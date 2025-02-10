@@ -1,0 +1,8 @@
+{
+	"SourceFiles": [
+		"C:\\ALPHA\\UnrealProject\\Course-Gameplay-Ability-System---Top-Down-RPG\\Aura\\Source\\Aura\\Aura.Build.cs",
+		"C:\\ALPHA\\UnrealProject\\Course-Gameplay-Ability-System---Top-Down-RPG\\Aura\\Source\\Aura.Target.cs",
+		"C:\\ALPHA\\UnrealProject\\Course-Gameplay-Ability-System---Top-Down-RPG\\Aura\\Source\\AuraEditor.Target.cs"
+	],
+	"EngineVersion": "5.5.3"
+}

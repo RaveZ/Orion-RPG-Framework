@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <None Include="..\..\Aura.uproject" />
+    <Filter Include="Source">
+      <UniqueIdentifier>{F31BBDD1-B3E8-3BCC-9652-680E16935819}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Source\Aura.Target.cs">
+      <Filter>Source</Filter>
+    </None>
+    <None Include="..\..\Source\AuraEditor.Target.cs">
+      <Filter>Source</Filter>
+    </None>
+    <None Include="..\..\.vsconfig" />
+    <Filter Include="Config">
+      <UniqueIdentifier>{FA535FFB-25E1-3D20-B416-52F9BE21E06E}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Config\DefaultEditor.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultEngine.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultGame.ini">
+      <Filter>Config</Filter>
+    </None>
+    <None Include="..\..\Config\DefaultInput.ini">
+      <Filter>Config</Filter>
+    </None>
+    <Filter Include="Source\Aura">
+      <UniqueIdentifier>{171ED4C2-8F97-3FFE-B0B6-01D55C378E24}</UniqueIdentifier>
+    </Filter>
+    <None Include="..\..\Source\Aura\Aura.Build.cs">
+      <Filter>Source\Aura</Filter>
+    </None>
+    <ClCompile Include="..\..\Source\Aura\Aura.cpp">
+      <Filter>Source\Aura</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Aura\Aura.h">
+      <Filter>Source\Aura</Filter>
+    </ClCompile>
+    <Filter Include="Source\Aura\Private">
+      <UniqueIdentifier>{614644D7-6FA7-303B-9CB5-F9579003D315}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Aura\Private\AbilitySystem">
+      <UniqueIdentifier>{E12B047D-3563-3B0F-A31F-6CA534A3F38C}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Private\AbilitySystem\AuraAbilitySystemComponent.cpp">
+      <Filter>Source\Aura\Private\AbilitySystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Aura\Private\AbilitySystem\AuraAttibuteSet.cpp">
+      <Filter>Source\Aura\Private\AbilitySystem</Filter>
+    </ClCompile>
+    <Filter Include="Source\Aura\Private\Character">
+      <UniqueIdentifier>{02E07034-0FE1-3A7C-A01D-10DA4A11D5EE}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Private\Character\AuraCharacter.cpp">
+      <Filter>Source\Aura\Private\Character</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Aura\Private\Character\AuraCharacterBase.cpp">
+      <Filter>Source\Aura\Private\Character</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Aura\Private\Character\AuraEnemy.cpp">
+      <Filter>Source\Aura\Private\Character</Filter>
+    </ClCompile>
+    <Filter Include="Source\Aura\Private\GameMode">
+      <UniqueIdentifier>{A8A74245-A521-3135-AFD5-12BD3DE24255}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Private\GameMode\AuraGameModeBase.cpp">
+      <Filter>Source\Aura\Private\GameMode</Filter>
+    </ClCompile>
+    <Filter Include="Source\Aura\Private\Interaction">
+      <UniqueIdentifier>{8600DADF-1C2F-3B4E-851E-5CF3B1B94879}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Private\Interaction\EnemyInterface.cpp">
+      <Filter>Source\Aura\Private\Interaction</Filter>
+    </ClCompile>
+    <Filter Include="Source\Aura\Private\Player">
+      <UniqueIdentifier>{0384C61C-70FC-34C5-AA42-3FFE81EA736E}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Private\Player\AuraPlayerController.cpp">
+      <Filter>Source\Aura\Private\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Aura\Private\Player\AuraPlayerState.cpp">
+      <Filter>Source\Aura\Private\Player</Filter>
+    </ClCompile>
+    <Filter Include="Source\Aura\Public">
+      <UniqueIdentifier>{812D085E-218E-32A1-B6D9-A817B3D0072A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Aura\Public\AbilitySystem">
+      <UniqueIdentifier>{E77883A5-D48A-34F9-8FEA-EA980135BDF7}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Public\AbilitySystem\AuraAbilitySystemComponent.h">
+      <Filter>Source\Aura\Public\AbilitySystem</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Aura\Public\AbilitySystem\AuraAttibuteSet.h">
+      <Filter>Source\Aura\Public\AbilitySystem</Filter>
+    </ClCompile>
+    <Filter Include="Source\Aura\Public\Character">
+      <UniqueIdentifier>{5BC97E21-9AE0-3A5A-B1AE-66CDA5B00EB5}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Public\Character\AuraCharacter.h">
+      <Filter>Source\Aura\Public\Character</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Aura\Public\Character\AuraCharacterBase.h">
+      <Filter>Source\Aura\Public\Character</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Aura\Public\Character\AuraEnemy.h">
+      <Filter>Source\Aura\Public\Character</Filter>
+    </ClCompile>
+    <Filter Include="Source\Aura\Public\GameMode">
+      <UniqueIdentifier>{E70CAB74-94E1-3EAC-974C-E252CAD5C204}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Public\GameMode\AuraGameModeBase.h">
+      <Filter>Source\Aura\Public\GameMode</Filter>
+    </ClCompile>
+    <Filter Include="Source\Aura\Public\Interaction">
+      <UniqueIdentifier>{AC69F4E0-FE2C-3C00-9744-FF5ECD46407C}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Public\Interaction\EnemyInterface.h">
+      <Filter>Source\Aura\Public\Interaction</Filter>
+    </ClCompile>
+    <Filter Include="Source\Aura\Public\Player">
+      <UniqueIdentifier>{92C9D14F-9ACD-3BE9-BD79-820E68D968CD}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Public\Player\AuraPlayerController.h">
+      <Filter>Source\Aura\Public\Player</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Aura\Public\Player\AuraPlayerState.h">
+      <Filter>Source\Aura\Public\Player</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
