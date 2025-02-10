@@ -8,6 +8,8 @@
             "c:\\alpha\\unrealproject\\course-gameplay-ability-system---top-down-rpg\\aura\\intermediate\\build\\win64\\x64\\unrealeditor\\debuggame\\aura\\definitions.aura.h",
             "c:\\alpha\\unrealproject\\course-gameplay-ability-system---top-down-rpg\\aura\\source\\aura\\public\\character\\auraenemy.h",
             "c:\\alpha\\unrealproject\\course-gameplay-ability-system---top-down-rpg\\aura\\source\\aura\\public\\character\\auracharacterbase.h",
+            "c:\\program files\\epic games\\ue_5.5\\engine\\plugins\\runtime\\gameplayabilities\\source\\gameplayabilities\\public\\abilitysysteminterface.h",
+            "c:\\program files\\epic games\\ue_5.5\\engine\\plugins\\runtime\\gameplayabilities\\intermediate\\build\\win64\\unrealeditor\\inc\\gameplayabilities\\uht\\abilitysysteminterface.generated.h",
             "c:\\program files\\epic games\\ue_5.5\\engine\\source\\runtime\\engine\\classes\\gameframework\\character.h",
             "c:\\program files\\epic games\\ue_5.5\\engine\\source\\runtime\\engine\\classes\\gameframework\\charactermovementreplication.h",
             "c:\\program files\\epic games\\ue_5.5\\engine\\source\\runtime\\net\\core\\public\\net\\core\\nettoken\\nettokenexportcontext.h",
@@ -18,6 +20,8 @@
             "c:\\program files\\epic games\\ue_5.5\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\rootmotionsource.generated.h",
             "c:\\program files\\epic games\\ue_5.5\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\character.generated.h",
             "c:\\alpha\\unrealproject\\course-gameplay-ability-system---top-down-rpg\\aura\\intermediate\\build\\win64\\unrealeditor\\inc\\aura\\uht\\auracharacterbase.generated.h",
+            "c:\\alpha\\unrealproject\\course-gameplay-ability-system---top-down-rpg\\aura\\source\\aura\\public\\interaction\\enemyinterface.h",
+            "c:\\alpha\\unrealproject\\course-gameplay-ability-system---top-down-rpg\\aura\\intermediate\\build\\win64\\unrealeditor\\inc\\aura\\uht\\enemyinterface.generated.h",
             "c:\\alpha\\unrealproject\\course-gameplay-ability-system---top-down-rpg\\aura\\intermediate\\build\\win64\\unrealeditor\\inc\\aura\\uht\\auraenemy.generated.h"
         ],
         "ImportedModules": [],

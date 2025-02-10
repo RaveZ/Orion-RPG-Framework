@@ -1,9 +1,10 @@
-C:\ALPHA\UnrealProject\Course-Gameplay-Ability-System---Top-Down-RPG\Aura\Source\Aura\Public\AbilitySystem\AuraAttibuteSet.h
-C:\ALPHA\UnrealProject\Course-Gameplay-Ability-System---Top-Down-RPG\Aura\Source\Aura\Public\Character\AuraCharacter.h
-C:\ALPHA\UnrealProject\Course-Gameplay-Ability-System---Top-Down-RPG\Aura\Source\Aura\Public\Interaction\EnemyInterface.h
+C:\ALPHA\UnrealProject\Course-Gameplay-Ability-System---Top-Down-RPG\Aura\Source\Aura\Public\AbilitySystem\AuraAbilitySystemComponent.h
+C:\ALPHA\UnrealProject\Course-Gameplay-Ability-System---Top-Down-RPG\Aura\Source\Aura\Public\Character\AuraEnemy.h
 C:\ALPHA\UnrealProject\Course-Gameplay-Ability-System---Top-Down-RPG\Aura\Source\Aura\Public\GameMode\AuraGameModeBase.h
 C:\ALPHA\UnrealProject\Course-Gameplay-Ability-System---Top-Down-RPG\Aura\Source\Aura\Public\Character\AuraCharacterBase.h
-C:\ALPHA\UnrealProject\Course-Gameplay-Ability-System---Top-Down-RPG\Aura\Source\Aura\Public\Character\AuraEnemy.h
 C:\ALPHA\UnrealProject\Course-Gameplay-Ability-System---Top-Down-RPG\Aura\Source\Aura\Public\Player\AuraPlayerState.h
+C:\ALPHA\UnrealProject\Course-Gameplay-Ability-System---Top-Down-RPG\Aura\Source\Aura\Public\Interaction\EnemyInterface.h
+C:\ALPHA\UnrealProject\Course-Gameplay-Ability-System---Top-Down-RPG\Aura\Source\Aura\Public\Character\AuraCharacter.h
 C:\ALPHA\UnrealProject\Course-Gameplay-Ability-System---Top-Down-RPG\Aura\Source\Aura\Public\Player\AuraPlayerController.h
-C:\ALPHA\UnrealProject\Course-Gameplay-Ability-System---Top-Down-RPG\Aura\Source\Aura\Public\AbilitySystem\AuraAbilitySystemComponent.h
+C:\ALPHA\UnrealProject\Course-Gameplay-Ability-System---Top-Down-RPG\Aura\Source\Aura\Public\AbilitySystem\AuraAttributeSet.h
+C:\ALPHA\UnrealProject\Course-Gameplay-Ability-System---Top-Down-RPG\Aura\Source\Aura\Public\Actor\AuraEffectActor.h
