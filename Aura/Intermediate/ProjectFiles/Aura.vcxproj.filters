@@ -48,8 +48,14 @@
     <ClCompile Include="..\..\Source\Aura\Private\AbilitySystem\AuraAbilitySystemComponent.cpp">
       <Filter>Source\Aura\Private\AbilitySystem</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Aura\Private\AbilitySystem\AuraAttibuteSet.cpp">
+    <ClCompile Include="..\..\Source\Aura\Private\AbilitySystem\AuraAttributeSet.cpp">
       <Filter>Source\Aura\Private\AbilitySystem</Filter>
+    </ClCompile>
+    <Filter Include="Source\Aura\Private\Actor">
+      <UniqueIdentifier>{051A7246-5551-3D03-BC41-3B84493932DF}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Private\Actor\AuraEffectActor.cpp">
+      <Filter>Source\Aura\Private\Actor</Filter>
     </ClCompile>
     <Filter Include="Source\Aura\Private\Character">
       <UniqueIdentifier>{02E07034-0FE1-3A7C-A01D-10DA4A11D5EE}</UniqueIdentifier>
@@ -84,6 +90,30 @@
     <ClCompile Include="..\..\Source\Aura\Private\Player\AuraPlayerState.cpp">
       <Filter>Source\Aura\Private\Player</Filter>
     </ClCompile>
+    <Filter Include="Source\Aura\Private\UI">
+      <UniqueIdentifier>{F9372D0D-4A97-3565-B84C-896EF7901031}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Aura\Private\UI\HUD">
+      <UniqueIdentifier>{095051DB-6234-3470-8A21-12B7360D4FBB}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Private\UI\HUD\AuraHUD.cpp">
+      <Filter>Source\Aura\Private\UI\HUD</Filter>
+    </ClCompile>
+    <Filter Include="Source\Aura\Private\UI\Widget">
+      <UniqueIdentifier>{24B7270D-1495-3C1D-8624-24B5BD522F15}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Private\UI\Widget\AuraUserWidget.cpp">
+      <Filter>Source\Aura\Private\UI\Widget</Filter>
+    </ClCompile>
+    <Filter Include="Source\Aura\Private\UI\WidgetController">
+      <UniqueIdentifier>{D768110E-7A16-3E45-95C4-8523946E0A11}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Private\UI\WidgetController\AuraWidgetController.cpp">
+      <Filter>Source\Aura\Private\UI\WidgetController</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Aura\Private\UI\WidgetController\OverlayWidgetController.cpp">
+      <Filter>Source\Aura\Private\UI\WidgetController</Filter>
+    </ClCompile>
     <Filter Include="Source\Aura\Public">
       <UniqueIdentifier>{812D085E-218E-32A1-B6D9-A817B3D0072A}</UniqueIdentifier>
     </Filter>
@@ -93,8 +123,14 @@
     <ClCompile Include="..\..\Source\Aura\Public\AbilitySystem\AuraAbilitySystemComponent.h">
       <Filter>Source\Aura\Public\AbilitySystem</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\Source\Aura\Public\AbilitySystem\AuraAttibuteSet.h">
+    <ClCompile Include="..\..\Source\Aura\Public\AbilitySystem\AuraAttributeSet.h">
       <Filter>Source\Aura\Public\AbilitySystem</Filter>
+    </ClCompile>
+    <Filter Include="Source\Aura\Public\Actor">
+      <UniqueIdentifier>{FB1C9C32-0E54-3D43-B3D9-FD86BB6EBCF1}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Public\Actor\AuraEffectActor.h">
+      <Filter>Source\Aura\Public\Actor</Filter>
     </ClCompile>
     <Filter Include="Source\Aura\Public\Character">
       <UniqueIdentifier>{5BC97E21-9AE0-3A5A-B1AE-66CDA5B00EB5}</UniqueIdentifier>
@@ -128,6 +164,30 @@
     </ClCompile>
     <ClCompile Include="..\..\Source\Aura\Public\Player\AuraPlayerState.h">
       <Filter>Source\Aura\Public\Player</Filter>
+    </ClCompile>
+    <Filter Include="Source\Aura\Public\UI">
+      <UniqueIdentifier>{8F425D6D-BDE7-3B81-8763-332C56914637}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source\Aura\Public\UI\HUD">
+      <UniqueIdentifier>{9E866B4B-78AE-3932-8E08-364DAD50A354}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Public\UI\HUD\AuraHUD.h">
+      <Filter>Source\Aura\Public\UI\HUD</Filter>
+    </ClCompile>
+    <Filter Include="Source\Aura\Public\UI\Widget">
+      <UniqueIdentifier>{94ECFD0D-3C45-3C22-8F23-53F6B52E3FDE}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Public\UI\Widget\AuraUserWidget.h">
+      <Filter>Source\Aura\Public\UI\Widget</Filter>
+    </ClCompile>
+    <Filter Include="Source\Aura\Public\UI\WidgetController">
+      <UniqueIdentifier>{3BCD7258-E95C-3A59-ACAC-9F88D343DD76}</UniqueIdentifier>
+    </Filter>
+    <ClCompile Include="..\..\Source\Aura\Public\UI\WidgetController\AuraWidgetController.h">
+      <Filter>Source\Aura\Public\UI\WidgetController</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\Source\Aura\Public\UI\WidgetController\OverlayWidgetController.h">
+      <Filter>Source\Aura\Public\UI\WidgetController</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

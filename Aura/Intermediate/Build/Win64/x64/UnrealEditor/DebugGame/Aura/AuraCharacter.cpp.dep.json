@@ -93,10 +93,19 @@
             "c:\\program files\\epic games\\ue_5.5\\engine\\source\\runtime\\engine\\public\\charactermovementcomponentasync.h",
             "c:\\program files\\epic games\\ue_5.5\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\charactermovementcomponentasync.generated.h",
             "c:\\program files\\epic games\\ue_5.5\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\charactermovementcomponent.generated.h",
+            "c:\\alpha\\unrealproject\\course-gameplay-ability-system---top-down-rpg\\aura\\source\\aura\\public\\player\\auraplayercontroller.h",
+            "c:\\alpha\\unrealproject\\course-gameplay-ability-system---top-down-rpg\\aura\\intermediate\\build\\win64\\unrealeditor\\inc\\aura\\uht\\auraplayercontroller.generated.h",
             "c:\\alpha\\unrealproject\\course-gameplay-ability-system---top-down-rpg\\aura\\source\\aura\\public\\player\\auraplayerstate.h",
             "c:\\program files\\epic games\\ue_5.5\\engine\\source\\runtime\\engine\\classes\\gameframework\\playerstate.h",
             "c:\\program files\\epic games\\ue_5.5\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\playerstate.generated.h",
-            "c:\\alpha\\unrealproject\\course-gameplay-ability-system---top-down-rpg\\aura\\intermediate\\build\\win64\\unrealeditor\\inc\\aura\\uht\\auraplayerstate.generated.h"
+            "c:\\alpha\\unrealproject\\course-gameplay-ability-system---top-down-rpg\\aura\\intermediate\\build\\win64\\unrealeditor\\inc\\aura\\uht\\auraplayerstate.generated.h",
+            "c:\\alpha\\unrealproject\\course-gameplay-ability-system---top-down-rpg\\aura\\source\\aura\\public\\ui\\hud\\aurahud.h",
+            "c:\\program files\\epic games\\ue_5.5\\engine\\source\\runtime\\engine\\classes\\gameframework\\hud.h",
+            "c:\\program files\\epic games\\ue_5.5\\engine\\source\\runtime\\engine\\classes\\gameframework\\hudhitbox.h",
+            "c:\\program files\\epic games\\ue_5.5\\engine\\source\\runtime\\engine\\classes\\gameframework\\debugtextinfo.h",
+            "c:\\program files\\epic games\\ue_5.5\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\debugtextinfo.generated.h",
+            "c:\\program files\\epic games\\ue_5.5\\engine\\intermediate\\build\\win64\\unrealeditor\\inc\\engine\\uht\\hud.generated.h",
+            "c:\\alpha\\unrealproject\\course-gameplay-ability-system---top-down-rpg\\aura\\intermediate\\build\\win64\\unrealeditor\\inc\\aura\\uht\\aurahud.generated.h"
         ],
         "ImportedModules": [],
         "ImportedHeaderUnits": []
