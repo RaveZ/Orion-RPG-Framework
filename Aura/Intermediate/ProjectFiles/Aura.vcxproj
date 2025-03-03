@@ -261,9 +261,11 @@
     <None Include="..\..\Source\Aura.Target.cs"/>
     <None Include="..\..\Source\AuraEditor.Target.cs"/>
     <None Include="..\..\.vsconfig"/>
+    <None Include="..\..\Aura.sln.DotSettings.user"/>
     <None Include="..\..\Config\DefaultEditor.ini"/>
     <None Include="..\..\Config\DefaultEngine.ini"/>
     <None Include="..\..\Config\DefaultGame.ini"/>
+    <None Include="..\..\Config\DefaultGameplayTags.ini"/>
     <None Include="..\..\Config\DefaultInput.ini"/>
     <None Include="..\..\Source\Aura\Aura.Build.cs"/>
     <ClCompile Include="..\..\Source\Aura\Aura.cpp">
