@@ -35,9 +35,15 @@ public class OrionCombatFramework : ModuleRules
 			new string[]
 			{
 				"CoreUObject",
+				"InputCore",
 				"Engine",
+				"UMG",
 				"Slate",
-				"SlateCore",
+				"SlateCore", 
+				"EnhancedInput", 
+				"GameplayAbilities",
+				"GameplayTags", 
+				"GameplayTasks",
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);
