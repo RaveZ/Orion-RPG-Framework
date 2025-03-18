@@ -4,6 +4,7 @@
 #include "OrionCharacterBase.h"
 
 #include "AbilitySystemComponent.h"
+#include "../AbilitySystem/OrionAbilitySystemComponent.h"
 
 AOrionCharacterBase::AOrionCharacterBase()
 {
@@ -47,3 +48,10 @@ void AOrionCharacterBase::InitializeDefaultAttributes() const
 }
 
 
+void AOrionCharacterBase::AddCharacterAbilities()
+{
+	UOrionAbilitySystemComponent* OrionASC = CastChecked<UOrionAbilitySystemComponent>(AbilitySystemComponent);
+	if (!HasAuthority()) return;
+
+	OrionASC->AddCharacterAbilities(StartupAbilities);
+}

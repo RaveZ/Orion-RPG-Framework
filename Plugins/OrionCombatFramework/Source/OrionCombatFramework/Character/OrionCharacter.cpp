@@ -36,6 +36,7 @@ void AOrionCharacter::PossessedBy(AController* NewController)
 
 	//Init Ability Actor info to the Server
 	InitAbilityActorInfo();
+	AddCharacterAbilities();
 }
 
 void AOrionCharacter::OnRep_PlayerState()
@@ -48,9 +49,9 @@ void AOrionCharacter::OnRep_PlayerState()
 
 int32 AOrionCharacter::GetPlayerLevel()
 {
-	const AOrionPlayerState* AuraPlayerState = GetPlayerState<AOrionPlayerState>();
-	check(AuraPlayerState);
-	return AuraPlayerState->GetPlayerLevel();
+	const AOrionPlayerState* OrionPlayerState = GetPlayerState<AOrionPlayerState>();
+	check(OrionPlayerState);
+	return OrionPlayerState->GetPlayerLevel();
 }
 
 void AOrionCharacter::InitAbilityActorInfo()

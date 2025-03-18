@@ -11,6 +11,8 @@
 class UGameplayEffect;
 class UAttributeSet;
 class UAbilitySystemComponent;
+class UGameplayAbility;
+
 
 UCLASS(Abstract)
 class ORIONCOMBATFRAMEWORK_API AOrionCharacterBase : public ACharacter, public IAbilitySystemInterface, public ICombatInterface
@@ -24,7 +26,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	UPROPERTY(EditAnywhere, Category="Combat")
+	UPROPERTY(EditAnywhere, Category="Orion | Combat")
 	TObjectPtr<USkeletalMeshComponent> Weapon;
 	
 	UPROPERTY(VisibleAnywhere)
@@ -35,17 +37,22 @@ protected:
 
 	virtual void InitAbilityActorInfo();
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Attributes")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Orion | Attributes")
 	TSubclassOf<UGameplayEffect> DefaultPrimaryAttributes;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Attributes")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Orion | Attributes")
 	TSubclassOf<UGameplayEffect> DefaultSecondaryAttributes;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Attributes")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Orion | Attributes")
 	TSubclassOf<UGameplayEffect> DefaultVitalAttributes;
 	
 	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level) const;
 	
 	void InitializeDefaultAttributes() const;
-public:
+
+	void AddCharacterAbilities();
+private:
+
+	UPROPERTY(EditAnywhere, Category = "Orion | Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
 };
