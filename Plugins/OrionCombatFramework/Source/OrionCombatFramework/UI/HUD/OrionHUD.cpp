@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "OrionCombatFramework/UI/Widget/OrionUserWidget.h"
 #include "OrionCombatFramework/UI/WidgetController/OverlayWidgetController.h"
+#include "OrionCombatFramework/UI/WidgetController/AttributeMenuWidgetController.h"
 
 UOverlayWidgetController* AOrionHUD::GetOverlayWidgetController(const FWidgetControllerParams& WCParams)
 {
@@ -17,6 +18,17 @@ UOverlayWidgetController* AOrionHUD::GetOverlayWidgetController(const FWidgetCon
 		return OverlayWidgetController;
 	}
 	return OverlayWidgetController;
+}
+
+UAttributeMenuWidgetController* AOrionHUD::GetAttributeMenuWidgetController(const FWidgetControllerParams& WCParams)
+{
+	if (AttributeMenuWidgetController == nullptr)
+	{
+		AttributeMenuWidgetController = NewObject<UAttributeMenuWidgetController>(this, AttributeMenuWidgetControllerClass);
+		AttributeMenuWidgetController->SetWidgetControllerParams(WCParams);
+		AttributeMenuWidgetController->BindCallbacksToDependencies();
+	}
+	return AttributeMenuWidgetController;
 }
 
 void AOrionHUD::InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS)

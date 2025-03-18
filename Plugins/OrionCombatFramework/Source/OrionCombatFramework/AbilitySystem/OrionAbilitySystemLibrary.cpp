@@ -23,3 +23,19 @@ UOverlayWidgetController* UOrionAbilitySystemLibrary::GetOverlayWidgetController
 	}
 	return nullptr;
 }
+
+UAttributeMenuWidgetController* UOrionAbilitySystemLibrary::GetAttributeMenuWidgetController(const UObject* WorldContextObject)
+{
+	if (APlayerController* PC = UGameplayStatics::GetPlayerController(WorldContextObject, 0))
+	{
+		if (AOrionHUD* OrionHUD = Cast<AOrionHUD>(PC->GetHUD()))
+		{
+			AOrionPlayerState* PS = PC->GetPlayerState<AOrionPlayerState>();
+			UAbilitySystemComponent* ASC = PS->GetAbilitySystemComponent();
+			UAttributeSet* AS = PS->GetAttributeSet();
+			const FWidgetControllerParams WidgetControllerParams(PC, PS, ASC, AS);
+			return OrionHUD->GetAttributeMenuWidgetController(WidgetControllerParams);
+		}
+	}
+	return nullptr;
+}

@@ -7,6 +7,7 @@
 #include "OrionAbilitySystemLibrary.generated.h"
 
 class UOverlayWidgetController;
+class UAttributeMenuWidgetController;
 /**
  * 
  */
@@ -17,4 +18,8 @@ class ORIONCOMBATFRAMEWORK_API UOrionAbilitySystemLibrary : public UBlueprintFun
 public:
 	UFUNCTION(BlueprintPure, Category = "OrionAbilitySystemLibrary|WidgetController")
 	static UOverlayWidgetController* GetOverlayWidgetController(const UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintPure, Category = "AuraAbilitySystemLibrary|WidgetController")
+	static UAttributeMenuWidgetController* GetAttributeMenuWidgetController(const UObject* WorldContextObject);
+	
 };

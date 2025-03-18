@@ -11,6 +11,7 @@ class UAbilitySystemComponent;
 struct FWidgetControllerParams;
 class UOverlayWidgetController;
 class UOrionUserWidget;
+class UAttributeMenuWidgetController;
 /**
  * 
  */
@@ -19,16 +20,18 @@ class ORIONCOMBATFRAMEWORK_API AOrionHUD : public AHUD
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY()
-	TObjectPtr<UOrionUserWidget> OverlayWidget;
 
 	UOverlayWidgetController* GetOverlayWidgetController(const FWidgetControllerParams& WCParams);
+	UAttributeMenuWidgetController* GetAttributeMenuWidgetController(const FWidgetControllerParams& WCParams);
 
 	void InitOverlay(APlayerController* PC, APlayerState* PS, UAbilitySystemComponent* ASC, UAttributeSet* AS);
 
 protected:
 
 private:
+	UPROPERTY()
+	TObjectPtr<UOrionUserWidget> OverlayWidget;
+
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UOrionUserWidget> OverlayWidgetClass;
 
@@ -37,4 +40,10 @@ private:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UOverlayWidgetController> OverlayWidgetControllerClass;
+
+	UPROPERTY()
+	TObjectPtr<UAttributeMenuWidgetController> AttributeMenuWidgetController;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UAttributeMenuWidgetController> AttributeMenuWidgetControllerClass;
 };

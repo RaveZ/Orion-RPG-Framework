@@ -6,9 +6,27 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "OrionCombatFramework/OrionGameplayTags.h"
 
 UOrionAttributeSet::UOrionAttributeSet()
 {
+	//Primary Attributes
+	TagsToAttributes.Add(TAG_Attributes_Primary_Strength, GetStrengthAttribute);
+	TagsToAttributes.Add(TAG_Attributes_Primary_Intelligence, GetIntelligenceAttribute);
+	TagsToAttributes.Add(TAG_Attributes_Primary_Resilience, GetResilienceAttribute);
+	TagsToAttributes.Add(TAG_Attributes_Primary_Vigor, GetVigorAttribute);
+
+	//Secondary Attributes
+	TagsToAttributes.Add(TAG_Attributes_Secondary_Armor, GetArmorAttribute);
+	TagsToAttributes.Add(TAG_Attributes_Secondary_ArmorPenetration, GetArmorPenetrationAttribute);
+	TagsToAttributes.Add(TAG_Attributes_Secondary_BlockChance, GetBlockChanceAttribute);
+	TagsToAttributes.Add(TAG_Attributes_Secondary_CriticalHitChance, GetCriticalHitChanceAttribute);
+	TagsToAttributes.Add(TAG_Attributes_Secondary_CriticalHitResistance, GetCriticalHitResistanceAttribute);
+	TagsToAttributes.Add(TAG_Attributes_Secondary_CriticalHitDamage, GetCriticalHitDamageAttribute);
+	TagsToAttributes.Add(TAG_Attributes_Secondary_HealthRegeneration, GetHealthRegenerationAttribute);
+	TagsToAttributes.Add(TAG_Attributes_Secondary_ManaRegeneration, GetManaRegenerationAttribute);
+	TagsToAttributes.Add(TAG_Attributes_Secondary_MaxHealth, GetMaxHealthAttribute);
+	TagsToAttributes.Add(TAG_Attributes_Secondary_MaxMana, GetMaxManaAttribute);
 }
 
 void UOrionAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
