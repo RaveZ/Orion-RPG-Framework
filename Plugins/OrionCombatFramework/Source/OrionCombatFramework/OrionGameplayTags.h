@@ -3,6 +3,18 @@
 #include "GameplayTagContainer.h"
 #include "NativeGameplayTags.h"
 
+
+/*
+GAS
+ */
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Damage);
+
+/*
+Effects
+*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Effects_HitReact);
+
+
 /*
 Primary Attributes
  */
@@ -26,4 +38,14 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Attributes_Secondary_ManaRegeneration);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Attributes_Secondary_MaxHealth);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Attributes_Secondary_MaxMana);
 
+/*
+ Input
+*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_LMB);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_RMB);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_Shift);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_1);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_2);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_3);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_4);
 

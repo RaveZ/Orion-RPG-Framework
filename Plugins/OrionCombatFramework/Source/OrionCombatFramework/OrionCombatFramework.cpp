@@ -4,6 +4,8 @@
 
 #define LOCTEXT_NAMESPACE "FOrionCombatFrameworkModule"
 
+DEFINE_LOG_CATEGORY(OrionLog);
+
 void FOrionCombatFrameworkModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module

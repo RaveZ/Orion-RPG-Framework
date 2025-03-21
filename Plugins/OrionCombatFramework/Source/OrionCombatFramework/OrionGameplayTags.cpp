@@ -1,5 +1,14 @@
 #include "OrionGameplayTags.h"
 
+/*
+GAS
+ */
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Damage, "Damage", "Damage Tag")
+
+/*
+Effects
+*/
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Effects_HitReact, "Effects.HitReact", "Tag granted when Hit Reacting")
 
 /*
 Primary Attributes
@@ -22,3 +31,15 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Attributes_Secondary_HealthRegeneration, "Att
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Attributes_Secondary_ManaRegeneration, "Attributes.Secondary.ManaRegeneration", "Amount of Mana regenerated every 1 second")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Attributes_Secondary_MaxHealth, "Attributes.Secondary.MaxHealth", "Maximum amount of Health obtainable")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Attributes_Secondary_MaxMana, "Attributes.Secondary.MaxMana", "Maximum amount of Mana obtainable")
+
+
+/*
+ Input
+*/
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_LMB, "InputTag.LMB", "Input Tag for Left Mouse Button")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_RMB, "InputTag.RMB", "Input Tag for Right Mouse Button")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_Shift, "InputTag.Shift", "Input Tag for Shift Key")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_1, "InputTag.1", "Input Tag for 1 key")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_2, "InputTag.2", "Input Tag for 2 key")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_3, "InputTag.3", "Input Tag for 3 key")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_4, "InputTag.4", "Input Tag for 4 key")
