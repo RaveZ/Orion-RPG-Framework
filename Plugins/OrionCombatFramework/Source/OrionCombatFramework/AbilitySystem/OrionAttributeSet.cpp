@@ -10,6 +10,7 @@
 #include "../Interaction/CombatInterface.h"
 #include "Kismet/GameplayStatics.h"
 #include "../Player/OrionPlayerController.h"	
+#include "OrionAbilitySystemLibrary.h"
 
 UOrionAttributeSet::UOrionAttributeSet()
 {
@@ -81,6 +82,7 @@ void UOrionAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectM
 	FEffectProperties Props;
 	SetEffectProperties(Data, Props);
 
+
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
@@ -111,11 +113,14 @@ void UOrionAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectM
 			}
 			else
 			{
+				//HitReact Ability
 				FGameplayTagContainer TagContainer;
 				TagContainer.AddTag(TAG_Effects_HitReact);
 				Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
 			}
-			ShowFloatingText(Props, LocalIncomingDamage);
+			const bool bBlock = UOrionAbilitySystemLibrary::IsBlockedHit(Props.FEffectContextHandle);
+			const bool bCriticalHit = UOrionAbilitySystemLibrary::IsCriticalHit(Props.FEffectContextHandle);
+			ShowFloatingText(Props, LocalIncomingDamage,bBlock, bCriticalHit);
 		}
 	}
 }
@@ -153,13 +158,14 @@ void UOrionAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackDat
 	}
 }
 
-void UOrionAttributeSet::ShowFloatingText(const FEffectProperties& Props, float Damage) const
+
+void UOrionAttributeSet::ShowFloatingText(const FEffectProperties& Props, float Damage, bool bBlockedHit, bool bCriticalHit) const
 {
 	if (Props.SourceCharacter != Props.TargetCharacter)
 	{
 		if (AOrionPlayerController* PC = Cast<AOrionPlayerController>(UGameplayStatics::GetPlayerController(Props.SourceCharacter, 0)))
 		{
-			PC->ShowDamageNumber(Damage, Props.TargetCharacter);
+			PC->ShowDamageNumber(Damage, Props.TargetCharacter, bBlockedHit, bCriticalHit);
 		}
 	}
 }

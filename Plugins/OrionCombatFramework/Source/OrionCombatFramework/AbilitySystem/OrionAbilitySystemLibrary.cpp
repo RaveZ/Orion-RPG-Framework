@@ -7,6 +7,7 @@
 #include "OrionCombatFramework/Player/OrionPlayerState.h"
 #include "OrionCombatFramework/UI/HUD/OrionHUD.h"
 #include "OrionCombatFramework/UI/WidgetController/OrionWidgetController.h"
+#include "OrionAbilityTypes.h"
 
 UOverlayWidgetController* UOrionAbilitySystemLibrary::GetOverlayWidgetController(const UObject* WorldContextObject)
 {
@@ -38,4 +39,38 @@ UAttributeMenuWidgetController* UOrionAbilitySystemLibrary::GetAttributeMenuWidg
 		}
 	}
 	return nullptr;
+}
+
+bool UOrionAbilitySystemLibrary::IsBlockedHit(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FOrionGameplayEffectContext* OrionEffectContext = static_cast<const FOrionGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		return OrionEffectContext->IsBlockedHit();
+	}
+	return false;
+}
+
+bool UOrionAbilitySystemLibrary::IsCriticalHit(const FGameplayEffectContextHandle& EffectContextHandle)
+{
+	if (const FOrionGameplayEffectContext* OrionEffectContext = static_cast<const FOrionGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		return OrionEffectContext->IsCriticalHit();
+	}
+	return false;
+}
+
+void UOrionAbilitySystemLibrary::SetIsBlockedHit(UPARAM(ref)FGameplayEffectContextHandle& EffectContextHandle, bool bInIsBlockedHit)
+{
+	if (FOrionGameplayEffectContext* OrionEffectContext = static_cast<FOrionGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		OrionEffectContext->SetIsBlockedHit(bInIsBlockedHit);
+	}
+}
+
+void UOrionAbilitySystemLibrary::SetIsCriticalHit(UPARAM(ref)FGameplayEffectContextHandle& EffectContextHandle, bool bInIsCriticalHit)
+{
+	if (FOrionGameplayEffectContext* OrionEffectContext = static_cast<FOrionGameplayEffectContext*>(EffectContextHandle.Get()))
+	{
+		OrionEffectContext->SetIsCriticalHit(bInIsCriticalHit);
+	}
 }
