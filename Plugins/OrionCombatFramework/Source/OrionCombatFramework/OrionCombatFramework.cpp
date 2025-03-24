@@ -1,10 +1,9 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #include "OrionCombatFramework.h"
 
 #define LOCTEXT_NAMESPACE "FOrionCombatFrameworkModule"
 
-DEFINE_LOG_CATEGORY(OrionLog);
 
 void FOrionCombatFrameworkModule::StartupModule()
 {
