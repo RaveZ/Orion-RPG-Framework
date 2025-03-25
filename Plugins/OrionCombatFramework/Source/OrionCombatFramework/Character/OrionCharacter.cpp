@@ -47,7 +47,18 @@ void AOrionCharacter::OnRep_PlayerState()
 	InitAbilityActorInfo();
 }
 
-int32 AOrionCharacter::GetPlayerLevel()
+void AOrionCharacter::AddToXP_Implementation(int32 InXP)
+{
+	AOrionPlayerState* OrionPlayerState = GetPlayerState<AOrionPlayerState>();
+	check(OrionPlayerState);
+	OrionPlayerState->AddToXP(InXP);
+}
+
+void AOrionCharacter::LevelUp_Implementation()
+{
+}
+
+int32 AOrionCharacter::GetPlayerLevel_Implementation()
 {
 	const AOrionPlayerState* OrionPlayerState = GetPlayerState<AOrionPlayerState>();
 	check(OrionPlayerState);

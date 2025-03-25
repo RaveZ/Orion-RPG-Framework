@@ -7,7 +7,9 @@
 #include "OrionCombatFramework/Player/OrionPlayerState.h"
 #include "OrionCombatFramework/UI/HUD/OrionHUD.h"
 #include "OrionCombatFramework/UI/WidgetController/OrionWidgetController.h"
+#include "../Character/OrionCharacterBase.h"
 #include "OrionAbilityTypes.h"
+#include "ScalableFloat.h"
 
 UOverlayWidgetController* UOrionAbilitySystemLibrary::GetOverlayWidgetController(const UObject* WorldContextObject)
 {
@@ -73,4 +75,12 @@ void UOrionAbilitySystemLibrary::SetIsCriticalHit(UPARAM(ref)FGameplayEffectCont
 	{
 		OrionEffectContext->SetIsCriticalHit(bInIsCriticalHit);
 	}
+}
+
+int32 UOrionAbilitySystemLibrary::GetXPRewardFromLevel(UObject* WorldContextObject, int32 CharacterLevel)
+{
+	AOrionCharacterBase* OrionCharacter = Cast<AOrionCharacterBase>(WorldContextObject);
+	const float XPReward = OrionCharacter->GetXPReward().GetValueAtLevel(CharacterLevel); 
+ 	return static_cast<int32>(XPReward);
+	//return int32();
 }

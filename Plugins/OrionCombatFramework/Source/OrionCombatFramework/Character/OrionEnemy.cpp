@@ -37,7 +37,7 @@ void AOrionEnemy::UnHighlightActor()
 	Weapon->SetRenderCustomDepth(false);
 }
 
-int32 AOrionEnemy::GetPlayerLevel()
+int32 AOrionEnemy::GetPlayerLevel_Implementation()
 {
 	return Level;
 }

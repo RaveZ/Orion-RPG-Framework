@@ -91,6 +91,7 @@ void AOrionCharacterBase::AddCharacterAbilities()
 	if (!HasAuthority()) return;
 
 	OrionASC->AddCharacterAbilities(StartupAbilities);
+	OrionASC->AddCharacterPassiveAbilities(StartupPassiveAbilities);
 }
 
 void AOrionCharacterBase::Dissolve()

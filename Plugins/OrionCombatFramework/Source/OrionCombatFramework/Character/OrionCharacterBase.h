@@ -6,6 +6,7 @@
 #include "AbilitySystemInterface.h"
 #include "GameFramework/Character.h"
 #include "OrionCombatFramework/Interaction/CombatInterface.h"
+#include "ScalableFloat.h"
 #include "OrionCharacterBase.generated.h"
 
 class UAnimMontage;
@@ -58,6 +59,9 @@ protected:
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Orion | Attributes")
 	TSubclassOf<UGameplayEffect> DefaultVitalAttributes;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Orion | Progression")
+	FScalableFloat XPReward = FScalableFloat();
 	
 	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level) const;
 	
@@ -84,8 +88,13 @@ private:
 
 	UPROPERTY(EditAnywhere, Category = "Orion | Abilities")
 	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
-
+	
+	UPROPERTY(EditAnywhere, Category = "Orion | Abilities")
+	TArray<TSubclassOf<UGameplayAbility>> StartupPassiveAbilities;
 
 	UPROPERTY(EditAnywhere, Category = "Orion |Combat")
 	TObjectPtr<UAnimMontage> HitReactMontage;
+
+public:
+	FORCEINLINE FScalableFloat GetXPReward() const { return XPReward; }
 };

@@ -24,7 +24,7 @@ void UOrionProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocat
 
     if (ProjectileClass == nullptr)
     {
-        UE_LOG(OrionLog, Warning, TEXT("OrionProjectile : ProjectileClass is NULL!"));
+        UE_LOG(LogOrion, Warning, TEXT("OrionProjectile : ProjectileClass is NULL!"));
         return;
     }
 
@@ -59,6 +59,7 @@ void UOrionProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocat
 
         const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), EffectContextHandle);
 
+        //TODO : make variable level so it can be used modular
         const float ScaledDamage = Damage.GetValueAtLevel(5);
 
         UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, TAG_Damage, ScaledDamage);

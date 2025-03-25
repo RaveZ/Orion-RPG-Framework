@@ -7,6 +7,7 @@
 #include "../OrionAbilityTypes.h"
 #include "../OrionAbilitySystemLibrary.h"
 #include "../../OrionGameplayTags.h"
+#include "../../Interaction/CombatInterface.h"
 
 
 struct OrionDamageStatics
@@ -50,8 +51,19 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	const UAbilitySystemComponent* SourceASC = ExecutionParams.GetSourceAbilitySystemComponent();
 	const UAbilitySystemComponent* TargetASC = ExecutionParams.GetTargetAbilitySystemComponent();
 
-	const AActor* SourceActor = SourceASC ? SourceASC->GetAvatarActor() : nullptr;
-	const AActor* TargetActor = TargetASC ? TargetASC->GetAvatarActor() : nullptr;
+	AActor* SourceAvatar = SourceASC ? SourceASC->GetAvatarActor() : nullptr;
+	AActor* TargetAvatar  = TargetASC ? TargetASC->GetAvatarActor() : nullptr;
+
+	int32 SourcePlayerLevel = 1;
+	if (SourceAvatar->Implements<UCombatInterface>())
+	{
+		SourcePlayerLevel = ICombatInterface::Execute_GetPlayerLevel(SourceAvatar);
+	}
+	int32 TargetPlayerLevel = 1;
+	if (TargetAvatar->Implements<UCombatInterface>())
+	{
+		TargetPlayerLevel = ICombatInterface::Execute_GetPlayerLevel(TargetAvatar);
+	}
 
 	const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec();
 	FGameplayEffectContextHandle EffectContext = Spec.GetContext();

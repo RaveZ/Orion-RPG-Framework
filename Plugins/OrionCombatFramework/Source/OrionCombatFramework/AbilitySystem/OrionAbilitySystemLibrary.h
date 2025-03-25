@@ -37,5 +37,5 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "AbilitySystemLibrary|GameplayEffects")
 	static void SetIsCriticalHit(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, bool bInIsCriticalHit);
 
-
+	static int32 GetXPRewardFromLevel(UObject* WorldContextObject, int32 CharacterLevel);
 };

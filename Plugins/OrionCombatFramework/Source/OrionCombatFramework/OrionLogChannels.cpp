@@ -3,4 +3,5 @@
 
 #include "OrionLogChannels.h"
 
-DEFINE_LOG_CATEGORY(OrionLog);
+DEFINE_LOG_CATEGORY(LogOrion);
+DEFINE_LOG_CATEGORY(LogOrion_UI);

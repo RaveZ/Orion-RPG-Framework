@@ -22,6 +22,7 @@ void AOrionPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AOrionPlayerState, Level);
+	DOREPLIFETIME(AOrionPlayerState, XP);
 }
 
 UAbilitySystemComponent* AOrionPlayerState::GetAbilitySystemComponent() const
@@ -29,6 +30,36 @@ UAbilitySystemComponent* AOrionPlayerState::GetAbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
+void AOrionPlayerState::AddToXP(int32 InXP)
+{
+	XP += InXP;
+	OnXPChangedDelegate.Broadcast(XP);
+}
+
+void AOrionPlayerState::AddToLevel(int32 InLevel)
+{
+	Level += InLevel;
+	OnLevelChangedDelegate.Broadcast(Level);	
+}
+
+void AOrionPlayerState::SetXP(int32 InXP)
+{
+	XP = InXP;
+	OnXPChangedDelegate.Broadcast(XP);
+}
+
+void AOrionPlayerState::SetLevel(int32 InLevel)
+{
+	Level = InLevel;
+	OnLevelChangedDelegate.Broadcast(Level);
+}
+
 void AOrionPlayerState::OnRep_Level(int32 OldLevel)
 {
+	OnLevelChangedDelegate.Broadcast(Level);
+}
+
+void AOrionPlayerState::OnRep_XP(int32 OldXP)
+{
+	OnXPChangedDelegate.Broadcast(XP);
 }

@@ -34,6 +34,11 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Attributes_Secondary_ManaRegeneration, "Attri
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Attributes_Secondary_MaxHealth, "Attributes.Secondary.MaxHealth", "Maximum amount of Health obtainable")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Attributes_Secondary_MaxMana, "Attributes.Secondary.MaxMana", "Maximum amount of Mana obtainable")
 
+/*
+Meta Attributes
+*/
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Attributes_Meta_IncomingXP, "Attributes.Meta.IncomingXP", "Incoming XP Meta Attribute")
+
 
 /*
  Input
@@ -45,3 +50,13 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_1, "InputTag.1", "Input Tag for 1 key")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_2, "InputTag.2", "Input Tag for 2 key")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_3, "InputTag.3", "Input Tag for 3 key")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_4, "InputTag.4", "Input Tag for 4 key")
+
+/*
+Abilities
+*/
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Tag_Abilities_Fire_Firebolt, "Abilities.Fire.Firebolt", "Firebolt Ability Tag")
+
+/*
+Cooldown
+*/
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(Tag_Cooldown_Fire_Firebolt, "Cooldown.Fire.Firebolt", "FireBolt Cooldown Tag")

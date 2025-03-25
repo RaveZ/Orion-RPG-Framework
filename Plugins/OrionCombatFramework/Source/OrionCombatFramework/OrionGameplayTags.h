@@ -41,6 +41,12 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Attributes_Secondary_MaxHealth);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Attributes_Secondary_MaxMana);
 
 /*
+Meta Attributes
+*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Attributes_Meta_IncomingXP);
+
+
+/*
  Input
 */
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_LMB);
@@ -50,4 +56,14 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_1);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_2);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_3);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Input_4);
+
+/*
+ Abilities
+*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Tag_Abilities_Fire_Firebolt);
+
+/*
+Cooldown
+*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Tag_Cooldown_Fire_Firebolt);
 

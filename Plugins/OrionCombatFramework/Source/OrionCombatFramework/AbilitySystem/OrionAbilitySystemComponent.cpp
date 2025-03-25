@@ -2,6 +2,7 @@
 
 #include "OrionAbilitySystemComponent.h"
 #include "../AbilitySystem/Ability/OrionGameplayAbility.h"
+#include "../OrionLogChannels.h"
 
 
 UOrionAbilitySystemComponent::UOrionAbilitySystemComponent()
@@ -20,6 +21,17 @@ void UOrionAbilitySystemComponent::AbilityActorInfoSet()
 void UOrionAbilitySystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void UOrionAbilitySystemComponent::OnRep_ActivateAbilities()
+{
+	Super::OnRep_ActivateAbilities();
+
+	if (!bStartupAbilitiesGiven)
+	{
+		bStartupAbilitiesGiven = true;
+		AbilitiesGivenDelegate.Broadcast(this);
+	}
 }
 
 void UOrionAbilitySystemComponent::ClientEffectApplied_Implementation(UAbilitySystemComponent* AbilitySystemComponent,
@@ -48,6 +60,17 @@ void UOrionAbilitySystemComponent::AddCharacterAbilities(const TArray<TSubclassO
 			AbilitySpec.GetDynamicSpecSourceTags().AddTag(OrionAbility->StartupInputTag);
 			GiveAbility(AbilitySpec);
 		}
+	}
+	bStartupAbilitiesGiven = true;
+	AbilitiesGivenDelegate.Broadcast(this);
+}
+
+void UOrionAbilitySystemComponent::AddCharacterPassiveAbilities(const TArray<TSubclassOf<UGameplayAbility>>& StartupPassiveAbilities)
+{
+	for (const TSubclassOf<UGameplayAbility> AbilityClass : StartupPassiveAbilities)
+	{
+		FGameplayAbilitySpec AbilitySpec = FGameplayAbilitySpec(AbilityClass, 1);
+		GiveAbilityAndActivateOnce(AbilitySpec);
 	}
 }
 
@@ -79,4 +102,43 @@ void UOrionAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& I
 			AbilitySpecInputReleased(AbilitySpec);
 		}
 	}
+}
+
+void UOrionAbilitySystemComponent::ForEachAbility(const FForEachAbility& Delegate)
+{
+	FScopedAbilityListLock ActiveScopeLock(*this);
+	for (const FGameplayAbilitySpec& AbilitySpec : GetActivatableAbilities())
+	{
+		if (!Delegate.ExecuteIfBound(AbilitySpec))
+		{
+			UE_LOG(LogOrion, Error, TEXT("Failed to execute delegate in %hs"), __FUNCTION__);
+		}
+	}
+}
+
+FGameplayTag UOrionAbilitySystemComponent::GetAbilityTagFromSpec(const FGameplayAbilitySpec& AbilitySpec)
+{
+	if (AbilitySpec.Ability)
+	{
+		for (FGameplayTag Tag : AbilitySpec.Ability.Get()->AbilityTags)
+		{
+			if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("Abilities"))))
+			{
+				return Tag;
+			}
+		}
+	}
+	return FGameplayTag();
+}
+
+FGameplayTag UOrionAbilitySystemComponent::GetInputTagFromSpec(const FGameplayAbilitySpec& AbilitySpec)
+{
+	for (FGameplayTag Tag : AbilitySpec.DynamicAbilityTags)
+	{
+		if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("InputTag"))))
+		{
+			return Tag;
+		}
+	}
+	return FGameplayTag();
 }
