@@ -11,6 +11,8 @@
 #include "OrionCombatFramework/UI/HUD/OrionHUD.h"
 #include "NiagaraComponent.h"
 #include "Camera/CameraComponent.h"
+#include "../OrionGameplayTags.h"
+#include "Abilities/GameplayAbilityTypes.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "../Progression/LevelUpInfo.h"
 #include "../OrionLogChannels.h"
@@ -37,8 +39,6 @@ AOrionCharacter::AOrionCharacter()
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationRoll = false;
 	bUseControllerRotationYaw = false;
-
-	
 }
 
 void AOrionCharacter::BeginPlay()
@@ -54,6 +54,42 @@ void AOrionCharacter::PossessedBy(AController* NewController)
 	//Init Ability Actor info to the Server
 	InitAbilityActorInfo();
 	AddCharacterAbilities();
+
+	// Listen for Wait Gameplay Event to Actor
+	if (AbilitySystemComponent)
+	{
+		//TODO : Make Gameplay tag event Generic | Example : Event.Tag.Tag 
+		AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(TAG_Attributes_Meta_IncomingXP).AddUObject(this, &AOrionCharacter::GameplayEventCallback);
+	}
+}
+
+void AOrionCharacter::GameplayEventCallback(const FGameplayEventData* Payload)
+{
+	if (Payload->EventTag == TAG_Attributes_Meta_IncomingXP)
+	{
+		const float LocalIncomingXP = Payload->EventMagnitude;
+		UE_LOG(LogOrion, Log, TEXT("Incoming XP: %f"), LocalIncomingXP);
+		
+		const int32 CurrentLevel = Execute_GetPlayerLevel(this);
+		const int32 CurrentXP = Execute_GetXP(this);
+
+		const int32 NewLevel = Execute_FindLevelForXP(this, CurrentXP + LocalIncomingXP);
+		const int32 NumLevelUps = NewLevel - CurrentLevel;
+		if (NumLevelUps > 0)
+		{
+			const int32 AttributePointsReward = Execute_GetAttributePointsReward(this, CurrentLevel);
+			const int32 SpellPointsReward = Execute_GetSpellPointsReward(this, CurrentLevel);
+
+			Execute_AddToPlayerLevel(this, NumLevelUps);
+			Execute_AddToAttributePoints(this, AttributePointsReward);
+			Execute_AddToSpellPoints(this, SpellPointsReward);
+
+			Execute_LevelUp(this);
+		}
+
+		Execute_AddToXP(this, LocalIncomingXP);
+		
+	}
 }
 
 void AOrionCharacter::OnRep_PlayerState()

@@ -5,7 +5,7 @@
 #include "AbilitySystemComponent.h"
 #include "../OrionAttributeSet.h"
 #include "../OrionAbilityTypes.h"
-#include "../OrionAbilitySystemLibrary.h"
+#include "../../OrionBlueprintFunctionLibrary.h"
 #include "../../OrionGameplayTags.h"
 #include "../../Interaction/CombatInterface.h"
 
@@ -87,7 +87,7 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	const bool bBlocked = FMath::RandRange(1, 100) < TargetBlockChance;
 	
 	//Set is blocked hit on the custom effect context handle
-	UOrionAbilitySystemLibrary::SetIsBlockedHit(EffectContext, bBlocked);
+	UOrionBlueprintFunctionLibrary::SetIsBlockedHit(EffectContext, bBlocked);
 
 	//if block, halves the damage
 	Damage = bBlocked ? Damage / 2.f : Damage;
@@ -124,7 +124,7 @@ void UExecCalc_Damage::Execute_Implementation(const FGameplayEffectCustomExecuti
 	const bool bCriticalHit = FMath::RandRange(1, 100) < EffectiveCriticalHitChance;
 
 	//Set is critical hit on the custom effect context handle
-	UOrionAbilitySystemLibrary::SetIsCriticalHit(EffectContext, bCriticalHit);
+	UOrionBlueprintFunctionLibrary::SetIsCriticalHit(EffectContext, bCriticalHit);
 
 	// Double damage plus a bonus if critical hit
 	Damage = bCriticalHit ? 2.f * Damage + SourceCriticalHitDamage : Damage;

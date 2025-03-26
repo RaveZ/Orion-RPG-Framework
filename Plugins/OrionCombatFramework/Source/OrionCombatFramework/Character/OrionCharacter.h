@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "OrionCharacterBase.h"
 #include "../Interaction/PlayerInterface.h"
+#include "Abilities/GameplayAbilityTypes.h"
 #include "OrionCharacter.generated.h"
 
 class UNiagaraComponent;
@@ -22,6 +23,9 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
 	virtual void OnRep_PlayerState() override;
+
+	/** Gameplay Event Callback */ 
+	virtual void GameplayEventCallback(const FGameplayEventData* Payload);
 
 	/** Player Interface */
 	virtual void AddToXP_Implementation(int32 InXP) override;

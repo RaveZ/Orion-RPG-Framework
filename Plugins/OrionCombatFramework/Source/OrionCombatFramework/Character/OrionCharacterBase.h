@@ -7,6 +7,7 @@
 #include "GameFramework/Character.h"
 #include "OrionCombatFramework/Interaction/CombatInterface.h"
 #include "ScalableFloat.h"
+#include "../Progression/Reward.h"
 #include "OrionCharacterBase.generated.h"
 
 class UAnimMontage;
@@ -14,6 +15,7 @@ class UGameplayEffect;
 class UAttributeSet;
 class UAbilitySystemComponent;
 class UGameplayAbility;
+
 
 
 UCLASS(Abstract)
@@ -62,7 +64,10 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, Category = "Orion | Progression")
 	FScalableFloat XPReward = FScalableFloat();
-	
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Orion | Progression")
+	TArray<FRewardInfo> DefeatReward;
+
 	void ApplyEffectToSelf(TSubclassOf<UGameplayEffect> GameplayEffectClass, float Level) const;
 	
 	void InitializeDefaultAttributes() const;

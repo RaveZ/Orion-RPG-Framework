@@ -12,7 +12,7 @@
 #include "../Player/OrionPlayerController.h"	
 #include "../OrionGameplayTags.h"
 #include "Kismet/GameplayStatics.h"
-#include "OrionAbilitySystemLibrary.h"
+#include "../OrionBlueprintFunctionLibrary.h"
 
 UOrionAttributeSet::UOrionAttributeSet()
 {
@@ -122,44 +122,13 @@ void UOrionAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectM
 				TagContainer.AddTag(TAG_Effects_HitReact);
 				Props.TargetASC->TryActivateAbilitiesByTag(TagContainer);
 			}
-			const bool bBlock = UOrionAbilitySystemLibrary::IsBlockedHit(Props.FEffectContextHandle);
-			const bool bCriticalHit = UOrionAbilitySystemLibrary::IsCriticalHit(Props.FEffectContextHandle);
+			const bool bBlock = UOrionBlueprintFunctionLibrary::IsBlockedHit(Props.FEffectContextHandle);
+			const bool bCriticalHit = UOrionBlueprintFunctionLibrary::IsCriticalHit(Props.FEffectContextHandle);
 			ShowFloatingText(Props, LocalIncomingDamage,bBlock, bCriticalHit);
 		}
 	}
 
-	if (Data.EvaluatedData.Attribute == GetIncomingXPAttribute())
-	{
-		const float LocalIncomingXP = GetIncomingXP();
-		SetIncomingXP(0.f);
-		UE_LOG(LogOrion, Log, TEXT("Incoming XP: %f"), LocalIncomingXP);
-
-		// Source Character is the owner, since GA_ListenForEvents applies GE_EventBasedEffect, adding to IncomingXP
-		if (Props.SourceCharacter->Implements<UPlayerInterface>() && Props.SourceCharacter->Implements<UCombatInterface>())
-		{
-			const int32 CurrentLevel = ICombatInterface::Execute_GetPlayerLevel(Props.SourceCharacter);
-			const int32 CurrentXP = IPlayerInterface::Execute_GetXP(Props.SourceCharacter);
-
-			const int32 NewLevel = IPlayerInterface::Execute_FindLevelForXP(Props.SourceCharacter, CurrentXP + LocalIncomingXP);
-			const int32 NumLevelUps = NewLevel - CurrentLevel;
-			if (NumLevelUps > 0)
-			{
-				const int32 AttributePointsReward = IPlayerInterface::Execute_GetAttributePointsReward(Props.SourceCharacter, CurrentLevel);
-				const int32 SpellPointsReward = IPlayerInterface::Execute_GetSpellPointsReward(Props.SourceCharacter, CurrentLevel);
-
-				IPlayerInterface::Execute_AddToPlayerLevel(Props.SourceCharacter, NumLevelUps);
-				IPlayerInterface::Execute_AddToAttributePoints(Props.SourceCharacter, AttributePointsReward);
-				IPlayerInterface::Execute_AddToSpellPoints(Props.SourceCharacter, SpellPointsReward);
-
-				SetHealth(GetMaxHealth());
-				SetMana(GetMaxMana());
-
-				IPlayerInterface::Execute_LevelUp(Props.SourceCharacter);
-			}
-
-			IPlayerInterface::Execute_AddToXP(Props.SourceCharacter, LocalIncomingXP);
-		}
-	}
+	
 }
 
 void UOrionAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData& Data,
@@ -212,7 +181,7 @@ void UOrionAttributeSet::SendXPEvent(const FEffectProperties& Props)
 	if (Props.TargetCharacter->Implements<UCombatInterface>())
 	{
 		const int32 TargetLevel = ICombatInterface::Execute_GetPlayerLevel(Props.TargetCharacter);
-		const int32 XPReward = UOrionAbilitySystemLibrary::GetXPRewardFromLevel(Props.TargetCharacter, TargetLevel);
+		const int32 XPReward = UOrionBlueprintFunctionLibrary::GetXPRewardFromLevel(Props.TargetCharacter, TargetLevel);
 
 		FGameplayEventData Payload;
 		Payload.EventTag = TAG_Attributes_Meta_IncomingXP;
