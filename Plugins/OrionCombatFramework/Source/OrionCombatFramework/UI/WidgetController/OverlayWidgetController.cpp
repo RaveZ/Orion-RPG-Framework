@@ -24,6 +24,12 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 {
 	AOrionPlayerState* OrionPlayerState = CastChecked<AOrionPlayerState>(PlayerState);
 	OrionPlayerState->OnXPChangedDelegate.AddUObject(this, &UOverlayWidgetController::OnXPChanged);
+	OrionPlayerState->OnLevelChangedDelegate.AddLambda(
+		[this](int32 NewLevel)
+		{
+			OnPlayerLevelChangedDelegate.Broadcast(NewLevel);
+		}
+	);
 
 	const UOrionAttributeSet* OrionAttributeSet = CastChecked<UOrionAttributeSet>(AttributeSet);
 	AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(OrionAttributeSet->GetHealthAttribute()).AddLambda(
