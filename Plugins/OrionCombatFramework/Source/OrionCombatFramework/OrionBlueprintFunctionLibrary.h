@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "AbilitySystem/OrionAttributeSet.h"
 #include "OrionBlueprintFunctionLibrary.generated.h"
 
 class UOverlayWidgetController;
@@ -37,5 +38,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "AbilitySystemLibrary|GameplayEffects")
 	static void SetIsCriticalHit(UPARAM(ref) FGameplayEffectContextHandle& EffectContextHandle, bool bInIsCriticalHit);
 
-	static int32 GetXPRewardFromLevel(UObject* WorldContextObject, int32 CharacterLevel);
+	static void SendDefeatRewardEvents(const FEffectProperties& Props);
+
 };

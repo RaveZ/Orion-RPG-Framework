@@ -25,7 +25,7 @@ protected:
 	virtual void OnRep_PlayerState() override;
 
 	/** Gameplay Event Callback */ 
-	virtual void GameplayEventCallback(const FGameplayEventData* Payload);
+	virtual void RewardEventCallback(const FGameplayEventData* Payload);
 
 	/** Player Interface */
 	virtual void AddToXP_Implementation(int32 InXP) override;

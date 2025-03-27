@@ -3,12 +3,14 @@
 
 #include "OrionBlueprintFunctionLibrary.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "Kismet/GameplayStatics.h"
 #include "OrionCombatFramework/Player/OrionPlayerState.h"
 #include "OrionCombatFramework/UI/HUD/OrionHUD.h"
 #include "OrionCombatFramework/UI/WidgetController/OrionWidgetController.h"
 #include "Character/OrionCharacterBase.h"
 #include "AbilitySystem/OrionAbilityTypes.h"
+#include "OrionGameplayTags.h"
 #include "ScalableFloat.h"
 
 UOverlayWidgetController* UOrionBlueprintFunctionLibrary::GetOverlayWidgetController(const UObject* WorldContextObject)
@@ -77,10 +79,20 @@ void UOrionBlueprintFunctionLibrary::SetIsCriticalHit(UPARAM(ref)FGameplayEffect
 	}
 }
 
-int32 UOrionBlueprintFunctionLibrary::GetXPRewardFromLevel(UObject* WorldContextObject, int32 CharacterLevel)
+void UOrionBlueprintFunctionLibrary::SendDefeatRewardEvents(const FEffectProperties& Props)
 {
-	AOrionCharacterBase* OrionCharacter = Cast<AOrionCharacterBase>(WorldContextObject);
-	const float XPReward = OrionCharacter->GetXPReward().GetValueAtLevel(CharacterLevel); 
- 	return static_cast<int32>(XPReward);
-	//return int32();
+	if (Props.TargetCharacter->Implements<UCombatInterface>())
+	{
+		const int32 TargetLevel = ICombatInterface::Execute_GetPlayerLevel(Props.TargetCharacter);
+		AOrionCharacterBase* DefeatCharacter = Cast<AOrionCharacterBase>(Props.TargetCharacter);
+		
+		for (FRewardInfo RewardInfo : DefeatCharacter->GetDefeatReward())
+		{
+			FGameplayEventData Payload;
+			Payload.EventTag = RewardInfo.Tag;
+			Payload.EventMagnitude = RewardInfo.Amount.GetValueAtLevel(TargetLevel);
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Props.SourceCharacter, TAG_Reward, Payload);
+		}
+
+	}
 }

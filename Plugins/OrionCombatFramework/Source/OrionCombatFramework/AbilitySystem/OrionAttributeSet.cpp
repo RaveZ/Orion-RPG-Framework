@@ -112,8 +112,8 @@ void UOrionAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectM
 				{
 					CombatInterface->Die();
 				}
-				//Send XP Event if Character is dead
-				SendXPEvent(Props);
+				//Send Reward Event if Character is dead
+				UOrionBlueprintFunctionLibrary::SendDefeatRewardEvents(Props);
 			}
 			else
 			{
@@ -173,20 +173,6 @@ void UOrionAttributeSet::ShowFloatingText(const FEffectProperties& Props, float 
 		{
 			PC->ShowDamageNumber(Damage, Props.TargetCharacter, bBlockedHit, bCriticalHit);
 		}
-	}
-}
-
-void UOrionAttributeSet::SendXPEvent(const FEffectProperties& Props)
-{
-	if (Props.TargetCharacter->Implements<UCombatInterface>())
-	{
-		const int32 TargetLevel = ICombatInterface::Execute_GetPlayerLevel(Props.TargetCharacter);
-		const int32 XPReward = UOrionBlueprintFunctionLibrary::GetXPRewardFromLevel(Props.TargetCharacter, TargetLevel);
-
-		FGameplayEventData Payload;
-		Payload.EventTag = TAG_Attributes_Meta_IncomingXP;
-		Payload.EventMagnitude = XPReward;
-		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Props.SourceCharacter, TAG_Attributes_Meta_IncomingXP, Payload);
 	}
 }
 

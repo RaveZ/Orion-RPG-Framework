@@ -58,14 +58,13 @@ void AOrionCharacter::PossessedBy(AController* NewController)
 	// Listen for Wait Gameplay Event to Actor
 	if (AbilitySystemComponent)
 	{
-		//TODO : Make Gameplay tag event Generic | Example : Event.Tag.Tag 
-		AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(TAG_Attributes_Meta_IncomingXP).AddUObject(this, &AOrionCharacter::GameplayEventCallback);
+		AbilitySystemComponent->GenericGameplayEventCallbacks.FindOrAdd(TAG_Reward).AddUObject(this, &AOrionCharacter::RewardEventCallback);
 	}
 }
 
-void AOrionCharacter::GameplayEventCallback(const FGameplayEventData* Payload)
+void AOrionCharacter::RewardEventCallback(const FGameplayEventData* Payload)
 {
-	if (Payload->EventTag == TAG_Attributes_Meta_IncomingXP)
+	if (Payload->EventTag.MatchesTagExact(TAG_Attributes_XP))
 	{
 		const float LocalIncomingXP = Payload->EventMagnitude;
 		UE_LOG(LogOrion, Log, TEXT("Incoming XP: %f"), LocalIncomingXP);
@@ -88,7 +87,10 @@ void AOrionCharacter::GameplayEventCallback(const FGameplayEventData* Payload)
 		}
 
 		Execute_AddToXP(this, LocalIncomingXP);
-		
+	}
+	if (Payload->EventTag.MatchesTag(TAG_Item))
+	{
+		//TODO : Add Item to Inventory
 	}
 }
 

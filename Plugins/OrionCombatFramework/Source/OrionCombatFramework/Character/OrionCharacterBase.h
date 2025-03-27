@@ -62,9 +62,7 @@ protected:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category="Orion | Attributes")
 	TSubclassOf<UGameplayEffect> DefaultVitalAttributes;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Orion | Progression")
-	FScalableFloat XPReward = FScalableFloat();
-
+    /** Reward granted to the source character upon defeating this character */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Orion | Progression")
 	TArray<FRewardInfo> DefeatReward;
 
@@ -101,5 +99,5 @@ private:
 	TObjectPtr<UAnimMontage> HitReactMontage;
 
 public:
-	FORCEINLINE FScalableFloat GetXPReward() const { return XPReward; }
+	FORCEINLINE TArray<FRewardInfo> GetDefeatReward() const { return DefeatReward; }
 };

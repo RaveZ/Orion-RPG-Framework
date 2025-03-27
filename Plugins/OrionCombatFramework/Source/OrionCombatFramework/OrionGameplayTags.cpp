@@ -35,9 +35,11 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Attributes_Secondary_MaxHealth, "Attributes.S
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Attributes_Secondary_MaxMana, "Attributes.Secondary.MaxMana", "Maximum amount of Mana obtainable")
 
 /*
-Meta Attributes
+Reward
 */
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Attributes_Meta_IncomingXP, "Attributes.Meta.IncomingXP", "Incoming XP Meta Attribute")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Reward, "Reward", "Reward Tag")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Attributes_XP, "Attributes.XP", "XP Attribute Tag")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Item, "Item", "Item Tag")
 
 
 /*
