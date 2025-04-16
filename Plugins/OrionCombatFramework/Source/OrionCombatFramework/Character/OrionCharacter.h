@@ -26,6 +26,7 @@ protected:
 
 	/** Gameplay Event Callback */ 
 	virtual void RewardEventCallback(const FGameplayEventData* Payload);
+	virtual void AttributeUpgradeEventCallback(const FGameplayEventData* Payload);
 
 	/** Player Interface */
 	virtual void AddToXP_Implementation(int32 InXP) override;
@@ -33,10 +34,12 @@ protected:
 	virtual int32 GetXP_Implementation() const override;
 	virtual int32 FindLevelForXP_Implementation(int32 InXP) const override;
 	virtual int32 GetAttributePointsReward_Implementation(int32 Level) const override;
-	virtual int32 GetSpellPointsReward_Implementation(int32 Level) const override;
+	virtual int32 GetSkillPointsReward_Implementation(int32 Level) const override;
 	virtual void AddToPlayerLevel_Implementation(int32 InPlayerLevel) override;
 	virtual void AddToAttributePoints_Implementation(int32 InAttributePoints) override;
-	virtual void AddToSpellPoints_Implementation(int32 InSpellPoints) override;
+	virtual void AddToSkillPoints_Implementation(int32 InSkillPoints) override;
+	virtual int32 GetAttributePoints_Implementation() const override;
+	virtual int32 GetSkillPoints_Implementation() const override;
 	/** end Player Interface */
 
 	/** Combat Interface */

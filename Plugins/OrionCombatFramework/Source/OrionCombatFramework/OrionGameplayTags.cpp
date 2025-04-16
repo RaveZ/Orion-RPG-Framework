@@ -13,6 +13,13 @@ Effects
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Effects_HitReact, "Effects.HitReact", "Tag granted when Hit Reacting")
 
 /*
+Event
+*/
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Event_Reward, "Event.Reward", "Event Reward Tag")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Event_AttributeUpgrade, "Event.AttributeUpgrade", "Event AttributeUpgrade Tag")
+
+
+/*
 Primary Attributes
  */
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Attributes_Primary_Strength, "Attributes.Primary.Strength", "Increases physical damage")
@@ -37,7 +44,6 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Attributes_Secondary_MaxMana, "Attributes.Sec
 /*
 Reward
 */
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Reward, "Reward", "Reward Tag")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Attributes_XP, "Attributes.XP", "XP Attribute Tag")
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Item, "Item", "Item Tag")
 

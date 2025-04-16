@@ -22,7 +22,7 @@ struct FOrionLevelUpInfo
     int32 AttributePointAward = 1;
 
     UPROPERTY(EditDefaultsOnly)
-    int32 SpellPointAward = 1;
+    int32 SkillPointAward = 1;
 };
 
 

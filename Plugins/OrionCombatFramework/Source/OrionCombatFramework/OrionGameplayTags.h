@@ -16,10 +16,17 @@ Effects
 */
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Effects_HitReact);
 
+/*
+Event
+*/
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_Reward);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_AttributeUpgrade);
+
 
 /*
 Primary Attributes
  */
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Attributes);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Attributes_Primary_Strength);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Attributes_Primary_Intelligence);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Attributes_Primary_Resilience);
@@ -43,7 +50,6 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Attributes_Secondary_MaxMana);
 /*
 Reward
 */
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Reward);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Attributes_XP);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item);
 

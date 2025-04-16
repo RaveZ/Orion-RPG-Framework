@@ -113,7 +113,7 @@ void UOverlayWidgetController::OnXPChanged(int32 NewXP) const
 {
 	const AOrionPlayerState* OrionPlayerState = CastChecked<AOrionPlayerState>(PlayerState);
 	const ULevelUpInfo* LevelUpInfo = OrionPlayerState->LevelUpInfo;
-	checkf(LevelUpInfo, TEXT("Unabled to find LevelUpInfo. Please fill out AuraPlayerState Blueprint"));
+	checkf(LevelUpInfo, TEXT("Unabled to find LevelUpInfo. Please fill out OrionPlayerState Blueprint"));
 
 	const int32 Level = LevelUpInfo->FindLevelForXP(NewXP);
 	const int32 MaxLevel = LevelUpInfo->LevelUpInformation.Num();

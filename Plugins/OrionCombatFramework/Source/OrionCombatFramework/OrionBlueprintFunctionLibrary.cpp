@@ -91,7 +91,7 @@ void UOrionBlueprintFunctionLibrary::SendDefeatRewardEvents(const FEffectPropert
 			FGameplayEventData Payload;
 			Payload.EventTag = RewardInfo.Tag;
 			Payload.EventMagnitude = RewardInfo.Amount.GetValueAtLevel(TargetLevel);
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Props.SourceCharacter, TAG_Reward, Payload);
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(Props.SourceCharacter, TAG_Event_Reward, Payload);
 		}
 
 	}

@@ -23,6 +23,8 @@ void AOrionPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimePropert
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME(AOrionPlayerState, Level);
 	DOREPLIFETIME(AOrionPlayerState, XP);
+	DOREPLIFETIME(AOrionPlayerState, AttributePoints);
+	DOREPLIFETIME(AOrionPlayerState, SkillPoints);
 }
 
 UAbilitySystemComponent* AOrionPlayerState::GetAbilitySystemComponent() const
@@ -40,6 +42,18 @@ void AOrionPlayerState::AddToLevel(int32 InLevel)
 {
 	Level += InLevel;
 	OnLevelChangedDelegate.Broadcast(Level);	
+}
+
+void AOrionPlayerState::AddToAttributePoints(int32 InPoints)
+{
+	AttributePoints += InPoints;
+	OnAttributePointsChangedDelegate.Broadcast(AttributePoints);
+}
+
+void AOrionPlayerState::AddToSkillPoints(int32 InPoints)
+{
+	SkillPoints += InPoints;
+	OnSkillPointsChangedDelegate.Broadcast(SkillPoints);
 }
 
 void AOrionPlayerState::SetXP(int32 InXP)
@@ -62,4 +76,14 @@ void AOrionPlayerState::OnRep_Level(int32 OldLevel)
 void AOrionPlayerState::OnRep_XP(int32 OldXP)
 {
 	OnXPChangedDelegate.Broadcast(XP);
+}
+
+void AOrionPlayerState::OnRep_AttributePoints(int32 OldAttributePoints)
+{
+	OnAttributePointsChangedDelegate.Broadcast(AttributePoints);
+}
+
+void AOrionPlayerState::OnRep_SkillPoints(int32 OldSpellPoints)
+{
+	OnSkillPointsChangedDelegate.Broadcast(SkillPoints);
 }

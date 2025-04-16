@@ -84,7 +84,6 @@ void UOrionAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectM
 	FEffectProperties Props;
 	SetEffectProperties(Data, Props);
 
-
 	if (Data.EvaluatedData.Attribute == GetHealthAttribute())
 	{
 		SetHealth(FMath::Clamp(GetHealth(), 0.f, GetMaxHealth()));
@@ -93,6 +92,7 @@ void UOrionAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectM
 	if (Data.EvaluatedData.Attribute == GetManaAttribute())
 	{
 		SetMana(FMath::Clamp(GetMana(), 0.f, GetMaxMana()));
+		UE_LOG(LogTemp, Warning, TEXT("Changed Mana on %s, Mana: %f"), *Props.TargetAvatarActor->GetName(), GetMana());
 	}
 
 	if (Data.EvaluatedData.Attribute == GetIncomingDamageAttribute())
@@ -124,11 +124,9 @@ void UOrionAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectM
 			}
 			const bool bBlock = UOrionBlueprintFunctionLibrary::IsBlockedHit(Props.FEffectContextHandle);
 			const bool bCriticalHit = UOrionBlueprintFunctionLibrary::IsCriticalHit(Props.FEffectContextHandle);
-			ShowFloatingText(Props, LocalIncomingDamage,bBlock, bCriticalHit);
+			ShowFloatingText(Props, LocalIncomingDamage, bBlock, bCriticalHit);
 		}
 	}
-
-	
 }
 
 void UOrionAttributeSet::SetEffectProperties(const FGameplayEffectModCallbackData& Data,

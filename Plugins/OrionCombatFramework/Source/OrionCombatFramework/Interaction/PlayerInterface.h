@@ -29,7 +29,7 @@ public:
 	int32 GetAttributePointsReward(int32 Level) const;
 
 	UFUNCTION(BlueprintNativeEvent)
-	int32 GetSpellPointsReward(int32 Level) const;
+	int32 GetSkillPointsReward(int32 Level) const;
 
 	UFUNCTION(BlueprintNativeEvent)
 	void AddToXP(int32 InXP);
@@ -41,7 +41,13 @@ public:
 	void AddToAttributePoints(int32 InAttributePoints);
 
 	UFUNCTION(BlueprintNativeEvent)
-	void AddToSpellPoints(int32 InSpellPoints);
+	int32 GetAttributePoints() const;
+
+	UFUNCTION(BlueprintNativeEvent)
+	void AddToSkillPoints(int32 InSkillPoints);
+
+	UFUNCTION(BlueprintNativeEvent)
+	int32 GetSkillPoints() const;
 
 	UFUNCTION(BlueprintNativeEvent)
 	void LevelUp();

@@ -1,7 +1,10 @@
 
-
 #include "OrionAbilitySystemComponent.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "../Interaction/PlayerInterface.h"
+#include "../AbilitySystem/OrionAttributeSet.h"
 #include "../AbilitySystem/Ability/OrionGameplayAbility.h"
+#include "../OrionGameplayTags.h"
 #include "../OrionLogChannels.h"
 
 
@@ -141,4 +144,31 @@ FGameplayTag UOrionAbilitySystemComponent::GetInputTagFromSpec(const FGameplayAb
 		}
 	}
 	return FGameplayTag();
+}
+
+void UOrionAbilitySystemComponent::UpgradeAttribute(const FGameplayTag& AttributeTag)
+{
+	if (GetAvatarActor()->Implements<UPlayerInterface>())
+	{
+		if (IPlayerInterface::Execute_GetAttributePoints(GetAvatarActor()) > 0)
+		{
+			ServerUpgradeAttribute(AttributeTag);
+		}
+	}
+}
+
+void UOrionAbilitySystemComponent::ServerUpgradeAttribute_Implementation(const FGameplayTag& AttributeTag)
+{
+	FGameplayEventData Payload;
+	Payload.EventTag = AttributeTag;
+	Payload.EventMagnitude = 1.0f;
+
+	
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(GetAvatarActor(), TAG_Event_AttributeUpgrade, Payload);
+
+	if (GetAvatarActor()->Implements<UPlayerInterface>())
+	{
+		IPlayerInterface::Execute_AddToAttributePoints(GetAvatarActor(), -1);
+	}
+
 }
