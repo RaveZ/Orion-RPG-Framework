@@ -105,7 +105,7 @@ void SGraphNode_QuestSystemNode::UpdateGraphNode()
 
 	const FSlateBrush* NodeTypeIcon = GetNameIcon();
 
-	FLinearColor TitleShadowColor(0.6f, 0.6f, 0.6f);
+	FLinearColor TitleShadowColor(0.0f, 0.0f, 0.0f, 0.0f);
 	TSharedPtr<SErrorText> ErrorText;
 	TSharedPtr<SVerticalBox> NodeBody;
 	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, GraphNode);
@@ -249,33 +249,11 @@ void SGraphNode_QuestSystemNode::UpdateGraphNode()
 											.MinDesiredHeight(NodePadding.Bottom)
 											[
 												SAssignNew(RightNodeBox, SVerticalBox)
-													/*+ SVerticalBox::Slot()
-													.HAlign(HAlign_Fill)
-													.VAlign(VAlign_Fill)
-													.Padding(20.0f, 0.0f)
-													.FillHeight(1.0f)
-													[
-														SAssignNew(OutputPinBox, SHorizontalBox)
-													]*/
+					
 											]
 									]
 							]
 
-							// Drag marker overlay
-							/*+ SOverlay::Slot()
-							.HAlign(HAlign_Fill)
-							.VAlign(VAlign_Top)
-							[
-								SNew(SBorder)
-									.BorderBackgroundColor(QuestSystemColors::Action::DragMarker)
-									.ColorAndOpacity(QuestSystemColors::Action::DragMarker)
-									.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
-									.Visibility(this, &SGraphNode_QuestSystemNode::GetDragOverMarkerVisibility)
-									[
-										SNew(SBox)
-											.HeightOverride(4)
-									]
-							]*/
 
 							// Blueprint indicator overlay
 							+ SOverlay::Slot()

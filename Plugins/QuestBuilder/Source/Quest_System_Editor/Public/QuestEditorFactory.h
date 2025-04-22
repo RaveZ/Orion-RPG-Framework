@@ -7,6 +7,8 @@
 #include "QuestSystemGraph.h"
 #include "Factories/Factory.h"
 #include "UObject/Object.h"
+#include "AssetDefinitionDefault.h"
+#include "Quest_System_Editor.h"
 #include "UObject/WeakObjectPtrTemplates.h"
 #include "WorkflowOrientedApp/WorkflowTabFactory.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
@@ -87,16 +89,16 @@ protected:
 	TWeakPtr<class FAssetEditor_QuestSystem> QuestEditorPtr;
 	FOnCreateGraphEditorWidget OnCreateGraphEditorWidget;
 };
+
+
 /**
  * 
  */
-UCLASS()
-class QUEST_SYSTEM_EDITOR_API UQuestEditorFactory : public UFactory
+UCLASS(MinimalAPI, hidecategories = Object)
+class UQuestEditorFactory : public UFactory
 {
-	GENERATED_BODY()
+	GENERATED_UCLASS_BODY()
 public:
-	UQuestEditorFactory();
-	virtual ~UQuestEditorFactory();
 
 	UPROPERTY(EditAnywhere, Category = DataAsset)	
 		TSubclassOf<UQuestSystemGraph> QuestSystemGraphClass;
@@ -104,6 +106,37 @@ public:
 	virtual bool ConfigureProperties() override;
 	virtual UObject* FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn) override;
 
+};
+
+
+UCLASS()
+class UAssetDefinition_QuestEditor : public UAssetDefinitionDefault
+{
+	GENERATED_BODY()
+
+public:
+
+	virtual FText GetAssetDisplayName() const override { return FText::FromString("Quest Builder Graph"); }
+	virtual FLinearColor GetAssetColor() const override { return FLinearColor(FColor(48, 165, 171)); }
+	virtual TSoftClassPtr<UObject> GetAssetClass() const override { return UQuestSystemGraph::StaticClass(); }
+
+	virtual TConstArrayView<FAssetCategoryPath> GetAssetCategories() const override
+	{
+		static const FAssetCategoryPath Categories[] = { FText::FromString("Quest Builder") };
+		return Categories;
+	}
+
+	virtual FAssetSupportResponse CanDuplicate(const FAssetData& InAsset) const override
+	{
+		return FAssetSupportResponse::NotSupported();
+	}
+
+	virtual const FSlateBrush* GetThumbnailBrush(const FAssetData& InAssetData, const FName InClassName) const override
+	{
+		return FQuest_System_EditorModule::CustomAssetsEditorSlateStyle->GetBrush(FName("CustomAsset.Thumbnail"));
+	}
+
+	virtual EAssetCommandResult OpenAssets(const FAssetOpenArgs& OpenArgs) const override;
 };
 
 

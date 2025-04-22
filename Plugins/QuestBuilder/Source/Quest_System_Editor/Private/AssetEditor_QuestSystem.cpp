@@ -75,16 +75,13 @@ FAssetEditor_QuestSystem::~FAssetEditor_QuestSystem()
 #endif // #else // #if ENGINE_MAJOR_VERSION < 5
 }
 
-void FAssetEditor_QuestSystem::InitQuestSystemGraphAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UQuestSystemGraph* Graph)
+void FAssetEditor_QuestSystem::Initialize(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UQuestSystemGraph* Graph)
 {
 	EditingQuestGraph = Graph;
 	FGenericCommands::Register();
 	FGraphEditorCommands::Register();
 	FMyQuestCommands::Register();
 	FQuest_System_EditorCommands::Register();
-
-	
-
 
 	if (!ToolbarBuilder.IsValid())
 	{
@@ -125,7 +122,7 @@ void FAssetEditor_QuestSystem::InitQuestSystemGraphAssetEditor(const EToolkitMod
 				(
 					FTabManager::NewStack()
 					->SetSizeCoefficient(0.55f)
-					->AddTab(/*FQuestSystemAssetEditorTabs::ViewportID*/"Document", ETabState::ClosedTab)
+					->AddTab("Document", ETabState::ClosedTab)
 				)
 				->Split
 				(
@@ -136,22 +133,15 @@ void FAssetEditor_QuestSystem::InitQuestSystemGraphAssetEditor(const EToolkitMod
 						->SetSizeCoefficient(0.55f)
 						->AddTab(FQuestSystemAssetEditorTabs::GenericGraphPropertyID, ETabState::OpenedTab)
 					)
-					/*->Split
-					(
-						FTabManager::NewStack()
-						->SetSizeCoefficient(0.45f)
-						->AddTab(FQuestSystemAssetEditorTabs::GenericGraphEditorSettingsID, ETabState::OpenedTab)
-					)*/
 				)
 			)
 		);
 
 	const bool bCreateDefaultStandaloneMenu = true;
 	const bool bCreateDefaultToolbar = true;
-	FAssetEditorToolkit::InitAssetEditor(Mode, InitToolkitHost, GenericGraphEditorAppName, StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, EditingQuestGraph, false);
+	InitAssetEditor(Mode, InitToolkitHost, GenericGraphEditorAppName, StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, EditingQuestGraph, false);
 	CommonInitialization(Graph, true);
 	RegenerateMenusAndToolbars();
-	//InitializeDocumentTab();
 
 	if (Graph->bIsNewlyCreated)
 	{
@@ -408,6 +398,7 @@ void FAssetEditor_QuestSystem::SaveAsset_Execute()
 
 void FAssetEditor_QuestSystem::RefreshEditors()
 {
+	
 }
 
 void FAssetEditor_QuestSystem::RefreshMyQuest()

@@ -22,72 +22,81 @@
 // Sets default values for this component's properties
 UQuestComponent::UQuestComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
+	SetIsReplicatedByDefault(true);
+	SetComponentTickEnabled(true);
 	PrimaryComponentTick.bCanEverTick = true;
-	// ...
 }
 
-bool UQuestComponent::RunQuestGraphs(TArray<UQuestSystemGraph*> QuestAssets)
+
+
+bool UQuestComponent::BeginQuest(UQuestSystemGraph* QuestAssets)
+{
+	if (QuestAssets == nullptr)
+	{
+		return false;
+	}
+
+	CacheQuestGraphDependencies(QuestAssets);
+	bool bSuccess = true;
+
+	for (UQuestSystem* QuestSystem : QuestAssets->QuestSystems)
+	{
+		EvaluateQuestCondition(QuestSystem);
+		if (QuestSystem->QuestState == EQuestState::E_Active)
+		{
+			if (QuestSystem->CurrentNode != nullptr)
+			{
+				BeginNode(QuestSystem);
+			}
+			else if (QuestSystem->CurrentNode == nullptr)
+			{
+				RestartQuest(QuestSystem->QuestID);
+			}
+		}
+	}
+
+	return bSuccess;
+}
+
+bool UQuestComponent::BeginMultipleQuest(TArray<UQuestSystemGraph*> QuestAssets)
 {
 	if (QuestAssets.IsEmpty())
 	{
 		return false;
 	}
 
-	//Set Dependency
-	OwningController = Cast<AController>(GetOwner());
 
-	for (UQuestSystemGraph* QuestGraph : QuestAssets)
+	for (UQuestSystemGraph* QuestAsset : QuestAssets)
 	{
-		if (QuestGraph)
-		{
-			QuestGraph->OwningController = OwningController;
-			QuestGraph->QuestComponent = this;
-
-			//Add QuestGraph to array
-			QuestGraphs.Add(QuestGraph);
-
-			for (UQuestSystem* Quest : QuestGraph->QuestSystems)
-			{
-				QuestSystemMap.Emplace(Quest->QuestID, Quest);
-
-				if (!bQuestLoaded)
-				{
-					Quest->QuestState = EQuestState::E_Locked;
-					Quest->CurrentNode = nullptr;
-					Quest->VisitedNodeIDs.Empty();
-				}
-			}
-		}
+		BeginQuest(QuestAsset);
 	}
 	bool bSuccess = true;
-	
-
-	//CheckQuestCondition
-	for (UQuestSystemGraph* QuestGraph : QuestGraphs)
-	{
-		for (UQuestSystem* QuestSystem : QuestGraph->QuestSystems)
-		{
-			EvaluateQuestCondition(QuestSystem);
-			if (QuestSystem->QuestState == EQuestState::E_Active)
-			{
-				if (QuestSystem->CurrentNode != nullptr)
-				{
-					BeginNode(QuestSystem);
-				}
-				else if (QuestSystem->CurrentNode == nullptr)
-				{
-					RestartQuest(QuestSystem->QuestID);
-				}
-			}
-		}
-	}
-	
-	OnQuestObjectiveUpdated.Broadcast();
 	return bSuccess;
 }
 
+void UQuestComponent::CacheQuestGraphDependencies(UQuestSystemGraph* QuestGraph)
+{
+	if (QuestGraph)
+	{
+		QuestGraph->OwningController = OwningController;
+		QuestGraph->QuestComponent = this;
+
+		//Add QuestGraph to array
+		QuestGraphs.Add(QuestGraph);
+
+		for (UQuestSystem* Quest : QuestGraph->QuestSystems)
+		{
+			QuestSystemMap.Emplace(Quest->QuestID, Quest);
+
+			if (!bQuestLoaded)
+			{
+				Quest->QuestState = EQuestState::E_Locked;
+				Quest->CurrentNode = nullptr;
+				Quest->VisitedNodeIDs.Empty();
+			}
+		}
+	}
+}
 
 void UQuestComponent::ActivateQuest(FName QuestID)
 {
@@ -441,7 +450,7 @@ void UQuestComponent::BeginNode(UQuestSystem* QuestParam)
 		{
 			if (Task)
 			{
-				Task->TaskBegin();
+				Task->BeginTask();
 			}
 
 		}
@@ -595,6 +604,10 @@ void UQuestComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	QuestSystemMap.Empty();
+
+	//Set Dependency
+	OwningController = Cast<AController>(GetOwner());
+
 #if WITH_ORION_COMBAT_FRAMEWORK
 
 #else

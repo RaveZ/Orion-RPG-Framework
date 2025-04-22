@@ -21,7 +21,7 @@ namespace QuestSystemColors
 		const FLinearColor ActiveDebugging(1.0f, 1.0f, 0.0f);
 		const FLinearColor InactiveDebugging(0.4f, 0.4f, 0.0f);
 		const FLinearColor NoHighlight(0.0f, 0.0f, 0.0f, 0.0f);
-		const FLinearColor HighlightCurrentNode(135, 135, 135);
+		const FLinearColor HighlightCurrentNode(1.f, 1.f, 1.f, .7f);
 		const FLinearColor HighlightAbortRange0(0.0f, 0.22f, 0.4f);
 		const FLinearColor Disconnected(0.f, 0.f, 0.f);
 		const FLinearColor BrokenWithParent(1.f, 0.f, 1.f);

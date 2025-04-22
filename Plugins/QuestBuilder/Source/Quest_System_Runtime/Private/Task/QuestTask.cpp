@@ -8,29 +8,79 @@
 #include "QuestSystemGraph.h"
 #include "QuestSystemGraphNode.h"
 #include "QuestSystemGraphNode_Objective.h"
+#include <TimerManager.h>
+
+UQuestTask::UQuestTask()
+{
+	bOptional = false;
+	bHidden = false;
+	bIsTaskTickable = false;
+	TickInterval = 0.1f; 
+	RequiredAmount = 1;
+}
 
 bool UQuestTask::CompleteTask()
 {	
-	if (QuestSystem == NULL)
+	if (QuestSystem == nullptr)
         return false;
 
     TaskState = ETaskState::E_Complete;
-    OnTaskCompleted();
+    K2_TaskCompleted();
 	GetQuestComponent()->UpdateQuest();
     GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast();
-    
+
+	//clear tick timer handle
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(TimerHandle_TickTask);
+	}
 	return true;
 }
 
+
 void UQuestTask::FailObjective()
 {
-	OnObjectiveFailed();
+	K2_ObjectiveFailed();
+
+	//clear tick timer handle
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(TimerHandle_TickTask);
+	}
 
 	//Launch ObjectiveFailedEvents
 	for (UQuestEvent* Event : ObjectiveNode->ObjectiveFailedEvents)
 	{
 		Event->BeginEvent();
 	}
+}
+
+void UQuestTask::BeginTask()  
+{  
+   K2_BeginTask();  
+
+   if (GetQuestComponent() && bIsTaskTickable)
+   {  
+       if (TickInterval > 0.f)  
+       {  
+		   UWorld* World = GetWorld();
+           if (World)  
+           {  
+               World->GetTimerManager().SetTimer(TimerHandle_TickTask, this, &UQuestTask::TickTask, TickInterval, true);  
+           }  
+           else  
+           {  
+               UE_LOG(LogTemp, Warning, TEXT("BeginTask: Failed to get UWorld instance."));  
+           }  
+       }  
+
+       // Fire the first tick off after BeginTask since begin task will usually init things that TickTask may need  
+       TickTask();  
+   }  
+}
+
+void UQuestTask::TickTask_Implementation()
+{
 }
 
 AController* UQuestTask::GetOwningController() const
@@ -62,6 +112,8 @@ UQuestSystem* UQuestTask::GetOwningQuestSystem() const
 	return QuestSystem;
 }
 
+
+
 void UQuestTask::AddAmount(int AmountToAdd)
 {
 	CurrentAmount = FMath::Clamp(CurrentAmount + AmountToAdd, 0, RequiredAmount);
@@ -77,13 +129,21 @@ FText UQuestTask::GetDescription_Implementation() const
 	return Description;
 }
 
-void UQuestTask::Tick(float DeltaTime)
+UWorld* UQuestTask::GetWorld() const
 {
-	if (LastFrameNumberWeTicked == GFrameCounter)
-		return;
-	//Do The Tick Logic
+	if (HasAllFlags(RF_ClassDefaultObject))
+	{
+		// If we are a CDO, we must return nullptr instead of calling Outer->GetWorld() to fool UObject::ImplementsGetWorld.
+		return nullptr;
+	}
+
+	if (GetQuestComponent())
+	{
+		return GetQuestComponent()->GetWorld();
+	}
+
+	return nullptr;
 	
-	TaskTick(DeltaTime);
-	
-	LastFrameNumberWeTicked = GFrameCounter;
 }
+
+

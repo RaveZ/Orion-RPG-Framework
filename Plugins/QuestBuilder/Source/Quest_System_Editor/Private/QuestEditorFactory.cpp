@@ -2,7 +2,6 @@
 
 #include "QuestEditorFactory.h"
 #include "QuestSystemGraph.h"
-
 #include "AssetEditor_QuestSystem.h"
 #include "ClassViewerModule.h"
 #include "ClassViewerFilter.h"
@@ -55,22 +54,16 @@ public:
 	}
 };
 
-UQuestEditorFactory::UQuestEditorFactory()
+UQuestEditorFactory::UQuestEditorFactory(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
+	SupportedClass = UQuestSystemGraph::StaticClass();
 	bCreateNew = true;
 	bEditAfterNew = true;
-	SupportedClass = UQuestSystemGraph::StaticClass();
-}
-
-UQuestEditorFactory::~UQuestEditorFactory()
-{
-	
 }
 
 
 bool UQuestEditorFactory::ConfigureProperties()
 {
-
 	return true;
 }
 
@@ -140,10 +133,21 @@ const FSlateBrush* FQuestGraphEditorSummoner::GetTabIconForObject(const FWorkflo
 }
 
 
+EAssetCommandResult UAssetDefinition_QuestEditor::OpenAssets(const FAssetOpenArgs& OpenArgs) const
+{
 
+	const EToolkitMode::Type Mode = OpenArgs.ToolkitHost.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
+	for (UQuestSystemGraph* QuestGraph : OpenArgs.LoadObjects<UQuestSystemGraph>())
+	{
+		FQuest_System_EditorModule& QuestSystemEditorModule = FModuleManager::GetModuleChecked<FQuest_System_EditorModule>("Quest_System_Editor");
+		QuestSystemEditorModule.CheckClassCache();
 
+		const TSharedRef<FAssetEditor_QuestSystem> CustomObjectToolkit(new FAssetEditor_QuestSystem());
+		CustomObjectToolkit->Initialize(Mode, OpenArgs.ToolkitHost, QuestGraph);
+	}
 
+	return EAssetCommandResult::Handled;
+}
 
 #undef LOCTEXT_NAMESPACE
-
 

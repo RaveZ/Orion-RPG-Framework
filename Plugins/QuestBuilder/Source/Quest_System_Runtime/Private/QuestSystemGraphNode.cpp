@@ -13,7 +13,8 @@ UQuestSystemGraphNode::UQuestSystemGraphNode()
 #if WITH_EDITORONLY_DATA
 	CompatibleGraphType = UQuestSystemGraph::StaticClass();
 
-	BackgroundColor = FLinearColor::Black;
+	FLinearColor Default(0.05f, 0.05f, 0.05f);
+	BackgroundColor = Default;
 #endif
 }
 

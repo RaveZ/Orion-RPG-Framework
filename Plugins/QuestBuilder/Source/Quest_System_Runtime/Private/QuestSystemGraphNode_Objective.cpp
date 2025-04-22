@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+﻿// Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
 #include "QuestSystemGraphNode_Objective.h"
@@ -61,7 +61,7 @@ FText UQuestSystemGraphNode_Objective::GetNodeDescription() const
     {
         if (Task)
         {
-            BulletedList += TEXT("- ");
+            BulletedList += TEXT("●  ");
             BulletedList += Task->GetDescription().ToString();
             BulletedList += TEXT("\n");
         }

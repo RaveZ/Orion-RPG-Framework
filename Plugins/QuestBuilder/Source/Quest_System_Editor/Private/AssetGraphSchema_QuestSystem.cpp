@@ -134,33 +134,6 @@ UEdGraphNode* FAssetSchemaAction_QuestSystem_NewNode::PerformAction(UEdGraph* Pa
 
 	return ResultNode;
 
-	/*UEdGraphNode* ResultNode = nullptr;
-
-	if (NodeTemplate != nullptr)
-	{
-		const FScopedTransaction Transaction(LOCTEXT("GenericGraphEditorNewNode", "Generic Graph Editor: New Node"));
-		ParentGraph->Modify();
-		if (FromPin != nullptr)
-			FromPin->Modify();
-
-		NodeTemplate->Rename(nullptr, ParentGraph);
-		ParentGraph->AddNode(NodeTemplate, true, bSelectNewNode);
-
-		NodeTemplate->CreateNewGuid();
-		NodeTemplate->PostPlacedNewNode();
-		NodeTemplate->AllocateDefaultPins();
-		NodeTemplate->AutowireNewNode(FromPin);
-
-		NodeTemplate->NodePosX = Location.X;
-		NodeTemplate->NodePosY = Location.Y;
-
-		NodeTemplate->QuestSystemGraphNode->SetFlags(RF_Transactional);
-		NodeTemplate->SetFlags(RF_Transactional);
-
-		ResultNode = NodeTemplate;
-	}
-
-	return ResultNode;*/
 }
 
 void FAssetSchemaAction_QuestSystem_NewNode::AddReferencedObjects(FReferenceCollector& Collector)
@@ -175,7 +148,7 @@ UEdGraphNode* FAssetSchemaAction_QuestSystem_NewEdge::PerformAction(UEdGraph* Pa
 
 	if (NodeTemplate != nullptr)
 	{
-		const FScopedTransaction Transaction(LOCTEXT("GenericGraphEditorNewEdge", "Generic Graph Editor: New Edge"));
+		const FScopedTransaction Transaction(LOCTEXT("QuestGraphEditorNewEdge", "Quest Graph Editor: New Edge"));
 		ParentGraph->Modify();
 		if (FromPin != nullptr)
 			FromPin->Modify();
@@ -282,50 +255,6 @@ void UAssetGraphSchema_QuestSystem::GetGraphContextActions(FGraphContextMenuBuil
 
 	TSet<TSubclassOf<UQuestSystemGraphNode> > Visited;
 
-	/*FText Desc = Graph->NodeType.GetDefaultObject()->ContextMenuName;
-
-	if (Desc.IsEmpty())
-	{
-		FString Title = Graph->NodeType->GetName();
-		Title.RemoveFromEnd("_C");
-		Desc = FText::FromString(Title);
-	}*/
-
-	
-
-
-	//to check if we create another instance derived from UQuestSystemGraphNode and they will added automatically
-	/*for (TObjectIterator<UClass> It; It; ++It)
-	{
-
-		if (It->IsChildOf(UQuestSystemGraphNode::StaticClass()) && !It->HasAnyClassFlags(CLASS_Abstract) && !Visited.Contains(*It))
-		{
-			TSubclassOf<UQuestSystemGraphNode> NodeType = *It;
-
-			if (It->GetName().StartsWith("REINST") || It->GetName().StartsWith("SKEL"))
-				continue;
-
-			if (!Graph->GetClass()->IsChildOf(NodeType.GetDefaultObject()->CompatibleGraphType))
-				continue;
-
-			Desc = NodeType.GetDefaultObject()->ContextMenuName;
-
-			if (Desc.IsEmpty())
-			{
-				FString Title = NodeType->GetName();
-				Title.RemoveFromEnd("_C");
-				Desc = FText::FromString(Title);
-			}
-
-			TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> Action(new FAssetSchemaAction_QuestSystem_NewNode(LOCTEXT("QuestSystemGraphNodeAction", "Task Node"), Desc, AddToolTip, 0));
-			Action->NodeTemplate = NewObject<UEdNode_QuestSystemNode>(ContextMenuBuilder.OwnerOfTemporaries);
-			Action->NodeTemplate->QuestSystemGraphNode = NewObject<UQuestSystemGraphNode>(Action->NodeTemplate, NodeType);
-			Action->NodeTemplate->QuestSystemGraphNode->QuestGraph = Graph;
-			ContextMenuBuilder.AddAction(Action);
-
-			Visited.Add(NodeType);
-		}
-	}*/
 
 
 	//Task
@@ -371,6 +300,7 @@ void UAssetGraphSchema_QuestSystem::GetGraphContextActions(FGraphContextMenuBuil
 
 
 	FCategorizedGraphActionListBuilder StateBuilder(TEXT("Quest State"));
+
 	//State : Complete Quest
 	TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> AddOpAction = UAssetGraphSchema_QuestSystem::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("QuestSystemGraphNodeAction", "Complete Quest"), LOCTEXT("QuestSystemGraphNodeTooltip", "Complete The Quest"));
 	UEdNode_QuestSystemNode* OpNode = NewObject<UEdNode_QuestSystemNode>(ContextMenuBuilder.OwnerOfTemporaries, UEdNode_QuestSystemState::StaticClass());
@@ -383,6 +313,7 @@ void UAssetGraphSchema_QuestSystem::GetGraphContextActions(FGraphContextMenuBuil
 	{
 		NodeState->QuestState = EQuestState::E_Complete;
 	}
+
 	//State : Fail Quest
 	AddOpAction = UAssetGraphSchema_QuestSystem::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("QuestSystemGraphNodeAction", "Fail Quest"), LOCTEXT("QuestSystemGraphNodeTooltip", "Fail The Quest"));
 	OpNode = NewObject<UEdNode_QuestSystemNode>(ContextMenuBuilder.OwnerOfTemporaries, UEdNode_QuestSystemState::StaticClass());
@@ -396,6 +327,16 @@ void UAssetGraphSchema_QuestSystem::GetGraphContextActions(FGraphContextMenuBuil
 		NodeState->QuestState = EQuestState::E_Fail;
 	}
 	ContextMenuBuilder.Append(StateBuilder);
+
+	//State : Custom State
+	/*AddOpAction = UAssetGraphSchema_QuestSystem::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("QuestSystemGraphNodeAction", "Add Custom State..."), LOCTEXT("QuestSystemGraphNodeTooltip", "Add Custom State..."));
+	OpNode = NewObject<UEdNode_QuestSystemNode>(ContextMenuBuilder.OwnerOfTemporaries, UEdNode_QuestSystemState::StaticClass());
+	AddOpAction->NodeTemplate = OpNode;
+	AddOpAction->NodeTemplate->QuestSystemGraphNode = NewObject<UQuestSystemGraphNode>(AddOpAction->NodeTemplate, UQuestSystemGraphNode_State::StaticClass());
+	AddOpAction->NodeTemplate->QuestSystemGraphNode->QuestGraph = Graph;
+	AddOpAction->NodeTemplate->QuestSystemGraphNode->ID = FQuestSystemEditorUtils::FindUniqueNodeName("StateNode");
+	AddOpAction->NodeTemplate->QuestSystemGraphNode->QuestGraph->QuestSystems = Graph->QuestSystems;
+	ContextMenuBuilder.Append(StateBuilder);*/
 }
 
 void UAssetGraphSchema_QuestSystem::GetContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
@@ -474,16 +415,15 @@ const FPinConnectionResponse UAssetGraphSchema_QuestSystem::CanCreateConnection(
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Can't create a graph cycle"));
 	}
 
-	FText ErrorMessage;
-	/*if (!EdNode_Out->QuestSystemGraphNode->CanCreateConnectionTo(EdNode_In->QuestSystemGraphNode, EdNode_Out->GetOutputPin()->LinkedTo.Num(), ErrorMessage))
+	if (In->Direction == EGPD_Input && Out->Direction == EGPD_Input)
 	{
-		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, ErrorMessage);
-	}*/
-	/*if (!EdNode_In->QuestSystemGraphNode->CanCreateConnectionFrom(EdNode_Out->QuestSystemGraphNode, EdNode_In->GetInputPin()->LinkedTo.Num(), ErrorMessage))
-	{
-		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, ErrorMessage);
-	}*/
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Invalid Node Connections"));
+	}
 
+	if (In->Direction == EGPD_Output && Out->Direction == EGPD_Input)
+	{
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Invalid Node Connections"));
+	}
 
 	if (EdNode_Out->QuestSystemGraphNode->GetOwningQuestGraph()->bEdgeEnabled)
 	{
@@ -501,6 +441,11 @@ bool UAssetGraphSchema_QuestSystem::TryCreateConnection(UEdGraphPin* A, UEdGraph
 	UEdNode_QuestSystemNode* NodeA = Cast<UEdNode_QuestSystemNode>(A->GetOwningNode());
 	UEdNode_QuestSystemNode* NodeB = Cast<UEdNode_QuestSystemNode>(B->GetOwningNode());
 
+	if(NodeA == NodeB)
+	{
+		return false;
+	}
+
 	// Check that this edge doesn't already exist
 	if (NodeA->GetOutputPin())
 	{
@@ -511,7 +456,6 @@ bool UAssetGraphSchema_QuestSystem::TryCreateConnection(UEdGraphPin* A, UEdGraph
 			{
 				ChildNode = EdNode_Edge->GetEndNode();
 			}
-
 			if (ChildNode == NodeB)
 				return false;
 		}
@@ -528,14 +472,16 @@ bool UAssetGraphSchema_QuestSystem::TryCreateConnection(UEdGraphPin* A, UEdGraph
 	}
 	else if (NodeA && NodeB)
 	{
-		// Always create connections from node A to B, don't allow adding in reverse
-		Super::TryCreateConnection(NodeA->GetOutputPin(), NodeB->GetInputPin());
-		return true;
-	}
-	else
-	{
+		if (A->Direction == EGPD_Output && B->Direction == EGPD_Input)
+		{
+			// Always create connections from node A to B, don't allow adding in reverse
+			Super::TryCreateConnection(NodeA->GetOutputPin(), NodeB->GetInputPin());
+			return true;
+		}
 		return false;
 	}
+	
+	return false;
 }
 
 bool UAssetGraphSchema_QuestSystem::CreateAutomaticConversionNodeAndConnections(UEdGraphPin* A, UEdGraphPin* B) const

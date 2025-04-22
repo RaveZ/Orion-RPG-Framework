@@ -63,14 +63,18 @@ FText UQuestSystemGraphNode_State::GetNodeDescription() const
 
 FLinearColor UQuestSystemGraphNode_State::GetBackgroundColor() const
 {
+    FLinearColor FailQuestColor(.34f, .024f, .024f);
+    FLinearColor CompleteQuestColor(0.20f, 0.32f, 0.15f);
+    FLinearColor Default(0.05f, 0.05f, 0.05f);
+
     switch (QuestState)
     {
         case EQuestState::E_Complete:
-            return FLinearColor::Green;
+            return CompleteQuestColor;
         case EQuestState::E_Fail:
-            return FLinearColor::Red;
+            return FailQuestColor;
         default:
-            return FLinearColor::Black;
+            return Default;
     }
 }
 #endif

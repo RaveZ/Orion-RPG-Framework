@@ -38,7 +38,7 @@ public:
 	FAssetEditor_QuestSystem();
 	virtual	~FAssetEditor_QuestSystem();
 
-	void InitQuestSystemGraphAssetEditor(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UQuestSystemGraph* Graph);
+	void Initialize(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UQuestSystemGraph* Graph);
 
 	// Should be called when initializing any editor built off this foundation
 	void CommonInitialization(const UQuestSystemGraph* Graph, bool bShouldOpenInDefaultsMode);
@@ -259,7 +259,7 @@ public:
 	/** Currently focused Editor Graph*/
 	UEdGraph* FocusedEdGraph;
 
-	/** Currently focused graph editor */
+	/** Currently focused slate graph editor */
 	TSharedPtr<SGraphEditor> ViewportWidget;
 
 	/** determine if node should be checked for new unique ID*/

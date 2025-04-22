@@ -61,7 +61,7 @@ public:
 
 
 	/** Description for your quest*/
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestSystem")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestSystem", meta = (MultiLine = true))
 		FText Description; 
 
 

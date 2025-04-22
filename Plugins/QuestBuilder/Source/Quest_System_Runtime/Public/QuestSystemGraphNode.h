@@ -31,7 +31,7 @@ public:
 	virtual ~UQuestSystemGraphNode();
 
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Detail")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Detail", meta = (MultiLine = true))
 		FText Description;
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Detail")

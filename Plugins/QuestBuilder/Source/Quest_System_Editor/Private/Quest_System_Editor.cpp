@@ -3,7 +3,6 @@
 #include "Quest_System_Editor.h"
 #include "Quest_System_EditorStyle.h"
 #include "Quest_System_EditorCommands.h"
-#include "AssetTypeActions_QuestSystem.h"
 #include "QuestSystemGraphNode.h"
 #include "Task/QuestTask.h"
 #include "IAssetTools.h"
@@ -13,47 +12,41 @@
 #include "Widgets/Text/STextBlock.h"
 #include "ToolMenus.h"
 #include "GraphNodeFactory.h"
+#include "Styling/SlateStyleRegistry.h"
 #include <IAssetTools.h>
 
-static const FName Quest_System_EditorTabName("Quest_System_Editor");
 
 #define LOCTEXT_NAMESPACE "FQuest_System_EditorModule"
 
+static const FName Quest_System_EditorTabName("Quest_System_Editor");
+TSharedPtr<FSlateStyleSet> FQuest_System_EditorModule::CustomAssetsEditorSlateStyle;
+
 void FQuest_System_EditorModule::StartupModule()
 {
-	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-	
 	FQuest_System_EditorStyle::Initialize();
 	FQuest_System_EditorStyle::ReloadTextures();
 
 	FQuest_System_EditorCommands::Register();
 	
+	//Register GraphNodeFactory
 	GraphPanelNodeFactory_QuestEditor = MakeShareable(new FQuestSystemNodeFactory());
 	FEdGraphUtilities::RegisterVisualNodeFactory(GraphPanelNodeFactory_QuestEditor);
 	
 
-	//register asset type to advanced asset(may be able to create new asset in content drawer)
-	IAssetTools& AssetTools = FModuleManager::LoadModuleChecked<FAssetToolsModule>("AssetTools").Get();
+	// Register the slate styles	
+	const FString ProjectResourceDir = FPaths::ProjectPluginsDir() / TEXT("QuestBuilder/Resources");
+	CustomAssetsEditorSlateStyle = MakeShareable(new FSlateStyleSet("QuestEditor"));
+	CustomAssetsEditorSlateStyle->Set("CustomAsset.Thumbnail", new FSlateImageBrush(FString(ProjectResourceDir / "Icon128.png"), FVector2D(128.0f, 128.0f)));
+	CustomAssetsEditorSlateStyle->Set("ClassIcon.CustomActor", new FSlateImageBrush(FString(ProjectResourceDir / "Icon128.png"), FVector2D(32.0f, 32.0f)));
+	CustomAssetsEditorSlateStyle->Set("ClassIcon.UAssetDefinition_CustomObject", new FSlateImageBrush(FString(ProjectResourceDir / "Icon128.png"), FVector2D(32.0f, 32.0f)));
 
-	QuestEditorAssetCategoryBit = AssetTools.RegisterAdvancedAssetCategory(FName(TEXT("Quest Builder")), LOCTEXT("QuestBuilderAssetCategory", "Quest Builder"));
-
-	RegisterAssetTypeAction(AssetTools, MakeShareable(new FAssetTypeActions_QuestSystem(QuestEditorAssetCategoryBit)));
-
-	
+	FSlateStyleRegistry::RegisterSlateStyle(*CustomAssetsEditorSlateStyle.Get());
 }
 
 void FQuest_System_EditorModule::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
-	if (FModuleManager::Get().IsModuleLoaded("AssetTools"))
-	{
-		IAssetTools& AssetTools = FModuleManager::GetModuleChecked<FAssetToolsModule>("AssetTools").Get();
-		for (int32 Index = 0; Index < CreatedAssetTypeActions.Num(); ++Index)
-		{
-			AssetTools.UnregisterAssetTypeActions(CreatedAssetTypeActions[Index].ToSharedRef());
-		}
-	}
 	if (GraphPanelNodeFactory_QuestEditor.IsValid())
 	{
 		FEdGraphUtilities::UnregisterVisualNodeFactory(GraphPanelNodeFactory_QuestEditor);
@@ -71,12 +64,6 @@ void FQuest_System_EditorModule::ShutdownModule()
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(Quest_System_EditorTabName);
 
 	ClassCache.Reset();
-}
-
-void FQuest_System_EditorModule::RegisterAssetTypeAction(IAssetTools& AssetTools, TSharedRef<IAssetTypeActions> Action)
-{
-	AssetTools.RegisterAssetTypeActions(Action);
-	CreatedAssetTypeActions.Add(Action);
 }
 
 TSharedRef<SDockTab> FQuest_System_EditorModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)

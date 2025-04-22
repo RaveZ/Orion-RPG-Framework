@@ -22,35 +22,39 @@ enum class ETaskState : uint8
 	E_Active		UMETA(DisplayName = "ACTIVE"),
 	E_Complete		UMETA(DisplayName = "COMPLETE"),
 };
-UCLASS(Blueprintable, EditInlineNew, HideDropdown, HideCategories = ("Hidden"))
-class QUEST_SYSTEM_RUNTIME_API UQuestTask : public UObject, public FTickableGameObject
+UCLASS(Abstract, Blueprintable, EditInlineNew, HideDropdown, HideCategories = ("Hidden"))
+class QUEST_SYSTEM_RUNTIME_API UQuestTask : public UObject
 {
 	GENERATED_BODY()
 
 public:
+	UQuestTask();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Task")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Task", meta = (MultiLine = true))
 		FText Description;
 
 	/**mark the task as optional and skip this task if the other non - optional task has been completed */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Task")
-		bool bOptional = false;
+		bool bOptional;
 
 	/**Hide the task from widget*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Task")
-		bool bHidden = false;
+		bool bHidden;
 	
 	/**This task use amount required to complete task?*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Task", meta = (DisplayName = "bUseAmount?"))
-		bool bUseAmount = false;
+		bool bUseAmount;
 
 	/**Amount required for your task*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Task", meta = (EditCondition = "bUseAmount == true", EditConditionHides))
-		int RequiredAmount = 1;
+		int RequiredAmount;
 
 	/**Is Task Tickable?*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Task", meta = (DisplayName = "TaskTickable?"))
-		bool bIsTaskTickable = false;
+		bool bIsTaskTickable;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Task", meta = (EditCondition = "bIsTaskTickable == true", EditConditionHides))
+		float TickInterval;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Task")
 		UQuestSystemGraph* QuestGraph;
@@ -71,24 +75,31 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Task")
 		float DistanceToTarget;
 
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Task")
-		void TaskBegin();
+	FTimerHandle TimerHandle_TickTask;
 
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Task")
-		void TaskTick(float DeltaTime);
+public:
 
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Task")
-		void OnTaskCompleted();
+	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Begin Task", Category = "Task")
+		void K2_BeginTask();
 
-	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Task")
-		void OnObjectiveFailed();
+	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Task Completed", Category = "Task")
+		void K2_TaskCompleted();
+
+	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Objective Failed", Category = "Task")
+		void K2_ObjectiveFailed();
 
 	UFUNCTION(BlueprintCallable, Category = "Task")
-		bool CompleteTask();
+		virtual void BeginTask();
 
+	UFUNCTION(BlueprintCallable, Category = "Task")
+		virtual bool CompleteTask();
+
+	UFUNCTION(BlueprintNativeEvent, DisplayName = "Tick Task", Category = "Task")
+		void TickTask();
+	virtual void TickTask_Implementation();
 	/**Fail The objective node*/
 	UFUNCTION(BlueprintCallable, Category = "Task")
-		void FailObjective();
+		virtual void FailObjective();
 
 	UFUNCTION(BlueprintCallable, Category = "Task")
 		AController* GetOwningController() const;
@@ -111,24 +122,7 @@ public:
 
 	virtual FText GetDescription_Implementation() const;
 
-	// FTickableGameObject Begin
-	virtual void Tick(float DeltaTime) override;
-
-	virtual bool IsTickable() const override { return bIsTaskTickable; }
-
-	virtual ETickableTickType GetTickableTickType() const override
-	{
-		return ETickableTickType::Conditional;
-	}
-	virtual TStatId GetStatId() const override
-	{
-		RETURN_QUICK_DECLARE_CYCLE_STAT(FMyTickableThing, STATGROUP_Tickables);
-	}
-
-
-
-private:
-	// The last frame number we were ticked.
-	// We don't want to tick multiple times per frame 
-	uint32 LastFrameNumberWeTicked = INDEX_NONE;
+	// Allows the Object to get a valid UWorld from it's outer.
+	virtual UWorld* GetWorld() const override;
+	
 };

@@ -46,7 +46,13 @@ public:
 		bool bQuestLoaded = false;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		bool RunQuestGraphs(TArray<UQuestSystemGraph*>  QuestAssets);
+		bool BeginQuest(UQuestSystemGraph* QuestAssets);
+
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		bool BeginMultipleQuest(TArray<UQuestSystemGraph*>  QuestAssets);
+
+	UFUNCTION()
+		void CacheQuestGraphDependencies(UQuestSystemGraph* QuestGraph);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void ActivateQuest(FName QuestID);

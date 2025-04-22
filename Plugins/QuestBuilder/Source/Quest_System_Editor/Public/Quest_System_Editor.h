@@ -73,11 +73,12 @@ public:
 	
 	/** This function will be bound to Command (by default it will bring up plugin window) */
 	void PluginButtonClicked();
-
+	
 	TSharedPtr<struct FGraphNodeClassHelper> GetClassCache() { return ClassCache; }
 	
 	void CheckClassCache();
 
+	static TSharedPtr<FSlateStyleSet> CustomAssetsEditorSlateStyle;
 
 private:
 
@@ -85,8 +86,6 @@ private:
 
 	void AddToolbarExtension(FToolBarBuilder& Builder);
 	void AddMenuExtension(FMenuBuilder& Builder);
-
-	void RegisterAssetTypeAction(IAssetTools& AssetTools, TSharedRef<IAssetTypeActions> Action);
 
 	TSharedRef<class SDockTab> OnSpawnPluginTab(const class FSpawnTabArgs& SpawnTabArgs);
 

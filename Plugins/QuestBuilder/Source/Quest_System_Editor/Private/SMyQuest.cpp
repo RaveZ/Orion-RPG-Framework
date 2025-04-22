@@ -5,10 +5,12 @@
 #include "Framework/Commands/GenericCommands.h"
 #include "GraphEditorActions.h"
 #include "SGraphActionMenu.h"
+#include "GraphActionNode.h"
 #include "SGraphPalette.h"
 #include "QuestSystemEditorUtils.h"
 #include "Quest_System_EditorCommands.h"
 #include "Widgets/Input/SSearchBox.h"
+#include "AssetEditor_QuestSystem.h"
 #include "Quest_System_EditorCommands.h"
 #include "SlateOptMacros.h"
 #include "SQuestPalette.h"
@@ -240,6 +242,10 @@ void SMyQuest::OnRequestRenameOnActionNode()
 {
 	// Attempt to rename in both menus, only one of them will have anything selected
 	GraphActionMenu->OnRequestRenameOnActionNode();
+	if (QuestEditorPtr.IsValid())
+	{
+
+	}
 }
 void SMyQuest::OnPasteGeneric()
 {
@@ -509,6 +515,21 @@ TSharedRef<SWidget> SMyQuest::CreateAddToSectionButton(int32 InSectionID, TWeakP
 }
 void SMyQuest::OnCategoryNameCommitted(const FText& InNewText, ETextCommit::Type InTextCommit, TWeakPtr<struct FGraphActionNode> InAction)
 {
+	// Remove excess whitespace and prevent categories with just spaces
+	FText CategoryName = FText::TrimPrecedingAndTrailing(InNewText);
+
+	TArray<TSharedPtr<FEdGraphSchemaAction>> Actions;
+	GraphActionMenu->GetCategorySubActions(InAction, Actions);
+
+	if (Actions.Num())
+	{
+		const FScopedTransaction Transaction(LOCTEXT("RenameCategory", "Rename Category"));
+
+		GetQuestSystemObj()->Modify();
+
+		Refresh();
+		SelectItemByName(FName(*CategoryName.ToString()), ESelectInfo::OnMouseClick, InAction.Pin()->SectionID, true);
+	}
 }
 bool SMyQuest::CanRequestRenameOnActionNode(TWeakPtr<struct FGraphActionNode> InSelectedNode) const
 {

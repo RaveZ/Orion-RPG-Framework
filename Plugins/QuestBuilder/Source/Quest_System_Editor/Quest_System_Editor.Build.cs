@@ -32,7 +32,11 @@ public class Quest_System_Editor : ModuleRules
 				"Kismet",
 				"AIGraph",
 				"EditorStyle",
-			}
+                "AssetTools",
+                "SlateCore",
+                "Slate",
+                "AssetDefinition",
+            }
 			);
 		
 		PrivateDependencyModuleNames.AddRange(
