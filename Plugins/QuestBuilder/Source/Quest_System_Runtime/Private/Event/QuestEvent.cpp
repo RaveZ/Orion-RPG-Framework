@@ -25,6 +25,14 @@ AController* UQuestEvent::GetOwningController() const
 	return QuestGraph->OwningController;
 }
 
+APawn* UQuestEvent::GetOwningPawn() const
+{
+	if (!QuestGraph)
+		return nullptr;
+
+	return QuestGraph->OwningPawn;
+}
+
 UQuestComponent* UQuestEvent::GetQuestComponent() const
 {
 	if (!QuestGraph)

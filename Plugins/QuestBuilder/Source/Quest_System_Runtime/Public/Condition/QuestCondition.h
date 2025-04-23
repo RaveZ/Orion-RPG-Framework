@@ -34,6 +34,9 @@ public:
 		AController* GetOwningController() const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestCondition")
+		APawn* GetOwningPawn() const;
+
+	UFUNCTION(BlueprintCallable, Category = "QuestCondition")
 		UQuestComponent* GetQuestComponent() const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestCondition")

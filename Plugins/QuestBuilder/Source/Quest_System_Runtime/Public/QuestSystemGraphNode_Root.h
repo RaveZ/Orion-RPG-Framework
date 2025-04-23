@@ -9,7 +9,7 @@
 
 
 
-UCLASS(HideCategories = ("Events", "Conditions"))
+UCLASS(HideCategories = ("Events", "Conditions", "Detail"))
 class QUEST_SYSTEM_RUNTIME_API UQuestSystemGraphNode_Root : public UQuestSystemGraphNode
 {
 	GENERATED_BODY()

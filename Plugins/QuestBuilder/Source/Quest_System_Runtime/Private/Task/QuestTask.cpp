@@ -37,24 +37,6 @@ bool UQuestTask::CompleteTask()
 	return true;
 }
 
-
-void UQuestTask::FailObjective()
-{
-	K2_ObjectiveFailed();
-
-	//clear tick timer handle
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().ClearTimer(TimerHandle_TickTask);
-	}
-
-	//Launch ObjectiveFailedEvents
-	for (UQuestEvent* Event : ObjectiveNode->ObjectiveFailedEvents)
-	{
-		Event->BeginEvent();
-	}
-}
-
 void UQuestTask::BeginTask()  
 {  
    K2_BeginTask();  
@@ -89,6 +71,14 @@ AController* UQuestTask::GetOwningController() const
 		return nullptr;
 
 	return QuestGraph->OwningController;
+}
+
+APawn* UQuestTask::GetOwningPawn() const
+{
+	if (!QuestGraph)
+		return nullptr;
+
+	return QuestGraph->OwningPawn;
 }
 
 UQuestComponent* UQuestTask::GetQuestComponent() const

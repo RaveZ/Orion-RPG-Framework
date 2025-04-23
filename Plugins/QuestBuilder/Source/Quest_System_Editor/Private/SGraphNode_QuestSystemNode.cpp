@@ -93,7 +93,7 @@ void SGraphNode_QuestSystemNode::Construct(const FArguments& InArgs, UEdNode_Que
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void SGraphNode_QuestSystemNode::UpdateGraphNode()
 {
-	const FMargin NodePadding = FMargin(5);
+	const FMargin NodePadding = FMargin(10.f);
 	const FMargin NamePadding = FMargin(2);
 
 	InputPins.Empty();
@@ -112,18 +112,11 @@ void SGraphNode_QuestSystemNode::UpdateGraphNode()
 	TWeakPtr<SNodeTitle> WeakNodeTitle = NodeTitle;
 
 	TSharedPtr<STextBlock> DescriptionText;
-	auto GetNodeTitlePlaceholderWidth = [WeakNodeTitle]() -> FOptionalSize
-		{
-			TSharedPtr<SNodeTitle> NodeTitlePin = WeakNodeTitle.Pin();
-			const float DesiredWidth = (NodeTitlePin.IsValid()) ? NodeTitlePin->GetTitleSize().X : 0.0f;
-			return FMath::Max(75.0f, DesiredWidth);
-		};
-	auto GetNodeTitlePlaceholderHeight = [WeakNodeTitle]() -> FOptionalSize
-		{
-			TSharedPtr<SNodeTitle> NodeTitlePin = WeakNodeTitle.Pin();
-			const float DesiredHeight = (NodeTitlePin.IsValid()) ? NodeTitlePin->GetTitleSize().Y : 0.0f;
-			return FMath::Max(22.0f, DesiredHeight);
-		};
+
+	auto SizeBox = SNew(SBox);
+	SizeBox->SetMinDesiredWidth(250.f);
+	SizeBox->SetMinDesiredHeight(60.f);
+
 	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	this->GetOrAddSlot(ENodeZone::Center)
 	.HAlign(HAlign_Fill)
@@ -141,7 +134,10 @@ void SGraphNode_QuestSystemNode::UpdateGraphNode()
 					//.OnMouseButtonDown(this, &SGraphNode_QuestSystemNode::OnMouseDown)
 					[
 						SNew(SOverlay)
-
+							+ SOverlay::Slot()
+							[
+								SizeBox
+							]
 							// Pins and node details
 							+ SOverlay::Slot()
 							.HAlign(HAlign_Fill)
@@ -165,11 +161,6 @@ void SGraphNode_QuestSystemNode::UpdateGraphNode()
 									.Padding(FMargin(NodePadding.Left, 0.0f, NodePadding.Right, 0.0f))
 									[
 										SNew(SVerticalBox)
-											/*+ SVerticalBox::Slot()
-											.AutoHeight()
-											[
-												DecoratorsBox.ToSharedRef()
-											]*/
 											+ SVerticalBox::Slot()
 											.AutoHeight()
 											[
@@ -177,7 +168,7 @@ void SGraphNode_QuestSystemNode::UpdateGraphNode()
 												+ SOverlay::Slot()
 												.HAlign(HAlign_Center)
 												.VAlign(VAlign_Center)
-												.Padding(8.0f)
+												.Padding(3.0f)
 												[
 													SNew(SBorder)
 														.BorderImage(FAppStyle::GetBrush("Graph.StateNode.ColorSpill"))
@@ -219,6 +210,7 @@ void SGraphNode_QuestSystemNode::UpdateGraphNode()
 																						.OnTextCommitted(this, &SGraphNode_QuestSystemNode::OnNameTextCommited)
 																						.IsReadOnly(this, &SGraphNode_QuestSystemNode::IsNameReadOnly)
 																						.IsSelected(this, &SGraphNode_QuestSystemNode::IsSelectedExclusively)
+																						.Clipping(EWidgetClipping::Inherit)
 																				]
 																				+ SVerticalBox::Slot()
 																				.AutoHeight()
@@ -227,11 +219,14 @@ void SGraphNode_QuestSystemNode::UpdateGraphNode()
 																				]
 																				+ SVerticalBox::Slot()
 																				.AutoHeight()
+																				.VAlign(VAlign_Bottom)
+																				.HAlign(HAlign_Fill)
 																				[
 																					// DESCRIPTION MESSAGE
-																					SAssignNew(DescriptionText, STextBlock)
+																					SNew(STextBlock)
 																						.Visibility(this, &SGraphNode_QuestSystemNode::GetDescriptionVisibility)
 																						.Text(this, &SGraphNode_QuestSystemNode::GetDescription)
+																						.WrapTextAt(200.f)
 																				]
 																		]
 																]

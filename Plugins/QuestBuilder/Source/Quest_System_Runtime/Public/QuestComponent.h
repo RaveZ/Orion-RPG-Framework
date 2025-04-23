@@ -44,27 +44,7 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestComponent")
 		bool bQuestLoaded = false;
-
-	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		bool BeginQuest(UQuestSystemGraph* QuestAssets);
-
-	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		bool BeginMultipleQuest(TArray<UQuestSystemGraph*>  QuestAssets);
-
-	UFUNCTION()
-		void CacheQuestGraphDependencies(UQuestSystemGraph* QuestGraph);
-
-	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void ActivateQuest(FName QuestID);
-
-	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void RestartQuest(FName QuestID, FName NodeID = NAME_None, bool bStartFromNodeID = false);
 	
-	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void FailQuest(FName QuestID);
-
-	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void CompleteQuest(FName QuestID);
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 		FQuestObjectiveUpdated OnQuestObjectiveUpdated;
@@ -81,17 +61,44 @@ public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 		FQuestAdded OnQuestAdded;
 
+public:
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		bool BeginQuest(UQuestSystemGraph* QuestAsset);
+
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		bool BeginMultipleQuest(TArray<UQuestSystemGraph*>  QuestAssets);
+
+	UFUNCTION()
+		void CacheQuestGraphDependencies(UQuestSystemGraph* QuestGraph);
+
+	UFUNCTION()
+		void EvaluateQuestSaveLoadState(UQuestSystemGraph* QuestGraph);
+
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		void ActivateQuest(FName QuestID);
+
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		void RestartQuest(FName QuestID, FName NodeID = NAME_None, bool bStartFromNodeID = false);
+
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		void FailQuest(FName QuestID);
+
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		void CompleteQuest(FName QuestID);
+	
+	UFUNCTION(BlueprintPure, Category = "Narrative")
+		virtual APawn* GetOwningPawn() const;
+
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		UQuestSystem* FindQuestFromNodeID(FName NodeIDParam) const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		bool IsQuestActiveFromNodeID(FName NodeID) const;
 
-
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		bool IsQuestActiveFromQuestID(FName QuestID) const;
 
-		UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void UpdateQuest();
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
@@ -101,12 +108,13 @@ public:
 		void EvaluateQuestCondition(UQuestSystem* QuestParam);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		void EvaluateQuestState(UQuestSystem* QuestParam, int SumConditionMet);
+
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void GoToNextNode(UQuestSystem* QuestParam, UQuestSystemGraphNode* NodeParam);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void BeginNode(UQuestSystem* QuestParam);
-
-
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestComponent")
 		void Save(const FString& SaveFileName, int SlotIndex);

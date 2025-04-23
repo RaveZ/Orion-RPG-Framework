@@ -29,30 +29,20 @@ UQuestComponent::UQuestComponent()
 
 
 
-bool UQuestComponent::BeginQuest(UQuestSystemGraph* QuestAssets)
+bool UQuestComponent::BeginQuest(UQuestSystemGraph* QuestAsset)
 {
-	if (QuestAssets == nullptr)
+	if (QuestAsset == nullptr)
 	{
 		return false;
 	}
 
-	CacheQuestGraphDependencies(QuestAssets);
+	CacheQuestGraphDependencies(QuestAsset);
+	EvaluateQuestSaveLoadState(QuestAsset);
 	bool bSuccess = true;
 
-	for (UQuestSystem* QuestSystem : QuestAssets->QuestSystems)
+	for (UQuestSystem* QuestSystem : QuestAsset->QuestSystems)
 	{
 		EvaluateQuestCondition(QuestSystem);
-		if (QuestSystem->QuestState == EQuestState::E_Active)
-		{
-			if (QuestSystem->CurrentNode != nullptr)
-			{
-				BeginNode(QuestSystem);
-			}
-			else if (QuestSystem->CurrentNode == nullptr)
-			{
-				RestartQuest(QuestSystem->QuestID);
-			}
-		}
 	}
 
 	return bSuccess;
@@ -80,6 +70,7 @@ void UQuestComponent::CacheQuestGraphDependencies(UQuestSystemGraph* QuestGraph)
 	{
 		QuestGraph->OwningController = OwningController;
 		QuestGraph->QuestComponent = this;
+		QuestGraph->OwningPawn = GetOwningPawn();
 
 		//Add QuestGraph to array
 		QuestGraphs.Add(QuestGraph);
@@ -87,13 +78,20 @@ void UQuestComponent::CacheQuestGraphDependencies(UQuestSystemGraph* QuestGraph)
 		for (UQuestSystem* Quest : QuestGraph->QuestSystems)
 		{
 			QuestSystemMap.Emplace(Quest->QuestID, Quest);
+		}
+	}
+}
 
-			if (!bQuestLoaded)
-			{
-				Quest->QuestState = EQuestState::E_Locked;
-				Quest->CurrentNode = nullptr;
-				Quest->VisitedNodeIDs.Empty();
-			}
+void UQuestComponent::EvaluateQuestSaveLoadState(UQuestSystemGraph* QuestGraph)
+{
+	for (UQuestSystem* Quest : QuestGraph->QuestSystems)
+	{
+		//check if quest has been loaded
+		if (!bQuestLoaded)
+		{
+			Quest->QuestState = EQuestState::E_Locked; // all quest state is locked by default
+			Quest->CurrentNode = nullptr;
+			Quest->VisitedNodeIDs.Empty();
 		}
 	}
 }
@@ -102,18 +100,18 @@ void UQuestComponent::ActivateQuest(FName QuestID)
 {
 	if (UQuestSystem* QuestSystem = QuestSystemMap.FindRef(QuestID))
 	{
-		if (QuestSystem->QuestState != EQuestState::E_Active)
+		QuestSystem->QuestState = EQuestState::E_Active;
+		if (QuestSystem->CurrentNode != nullptr)
 		{
-			QuestSystem->QuestState = EQuestState::E_Active;
+			BeginNode(QuestSystem);
+		}
+		else if (QuestSystem->CurrentNode == nullptr)
+		{
 			OnQuestAdded.Broadcast(QuestSystem);
 			RestartQuest(QuestSystem->QuestID);
 		}
-
 	}
 }
-
-
-
 
 void UQuestComponent::RestartQuest(FName QuestID, FName NodeID, bool bStartFromNodeID)
 {
@@ -246,6 +244,15 @@ void UQuestComponent::CompleteQuest(FName QuestID)
 	}
 }
 
+APawn* UQuestComponent::GetOwningPawn() const
+{
+	if (OwningController)
+	{
+		return OwningController->GetPawn();
+	}
+	return nullptr;
+}
+
 UQuestSystem* UQuestComponent::FindQuestFromNodeID(FName NodeIDParam) const
 {
 	UQuestSystem* FoundedQuest = nullptr;
@@ -297,6 +304,9 @@ void UQuestComponent::UpdateQuest()
 		FName Key = It.Key;
 		UQuestSystem* QuestSystem = It.Value;
 		
+		if (QuestSystem->QuestState == EQuestState::E_Complete || QuestSystem->QuestState == EQuestState::E_Fail)
+			continue;
+
 		EvaluateQuestCondition(QuestSystem);
 		if (QuestSystem->CurrentNode != nullptr)
 		{
@@ -380,34 +390,41 @@ void UQuestComponent::EvaluateQuestCondition(UQuestSystem* QuestParam)
 			SumConditionMet++;
 		}
 	}
+	EvaluateQuestState(QuestParam, SumConditionMet);
+	
+}
 
-	switch(QuestParam->QuestState)
+void UQuestComponent::EvaluateQuestState(UQuestSystem* QuestParam, int SumConditionMet)
+{
+
+	if (QuestParam->bAutoActivateQuest)
 	{
+		ActivateQuest(QuestParam->QuestID);
+		return;
+	}
+
+	switch (QuestParam->QuestState)
+	{
+		case EQuestState::E_Active:
+			ActivateQuest(QuestParam->QuestID);
+			return;
 		case EQuestState::E_Locked:
 			if (SumConditionMet >= QuestParam->Conditions.Num())
 			{
-				if (QuestParam->bAutoActivateQuest)
+				if (QuestParam->bUnlockQuest)
 				{
-					QuestParam->QuestState = EQuestState::E_Active;
-					OnQuestAdded.Broadcast(QuestParam);
-					return;
+					QuestParam->QuestState = EQuestState::E_Unlocked;
 				}
-				QuestParam->QuestState = EQuestState::E_Unlocked;
+				else
+				{
+					ActivateQuest(QuestParam->QuestID);
+				}
 			}
+			return;
 		case EQuestState::E_Unlocked:
-			if (SumConditionMet >= QuestParam->Conditions.Num())
-			{
-				if (QuestParam->bAutoActivateQuest)
-				{
-					QuestParam->QuestState = EQuestState::E_Active;
-					OnQuestAdded.Broadcast(QuestParam);
-					return;
-				}
-			}
 
+			return;
 	}
-	
-	
 }
 
 void UQuestComponent::GoToNextNode(UQuestSystem* QuestParam, UQuestSystemGraphNode* NodeParam)
@@ -416,50 +433,56 @@ void UQuestComponent::GoToNextNode(UQuestSystem* QuestParam, UQuestSystemGraphNo
 	BeginNode(QuestParam);
 }
 
-void UQuestComponent::BeginNode(UQuestSystem* QuestParam)
-{
-	//add visited node
-	QuestParam->VisitedNodeIDs.AddUnique(QuestParam->CurrentNode->ID);
+void UQuestComponent::BeginNode(UQuestSystem* QuestParam)  
+{  
+   if (QuestParam->CurrentNode == nullptr)  
+   {  
+       UE_LOG(LogTemp, Warning, TEXT("BeginNode: CurrentNode is null for QuestID: %s"), *QuestParam->QuestID.ToString());  
+       return;  
+   }  
 
-	if (UQuestSystemGraphNode_Root* RootNode = Cast<UQuestSystemGraphNode_Root>(QuestParam->CurrentNode))
-	{
-		EvaluateNextNodeCondition(QuestParam);
-		return;
-	}
+   //add visited node
+   QuestParam->VisitedNodeIDs.AddUnique(QuestParam->CurrentNode->ID);
 
-	//Start of the Node, Launch Event with the Start and Both Type
-	for (UQuestEvent* Event : QuestParam->CurrentNode->Events)
-	{
-		if (Event)
-		{
-			if (Event->EventRunType == EEventRunType::E_Both || Event->EventRunType == EEventRunType::E_Start)
-			{
-				if (!Event->StartLaunched)
-				{
-					Event->BeginEvent();
-					Event->StartLaunched = true;
-				}
-			}
-		}
-	}
+   if (UQuestSystemGraphNode_Root* RootNode = Cast<UQuestSystemGraphNode_Root>(QuestParam->CurrentNode))
+   {
+	   EvaluateNextNodeCondition(QuestParam);
+	   return;
+   }
 
-	//Begin Node Functionality
-	if (UQuestSystemGraphNode_Objective* ObjectiveNode = Cast<UQuestSystemGraphNode_Objective>(QuestParam->CurrentNode))
-	{
-		for (UQuestTask* Task : ObjectiveNode->Tasks)
-		{
-			if (Task)
-			{
-				Task->BeginTask();
-			}
+   //Start of the Node, Launch Event with the Start and Both Type
+   for (UQuestEvent* Event : QuestParam->CurrentNode->Events)
+   {
+	   if (Event)
+	   {
+		   if (Event->EventRunType == EEventRunType::E_Both || Event->EventRunType == EEventRunType::E_Start)
+		   {
+			   if (!Event->StartLaunched)
+			   {
+				   Event->BeginEvent();
+				   Event->StartLaunched = true;
+			   }
+		   }
+	   }
+   }
 
-		}
-	}
+   //Begin Node Functionality
+   if (UQuestSystemGraphNode_Objective* ObjectiveNode = Cast<UQuestSystemGraphNode_Objective>(QuestParam->CurrentNode))
+   {
+	   for (UQuestTask* Task : ObjectiveNode->Tasks)
+	   {
+		   if (Task)
+		   {
+			   Task->BeginTask();
+		   }
 
-	if (UQuestSystemGraphNode_State* StateNode = Cast<UQuestSystemGraphNode_State>(QuestParam->CurrentNode))
-	{
-		StateNode->BeginState();
-	}
+	   }
+   }
+
+   if (UQuestSystemGraphNode_State* StateNode = Cast<UQuestSystemGraphNode_State>(QuestParam->CurrentNode))
+   {
+	   StateNode->BeginState();
+   }
 }
 
 
@@ -604,7 +627,7 @@ void UQuestComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	QuestSystemMap.Empty();
-
+	bQuestLoaded = false;
 	//Set Dependency
 	OwningController = Cast<AController>(GetOwner());
 

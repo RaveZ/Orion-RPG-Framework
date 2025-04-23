@@ -37,7 +37,7 @@ public:
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Detail")
 		FName ID;
 
-	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Conditions")
+	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Branching Conditions", meta = (DisplayName = "Branching Conditions"))
 		TArray<UQuestCondition*> Conditions;
 	
 	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Events")
@@ -68,6 +68,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "QuestSystemGraphNode")
 		AController* GetOwningController() const;
+
+	UFUNCTION(BlueprintCallable, Category = "QuestSystemGraphNode")
+		APawn* GetOwningPawn() const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestSystemGraphNode")
 		UQuestComponent* GetQuestComponent() const;

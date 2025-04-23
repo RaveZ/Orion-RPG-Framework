@@ -42,7 +42,7 @@ public:
 		bool bHidden;
 	
 	/**This task use amount required to complete task?*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Task", meta = (DisplayName = "bUseAmount?"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Task", meta = (DisplayName = "UseAmount"))
 		bool bUseAmount;
 
 	/**Amount required for your task*/
@@ -50,7 +50,7 @@ public:
 		int RequiredAmount;
 
 	/**Is Task Tickable?*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Task", meta = (DisplayName = "TaskTickable?"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Task", meta = (DisplayName = "TaskTickable"))
 		bool bIsTaskTickable;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Task", meta = (EditCondition = "bIsTaskTickable == true", EditConditionHides))
@@ -85,8 +85,6 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Task Completed", Category = "Task")
 		void K2_TaskCompleted();
 
-	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Objective Failed", Category = "Task")
-		void K2_ObjectiveFailed();
 
 	UFUNCTION(BlueprintCallable, Category = "Task")
 		virtual void BeginTask();
@@ -97,12 +95,12 @@ public:
 	UFUNCTION(BlueprintNativeEvent, DisplayName = "Tick Task", Category = "Task")
 		void TickTask();
 	virtual void TickTask_Implementation();
-	/**Fail The objective node*/
-	UFUNCTION(BlueprintCallable, Category = "Task")
-		virtual void FailObjective();
 
 	UFUNCTION(BlueprintCallable, Category = "Task")
 		AController* GetOwningController() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Task")
+		APawn* GetOwningPawn() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Task")
 		UQuestComponent* GetQuestComponent() const;

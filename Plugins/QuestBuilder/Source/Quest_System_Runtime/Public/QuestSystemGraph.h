@@ -43,6 +43,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "QuestSystemGraph")
 		UQuestComponent* QuestComponent;
 
+	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraph")
+		class APawn* OwningPawn;
+
 
 #if WITH_EDITORONLY_DATA
 	/** Set of quest-graph pages */

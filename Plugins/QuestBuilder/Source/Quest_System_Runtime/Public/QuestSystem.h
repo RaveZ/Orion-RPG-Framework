@@ -70,18 +70,25 @@ public:
 		TArray<FRewardData> Rewards;
 
 	/**Make your quest can be aborted*/
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Conditions")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestConditions")
 		bool bCanQuestBeAborted = false;
 	/**
-	* TRUE : After the conditions met, activate this quest. if there are no conditions, activate this quest immediately
-	* FALSE : After the conditions met, unlock this quest.
+	* TRUE : activate this quest immediately
+	* FALSE : Use Quest Condition To Activate/Unlock the Quest
 	*/
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Conditions")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestConditions", meta = (DisplayName = "AutoActivateQuest?"))
 		bool bAutoActivateQuest = false;
 
 	/**Conditions to unlock the Quest*/
-	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Conditions")
+	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "QuestConditions", meta = (EditCondition = "bAutoActivateQuest == false", EditConditionHides))
 		TArray<UQuestCondition*> Conditions;
+
+	/**
+	* TRUE : Unlock Quest
+	* FALSE : Activate Quest Immediately
+	*/
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestConditions", meta = (EditCondition = "bAutoActivateQuest == false", EditConditionHides, DisplayName = "UnlockQuest?"))
+		bool bUnlockQuest = false;
 
 
 	/** List of All Visited Node IDs in Sequence*/
@@ -113,6 +120,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "QuestSystem")
 		AController* GetOwningController();
+
+	UFUNCTION(BlueprintCallable, Category = "QuestSystem")
+		APawn* GetOwningPawn();
 
 	UFUNCTION(BlueprintCallable, Category = "QuestSystem")
 		UQuestComponent* GetQuestComponent();
