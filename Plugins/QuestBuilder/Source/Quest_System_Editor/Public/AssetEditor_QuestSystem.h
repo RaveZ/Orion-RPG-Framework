@@ -160,7 +160,6 @@ public:
 	/** Checks to see if the provided graph is contained within the current QuestSystemGraph */
 	bool IsGraphInCurrentQuestGraph(const UEdGraph* InGraph) const;
 
-	UQuestEditorSettings* GetSettings() const;
 
 	//Getter
 	TSharedPtr<SMyQuest> GetMyQuestWidget() const { return MyQuestWidget; }
@@ -244,12 +243,14 @@ protected:
 	
 	void OnFinishedChangingProperties(const FPropertyChangedEvent& PropertyChangedEvent);
 
+	void OnPackageMarkedDirty(UPackage* ModifiedPackage, bool bWasDirty);
 
 #if ENGINE_MAJOR_VERSION < 5
 	void OnPackageSaved(const FString& PackageFileName, UObject* Outer);
 #else // #if ENGINE_MAJOR_VERSION < 5
 	void OnPackageSavedWithContext(const FString& PackageFileName, UPackage* Package, FObjectPostSaveContext ObjectSaveContext);
 #endif // #else // #if ENGINE_MAJOR_VERSION < 5
+
 
 public:
 
@@ -264,13 +265,11 @@ public:
 
 	/** determine if node should be checked for new unique ID*/
 	bool ShouldGetNewID = false;
-
 protected:
 
 	/** Factory that spawns graph editors; used to look up all tabs spawned by it. */
 	TWeakPtr<FDocumentTabFactory> QuestEditorTabFactoryPtr;
 
-	UQuestEditorSettings* QuestGraphEditorSettings;
 
 	UQuestSystemGraph* EditingQuestGraph;
 

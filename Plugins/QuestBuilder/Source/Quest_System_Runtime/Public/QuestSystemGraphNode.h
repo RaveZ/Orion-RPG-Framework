@@ -36,12 +36,12 @@ public:
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Detail")
 		FName ID;
-
-	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Branching Conditions", meta = (DisplayName = "Branching Conditions"))
-		TArray<UQuestCondition*> Conditions;
 	
 	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Events")
 		TArray<UQuestEvent*> Events;
+
+	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Branching Conditions", meta = (DisplayName = "Branching Conditions"))
+		TArray<UQuestCondition*> Conditions;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
 		UQuestSystemGraph* QuestGraph;
@@ -128,6 +128,10 @@ public:
 	virtual FText GetNodeTitle() const;
 
 	virtual FText GetNodeDescription() const;
+
+	virtual FText GetEventsText() const;
+
+	virtual FText GetConditionsText() const;
 
 	virtual void SetNodeTitle(const FText& NewTitle);
 

@@ -3,12 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "QuestData.h"
 #include "UObject/NoExportTypes.h"
 #include "QuestEvent.generated.h"
 
 class UQuestSystemGraph;
 class UQuestSystemGraphNode;
 class UQuestSystem;
+
 
 UENUM(BlueprintType)
 enum class EEventRunType : uint8
@@ -39,8 +41,11 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
 		bool bUseQuestID = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (GetOptions = "GetAllQuestID", EditCondition = "bUseQuestID == true", HideEditConditionToggle, EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (GetOptions = "GetAllQuestID"))
 		FName QuestID;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (GetOptions = "GetAllQuestID"))
+		FQuestDataHandle QuestDataHandle;
 
 	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
 		bool StartLaunched = false;
@@ -60,6 +65,10 @@ public:
 
 	virtual void BeginEvent_Implementation();
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestEvent")
+	FString GetNodeDisplayText() const;
+	virtual FString GetNodeDisplayText_Implementation() const;
+
 	UFUNCTION(BlueprintCallable, Category = "QuestEvent")
 		AController* GetOwningController() const;
 
@@ -75,9 +84,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "QuestEvent")
 		UQuestSystem* GetOwningQuestSystem() const;
 
-	UFUNCTION(CallInEditor)
-	TArray<FName> GetAllQuestID();
+	UFUNCTION(CallInEditor, BlueprintCallable)
+	static TArray<FName> GetAllQuestID();
 
-	
 
 };

@@ -6,14 +6,17 @@
 #include "QuestSystemGraphNode.h"
 #include "Task/QuestTask.h"
 #include "IAssetTools.h"
+#include "ISettingsModule.h"
+#include "ISettingsSection.h"
+#include "ISettingsContainer.h"
+#include <ISettingsCategory.h>
 #include "LevelEditor.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/STextBlock.h"
 #include "ToolMenus.h"
-#include "GraphNodeFactory.h"
 #include "Styling/SlateStyleRegistry.h"
-#include <IAssetTools.h>
+#include "Setting_QuestEditor.h"
 
 
 #define LOCTEXT_NAMESPACE "FQuest_System_EditorModule"
@@ -25,7 +28,7 @@ void FQuest_System_EditorModule::StartupModule()
 {
 	FQuest_System_EditorStyle::Initialize();
 	FQuest_System_EditorStyle::ReloadTextures();
-
+	RegisterSettings();
 	FQuest_System_EditorCommands::Register();
 	
 	//Register GraphNodeFactory
@@ -66,40 +69,6 @@ void FQuest_System_EditorModule::ShutdownModule()
 	ClassCache.Reset();
 }
 
-TSharedRef<SDockTab> FQuest_System_EditorModule::OnSpawnPluginTab(const FSpawnTabArgs& SpawnTabArgs)
-{
-		//Load Property Module
-		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-
-		//FDetailsViewArgs is a struct of settings to customize our Details View Widget
-		FDetailsViewArgs Args;
-		Args.bHideSelectionTip = true;
-
-	// Return the property widget as the content of the tab
-		FText WidgetText = FText::Format(
-			LOCTEXT("WindowWidgetText", "Add code to {0} in {1} to override this window's contents"),
-			FText::FromString(TEXT("FQuest_System_EditorModule::OnSpawnPluginTab")),
-			FText::FromString(TEXT("Quest_System_Editor.cpp"))
-			);
-
-		return SNew(SDockTab)
-			.TabRole(ETabRole::NomadTab)
-			[
-				// Put your tab content here!
-				SNew(SBox)
-				.HAlign(HAlign_Center)
-				.VAlign(VAlign_Center)
-				[
-					SNew(STextBlock)
-					.Text(WidgetText)
-				]
-			];
-}
-
-void FQuest_System_EditorModule::PluginButtonClicked()
-{
-	FGlobalTabmanager::Get()->TryInvokeTab(Quest_System_EditorTabName);
-}
 
 void FQuest_System_EditorModule::CheckClassCache()
 {
@@ -111,28 +80,17 @@ void FQuest_System_EditorModule::CheckClassCache()
 	}
 }
 
-void FQuest_System_EditorModule::RegisterMenus()
+void FQuest_System_EditorModule::RegisterSettings()
 {
-	// Owner will be used for cleanup in call to UToolMenus::UnregisterOwner
-	FToolMenuOwnerScoped OwnerScoped(this);
-
+	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
-		UToolMenu* Menu = UToolMenus::Get()->ExtendMenu("LevelEditor.MainMenu.Window");
-		{
-			FToolMenuSection& Section = Menu->FindOrAddSection("WindowLayout");
-			Section.AddMenuEntryWithCommandList(FQuest_System_EditorCommands::Get().OpenPluginWindow, PluginCommands);
-		}
-	}
+		// Register the settings
+		SettingsModule->RegisterSettings("Project", "Plugins", "Quest Builder - Editor",
+			LOCTEXT("QuestBuilderSettingsName", "Quest Builder - Editor"),
+			LOCTEXT("QuestBuilderSettingsDescription", "Configuration Settings for the Quest Builder Editor"),
+			GetMutableDefault<UQuestEditorSettings>()
+		);
 
-	{
-		UToolMenu* ToolbarMenu = UToolMenus::Get()->ExtendMenu("LevelEditor.LevelEditorToolBar");
-		{
-			FToolMenuSection& Section = ToolbarMenu->FindOrAddSection("Settings");
-			{
-				FToolMenuEntry& Entry = Section.AddEntry(FToolMenuEntry::InitToolBarButton(FQuest_System_EditorCommands::Get().OpenPluginWindow));
-				Entry.SetCommandList(PluginCommands);
-			}
-		}
 	}
 }
 

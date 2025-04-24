@@ -4,17 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "Event/QuestEvent.h"
-#include "JumpToNextNode.generated.h"
+#include "JumpToNode.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class QUEST_SYSTEM_RUNTIME_API UJumpToNextNode : public UQuestEvent
+class QUEST_SYSTEM_RUNTIME_API UJumpToNode : public UQuestEvent
 {
 	GENERATED_BODY()
 public:
-	UJumpToNextNode();
+	UJumpToNode();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (GetOptions = "GetNextNodeID") )
 		FName NodeID;
@@ -23,4 +23,5 @@ public:
 		TArray<FName> GetNextNodeID();
 
 	virtual void BeginEvent_Implementation() override;
+	virtual FString GetNodeDisplayText_Implementation() const override;
 };

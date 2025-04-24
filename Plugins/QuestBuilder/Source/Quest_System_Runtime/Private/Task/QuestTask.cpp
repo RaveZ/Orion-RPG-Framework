@@ -116,7 +116,7 @@ void UQuestTask::AddAmount(int AmountToAdd)
 
 FText UQuestTask::GetDescription_Implementation() const
 {
-	return Description;
+    return Description.IsEmpty() ? FText::FromString(GetName()) : Description;
 }
 
 UWorld* UQuestTask::GetWorld() const

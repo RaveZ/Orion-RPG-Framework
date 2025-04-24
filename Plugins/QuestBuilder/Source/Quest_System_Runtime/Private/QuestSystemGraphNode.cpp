@@ -4,6 +4,8 @@
 #include "QuestSystemGraphNode.h"
 #include "QuestSystemGraphEdge.h"
 #include "QuestSystem.h"
+#include "Event/QuestEvent.h"
+#include "Condition/QuestCondition.h"
 #include "QuestSystemGraph.h"
 
 #define LOCTEXT_NAMESPACE "QuestSystemGraphNode"
@@ -75,6 +77,41 @@ FText UQuestSystemGraphNode::GetNodeTitle() const
 FText UQuestSystemGraphNode::GetNodeDescription() const
 {
 	return FText::FromString(TEXT("This is NodeBase"));
+}
+
+FText UQuestSystemGraphNode::GetEventsText() const
+{
+	FString EventListText;
+
+	for (const UQuestEvent* Event : Events)
+	{
+		if (Event)
+		{
+			if(!EventListText.IsEmpty()) EventListText += TEXT("\n");
+			EventListText += Event->GetNodeDisplayText();
+		}
+
+	}
+
+	return FText::FromString(EventListText);
+}
+
+FText UQuestSystemGraphNode::GetConditionsText() const
+{
+	FString ConditionListText;
+
+	for (const UQuestCondition* Condition : Conditions)
+	{
+		if (Condition)
+		{
+			if(!ConditionListText.IsEmpty()) ConditionListText += TEXT("\n");
+
+			ConditionListText += Condition->GetNodeDisplayText();
+		}
+
+	}
+
+	return FText::FromString(ConditionListText);
 }
 
 void UQuestSystemGraphNode::SetNodeTitle(const FText& NewTitle)

@@ -50,25 +50,19 @@ void UQuestSystemGraphNode_Objective::SetNodeTitle(const FText& NewTitle)
 
 FText UQuestSystemGraphNode_Objective::GetNodeDescription() const
 {
-    if (Tasks.Num() == 0)
-    {
-        return FText::FromString(TEXT("Task Node"));
-    }
-
-    FString BulletedList;
+    FString TaskDesc;
 
     for (const UQuestTask* Task : Tasks)
     {
         if (Task)
         {
-            BulletedList += TEXT("●  ");
-            BulletedList += Task->GetDescription().ToString();
-            BulletedList += TEXT("\n");
+            if(!TaskDesc.IsEmpty()) TaskDesc += TEXT("\n");
+            TaskDesc += Task->GetDescription().ToString();
         }
         
     }
 
-    return FText::FromString(BulletedList);
+    return FText::FromString(TaskDesc);
 }
 #endif
 

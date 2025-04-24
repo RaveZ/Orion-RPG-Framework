@@ -30,6 +30,11 @@ public:
 
 		virtual bool IsConditionMet_Implementation() const;
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestCondition")
+	FString GetNodeDisplayText() const;
+
+	virtual FString GetNodeDisplayText_Implementation() const;
+
 	UFUNCTION(BlueprintCallable, Category = "QuestCondition")
 		AController* GetOwningController() const;
 

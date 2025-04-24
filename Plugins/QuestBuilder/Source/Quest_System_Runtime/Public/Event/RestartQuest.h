@@ -9,6 +9,8 @@
 /**
  * 
  */
+
+
 UCLASS()
 class QUEST_SYSTEM_RUNTIME_API URestartQuest : public UQuestEvent
 {
@@ -16,13 +18,18 @@ class QUEST_SYSTEM_RUNTIME_API URestartQuest : public UQuestEvent
 public:
 	URestartQuest();
 
+
 	/** Start Quest From Specific Node ID. if Node ID Not Found Quest Will Start From Root Node*/
 	UPROPERTY(EditAnywhere, Category = "QuestEvent", meta = (DisplayName = "StartFromNodeID?"))
-		bool bStartFromNodeID = false;
+	bool bStartFromNodeID = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bStartFromNodeID == true", EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bStartFromNodeID == true", EditConditionHides, GetOptions = "GetAllNodeIDFromQuest"))
 		FName NodeID;
 
+	UFUNCTION(CallInEditor)
+		TArray<FName> GetAllNodeIDFromQuest();
+
 	virtual void BeginEvent_Implementation() override;
+	virtual FString GetNodeDisplayText_Implementation() const override;
 
 };

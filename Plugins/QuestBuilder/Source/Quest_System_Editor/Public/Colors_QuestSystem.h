@@ -26,6 +26,7 @@ namespace QuestSystemColors
 		const FLinearColor Disconnected(0.f, 0.f, 0.f);
 		const FLinearColor BrokenWithParent(1.f, 0.f, 1.f);
 		const FLinearColor QuickFind(0.f, 0.8f, 0.f);
+		const FLinearColor DescriptionBorder(1.f, 1.0f, 1.f, 0.2f);
 	}
 
 	namespace Pin

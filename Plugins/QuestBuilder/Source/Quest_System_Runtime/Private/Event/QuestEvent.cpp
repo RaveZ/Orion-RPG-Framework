@@ -2,12 +2,12 @@
 
 #include "Event/QuestEvent.h"
 #include "UObject/UObjectIterator.h"
+#include "Quest_System_Runtime.h"
 #include "QuestComponent.h"
 #include "QuestSystem.h"
 #include "QuestSystemGraph.h"
 #include "QuestSystemGraphNode.h"
 #include "QuestSystemGraphNode_Objective.h"
-
 
 UQuestEvent::UQuestEvent()
 {
@@ -15,6 +15,11 @@ UQuestEvent::UQuestEvent()
 
 void UQuestEvent::BeginEvent_Implementation()
 {
+}
+
+FString UQuestEvent::GetNodeDisplayText_Implementation() const
+{
+	return GetName();
 }
 
 AController* UQuestEvent::GetOwningController() const
@@ -67,3 +72,4 @@ TArray<FName> UQuestEvent::GetAllQuestID()
 
 	return QuestIDs;
 }
+

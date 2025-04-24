@@ -17,4 +17,5 @@ public:
 	UFailQuest();
 
 	virtual void BeginEvent_Implementation() override;
+	virtual FString GetNodeDisplayText_Implementation() const override;
 };

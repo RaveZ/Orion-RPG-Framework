@@ -72,8 +72,8 @@ void FAssetEditorToolbar_QuestSystem::FillQuestSystemToolbar(FToolBarBuilder& To
 
 	ToolbarBuilder.BeginSection("Quest System");
 	{
-		const FText QuestSettingLabel = LOCTEXT("QuestSetting_Label", "Quest Builder Setting");
-		const FText QuestSettingTooltip = LOCTEXT("QuestSetting_ToolTip", "Access Quest Builder Setting");
+		const FText QuestSettingLabel = LOCTEXT("QuestSetting_Label", "Quest Default Info");
+		const FText QuestSettingTooltip = LOCTEXT("QuestSetting_ToolTip", "Access Quest Default Info");
 		const FSlateIcon QuestSettingIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "ProjectSettings.TabIcon");
 
 

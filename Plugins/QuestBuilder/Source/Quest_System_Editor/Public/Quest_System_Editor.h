@@ -71,8 +71,6 @@ public:
 	virtual void StartupModule() override;
 	virtual void ShutdownModule() override;
 	
-	/** This function will be bound to Command (by default it will bring up plugin window) */
-	void PluginButtonClicked();
 	
 	TSharedPtr<struct FGraphNodeClassHelper> GetClassCache() { return ClassCache; }
 	
@@ -82,13 +80,11 @@ public:
 
 private:
 
-	void RegisterMenus();
+	void RegisterSettings();
 
-	void AddToolbarExtension(FToolBarBuilder& Builder);
-	void AddMenuExtension(FMenuBuilder& Builder);
 
-	TSharedRef<class SDockTab> OnSpawnPluginTab(const class FSpawnTabArgs& SpawnTabArgs);
 
+	class UQuestEditorSettings* SettingsPtr;
 private:
 	TSharedPtr<class FUICommandList> PluginCommands;
 	TSharedPtr<FQuestSystemNodeFactory> GraphPanelNodeFactory_QuestEditor;

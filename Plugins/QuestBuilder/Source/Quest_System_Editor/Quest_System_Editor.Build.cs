@@ -42,7 +42,25 @@ public class Quest_System_Editor : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
    {
-                "Quest_System_Runtime", "AssetTools", "GraphEditor", "PropertyEditor", "EditorStyle", "Kismet", "KismetWidgets", "ApplicationCore", "ToolMenus", "Projects", "InputCore", "UnrealEd", "ToolMenus", "CoreUObject", "Engine", "Slate", "SlateCore", "AIGraph",
+                "Quest_System_Runtime", 
+				"AssetTools", 
+				"GraphEditor", 
+				"PropertyEditor", 
+				"EditorStyle", 
+				"Kismet", 
+				"KismetWidgets", 
+				"ApplicationCore", 
+				"ToolMenus", 
+				"Projects", 
+				"InputCore", 
+				"UnrealEd", 
+				"ToolMenus", 
+				"CoreUObject", 
+				"Engine", 
+				"Slate", 
+				"SlateCore", 
+				"AIGraph",
+                "UMG",
    }
 			);
 		

@@ -14,6 +14,11 @@ bool UQuestCondition::IsConditionMet_Implementation() const
 	return true;
 }
 
+FString UQuestCondition::GetNodeDisplayText_Implementation() const
+{
+	return GetName();
+}
+
 AController* UQuestCondition::GetOwningController() const
 {
 	if (!QuestGraph)

@@ -76,6 +76,16 @@ FText UEdNode_QuestSystemNode::GetDescription() const
 	return QuestSystemGraphNode->GetNodeDescription();
 }
 
+FText UEdNode_QuestSystemNode::GetEventsText() const
+{
+	return QuestSystemGraphNode->GetEventsText();
+}
+
+FText UEdNode_QuestSystemNode::GetConditionsText() const
+{
+	return QuestSystemGraphNode->GetConditionsText();
+}
+
 FLinearColor UEdNode_QuestSystemNode::GetBackgroundColor() const
 {
 	return QuestSystemGraphNode == nullptr ? FLinearColor::Black : QuestSystemGraphNode->GetBackgroundColor();

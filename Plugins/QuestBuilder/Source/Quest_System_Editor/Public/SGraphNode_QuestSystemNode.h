@@ -23,6 +23,11 @@ public:
 	virtual bool IsNameReadOnly() const override;
 	virtual FText GetDescription() const;
 	virtual EVisibility GetDescriptionVisibility() const;
+	virtual EVisibility GetTaskVisibility() const;
+	virtual FText GetEventsText() const;
+	virtual EVisibility GetEventsVisibility() const;
+	virtual FText GetConditionsText() const;
+	virtual EVisibility GetConditionsVisibility() const;
 
 	
 	/** Called when text is being committed to check for validity */
@@ -46,7 +51,7 @@ public:
 
 protected:
 	TSharedPtr<SHorizontalBox> OutputPinBox;
-
+	TSharedPtr<SWidget> QuestNodeWidgetRef;
 
 	virtual EVisibility GetBlueprintIconVisibility() const;
 };

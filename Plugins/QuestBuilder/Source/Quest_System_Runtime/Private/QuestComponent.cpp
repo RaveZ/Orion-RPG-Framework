@@ -14,6 +14,7 @@
 #include "QuestSystemGraphNode_Objective.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Controller.h"
+#include "QuestData.h"
 
 
 

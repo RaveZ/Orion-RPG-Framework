@@ -6,14 +6,9 @@
 #include "UObject/NoExportTypes.h"
 #include "Setting_QuestEditor.generated.h"
 
-UENUM(BlueprintType)
-enum class EAutoLayoutType : uint8
-{
-	Tree,
-	ForceDirected,
-};
 
-UCLASS()
+
+UCLASS(config = Engine, defaultconfig)
 class QUEST_SYSTEM_EDITOR_API UQuestEditorSettings : public UObject
 {
 	GENERATED_BODY()
@@ -21,24 +16,7 @@ class QUEST_SYSTEM_EDITOR_API UQuestEditorSettings : public UObject
 	UQuestEditorSettings();
 	virtual ~UQuestEditorSettings();
 
-	UPROPERTY(EditDefaultsOnly, Category = "AutoArrange")
-		float OptimalDistance;
-
-	UPROPERTY(EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
-		EAutoLayoutType AutoLayoutStrategy;
-
-	UPROPERTY(EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
-		int32 MaxIteration;
-
-	UPROPERTY(EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
-		bool bFirstPassOnly;
-
-	UPROPERTY(EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
-		bool bRandomInit;
-
-	UPROPERTY(EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
-		float InitTemperature;
-
-	UPROPERTY(EditDefaultsOnly, AdvancedDisplay, Category = "AutoArrange")
-		float CoolDownRate;
+public:
+	UPROPERTY(EditAnywhere, config, Category = "Graph Defaults", noclear, meta = (MetaClass = "/Script/Quest_System_Editor.QuestNodeWidget"))
+	TSoftClassPtr<class UQuestNodeWidget> DefaultQuestNodeWidgetClass;
 };

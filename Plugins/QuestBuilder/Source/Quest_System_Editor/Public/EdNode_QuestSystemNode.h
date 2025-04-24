@@ -43,6 +43,8 @@ public:
 	virtual void PrepareForCopying() override;
 	virtual void AutowireNewNode(UEdGraphPin* FromPin) override;
 	virtual FText GetDescription() const;
+	virtual FText GetEventsText() const;
+	virtual FText GetConditionsText() const;
 
 	virtual FLinearColor GetBackgroundColor() const;
 	virtual UEdGraphPin* GetInputPin() const;

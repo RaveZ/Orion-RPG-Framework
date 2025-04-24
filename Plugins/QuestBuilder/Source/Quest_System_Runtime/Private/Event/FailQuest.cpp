@@ -20,3 +20,8 @@ void UFailQuest::BeginEvent_Implementation()
 	}
 	
 }
+
+FString UFailQuest::GetNodeDisplayText_Implementation() const
+{
+	return FString::Printf(TEXT("Fail Quest :  %s"), *QuestID.ToString());
+}

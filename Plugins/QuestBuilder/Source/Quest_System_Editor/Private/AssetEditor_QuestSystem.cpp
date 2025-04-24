@@ -56,7 +56,6 @@ const FName GenericGraphEditorAppName = FName(TEXT("GenericGraphEditorApp"));
 FAssetEditor_QuestSystem::FAssetEditor_QuestSystem()
 {
 	EditingQuestGraph = nullptr;
-	QuestGraphEditorSettings = NewObject<UQuestEditorSettings>(UQuestEditorSettings::StaticClass());
 	DocumentManager = MakeShareable(new FDocumentTracker);
 
 #if ENGINE_MAJOR_VERSION < 5
@@ -83,6 +82,11 @@ void FAssetEditor_QuestSystem::Initialize(const EToolkitMode::Type Mode, const T
 	FMyQuestCommands::Register();
 	FQuest_System_EditorCommands::Register();
 
+	//Binding Functionality
+	EditingQuestGraph->GetOutermost()->PackageMarkedDirtyEvent.AddRaw(this, &FAssetEditor_QuestSystem::OnPackageMarkedDirty);
+	
+
+	//Make Toolbar
 	if (!ToolbarBuilder.IsValid())
 	{
 		ToolbarBuilder = MakeShareable(new FAssetEditorToolbar_QuestSystem(SharedThis(this)));
@@ -354,6 +358,7 @@ FText FAssetEditor_QuestSystem::GetBaseToolkitName() const
 {
 	return LOCTEXT("QuestGraphEditorAppLabel", "Quest Graph Editor");
 }
+
 
 FText FAssetEditor_QuestSystem::GetToolkitName() const
 {
@@ -810,11 +815,6 @@ bool FAssetEditor_QuestSystem::IsGraphInCurrentQuestGraph(const UEdGraph* InGrap
 	return bEditable;
 }
 
-UQuestEditorSettings* FAssetEditor_QuestSystem::GetSettings() const
-{
-	return QuestGraphEditorSettings;
-}
-
 FGraphAppearanceInfo FAssetEditor_QuestSystem::GetGraphAppearance() const
 {
 	FGraphAppearanceInfo AppearanceInfo;
@@ -926,8 +926,6 @@ void FAssetEditor_QuestSystem::CreateInternalWidgets()
 	PropertyWidget->SetObject(nullptr);
 	PropertyWidget->OnFinishedChangingProperties().AddSP(this, &FAssetEditor_QuestSystem::OnFinishedChangingProperties);
 
-	EditorSettingsWidget = PropertyModule.CreateDetailView(Args);
-	EditorSettingsWidget->SetObject(QuestGraphEditorSettings);
 
 	this->MyQuestWidget = SNew(SMyQuest, SharedThis(this));
 }
@@ -1428,6 +1426,23 @@ void FAssetEditor_QuestSystem::OnFinishedChangingProperties(const FPropertyChang
 	DocumentManager->RefreshAllTabs();
 
 }
+#include "Async/Async.h"
+
+void FAssetEditor_QuestSystem::OnPackageMarkedDirty(UPackage* ModifiedPackage, bool bWasDirty)
+{
+    // Schedule the graph rebuild after 1 second using a timer
+    FTimerHandle TimerHandle;
+    GEditor->GetTimerManager()->SetTimer(
+        TimerHandle,
+        FTimerDelegate::CreateLambda([this]()
+        {
+            RebuildQuestSystemGraph();
+        }),
+        1.0f, // Delay in seconds
+        false // Do not loop
+    );
+    
+}
 //Called when saving our file graph
 #if ENGINE_MAJOR_VERSION < 5
 
@@ -1439,9 +1454,7 @@ void FAssetEditor_QuestSystem::OnPackageSaved(const FString& PackageFileName, UO
 void FAssetEditor_QuestSystem::OnPackageSavedWithContext(const FString& PackageFileName, UPackage* Package, FObjectPostSaveContext ObjectSaveContext)
 {
 	RebuildQuestSystemGraph();
-	if (QuestGraphEditorSettings == nullptr) {
-		UE_LOG(LogTemp, Log, TEXT("Null"))
-	}
+	
 }
 
 #endif // #else // #if ENGINE_MAJOR_VERSION < 5
