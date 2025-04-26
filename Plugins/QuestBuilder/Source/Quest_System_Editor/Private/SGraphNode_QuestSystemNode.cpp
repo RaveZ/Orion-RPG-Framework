@@ -22,6 +22,8 @@
 #include "Setting_QuestEditor.h"	
 #include "Fonts/SlateFontInfo.h"
 #include "QuestNodeWidget.h"
+#include "Condition/QuestCondition.h"
+#include "Event/QuestEvent.h"
 
 #define LOCTEXT_NAMESPACE "EdNode_GenericGraph"
 
@@ -168,7 +170,7 @@ void SGraphNode_QuestSystemNode::UpdateGraphNode()
 				SNew(SBorder)
 					.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
 					.Padding(3.0f)
-					.BorderBackgroundColor(this, &SGraphNode_QuestSystemNode::GetHighlightColor)
+					.BorderBackgroundColor(this, &SGraphNode_QuestSystemNode::GetNodeHighlightColor)
 					[
 						SNew(SBorder)
 							.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
@@ -570,29 +572,47 @@ void SGraphNode_QuestSystemNode::OnNameTextCommited(const FText& InText, ETextCo
 {
 	SGraphNode::OnNameTextCommited(InText, CommitInfo);
 
+	const FString NewNameString = InText.ToString();
+	const FName NewName = *NewNameString;
+	FName OriginalName;
+
 	UEdNode_QuestSystemNode* MyNode = CastChecked<UEdNode_QuestSystemNode>(GraphNode);
+	UQuestSystemGraphNode* QuestSystemNode = MyNode ? MyNode->QuestSystemGraphNode : nullptr;
 
 	if (MyNode != nullptr && MyNode->QuestSystemGraphNode != nullptr)
 	{
-		/*OriginalName = QuestEdGraph->QuestSystem->QuestID;
+		UEdGraph_QuestSystemGraph* QuestEdGraph = MyNode->GetQuestSystemGraphEdGraph();
+		OriginalName = QuestEdGraph->QuestSystem->QuestID;
 		QuestEdGraph->QuestSystem->QuestID = NewName;
-		QuestEdGraph->Rename(*(NewName.ToString()), QuestSystemGraph, REN_DoNotDirty | REN_ForceNoResetLoaders);
-		for (TObjectIterator<UQuestCondition> It; It; ++It)
-		{
-			if (UQuestCondition* QuestCondition = Cast<UQuestCondition>(*It))
-			{
-				if (QuestCondition->QuestID == OriginalName)
-				{
-					QuestCondition->QuestID = NewName;
-				}
-			}
-		}*/
+		
 		//Finalize Node and Update GraphNode
 		const FScopedTransaction Transaction(LOCTEXT("QuestSystemEditorRenameNode", "Quest System Editor: Rename Node"));
 		MyNode->Modify();
 		MyNode->QuestSystemGraphNode->Modify();
 		MyNode->QuestSystemGraphNode->SetNodeTitle(InText);
 		UpdateGraphNode();
+
+		// Update the name of the node in the QuestSystemGraph
+		for (TObjectIterator<UQuestCondition> It; It; ++It)
+		{
+			if (UQuestCondition* QuestCondition = Cast<UQuestCondition>(*It))
+			{
+				if (QuestCondition->NodeID == OriginalName)
+				{
+					QuestCondition->NodeID = NewName;
+				}
+			}
+		}
+		for (TObjectIterator<UQuestEvent> It; It; ++It)
+		{
+			if (UQuestEvent* QuestEvent = Cast<UQuestEvent>(*It))
+			{
+				if (QuestEvent->NodeID == OriginalName)
+				{
+					QuestEvent->NodeID = NewName;
+				}
+			}
+		}
 	}
 }
 
@@ -602,7 +622,7 @@ FSlateColor SGraphNode_QuestSystemNode::GetBorderBackgroundColor() const
 	return MyNode ? MyNode->GetBackgroundColor() : QuestSystemColors::NodeBorder::HighlightAbortRange0;
 }
 
-FSlateColor SGraphNode_QuestSystemNode::GetHighlightColor() const
+FSlateColor SGraphNode_QuestSystemNode::GetNodeHighlightColor() const
 {
 	UEdNode_QuestSystemNode* MyNode = CastChecked<UEdNode_QuestSystemNode>(GraphNode);
 	if (MyNode->QuestSystemGraphNode->QuestSystem == nullptr)

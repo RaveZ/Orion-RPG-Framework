@@ -71,5 +71,4 @@ public:
 
 	/** Returns the event graph, if any */
 	static UEdGraph* FindQuestGraph(const UQuestSystemGraph* QuestSystemGraph);
-
 };

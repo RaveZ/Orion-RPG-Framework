@@ -14,15 +14,15 @@ class AController;
 /** This Delegate will be called if a quest objective has been completed*/
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FQuestObjectiveUpdated);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStartNavigateQuest);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStartNavigateQuest, UQuestSystem*, Quest);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestFailed, UQuestSystem*, Quest);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestCompleted, UQuestSystem*, Quest);
-
+	
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestAdded, UQuestSystem*, Quest);
 
-UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable, HideDropdown, ClassGroup = "Quest")
+UCLASS(meta=(BlueprintSpawnableComponent), Blueprintable, HideDropdown, ClassGroup = "QuestBuilder", DisplayName = "Quest Component")
 class QUEST_SYSTEM_RUNTIME_API UQuestComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -44,7 +44,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestComponent")
 		bool bQuestLoaded = false;
-	
+
+	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
+		TObjectPtr<UQuestSystem> CurrentNavigatedQuest;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 		FQuestObjectiveUpdated OnQuestObjectiveUpdated;
@@ -60,6 +62,8 @@ public:
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 		FQuestAdded OnQuestAdded;
+
+
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
@@ -85,8 +89,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void CompleteQuest(FName QuestID);
+
+
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		void StartNavigateQuest(UQuestSystem* InQuest);
 	
-	UFUNCTION(BlueprintPure, Category = "Narrative")
+	UFUNCTION(BlueprintPure, Category = "QuestComponent")
 		virtual APawn* GetOwningPawn() const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
@@ -126,6 +134,8 @@ public:
 
 	virtual void Load_Implementation(const FString& SaveFileName, int SlotIndex);
 
+	UFUNCTION()
+	bool ShouldUpdateQuest(UQuestSystem* QuestParam);
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;

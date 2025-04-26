@@ -79,7 +79,6 @@ struct FQuestDataHandle
 {
 	GENERATED_BODY()
 
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = QuestDataHandle, meta = (GetOptions = "Quest_System_Runtime.QuestBuilderFunctionLibrary.GetAllQuestID"))
 	FName QuestID;
 
@@ -93,7 +92,6 @@ struct FQuestDataHandle
 	}
 
 	QUEST_SYSTEM_RUNTIME_API void PostSerialize(const FArchive& Ar);
-
 };
 
 template<>
@@ -104,3 +102,4 @@ struct TStructOpsTypeTraits< FQuestDataHandle > : public TStructOpsTypeTraitsBas
 		WithPostSerialize = true,
 	};
 };
+

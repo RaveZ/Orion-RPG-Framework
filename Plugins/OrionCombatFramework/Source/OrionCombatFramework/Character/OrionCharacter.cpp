@@ -5,21 +5,40 @@
 
 #include "AbilitySystemComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include "OrionCombatFramework/AbilitySystem/OrionAbilitySystemComponent.h"
-#include "OrionCombatFramework/Player/OrionPlayerController.h"
-#include "OrionCombatFramework/Player/OrionPlayerState.h"
-#include "OrionCombatFramework/UI/HUD/OrionHUD.h"
-#include "OrionCombatFramework/AbilitySystem/OrionAttributeSet.h"
-#include "NiagaraComponent.h"
-#include "Camera/CameraComponent.h"
-#include "../OrionGameplayTags.h"
-#include "Abilities/GameplayAbilityTypes.h"
-#include "GameFramework/SpringArmComponent.h"
+#include "../AbilitySystem/OrionAbilitySystemComponent.h"
+#include "../Player/OrionPlayerController.h"
+#include "../Player/OrionPlayerState.h"
+#include "../UI/HUD/OrionHUD.h"
+#include "../AbilitySystem/OrionAttributeSet.h"
 #include "../Progression/LevelUpInfo.h"
 #include "../OrionLogChannels.h"
+#include "../OrionGameplayTags.h"
+#include "../AI/OrionAIController.h"
 
-AOrionCharacter::AOrionCharacter()
+#include "NiagaraComponent.h"
+#include "Camera/CameraComponent.h"
+#include "Abilities/GameplayAbilityTypes.h"
+#include "GameFramework/SpringArmComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
+#include "Engine/StaticMesh.h"
+#include "Components/SkeletalMeshComponent.h"
+
+AOrionCharacter::AOrionCharacter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
 {
+	HeldObjectRoot = CreateDefaultSubobject<USceneComponent>(TEXT("HeldObjectRoot"));
+	HeldObjectRoot->SetupAttachment(GetMesh());
+
+	SkeletalMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("SkeletalMesh"));
+	SkeletalMesh->SetupAttachment(HeldObjectRoot);
+
+	StaticMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("StaticMesh"));
+	StaticMesh->SetupAttachment(HeldObjectRoot);
+
+	AIControllerClass = AOrionAIController::StaticClass();
+
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>("CameraBoom");
 	CameraBoom->SetupAttachment(GetRootComponent());
 	CameraBoom->SetUsingAbsoluteRotation(true);
@@ -45,7 +64,15 @@ AOrionCharacter::AOrionCharacter()
 void AOrionCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+	UpdateHeldObject();
 	
+}
+
+void AOrionCharacter::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	UpdateHeldObjectAnimations();
 }
 
 void AOrionCharacter::PossessedBy(AController* NewController)
@@ -267,4 +294,83 @@ void AOrionCharacter::MulticastLevelUpParticles_Implementation() const
  		LevelUpNiagaraComponent->SetWorldRotation(ToCameraRotation);
  		LevelUpNiagaraComponent->Activate(true);
  	}
+}
+
+
+void AOrionCharacter::ClearHeldObject()
+{
+	StaticMesh->SetStaticMesh(nullptr);
+	SkeletalMesh->SetSkeletalMesh(nullptr);
+	SkeletalMesh->SetAnimInstanceClass(nullptr);
+}
+
+void AOrionCharacter::AttachToHand(UStaticMesh* NewStaticMesh, USkeletalMesh* NewSkeletalMesh, UClass* NewAnimClass,
+	bool bLeftHand, FVector Offset)
+{
+	ClearHeldObject();
+
+	if (IsValid(NewStaticMesh))
+	{
+		StaticMesh->SetStaticMesh(NewStaticMesh);
+	}
+	else if (IsValid(NewSkeletalMesh))
+	{
+		SkeletalMesh->SetSkeletalMesh(NewSkeletalMesh);
+		if (IsValid(NewAnimClass))
+		{
+			SkeletalMesh->SetAnimInstanceClass(NewAnimClass);
+		}
+	}
+
+	FName AttachBone;
+	if (bLeftHand)
+	{
+		AttachBone = TEXT("VB LHS_ik_hand_gun");
+	}
+	else
+	{
+		AttachBone = TEXT("VB RHS_ik_hand_gun");
+	}
+
+	HeldObjectRoot->AttachToComponent(GetMesh(),
+		FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachBone);
+	HeldObjectRoot->SetRelativeLocation(Offset);
+}
+
+void AOrionCharacter::RagdollStart()
+{
+	ClearHeldObject();
+	Super::RagdollStart();
+}
+
+void AOrionCharacter::RagdollEnd()
+{
+	Super::RagdollEnd();
+	UpdateHeldObject();
+}
+
+ECollisionChannel AOrionCharacter::GetThirdPersonTraceParams(FVector& TraceOrigin, float& TraceRadius)
+{
+	const FName CameraSocketName = bRightShoulder ? TEXT("TP_CameraTrace_R") : TEXT("TP_CameraTrace_L");
+	TraceOrigin = GetMesh()->GetSocketLocation(CameraSocketName);
+	TraceRadius = 15.0f;
+	return ECC_Camera;
+}
+
+FTransform AOrionCharacter::GetThirdPersonPivotTarget()
+{
+	return FTransform(GetActorRotation(),
+		(GetMesh()->GetSocketLocation(TEXT("Head")) + GetMesh()->GetSocketLocation(TEXT("root"))) / 2.0f,
+		FVector::OneVector);
+}
+
+FVector AOrionCharacter::GetFirstPersonCameraTarget()
+{
+	return GetMesh()->GetSocketLocation(TEXT("FP_Camera"));
+}
+
+void AOrionCharacter::OnOverlayStateChanged(EOrionOverlayState PreviousState)
+{
+	Super::OnOverlayStateChanged(PreviousState);
+	UpdateHeldObject();
 }

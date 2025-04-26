@@ -10,7 +10,8 @@
 #include "../UI/Widget/OrionUserWidget.h"
 #include "../OrionGameplayTags.h"
 
-AOrionEnemy::AOrionEnemy()
+AOrionEnemy::AOrionEnemy(const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer)
 {
 	GetMesh()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	AbilitySystemComponent = CreateDefaultSubobject<UOrionAbilitySystemComponent>("AbilitySystemComponent");

@@ -24,3 +24,8 @@ bool UIsQuestFailed::IsConditionMet_Implementation() const
     }
     return false;
 }
+
+FString UIsQuestFailed::GetNodeDisplayText_Implementation() const
+{
+    return FString::Printf(TEXT("Is Quest Failed :  %s"), *QuestID.ToString());
+}

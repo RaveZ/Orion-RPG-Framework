@@ -10,23 +10,7 @@
 
 UJumpToNode::UJumpToNode()
 {
-}
-
-TArray<FName> UJumpToNode::GetNextNodeID()
-{
-	TArray<FName> NodeIDs;
-	if(GetOwningQuestSystem())
-	{
-		for (UQuestSystemGraphNode* Node : GetOwningQuestSystem()->AllNodes)
-		{
-			if (Node)
-			{
-				if (UQuestSystemGraphNode_Root* RootNode = Cast<UQuestSystemGraphNode_Root>(Node)) continue;
-				NodeIDs.Emplace(Node->ID);
-			}
-		}
-	}
-	return NodeIDs;
+	bUseNodeID = true;
 }
 
 void UJumpToNode::BeginEvent_Implementation()

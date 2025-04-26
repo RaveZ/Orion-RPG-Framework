@@ -27,24 +27,6 @@ enum class EQuestState : uint8
 	E_Unlocked		UMETA(DisplayName = "UNLOCKED"),
 };
 
-/** Reward Data for Quest*/
-USTRUCT(BlueprintType)
-struct FRewardData
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Reward Tag"), Category = RewardData)
-		FString RewardTag;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Reward Name"), Category = RewardData)
-		FString RewardName;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "Reward Quantity"), Category = RewardData)
-		int RewardQuantity = 0;
-
-};
-
-
 
 UCLASS(Blueprintable)
 class QUEST_SYSTEM_RUNTIME_API UQuestSystem : public UObject
@@ -64,11 +46,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestSystem", meta = (MultiLine = true))
 		FText Description; 
 
-
-	/** Reward for your Quest*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "QuestSystem")
-		TArray<FRewardData> Rewards;
-
 	/**Make your quest can be aborted*/
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestConditions")
 		bool bCanQuestBeAborted = false;
@@ -77,7 +54,7 @@ public:
 	* FALSE : Use Quest Condition To Activate/Unlock the Quest
 	*/
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestConditions", meta = (DisplayName = "AutoActivateQuest?"))
-		bool bAutoActivateQuest = false;
+		bool bAutoActivateQuest = true;
 
 	/**Conditions to unlock the Quest*/
 	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "QuestConditions", meta = (EditCondition = "bAutoActivateQuest == false", EditConditionHides))

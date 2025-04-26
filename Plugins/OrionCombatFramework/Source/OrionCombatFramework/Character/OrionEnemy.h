@@ -17,7 +17,7 @@ class ORIONCOMBATFRAMEWORK_API AOrionEnemy : public AOrionCharacterBase, public 
 
 public:
 	// Sets default values for this character's properties
-	AOrionEnemy();
+	AOrionEnemy(const FObjectInitializer& ObjectInitializer);
 	
 	virtual void HighlightActor() override;
 	virtual void UnHighlightActor() override;

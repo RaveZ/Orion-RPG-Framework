@@ -43,6 +43,8 @@ bool UQuestComponent::BeginQuest(UQuestSystemGraph* QuestAsset)
 
 	for (UQuestSystem* QuestSystem : QuestAsset->QuestSystems)
 	{
+		if (!ShouldUpdateQuest(QuestSystem))
+			continue;
 		EvaluateQuestCondition(QuestSystem);
 	}
 
@@ -245,6 +247,16 @@ void UQuestComponent::CompleteQuest(FName QuestID)
 	}
 }
 
+void UQuestComponent::StartNavigateQuest(UQuestSystem* InQuest)
+{
+	if (InQuest)
+	{
+		CurrentNavigatedQuest = InQuest;
+		OnStartNavigateQuest.Broadcast(InQuest);
+	}
+}
+
+
 APawn* UQuestComponent::GetOwningPawn() const
 {
 	if (OwningController)
@@ -305,7 +317,7 @@ void UQuestComponent::UpdateQuest()
 		FName Key = It.Key;
 		UQuestSystem* QuestSystem = It.Value;
 		
-		if (QuestSystem->QuestState == EQuestState::E_Complete || QuestSystem->QuestState == EQuestState::E_Fail)
+		if (!ShouldUpdateQuest(QuestSystem))
 			continue;
 
 		EvaluateQuestCondition(QuestSystem);
@@ -397,7 +409,8 @@ void UQuestComponent::EvaluateQuestCondition(UQuestSystem* QuestParam)
 
 void UQuestComponent::EvaluateQuestState(UQuestSystem* QuestParam, int SumConditionMet)
 {
-
+	if (QuestParam->QuestState == EQuestState::E_Complete || QuestParam->QuestState == EQuestState::E_Fail)
+		return;
 	if (QuestParam->bAutoActivateQuest)
 	{
 		ActivateQuest(QuestParam->QuestID);
@@ -622,6 +635,12 @@ void UQuestComponent::Load_Implementation(const FString& SaveFileName, int SlotI
 	}
 
 }
+
+bool UQuestComponent::ShouldUpdateQuest(UQuestSystem* QuestParam)
+{
+	return !(QuestParam->QuestState == EQuestState::E_Complete || QuestParam->QuestState == EQuestState::E_Fail);
+}
+
 
 // Called when the game starts
 void UQuestComponent::BeginPlay()

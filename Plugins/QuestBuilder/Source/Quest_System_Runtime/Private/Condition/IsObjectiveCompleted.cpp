@@ -8,7 +8,8 @@
 
 UIsObjectiveCompleted::UIsObjectiveCompleted()
 {
-
+    bUseQuestID = true;
+	bUseNodeID = true;
 }
 
 bool UIsObjectiveCompleted::IsConditionMet_Implementation() const
@@ -25,4 +26,9 @@ bool UIsObjectiveCompleted::IsConditionMet_Implementation() const
         }
     }
     return false;
+}
+
+FString UIsObjectiveCompleted::GetNodeDisplayText_Implementation() const
+{
+    return FString::Printf(TEXT("Is Objective Completed :  %s"), *NodeID.ToString());
 }

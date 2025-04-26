@@ -26,6 +26,8 @@ public class OrionCombatFramework : ModuleRules
 			new string[]
 			{
 				"Core",
+                "AIModule",
+                "PhysicsCore"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

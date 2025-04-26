@@ -24,3 +24,8 @@ bool UIsQuestActive::IsConditionMet_Implementation() const
     }
     return false;
 }
+
+FString UIsQuestActive::GetNodeDisplayText_Implementation() const
+{
+    return FString::Printf(TEXT("Is Quest Active :  %s"), *QuestID.ToString());
+}

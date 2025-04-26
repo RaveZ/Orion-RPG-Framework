@@ -16,8 +16,7 @@ class QUEST_SYSTEM_RUNTIME_API UIsObjectiveCompleted : public UQuestCondition
 public:
 	UIsObjectiveCompleted();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestCondition")
-	FName NodeID;
 
 	virtual bool IsConditionMet_Implementation() const override;
+	virtual FString GetNodeDisplayText_Implementation() const override;
 };

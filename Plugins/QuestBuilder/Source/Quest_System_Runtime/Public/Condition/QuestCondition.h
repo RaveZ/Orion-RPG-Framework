@@ -8,7 +8,7 @@
 
 class UQuestSystemGraph;
 
-UCLASS(Blueprintable, EditInlineNew, HideDropdown)
+UCLASS(Abstract, Blueprintable, EditInlineNew, HideDropdown)
 class QUEST_SYSTEM_RUNTIME_API UQuestCondition : public UObject
 {
 	GENERATED_BODY()
@@ -16,11 +16,19 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "QuestCondition")
 		UQuestSystemGraph* QuestGraph;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestCondition")
+	/**Display quest ID in property panel?*/
+	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
 		bool bUseQuestID = false;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestCondition", meta = (GetOptions = "GetAllQuestID", EditCondition = "bUseQuestID == true", HideEditConditionToggle, EditConditionHides))
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bUseQuestID == true", HideEditConditionToggle, EditConditionHides, GetOptions = "GetAllQuestID"))
 		FName QuestID;
+
+	/** Display Node ID in property panel?*/
+	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
+		bool bUseNodeID = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bUseNodeID == true", HideEditConditionToggle, EditConditionHides, GetOptions = "GetAllNodeID"))
+		FName NodeID;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "QuestCondition")
 		UQuestSystem* QuestSystem;
@@ -51,6 +59,13 @@ public:
 		UQuestSystem* GetOwningQuestSystem() const;
 
 	UFUNCTION(CallInEditor)
-		TArray<FName> GetAllQuestID();
-	
+	virtual	TArray<FName> GetAllQuestID();
+
+	UFUNCTION(CallInEditor)
+	virtual TArray<FName> GetAllNodeID();
+
+#if WITH_EDITOR
+protected:
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 };

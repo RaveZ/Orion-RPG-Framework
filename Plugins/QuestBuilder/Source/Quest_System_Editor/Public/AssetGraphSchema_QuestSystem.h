@@ -26,7 +26,7 @@ public:
 	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 
-	UEdNode_QuestSystemNode* NodeTemplate;
+	TObjectPtr<UEdNode_QuestSystemNode> NodeTemplate;
 };
 
 USTRUCT()
@@ -43,7 +43,7 @@ public:
 	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 
-	UEdNode_QuestSystemEdge* NodeTemplate;
+	TObjectPtr <UEdNode_QuestSystemEdge> NodeTemplate;
 };
 
 /** Reference to a  event graph (only used in 'docked' palette) */

@@ -39,7 +39,7 @@ public:
 	FText GetPinTooltip(UEdGraphPin* GraphPinObj) const;
 
 	virtual FSlateColor GetBorderBackgroundColor() const;
-	virtual FSlateColor GetHighlightColor() const;
+	virtual FSlateColor GetNodeHighlightColor() const;
 	virtual FSlateColor GetBackgroundColor() const;
 
 	virtual EVisibility GetDragOverMarkerVisibility() const;
@@ -53,5 +53,5 @@ protected:
 	TSharedPtr<SHorizontalBox> OutputPinBox;
 	TSharedPtr<SWidget> QuestNodeWidgetRef;
 
-	virtual EVisibility GetBlueprintIconVisibility() const;
+	EVisibility GetBlueprintIconVisibility() const;
 };

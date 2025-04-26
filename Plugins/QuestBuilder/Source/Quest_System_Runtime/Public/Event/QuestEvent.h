@@ -23,7 +23,7 @@ enum class EEventRunType : uint8
 	E_Both			UMETA(DisplayName = "BOTH"),
 };
 
-UCLASS(Blueprintable, EditInlineNew, HideDropdown)
+UCLASS(Abstract, Blueprintable, EditInlineNew, HideDropdown)
 class QUEST_SYSTEM_RUNTIME_API UQuestEvent : public UObject
 {
 	GENERATED_BODY()
@@ -41,11 +41,15 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
 		bool bUseQuestID = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (GetOptions = "GetAllQuestID"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bUseQuestID == true", HideEditConditionToggle, EditConditionHides, GetOptions = "GetAllQuestID"))
 		FName QuestID;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (GetOptions = "GetAllQuestID"))
-		FQuestDataHandle QuestDataHandle;
+	/** Display Node ID in property panel?*/
+	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
+		bool bUseNodeID = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bUseNodeID == true", HideEditConditionToggle, EditConditionHides, GetOptions = "GetAllNodeID"))
+		FName NodeID;
 
 	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
 		bool StartLaunched = false;
@@ -85,7 +89,13 @@ public:
 		UQuestSystem* GetOwningQuestSystem() const;
 
 	UFUNCTION(CallInEditor, BlueprintCallable)
-	static TArray<FName> GetAllQuestID();
+	virtual TArray<FName> GetAllQuestID();
 
+	UFUNCTION(CallInEditor)
+	virtual TArray<FName> GetAllNodeID();
 
+#if WITH_EDITOR
+protected:
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 };

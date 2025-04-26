@@ -24,3 +24,8 @@ bool UIsQuestCompleted::IsConditionMet_Implementation() const
     }
     return false;
 }
+
+FString UIsQuestCompleted::GetNodeDisplayText_Implementation() const
+{
+    return FString::Printf(TEXT("Is Quest Completed :  %s"), *QuestID.ToString());
+}

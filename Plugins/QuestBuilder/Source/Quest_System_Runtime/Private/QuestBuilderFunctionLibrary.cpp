@@ -7,6 +7,9 @@
 #include "QuestSystemGraphNode.h"
 #include "QuestSystemGraphNode_Root.h"
 #include "QuestSystem.h"
+#include "QuestData.h"
+#include "QuestComponent.h"
+#include "Kismet/GameplayStatics.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 
 TArray<FName> UQuestBuilderFunctionLibrary::GetAllQuestID()
@@ -35,7 +38,6 @@ TArray<FName> UQuestBuilderFunctionLibrary::GetAllQuestID()
 
 TArray<FName> UQuestBuilderFunctionLibrary::GetNodeIDFromCachedQuest()
 {
-	FQuest_System_RuntimeModule& RuntimeModule = FModuleManager::GetModuleChecked<FQuest_System_RuntimeModule>(TEXT("Quest_System_Runtime"));
 	TArray<FName> NodeIDs;
     // Load all UQuestSystemGraph assets
     TArray<FAssetData> AssetDataArray;
@@ -49,7 +51,8 @@ TArray<FName> UQuestBuilderFunctionLibrary::GetNodeIDFromCachedQuest()
         {
             for (UQuestSystem* Quest : QuestGraph->QuestSystems)
             {
-                if (Quest->QuestID != RuntimeModule.CachedQuestID) continue;
+                //TODO : Fix Cached QuestID BUG
+                //if (Quest->QuestID != RuntimeModule.CachedQuestID) continue;
                 for (UQuestSystemGraphNode* Node : Quest->AllNodes)
                 {
                     if (Node)
@@ -64,4 +67,41 @@ TArray<FName> UQuestBuilderFunctionLibrary::GetNodeIDFromCachedQuest()
 	return NodeIDs;
 
 
+}
+
+UQuestComponent* UQuestBuilderFunctionLibrary::GetQuestComponent(const UObject* WorldContextObject)
+{
+    return GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0));
+}
+
+UQuestComponent* UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(AActor* Target)
+{
+    if (!Target)
+    {
+        return nullptr;
+    }
+
+    if (UQuestComponent* QuestComp = Target->FindComponentByClass<UQuestComponent>())
+    {
+        return QuestComp;
+    }
+
+    //Quest comp may be on the controllers pawn or pawns controller
+    if (APlayerController* OwningController = Cast<APlayerController>(Target))
+    {
+        if (OwningController->GetPawn())
+        {
+            return OwningController->GetPawn()->FindComponentByClass<UQuestComponent>();
+        }
+    }
+
+    if (APawn* OwningPawn = Cast<APawn>(Target))
+    {
+        if (OwningPawn->GetController())
+        {
+            return OwningPawn->GetController()->FindComponentByClass<UQuestComponent>();
+        }
+    }
+
+    return nullptr;
 }

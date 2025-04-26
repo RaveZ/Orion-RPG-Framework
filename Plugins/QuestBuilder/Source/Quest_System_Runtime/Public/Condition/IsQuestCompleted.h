@@ -19,4 +19,5 @@ public:
 
 
 	virtual bool IsConditionMet_Implementation() const override;
+	virtual FString GetNodeDisplayText_Implementation() const override;
 };
