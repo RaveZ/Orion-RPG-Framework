@@ -7,6 +7,7 @@
 #include "QuestCondition.generated.h"
 
 class UQuestSystemGraph;
+class UQuestSystemGraphNode;
 
 UCLASS(Abstract, Blueprintable, EditInlineNew, HideDropdown)
 class QUEST_SYSTEM_RUNTIME_API UQuestCondition : public UObject
@@ -14,7 +15,10 @@ class QUEST_SYSTEM_RUNTIME_API UQuestCondition : public UObject
 	GENERATED_BODY()
 public:
 	UPROPERTY(BlueprintReadOnly, Category = "QuestCondition")
-		UQuestSystemGraph* QuestGraph;
+		TObjectPtr<UQuestSystemGraph> QuestGraph;
+
+	UPROPERTY(BlueprintReadOnly, Category = "QuestCondition")
+		TObjectPtr<UQuestSystemGraphNode> OwningNode;
 
 	/**Display quest ID in property panel?*/
 	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
@@ -31,7 +35,7 @@ public:
 		FName NodeID;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "QuestCondition")
-		UQuestSystem* QuestSystem;
+		TObjectPtr<UQuestSystem> QuestSystem;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestCondition")
 		bool IsConditionMet() const;

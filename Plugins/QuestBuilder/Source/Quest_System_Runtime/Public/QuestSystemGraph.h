@@ -12,6 +12,7 @@ class UQuestComponent;
 class UQuestSystemGraphNode;
 class UQuestSystemGraphEdge;
 class AController;
+class APawn;
 
 
 UCLASS(Blueprintable)
@@ -32,19 +33,19 @@ public:
 
 	/** Set of QuestSystem linked with Quest Graph Pages */
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraph")
-		TArray<UQuestSystem*> QuestSystems;
+		TArray< TObjectPtr<UQuestSystem>> QuestSystems;
 
 	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly, Category = "QuestSystemGraph")
 		bool bEdgeEnabled;
 
 	UPROPERTY(BlueprintReadWrite, Category = "QuestSystemGraph")
-		AController* OwningController;
+		TObjectPtr<AController> OwningController;
 
 	UPROPERTY(BlueprintReadWrite, Category = "QuestSystemGraph")
-		UQuestComponent* QuestComponent;
+		TObjectPtr < UQuestComponent> QuestComponent;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraph")
-		class APawn* OwningPawn;
+		TObjectPtr<APawn> OwningPawn;
 
 
 #if WITH_EDITORONLY_DATA

@@ -35,12 +35,11 @@ class QUEST_SYSTEM_RUNTIME_API UQuestSystem : public UObject
 public:
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "QuestAssets")
-		UQuestSystemGraph* QuestGraph;
+	TObjectPtr<UQuestSystemGraph> QuestGraph;
 
 	/** Quest ID */
 	UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly, Category = "QuestSystem")
 		FName QuestID;
-
 
 	/** Description for your quest*/
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestSystem", meta = (MultiLine = true))
@@ -58,7 +57,7 @@ public:
 
 	/**Conditions to unlock the Quest*/
 	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "QuestConditions", meta = (EditCondition = "bAutoActivateQuest == false", EditConditionHides))
-		TArray<UQuestCondition*> Conditions;
+		TArray<TObjectPtr<UQuestCondition>> Conditions;
 
 	/**
 	* TRUE : Unlock Quest
@@ -77,16 +76,16 @@ public:
 		EQuestState QuestState = EQuestState::E_Locked;
 	
 	UPROPERTY(BlueprintReadWrite, Category = "QuestSystem")
-		UQuestSystemGraphNode* CurrentNode;
+		TObjectPtr<UQuestSystemGraphNode> CurrentNode;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystem")
-		TArray<UQuestSystemGraphNode*> RootNodes;
+		TArray< TObjectPtr<UQuestSystemGraphNode>> RootNodes;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystem")
-		TArray<UQuestSystemGraphNode*> AllNodes;
+		TArray< TObjectPtr<UQuestSystemGraphNode>> AllNodes;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystem")
-		TMap<FName, UQuestSystemGraphNode*> NodeMap;
+		TMap<FName, TObjectPtr<UQuestSystemGraphNode>> NodeMap;
 
 
 	UFUNCTION(BlueprintCallable, Category = "QuestSystem")

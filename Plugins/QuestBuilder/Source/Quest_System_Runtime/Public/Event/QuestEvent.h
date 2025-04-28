@@ -31,11 +31,11 @@ public:
 	UQuestEvent();
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestEvent")
-		UQuestSystemGraph* QuestGraph;
+		TObjectPtr<UQuestSystemGraph> QuestGraph;
 		
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestTask")
-		UQuestSystemGraphNode* OwningNode;
+	UPROPERTY(BlueprintReadOnly, Category = "QuestEvent")
+		TObjectPtr<UQuestSystemGraphNode> OwningNode;
 
 	/**Display quest ID in property panel?*/
 	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
@@ -58,7 +58,7 @@ public:
 		bool EndLaunched = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestEvent")
-		UQuestSystem* QuestSystem;
+		TObjectPtr<UQuestSystem> QuestSystem;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "QuestEvent")
 		EEventRunType EventRunType = EEventRunType::E_Start;

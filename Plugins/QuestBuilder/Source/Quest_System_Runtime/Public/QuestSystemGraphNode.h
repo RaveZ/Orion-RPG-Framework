@@ -38,25 +38,25 @@ public:
 		FName ID;
 	
 	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Events")
-		TArray<UQuestEvent*> Events;
+		TArray<TObjectPtr<UQuestEvent>> Events;
 
-	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Branching Conditions", meta = (DisplayName = "Branching Conditions"))
-		TArray<UQuestCondition*> Conditions;
-
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
-		UQuestSystemGraph* QuestGraph;
+	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = BranchingConditions, meta = (DisplayName = "Branching Conditions"))
+		TArray<TObjectPtr<UQuestCondition>> Conditions;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
-		UQuestSystem* QuestSystem;
+		TObjectPtr<UQuestSystemGraph> QuestGraph;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
-		TArray<UQuestSystemGraphNode*> ParentNodes;
+		TObjectPtr<UQuestSystem> QuestSystem;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
-		TArray<UQuestSystemGraphNode*> ChildrenNodes;
+		TArray<TObjectPtr<UQuestSystemGraphNode>> ParentNodes;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
-		TMap<UQuestSystemGraphNode*, UQuestSystemGraphEdge*> Edges;
+		TArray<TObjectPtr<UQuestSystemGraphNode>> ChildrenNodes;
+
+	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
+		TMap<TObjectPtr<UQuestSystemGraphNode>, TObjectPtr<UQuestSystemGraphEdge>> Edges;
 
 
 	UFUNCTION(BlueprintCallable, Category = "QuestSystemGraphNode")

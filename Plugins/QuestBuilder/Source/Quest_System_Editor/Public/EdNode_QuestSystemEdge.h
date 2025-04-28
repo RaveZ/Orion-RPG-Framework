@@ -11,6 +11,7 @@
 class UQuestSystemGraphNode;
 class UQuestSystemGraphEdge;
 class UEdNode_QuestSystemNode;
+class UEdGraph;
 
 UCLASS()
 class QUEST_SYSTEM_EDITOR_API UEdNode_QuestSystemEdge : public UEdGraphNode
@@ -20,10 +21,10 @@ public:
 	UEdNode_QuestSystemEdge();
 
 	UPROPERTY()
-		class UEdGraph* Graph;
+		TObjectPtr<UEdGraph> Graph;
 
 	UPROPERTY(VisibleAnywhere, Instanced, Category = "QuestSystemGraph")
-		UQuestSystemGraphEdge* QuestSystemGraphEdge;
+		TObjectPtr<UQuestSystemGraphEdge> QuestSystemGraphEdge;
 
 	void SetEdge(UQuestSystemGraphEdge* Edge);
 

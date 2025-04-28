@@ -57,14 +57,14 @@ public:
 		float TickInterval;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Task")
-		UQuestSystemGraph* QuestGraph;
+		TObjectPtr<UQuestSystemGraph> QuestGraph;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Task")
-		UQuestSystem* QuestSystem;
+		TObjectPtr<UQuestSystem> QuestSystem;
 
 
 	UPROPERTY(BlueprintReadOnly, Category = "Task")
-		UQuestSystemGraphNode_Objective* ObjectiveNode;
+		TObjectPtr<UQuestSystemGraphNode_Objective> ObjectiveNode;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Task")
 		ETaskState TaskState = ETaskState::E_Active;

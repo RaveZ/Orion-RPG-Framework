@@ -16,7 +16,7 @@ class QUEST_SYSTEM_RUNTIME_API UQuestSystemGraphNode_Objective : public UQuestSy
 public:
 	/**List of task for your objective*/
 	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Objective", meta = (EditFixedOrder))
-		TArray<UQuestTask*> Tasks;
+		TArray<TObjectPtr<UQuestTask>> Tasks;
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 		bool IsAllTaskCompleted();

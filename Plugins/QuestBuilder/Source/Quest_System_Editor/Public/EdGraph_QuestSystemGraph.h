@@ -30,13 +30,13 @@ public:
 
 	/** QuestSystem linked with this UEdGraph */
 	UPROPERTY(VisibleAnywhere, Instanced, Category = "QuestSystemGraph")
-		UQuestSystem* QuestSystem;
+		TObjectPtr<UQuestSystem> QuestSystem;
 
 	UPROPERTY(Transient)
-		TMap<UQuestSystemGraphNode*, UEdNode_QuestSystemNode*> NodeMap;
+		TMap< TObjectPtr<UQuestSystemGraphNode>, TObjectPtr<UEdNode_QuestSystemNode>> NodeMap;
 
 	UPROPERTY(Transient)
-		TMap<UQuestSystemGraphEdge*, UEdNode_QuestSystemEdge*> EdgeMap;
+		TMap< TObjectPtr<UQuestSystemGraphEdge>, TObjectPtr<UEdNode_QuestSystemEdge>> EdgeMap;
 
 
 	void Clear();

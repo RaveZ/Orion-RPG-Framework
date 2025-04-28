@@ -110,6 +110,7 @@ void UEdGraph_QuestSystemGraph::RebuildQuestSystemGraph()
 			{
 				if (QuestCondition != nullptr)
 				{
+					QuestCondition->OwningNode = QuestSystemGraphNode;
 					QuestCondition->QuestGraph = Graph;
 					QuestCondition->QuestSystem = QuestSystem;
 				}

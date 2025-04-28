@@ -38,22 +38,21 @@ public:
 	UQuestComponent();
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestComponent")
-		AController* OwningController;
+		TObjectPtr<AController> OwningController;
 
 	/** Array of QuestGraph that is Running*/
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
-		TArray<UQuestSystemGraph*> QuestGraphs;
+		TArray< TObjectPtr<UQuestSystemGraph>> QuestGraphs;
 
 	/** Map of Quest ID and attached Quest System That is Running*/
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
-		TMap<FName, UQuestSystem*> QuestSystemMap;
+		TMap<FName, TObjectPtr<UQuestSystem>> QuestSystemMap;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestComponent")
 		bool bQuestLoaded = false;
 
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
 		TObjectPtr<UQuestSystem> CurrentNavigatedQuest;
-
 public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 		FQuestObjectiveUpdated OnQuestObjectiveUpdated;

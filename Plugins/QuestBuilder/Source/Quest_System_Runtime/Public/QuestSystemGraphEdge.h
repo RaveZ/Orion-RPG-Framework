@@ -19,13 +19,13 @@ public:
 	virtual ~UQuestSystemGraphEdge();
 
 	UPROPERTY(VisibleAnywhere, Category = "GenericGraphNode")
-		UQuestSystemGraph* Graph;
+		TObjectPtr<UQuestSystemGraph> Graph;
 
 	UPROPERTY(BlueprintReadOnly, Category = "GenericGraphEdge")
-		UQuestSystemGraphNode* StartNode;
+		TObjectPtr<UQuestSystemGraphNode> StartNode;
 
 	UPROPERTY(BlueprintReadOnly, Category = "GenericGraphEdge")
-		UQuestSystemGraphNode* EndNode;
+		TObjectPtr<UQuestSystemGraphNode> EndNode;
 
 	UFUNCTION(BlueprintPure, Category = "GenericGraphEdge")
 		UQuestSystemGraph* GetGraph() const;

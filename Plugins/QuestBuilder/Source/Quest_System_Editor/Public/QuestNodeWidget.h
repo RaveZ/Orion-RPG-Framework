@@ -6,6 +6,10 @@
 #include "Blueprint/UserWidget.h"
 #include "QuestNodeWidget.generated.h"
 
+class UQuestSystemGraphNode;
+class UQuestSystem;
+class UVerticalBox;
+
 UCLASS()
 class QUEST_SYSTEM_EDITOR_API UQuestNodeWidget : public UUserWidget
 {
@@ -21,16 +25,16 @@ public:
 protected:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Quest Node")
-	class UQuestSystemGraphNode* Node;
+		TObjectPtr<UQuestSystemGraphNode> Node;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Quest Node")
-	class UQuestSystem* Quest;
+		TObjectPtr<UQuestSystem> Quest;
 
 public:
 
 	UPROPERTY(meta = (BindWidget))
-	class UVerticalBox* LeftPinBox;
+		TObjectPtr<UVerticalBox> LeftPinBox;
 
 	UPROPERTY(meta = (BindWidget))
-	class UVerticalBox* RightPinBox;
+		TObjectPtr<UVerticalBox> RightPinBox;
 };
