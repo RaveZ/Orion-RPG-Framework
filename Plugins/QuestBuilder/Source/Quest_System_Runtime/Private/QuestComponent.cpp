@@ -28,7 +28,41 @@ UQuestComponent::UQuestComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
+// Called when the game starts
+void UQuestComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	QuestSystemMap.Empty();
+	bQuestLoaded = false;
+	//Set Dependency
+	OwningController = Cast<AController>(GetOwner());
 
+	OnQuestObjectiveUpdated.AddDynamic(this, &UQuestComponent::QuestObjectiveUpdated);
+	OnStartNavigateQuest.AddDynamic(this, &UQuestComponent::StartNavigatingQuest);
+	OnQuestFailed.AddDynamic(this, &UQuestComponent::QuestFailed);
+	OnQuestCompleted.AddDynamic(this, &UQuestComponent::QuestCompleted);
+	OnQuestAdded.AddDynamic(this, &UQuestComponent::QuestAdded);
+	OnBeginSave.AddDynamic(this, &UQuestComponent::BeginSave);
+	OnSaveComplete.AddDynamic(this, &UQuestComponent::SaveComplete);
+	OnBeginLoad.AddDynamic(this, &UQuestComponent::BeginLoad);
+	OnLoadComplete.AddDynamic(this, &UQuestComponent::LoadComplete);
+
+#if WITH_ORION_COMBAT_FRAMEWORK
+
+#else
+
+#endif
+
+}
+
+
+// Called every frame
+void UQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+	// ...
+}
 
 bool UQuestComponent::BeginQuest(UQuestSystemGraph* QuestAsset)
 {
@@ -504,6 +538,7 @@ void UQuestComponent::BeginNode(UQuestSystem* QuestParam)
 
 void UQuestComponent::Save_Implementation(const FString& SaveFileName, int SlotIndex)
 {
+	OnBeginSave.Broadcast(SaveFileName);
 	//Create New Save
 	if (UQuestSaveObject* QuestSaveObject = Cast<UQuestSaveObject>(UGameplayStatics::CreateSaveGameObject(UQuestSaveObject::StaticClass())))
 	{
@@ -563,15 +598,20 @@ void UQuestComponent::Save_Implementation(const FString& SaveFileName, int SlotI
 			
 		}
 
-		UGameplayStatics::SaveGameToSlot(QuestSaveObject, SaveFileName, SlotIndex);
+		if (UGameplayStatics::SaveGameToSlot(QuestSaveObject, SaveFileName, SlotIndex))
+		{
+			OnSaveComplete.Broadcast(SaveFileName);
+		}
 	}
-	
-
-
 }
 
 void UQuestComponent::Load_Implementation(const FString& SaveFileName, int SlotIndex) 
 {
+	if (!UGameplayStatics::DoesSaveGameExist(SaveFileName, 0))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Quest Component: Loading Save file failed, %s save file does not exist "), *SaveFileName);
+		return;
+	}
 	TMap<FName, UQuestSystem*> QuestMap;
 	for (TObjectIterator<UQuestSystemGraph> It; It; ++It)
 	{
@@ -583,6 +623,7 @@ void UQuestComponent::Load_Implementation(const FString& SaveFileName, int SlotI
 
 	if (UQuestSaveObject* LoadedData = Cast<UQuestSaveObject>(UGameplayStatics::LoadGameFromSlot(SaveFileName, SlotIndex)))
 	{
+		OnBeginLoad.Broadcast(SaveFileName);
 		bQuestLoaded = true;
 		for (const auto& QuestIt : LoadedData->QuestMapData)
 		{
@@ -630,10 +671,21 @@ void UQuestComponent::Load_Implementation(const FString& SaveFileName, int SlotI
 						}
 					}
 				}
+				OnLoadComplete.Broadcast(SaveFileName);
 			}
 		}
 	}
 
+}
+
+bool UQuestComponent::DeleteSave(const FString& SaveName, const int32 Slot)
+{
+	if (!UGameplayStatics::DoesSaveGameExist(SaveName, 0))
+	{
+		return false;
+	}
+
+	return UGameplayStatics::DeleteGameInSlot(SaveName, Slot);
 }
 
 bool UQuestComponent::ShouldUpdateQuest(UQuestSystem* QuestParam)
@@ -642,30 +694,63 @@ bool UQuestComponent::ShouldUpdateQuest(UQuestSystem* QuestParam)
 }
 
 
-// Called when the game starts
-void UQuestComponent::BeginPlay()
-{
-	Super::BeginPlay();
-	QuestSystemMap.Empty();
-	bQuestLoaded = false;
-	//Set Dependency
-	OwningController = Cast<AController>(GetOwner());
 
-#if WITH_ORION_COMBAT_FRAMEWORK
-
-#else
-
-#endif
-	
-}
-
-
-// Called every frame
-void UQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	// ...
-}
 
 #undef LOCTEXT_NAMESPACE
+
+void UQuestComponent::QuestObjectiveUpdated()
+{
+	UpdateQuest();
+}
+
+void UQuestComponent::StartNavigatingQuest(UQuestSystem* Quest)
+{
+	if (Quest)
+	{
+        UE_LOG(LogTemp, Log, TEXT("Start Navigating Quest: %s"), *Quest->QuestID.ToString());  
+    }  
+}
+
+void UQuestComponent::QuestFailed(UQuestSystem* Quest)
+{
+	if (Quest)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Quest failed: %s"), *Quest->QuestID.ToString());
+	}
+}
+
+void UQuestComponent::QuestCompleted(UQuestSystem* Quest)
+{
+	if (Quest)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Quest Completed: %s"), *Quest->QuestID.ToString());
+	}
+}
+
+void UQuestComponent::QuestAdded(UQuestSystem* Quest)
+{
+	if (Quest)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Quest Added: %s"), *Quest->QuestID.ToString());
+	}
+}
+
+void UQuestComponent::BeginSave(FString SaveName)
+{
+	UE_LOG(LogTemp, Verbose, TEXT("Begun saving using save name: %s"), *SaveName);
+}
+
+void UQuestComponent::BeginLoad(FString SaveName)
+{
+	UE_LOG(LogTemp, Verbose, TEXT("Begun loading using save name: %s"), *SaveName);
+}
+
+void UQuestComponent::SaveComplete(FString SaveName)
+{
+	UE_LOG(LogTemp, Verbose, TEXT("Save complete for save name: %s"), *SaveName);
+}
+
+void UQuestComponent::LoadComplete(FString SaveName)
+{
+	UE_LOG(LogTemp, Verbose, TEXT("Load complete for save name: %s"), *SaveName);
+}

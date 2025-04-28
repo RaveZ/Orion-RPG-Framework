@@ -27,6 +27,7 @@ const FName NAME_PivotOffset_Y(TEXT("PivotOffset_Y"));
 const FName NAME_PivotOffset_Z(TEXT("PivotOffset_Z"));
 const FName NAME_RotationLagSpeed(TEXT("RotationLagSpeed"));
 const FName NAME_Weight_FirstPerson(TEXT("Weight_FirstPerson"));
+const FName NAME_Weight_ThirdPerson(TEXT("Weight_ThirdPerson"));
 
 
 AALSPlayerCameraManager::AALSPlayerCameraManager()

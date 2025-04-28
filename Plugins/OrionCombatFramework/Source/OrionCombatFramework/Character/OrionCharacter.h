@@ -50,11 +50,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UNiagaraComponent> LevelUpNiagaraComponent;
 private:
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<UCameraComponent> CameraComponent;
-
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<USpringArmComponent> CameraBoom;
 
 	virtual void InitAbilityActorInfo() override;
 

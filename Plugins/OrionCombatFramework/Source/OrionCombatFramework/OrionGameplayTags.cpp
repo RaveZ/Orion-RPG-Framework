@@ -51,16 +51,14 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Item, "Item", "Item Tag")
 /*
  Input
 */
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_LMB, "InputTag.LMB", "Input Tag for Left Mouse Button")
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_RMB, "InputTag.RMB", "Input Tag for Right Mouse Button")
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_Shift, "InputTag.Shift", "Input Tag for Shift Key")
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_1, "InputTag.1", "Input Tag for 1 key")
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_2, "InputTag.2", "Input Tag for 2 key")
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_3, "InputTag.3", "Input Tag for 3 key")
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_4, "InputTag.4", "Input Tag for 4 key")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_BasicAttackAction, "InputTag.BasicAttackAction", "Input Tag for Basic Attack Action")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_Ability1, "InputTag.Ability1", "Input Tag Ability 1 ")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_Ability2, "InputTag.Ability2", "Input Tag Ability 2 ")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_Ability3, "InputTag.Ability3", "Input Tag Ability 3 ")
+UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Input_Ability4, "InputTag.Ability4", "Input Tag Ability 4 ")
 
 /*
-Abilities
+AbilitiesS
 */
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(Tag_Abilities_Fire_Firebolt, "Abilities.Fire.Firebolt", "Firebolt Ability Tag")
 

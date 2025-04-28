@@ -15,41 +15,115 @@ class UEnhancedInputComponent;
 class UOrionAbilitySystemComponent;
 class USplineComponent;
 class UDamageTextComponent;
+class AOrionCharacterBase;
 
 class IEnemyInterface;
 
 struct FInputActionValue;
 
-UCLASS()
+UCLASS(Blueprintable, BlueprintType)
 class ORIONCOMBATFRAMEWORK_API AOrionPlayerController : public APlayerController
 {
 	GENERATED_BODY()
 public:
 	AOrionPlayerController();
+
+	virtual void BeginPlay() override;
+
 	virtual void PlayerTick(float DeltaTime) override;
+
+	virtual void OnPossess(APawn* NewPawn) override;
+
+	virtual void OnRep_Pawn() override;
+
+	virtual void SetupInputComponent() override;
+
+	virtual void BindActions(UInputMappingContext* Context);
 
 	UFUNCTION(Client, Reliable)
 	void ShowDamageNumber(float DamageAmount, ACharacter* TargetCharacter, bool bBlockedHit, bool bCriticalHit);
 protected:
-	virtual void BeginPlay() override;
+	void SetupInputs();
 
-	virtual void SetupInputComponent() override;
+	void SetupCamera();
+
+	UFUNCTION()
+	void ForwardMovementAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void RightMovementAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void CameraUpAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void CameraRightAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void JumpAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void SprintAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void AimAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void CameraTapAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void CameraHeldAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void StanceAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void WalkAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void RagdollAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void VelocityDirectionAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void LookingDirectionAction(const FInputActionValue& Value);
+
+	// Debug actions
+	UFUNCTION()
+	void DebugToggleHudAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void DebugToggleDebugViewAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void DebugToggleTracesAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void DebugToggleShapesAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void DebugToggleLayerColorsAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void DebugToggleCharacterInfoAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void DebugToggleSlomoAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void DebugFocusedCharacterCycleAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void DebugToggleMeshAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void DebugOpenOverlayMenuAction(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void DebugOverlayMenuCycleAction(const FInputActionValue& Value);
+
 private:
-	UPROPERTY(EditAnywhere, Category="Input")
-	TObjectPtr<UInputMappingContext> OrionContext;
-
-	UPROPERTY(EditAnywhere, Category="Input")
-	TObjectPtr<UInputAction> MoveAction;
-
-	UPROPERTY(EditAnywhere, Category = "Input")
-	TObjectPtr<UInputAction> ShiftAction;
-
-	void ShiftPressed() { bShiftKeyDown = true; };
-	void ShiftReleased() { bShiftKeyDown = false; };
-	bool bShiftKeyDown = false;
-
-	void Move(const FInputActionValue& InputActionValue);
-
 	void CursorTrace();
 
 	TScriptInterface<IEnemyInterface> LastActor;
@@ -71,16 +145,9 @@ private:
 	FVector CachedDestination = FVector::ZeroVector;
 	float FollowTime = 0.f;
 	float ShortPressThreshold = 0.5f;
-	bool bAutoRunning = false;
 	bool bTargeting = false;
 
-	UPROPERTY(EditDefaultsOnly)
-	float AutoRunAcceptanceRadius = 50.f;
 
-	UPROPERTY(VisibleAnywhere)
-	TObjectPtr<USplineComponent> Spline;
-
-	void AutoRun();
 
 
 	UPROPERTY(EditDefaultsOnly)
@@ -89,6 +156,17 @@ public:
     //Input
     template<class UserClass, typename PressedFuncType, typename ReleasedFuncType, typename HeldFuncType>
     void BindAbilityActions(UEnhancedInputComponent* EnhancedInputComponent, const UOrionInputConfig* InputConfig, UserClass* Object, PressedFuncType PressedFunc, ReleasedFuncType ReleasedFunc, HeldFuncType HeldFunc);
+
+public:
+	/** Main character reference */
+	UPROPERTY(BlueprintReadOnly, Category = "Orion")
+	TObjectPtr<AOrionCharacterBase> PossessedCharacter = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input")
+	TObjectPtr<UInputMappingContext> DefaultInputMappingContext = nullptr;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Input")
+	TObjectPtr<UInputMappingContext> DebugInputMappingContext = nullptr;
 };
 
 

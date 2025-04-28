@@ -10,8 +10,7 @@ class UQuestSaveObject;
 class USaveGame;
 class AController;
 
-//Delegate
-/** This Delegate will be called if a quest objective has been completed*/
+//Quest Delegate
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FQuestObjectiveUpdated);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStartNavigateQuest, UQuestSystem*, Quest);
@@ -21,6 +20,13 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestFailed, UQuestSystem*, Quest);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestCompleted, UQuestSystem*, Quest);
 	
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestAdded, UQuestSystem*, Quest);
+
+
+//Save/Load Delegate
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBeginSave, FString, SaveFileName);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSaveComplete, FString, SaveFileName);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBeginLoad, FString, SaveFileName);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLoadComplete, FString, SaveFileName);
 
 UCLASS(meta=(BlueprintSpawnableComponent), Blueprintable, HideDropdown, ClassGroup = "QuestBuilder", DisplayName = "Quest Component")
 class QUEST_SYSTEM_RUNTIME_API UQuestComponent : public UActorComponent
@@ -48,6 +54,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
 		TObjectPtr<UQuestSystem> CurrentNavigatedQuest;
 
+public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 		FQuestObjectiveUpdated OnQuestObjectiveUpdated;
 
@@ -63,8 +70,48 @@ public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 		FQuestAdded OnQuestAdded;
 
+	/**Called when a save has begun*/
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Saving/Loading")
+		FOnBeginSave OnBeginSave;
 
+	/**Called when a save has completed*/
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Saving/Loading")
+		FOnSaveComplete OnSaveComplete;
 
+	/**Called when a load has begun*/
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Saving/Loading")
+		FOnBeginLoad OnBeginLoad;
+
+	/**Called when a load has completed*/
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Saving/Loading")
+		FOnLoadComplete OnLoadComplete;
+
+	UFUNCTION()
+		virtual void QuestObjectiveUpdated();
+
+	UFUNCTION()
+		virtual void StartNavigatingQuest(UQuestSystem* Quest);
+
+	UFUNCTION()
+		virtual void QuestFailed(UQuestSystem* Quest);
+
+	UFUNCTION()
+		virtual void QuestCompleted(UQuestSystem* Quest);
+
+	UFUNCTION()
+		virtual void QuestAdded(UQuestSystem* Quest);
+
+	UFUNCTION()
+		virtual void BeginSave(FString SaveName);
+
+	UFUNCTION()
+		virtual void BeginLoad(FString SaveName);
+
+	UFUNCTION()
+		virtual void SaveComplete(FString SaveName);
+
+	UFUNCTION()
+		virtual void LoadComplete(FString SaveName);
 public:
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		bool BeginQuest(UQuestSystemGraph* QuestAsset);
@@ -124,15 +171,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void BeginNode(UQuestSystem* QuestParam);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestComponent")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Saving")
 		void Save(const FString& SaveFileName, int SlotIndex);
 
 	virtual void Save_Implementation(const FString& SaveFileName, int SlotIndex);
 	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestComponent")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Saving")
 		void Load(const FString& SaveFileName, int SlotIndex);
 
 	virtual void Load_Implementation(const FString& SaveFileName, int SlotIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "Saving")
+	virtual bool DeleteSave(const FString& SaveName = "QuestBuilderSaveData", const int32 Slot = 0);
 
 	UFUNCTION()
 	bool ShouldUpdateQuest(UQuestSystem* QuestParam);

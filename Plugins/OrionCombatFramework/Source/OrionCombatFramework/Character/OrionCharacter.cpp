@@ -39,26 +39,9 @@ AOrionCharacter::AOrionCharacter(const FObjectInitializer& ObjectInitializer)
 
 	AIControllerClass = AOrionAIController::StaticClass();
 
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>("CameraBoom");
-	CameraBoom->SetupAttachment(GetRootComponent());
-	CameraBoom->SetUsingAbsoluteRotation(true);
-	CameraBoom->bDoCollisionTest = false;
-
-	CameraComponent = CreateDefaultSubobject<UCameraComponent>("CameraComponent");
-	CameraComponent->SetupAttachment(CameraBoom, USpringArmComponent::SocketName);
-	CameraComponent->bUsePawnControlRotation = false;
-
 	LevelUpNiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>("LevelUpNiagaraComponent");
 	LevelUpNiagaraComponent->SetupAttachment(GetRootComponent());
 	LevelUpNiagaraComponent->bAutoActivate = false;
-
-	GetCharacterMovement()->bOrientRotationToMovement = true;
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 400.f, 0.f);
-	GetCharacterMovement()->bConstrainToPlane = true;
-	GetCharacterMovement()->bSnapToPlaneAtStart = true;
-	bUseControllerRotationPitch = false;
-	bUseControllerRotationRoll = false;
-	bUseControllerRotationYaw = false;
 }
 
 void AOrionCharacter::BeginPlay()
@@ -288,9 +271,9 @@ void AOrionCharacter::MulticastLevelUpParticles_Implementation() const
 {
 	if (IsValid(LevelUpNiagaraComponent))
  	{
- 		const FVector CameraLocation = CameraComponent->GetComponentLocation();
+ 		const FVector MeshLocation = GetMesh()->GetComponentLocation();
  		const FVector NiagaraSystemLocation = LevelUpNiagaraComponent->GetComponentLocation();
- 		const FRotator ToCameraRotation = (CameraLocation - NiagaraSystemLocation).Rotation();
+ 		const FRotator ToCameraRotation = (MeshLocation - NiagaraSystemLocation).Rotation();
  		LevelUpNiagaraComponent->SetWorldRotation(ToCameraRotation);
  		LevelUpNiagaraComponent->Activate(true);
  	}
