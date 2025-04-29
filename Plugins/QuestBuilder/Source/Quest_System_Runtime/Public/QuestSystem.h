@@ -33,6 +33,7 @@ class QUEST_SYSTEM_RUNTIME_API UQuestSystem : public UObject
 {
 	GENERATED_BODY()
 public:
+	UQuestSystem();
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "QuestAssets")
 	TObjectPtr<UQuestSystemGraph> QuestGraph;
@@ -41,7 +42,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly, Category = "QuestSystem")
 		FName QuestID;
 
-	/** Description for your quest*/
+	/** Your Quest Name*/
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestSystem", meta = (MultiLine = true))
 		FText QuestName;
 

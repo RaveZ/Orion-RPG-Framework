@@ -28,6 +28,11 @@ void UEdGraph_QuestSystemGraph::RebuildQuestSystemGraph()
 	UQuestSystemGraph* Graph = GetQuestSystemGraph();
 
 	Clear();
+	
+	if (QuestSystem->QuestName.IsEmpty())
+	{
+		QuestSystem->QuestName = FText::FromName(QuestSystem->QuestID);
+	}
 
 	if (Graph->CategoryDisplayName.IsEmpty())
 	{

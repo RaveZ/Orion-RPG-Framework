@@ -106,6 +106,8 @@ UEdGraph* FQuestSystemEditorUtils::CreateNewGraph(UObject* ParentScope, const FN
 		QuestGraph->QuestSystem = NewObject<UQuestSystem>(ParentScope, UQuestSystem::StaticClass(), NAME_None, RF_Transactional);
 		QuestGraph->QuestSystem->QuestGraph = QuestGraph->GetQuestSystemGraph();
 		QuestGraph->QuestSystem->QuestID = GraphName;
+		QuestGraph->QuestSystem->QuestName = FText::FromName(QuestGraph->QuestSystem->QuestID);
+
 		if (UQuestSystemGraph* QuestSystemGraph = Cast<UQuestSystemGraph>(QuestGraph->GetQuestSystemGraph()))
 		{
 			QuestSystemGraph->QuestSystems.Add(QuestGraph->QuestSystem);

@@ -30,12 +30,11 @@ public:
 	UQuestSystemGraphNode();
 	virtual ~UQuestSystemGraphNode();
 
+	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Detail")
+		FName ID;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Detail", meta = (MultiLine = true))
 		FText Description;
-
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Detail")
-		FName ID;
 	
 	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Events")
 		TArray<TObjectPtr<UQuestEvent>> Events;

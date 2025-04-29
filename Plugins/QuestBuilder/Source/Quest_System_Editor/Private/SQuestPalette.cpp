@@ -209,10 +209,19 @@ void SQuestPaletteItem::OnNameTextCommitted(const FText& NewText, ETextCommit::T
    FAssetSchemaAction_QuestSystemGraph* QuestGraphAction = (FAssetSchemaAction_QuestSystemGraph*)ActionPtr.Pin().Get();  
    if (UEdGraph_QuestSystemGraph* QuestEdGraph = Cast<UEdGraph_QuestSystemGraph>(QuestGraphAction->EdGraph))  
    {  
-
+	   //Rename Succesful
        OriginalName = QuestEdGraph->QuestSystem->QuestID;  
        QuestEdGraph->QuestSystem->QuestID = NewName;  
        QuestEdGraph->Rename(*(NewName.ToString()), QuestSystemGraph, REN_DoNotDirty | REN_ForceNoResetLoaders);  
+
+	   if (!QuestEdGraph->QuestSystem->QuestName.IsFromStringTable())
+	   {
+           if (QuestEdGraph->QuestSystem->QuestName.IsEmpty() || QuestEdGraph->QuestSystem->QuestName.EqualTo(FText::FromName(OriginalName)))
+		   {
+			   QuestEdGraph->QuestSystem->QuestName = FText::FromName(NewName);
+		   }
+	   }
+
        for (TObjectIterator<UQuestCondition> It; It; ++It)  
        {  
            if (UQuestCondition* QuestCondition = Cast<UQuestCondition>(*It))  

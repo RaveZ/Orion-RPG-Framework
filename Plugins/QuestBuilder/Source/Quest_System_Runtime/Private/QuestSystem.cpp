@@ -13,6 +13,10 @@
 
 
 
+UQuestSystem::UQuestSystem()
+{
+}
+
 int UQuestSystem::GetLevelNum() const
 {
 	int Level = 0;

@@ -543,6 +543,7 @@ bool SGraphNode_QuestSystemNode::OnVerifyNameTextChanged(const FText& InText, FT
 		OriginalName = MyNode->QuestSystemGraphNode->ID;
 	}
 
+
 	for (TObjectIterator<UQuestSystemGraphNode> It; It; ++It)
 	{
 		if (UQuestSystemGraphNode* QuestSystem = Cast<UQuestSystemGraphNode>(*It))
