@@ -43,6 +43,10 @@ public:
 
 	/** Description for your quest*/
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestSystem", meta = (MultiLine = true))
+		FText QuestName;
+
+	/** Description for your quest*/
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestSystem", meta = (MultiLine = true))
 		FText Description; 
 
 	/**Make your quest can be aborted*/
@@ -107,8 +111,10 @@ public:
 		UQuestSystemGraph* GetOwningQuestGraph() const;
 	void ClearGraph();
 
-
-	
+#if WITH_EDITOR
+protected:
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 
 	
 

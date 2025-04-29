@@ -13,7 +13,7 @@ class UQuestSystemGraphNode;
 class UQuestSystemGraphEdge;
 class AController;
 class APawn;
-
+class UEdGraph_QuestSystemGraph;
 
 UCLASS(Blueprintable)
 class QUEST_SYSTEM_RUNTIME_API UQuestSystemGraph : public UObject
@@ -29,7 +29,6 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly, Category = "QuestSystemGraph")
 		FGameplayTagContainer GraphTags;
-
 
 	/** Set of QuestSystem linked with Quest Graph Pages */
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraph")
@@ -52,7 +51,6 @@ public:
 	/** Set of quest-graph pages */
 	UPROPERTY()
 	TArray<TObjectPtr<UEdGraph>> QuestGraphPages;
-
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraph")
 		bool bCanRenameNode;

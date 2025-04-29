@@ -118,4 +118,14 @@ void UQuestSystem::ClearGraph()
 	RootNodes.Empty();
 }
 
+#if WITH_EDITOR
+void UQuestSystem::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+	if (QuestGraph)
+	{
+	}
+}
+#endif
+
 #undef LOCTEXT_NAMESPACE

@@ -582,8 +582,7 @@ void SGraphNode_QuestSystemNode::OnNameTextCommited(const FText& InText, ETextCo
 	if (MyNode != nullptr && MyNode->QuestSystemGraphNode != nullptr)
 	{
 		UEdGraph_QuestSystemGraph* QuestEdGraph = MyNode->GetQuestSystemGraphEdGraph();
-		OriginalName = QuestEdGraph->QuestSystem->QuestID;
-		QuestEdGraph->QuestSystem->QuestID = NewName;
+		OriginalName = QuestSystemNode->ID;
 		
 		//Finalize Node and Update GraphNode
 		const FScopedTransaction Transaction(LOCTEXT("QuestSystemEditorRenameNode", "Quest System Editor: Rename Node"));

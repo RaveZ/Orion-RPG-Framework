@@ -12,13 +12,13 @@ public class Quest_System_Runtime : ModuleRules
 
         PublicIncludePaths.AddRange(
             new string[] {
-			}
+            }
             );
 
         PrivateIncludePaths.AddRange(
             new string[] {
                 "Quest_System_Runtime/Private",
-			}
+            }
             );
 
         PublicDependencyModuleNames.AddRange(
@@ -27,7 +27,7 @@ public class Quest_System_Runtime : ModuleRules
                 "Core",
                 "CoreUObject",
                 "Engine",
-			}
+            }
             );
 
         PrivateDependencyModuleNames.AddRange(
