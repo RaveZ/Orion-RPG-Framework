@@ -17,6 +17,8 @@ UQuestTask::UQuestTask()
 	bIsTaskTickable = false;
 	TickInterval = 0.1f; 
 	RequiredAmount = 1;
+
+
 }
 
 bool UQuestTask::CompleteTask()

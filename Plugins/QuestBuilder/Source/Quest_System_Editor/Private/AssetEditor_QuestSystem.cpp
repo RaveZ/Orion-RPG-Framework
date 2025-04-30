@@ -393,10 +393,9 @@ FString FAssetEditor_QuestSystem::GetDocumentationLink() const
 
 void FAssetEditor_QuestSystem::SaveAsset_Execute()
 {
-	if (EditingQuestGraph != nullptr)
-	{
-		RebuildQuestSystemGraph();
-	}
+	
+	RebuildQuestSystemGraph();
+	
 
 	FAssetEditorToolkit::SaveAsset_Execute();
 }
@@ -959,7 +958,6 @@ void FAssetEditor_QuestSystem::RebuildQuestSystemGraph()
 {
 	if (EditingQuestGraph == nullptr)
 	{
-		//LOG_WARNING(TEXT("FGenericGraphAssetEditor::RebuildGenericGraph EditingQuestGraph is nullptr"));
 		return;
 	}
 
@@ -1432,15 +1430,19 @@ void FAssetEditor_QuestSystem::OnPackageMarkedDirty(UPackage* ModifiedPackage, b
 {
     // Schedule the graph rebuild after 1 second using a timer
     FTimerHandle TimerHandle;
-    GEditor->GetTimerManager()->SetTimer(
-        TimerHandle,
-        FTimerDelegate::CreateLambda([this]()
-        {
-            RebuildQuestSystemGraph();
-        }),
-        1.0f, // Delay in seconds
-        false // Do not loop
-    );
+	if (GEditor)
+	{
+		GEditor->GetTimerManager()->SetTimer(
+			TimerHandle,
+			FTimerDelegate::CreateLambda([this]()
+				{
+					RebuildQuestSystemGraph();
+				}),
+			1.0f, // Delay in seconds
+			false // Do not loop
+		);
+	}
+   
     
 }
 //Called when saving our file graph

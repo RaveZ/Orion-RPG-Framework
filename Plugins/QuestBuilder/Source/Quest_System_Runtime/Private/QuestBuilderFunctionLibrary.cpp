@@ -103,5 +103,58 @@ UQuestComponent* UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(AActo
         }
     }
 
+    UE_LOG(LogTemp, Warning, TEXT("QuestBuilderFunctionLibrary : Current Component Not Found!"));
+    return nullptr;
+}
+
+UQuestSystem* UQuestBuilderFunctionLibrary::FindQuestFromNodeID(const UObject* WorldContextObject, FName NodeID)
+{   
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        UQuestSystem* Quest = QuestComp->FindQuestFromNodeID(NodeID);
+        
+		if (Quest)
+		{
+			return Quest;
+		}
+    }
+    return nullptr;
+}
+
+bool UQuestBuilderFunctionLibrary::IsCurrentNodeIDMatch(const UObject* WorldContextObject, FName NodeID)
+{
+    UQuestSystem* Quest = FindQuestFromNodeID(WorldContextObject, NodeID);
+    
+    if (Quest && Quest->CurrentNode->ID == NodeID)
+    {
+        return true;
+    }
+    
+    return false;
+}
+
+bool UQuestBuilderFunctionLibrary::IsQuestAtState(const UObject* WorldContextObject, FName QuestID, EQuestState QuestState)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+		UQuestSystem* Quest = QuestComp->FindQuest(QuestID);
+
+        if (Quest && Quest->QuestState == QuestState)
+        {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+UQuestSystem* UQuestBuilderFunctionLibrary::GetCurrentNavigatedQuest(const UObject* WorldContextObject)
+{
+	if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+	{
+		return QuestComp->CurrentNavigatedQuest;
+	}
+
+    UE_LOG(LogTemp, Warning, TEXT("QuestBuilderFunctionLibrary : Current Navigated Quest Is Null!"));
     return nullptr;
 }

@@ -30,7 +30,7 @@ class QUEST_SYSTEM_RUNTIME_API UQuestTask : public UObject
 public:
 	UQuestTask();
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Task", meta = (MultiLine = true))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Task", meta = (MultiLine = true))
 		FText Description;
 
 	/**mark the task as optional and skip this task if the other non - optional task has been completed */
@@ -113,7 +113,7 @@ public:
 
 	/**Add amount and check if the required amount has fulfilled, then complete the task*/
 	UFUNCTION(BlueprintCallable, Category = "Task")
-		void AddAmount(int AmountToAdd);
+		void AddAmount(int AmountToAdd = 1);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Task")
 		FText GetDescription() const;

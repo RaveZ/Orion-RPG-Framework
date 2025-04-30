@@ -59,7 +59,7 @@ public class Quest_System_Editor : ModuleRules
 				"Slate", 
 				"SlateCore", 
 				"AIGraph",
-                "UMG",
+				"UMG",
    }
 			);
 		

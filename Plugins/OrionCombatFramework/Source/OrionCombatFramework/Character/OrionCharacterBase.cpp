@@ -32,7 +32,7 @@ const FName NAME_spine_03(TEXT("spine_03"));
 AOrionCharacterBase::AOrionCharacterBase(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer.SetDefaultSubobjectClass<UOrionCharacterMovementComponent>(CharacterMovementComponentName))
 {
- 	PrimaryActorTick.bCanEverTick = false;
+ 	PrimaryActorTick.bCanEverTick = true;
 	bUseControllerRotationYaw = 0;
 	bReplicates = true;
 	SetReplicatingMovement(true);

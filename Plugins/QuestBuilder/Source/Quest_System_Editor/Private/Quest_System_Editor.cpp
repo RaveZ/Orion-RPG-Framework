@@ -17,6 +17,8 @@
 #include "ToolMenus.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Setting_QuestEditor.h"
+#include "AttributeDetails.h"
+#include "QuestData.h"
 
 
 #define LOCTEXT_NAMESPACE "FQuest_System_EditorModule"
@@ -25,12 +27,19 @@ static const FName Quest_System_EditorTabName("Quest_System_Editor");
 TSharedPtr<FSlateStyleSet> FQuest_System_EditorModule::CustomAssetsEditorSlateStyle;
 
 void FQuest_System_EditorModule::StartupModule()
-{
+{	
+	// Register the PropertyEditors
+	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+	//PropertyModule.RegisterCustomPropertyTypeLayout(FQuestDataHandle::StaticStruct()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FQuestPropertyDetails::MakeInstance));
+
+	//Initialize
 	FQuest_System_EditorStyle::Initialize();
 	FQuest_System_EditorStyle::ReloadTextures();
-	RegisterSettings();
 	FQuest_System_EditorCommands::Register();
-	
+
+	//Register Settings Menu For Quest Builder
+	RegisterSettings();
+
 	//Register GraphNodeFactory
 	GraphPanelNodeFactory_QuestEditor = MakeShareable(new FQuestSystemNodeFactory());
 	FEdGraphUtilities::RegisterVisualNodeFactory(GraphPanelNodeFactory_QuestEditor);
@@ -65,6 +74,13 @@ void FQuest_System_EditorModule::ShutdownModule()
 	FQuest_System_EditorCommands::Unregister();
 
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(Quest_System_EditorTabName);
+
+	//Unregister PropertyEditor
+	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
+	{
+		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		PropertyModule.UnregisterCustomPropertyTypeLayout(FQuestDataHandle::StaticStruct()->GetFName());
+	}
 
 	ClassCache.Reset();
 }

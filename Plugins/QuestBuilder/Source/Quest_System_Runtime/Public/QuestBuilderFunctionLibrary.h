@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "QuestSystem.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "QuestBuilderFunctionLibrary.generated.h"
 
@@ -25,7 +26,7 @@ public:
 	*
 	* @return The Quest component.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilder", meta = (WorldContext = "WorldContextObject"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
 	static class UQuestComponent* GetQuestComponent(const UObject* WorldContextObject);
 
 	/**
@@ -33,8 +34,38 @@ public:
 	*
 	* @return The Quest component.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilder", meta = (DefaultToSelf = "Target"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (DefaultToSelf = "Target"))
 	static class UQuestComponent* GetQuestComponentFromTarget(AActor* Target);
 
+	/**
+	* Find the Quest from the given Node ID
+	*
+	* @return The Quest.
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	static class UQuestSystem* FindQuestFromNodeID(const UObject* WorldContextObject, FName NodeID);
 
+	/**
+	* Check if the Current Node ID match with the given Node ID
+	*
+	* @return bool.
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	static bool IsCurrentNodeIDMatch(const UObject* WorldContextObject, FName NodeID);
+
+	/**
+	* Check if the quest at which state from the given Quest ID
+	*
+	* @return bool.
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	static bool IsQuestAtState(const UObject* WorldContextObject, FName QuestID, EQuestState QuestState);
+
+	/**
+	* Grab the Quest component from the local pawn or player controller, whichever it exists on.
+	*
+	* @return The Quest component.
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	static class UQuestSystem* GetCurrentNavigatedQuest(const UObject* WorldContextObject);
 };

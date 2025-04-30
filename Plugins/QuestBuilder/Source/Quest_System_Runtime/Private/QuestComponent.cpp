@@ -318,6 +318,17 @@ UQuestSystem* UQuestComponent::FindQuestFromNodeID(FName NodeIDParam) const
 
 }
 
+UQuestSystem* UQuestComponent::FindQuest(FName QuestIDParam) const
+{
+	if (UQuestSystem* FoundedQuest = QuestSystemMap.FindRef(QuestIDParam))
+	{
+		return FoundedQuest;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Quest Not Found"));
+	return nullptr;
+}
+
 bool UQuestComponent::IsQuestActiveFromNodeID(FName NodeID) const
 {
 	if (UQuestSystem* FoundedQuest = FindQuestFromNodeID(NodeID))

@@ -148,6 +148,9 @@ public:
 		UQuestSystem* FindQuestFromNodeID(FName NodeIDParam) const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		UQuestSystem* FindQuest(FName QuestIDParam) const;
+
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		bool IsQuestActiveFromNodeID(FName NodeID) const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
