@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "EdGraph/EdGraphSchema.h"
-#include "AssetGraphSchema_QuestSystem.generated.h"
+#include "EdGraphSchema_QuestBuilder.generated.h"
 
 /** Action to add a node to the graph */
 
@@ -71,22 +71,11 @@ struct QUEST_SYSTEM_EDITOR_API FAssetSchemaAction_QuestSystemGraph : public FEdG
 		: FEdGraphSchemaAction(MoveTemp(InNodeCategory), MoveTemp(InMenuDesc), MoveTemp(InToolTip), InGrouping, FText(), InSectionID)
 		, EdGraph(nullptr)
 	{}
-
-	// FEdGraphSchemaAction interface
-	//virtual bool IsParentable() const override { return true; }
-	//virtual void MovePersistentItemToCategory(const FText& NewCategoryName) override;
-	//virtual int32 GetReorderIndexInContainer() const override;
-	//virtual bool ReorderToBeforeAction(TSharedRef<FEdGraphSchemaAction> OtherAction) override;
-	//virtual FEdGraphSchemaActionDefiningObject GetPersistentItemDefiningObject() const override;
-	// End of FEdGraphSchemaAction interface
-
-	//UFunction* GetFunction() const;
-	//UBlueprint* GetSourceBlueprint() const;
 };
 
 
 UCLASS(MinimalAPI)
-class UAssetGraphSchema_QuestSystem : public UEdGraphSchema
+class UEdGraphSchema_QuestBuilder : public UEdGraphSchema
 {
 	GENERATED_BODY()
 	public:

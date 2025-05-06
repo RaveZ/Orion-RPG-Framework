@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "SGraphActionMenu.h"
-#include "AssetGraphSchema_QuestSystem.h"
+#include "EdGraphSchema_QuestBuilder.h"
 #include "Widgets/SCompoundWidget.h"
 #include "QuestBuilderEditor.h"
 

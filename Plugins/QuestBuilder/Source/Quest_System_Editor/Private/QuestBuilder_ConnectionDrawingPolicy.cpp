@@ -1,17 +1,17 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "ConnectionDrawPolicy_QuestSystem.h"
+#include "QuestBuilder_ConnectionDrawingPolicy.h"
 #include "EdNode_QuestSystemNode.h"
 #include "EdNode_QuestSystemEdge.h"
 
-FConnectionDrawPolicy_QuestSystem::FConnectionDrawPolicy_QuestSystem(int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj)
+FQuestBuilder_ConnectionDrawingPolicy::FQuestBuilder_ConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj)
 	: FConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, ZoomFactor, InClippingRect, InDrawElements)
 	, GraphObj(InGraphObj)
 {
 }
 
-void FConnectionDrawPolicy_QuestSystem::DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FConnectionParams& Params)
+void FQuestBuilder_ConnectionDrawingPolicy::DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FConnectionParams& Params)
 {
 	Params.AssociatedPin1 = OutputPin;
 	Params.AssociatedPin2 = InputPin;
@@ -24,7 +24,7 @@ void FConnectionDrawPolicy_QuestSystem::DetermineWiringStyle(UEdGraphPin* Output
 	}
 }
 
-void FConnectionDrawPolicy_QuestSystem::Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& InPinGeometries, FArrangedChildren& ArrangedNodes)
+void FQuestBuilder_ConnectionDrawingPolicy::Draw(TMap<TSharedRef<SWidget>, FArrangedWidget>& InPinGeometries, FArrangedChildren& ArrangedNodes)
 {
 	// Build an acceleration structure to quickly find geometry for the nodes
 	NodeWidgetMap.Empty();
@@ -39,7 +39,7 @@ void FConnectionDrawPolicy_QuestSystem::Draw(TMap<TSharedRef<SWidget>, FArranged
 	FConnectionDrawingPolicy::Draw(InPinGeometries, ArrangedNodes);
 }
 
-void FConnectionDrawPolicy_QuestSystem::DrawSplineWithArrow(const FGeometry& StartGeom, const FGeometry& EndGeom, const FConnectionParams& Params)
+void FQuestBuilder_ConnectionDrawingPolicy::DrawSplineWithArrow(const FGeometry& StartGeom, const FGeometry& EndGeom, const FConnectionParams& Params)
 {
 	// Get a reasonable seed point (halfway between the boxes)
 	const FVector2D StartCenter = FGeometryHelper::CenterOf(StartGeom);
@@ -53,7 +53,7 @@ void FConnectionDrawPolicy_QuestSystem::DrawSplineWithArrow(const FGeometry& Sta
 	DrawSplineWithArrow(StartAnchorPoint, EndAnchorPoint, Params);
 }
 
-void FConnectionDrawPolicy_QuestSystem::DrawSplineWithArrow(const FVector2D& StartAnchorPoint, const FVector2D& EndAnchorPoint, const FConnectionParams& Params)
+void FQuestBuilder_ConnectionDrawingPolicy::DrawSplineWithArrow(const FVector2D& StartAnchorPoint, const FVector2D& EndAnchorPoint, const FConnectionParams& Params)
 {
 	// bUserFlag1 indicates that we need to reverse the direction of connection (used by debugger)
 	const FVector2D& P0 = Params.bUserFlag1 ? EndAnchorPoint : StartAnchorPoint;
@@ -62,7 +62,7 @@ void FConnectionDrawPolicy_QuestSystem::DrawSplineWithArrow(const FVector2D& Sta
 	Internal_DrawLineWithArrow(P0, P1, Params);
 }
 
-void FConnectionDrawPolicy_QuestSystem::DrawPreviewConnector(const FGeometry& PinGeometry, const FVector2D& StartPoint, const FVector2D& EndPoint, UEdGraphPin* Pin)
+void FQuestBuilder_ConnectionDrawingPolicy::DrawPreviewConnector(const FGeometry& PinGeometry, const FVector2D& StartPoint, const FVector2D& EndPoint, UEdGraphPin* Pin)
 {
 	FConnectionParams Params;
 	DetermineWiringStyle(Pin, nullptr, /*inout*/ Params);
@@ -77,7 +77,7 @@ void FConnectionDrawPolicy_QuestSystem::DrawPreviewConnector(const FGeometry& Pi
 	}
 }
 
-void FConnectionDrawPolicy_QuestSystem::Internal_DrawLineWithArrow(const FVector2D& StartAnchorPoint, const FVector2D& EndAnchorPoint, const FConnectionParams& Params)
+void FQuestBuilder_ConnectionDrawingPolicy::Internal_DrawLineWithArrow(const FVector2D& StartAnchorPoint, const FVector2D& EndAnchorPoint, const FConnectionParams& Params)
 {
 	//@TODO: Should this be scaled by zoom factor?
 	const float LineSeparationAmount = 4.5f;
@@ -112,7 +112,7 @@ void FConnectionDrawPolicy_QuestSystem::Internal_DrawLineWithArrow(const FVector
 	);
 }
 
-FVector2D FConnectionDrawPolicy_QuestSystem::ComputeSplineTangent(const FVector2D& Start, const FVector2D& End) const
+FVector2D FQuestBuilder_ConnectionDrawingPolicy::ComputeSplineTangent(const FVector2D& Start, const FVector2D& End) const
 {
 	const FVector2D Delta = End - Start;
 	const FVector2D NormDelta = Delta.GetSafeNormal();
@@ -120,7 +120,7 @@ FVector2D FConnectionDrawPolicy_QuestSystem::ComputeSplineTangent(const FVector2
 	return NormDelta;
 }
 
-void FConnectionDrawPolicy_QuestSystem::DetermineLinkGeometry(FArrangedChildren& ArrangedNodes, TSharedRef<SWidget>& OutputPinWidget, UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FArrangedWidget*& StartWidgetGeometry, FArrangedWidget*& EndWidgetGeometry)
+void FQuestBuilder_ConnectionDrawingPolicy::DetermineLinkGeometry(FArrangedChildren& ArrangedNodes, TSharedRef<SWidget>& OutputPinWidget, UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FArrangedWidget*& StartWidgetGeometry, FArrangedWidget*& EndWidgetGeometry)
 {
 	if (UEdNode_QuestSystemEdge* EdgeNode = Cast<UEdNode_QuestSystemEdge>(InputPin->GetOwningNode()))
 	{

@@ -6,14 +6,14 @@
 #include "ConnectionDrawingPolicy.h"
 
 
-class QUEST_SYSTEM_EDITOR_API FConnectionDrawPolicy_QuestSystem : public FConnectionDrawingPolicy
+class QUEST_SYSTEM_EDITOR_API FQuestBuilder_ConnectionDrawingPolicy : public FConnectionDrawingPolicy
 {
 protected:
 	UEdGraph* GraphObj;
 	TMap<UEdGraphNode*, int32> NodeWidgetMap;
 
 public:
-	FConnectionDrawPolicy_QuestSystem(int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj);
+	FQuestBuilder_ConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj);
 
 	// FConnectionDrawingPolicy interface 
 	virtual void DetermineWiringStyle(UEdGraphPin* OutputPin, UEdGraphPin* InputPin, /*inout*/ FConnectionParams& Params) override;

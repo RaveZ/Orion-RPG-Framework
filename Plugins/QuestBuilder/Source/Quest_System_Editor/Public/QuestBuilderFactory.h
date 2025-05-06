@@ -13,10 +13,10 @@
 #include "WorkflowOrientedApp/WorkflowTabFactory.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
 #include "WorkflowOrientedApp/WorkflowUObjectDocuments.h"
-#include "QuestEditorFactory.generated.h"
+#include "QuestBuilderFactory.generated.h"
 
 
-#define LOCTEXT_NAMESPACE "QuestEditor"
+#define LOCTEXT_NAMESPACE "QuestBuilderFactory"
 
 /////////////////////////////////////////////////////
 // FLocalKismetCallbacks
@@ -95,7 +95,7 @@ protected:
  * 
  */
 UCLASS(MinimalAPI, hidecategories = Object)
-class UQuestEditorFactory : public UFactory
+class UQuestBuilderFactory : public UFactory
 {
 	GENERATED_UCLASS_BODY()
 public:

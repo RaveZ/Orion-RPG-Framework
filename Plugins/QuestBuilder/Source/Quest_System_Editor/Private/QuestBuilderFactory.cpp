@@ -1,6 +1,6 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
-#include "QuestEditorFactory.h"
+#include "QuestBuilderFactory.h"
 #include "QuestSystemGraph.h"
 #include "QuestBuilderEditor.h"
 #include "ClassViewerModule.h"
@@ -54,7 +54,7 @@ public:
 	}
 };
 
-UQuestEditorFactory::UQuestEditorFactory(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
+UQuestBuilderFactory::UQuestBuilderFactory(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	SupportedClass = UQuestSystemGraph::StaticClass();
 	bCreateNew = true;
@@ -62,12 +62,12 @@ UQuestEditorFactory::UQuestEditorFactory(const FObjectInitializer& ObjectInitial
 }
 
 
-bool UQuestEditorFactory::ConfigureProperties()
+bool UQuestBuilderFactory::ConfigureProperties()
 {
 	return true;
 }
 
-UObject* UQuestEditorFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
+UObject* UQuestBuilderFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
 {
 	if (QuestSystemGraphClass != nullptr)
 	{

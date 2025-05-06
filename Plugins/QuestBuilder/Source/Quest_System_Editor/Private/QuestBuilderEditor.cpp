@@ -13,7 +13,7 @@
 #include "UObject/ObjectSaveContext.h"
 #include "GraphEditorActions.h"
 #include "Framework/Commands/GenericCommands.h"
-#include "AssetEditorToolbar_QuestSystem.h"
+#include "QuestBuilderEditorToolbar.h"
 #include "Quest_System_EditorCommands.h"
 #include "EdGraph_QuestSystemGraph.h"
 #include "EdNode_QuestSystemNode.h"
@@ -22,15 +22,15 @@
 #include "EdNode_QuestSystemEdge.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "HAL/PlatformApplicationMisc.h"
-#include "AssetGraphSchema_QuestSystem.h"
+#include "EdGraphSchema_QuestBuilder.h"
 #include "QuestSystemEditorUtils.h"
-#include "QuestEditorFactory.h"
+#include "QuestBuilderFactory.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "SMyQuest.h"
 #include "Task/QuestTask.h"
 #include "Quest_System_Editor.h"
-#include <ContentBrowserModule.h>
-#include <ContentBrowserFrontEndFilterExtension.h>
+#include "ContentBrowserModule.h"
+#include "ContentBrowserFrontEndFilterExtension.h"
 #include "Kismet2/KismetDebugUtilities.h"
 #include "WorkflowOrientedApp/WorkflowUObjectDocuments.h"
 #include "WorkflowOrientedApp/WorkflowCentricApplication.h"
@@ -38,14 +38,14 @@
 #include "Widgets/Notifications/SNotificationList.h"
 #include <Kismet2/KismetEditorUtilities.h>
 
-#define LOCTEXT_NAMESPACE "AssetEditor_QuestGraph"
+#define LOCTEXT_NAMESPACE "QuestBuilderEditor"
 
 const FName FQuestBuilderEditorTabs::MyQuestDetailID(TEXT("MyQuestDetail"));
 const FName FQuestBuilderEditorTabs::GenericGraphPropertyID(TEXT("GenericGraphProperty"));
 const FName FQuestBuilderEditorTabs::ViewportID(TEXT("Viewport"));
 const FName FQuestBuilderEditorTabs::GenericGraphEditorSettingsID(TEXT("GenericGraphEditorSettings"));
 
-const FName GenericGraphEditorAppName = FName(TEXT("GenericGraphEditorApp"));
+const FName QuestBuilderEditorAppName = FName(TEXT("QuestBuilderEditorApp"));
 
 //////////////////////////////////////////////////////////////////////////
 FQuestBuilderEditor::FQuestBuilderEditor()
@@ -77,9 +77,17 @@ void FQuestBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShare
 		EditingQuestGraph = QuestGraphToEdit;
 	}
 
+	//Make sure the graph schema is not null
+	for (auto& QuestGraphPage : EditingQuestGraph->QuestGraphPages)
+	{
+		if (QuestGraphPage->Schema == nullptr)
+		{
+			QuestGraphPage->Schema = UEdGraphSchema_QuestBuilder::StaticClass();
+		}
+	}
+
 	//Binding Functionality
 	EditingQuestGraph->GetOutermost()->PackageMarkedDirtyEvent.AddRaw(this, &FQuestBuilderEditor::OnPackageMarkedDirty);
-
 
 	TSharedPtr<FQuestBuilderEditor> ThisPtr(SharedThis(this));
 	if (!DocumentManager.IsValid())
@@ -108,7 +116,7 @@ void FQuestBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShare
 	//Make Toolbar
 	if (!ToolbarBuilder.IsValid())
 	{
-		ToolbarBuilder = MakeShareable(new FAssetEditorToolbar_QuestSystem(SharedThis(this)));
+		ToolbarBuilder = MakeShareable(new FQuestBuilderEditorToolbar(SharedThis(this)));
 	}
 
 	// if we are already editing objects, dont try to recreate the editor from scratch but update the list of objects in edition
@@ -171,7 +179,7 @@ void FQuestBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShare
 
 		const bool bCreateDefaultStandaloneMenu = true;
 		const bool bCreateDefaultToolbar = true;
-		InitAssetEditor(Mode, InitToolkitHost, GenericGraphEditorAppName, StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, EditingQuestGraph, false);
+		InitAssetEditor(Mode, InitToolkitHost, QuestBuilderEditorAppName, StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, EditingQuestGraph, false);
 
 	}
 	else
@@ -200,6 +208,7 @@ void FQuestBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShare
 	}
 
 	RegenerateMenusAndToolbars();
+	
 	
 }
 
@@ -585,7 +594,7 @@ void FQuestBuilderEditor::NewDocument_OnClicked(ECreatedQuestDocumentType GraphT
 	
 	if (GraphType == CGT_NewQuestGraph)
 	{
-		NewGraph = FQuestSystemEditorUtils::CreateNewGraph(GetQuestSystemObj(), DocumentName, UEdGraph_QuestSystemGraph::StaticClass(), UAssetGraphSchema_QuestSystem::StaticClass());
+		NewGraph = FQuestSystemEditorUtils::CreateNewGraph(GetQuestSystemObj(), DocumentName, UEdGraph_QuestSystemGraph::StaticClass(), UEdGraphSchema_QuestBuilder::StaticClass());
 		FQuestSystemEditorUtils::AddQuestGraphPage(GetQuestSystemObj(), NewGraph);
 	}
 	else
@@ -973,9 +982,12 @@ void FQuestBuilderEditor::RebuildQuestSystemGraph()
 
 	for (UEdGraph* EdGraph : EditingQuestGraph->QuestGraphPages)
 	{
-		UEdGraph_QuestSystemGraph* QuestGraph = Cast<UEdGraph_QuestSystemGraph>(EdGraph);
 		check(EdGraph != nullptr);
-		QuestGraph->RebuildQuestSystemGraph();
+
+		if (UEdGraph_QuestSystemGraph* QuestGraph = Cast<UEdGraph_QuestSystemGraph>(EdGraph))
+		{
+			QuestGraph->RebuildQuestSystemGraph();
+		}
 	}
 }
 void FQuestBuilderEditor::SelectAllNodes()

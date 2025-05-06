@@ -1,11 +1,11 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "AssetGraphSchema_QuestSystem.h"
+#include "EdGraphSchema_QuestBuilder.h"
 #include "ToolMenus.h"
 #include "Quest_System_Editor.h"
 #include "AIGraphTypes.h"
-#include "ConnectionDrawPolicy_QuestSystem.h"
+#include "QuestBuilder_ConnectionDrawingPolicy.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "Settings/EditorStyleSettings.h"
 #include "QuestSystemEditorUtils.h"
@@ -23,7 +23,7 @@
 #include "Task/QuestTask.h"
 
 
-#define LOCTEXT_NAMESPACE "AssetSchema_QuestSystemGraph"
+#define LOCTEXT_NAMESPACE "EdGraphSchema_QuestBuilder"
 
 namespace
 {
@@ -31,7 +31,7 @@ namespace
 	const int32 NodeDistance = 60;
 }
 
-int32 UAssetGraphSchema_QuestSystem::CurrentCacheRefreshID = 0;
+int32 UEdGraphSchema_QuestBuilder::CurrentCacheRefreshID = 0;
 
 class FNodeVisitorCycleChecker
 {
@@ -179,7 +179,7 @@ void FAssetSchemaAction_QuestSystem_NewEdge::AddReferencedObjects(FReferenceColl
 }
 
 
-void UAssetGraphSchema_QuestSystem::GetBreakLinkToSubMenuActions(UToolMenu* Menu, UEdGraphPin* InGraphPin)
+void UEdGraphSchema_QuestBuilder::GetBreakLinkToSubMenuActions(UToolMenu* Menu, UEdGraphPin* InGraphPin)
 {
 	// Make sure we have a unique name for every entry in the list
 	TMap< FString, uint32 > LinkTitleCount;
@@ -221,11 +221,11 @@ void UAssetGraphSchema_QuestSystem::GetBreakLinkToSubMenuActions(UToolMenu* Menu
 		++Count;
 
 		Section.AddMenuEntry(NAME_None, Description, Description, FSlateIcon(), FUIAction(
-			FExecuteAction::CreateUObject(this, &UAssetGraphSchema_QuestSystem::BreakSinglePinLink, const_cast<UEdGraphPin*>(InGraphPin), *Links)));
+			FExecuteAction::CreateUObject(this, &UEdGraphSchema_QuestBuilder::BreakSinglePinLink, const_cast<UEdGraphPin*>(InGraphPin), *Links)));
 	}
 }
 
-void UAssetGraphSchema_QuestSystem::CreateDefaultNodesForGraph(UEdGraph& Graph) const
+void UEdGraphSchema_QuestBuilder::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 {
 	UQuestSystemGraph* QuestGraph = CastChecked<UQuestSystemGraph>(Graph.GetOuter());
 
@@ -239,12 +239,12 @@ void UAssetGraphSchema_QuestSystem::CreateDefaultNodesForGraph(UEdGraph& Graph) 
 	SetNodeMetaData(RootNode, FNodeMetadata::DefaultGraphNode);
 }
 
-EGraphType UAssetGraphSchema_QuestSystem::GetGraphType(const UEdGraph* TestEdGraph) const
+EGraphType UEdGraphSchema_QuestBuilder::GetGraphType(const UEdGraph* TestEdGraph) const
 {
 	return GT_StateMachine;
 }
 
-void UAssetGraphSchema_QuestSystem::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const
+void UEdGraphSchema_QuestBuilder::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const
 {
 	UQuestSystemGraph* Graph = CastChecked<UQuestSystemGraph>(ContextMenuBuilder.CurrentGraph->GetOuter());
 
@@ -277,7 +277,7 @@ void UAssetGraphSchema_QuestSystem::GetGraphContextActions(FGraphContextMenuBuil
 
 		const FText NodeTypeName = FText::FromString(FName::NameToDisplayString(NodeClass.ToString(), false));
 
-		TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> AddOpAction = UAssetGraphSchema_QuestSystem::AddNewNodeAction(TasksBuilder, NodeClass.GetCategory(), NodeTypeName, FText::GetEmpty());
+		TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> AddOpAction = UEdGraphSchema_QuestBuilder::AddNewNodeAction(TasksBuilder, NodeClass.GetCategory(), NodeTypeName, FText::GetEmpty());
 		UClass* GraphNodeClass = UEdNode_QuestSystemTask::StaticClass();
 
 
@@ -302,7 +302,7 @@ void UAssetGraphSchema_QuestSystem::GetGraphContextActions(FGraphContextMenuBuil
 	FCategorizedGraphActionListBuilder StateBuilder(TEXT("Quest State"));
 
 	//State : Complete Quest
-	TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> AddOpAction = UAssetGraphSchema_QuestSystem::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("QuestSystemGraphNodeAction", "Complete Quest"), LOCTEXT("QuestSystemGraphNodeTooltip", "Complete The Quest"));
+	TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> AddOpAction = UEdGraphSchema_QuestBuilder::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("QuestSystemGraphNodeAction", "Complete Quest"), LOCTEXT("QuestSystemGraphNodeTooltip", "Complete The Quest"));
 	UEdNode_QuestSystemNode* OpNode = NewObject<UEdNode_QuestSystemNode>(ContextMenuBuilder.OwnerOfTemporaries, UEdNode_QuestSystemState::StaticClass());
 	AddOpAction->NodeTemplate = OpNode;
 	AddOpAction->NodeTemplate->QuestSystemGraphNode = NewObject<UQuestSystemGraphNode>(AddOpAction->NodeTemplate, UQuestSystemGraphNode_State::StaticClass());
@@ -315,7 +315,7 @@ void UAssetGraphSchema_QuestSystem::GetGraphContextActions(FGraphContextMenuBuil
 	}
 
 	//State : Fail Quest
-	AddOpAction = UAssetGraphSchema_QuestSystem::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("QuestSystemGraphNodeAction", "Fail Quest"), LOCTEXT("QuestSystemGraphNodeTooltip", "Fail The Quest"));
+	AddOpAction = UEdGraphSchema_QuestBuilder::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("QuestSystemGraphNodeAction", "Fail Quest"), LOCTEXT("QuestSystemGraphNodeTooltip", "Fail The Quest"));
 	OpNode = NewObject<UEdNode_QuestSystemNode>(ContextMenuBuilder.OwnerOfTemporaries, UEdNode_QuestSystemState::StaticClass());
 	AddOpAction->NodeTemplate = OpNode;
 	AddOpAction->NodeTemplate->QuestSystemGraphNode = NewObject<UQuestSystemGraphNode>(AddOpAction->NodeTemplate, UQuestSystemGraphNode_State::StaticClass());
@@ -329,7 +329,7 @@ void UAssetGraphSchema_QuestSystem::GetGraphContextActions(FGraphContextMenuBuil
 	ContextMenuBuilder.Append(StateBuilder);
 
 	//State : Custom State
-	/*AddOpAction = UAssetGraphSchema_QuestSystem::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("QuestSystemGraphNodeAction", "Add Custom State..."), LOCTEXT("QuestSystemGraphNodeTooltip", "Add Custom State..."));
+	/*AddOpAction = UEdGraphSchema_QuestBuilder::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("QuestSystemGraphNodeAction", "Add Custom State..."), LOCTEXT("QuestSystemGraphNodeTooltip", "Add Custom State..."));
 	OpNode = NewObject<UEdNode_QuestSystemNode>(ContextMenuBuilder.OwnerOfTemporaries, UEdNode_QuestSystemState::StaticClass());
 	AddOpAction->NodeTemplate = OpNode;
 	AddOpAction->NodeTemplate->QuestSystemGraphNode = NewObject<UQuestSystemGraphNode>(AddOpAction->NodeTemplate, UQuestSystemGraphNode_State::StaticClass());
@@ -339,7 +339,7 @@ void UAssetGraphSchema_QuestSystem::GetGraphContextActions(FGraphContextMenuBuil
 	ContextMenuBuilder.Append(StateBuilder);*/
 }
 
-void UAssetGraphSchema_QuestSystem::GetContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
+void UEdGraphSchema_QuestBuilder::GetContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
 	if (Context->Pin) {
 		FToolMenuSection& Section = Menu->AddSection("QuestSystemGraphAssetGraphSchemaNodeActions", LOCTEXT("PinActionsMenuHeader", "Pin Actions"));
@@ -355,11 +355,11 @@ void UAssetGraphSchema_QuestSystem::GetContextMenuActions(UToolMenu* Menu, UGrap
 						"BreakLinkTo",
 						LOCTEXT("BreakLinkTo", "Break Link To..."),
 						LOCTEXT("BreakSpecificLinks", "Break a specific link..."),
-						FNewToolMenuDelegate::CreateUObject((UAssetGraphSchema_QuestSystem* const)this, &UAssetGraphSchema_QuestSystem::GetBreakLinkToSubMenuActions, const_cast<UEdGraphPin*>(Context->Pin)));
+						FNewToolMenuDelegate::CreateUObject((UEdGraphSchema_QuestBuilder* const)this, &UEdGraphSchema_QuestBuilder::GetBreakLinkToSubMenuActions, const_cast<UEdGraphPin*>(Context->Pin)));
 				}
 				else
 				{
-					((UAssetGraphSchema_QuestSystem* const)this)->GetBreakLinkToSubMenuActions(Menu, const_cast<UEdGraphPin*>(Context->Pin));
+					((UEdGraphSchema_QuestBuilder* const)this)->GetBreakLinkToSubMenuActions(Menu, const_cast<UEdGraphPin*>(Context->Pin));
 				}
 			}
 	}
@@ -380,7 +380,7 @@ void UAssetGraphSchema_QuestSystem::GetContextMenuActions(UToolMenu* Menu, UGrap
 	Super::GetContextMenuActions(Menu, Context);
 }
 
-const FPinConnectionResponse UAssetGraphSchema_QuestSystem::CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const
+const FPinConnectionResponse UEdGraphSchema_QuestBuilder::CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const
 {
 	
 	// Make sure the pins are not on the same node
@@ -435,7 +435,7 @@ const FPinConnectionResponse UAssetGraphSchema_QuestSystem::CanCreateConnection(
 	}
 }
 
-bool UAssetGraphSchema_QuestSystem::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const
+bool UEdGraphSchema_QuestBuilder::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const
 {
 	// We don't actually care about the pin, we want the node that is being dragged between
 	UEdNode_QuestSystemNode* NodeA = Cast<UEdNode_QuestSystemNode>(A->GetOwningNode());
@@ -484,7 +484,7 @@ bool UAssetGraphSchema_QuestSystem::TryCreateConnection(UEdGraphPin* A, UEdGraph
 	return false;
 }
 
-bool UAssetGraphSchema_QuestSystem::CreateAutomaticConversionNodeAndConnections(UEdGraphPin* A, UEdGraphPin* B) const
+bool UEdGraphSchema_QuestBuilder::CreateAutomaticConversionNodeAndConnections(UEdGraphPin* A, UEdGraphPin* B) const
 {
 	UEdNode_QuestSystemNode* NodeA = Cast<UEdNode_QuestSystemNode>(A->GetOwningNode());
 	UEdNode_QuestSystemNode* NodeB = Cast<UEdNode_QuestSystemNode>(B->GetOwningNode());
@@ -508,38 +508,38 @@ bool UAssetGraphSchema_QuestSystem::CreateAutomaticConversionNodeAndConnections(
 	return true;
 }
 
-FConnectionDrawingPolicy* UAssetGraphSchema_QuestSystem::CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj) const
+FConnectionDrawingPolicy* UEdGraphSchema_QuestBuilder::CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj) const
 {
-	return new FConnectionDrawPolicy_QuestSystem(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj);
+	return new FQuestBuilder_ConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, InZoomFactor, InClippingRect, InDrawElements, InGraphObj);
 }
 
-FLinearColor UAssetGraphSchema_QuestSystem::GetPinTypeColor(const FEdGraphPinType& PinType) const
+FLinearColor UEdGraphSchema_QuestBuilder::GetPinTypeColor(const FEdGraphPinType& PinType) const
 {
 	return FColor::Cyan;
 }
 
-void UAssetGraphSchema_QuestSystem::BreakNodeLinks(UEdGraphNode& TargetNode) const
+void UEdGraphSchema_QuestBuilder::BreakNodeLinks(UEdGraphNode& TargetNode) const
 {
 	const FScopedTransaction Transaction(NSLOCTEXT("UnrealEd", "GraphEd_BreakNodeLinks", "Break Node Links"));
 
 	Super::BreakNodeLinks(TargetNode);
 }
 
-void UAssetGraphSchema_QuestSystem::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const
+void UEdGraphSchema_QuestBuilder::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const
 {
 	const FScopedTransaction Transaction(NSLOCTEXT("UnrealEd", "GraphEd_BreakPinLinks", "Break Pin Links"));
 
 	Super::BreakPinLinks(TargetPin, bSendsNodeNotifcation);
 }
 
-void UAssetGraphSchema_QuestSystem::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const
+void UEdGraphSchema_QuestBuilder::BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const
 {
 	const FScopedTransaction Transaction(NSLOCTEXT("UnrealEd", "GraphEd_BreakSinglePinLink", "Break Pin Link"));
 
 	Super::BreakSinglePinLink(SourcePin, TargetPin);
 }
 
-UEdGraphPin* UAssetGraphSchema_QuestSystem::DropPinOnNode(UEdGraphNode* InTargetNode, const FName& InSourcePinName, const FEdGraphPinType& InSourcePinType, EEdGraphPinDirection InSourcePinDirection) const
+UEdGraphPin* UEdGraphSchema_QuestBuilder::DropPinOnNode(UEdGraphNode* InTargetNode, const FName& InSourcePinName, const FEdGraphPinType& InSourcePinType, EEdGraphPinDirection InSourcePinDirection) const
 {
 	UEdNode_QuestSystemNode* EdNode = Cast<UEdNode_QuestSystemNode>(InTargetNode);
 	switch (InSourcePinDirection)
@@ -553,27 +553,27 @@ UEdGraphPin* UAssetGraphSchema_QuestSystem::DropPinOnNode(UEdGraphNode* InTarget
 	}
 }
 
-bool UAssetGraphSchema_QuestSystem::SupportsDropPinOnNode(UEdGraphNode* InTargetNode, const FEdGraphPinType& InSourcePinType, EEdGraphPinDirection InSourcePinDirection, FText& OutErrorMessage) const
+bool UEdGraphSchema_QuestBuilder::SupportsDropPinOnNode(UEdGraphNode* InTargetNode, const FEdGraphPinType& InSourcePinType, EEdGraphPinDirection InSourcePinDirection, FText& OutErrorMessage) const
 {
 	return Cast<UEdNode_QuestSystemNode>(InTargetNode) != nullptr;
 }
 
-bool UAssetGraphSchema_QuestSystem::IsCacheVisualizationOutOfDate(int32 InVisualizationCacheID) const
+bool UEdGraphSchema_QuestBuilder::IsCacheVisualizationOutOfDate(int32 InVisualizationCacheID) const
 {
 	return CurrentCacheRefreshID != InVisualizationCacheID;
 }
 
-int32 UAssetGraphSchema_QuestSystem::GetCurrentVisualizationCacheID() const
+int32 UEdGraphSchema_QuestBuilder::GetCurrentVisualizationCacheID() const
 {
 	return CurrentCacheRefreshID;
 }
 
-void UAssetGraphSchema_QuestSystem::ForceVisualizationCacheClear() const
+void UEdGraphSchema_QuestBuilder::ForceVisualizationCacheClear() const
 {
 	++CurrentCacheRefreshID;
 }
 
-TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> UAssetGraphSchema_QuestSystem::AddNewNodeAction(FGraphActionListBuilderBase& ContextMenuBuilder, const FText& Category, const FText& MenuDesc, const FText& Tooltip)
+TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> UEdGraphSchema_QuestBuilder::AddNewNodeAction(FGraphActionListBuilderBase& ContextMenuBuilder, const FText& Category, const FText& MenuDesc, const FText& Tooltip)
 {
 	TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> NewAction = TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode>(new FAssetSchemaAction_QuestSystem_NewNode(Category, MenuDesc, Tooltip, 0));
 	ContextMenuBuilder.AddAction(NewAction);

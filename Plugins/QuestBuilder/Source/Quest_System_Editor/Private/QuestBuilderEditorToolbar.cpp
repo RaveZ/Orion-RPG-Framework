@@ -1,23 +1,23 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "AssetEditorToolbar_QuestSystem.h"
+#include "QuestBuilderEditorToolbar.h"
 #include "Quest_System_EditorCommands.h"
 #include "Quest_System_EditorStyle.h"
 #include "QuestBuilderEditor.h"
 
-#define LOCTEXT_NAMESPACE "AssetEditorToolbar_QuestSystem"
-void FAssetEditorToolbar_QuestSystem::AddQuestSystemToolbar(TSharedPtr<FExtender> Extender)
+#define LOCTEXT_NAMESPACE "QuestBuilderEditorToolbar"
+void FQuestBuilderEditorToolbar::AddQuestSystemToolbar(TSharedPtr<FExtender> Extender)
 {
 	check(QuestSystemEditor.IsValid());
 	TSharedPtr<FQuestBuilderEditor> QuestSystemEditorPtr = QuestSystemEditor.Pin();
 	
 	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
-	ToolbarExtender->AddToolBarExtension("Asset", EExtensionHook::After, QuestSystemEditorPtr->GetToolkitCommands(), FToolBarExtensionDelegate::CreateSP(this, &FAssetEditorToolbar_QuestSystem::FillQuestSystemToolbar));
+	ToolbarExtender->AddToolBarExtension("Asset", EExtensionHook::After, QuestSystemEditorPtr->GetToolkitCommands(), FToolBarExtensionDelegate::CreateSP(this, &FQuestBuilderEditorToolbar::FillQuestSystemToolbar));
 	QuestSystemEditorPtr->AddToolbarExtender(ToolbarExtender);
 }
 
-void FAssetEditorToolbar_QuestSystem::FillQuestSystemToolbar(FToolBarBuilder& ToolbarBuilder)
+void FQuestBuilderEditorToolbar::FillQuestSystemToolbar(FToolBarBuilder& ToolbarBuilder)
 {
 	check(QuestSystemEditor.IsValid());
 	TSharedPtr<FQuestBuilderEditor> QuestSystemEditorPtr = QuestSystemEditor.Pin();

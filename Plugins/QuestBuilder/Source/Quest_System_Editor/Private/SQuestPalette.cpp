@@ -7,7 +7,7 @@
 #include "TutorialMetaData.h"
 #include "SMyQuest.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
-#include "AssetGraphSchema_QuestSystem.h"
+#include "EdGraphSchema_QuestBuilder.h"
 #include "EdGraph_QuestSystemGraph.h"
 #include "QuestSystemGraph.h"
 #include "Condition/QuestCondition.h"
@@ -146,7 +146,7 @@ TSharedRef<SWidget> SQuestPaletteItem::CreateTextSlotWidget(FCreateWidgetForActi
 
 FText SQuestPaletteItem::GetDisplayText() const
 {
-	const UAssetGraphSchema_QuestSystem* QuestSchema = GetDefault<UAssetGraphSchema_QuestSystem>();
+	const UEdGraphSchema_QuestBuilder* QuestSchema = GetDefault<UEdGraphSchema_QuestBuilder>();
 	if (MenuDescriptionCache.IsOutOfDate(QuestSchema))
 	{
 		TSharedPtr< FEdGraphSchemaAction > GraphAction = ActionPtr.Pin();

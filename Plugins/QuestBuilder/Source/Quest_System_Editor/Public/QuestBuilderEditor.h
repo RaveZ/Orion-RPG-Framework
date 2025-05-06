@@ -120,7 +120,7 @@ public:
 
 	//Toolbar
 	void UpdateToolbar();
-	TSharedPtr<class FAssetEditorToolbar_QuestSystem> GetToolbarBuilder() { return ToolbarBuilder; }
+	TSharedPtr<class FQuestBuilderEditorToolbar> GetToolbarBuilder() { return ToolbarBuilder; }
 	void RegisterToolbarTab(const TSharedRef<class FTabManager>& TabManager);
 
 	
@@ -318,7 +318,7 @@ protected:
 
 
 	//Toolbar
-	TSharedPtr<class FAssetEditorToolbar_QuestSystem> ToolbarBuilder;
+	TSharedPtr<class FQuestBuilderEditorToolbar> ToolbarBuilder;
 
 	/** Handle to the registered OnPackageSave delegate */
 	FDelegateHandle OnPackageSavedDelegateHandle;

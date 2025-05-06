@@ -8,10 +8,10 @@ class FQuestBuilderEditor;
 class FExtender;
 class FToolBarBuilder;
 
-class QUEST_SYSTEM_EDITOR_API FAssetEditorToolbar_QuestSystem : public TSharedFromThis<FAssetEditorToolbar_QuestSystem>
+class QUEST_SYSTEM_EDITOR_API FQuestBuilderEditorToolbar : public TSharedFromThis<FQuestBuilderEditorToolbar>
 {
 public:
-	FAssetEditorToolbar_QuestSystem(TSharedPtr<FQuestBuilderEditor> InQuestBuilderEditor)
+	FQuestBuilderEditorToolbar(TSharedPtr<FQuestBuilderEditor> InQuestBuilderEditor)
 		: QuestSystemEditor(InQuestBuilderEditor) {}
 
 	void AddQuestSystemToolbar(TSharedPtr<FExtender> Extender);

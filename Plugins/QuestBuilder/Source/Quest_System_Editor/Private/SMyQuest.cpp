@@ -304,23 +304,12 @@ TSharedRef<SWidget> SMyQuest::OnCreateWidgetForAction(FCreateWidgetForActionData
 
 void SMyQuest::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 {
-	const UAssetGraphSchema_QuestSystem* QuestSystemSchema = GetDefault<UAssetGraphSchema_QuestSystem>();
-
 	UQuestSystemGraph* QuestSystemObj = GetQuestSystemObj();
 	check(QuestSystemObj);
 
 	TSharedPtr<FQuestBuilderEditor> QuestSystemEditor = QuestEditorPtr.Pin();
 
 	EFieldIteratorFlags::SuperClassFlags FieldIteratorSuperFlag = EFieldIteratorFlags::IncludeSuper;
-	/*if (ShowUserVarsOnly())
-	{
-		FieldIteratorSuperFlag = EFieldIteratorFlags::ExcludeSuper;
-	}*/
-
-	//bool bShowReplicatedOnly = IsShowingReplicatedVariablesOnly();
-
-	// Initialise action sorting instance
-	//FGraphActionSort SortList(QuestSystemObj->CategorySorting);
 
 	if (QuestSystemEditor.IsValid())
 	{
@@ -337,9 +326,6 @@ void SMyQuest::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 			NeUbergraphAction->FuncName = Graph->GetFName();
 			NeUbergraphAction->EdGraph = Graph;
 			OutAllActions.AddAction(NeUbergraphAction);
-
-			//GetChildGraphs(Graph, NeUbergraphAction->GetSectionID(), SortList);
-			//GetChildEvents(Graph, NeUbergraphAction->GetSectionID(), SortList);
 		}
 	}
 }
