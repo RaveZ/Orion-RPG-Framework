@@ -19,7 +19,7 @@
 
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
-void SQuestPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, TWeakPtr<FAssetEditor_QuestSystem> InQuestEditor)
+void SQuestPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, TWeakPtr<FQuestBuilderEditor> InQuestEditor)
 {
 	Construct(InArgs, InCreateData, InQuestEditor.Pin()->GetQuestSystemObj(), InQuestEditor);
 
@@ -27,10 +27,10 @@ void SQuestPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActi
 
 void SQuestPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestSystemGraph* InQuestSystemGraph)
 {
-	Construct(InArgs, InCreateData, InQuestSystemGraph, TWeakPtr<FAssetEditor_QuestSystem>());
+	Construct(InArgs, InCreateData, InQuestSystemGraph, TWeakPtr<FQuestBuilderEditor>());
 }
 
-void SQuestPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestSystemGraph* InQuestSystemGraph, TWeakPtr<FAssetEditor_QuestSystem> InQuestEditor)
+void SQuestPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestSystemGraph* InQuestSystemGraph, TWeakPtr<FQuestBuilderEditor> InQuestEditor)
 {
 	check(InCreateData->Action.IsValid());
 	check(InQuestSystemGraph);
@@ -260,7 +260,7 @@ FText SQuestPaletteItem::GetToolTipText() const
 	return FText::FromString(TEXT(""));
 }
 
-void SQuestPalette::Construct(const FArguments& InArgs, TWeakPtr<FAssetEditor_QuestSystem> InQuestEditor)
+void SQuestPalette::Construct(const FArguments& InArgs, TWeakPtr<FQuestBuilderEditor> InQuestEditor)
 {
 }
 

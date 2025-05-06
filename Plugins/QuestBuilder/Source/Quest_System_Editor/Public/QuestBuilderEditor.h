@@ -21,7 +21,7 @@ namespace QuestSectionID
 	};
 };
 
-struct FQuestSystemAssetEditorTabs
+struct FQuestBuilderEditorTabs
 {
 	// Tab identifiers
 	static const FName MyQuestDetailID;
@@ -80,11 +80,11 @@ public:
 };
 
 
-class QUEST_SYSTEM_EDITOR_API FAssetEditor_QuestSystem : public IQuestEditor, public FNotifyHook, public FGCObject
+class QUEST_SYSTEM_EDITOR_API FQuestBuilderEditor : public IQuestEditor, public FNotifyHook, public FGCObject
 {
 public:
-	FAssetEditor_QuestSystem();
-	virtual	~FAssetEditor_QuestSystem();
+	FQuestBuilderEditor();
+	virtual	~FQuestBuilderEditor();
 
 	void Initialize(const EToolkitMode::Type Mode, const TSharedPtr< IToolkitHost >& InitToolkitHost, UObject* InObject);
 

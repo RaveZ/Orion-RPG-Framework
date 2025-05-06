@@ -1,7 +1,7 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "AssetEditor_QuestSystem.h"
+#include "QuestBuilderEditor.h"
 #include "QuestSystemGraphNode_Root.h"
 #include "Condition/QuestCondition.h"
 #include "EngineGlobals.h"
@@ -40,26 +40,26 @@
 
 #define LOCTEXT_NAMESPACE "AssetEditor_QuestGraph"
 
-const FName FQuestSystemAssetEditorTabs::MyQuestDetailID(TEXT("MyQuestDetail"));
-const FName FQuestSystemAssetEditorTabs::GenericGraphPropertyID(TEXT("GenericGraphProperty"));
-const FName FQuestSystemAssetEditorTabs::ViewportID(TEXT("Viewport"));
-const FName FQuestSystemAssetEditorTabs::GenericGraphEditorSettingsID(TEXT("GenericGraphEditorSettings"));
+const FName FQuestBuilderEditorTabs::MyQuestDetailID(TEXT("MyQuestDetail"));
+const FName FQuestBuilderEditorTabs::GenericGraphPropertyID(TEXT("GenericGraphProperty"));
+const FName FQuestBuilderEditorTabs::ViewportID(TEXT("Viewport"));
+const FName FQuestBuilderEditorTabs::GenericGraphEditorSettingsID(TEXT("GenericGraphEditorSettings"));
 
 const FName GenericGraphEditorAppName = FName(TEXT("GenericGraphEditorApp"));
 
 //////////////////////////////////////////////////////////////////////////
-FAssetEditor_QuestSystem::FAssetEditor_QuestSystem()
+FQuestBuilderEditor::FQuestBuilderEditor()
 {
 	EditingQuestGraph = nullptr;
 
 #if ENGINE_MAJOR_VERSION < 5
-	OnPackageSavedDelegateHandle = UPackage::PackageSavedEvent.AddRaw(this, &FAssetEditor_QuestSystem::OnPackageSaved);
+	OnPackageSavedDelegateHandle = UPackage::PackageSavedEvent.AddRaw(this, &FQuestBuilderEditor::OnPackageSaved);
 #else // #if ENGINE_MAJOR_VERSION < 5
-	OnPackageSavedDelegateHandle = UPackage::PackageSavedWithContextEvent.AddRaw(this, &FAssetEditor_QuestSystem::OnPackageSavedWithContext);
+	OnPackageSavedDelegateHandle = UPackage::PackageSavedWithContextEvent.AddRaw(this, &FQuestBuilderEditor::OnPackageSavedWithContext);
 #endif // #else // #if ENGINE_MAJOR_VERSION < 5
 }
 
-FAssetEditor_QuestSystem::~FAssetEditor_QuestSystem()
+FQuestBuilderEditor::~FQuestBuilderEditor()
 {
 #if ENGINE_MAJOR_VERSION < 5
 	UPackage::PackageSavedEvent.Remove(OnPackageSavedDelegateHandle);
@@ -68,7 +68,7 @@ FAssetEditor_QuestSystem::~FAssetEditor_QuestSystem()
 #endif // #else // #if ENGINE_MAJOR_VERSION < 5
 }
 
-void FAssetEditor_QuestSystem::Initialize(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UObject* InObject)
+void FQuestBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UObject* InObject)
 {
 	UQuestSystemGraph* QuestGraphToEdit = Cast<UQuestSystemGraph>(InObject);
 
@@ -78,10 +78,10 @@ void FAssetEditor_QuestSystem::Initialize(const EToolkitMode::Type Mode, const T
 	}
 
 	//Binding Functionality
-	EditingQuestGraph->GetOutermost()->PackageMarkedDirtyEvent.AddRaw(this, &FAssetEditor_QuestSystem::OnPackageMarkedDirty);
+	EditingQuestGraph->GetOutermost()->PackageMarkedDirtyEvent.AddRaw(this, &FQuestBuilderEditor::OnPackageMarkedDirty);
 
 
-	TSharedPtr<FAssetEditor_QuestSystem> ThisPtr(SharedThis(this));
+	TSharedPtr<FQuestBuilderEditor> ThisPtr(SharedThis(this));
 	if (!DocumentManager.IsValid())
 	{
 		DocumentManager = MakeShareable(new FDocumentTracker);
@@ -90,7 +90,7 @@ void FAssetEditor_QuestSystem::Initialize(const EToolkitMode::Type Mode, const T
 		// Register the document factories
 		{
 			TSharedRef<FDocumentTabFactory> GraphEditorFactory = MakeShareable(new FQuestGraphEditorSummoner(ThisPtr,
-				FQuestGraphEditorSummoner::FOnCreateGraphEditorWidget::CreateSP(this, &FAssetEditor_QuestSystem::CreateGraphEditorWidget)
+				FQuestGraphEditorSummoner::FOnCreateGraphEditorWidget::CreateSP(this, &FQuestBuilderEditor::CreateGraphEditorWidget)
 			));
 
 			// Also store off a reference to the grapheditor factory so we can find all the tabs spawned by it later.
@@ -148,7 +148,7 @@ void FAssetEditor_QuestSystem::Initialize(const EToolkitMode::Type Mode, const T
 					(
 						FTabManager::NewStack()
 						->SetSizeCoefficient(0.2f)
-						->AddTab(FQuestSystemAssetEditorTabs::MyQuestDetailID, ETabState::OpenedTab)
+						->AddTab(FQuestBuilderEditorTabs::MyQuestDetailID, ETabState::OpenedTab)
 					)
 					->Split
 					(
@@ -163,7 +163,7 @@ void FAssetEditor_QuestSystem::Initialize(const EToolkitMode::Type Mode, const T
 						(
 							FTabManager::NewStack()
 							->SetSizeCoefficient(0.55f)
-							->AddTab(FQuestSystemAssetEditorTabs::GenericGraphPropertyID, ETabState::OpenedTab)
+							->AddTab(FQuestBuilderEditorTabs::GenericGraphPropertyID, ETabState::OpenedTab)
 						)
 					)
 				)
@@ -204,7 +204,7 @@ void FAssetEditor_QuestSystem::Initialize(const EToolkitMode::Type Mode, const T
 }
 
 
-void FAssetEditor_QuestSystem::RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
+void FQuestBuilderEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
 {
 	DocumentManager->SetTabManager(InTabManager);
 
@@ -213,70 +213,70 @@ void FAssetEditor_QuestSystem::RegisterTabSpawners(const TSharedRef<FTabManager>
 
 	FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
 
-	InTabManager->RegisterTabSpawner(FQuestSystemAssetEditorTabs::MyQuestDetailID, FOnSpawnTab::CreateSP(this, &FAssetEditor_QuestSystem::SpawnTab_MyQuest))
+	InTabManager->RegisterTabSpawner(FQuestBuilderEditorTabs::MyQuestDetailID, FOnSpawnTab::CreateSP(this, &FQuestBuilderEditor::SpawnTab_MyQuest))
 		.SetDisplayName(LOCTEXT("Quest Details", "My Quest"))
 		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
 
-	InTabManager->RegisterTabSpawner(FQuestSystemAssetEditorTabs::ViewportID, FOnSpawnTab::CreateSP(this, &FAssetEditor_QuestSystem::SpawnTab_Viewport))
+	InTabManager->RegisterTabSpawner(FQuestBuilderEditorTabs::ViewportID, FOnSpawnTab::CreateSP(this, &FQuestBuilderEditor::SpawnTab_Viewport))
 		.SetDisplayName(LOCTEXT("GraphCanvasTab", "Viewport"))
 		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.EventGraph_16x"));
 
-	InTabManager->RegisterTabSpawner(FQuestSystemAssetEditorTabs::GenericGraphPropertyID, FOnSpawnTab::CreateSP(this, &FAssetEditor_QuestSystem::SpawnTab_Details))
+	InTabManager->RegisterTabSpawner(FQuestBuilderEditorTabs::GenericGraphPropertyID, FOnSpawnTab::CreateSP(this, &FQuestBuilderEditor::SpawnTab_Details))
 		.SetDisplayName(LOCTEXT("DetailsTab", "Property"))
 		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
 }
 
-void FAssetEditor_QuestSystem::UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
+void FQuestBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
 {
 	FAssetEditorToolkit::UnregisterTabSpawners(InTabManager);
 
-	InTabManager->UnregisterTabSpawner(FQuestSystemAssetEditorTabs::MyQuestDetailID);
-	InTabManager->UnregisterTabSpawner(FQuestSystemAssetEditorTabs::ViewportID);
-	InTabManager->UnregisterTabSpawner(FQuestSystemAssetEditorTabs::GenericGraphPropertyID);
-	InTabManager->UnregisterTabSpawner(FQuestSystemAssetEditorTabs::GenericGraphEditorSettingsID);
+	InTabManager->UnregisterTabSpawner(FQuestBuilderEditorTabs::MyQuestDetailID);
+	InTabManager->UnregisterTabSpawner(FQuestBuilderEditorTabs::ViewportID);
+	InTabManager->UnregisterTabSpawner(FQuestBuilderEditorTabs::GenericGraphPropertyID);
+	InTabManager->UnregisterTabSpawner(FQuestBuilderEditorTabs::GenericGraphEditorSettingsID);
 }
 
 
 
 
 
-void FAssetEditor_QuestSystem::BindCommands()
+void FQuestBuilderEditor::BindCommands()
 {
 	ToolkitCommands->MapAction(FQuest_System_EditorCommands::Get().NewTask,
-		FExecuteAction::CreateSP(this, &FAssetEditor_QuestSystem::CreateNewTask),
-		FCanExecuteAction::CreateSP(this, &FAssetEditor_QuestSystem::CanCreateNewTask),
+		FExecuteAction::CreateSP(this, &FQuestBuilderEditor::CreateNewTask),
+		FCanExecuteAction::CreateSP(this, &FQuestBuilderEditor::CanCreateNewTask),
 		FIsActionChecked(),
-		FIsActionButtonVisible::CreateSP(this, &FAssetEditor_QuestSystem::IsNewTaskButtonVisible)
+		FIsActionButtonVisible::CreateSP(this, &FQuestBuilderEditor::IsNewTaskButtonVisible)
 	);
 
 	ToolkitCommands->MapAction(FQuest_System_EditorCommands::Get().NewQuestCondition,
-		FExecuteAction::CreateSP(this, &FAssetEditor_QuestSystem::CreateNewQuestCondition),
-		FCanExecuteAction::CreateSP(this, &FAssetEditor_QuestSystem::CanCreateQuestCondition)
+		FExecuteAction::CreateSP(this, &FQuestBuilderEditor::CreateNewQuestCondition),
+		FCanExecuteAction::CreateSP(this, &FQuestBuilderEditor::CanCreateQuestCondition)
 	);
 
 	ToolkitCommands->MapAction(FQuest_System_EditorCommands::Get().NewQuestEvent,
-		FExecuteAction::CreateSP(this, &FAssetEditor_QuestSystem::CreateNewQuestEvent),
-		FCanExecuteAction::CreateSP(this, &FAssetEditor_QuestSystem::CanCreateQuestEvent)
+		FExecuteAction::CreateSP(this, &FQuestBuilderEditor::CreateNewQuestEvent),
+		FCanExecuteAction::CreateSP(this, &FQuestBuilderEditor::CanCreateQuestEvent)
 	); 
 	
 	ToolkitCommands->MapAction(FQuest_System_EditorCommands::Get().QuestSetting,
-		FExecuteAction::CreateSP(this, &FAssetEditor_QuestSystem::OpenQuestSetting),
-		FCanExecuteAction::CreateSP(this, &FAssetEditor_QuestSystem::CanOpenQuestSetting)
+		FExecuteAction::CreateSP(this, &FQuestBuilderEditor::OpenQuestSetting),
+		FCanExecuteAction::CreateSP(this, &FQuestBuilderEditor::CanOpenQuestSetting)
 	);
 	
 	ToolkitCommands->MapAction(FQuest_System_EditorCommands::Get().AddNewQuestGraph,
-		FExecuteAction::CreateSP(this, &FAssetEditor_QuestSystem::NewDocument_OnClicked, CGT_NewQuestGraph),
-		FCanExecuteAction::CreateSP(this, &FAssetEditor_QuestSystem::InEditingMode),
+		FExecuteAction::CreateSP(this, &FQuestBuilderEditor::NewDocument_OnClicked, CGT_NewQuestGraph),
+		FCanExecuteAction::CreateSP(this, &FQuestBuilderEditor::InEditingMode),
 		FIsActionChecked(),
-		FIsActionButtonVisible::CreateSP(this, &FAssetEditor_QuestSystem::NewDocument_IsVisibleForType, CGT_NewQuestGraph)
+		FIsActionButtonVisible::CreateSP(this, &FQuestBuilderEditor::NewDocument_IsVisibleForType, CGT_NewQuestGraph)
 	);
 
 }
 
-void FAssetEditor_QuestSystem::CreateCommandList()
+void FQuestBuilderEditor::CreateCommandList()
 {
 	if (GraphEditorCommands.IsValid()) {
 		return;
@@ -288,71 +288,71 @@ void FAssetEditor_QuestSystem::CreateCommandList()
 	// if it ever crashes, this function will have to go away and be reimplemented in each derived class
 
 	GraphEditorCommands->MapAction(FQuest_System_EditorCommands::Get().AddNewQuestGraph,
-		FExecuteAction::CreateSP(this, &FAssetEditor_QuestSystem::NewDocument_OnClicked, CGT_NewQuestGraph),
-		FCanExecuteAction::CreateSP(this, &FAssetEditor_QuestSystem::InEditingMode),
+		FExecuteAction::CreateSP(this, &FQuestBuilderEditor::NewDocument_OnClicked, CGT_NewQuestGraph),
+		FCanExecuteAction::CreateSP(this, &FQuestBuilderEditor::InEditingMode),
 		FIsActionChecked(),
-		FIsActionButtonVisible::CreateSP(this, &FAssetEditor_QuestSystem::NewDocument_IsVisibleForType, CGT_NewQuestGraph)
+		FIsActionButtonVisible::CreateSP(this, &FQuestBuilderEditor::NewDocument_IsVisibleForType, CGT_NewQuestGraph)
 	);
 
 	GraphEditorCommands->MapAction(FQuest_System_EditorCommands::Get().NewTask,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::CreateNewTask),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::CanCreateNewTask));
+		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CreateNewTask),
+		FCanExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CanCreateNewTask));
 
 	GraphEditorCommands->MapAction(FQuest_System_EditorCommands::Get().NewQuestCondition,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::CreateNewQuestEvent),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::CanCreateQuestEvent));
+		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CreateNewQuestEvent),
+		FCanExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CanCreateQuestEvent));
 	
 	GraphEditorCommands->MapAction(FQuest_System_EditorCommands::Get().NewQuestEvent,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::CreateNewQuestCondition),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::CanCreateQuestCondition));
+		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CreateNewQuestCondition),
+		FCanExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CanCreateQuestCondition));
 
 	GraphEditorCommands->MapAction(FQuest_System_EditorCommands::Get().QuestSetting,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::OpenQuestSetting),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::CanOpenQuestSetting));
+		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::OpenQuestSetting),
+		FCanExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CanOpenQuestSetting));
 
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().SelectAll,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::SelectAllNodes),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::CanSelectAllNodes)
+		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::SelectAllNodes),
+		FCanExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CanSelectAllNodes)
 	);
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().Delete,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::DeleteSelectedNodes),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::CanDeleteNodes)
+		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::DeleteSelectedNodes),
+		FCanExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CanDeleteNodes)
 	);
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().Copy,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::CopySelectedNodes),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::CanCopyNodes)
+		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CopySelectedNodes),
+		FCanExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CanCopyNodes)
 	);
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().Cut,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::CutSelectedNodes),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::CanCutNodes)
+		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CutSelectedNodes),
+		FCanExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CanCutNodes)
 	);
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().Paste,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::PasteNodes),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::CanPasteNodes)
+		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::PasteNodes),
+		FCanExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CanPasteNodes)
 	);
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().Duplicate,
-		FExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::DuplicateNodes),
-		FCanExecuteAction::CreateRaw(this, &FAssetEditor_QuestSystem::CanDuplicateNodes)
+		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::DuplicateNodes),
+		FCanExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CanDuplicateNodes)
 	);
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().Rename,
-		FExecuteAction::CreateSP(this, &FAssetEditor_QuestSystem::OnRenameNode),
-		FCanExecuteAction::CreateSP(this, &FAssetEditor_QuestSystem::CanRenameNodes)
+		FExecuteAction::CreateSP(this, &FQuestBuilderEditor::OnRenameNode),
+		FCanExecuteAction::CreateSP(this, &FQuestBuilderEditor::CanRenameNodes)
 	);
 }
 
-TSharedPtr<SGraphEditor> FAssetEditor_QuestSystem::GetCurrGraphEditor() const
+TSharedPtr<SGraphEditor> FQuestBuilderEditor::GetCurrGraphEditor() const
 {
 	return ViewportWidget;
 }
 
-FGraphPanelSelectionSet FAssetEditor_QuestSystem::GetSelectedNodes() const
+FGraphPanelSelectionSet FQuestBuilderEditor::GetSelectedNodes() const
 {
 	FGraphPanelSelectionSet CurrentSelection;
 	TSharedPtr<SGraphEditor> FocusedGraphEd = GetCurrGraphEditor();
@@ -364,18 +364,18 @@ FGraphPanelSelectionSet FAssetEditor_QuestSystem::GetSelectedNodes() const
 	return CurrentSelection;
 }
 
-FName FAssetEditor_QuestSystem::GetToolkitFName() const
+FName FQuestBuilderEditor::GetToolkitFName() const
 {
 	return FName("FQuestGraphEditor");
 }
 
-FText FAssetEditor_QuestSystem::GetBaseToolkitName() const
+FText FQuestBuilderEditor::GetBaseToolkitName() const
 {
 	return LOCTEXT("QuestGraphEditorAppLabel", "Quest Graph Editor");
 }
 
 
-FText FAssetEditor_QuestSystem::GetToolkitName() const
+FText FQuestBuilderEditor::GetToolkitName() const
 {
 	const bool bDirtyState = EditingQuestGraph->GetOutermost()->IsDirty();
 
@@ -385,28 +385,28 @@ FText FAssetEditor_QuestSystem::GetToolkitName() const
 	return FText::Format(LOCTEXT("QuestGraphEditorToolkitName", "{QuestGraphName}{DirtyState}"), Args);
 }
 
-FText FAssetEditor_QuestSystem::GetToolkitToolTipText() const
+FText FQuestBuilderEditor::GetToolkitToolTipText() const
 {
 	return FAssetEditorToolkit::GetToolTipTextForObject(EditingQuestGraph);
 }
 
-FLinearColor FAssetEditor_QuestSystem::GetWorldCentricTabColorScale() const
+FLinearColor FQuestBuilderEditor::GetWorldCentricTabColorScale() const
 {
 	return FLinearColor::Blue;
 }
 
-FString FAssetEditor_QuestSystem::GetWorldCentricTabPrefix() const
+FString FQuestBuilderEditor::GetWorldCentricTabPrefix() const
 {
 	return TEXT("QuestGraphEditor");
 }
 
-FString FAssetEditor_QuestSystem::GetDocumentationLink() const
+FString FQuestBuilderEditor::GetDocumentationLink() const
 {
 	//make documentation from notion add this link
 	return TEXT("");
 }
 
-void FAssetEditor_QuestSystem::SaveAsset_Execute()
+void FQuestBuilderEditor::SaveAsset_Execute()
 {
 	
 	RebuildQuestSystemGraph();
@@ -415,24 +415,24 @@ void FAssetEditor_QuestSystem::SaveAsset_Execute()
 	FAssetEditorToolkit::SaveAsset_Execute();
 }
 
-void FAssetEditor_QuestSystem::RefreshEditors()
+void FQuestBuilderEditor::RefreshEditors()
 {
 	
 }
 
-void FAssetEditor_QuestSystem::RefreshMyQuest()
+void FQuestBuilderEditor::RefreshMyQuest()
 {
 }
 
-void FAssetEditor_QuestSystem::RefreshInspector()
+void FQuestBuilderEditor::RefreshInspector()
 {
 }
 
-void FAssetEditor_QuestSystem::AddToSelection(UEdGraphNode* InNode)
+void FQuestBuilderEditor::AddToSelection(UEdGraphNode* InNode)
 {
 }
 
-void FAssetEditor_QuestSystem::JumpToHyperlink(const UObject* ObjectReference, bool bRequestRename)
+void FQuestBuilderEditor::JumpToHyperlink(const UObject* ObjectReference, bool bRequestRename)
 {
 	//SetCurrentMode(FBlueprintEditorApplicationModes::StandardBlueprintEditorMode);
 	if (const UEdGraph* Graph = Cast<const UEdGraph>(ObjectReference))
@@ -497,33 +497,33 @@ void FAssetEditor_QuestSystem::JumpToHyperlink(const UObject* ObjectReference, b
 	}
 }
 
-void FAssetEditor_QuestSystem::JumpToPin(const UEdGraphPin* Pin)
+void FQuestBuilderEditor::JumpToPin(const UEdGraphPin* Pin)
 {
 }
 
-void FAssetEditor_QuestSystem::SummonSearchUI(bool bSetFindWithinBlueprint, FString NewSearchTerms, bool bSelectFirstResult)
+void FQuestBuilderEditor::SummonSearchUI(bool bSetFindWithinBlueprint, FString NewSearchTerms, bool bSelectFirstResult)
 {
 }
 
-void FAssetEditor_QuestSystem::SummonFindAndReplaceUI()
+void FQuestBuilderEditor::SummonFindAndReplaceUI()
 {
 }
 
-TSharedPtr<SGraphEditor> FAssetEditor_QuestSystem::OpenGraphAndBringToFront(UEdGraph* Graph, bool bSetFocus)
+TSharedPtr<SGraphEditor> FQuestBuilderEditor::OpenGraphAndBringToFront(UEdGraph* Graph, bool bSetFocus)
 {
 	return TSharedPtr<SGraphEditor>();
 }
 
-void FAssetEditor_QuestSystem::UpdateToolbar()
+void FQuestBuilderEditor::UpdateToolbar()
 {
 }
 
-void FAssetEditor_QuestSystem::RegisterToolbarTab(const TSharedRef<class FTabManager>& InTabManager)
+void FQuestBuilderEditor::RegisterToolbarTab(const TSharedRef<class FTabManager>& InTabManager)
 {
 	FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
 }
 
-void FAssetEditor_QuestSystem::AddReferencedObjects(FReferenceCollector& Collector)
+void FQuestBuilderEditor::AddReferencedObjects(FReferenceCollector& Collector)
 {
 	/*if (GetObjectsCurrentlyBeingEdited()->Num() > 0)
 	{
@@ -535,23 +535,23 @@ void FAssetEditor_QuestSystem::AddReferencedObjects(FReferenceCollector& Collect
 	Collector.AddReferencedObject(EditingQuestGraph);*/
 }
 
-FString FAssetEditor_QuestSystem::GetReferencerName() const
+FString FQuestBuilderEditor::GetReferencerName() const
 {
 	return FString();
 }
 
-UQuestSystemGraph* FAssetEditor_QuestSystem::GetQuestSystemObj() const
+UQuestSystemGraph* FQuestBuilderEditor::GetQuestSystemObj() const
 {
 	return EditingQuestGraph;
 	//return GetEditingObjects().Num() == 1 ? Cast<UQuestSystemGraph>(GetEditingObjects()[0]) : nullptr;
 }
 
-bool FAssetEditor_QuestSystem::NewDocument_IsVisibleForType(ECreatedQuestDocumentType GraphType) const
+bool FQuestBuilderEditor::NewDocument_IsVisibleForType(ECreatedQuestDocumentType GraphType) const
 {
 	return true;
 }
 
-void FAssetEditor_QuestSystem::NewDocument_OnClicked(ECreatedQuestDocumentType GraphType)
+void FQuestBuilderEditor::NewDocument_OnClicked(ECreatedQuestDocumentType GraphType)
 {
 	FText DocumentNameText;
 	bool bResetMyBlueprintFilter = false;
@@ -606,24 +606,24 @@ void FAssetEditor_QuestSystem::NewDocument_OnClicked(ECreatedQuestDocumentType G
 	}
 }
 
-bool FAssetEditor_QuestSystem::InEditingMode() const
+bool FQuestBuilderEditor::InEditingMode() const
 {
 	return true;
 }
 
-TSharedPtr<SDockTab> FAssetEditor_QuestSystem::OpenDocument(const UObject* DocumentID, FDocumentTracker::EOpenDocumentCause Cause)
+TSharedPtr<SDockTab> FQuestBuilderEditor::OpenDocument(const UObject* DocumentID, FDocumentTracker::EOpenDocumentCause Cause)
 {
 	TSharedRef<FTabPayload_UObject> Payload = FTabPayload_UObject::Make(DocumentID);
 	return DocumentManager->OpenDocument(Payload, Cause);
 }
 
-void FAssetEditor_QuestSystem::CloseDocumentTab(const UObject* DocumentID)
+void FQuestBuilderEditor::CloseDocumentTab(const UObject* DocumentID)
 {
 	TSharedRef<FTabPayload_UObject> Payload = FTabPayload_UObject::Make(DocumentID);
 	DocumentManager->CloseTab(Payload);
 }
 
-void FAssetEditor_QuestSystem::RenameNewlyAddedAction(FName InActionName)
+void FQuestBuilderEditor::RenameNewlyAddedAction(FName InActionName)
 {
 	//TabManager->TryInvokeTab(FBlueprintEditorTabs::MyBlueprintID);
 	//TryInvokingDetailsTab(/*Flash*/false);
@@ -637,7 +637,7 @@ void FAssetEditor_QuestSystem::RenameNewlyAddedAction(FName InActionName)
 	}
 }
 
-void FAssetEditor_QuestSystem::LogSimpleMessage(const FText& MessageText)
+void FQuestBuilderEditor::LogSimpleMessage(const FText& MessageText)
 {
 	FNotificationInfo Info(MessageText);
 	Info.ExpireDuration = 3.0f;
@@ -649,19 +649,19 @@ void FAssetEditor_QuestSystem::LogSimpleMessage(const FText& MessageText)
 	}
 }
 
-TSharedRef<SWidget> FAssetEditor_QuestSystem::CreateGraphTitleBarWidget(TSharedRef<FTabInfo> InTabInfo, UEdGraph* InGraph)
+TSharedRef<SWidget> FQuestBuilderEditor::CreateGraphTitleBarWidget(TSharedRef<FTabInfo> InTabInfo, UEdGraph* InGraph)
 {
 	// Create the title bar widget
 	return SNew(SBox);
 		/*SNew(SGraphTitleBar)
 		.EdGraphObj(InGraph)
 		.Kismet2(SharedThis(this))
-		.OnDifferentGraphCrumbClicked(this, &FAssetEditor_QuestSystem::OnChangeBreadCrumbGraph)
+		.OnDifferentGraphCrumbClicked(this, &FQuestBuilderEditor::OnChangeBreadCrumbGraph)
 		.HistoryNavigationWidget(InTabInfo->CreateHistoryNavigationWidget());*/
 }
 
 
-const FSlateBrush* FAssetEditor_QuestSystem::GetGlyphForGraph(const UEdGraph* Graph, bool bInLargeIcon)
+const FSlateBrush* FQuestBuilderEditor::GetGlyphForGraph(const UEdGraph* Graph, bool bInLargeIcon)
 {
 	const FSlateBrush* ReturnValue = FAppStyle::GetBrush(bInLargeIcon ? TEXT("GraphEditor.Function_24x") : TEXT("GraphEditor.Function_16x"));
 
@@ -684,7 +684,7 @@ const FSlateBrush* FAssetEditor_QuestSystem::GetGlyphForGraph(const UEdGraph* Gr
 	return ReturnValue;
 }
 
-bool FAssetEditor_QuestSystem::FindOpenTabsContainingDocument(const UObject* DocumentID, TArray<TSharedPtr<SDockTab>>& Results)
+bool FQuestBuilderEditor::FindOpenTabsContainingDocument(const UObject* DocumentID, TArray<TSharedPtr<SDockTab>>& Results)
 {
 	int32 StartingCount = Results.Num();
 
@@ -697,7 +697,7 @@ bool FAssetEditor_QuestSystem::FindOpenTabsContainingDocument(const UObject* Doc
 }
 
 
-void FAssetEditor_QuestSystem::InitializeDocumentTab()
+void FQuestBuilderEditor::InitializeDocumentTab()
 {
 	check(IsEditingSingleQuestGraph());
 
@@ -715,7 +715,7 @@ void FAssetEditor_QuestSystem::InitializeDocumentTab()
 			{
 				struct LocalStruct
 				{
-					static TSharedPtr<SDockTab> OpenGraphTree(FAssetEditor_QuestSystem* InQuestSystemGraphEditor, UEdGraph* InGraph)
+					static TSharedPtr<SDockTab> OpenGraphTree(FQuestBuilderEditor* InQuestSystemGraphEditor, UEdGraph* InGraph)
 					{
 						FDocumentTracker::EOpenDocumentCause OpenCause = FDocumentTracker::QuickNavigateCurrentDocument;
 
@@ -755,12 +755,12 @@ void FAssetEditor_QuestSystem::InitializeDocumentTab()
 
 
 
-bool FAssetEditor_QuestSystem::IsEditingSingleQuestGraph() const
+bool FQuestBuilderEditor::IsEditingSingleQuestGraph() const
 {
 	return GetQuestSystemObj() != nullptr;
 }
 
-UEdGraph* FAssetEditor_QuestSystem::GetFocusedGraph() const
+UEdGraph* FQuestBuilderEditor::GetFocusedGraph() const
 {
 	if (GetCurrGraphEditor().IsValid())
 	{
@@ -775,13 +775,13 @@ UEdGraph* FAssetEditor_QuestSystem::GetFocusedGraph() const
 	return nullptr;
 }
 
-UEdGraphNode* FAssetEditor_QuestSystem::GetSingleSelectedNode() const
+UEdGraphNode* FQuestBuilderEditor::GetSingleSelectedNode() const
 {
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
 	return (SelectedNodes.Num() == 1) ? Cast<UEdGraphNode>(*SelectedNodes.CreateConstIterator()) : nullptr;
 }
 
-void FAssetEditor_QuestSystem::OnGraphEditorFocused(const TSharedRef<class SGraphEditor>& InGraphEditor)
+void FQuestBuilderEditor::OnGraphEditorFocused(const TSharedRef<class SGraphEditor>& InGraphEditor)
 {
 	// Update the graph editor that is currently focused
 	ViewportWidget = InGraphEditor;
@@ -807,11 +807,11 @@ void FAssetEditor_QuestSystem::OnGraphEditorFocused(const TSharedRef<class SGrap
 	
 }
 
-void FAssetEditor_QuestSystem::OnGraphEditorBackgrounded(const TSharedRef<SGraphEditor>& InGraphEditor)
+void FQuestBuilderEditor::OnGraphEditorBackgrounded(const TSharedRef<SGraphEditor>& InGraphEditor)
 {
 }
 
-bool FAssetEditor_QuestSystem::IsGraphInCurrentQuestGraph(const UEdGraph* InGraph) const
+bool FQuestBuilderEditor::IsGraphInCurrentQuestGraph(const UEdGraph* InGraph) const
 {
 	bool bEditable = true;
 
@@ -826,12 +826,12 @@ bool FAssetEditor_QuestSystem::IsGraphInCurrentQuestGraph(const UEdGraph* InGrap
 	return bEditable;
 }
 
-FGraphAppearanceInfo FAssetEditor_QuestSystem::GetGraphAppearance() const
+FGraphAppearanceInfo FQuestBuilderEditor::GetGraphAppearance() const
 {
 	FGraphAppearanceInfo AppearanceInfo;
 	AppearanceInfo.CornerText = LOCTEXT("AppearanceCornerText", "Quest Editor");
 
-	if (FAssetEditor_QuestSystem::IsPIESimulating())
+	if (FQuestBuilderEditor::IsPIESimulating())
 	{
 		if (GetQuestSystemObj()->QuestComponent)
 		{
@@ -847,29 +847,29 @@ FGraphAppearanceInfo FAssetEditor_QuestSystem::GetGraphAppearance() const
 	return AppearanceInfo;
 }
 
-bool FAssetEditor_QuestSystem::InEditingMode(bool bGraphIsEditable) const
+bool FQuestBuilderEditor::InEditingMode(bool bGraphIsEditable) const
 {
-	return bGraphIsEditable && FAssetEditor_QuestSystem::IsPIENotSimulating();
+	return bGraphIsEditable && FQuestBuilderEditor::IsPIENotSimulating();
 }
 
 
-bool FAssetEditor_QuestSystem::IsPIESimulating()
+bool FQuestBuilderEditor::IsPIESimulating()
 {
 	return GEditor->bIsSimulatingInEditor || GEditor->PlayWorld;
 }
 
-bool FAssetEditor_QuestSystem::IsPIENotSimulating()
+bool FQuestBuilderEditor::IsPIENotSimulating()
 {
 	return !GEditor->bIsSimulatingInEditor && (GEditor->PlayWorld == NULL);
 }
 
-void FAssetEditor_QuestSystem::OnChangeBreadCrumbGraph(UEdGraph* InGraph)
+void FQuestBuilderEditor::OnChangeBreadCrumbGraph(UEdGraph* InGraph)
 {
 }
 
-TSharedRef<SDockTab> FAssetEditor_QuestSystem::SpawnTab_Viewport(const FSpawnTabArgs& Args)
+TSharedRef<SDockTab> FQuestBuilderEditor::SpawnTab_Viewport(const FSpawnTabArgs& Args)
 {
-	check(Args.GetTabId() == FQuestSystemAssetEditorTabs::ViewportID);
+	check(Args.GetTabId() == FQuestBuilderEditorTabs::ViewportID);
 
 	TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
 		.Label(LOCTEXT("ViewportTab_Title", "Viewport"));
@@ -882,9 +882,9 @@ TSharedRef<SDockTab> FAssetEditor_QuestSystem::SpawnTab_Viewport(const FSpawnTab
 	return SpawnedTab;
 }
 
-TSharedRef<SDockTab> FAssetEditor_QuestSystem::SpawnTab_Details(const FSpawnTabArgs& Args)
+TSharedRef<SDockTab> FQuestBuilderEditor::SpawnTab_Details(const FSpawnTabArgs& Args)
 {
-	check(Args.GetTabId() == FQuestSystemAssetEditorTabs::GenericGraphPropertyID);
+	check(Args.GetTabId() == FQuestBuilderEditorTabs::GenericGraphPropertyID);
 
 	return SNew(SDockTab)
 #if ENGINE_MAJOR_VERSION < 5
@@ -896,9 +896,9 @@ TSharedRef<SDockTab> FAssetEditor_QuestSystem::SpawnTab_Details(const FSpawnTabA
 		];
 }
 
-TSharedRef<SDockTab> FAssetEditor_QuestSystem::SpawnTab_EditorSettings(const FSpawnTabArgs& Args)
+TSharedRef<SDockTab> FQuestBuilderEditor::SpawnTab_EditorSettings(const FSpawnTabArgs& Args)
 {
-	check(Args.GetTabId() == FQuestSystemAssetEditorTabs::GenericGraphEditorSettingsID);
+	check(Args.GetTabId() == FQuestBuilderEditorTabs::GenericGraphEditorSettingsID);
 
 	return SNew(SDockTab)
 #if ENGINE_MAJOR_VERSION < 5
@@ -910,9 +910,9 @@ TSharedRef<SDockTab> FAssetEditor_QuestSystem::SpawnTab_EditorSettings(const FSp
 		];
 }
 
-TSharedRef<SDockTab> FAssetEditor_QuestSystem::SpawnTab_MyQuest(const FSpawnTabArgs& Args)
+TSharedRef<SDockTab> FQuestBuilderEditor::SpawnTab_MyQuest(const FSpawnTabArgs& Args)
 {
-	check(Args.GetTabId() == FQuestSystemAssetEditorTabs::MyQuestDetailID);
+	check(Args.GetTabId() == FQuestBuilderEditorTabs::MyQuestDetailID);
 
 	return SNew(SDockTab)
 #if ENGINE_MAJOR_VERSION < 5
@@ -924,7 +924,7 @@ TSharedRef<SDockTab> FAssetEditor_QuestSystem::SpawnTab_MyQuest(const FSpawnTabA
 		];
 }
 
-void FAssetEditor_QuestSystem::CreateInternalWidgets()
+void FQuestBuilderEditor::CreateInternalWidgets()
 {
 	FDetailsViewArgs Args;
 	Args.bHideSelectionTip = true;
@@ -933,13 +933,13 @@ void FAssetEditor_QuestSystem::CreateInternalWidgets()
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	PropertyWidget = PropertyModule.CreateDetailView(Args);
 	PropertyWidget->SetObject(nullptr);
-	PropertyWidget->OnFinishedChangingProperties().AddSP(this, &FAssetEditor_QuestSystem::OnFinishedChangingProperties);
+	PropertyWidget->OnFinishedChangingProperties().AddSP(this, &FQuestBuilderEditor::OnFinishedChangingProperties);
 
 
 	this->MyQuestWidget = SNew(SMyQuest, SharedThis(this));
 }
 
-TSharedRef<SGraphEditor> FAssetEditor_QuestSystem::CreateGraphEditorWidget(TSharedRef<class FTabInfo> InTabInfo, UEdGraph* InGraph)
+TSharedRef<SGraphEditor> FQuestBuilderEditor::CreateGraphEditorWidget(TSharedRef<class FTabInfo> InTabInfo, UEdGraph* InGraph)
 {
 
 	// Create the title bar widget
@@ -948,23 +948,23 @@ TSharedRef<SGraphEditor> FAssetEditor_QuestSystem::CreateGraphEditorWidget(TShar
 	CreateCommandList();
 
 	SGraphEditor::FGraphEditorEvents InEvents;
-	InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateSP(this, &FAssetEditor_QuestSystem::OnSelectedNodesChanged);
-	InEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &FAssetEditor_QuestSystem::OnNodeDoubleClicked);
+	InEvents.OnSelectionChanged = SGraphEditor::FOnSelectionChanged::CreateSP(this, &FQuestBuilderEditor::OnSelectedNodesChanged);
+	InEvents.OnNodeDoubleClicked = FSingleNodeEvent::CreateSP(this, &FQuestBuilderEditor::OnNodeDoubleClicked);
 
 	// Make full graph editor
 	const bool bGraphIsEditable = InGraph->bEditable;
 	return SNew(SGraphEditor)
 		.AdditionalCommands(GraphEditorCommands)
-		.IsEditable(this, &FAssetEditor_QuestSystem::InEditingMode, bGraphIsEditable)
+		.IsEditable(this, &FQuestBuilderEditor::InEditingMode, bGraphIsEditable)
 		.TitleBar(TitleBarWidget)
-		.Appearance(this, &FAssetEditor_QuestSystem::GetGraphAppearance)
+		.Appearance(this, &FQuestBuilderEditor::GetGraphAppearance)
 		.GraphToEdit(InGraph)
 		.GraphEvents(InEvents)
 		.AutoExpandActionMenu(true);
 }
 
 
-void FAssetEditor_QuestSystem::RebuildQuestSystemGraph()
+void FQuestBuilderEditor::RebuildQuestSystemGraph()
 {
 	if (EditingQuestGraph == nullptr)
 	{
@@ -978,7 +978,7 @@ void FAssetEditor_QuestSystem::RebuildQuestSystemGraph()
 		QuestGraph->RebuildQuestSystemGraph();
 	}
 }
-void FAssetEditor_QuestSystem::SelectAllNodes()
+void FQuestBuilderEditor::SelectAllNodes()
 {
 	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
 	if (CurrentGraphEditor.IsValid())
@@ -986,11 +986,11 @@ void FAssetEditor_QuestSystem::SelectAllNodes()
 		CurrentGraphEditor->SelectAllNodes();
 	}
 }
-bool FAssetEditor_QuestSystem::CanSelectAllNodes()
+bool FQuestBuilderEditor::CanSelectAllNodes()
 {
 	return true;
 }
-void FAssetEditor_QuestSystem::DeleteSelectedNodes()
+void FQuestBuilderEditor::DeleteSelectedNodes()
 {
 	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
 	if (!CurrentGraphEditor.IsValid())
@@ -1030,7 +1030,7 @@ void FAssetEditor_QuestSystem::DeleteSelectedNodes()
 		}
 	}
 }
-bool FAssetEditor_QuestSystem::CanDeleteNodes()
+bool FQuestBuilderEditor::CanDeleteNodes()
 {
 	if (IsPIESimulating())
 		return false;
@@ -1047,7 +1047,7 @@ bool FAssetEditor_QuestSystem::CanDeleteNodes()
 	}
 	return false;
 }
-void FAssetEditor_QuestSystem::DeleteSelectedDuplicatableNodes()
+void FQuestBuilderEditor::DeleteSelectedDuplicatableNodes()
 {
 	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
 	if (!CurrentGraphEditor.IsValid())
@@ -1080,20 +1080,20 @@ void FAssetEditor_QuestSystem::DeleteSelectedDuplicatableNodes()
 		}
 	}
 }
-void FAssetEditor_QuestSystem::CutSelectedNodes()
+void FQuestBuilderEditor::CutSelectedNodes()
 {
 	CopySelectedNodes();
 	DeleteSelectedDuplicatableNodes();
 	ShouldGetNewID = false;
 }
-bool FAssetEditor_QuestSystem::CanCutNodes()
+bool FQuestBuilderEditor::CanCutNodes()
 {
 	if (IsPIESimulating())
 		return false;
 	return CanCopyNodes() && CanDeleteNodes();
 }
 
-void FAssetEditor_QuestSystem::CopySelectedNodes()
+void FQuestBuilderEditor::CopySelectedNodes()
 {
 	// Export the selected nodes and place the text on the clipboard
 	FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
@@ -1129,7 +1129,7 @@ void FAssetEditor_QuestSystem::CopySelectedNodes()
 	FEdGraphUtilities::ExportNodesToText(SelectedNodes, ExportedText);
 	FPlatformApplicationMisc::ClipboardCopy(*ExportedText);
 }
-bool FAssetEditor_QuestSystem::CanCopyNodes()
+bool FQuestBuilderEditor::CanCopyNodes()
 {
 	// If any of the nodes can be duplicated then we should allow copying
 	const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
@@ -1144,7 +1144,7 @@ bool FAssetEditor_QuestSystem::CanCopyNodes()
 
 	return false;
 }
-void FAssetEditor_QuestSystem::PasteNodes()
+void FQuestBuilderEditor::PasteNodes()
 {
 	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
 	if (CurrentGraphEditor.IsValid())
@@ -1152,7 +1152,7 @@ void FAssetEditor_QuestSystem::PasteNodes()
 		PasteNodesHere(CurrentGraphEditor->GetCurrentGraph(), CurrentGraphEditor->GetPasteLocation());
 	}
 }
-void FAssetEditor_QuestSystem::PasteNodesHere(UEdGraph* DestinationGraph, const FVector2D& Location)
+void FQuestBuilderEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVector2D& Location)
 {
 	// Find the graph editor with focus
 	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
@@ -1230,7 +1230,7 @@ void FAssetEditor_QuestSystem::PasteNodesHere(UEdGraph* DestinationGraph, const 
 	}
 }
 
-bool FAssetEditor_QuestSystem::CanPasteNodes() const
+bool FQuestBuilderEditor::CanPasteNodes() const
 {
 	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
 	if (!CurrentGraphEditor.IsValid())
@@ -1243,22 +1243,22 @@ bool FAssetEditor_QuestSystem::CanPasteNodes() const
 
 	return FEdGraphUtilities::CanImportNodesFromText(CurrentGraphEditor->GetCurrentGraph(), ClipboardContent);
 }
-void FAssetEditor_QuestSystem::DuplicateNodes()
+void FQuestBuilderEditor::DuplicateNodes()
 {
 	ShouldGetNewID = true;
 	CopySelectedNodes();
 	PasteNodes();
 }
-bool FAssetEditor_QuestSystem::CanDuplicateNodes()
+bool FQuestBuilderEditor::CanDuplicateNodes()
 {
 	return CanCopyNodes();
 }
-void FAssetEditor_QuestSystem::CreateNewTask()
+void FQuestBuilderEditor::CreateNewTask()
 {
 	HandleNewNodeClassPicked(UQuestTask::StaticClass());
 }
 
-void FAssetEditor_QuestSystem::HandleNewNodeClassPicked(UClass* InClass) const
+void FQuestBuilderEditor::HandleNewNodeClassPicked(UClass* InClass) const
 {
 	/*UE_CLOG(InClass == nullptr, LogBehaviorTreeEditor, Error, TEXT("Trying to handle new node of NULL class for Behavior Treee %s ")
 		, *GetNameSafe(BehaviorTree));*/
@@ -1307,40 +1307,40 @@ void FAssetEditor_QuestSystem::HandleNewNodeClassPicked(UClass* InClass) const
 	FSlateApplication::Get().DismissAllMenus();
 }
 
-bool FAssetEditor_QuestSystem::CanCreateNewTask() const
+bool FQuestBuilderEditor::CanCreateNewTask() const
 {
 	return true;
 }
-bool FAssetEditor_QuestSystem::IsNewTaskButtonVisible() const
+bool FQuestBuilderEditor::IsNewTaskButtonVisible() const
 {
 	return true;
 }
 
-void FAssetEditor_QuestSystem::CreateNewQuestCondition()
+void FQuestBuilderEditor::CreateNewQuestCondition()
 {
 	HandleNewNodeClassPicked(UQuestCondition::StaticClass());
 }
-bool FAssetEditor_QuestSystem::CanCreateQuestCondition() const
+bool FQuestBuilderEditor::CanCreateQuestCondition() const
 {
 	return true;
 }
-void FAssetEditor_QuestSystem::CreateNewQuestEvent()
+void FQuestBuilderEditor::CreateNewQuestEvent()
 {
 	HandleNewNodeClassPicked(UQuestEvent::StaticClass());
 }
-bool FAssetEditor_QuestSystem::CanCreateQuestEvent() const
+bool FQuestBuilderEditor::CanCreateQuestEvent() const
 {
 	return true;
 }
-void FAssetEditor_QuestSystem::OpenQuestSetting()
+void FQuestBuilderEditor::OpenQuestSetting()
 {
 	PropertyWidget->SetObject(GetQuestSystemObj());
 }
-bool FAssetEditor_QuestSystem::CanOpenQuestSetting() const
+bool FQuestBuilderEditor::CanOpenQuestSetting() const
 {
 	return true;
 }
-void FAssetEditor_QuestSystem::OnRenameNode()
+void FQuestBuilderEditor::OnRenameNode()
 {
 	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
 	if (CurrentGraphEditor.IsValid())
@@ -1357,7 +1357,7 @@ void FAssetEditor_QuestSystem::OnRenameNode()
 		}
 	}
 }
-bool FAssetEditor_QuestSystem::CanRenameNodes() const
+bool FQuestBuilderEditor::CanRenameNodes() const
 {
 	if (GetFocusedGraph())
 	{
@@ -1369,7 +1369,7 @@ bool FAssetEditor_QuestSystem::CanRenameNodes() const
 	return false;
 
 }
-void FAssetEditor_QuestSystem::OnSelectedNodesChanged(const TSet<class UObject*>& NewSelection)
+void FQuestBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& NewSelection)
 {
 	TArray<UObject*> Selection;
 
@@ -1405,7 +1405,7 @@ void FAssetEditor_QuestSystem::OnSelectedNodesChanged(const TSet<class UObject*>
 	}
 }
 
-void FAssetEditor_QuestSystem::OnNodeDoubleClicked(UEdGraphNode* Node)
+void FQuestBuilderEditor::OnNodeDoubleClicked(UEdGraphNode* Node)
 {
 	UEdNode_QuestSystemNode* MyNode = Cast<UEdNode_QuestSystemNode>(Node);
 	if (MyNode && MyNode->QuestSystemGraphNode &&
@@ -1422,7 +1422,7 @@ void FAssetEditor_QuestSystem::OnNodeDoubleClicked(UEdGraphNode* Node)
 	}
 }
 
-void FAssetEditor_QuestSystem::OnFinishedChangingProperties(const FPropertyChangedEvent& PropertyChangedEvent)
+void FQuestBuilderEditor::OnFinishedChangingProperties(const FPropertyChangedEvent& PropertyChangedEvent)
 {
 	if (EditingQuestGraph == nullptr)
 		return;
@@ -1436,7 +1436,7 @@ void FAssetEditor_QuestSystem::OnFinishedChangingProperties(const FPropertyChang
 }
 #include "Async/Async.h"
 
-void FAssetEditor_QuestSystem::OnPackageMarkedDirty(UPackage* ModifiedPackage, bool bWasDirty)
+void FQuestBuilderEditor::OnPackageMarkedDirty(UPackage* ModifiedPackage, bool bWasDirty)
 {
     // Schedule the graph rebuild after 1 second using a timer
     FTimerHandle TimerHandle;
@@ -1458,12 +1458,12 @@ void FAssetEditor_QuestSystem::OnPackageMarkedDirty(UPackage* ModifiedPackage, b
 //Called when saving our file graph
 #if ENGINE_MAJOR_VERSION < 5
 
-void FAssetEditor_QuestSystem::OnPackageSaved(const FString& PackageFileName, UObject* Outer)
+void FQuestBuilderEditor::OnPackageSaved(const FString& PackageFileName, UObject* Outer)
 {
 	RebuildQuestSystemGraph();
 }
 #else // #if ENGINE_MAJOR_VERSION < 5
-void FAssetEditor_QuestSystem::OnPackageSavedWithContext(const FString& PackageFileName, UPackage* Package, FObjectPostSaveContext ObjectSaveContext)
+void FQuestBuilderEditor::OnPackageSavedWithContext(const FString& PackageFileName, UPackage* Package, FObjectPostSaveContext ObjectSaveContext)
 {
 	RebuildQuestSystemGraph();
 	

@@ -57,7 +57,7 @@ struct FQuestGraphEditorSummoner : public FDocumentTabFactoryForObjects<UEdGraph
 public:
 	DECLARE_DELEGATE_RetVal_TwoParams(TSharedRef<SGraphEditor>, FOnCreateGraphEditorWidget, TSharedRef<FTabInfo>, UEdGraph*);
 public:
-	FQuestGraphEditorSummoner(TSharedPtr<class FAssetEditor_QuestSystem> InQuestEditorPtr, FOnCreateGraphEditorWidget CreateGraphEditorWidgetCallback);
+	FQuestGraphEditorSummoner(TSharedPtr<class FQuestBuilderEditor> InQuestEditorPtr, FOnCreateGraphEditorWidget CreateGraphEditorWidgetCallback);
 
 	virtual void OnTabActivated(TSharedPtr<SDockTab> Tab) const override;
 
@@ -86,7 +86,7 @@ protected:
 	//virtual TSharedRef<FGenericTabHistory> CreateTabHistoryNode(TSharedPtr<FTabPayload> Payload) override;
 
 protected:
-	TWeakPtr<class FAssetEditor_QuestSystem> QuestEditorPtr;
+	TWeakPtr<class FQuestBuilderEditor> QuestEditorPtr;
 	FOnCreateGraphEditorWidget OnCreateGraphEditorWidget;
 };
 

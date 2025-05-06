@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AssetEditor_QuestSystem.h"
+#include "QuestBuilderEditor.h"
 #include "SGraphPalette.h"
 #include "Widgets/SCompoundWidget.h"
 
@@ -30,11 +30,11 @@ public:
 	 * @param  InCreateData			A set of data associated with a FEdGraphSchemaAction that this item represents.
 	 * @param  InQuestEditor	A pointer to the Quest editor that the palette belongs to.
 	 */
-	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, TWeakPtr<FAssetEditor_QuestSystem> InQuestEditor);
+	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, TWeakPtr<FQuestBuilderEditor> InQuestEditor);
 	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestSystemGraph* InQuestSystemGraph);
 
 private:
-	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestSystemGraph* InQuestSystemGraph, TWeakPtr<FAssetEditor_QuestSystem> InQuestEditor);
+	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestSystemGraph* InQuestSystemGraph, TWeakPtr<FQuestBuilderEditor> InQuestEditor);
 
 	// SWidget Interface
 	virtual void OnDragEnter(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent) override;
@@ -64,7 +64,7 @@ private:
 	UQuestSystemGraph* QuestSystemGraph;
 
 	/** Pointer back to the Quest editor that owns this */
-	TWeakPtr<FAssetEditor_QuestSystem> QuestEditorPtr;
+	TWeakPtr<FQuestBuilderEditor> QuestEditorPtr;
 
 	/** Cache for the MenuDescription to be displayed for this item */
 	FNodeTextCache MenuDescriptionCache;
@@ -87,7 +87,7 @@ public:
 	 * @param  InArgs				A set of slate arguments, defined above.
 	 * @param  InQuestEditor	A pointer to the Quest editor that this palette belongs to.
 	 */
-	void Construct(const FArguments& InArgs, TWeakPtr<FAssetEditor_QuestSystem> InQuestEditor);
+	void Construct(const FArguments& InArgs, TWeakPtr<FQuestBuilderEditor> InQuestEditor);
 
 private:
 	/**

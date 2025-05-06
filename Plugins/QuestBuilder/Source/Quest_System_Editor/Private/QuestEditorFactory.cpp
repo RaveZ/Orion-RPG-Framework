@@ -2,7 +2,7 @@
 
 #include "QuestEditorFactory.h"
 #include "QuestSystemGraph.h"
-#include "AssetEditor_QuestSystem.h"
+#include "QuestBuilderEditor.h"
 #include "ClassViewerModule.h"
 #include "ClassViewerFilter.h"
 #include "Kismet2/KismetEditorUtilities.h"
@@ -80,7 +80,7 @@ UObject* UQuestEditorFactory::FactoryCreateNew(UClass* Class, UObject* InParent,
 	}
 }
 
-FQuestGraphEditorSummoner::FQuestGraphEditorSummoner(TSharedPtr<class FAssetEditor_QuestSystem> InQuestEditorPtr, FOnCreateGraphEditorWidget CreateGraphEditorWidgetCallback) : FDocumentTabFactoryForObjects<UEdGraph>(FQuestSystemAssetEditorTabs::ViewportID, InQuestEditorPtr)
+FQuestGraphEditorSummoner::FQuestGraphEditorSummoner(TSharedPtr<class FQuestBuilderEditor> InQuestEditorPtr, FOnCreateGraphEditorWidget CreateGraphEditorWidgetCallback) : FDocumentTabFactoryForObjects<UEdGraph>(FQuestBuilderEditorTabs::ViewportID, InQuestEditorPtr)
 , QuestEditorPtr(InQuestEditorPtr)
 , OnCreateGraphEditorWidget(CreateGraphEditorWidgetCallback)
 {
@@ -129,7 +129,7 @@ TSharedRef<SWidget> FQuestGraphEditorSummoner::CreateTabBodyForObject(const FWor
 
 const FSlateBrush* FQuestGraphEditorSummoner::GetTabIconForObject(const FWorkflowTabSpawnInfo& Info, UEdGraph* DocumentID) const
 {
-	return FAssetEditor_QuestSystem::GetGlyphForGraph(DocumentID, false);
+	return FQuestBuilderEditor::GetGlyphForGraph(DocumentID, false);
 }
 
 
@@ -141,7 +141,7 @@ EAssetCommandResult UAssetDefinition_QuestEditor::OpenAssets(const FAssetOpenArg
 		FQuest_System_EditorModule& QuestSystemEditorModule = FModuleManager::GetModuleChecked<FQuest_System_EditorModule>("Quest_System_Editor");
 		QuestSystemEditorModule.CheckClassCache();
 
-		const TSharedRef<FAssetEditor_QuestSystem> CustomObjectToolkit(new FAssetEditor_QuestSystem());
+		const TSharedRef<FQuestBuilderEditor> CustomObjectToolkit(new FQuestBuilderEditor());
 		CustomObjectToolkit->Initialize(Mode, OpenArgs.ToolkitHost, QuestGraph);
 	}
 

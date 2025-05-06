@@ -10,7 +10,7 @@
 #include "QuestSystemEditorUtils.h"
 #include "Quest_System_EditorCommands.h"
 #include "Widgets/Input/SSearchBox.h"
-#include "AssetEditor_QuestSystem.h"
+#include "QuestBuilderEditor.h"
 #include "Quest_System_EditorCommands.h"
 #include "SlateOptMacros.h"
 #include "SQuestPalette.h"
@@ -29,7 +29,7 @@ void FMyQuestCommands::RegisterCommands()
 }
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
-void SMyQuest::Construct(const FArguments& InArgs, TWeakPtr<FAssetEditor_QuestSystem> InQuestEditor, const UQuestSystemGraph* InQuestSystemGraph)
+void SMyQuest::Construct(const FArguments& InArgs, TWeakPtr<FQuestBuilderEditor> InQuestEditor, const UQuestSystemGraph* InQuestSystemGraph)
 {
 	bNeedsRefresh = false;
 	bShowReplicatedVariablesOnly = false;
@@ -309,7 +309,7 @@ void SMyQuest::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 	UQuestSystemGraph* QuestSystemObj = GetQuestSystemObj();
 	check(QuestSystemObj);
 
-	TSharedPtr<FAssetEditor_QuestSystem> QuestSystemEditor = QuestEditorPtr.Pin();
+	TSharedPtr<FQuestBuilderEditor> QuestSystemEditor = QuestEditorPtr.Pin();
 
 	EFieldIteratorFlags::SuperClassFlags FieldIteratorSuperFlag = EFieldIteratorFlags::IncludeSuper;
 	/*if (ShowUserVarsOnly())
@@ -365,7 +365,7 @@ void SMyQuest::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& 
 
 		if (GraphAction->EdGraph)
 		{
-			TSharedPtr<FAssetEditor_QuestSystem> QuestEditor = QuestEditorPtr.Pin();
+			TSharedPtr<FQuestBuilderEditor> QuestEditor = QuestEditorPtr.Pin();
 
 			if (UEdGraph_QuestSystemGraph* QuestGraph = Cast<UEdGraph_QuestSystemGraph>(QuestEditor->FocusedEdGraph))
 			{
@@ -414,7 +414,7 @@ void SMyQuest::ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction)
 			{
 				QuestEditorPtr.Pin()->JumpToHyperlink(GraphAction->EdGraph);
 
-				TSharedPtr<FAssetEditor_QuestSystem> QuestEditor = QuestEditorPtr.Pin();
+				TSharedPtr<FQuestBuilderEditor> QuestEditor = QuestEditorPtr.Pin();
 
 				if (UEdGraph_QuestSystemGraph* QuestGraph = Cast<UEdGraph_QuestSystemGraph>(QuestEditor->ViewportWidget->GetCurrentGraph()))
 				{
@@ -574,7 +574,7 @@ TSharedRef<SWidget> SMyQuest::OnGetSectionWidget(TSharedRef<SWidget> RowWidget, 
 }
 FReply SMyQuest::OnAddButtonClickedOnSection(int32 InSectionID)
 {
-	TSharedPtr<FAssetEditor_QuestSystem> QuestEditor = QuestEditorPtr.Pin();
+	TSharedPtr<FQuestBuilderEditor> QuestEditor = QuestEditorPtr.Pin();
 
 	switch (InSectionID)
 	{

@@ -6,7 +6,7 @@
 #include "SGraphActionMenu.h"
 #include "AssetGraphSchema_QuestSystem.h"
 #include "Widgets/SCompoundWidget.h"
-#include "AssetEditor_QuestSystem.h"
+#include "QuestBuilderEditor.h"
 
 
 
@@ -44,7 +44,7 @@ public:
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */
-	void Construct(const FArguments& InArgs, TWeakPtr<FAssetEditor_QuestSystem> InQuestEditor, const UQuestSystemGraph* InQuestSystemGraph = nullptr);
+	void Construct(const FArguments& InArgs, TWeakPtr<FQuestBuilderEditor> InQuestEditor, const UQuestSystemGraph* InQuestSystemGraph = nullptr);
 	~SMyQuest();
 
 	/* SWidget interface */
@@ -91,7 +91,7 @@ private:
 	FReply OnActionDragged(const TArray< TSharedPtr<FEdGraphSchemaAction> >& InActions, const FPointerEvent& MouseEvent);
 	FReply OnCategoryDragged(const FText& InCategory, const FPointerEvent& MouseEvent);
 	void OnActionSelected(const TArray< TSharedPtr<FEdGraphSchemaAction> >& InActions);
-	//void OnActionSelectedHelper(TSharedPtr<FEdGraphSchemaAction> InAction, TWeakPtr<FAssetEditor_QuestSystem> InQuestEditor, UQuestSystemGraph* InQuestSystemGraph, TSharedRef<SKismetInspector> Inspector);
+	//void OnActionSelectedHelper(TSharedPtr<FEdGraphSchemaAction> InAction, TWeakPtr<FQuestBuilderEditor> InQuestEditor, UQuestSystemGraph* InQuestSystemGraph, TSharedRef<SKismetInspector> Inspector);
 	void OnGlobalActionSelected(const TArray< TSharedPtr<FEdGraphSchemaAction> >& InActions, ESelectInfo::Type InSelectionType);
 	void OnActionDoubleClicked(const TArray< TSharedPtr<FEdGraphSchemaAction> >& InActions);
 	void ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction);
@@ -161,7 +161,7 @@ private:
 	TSharedPtr<class SGraphActionMenu> GraphActionMenu;
 
 	/** Pointer back to the Quest editor that owns us */
-	TWeakPtr<FAssetEditor_QuestSystem> QuestEditorPtr;
+	TWeakPtr<FQuestBuilderEditor> QuestEditorPtr;
 
 	/** The Quest graph being displayed: */
 	UQuestSystemGraph* QuestSystemGraph;

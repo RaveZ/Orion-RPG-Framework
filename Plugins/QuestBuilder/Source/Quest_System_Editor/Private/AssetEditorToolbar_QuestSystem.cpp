@@ -4,13 +4,13 @@
 #include "AssetEditorToolbar_QuestSystem.h"
 #include "Quest_System_EditorCommands.h"
 #include "Quest_System_EditorStyle.h"
-#include "AssetEditor_QuestSystem.h"
+#include "QuestBuilderEditor.h"
 
 #define LOCTEXT_NAMESPACE "AssetEditorToolbar_QuestSystem"
 void FAssetEditorToolbar_QuestSystem::AddQuestSystemToolbar(TSharedPtr<FExtender> Extender)
 {
 	check(QuestSystemEditor.IsValid());
-	TSharedPtr<FAssetEditor_QuestSystem> QuestSystemEditorPtr = QuestSystemEditor.Pin();
+	TSharedPtr<FQuestBuilderEditor> QuestSystemEditorPtr = QuestSystemEditor.Pin();
 	
 	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
 	ToolbarExtender->AddToolBarExtension("Asset", EExtensionHook::After, QuestSystemEditorPtr->GetToolkitCommands(), FToolBarExtensionDelegate::CreateSP(this, &FAssetEditorToolbar_QuestSystem::FillQuestSystemToolbar));
@@ -20,7 +20,7 @@ void FAssetEditorToolbar_QuestSystem::AddQuestSystemToolbar(TSharedPtr<FExtender
 void FAssetEditorToolbar_QuestSystem::FillQuestSystemToolbar(FToolBarBuilder& ToolbarBuilder)
 {
 	check(QuestSystemEditor.IsValid());
-	TSharedPtr<FAssetEditor_QuestSystem> QuestSystemEditorPtr = QuestSystemEditor.Pin();
+	TSharedPtr<FQuestBuilderEditor> QuestSystemEditorPtr = QuestSystemEditor.Pin();
 
 	ToolbarBuilder.BeginSection("Quest System");
 	{
