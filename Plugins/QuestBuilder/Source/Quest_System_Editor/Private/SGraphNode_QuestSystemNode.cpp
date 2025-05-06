@@ -18,14 +18,25 @@
 #include "SCommentBubble.h"
 #include "SLevelOfDetailBranchNode.h"
 #include "QuestSystemGraphNode.h"
+#include "EdNode_QuestSystemRoot.h"
 #include "QuestSystemGraphNode_Objective.h"
 #include "Setting_QuestEditor.h"	
 #include "Fonts/SlateFontInfo.h"
-#include "QuestNodeWidget.h"
 #include "Condition/QuestCondition.h"
 #include "Event/QuestEvent.h"
 
 #define LOCTEXT_NAMESPACE "EdNode_GenericGraph"
+
+#define ALWAYS_SHOW_QUEST_EXECUTION_INDEX 1
+
+bool ShouldShowExecutionIndex()
+{
+#ifdef ALWAYS_SHOW_QUEST_EXECUTION_INDEX
+	return true;
+#else
+	return GEditor && (GEditor->bIsSimulatingInEditor || GEditor->PlayWorld != NULL);
+#endif // ALWAYS_SHOW_BT_EXECUTION_INDEX
+}
 
 //////////////////////////////////////////////////////////////////////////
 class SQuestSystemPin : public SGraphPin
@@ -75,6 +86,92 @@ protected:
 };
 
 
+/** Widget for overlaying an execution-order index onto a node */
+class SQuestNodeIndex : public SCompoundWidget
+{
+public:
+	/** Delegate event fired when the hover state of this widget changes */
+	DECLARE_DELEGATE_OneParam(FOnHoverStateChanged, bool /* bHovered */);
+
+	/** Delegate used to receive the color of the node, depending on hover state and state of other siblings */
+	DECLARE_DELEGATE_RetVal_OneParam(FSlateColor, FOnGetIndexColor, bool /* bHovered */);
+
+	SLATE_BEGIN_ARGS(SQuestNodeIndex) {}
+		SLATE_ATTRIBUTE(FText, Text)
+		SLATE_EVENT(FOnHoverStateChanged, OnHoverStateChanged)
+		SLATE_EVENT(FOnGetIndexColor, OnGetIndexColor)
+	SLATE_END_ARGS()
+
+	void Construct(const FArguments& InArgs)
+	{
+		OnHoverStateChangedEvent = InArgs._OnHoverStateChanged;
+		OnGetIndexColorEvent = InArgs._OnGetIndexColor;
+
+		const FSlateBrush* IndexBrush = FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Index"));
+
+		ChildSlot
+			[
+				SNew(SOverlay)
+					+ SOverlay::Slot()
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Fill)
+					[
+						// Add a dummy box here to make sure the widget doesnt get smaller than the brush
+						SNew(SBox)
+							.WidthOverride(IndexBrush->ImageSize.X)
+							.HeightOverride(IndexBrush->ImageSize.Y)
+					]
+					+ SOverlay::Slot()
+					.HAlign(HAlign_Fill)
+					.VAlign(VAlign_Fill)
+					[
+						SNew(SBorder)
+							.BorderImage(IndexBrush)
+							.BorderBackgroundColor(this, &SQuestNodeIndex::GetColor)
+							.Padding(FMargin(4.0f, 0.0f, 4.0f, 1.0f))
+							.VAlign(VAlign_Center)
+							.HAlign(HAlign_Center)
+							[
+								SNew(STextBlock)
+									.Text(InArgs._Text)
+									.Font(FAppStyle::GetFontStyle("BTEditor.Graph.BTNode.IndexText"))
+							]
+					]
+			];
+	}
+
+	virtual void OnMouseEnter(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override
+	{
+		OnHoverStateChangedEvent.ExecuteIfBound(true);
+		SCompoundWidget::OnMouseEnter(MyGeometry, MouseEvent);
+	}
+
+	virtual void OnMouseLeave(const FPointerEvent& MouseEvent) override
+	{
+		OnHoverStateChangedEvent.ExecuteIfBound(false);
+		SCompoundWidget::OnMouseLeave(MouseEvent);
+	}
+
+	/** Get the color we use to display the rounded border */
+	FSlateColor GetColor() const
+	{
+		if (OnGetIndexColorEvent.IsBound())
+		{
+			return OnGetIndexColorEvent.Execute(IsHovered());
+		}
+
+		return FSlateColor::UseForeground();
+	}
+
+private:
+	/** Delegate event fired when the hover state of this widget changes */
+	FOnHoverStateChanged OnHoverStateChangedEvent;
+
+	/** Delegate used to receive the color of the node, depending on hover state and state of other siblings */
+	FOnGetIndexColor OnGetIndexColorEvent;
+};
+
+
 void SGraphNode_QuestSystemNode::Construct(const FArguments& InArgs, UEdNode_QuestSystemNode* InNode)
 {
 	GraphNode = InNode;
@@ -105,280 +202,236 @@ void SGraphNode_QuestSystemNode::UpdateGraphNode()
 	UEdNode_QuestSystemNode* QuestEditorNode = Cast<UEdNode_QuestSystemNode>(GraphNode);
 	UQuestSystemGraphNode* QuestSystemNode = QuestEditorNode ? QuestEditorNode->QuestSystemGraphNode : nullptr;
 
-	UQuestNodeWidget* QuestNodeWidgetInstance = nullptr;
 	UWorld* World = GEditor->GetEditorWorldContext().World();
 
-	// In a function where you want to get the reference to the UUserWidget asset
-	// Load the UUserWidget asset using SoftObjectPtr::LoadSynchronous
-	if (const UQuestEditorSettings* QuestSettings = GetDefault<UQuestEditorSettings>())
-	{
-		UClass* WidgetClass = QuestSettings->DefaultQuestNodeWidgetClass.LoadSynchronous();
-
-		// Spawn an instance of the UUserWidget class
-		QuestNodeWidgetInstance = CreateWidget<UQuestNodeWidget>(World, WidgetClass);
-	}
-
-
-	if (QuestNodeWidgetInstance && QuestSystemNode)
-	{
-		if (QuestSystemNode->QuestSystem)
-		{
-			QuestNodeWidgetInstance->InitializeFromNode(QuestSystemNode, QuestSystemNode->QuestSystem);
-			QuestNodeWidgetRef = QuestNodeWidgetInstance->TakeWidget();
-
-			if (QuestNodeWidgetInstance->RightPinBox && QuestNodeWidgetInstance->LeftPinBox)
-			{
-				//Tell the C++ code to autopopulate our UMG blueprint widgets pin boxes! 
-				RightNodeBox = StaticCastSharedRef<SVerticalBox>(QuestNodeWidgetInstance->RightPinBox->TakeWidget());
-				LeftNodeBox = StaticCastSharedRef<SVerticalBox>(QuestNodeWidgetInstance->LeftPinBox->TakeWidget());
-			}
-			else
-			{
-				//Didnt have pin boxes, clear the Quest node ref to force node to use old style 
-				QuestNodeWidgetRef.Reset();
-			}
-		}
-		
-	}
+	IndexOverlay = SNew(SQuestNodeIndex)
+		.ToolTipText(this, &SGraphNode_QuestSystemNode::GetIndexTooltipText)
+		.Visibility(this, &SGraphNode_QuestSystemNode::GetIndexVisibility)
+		.Text(this, &SGraphNode_QuestSystemNode::GetIndexText)
+		.OnHoverStateChanged(this, &SGraphNode_QuestSystemNode::OnIndexHoverStateChanged)
+		.OnGetIndexColor(this, &SGraphNode_QuestSystemNode::GetIndexColor);
 	
-	//UMG Based Nodes
-	/*if (QuestNodeWidgetRef.IsValid())
-	{
+	auto SizeBox = SNew(SBox);
+	SizeBox->SetMinDesiredWidth(250.f);
+	SizeBox->SetMinDesiredHeight(60.f);
 
-		this->GetOrAddSlot(ENodeZone::Center)
-			.HAlign(HAlign_Fill)
-			.VAlign(VAlign_Fill)
-			[
-				SNew(SOverlay)
-					+ SOverlay::Slot()
-					[
-						QuestNodeWidgetRef.ToSharedRef()
-					]
-			];
-	}
-	else //Old Slate Style Nodes
-	{*/
-		auto SizeBox = SNew(SBox);
-		SizeBox->SetMinDesiredWidth(250.f);
-		SizeBox->SetMinDesiredHeight(60.f);
-
-		this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
-		this->GetOrAddSlot(ENodeZone::Center)
-			.HAlign(HAlign_Fill)
-			.VAlign(VAlign_Center)
-			[
-				SNew(SBorder)
-					.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
-					.Padding(3.0f)
-					.BorderBackgroundColor(this, &SGraphNode_QuestSystemNode::GetNodeHighlightColor)
-					[
-						SNew(SBorder)
-							.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
-							.Padding(0.0f)
-							.BorderBackgroundColor(this, &SGraphNode_QuestSystemNode::GetBorderBackgroundColor)
-							//.OnMouseButtonDown(this, &SGraphNode_QuestSystemNode::OnMouseDown)
-							[
-								SNew(SOverlay)
-									+ SOverlay::Slot()
-									[
-										SizeBox
-									]
-								// Pins and node details
+	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
+	this->GetOrAddSlot(ENodeZone::Center)
+		.HAlign(HAlign_Fill)
+		.VAlign(VAlign_Center)
+		[
+			SNew(SBorder)
+				.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
+				.Padding(3.0f)
+				.BorderBackgroundColor(this, &SGraphNode_QuestSystemNode::GetNodeHighlightColor)
+				[
+					SNew(SBorder)
+						.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
+						.Padding(0.0f)
+						.BorderBackgroundColor(this, &SGraphNode_QuestSystemNode::GetBorderBackgroundColor)
+						//.OnMouseButtonDown(this, &SGraphNode_QuestSystemNode::OnMouseDown)
+						[
+							SNew(SOverlay)
 								+ SOverlay::Slot()
-									.HAlign(HAlign_Fill)
-									.VAlign(VAlign_Fill)
-									[
-										SNew(SHorizontalBox)
+								[
+									SizeBox
+								]
+							// Pins and node details
+							+ SOverlay::Slot()
+								.HAlign(HAlign_Fill)
+								.VAlign(VAlign_Fill)
+								[
+									SNew(SHorizontalBox)
 
-											// INPUT PIN AREA
-											+ SHorizontalBox::Slot()
-											.AutoWidth()
-											[
-												SNew(SBox)
-													.MinDesiredHeight(NodePadding.Top)
-													[
-														SAssignNew(LeftNodeBox, SVerticalBox)
-													]
-											]
+										// INPUT PIN AREA
+										+ SHorizontalBox::Slot()
+										.AutoWidth()
+										[
+											SNew(SBox)
+												.MinDesiredHeight(NodePadding.Top)
+												[
+													SAssignNew(LeftNodeBox, SVerticalBox)
+												]
+										]
 
-											// STATE NAME AREA
-											+ SHorizontalBox::Slot()
-											.Padding(FMargin(NodePadding.Left, 0.0f, NodePadding.Right, 0.0f))
-											[
-												SNew(SVerticalBox)
-													+ SVerticalBox::Slot()
-													.AutoHeight()
-													[
-														SNew(SOverlay)
-															+ SOverlay::Slot()
-															.HAlign(HAlign_Center)
-															.VAlign(VAlign_Center)
-															.Padding(7.0f)
-															[
-																SAssignNew(NodeBody, SVerticalBox)
+										// STATE NAME AREA
+										+ SHorizontalBox::Slot()
+										.Padding(FMargin(NodePadding.Left, 0.0f, NodePadding.Right, 0.0f))
+										[
+											SNew(SVerticalBox)
+												+ SVerticalBox::Slot()
+												.AutoHeight()
+												[
+													SNew(SOverlay)
+														+ SOverlay::Slot()
+														.HAlign(HAlign_Center)
+														.VAlign(VAlign_Center)
+														.Padding(7.0f)
+														[
+															SAssignNew(NodeBody, SVerticalBox)
 
-																	// Title
-																	+ SVerticalBox::Slot()
-																	.AutoHeight()
-																	[
-																		SNew(SVerticalBox)
-																			+ SVerticalBox::Slot()
-																			.AutoHeight()
-																			[
-																				SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-																					.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
-																					.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
-																					.OnVerifyTextChanged(this, &SGraphNode_QuestSystemNode::OnVerifyNameTextChanged)
-																					.OnTextCommitted(this, &SGraphNode_QuestSystemNode::OnNameTextCommited)
-																					.IsReadOnly(this, &SGraphNode_QuestSystemNode::IsNameReadOnly)
-																					.IsSelected(this, &SGraphNode_QuestSystemNode::IsSelectedExclusively)
-																					.Clipping(EWidgetClipping::Inherit)
-																			]
-																			+ SVerticalBox::Slot()
-																			.AutoHeight()
-																			[
-																				NodeTitle.ToSharedRef()
-																			]
+																// Title
+																+ SVerticalBox::Slot()
+																.AutoHeight()
+																[
+																	SNew(SVerticalBox)
+																		+ SVerticalBox::Slot()
+																		.AutoHeight()
+																		[
+																			SAssignNew(InlineEditableText, SInlineEditableTextBlock)
+																				.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
+																				.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
+																				.OnVerifyTextChanged(this, &SGraphNode_QuestSystemNode::OnVerifyNameTextChanged)
+																				.OnTextCommitted(this, &SGraphNode_QuestSystemNode::OnNameTextCommited)
+																				.IsReadOnly(this, &SGraphNode_QuestSystemNode::IsNameReadOnly)
+																				.IsSelected(this, &SGraphNode_QuestSystemNode::IsSelectedExclusively)
+																				.Clipping(EWidgetClipping::Inherit)
+																		]
+																		+ SVerticalBox::Slot()
+																		.AutoHeight()
+																		[
+																			NodeTitle.ToSharedRef()
+																		]
 
-																	]
-																	// Error Msg
-																	+ SVerticalBox::Slot()
-																	.AutoHeight()
-																	[
-																		SAssignNew(ErrorText, SErrorText)
-																			.BackgroundColor(this, &SGraphNode_QuestSystemNode::GetErrorColor)
-																			.ToolTipText(this, &SGraphNode_QuestSystemNode::GetErrorMsgToolTip)
-																	]
+																]
+																// Error Msg
+																+ SVerticalBox::Slot()
+																.AutoHeight()
+																[
+																	SAssignNew(ErrorText, SErrorText)
+																		.BackgroundColor(this, &SGraphNode_QuestSystemNode::GetErrorColor)
+																		.ToolTipText(this, &SGraphNode_QuestSystemNode::GetErrorMsgToolTip)
+																]
 																	
-															]
-													]
-													// Description
-													+ SVerticalBox::Slot()
-													.AutoHeight()
-													.HAlign(HAlign_Fill)
-													.VAlign(VAlign_Center)
-													[
-														SNew(SVerticalBox)
-															+ SVerticalBox::Slot()
-															.Padding(FMargin(5.0f, 0.0f, 5.0f, 3.0f))
-															.AutoHeight()
-															[
-																// TASK TITLE
-																SNew(STextBlock)
-																	.Visibility(this, &SGraphNode_QuestSystemNode::GetTaskVisibility)
-                                                                    .Text(LOCTEXT("TaskLabel", "TASK"))
-																	.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
-																	.Justification(ETextJustify::Center)
-																	.Clipping(EWidgetClipping::Inherit)
-															]
-															+ SVerticalBox::Slot()
-															.Padding(FMargin(5.0f, 0.0f, 5.0f, 8.0f))
-															.AutoHeight()
-															[
-																// DESCRIPTION MESSAGE | Including Task Datas
-																SNew(STextBlock)
-																	.Visibility(this, &SGraphNode_QuestSystemNode::GetDescriptionVisibility)
-																	.Text(this, &SGraphNode_QuestSystemNode::GetDescription)
-																	.Justification(ETextJustify::Center)
-																	.Clipping(EWidgetClipping::Inherit)
-															]
+														]
+												]
+												// Description
+												+ SVerticalBox::Slot()
+												.AutoHeight()
+												.HAlign(HAlign_Fill)
+												.VAlign(VAlign_Center)
+												[
+													SNew(SVerticalBox)
+														+ SVerticalBox::Slot()
+														.Padding(FMargin(5.0f, 0.0f, 5.0f, 3.0f))
+														.AutoHeight()
+														[
+															// TASK TITLE
+															SNew(STextBlock)
+																.Visibility(this, &SGraphNode_QuestSystemNode::GetTaskVisibility)
+                                                                .Text(LOCTEXT("TaskLabel", "TASK"))
+																.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+																.Justification(ETextJustify::Center)
+																.Clipping(EWidgetClipping::Inherit)
+														]
+														+ SVerticalBox::Slot()
+														.Padding(FMargin(5.0f, 0.0f, 5.0f, 8.0f))
+														.AutoHeight()
+														[
+															// DESCRIPTION MESSAGE | Including Task Datas
+															SNew(STextBlock)
+																.Visibility(this, &SGraphNode_QuestSystemNode::GetDescriptionVisibility)
+																.Text(this, &SGraphNode_QuestSystemNode::GetDescription)
+																.Justification(ETextJustify::Center)
+																.Clipping(EWidgetClipping::Inherit)
+														]
 															
-													]
+												]
 
-													// Events
-													+ SVerticalBox::Slot()
-													.AutoHeight()
-													.HAlign(HAlign_Fill)
-													.VAlign(VAlign_Center)
-													[
-														SNew(SVerticalBox)
-															+ SVerticalBox::Slot()
-															.Padding(FMargin(5.0f, 0.0f, 5.0f, 3.0f))
-															.AutoHeight()
-															[
-																// EVENT TITLE
-																SNew(STextBlock)
-																	.Visibility(this, &SGraphNode_QuestSystemNode::GetEventsVisibility)
-																	.Text(LOCTEXT("TaskLabel", "EVENT"))
-																	.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
-																	.Justification(ETextJustify::Center)
-																	.Clipping(EWidgetClipping::Inherit)
-															]
-															+ SVerticalBox::Slot()
-															.Padding(FMargin(5.0f, 0.0f, 5.0f, 8.0f))
-															.AutoHeight()
-															[
-																//Events Text
-																SNew(STextBlock)
-																	.Visibility(this, &SGraphNode_QuestSystemNode::GetEventsVisibility)
-																	.Text(this, &SGraphNode_QuestSystemNode::GetEventsText)
-																	.Justification(ETextJustify::Center)
-																	.Clipping(EWidgetClipping::Inherit)
-															]
+												// Events
+												+ SVerticalBox::Slot()
+												.AutoHeight()
+												.HAlign(HAlign_Fill)
+												.VAlign(VAlign_Center)
+												[
+													SNew(SVerticalBox)
+														+ SVerticalBox::Slot()
+														.Padding(FMargin(5.0f, 0.0f, 5.0f, 3.0f))
+														.AutoHeight()
+														[
+															// EVENT TITLE
+															SNew(STextBlock)
+																.Visibility(this, &SGraphNode_QuestSystemNode::GetEventsVisibility)
+																.Text(LOCTEXT("TaskLabel", "EVENT"))
+																.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+																.Justification(ETextJustify::Center)
+																.Clipping(EWidgetClipping::Inherit)
+														]
+														+ SVerticalBox::Slot()
+														.Padding(FMargin(5.0f, 0.0f, 5.0f, 8.0f))
+														.AutoHeight()
+														[
+															//Events Text
+															SNew(STextBlock)
+																.Visibility(this, &SGraphNode_QuestSystemNode::GetEventsVisibility)
+																.Text(this, &SGraphNode_QuestSystemNode::GetEventsText)
+																.Justification(ETextJustify::Center)
+																.Clipping(EWidgetClipping::Inherit)
+														]
 
-													]
+												]
 
-													// Conditions
-													+ SVerticalBox::Slot()
-													.AutoHeight()
-													.HAlign(HAlign_Fill)
-													.VAlign(VAlign_Center)
-													[
-														SNew(SVerticalBox)
-															+ SVerticalBox::Slot()
-															.Padding(FMargin(5.0f, 0.0f, 5.0f, 3.0f))
-															.AutoHeight()
-															[
-																// BRANCHING CONDITION TITLE
-																SNew(STextBlock)
-																	.Visibility(this, &SGraphNode_QuestSystemNode::GetConditionsVisibility)
-																	.Text(LOCTEXT("TaskLabel", "BRANCHING CONDITION"))
-																	.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
-																	.Justification(ETextJustify::Center)
-																	.Clipping(EWidgetClipping::Inherit)
-															]
-															+ SVerticalBox::Slot()
-															.Padding(FMargin(5.0f, 0.0f, 5.0f, 8.0f))
-															.AutoHeight()
-															[
-																//Events Text
-																SNew(STextBlock)
-																	.Visibility(this, &SGraphNode_QuestSystemNode::GetConditionsVisibility)
-																	.Text(this, &SGraphNode_QuestSystemNode::GetConditionsText)
-																	.Justification(ETextJustify::Center)
-																	.Clipping(EWidgetClipping::Inherit)
-															]
+												// Conditions
+												+ SVerticalBox::Slot()
+												.AutoHeight()
+												.HAlign(HAlign_Fill)
+												.VAlign(VAlign_Center)
+												[
+													SNew(SVerticalBox)
+														+ SVerticalBox::Slot()
+														.Padding(FMargin(5.0f, 0.0f, 5.0f, 3.0f))
+														.AutoHeight()
+														[
+															// BRANCHING CONDITION TITLE
+															SNew(STextBlock)
+																.Visibility(this, &SGraphNode_QuestSystemNode::GetConditionsVisibility)
+																.Text(LOCTEXT("TaskLabel", "BRANCHING CONDITION"))
+																.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+																.Justification(ETextJustify::Center)
+																.Clipping(EWidgetClipping::Inherit)
+														]
+														+ SVerticalBox::Slot()
+														.Padding(FMargin(5.0f, 0.0f, 5.0f, 8.0f))
+														.AutoHeight()
+														[
+															//Events Text
+															SNew(STextBlock)
+																.Visibility(this, &SGraphNode_QuestSystemNode::GetConditionsVisibility)
+																.Text(this, &SGraphNode_QuestSystemNode::GetConditionsText)
+																.Justification(ETextJustify::Center)
+																.Clipping(EWidgetClipping::Inherit)
+														]
 
-													]
+												]
 
-											]
+										]
 
-											// OUTPUT PIN AREA
-											+ SHorizontalBox::Slot()
-											.AutoWidth()
-											[
-												SNew(SBox)
-													.MinDesiredHeight(NodePadding.Bottom)
-													[
-														SAssignNew(RightNodeBox, SVerticalBox)
+										// OUTPUT PIN AREA
+										+ SHorizontalBox::Slot()
+										.AutoWidth()
+										[
+											SNew(SBox)
+												.MinDesiredHeight(NodePadding.Bottom)
+												[
+													SAssignNew(RightNodeBox, SVerticalBox)
 
-													]
-											]
-									]
+												]
+										]
+								]
 
 
-									// Blueprint indicator overlay
-									+SOverlay::Slot()
-									.HAlign(HAlign_Left)
-									.VAlign(VAlign_Top)
-									[
-										SNew(SImage)
-											.Image(FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Blueprint")))
-											.Visibility(this, &SGraphNode_QuestSystemNode::GetBlueprintIconVisibility)
-									]
-							]
-					]
-			];
+								// Blueprint indicator overlay
+								+SOverlay::Slot()
+								.HAlign(HAlign_Left)
+								.VAlign(VAlign_Top)
+								[
+									SNew(SImage)
+										.Image(FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Blueprint")))
+										.Visibility(this, &SGraphNode_QuestSystemNode::GetBlueprintIconVisibility)
+								]
+						]
+				]
+		];
 		// Create comment bubble
 		TSharedPtr<SCommentBubble> CommentBubble;
 		const FSlateColor CommentColor = GetDefault<UGraphEditorSettings>()->DefaultCommentNodeTitleColor;
@@ -407,6 +460,20 @@ void SGraphNode_QuestSystemNode::UpdateGraphNode()
 		ErrorReporting->SetError(ErrorMsg);
 	
 	CreatePinWidgets();
+}
+
+TArray<FOverlayWidgetInfo> SGraphNode_QuestSystemNode::GetOverlayWidgets(bool bSelected, const FVector2D& WidgetSize) const
+{
+	TArray<FOverlayWidgetInfo> Widgets;
+
+	/*check(IndexOverlay.IsValid());
+
+	FVector2D Origin(0.0f, 0.0f);
+	FOverlayWidgetInfo Overlay(IndexOverlay);
+	Overlay.OverlayOffset = FVector2D(WidgetSize.X - (IndexOverlay->GetDesiredSize().X * 0.5f), Origin.Y);
+	Widgets.Add(Overlay);*/
+
+	return Widgets;
 }
 
 void SGraphNode_QuestSystemNode::CreatePinWidgets()
@@ -670,5 +737,92 @@ EVisibility SGraphNode_QuestSystemNode::GetBlueprintIconVisibility() const
 	return (bCanShowIcon && (!MyOwnerPanel.IsValid() || MyOwnerPanel->GetCurrentLOD() > EGraphRenderingLOD::LowDetail)) ? EVisibility::Visible : EVisibility::Collapsed;
 
 }
+
+EVisibility SGraphNode_QuestSystemNode::GetIndexVisibility() const
+{
+	// always hide the index on the root node
+	if (GraphNode->IsA(UEdNode_QuestSystemRoot::StaticClass()))
+	{
+		return EVisibility::Collapsed;
+	}
+
+	UEdNode_QuestSystemNode* StateNode = CastChecked<UEdNode_QuestSystemNode>(GraphNode);
+	UEdGraphPin* MyInputPin = StateNode->GetInputPin();
+	UEdGraphPin* MyParentOutputPin = NULL;
+	if (MyInputPin != NULL && MyInputPin->LinkedTo.Num() > 0)
+	{
+		MyParentOutputPin = MyInputPin->LinkedTo[0];
+	}
+
+	// Visible if we are in PIE or if we have siblings
+	const bool bCanShowIndex = ShouldShowExecutionIndex() || (MyParentOutputPin && MyParentOutputPin->LinkedTo.Num() > 1);
+
+	// LOD this out once things get too small
+	TSharedPtr<SGraphPanel> MyOwnerPanel = GetOwnerPanel();
+	return (bCanShowIndex && (!MyOwnerPanel.IsValid() || MyOwnerPanel->GetCurrentLOD() > EGraphRenderingLOD::LowDetail)) ? EVisibility::Visible : EVisibility::Collapsed;
+}
+
+FText SGraphNode_QuestSystemNode::GetIndexText() const
+{
+	UEdNode_QuestSystemNode* QuestEditorNode = Cast<UEdNode_QuestSystemNode>(GraphNode);
+	UEdGraphPin* MyInputPin = QuestEditorNode->GetInputPin();
+	UEdGraphPin* MyParentOutputPin = NULL;
+	if (MyInputPin != NULL && MyInputPin->LinkedTo.Num() > 0)
+	{
+		MyParentOutputPin = MyInputPin->LinkedTo[0];
+	}
+
+	int32 Index = 0;
+
+	if (ShouldShowExecutionIndex())
+	{
+		// show execution index (debugging purposes)
+		UQuestSystemGraphNode* QuestSystemNode = QuestEditorNode ? QuestEditorNode->QuestSystemGraphNode : nullptr;
+		Index = (QuestSystemNode && QuestSystemNode->ExecutionIndex < 0xffff) ? QuestSystemNode->ExecutionIndex : -1;
+	}
+	else
+	{
+		// show child index
+		if (MyParentOutputPin != NULL)
+		{
+			for (Index = 0; Index < MyParentOutputPin->LinkedTo.Num(); ++Index)
+			{
+				if (MyParentOutputPin->LinkedTo[Index] == MyInputPin)
+				{
+					break;
+				}
+			}
+		}
+	}
+
+	return FText::AsNumber(Index);
+}
+
+FText SGraphNode_QuestSystemNode::GetIndexTooltipText() const
+{
+	if (ShouldShowExecutionIndex())
+	{
+		return LOCTEXT("ExecutionIndexTooltip", "Execution index: this shows the order in which nodes are executed.");
+	}
+	else
+	{
+		return LOCTEXT("ChildIndexTooltip", "Child index: this shows the order in which child nodes are executed.");
+	}
+}
+
+FSlateColor SGraphNode_QuestSystemNode::GetIndexColor(bool bHovered) const
+{
+	const bool bHighlightHover = bHovered;
+
+	static const FName HoveredColor("BTEditor.Graph.BTNode.Index.HoveredColor");
+	static const FName DefaultColor("BTEditor.Graph.BTNode.Index.Color");
+
+	return bHighlightHover ? FAppStyle::Get().GetSlateColor(HoveredColor) : FAppStyle::Get().GetSlateColor(DefaultColor);
+}
+
+void SGraphNode_QuestSystemNode::OnIndexHoverStateChanged(bool bHovered)
+{
+}
+
 
 #undef LOCTEXT_NAMESPACE

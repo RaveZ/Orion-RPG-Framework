@@ -51,26 +51,23 @@ public:
 		FText Description; 
 
 	/**Make your quest can be aborted*/
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestConditions")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestConditions", meta = (DisplayName = "CanAbortQuest"))
 		bool bCanQuestBeAborted = false;
-	/**
-	* TRUE : activate this quest immediately
-	* FALSE : Use Quest Condition To Activate/Unlock the Quest
-	*/
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestConditions", meta = (DisplayName = "AutoActivateQuest?"))
-		bool bAutoActivateQuest = true;
 
-	/**Conditions to unlock the Quest*/
-	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "QuestConditions", meta = (EditCondition = "bAutoActivateQuest == false", EditConditionHides))
+	/**Make your quest can be aborted*/
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestConditions", meta = (DisplayName = "CanRetakeQuest"))
+		bool bCanRetakeQuest = false;
+
+	/**Conditions to change the QuestState to DesiredQuestState*/
+	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "QuestConditions")
 		TArray<TObjectPtr<UQuestCondition>> Conditions;
 
 	/**
-	* TRUE : Unlock Quest
-	* FALSE : Activate Quest Immediately
+	* Change the Quest State to this value after condition met
+	* If there is no condition, immediately change the quest state
 	*/
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestConditions", meta = (EditCondition = "bAutoActivateQuest == false", EditConditionHides, DisplayName = "UnlockQuest?"))
-		bool bUnlockQuest = false;
-
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "QuestConditions")
+		EQuestState DesiredQuestState = EQuestState::E_Active;
 
 	/** List of All Visited Node IDs in Sequence*/
 	UPROPERTY(BlueprintReadWrite, Category = "QuestSystem")

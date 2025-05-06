@@ -85,12 +85,14 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Task Completed", Category = "Task")
 		void K2_TaskCompleted();
 
-
 	UFUNCTION(BlueprintCallable, Category = "Task")
 		virtual void BeginTask();
 
 	UFUNCTION(BlueprintCallable, Category = "Task")
 		virtual bool CompleteTask();
+
+	UFUNCTION(BlueprintCallable, Category = "Objective")
+		bool IsTaskCompleted();
 
 	UFUNCTION(BlueprintNativeEvent, DisplayName = "Tick Task", Category = "Task")
 		void TickTask();

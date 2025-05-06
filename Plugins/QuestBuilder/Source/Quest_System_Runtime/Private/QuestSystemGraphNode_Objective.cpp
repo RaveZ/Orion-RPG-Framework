@@ -19,7 +19,7 @@ bool UQuestSystemGraphNode_Objective::IsAllTaskCompleted()
         {
             completeSum++;
         }
-        if (Task && !Task->bOptional && Task->TaskState == ETaskState::E_Complete)
+        if (Task && !Task->bOptional && Task->IsTaskCompleted())
         {
             progress++;
             

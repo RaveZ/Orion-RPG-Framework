@@ -284,8 +284,8 @@ void UAssetGraphSchema_QuestSystem::GetGraphContextActions(FGraphContextMenuBuil
 		UEdNode_QuestSystemNode* OpNode = NewObject<UEdNode_QuestSystemNode>(ContextMenuBuilder.OwnerOfTemporaries, GraphNodeClass);
 		OpNode->ClassData = NodeClass;
 		AddOpAction->NodeTemplate = OpNode;
-		AddOpAction->NodeTemplate->QuestSystemGraphNode = NewObject<UQuestSystemGraphNode>(AddOpAction->NodeTemplate, UQuestSystemGraphNode_Objective::StaticClass());// NodeClass.GetClass(true));
-		if (UQuestSystemGraphNode_Objective* ObjectiveNode = Cast< UQuestSystemGraphNode_Objective>(AddOpAction->NodeTemplate->QuestSystemGraphNode))
+		AddOpAction->NodeTemplate->QuestSystemGraphNode = NewObject<UQuestSystemGraphNode>(AddOpAction->NodeTemplate, UQuestSystemGraphNode_Objective::StaticClass());
+		if (UQuestSystemGraphNode_Objective* ObjectiveNode = Cast<UQuestSystemGraphNode_Objective>(AddOpAction->NodeTemplate->QuestSystemGraphNode))
 		{
 			if (NodeClass.GetClass(true)->IsChildOf(UQuestTask::StaticClass()))
 			{

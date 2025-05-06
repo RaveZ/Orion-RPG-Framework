@@ -125,7 +125,7 @@ bool UQuestBuilderFunctionLibrary::IsCurrentNodeIDMatch(const UObject* WorldCont
 {
     UQuestSystem* Quest = FindQuestFromNodeID(WorldContextObject, NodeID);
     
-    if (Quest && Quest->CurrentNode->ID == NodeID)
+    if (Quest && Quest->CurrentNode && Quest->CurrentNode->ID == NodeID)
     {
         return true;
     }

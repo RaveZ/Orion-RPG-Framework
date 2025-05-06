@@ -135,7 +135,6 @@ const FSlateBrush* FQuestGraphEditorSummoner::GetTabIconForObject(const FWorkflo
 
 EAssetCommandResult UAssetDefinition_QuestEditor::OpenAssets(const FAssetOpenArgs& OpenArgs) const
 {
-
 	const EToolkitMode::Type Mode = OpenArgs.ToolkitHost.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
 	for (UQuestSystemGraph* QuestGraph : OpenArgs.LoadObjects<UQuestSystemGraph>())
 	{

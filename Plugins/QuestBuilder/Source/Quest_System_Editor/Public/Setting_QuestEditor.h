@@ -17,6 +17,22 @@ class QUEST_SYSTEM_EDITOR_API UQuestEditorSettings : public UObject
 	virtual ~UQuestEditorSettings();
 
 public:
-	UPROPERTY(EditAnywhere, config, Category = "Graph Defaults", noclear, meta = (MetaClass = "/Script/Quest_System_Editor.QuestNodeWidget"))
-	TSoftClassPtr<class UQuestNodeWidget> DefaultQuestNodeWidgetClass;
+
+	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
+	FLinearColor FailedNodeColor;
+
+	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
+	FLinearColor SuccessNodeColor;
+
+	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
+	FLinearColor StateNodeColor;
+
+	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
+	FLinearColor RootNodeColor;
+
+	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
+	FLinearColor TaskNodeColor;
+
+	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
+	FLinearColor PersistentTasksNodeColor;
 };

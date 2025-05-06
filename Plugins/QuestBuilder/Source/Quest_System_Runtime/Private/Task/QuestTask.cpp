@@ -39,6 +39,11 @@ bool UQuestTask::CompleteTask()
 	return true;
 }
 
+bool UQuestTask::IsTaskCompleted()
+{
+	return TaskState == ETaskState::E_Complete;
+}
+
 void UQuestTask::BeginTask()  
 {  
    K2_BeginTask();  

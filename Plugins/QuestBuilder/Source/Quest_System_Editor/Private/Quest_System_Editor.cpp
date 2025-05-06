@@ -17,7 +17,6 @@
 #include "ToolMenus.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "Setting_QuestEditor.h"
-#include "AttributeDetails.h"
 #include "QuestData.h"
 
 
@@ -30,8 +29,7 @@ void FQuest_System_EditorModule::StartupModule()
 {	
 	// Register the PropertyEditors
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-	//PropertyModule.RegisterCustomPropertyTypeLayout(FQuestDataHandle::StaticStruct()->GetFName(), FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FQuestPropertyDetails::MakeInstance));
-
+	
 	//Initialize
 	FQuest_System_EditorStyle::Initialize();
 	FQuest_System_EditorStyle::ReloadTextures();
@@ -79,7 +77,6 @@ void FQuest_System_EditorModule::ShutdownModule()
 	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
 	{
 		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-		PropertyModule.UnregisterCustomPropertyTypeLayout(FQuestDataHandle::StaticStruct()->GetFName());
 	}
 
 	ClassCache.Reset();

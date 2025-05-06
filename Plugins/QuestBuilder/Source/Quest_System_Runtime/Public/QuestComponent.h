@@ -8,7 +8,7 @@
 
 class UQuestSaveObject;
 class USaveGame;
-class AController;
+class APlayerController;
 
 //Quest Delegate
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FQuestObjectiveUpdated);
@@ -37,8 +37,9 @@ public:
 	// Sets default values for this component's properties
 	UQuestComponent();
 
+	//We cache the OwningController, we won't cache pawn as this might change
 	UPROPERTY(BlueprintReadOnly, Category = "QuestComponent")
-		TObjectPtr<AController> OwningController;
+		TObjectPtr<APlayerController> OwningController;
 
 	/** Array of QuestGraph that is Running*/
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
@@ -129,6 +130,12 @@ public:
 		void ActivateQuest(FName QuestID);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		void UnlockQuest(FName QuestID = NAME_None);
+
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		void LockQuest(UQuestSystem* InQuest = nullptr, FName QuestID = NAME_None);
+
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void RestartQuest(FName QuestID, FName NodeID = NAME_None, bool bStartFromNodeID = false);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
@@ -140,9 +147,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void StartNavigateQuest(UQuestSystem* InQuest);
-	
-	UFUNCTION(BlueprintPure, Category = "QuestComponent")
-		virtual APawn* GetOwningPawn() const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		UQuestSystem* FindQuestFromNodeID(FName NodeIDParam) const;
@@ -187,8 +191,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Saving")
 	virtual bool DeleteSave(const FString& SaveName = "QuestBuilderSaveData", const int32 Slot = 0);
 
-	UFUNCTION()
-	bool ShouldUpdateQuest(UQuestSystem* QuestParam);
+public:
+	UFUNCTION(BlueprintPure, Category = "QuestComponent")
+	virtual APawn* GetOwningPawn() const;
+
+	UFUNCTION(BlueprintPure, Category = "QuestComponent")
+	virtual APlayerController* GetOwningController() const;
+
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;

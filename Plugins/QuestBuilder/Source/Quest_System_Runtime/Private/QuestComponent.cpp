@@ -35,7 +35,7 @@ void UQuestComponent::BeginPlay()
 	QuestSystemMap.Empty();
 	bQuestLoaded = false;
 	//Set Dependency
-	OwningController = Cast<AController>(GetOwner());
+	OwningController = GetOwningController();
 
 	OnQuestObjectiveUpdated.AddDynamic(this, &UQuestComponent::QuestObjectiveUpdated);
 	OnStartNavigateQuest.AddDynamic(this, &UQuestComponent::StartNavigatingQuest);
@@ -77,8 +77,6 @@ bool UQuestComponent::BeginQuest(UQuestSystemGraph* QuestAsset)
 
 	for (UQuestSystem* QuestSystem : QuestAsset->QuestSystems)
 	{
-		if (!ShouldUpdateQuest(QuestSystem))
-			continue;
 		EvaluateQuestCondition(QuestSystem);
 	}
 
@@ -126,9 +124,7 @@ void UQuestComponent::EvaluateQuestSaveLoadState(UQuestSystemGraph* QuestGraph)
 		//check if quest has been loaded
 		if (!bQuestLoaded)
 		{
-			Quest->QuestState = EQuestState::E_Locked; // all quest state is locked by default
-			Quest->CurrentNode = nullptr;
-			Quest->VisitedNodeIDs.Empty();
+			LockQuest(Quest);
 		}
 	}
 }
@@ -147,6 +143,38 @@ void UQuestComponent::ActivateQuest(FName QuestID)
 			OnQuestAdded.Broadcast(QuestSystem);
 			RestartQuest(QuestSystem->QuestID);
 		}
+	}
+}
+
+void UQuestComponent::UnlockQuest(FName QuestID)
+{
+	if (UQuestSystem* QuestSystem = QuestSystemMap.FindRef(QuestID))
+	{
+		QuestSystem->QuestState = EQuestState::E_Unlocked;
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("QuestComponent : Quest %s not found or null"), *QuestID.ToString());
+	}
+}
+
+void UQuestComponent::LockQuest(UQuestSystem* InQuest, FName QuestID)
+{
+	UQuestSystem* QuestSystem = nullptr;
+	if (InQuest)
+		QuestSystem = InQuest;
+	else
+		QuestSystem = QuestSystemMap.FindRef(QuestID);
+
+	if (QuestSystem)
+	{
+		QuestSystem->QuestState = EQuestState::E_Locked;
+		QuestSystem->CurrentNode = nullptr;
+		QuestSystem->VisitedNodeIDs.Empty();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("QuestComponent : Quest %s not found or null"), *QuestID.ToString());
 	}
 }
 
@@ -297,6 +325,44 @@ APawn* UQuestComponent::GetOwningPawn() const
 	{
 		return OwningController->GetPawn();
 	}
+
+	APlayerController* PC = Cast<APlayerController>(GetOwner());
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+
+	if (OwningPawn)
+	{
+		return OwningPawn;
+	}
+
+	if (!OwningPawn && PC)
+	{
+		return PC->GetPawn();
+	}
+
+	return nullptr;
+}
+
+APlayerController* UQuestComponent::GetOwningController() const
+{
+	//We cache this on beginplay as to not re-find it every time 
+	if (OwningController)
+	{
+		return OwningController;
+	}
+
+	APlayerController* PC = Cast<APlayerController>(GetOwner());
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+
+	if (PC)
+	{
+		return PC;
+	}
+
+	if (!PC && OwningPawn)
+	{
+		return Cast<APlayerController>(OwningPawn->GetController());
+	}
+
 	return nullptr;
 }
 
@@ -361,26 +427,28 @@ void UQuestComponent::UpdateQuest()
 	{
 		FName Key = It.Key;
 		UQuestSystem* QuestSystem = It.Value;
-		
-		if (!ShouldUpdateQuest(QuestSystem))
-			continue;
 
 		EvaluateQuestCondition(QuestSystem);
-		if (QuestSystem->CurrentNode != nullptr)
+
+		if(QuestSystem->QuestState == EQuestState::E_Active)
 		{
-			if (UQuestSystemGraphNode_Objective* ObjectiveNode = Cast<UQuestSystemGraphNode_Objective>(QuestSystem->CurrentNode))
+			if (QuestSystem->CurrentNode != nullptr)
 			{
-				if (ObjectiveNode->IsAllTaskCompleted())
+				if (UQuestSystemGraphNode_Objective* ObjectiveNode = Cast<UQuestSystemGraphNode_Objective>(QuestSystem->CurrentNode))
 				{
-					//evaluate next node condition
-					EvaluateNextNodeCondition(QuestSystem);
+					if (ObjectiveNode->IsAllTaskCompleted())
+					{
+						//evaluate next node condition
+						EvaluateNextNodeCondition(QuestSystem);
+					}
 				}
 			}
+			else if (QuestSystem->CurrentNode == nullptr)
+			{
+				RestartQuest(QuestSystem->QuestID);
+			}
 		}
-		else if (QuestSystem->QuestState == EQuestState::E_Active && QuestSystem->CurrentNode == nullptr)
-		{
-			RestartQuest(QuestSystem->QuestID);
-		}
+		
 		
 	}
 }
@@ -440,6 +508,9 @@ void UQuestComponent::EvaluateNextNodeCondition(UQuestSystem* QuestParam)
 
 void UQuestComponent::EvaluateQuestCondition(UQuestSystem* QuestParam)
 {
+	if (QuestParam->QuestState != EQuestState::E_Locked)
+		return;
+
 	int SumConditionMet = 0;
 	for (UQuestCondition* Condition : QuestParam->Conditions)
 	{
@@ -456,33 +527,25 @@ void UQuestComponent::EvaluateQuestState(UQuestSystem* QuestParam, int SumCondit
 {
 	if (QuestParam->QuestState == EQuestState::E_Complete || QuestParam->QuestState == EQuestState::E_Fail)
 		return;
-	if (QuestParam->bAutoActivateQuest)
-	{
-		ActivateQuest(QuestParam->QuestID);
-		return;
-	}
 
-	switch (QuestParam->QuestState)
+	if (SumConditionMet >= QuestParam->Conditions.Num())
 	{
-		case EQuestState::E_Active:
-			ActivateQuest(QuestParam->QuestID);
-			return;
-		case EQuestState::E_Locked:
-			if (SumConditionMet >= QuestParam->Conditions.Num())
-			{
-				if (QuestParam->bUnlockQuest)
-				{
-					QuestParam->QuestState = EQuestState::E_Unlocked;
-				}
-				else
-				{
-					ActivateQuest(QuestParam->QuestID);
-				}
-			}
-			return;
-		case EQuestState::E_Unlocked:
-
-			return;
+		switch (QuestParam->DesiredQuestState)
+		{
+			case EQuestState::E_Active:
+				ActivateQuest(QuestParam->QuestID);
+				return;
+			case EQuestState::E_Fail:
+				FailQuest(QuestParam->QuestID);
+				return;
+			case EQuestState::E_Complete:
+				CompleteQuest(QuestParam->QuestID);
+				return;
+			case EQuestState::E_Unlocked:
+				UnlockQuest(QuestParam->QuestID);
+				return;
+		}
+		
 	}
 }
 
@@ -697,11 +760,6 @@ bool UQuestComponent::DeleteSave(const FString& SaveName, const int32 Slot)
 	}
 
 	return UGameplayStatics::DeleteGameInSlot(SaveName, Slot);
-}
-
-bool UQuestComponent::ShouldUpdateQuest(UQuestSystem* QuestParam)
-{
-	return !(QuestParam->QuestState == EQuestState::E_Complete || QuestParam->QuestState == EQuestState::E_Fail);
 }
 
 

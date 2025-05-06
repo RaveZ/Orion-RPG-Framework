@@ -40,23 +40,17 @@
 
 #define LOCTEXT_NAMESPACE "AssetEditor_QuestGraph"
 
-
-
-//////////////////////////////////////////////////////////////////////////
-
 const FName FQuestSystemAssetEditorTabs::MyQuestDetailID(TEXT("MyQuestDetail"));
 const FName FQuestSystemAssetEditorTabs::GenericGraphPropertyID(TEXT("GenericGraphProperty"));
 const FName FQuestSystemAssetEditorTabs::ViewportID(TEXT("Viewport"));
 const FName FQuestSystemAssetEditorTabs::GenericGraphEditorSettingsID(TEXT("GenericGraphEditorSettings"));
 
-//////////////////////////////////////////////////////////////////////////
-
 const FName GenericGraphEditorAppName = FName(TEXT("GenericGraphEditorApp"));
 
+//////////////////////////////////////////////////////////////////////////
 FAssetEditor_QuestSystem::FAssetEditor_QuestSystem()
 {
 	EditingQuestGraph = nullptr;
-	DocumentManager = MakeShareable(new FDocumentTracker);
 
 #if ENGINE_MAJOR_VERSION < 5
 	OnPackageSavedDelegateHandle = UPackage::PackageSavedEvent.AddRaw(this, &FAssetEditor_QuestSystem::OnPackageSaved);
@@ -74,17 +68,42 @@ FAssetEditor_QuestSystem::~FAssetEditor_QuestSystem()
 #endif // #else // #if ENGINE_MAJOR_VERSION < 5
 }
 
-void FAssetEditor_QuestSystem::Initialize(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UQuestSystemGraph* Graph)
+void FAssetEditor_QuestSystem::Initialize(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UObject* InObject)
 {
-	EditingQuestGraph = Graph;
-	FGenericCommands::Register();
-	FGraphEditorCommands::Register();
-	FMyQuestCommands::Register();
-	FQuest_System_EditorCommands::Register();
+	UQuestSystemGraph* QuestGraphToEdit = Cast<UQuestSystemGraph>(InObject);
+
+	if (QuestGraphToEdit != nullptr)
+	{
+		EditingQuestGraph = QuestGraphToEdit;
+	}
 
 	//Binding Functionality
 	EditingQuestGraph->GetOutermost()->PackageMarkedDirtyEvent.AddRaw(this, &FAssetEditor_QuestSystem::OnPackageMarkedDirty);
-	
+
+
+	TSharedPtr<FAssetEditor_QuestSystem> ThisPtr(SharedThis(this));
+	if (!DocumentManager.IsValid())
+	{
+		DocumentManager = MakeShareable(new FDocumentTracker);
+		DocumentManager->Initialize(ThisPtr);
+
+		// Register the document factories
+		{
+			TSharedRef<FDocumentTabFactory> GraphEditorFactory = MakeShareable(new FQuestGraphEditorSummoner(ThisPtr,
+				FQuestGraphEditorSummoner::FOnCreateGraphEditorWidget::CreateSP(this, &FAssetEditor_QuestSystem::CreateGraphEditorWidget)
+			));
+
+			// Also store off a reference to the grapheditor factory so we can find all the tabs spawned by it later.
+			QuestEditorTabFactoryPtr = GraphEditorFactory;
+			DocumentManager->RegisterDocumentFactory(GraphEditorFactory);
+		}
+	}
+
+	TArray<UObject*> ObjectsToEdit;
+	if (EditingQuestGraph != nullptr)
+	{
+		ObjectsToEdit.Add(EditingQuestGraph);
+	}
 
 	//Make Toolbar
 	if (!ToolbarBuilder.IsValid())
@@ -92,66 +111,85 @@ void FAssetEditor_QuestSystem::Initialize(const EToolkitMode::Type Mode, const T
 		ToolbarBuilder = MakeShareable(new FAssetEditorToolbar_QuestSystem(SharedThis(this)));
 	}
 
-	BindCommands();
+	// if we are already editing objects, dont try to recreate the editor from scratch but update the list of objects in edition
+	// ex: BehaviorTree may want to reuse an editor already opened for its associated Blackboard asset.
+	const TArray<UObject*>* EditedObjects = GetObjectsCurrentlyBeingEdited();
+	if (EditedObjects == nullptr || EditedObjects->Num() == 0)
+	{
+		FGenericCommands::Register();
+		FGraphEditorCommands::Register();
+		FMyQuestCommands::Register();
+		FQuest_System_EditorCommands::Register();
 
-	CreateInternalWidgets();
+		TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
 
-	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
+		ToolbarBuilder->AddQuestSystemToolbar(ToolbarExtender);
 
-	ToolbarBuilder->AddQuestSystemToolbar(ToolbarExtender);
-	
-	// Layout
-	const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("Standalone_GenericGraphEditor_Layout_v1")
-		->AddArea
-		(
-			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
+		BindCommands();
+		CreateInternalWidgets();
+
+		// Layout
+		const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("Standalone_GenericGraphEditor_Layout_v1")
+			->AddArea
+			(
+				FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
 #if ENGINE_MAJOR_VERSION < 5
-			->Split
-			(
-				FTabManager::NewStack()
-				->SetSizeCoefficient(0.1f)
-				->AddTab(GetToolbarTabId(), ETabState::OpenedTab)->SetHideTabWell(true)
-			)
+				->Split
+				(
+					FTabManager::NewStack()
+					->SetSizeCoefficient(0.1f)
+					->AddTab(GetToolbarTabId(), ETabState::OpenedTab)->SetHideTabWell(true)
+				)
 #endif // #if ENGINE_MAJOR_VERSION < 5
-			->Split
-			(
-				FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
 				->Split
 				(
-					FTabManager::NewStack()
-					->SetSizeCoefficient(0.2f)
-					->AddTab(FQuestSystemAssetEditorTabs::MyQuestDetailID, ETabState::OpenedTab)
-				)
-				->Split
-				(
-					FTabManager::NewStack()
-					->SetSizeCoefficient(0.55f)
-					->AddTab("Document", ETabState::ClosedTab)
-				)
-				->Split
-				(
-					FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)->SetSizeCoefficient(0.25f)
+					FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
+					->Split
+					(
+						FTabManager::NewStack()
+						->SetSizeCoefficient(0.2f)
+						->AddTab(FQuestSystemAssetEditorTabs::MyQuestDetailID, ETabState::OpenedTab)
+					)
 					->Split
 					(
 						FTabManager::NewStack()
 						->SetSizeCoefficient(0.55f)
-						->AddTab(FQuestSystemAssetEditorTabs::GenericGraphPropertyID, ETabState::OpenedTab)
+						->AddTab("Document", ETabState::ClosedTab)
+					)
+					->Split
+					(
+						FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)->SetSizeCoefficient(0.25f)
+						->Split
+						(
+							FTabManager::NewStack()
+							->SetSizeCoefficient(0.55f)
+							->AddTab(FQuestSystemAssetEditorTabs::GenericGraphPropertyID, ETabState::OpenedTab)
+						)
 					)
 				)
-			)
-		);
+			);
 
-	const bool bCreateDefaultStandaloneMenu = true;
-	const bool bCreateDefaultToolbar = true;
-	InitAssetEditor(Mode, InitToolkitHost, GenericGraphEditorAppName, StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, EditingQuestGraph, false);
-	CommonInitialization(Graph, true);
-	RegenerateMenusAndToolbars();
+		const bool bCreateDefaultStandaloneMenu = true;
+		const bool bCreateDefaultToolbar = true;
+		InitAssetEditor(Mode, InitToolkitHost, GenericGraphEditorAppName, StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, EditingQuestGraph, false);
 
-	if (Graph->bIsNewlyCreated)
+	}
+	else
+	{
+		for (UObject* ObjectToEdit : ObjectsToEdit)
+		{
+			if (!EditedObjects->Contains(ObjectToEdit))
+			{
+				AddEditingObject(ObjectToEdit);
+			}
+		}
+	}
+
+	if (EditingQuestGraph && EditingQuestGraph->bIsNewlyCreated)
 	{
 		NewDocument_OnClicked(CGT_NewQuestGraph);
-		Graph->bIsNewlyCreated = false;
-		Graph->Modify();
+		EditingQuestGraph->bIsNewlyCreated = false;
+		EditingQuestGraph->Modify();
 	}
 	else
 	{
@@ -160,38 +198,15 @@ void FAssetEditor_QuestSystem::Initialize(const EToolkitMode::Type Mode, const T
 			OpenDocument(GetQuestSystemObj()->QuestGraphPages[0], FDocumentTracker::OpenNewDocument);
 		}
 	}
+
+	RegenerateMenusAndToolbars();
 	
 }
 
-void FAssetEditor_QuestSystem::CommonInitialization(const UQuestSystemGraph* Graph, bool bShouldOpenInDefaultsMode)
-{
-	TSharedPtr<FAssetEditor_QuestSystem> ThisPtr(SharedThis(this));
-
-	// @todo TabManagement
-	DocumentManager->Initialize(ThisPtr);
-
-	// Register the document factories
-	{
-		//DocumentManager->RegisterDocumentFactory(MakeShareable(new FTimelineEditorSummoner(ThisPtr)));
-
-		TSharedRef<FDocumentTabFactory> GraphEditorFactory = MakeShareable(new FQuestGraphEditorSummoner(ThisPtr,
-			FQuestGraphEditorSummoner::FOnCreateGraphEditorWidget::CreateSP(this, &FAssetEditor_QuestSystem::CreateGraphEditorWidget)
-		));
-
-		// Also store off a reference to the grapheditor factory so we can find all the tabs spawned by it later.
-		QuestEditorTabFactoryPtr = GraphEditorFactory;
-		DocumentManager->RegisterDocumentFactory(GraphEditorFactory);
-	}
-
-	CreateDefaultTabContents(Graph);
-}
 
 void FAssetEditor_QuestSystem::RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
 {
-
 	DocumentManager->SetTabManager(InTabManager);
-
-	//FWorkflowCentricApplication::RegisterTabSpawners(InTabManager);
 
 	WorkspaceMenuCategory = InTabManager->AddLocalWorkspaceMenuCategory(LOCTEXT("WorkspaceMenu_GenericGraphEditor", "Generic Graph Editor"));
 	auto WorkspaceMenuCategoryRef = WorkspaceMenuCategory.ToSharedRef();
@@ -645,9 +660,6 @@ TSharedRef<SWidget> FAssetEditor_QuestSystem::CreateGraphTitleBarWidget(TSharedR
 		.HistoryNavigationWidget(InTabInfo->CreateHistoryNavigationWidget());*/
 }
 
-void FAssetEditor_QuestSystem::CreateDefaultTabContents(const UQuestSystemGraph* Graph)
-{
-}
 
 const FSlateBrush* FAssetEditor_QuestSystem::GetGlyphForGraph(const UEdGraph* Graph, bool bInLargeIcon)
 {
@@ -914,8 +926,6 @@ TSharedRef<SDockTab> FAssetEditor_QuestSystem::SpawnTab_MyQuest(const FSpawnTabA
 
 void FAssetEditor_QuestSystem::CreateInternalWidgets()
 {
-	//ViewportWidget = CreateViewportWidget();
-
 	FDetailsViewArgs Args;
 	Args.bHideSelectionTip = true;
 	Args.NotifyHook = this;

@@ -119,6 +119,10 @@ UEdGraphPin* UEdNode_QuestSystemNode::GetOutputPin() const
 	return nullptr;
 }
 
+void UEdNode_QuestSystemNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
+{
+}
+
 bool UEdNode_QuestSystemNode::UsesBlueprint() const
 {
 	return QuestSystemGraphNode && QuestSystemGraphNode->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint);

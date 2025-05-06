@@ -50,6 +50,10 @@ public:
 	virtual UEdGraphPin* GetInputPin() const;
 	virtual UEdGraphPin* GetOutputPin() const;
 
+
+	/** Gets a list of actions that can be done to this particular node */
+	virtual void GetNodeContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const override;
+
 	/** Check if node instance uses blueprint for its implementation */
 	bool UsesBlueprint() const;
 

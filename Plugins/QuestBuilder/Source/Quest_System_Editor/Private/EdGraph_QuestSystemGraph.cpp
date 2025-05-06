@@ -177,12 +177,16 @@ void UEdGraph_QuestSystemGraph::RebuildQuestSystemGraph()
 		Node->Rename(nullptr, Graph, REN_DontCreateRedirectors | REN_DoNotDirty);
 	}
 
+	
+
 	QuestSystem->RootNodes.Sort([&](const UQuestSystemGraphNode& L, const UQuestSystemGraphNode& R)
 	{
 		UEdNode_QuestSystemNode* EdNode_LNode = NodeMap[&L];
 		UEdNode_QuestSystemNode* EdNode_RNode = NodeMap[&R];
 		return EdNode_LNode->NodePosX < EdNode_RNode->NodePosX;
 	});
+
+	
 }
 
 UQuestSystemGraph* UEdGraph_QuestSystemGraph::GetQuestSystemGraph() const

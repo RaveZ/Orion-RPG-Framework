@@ -3,15 +3,15 @@
 
 #include "Setting_QuestEditor.h"
 #include "UObject/ConstructorHelpers.h"
-#include "QuestNodeWidget.h"
 
 UQuestEditorSettings::UQuestEditorSettings()
 {
-	auto QuestNodeUserWidgetFinder = ConstructorHelpers::FClassFinder<UQuestNodeWidget>(TEXT("WidgetBlueprint'/Quest_System_Editor/Widgets/Editor/WBP_DefaultQuestNodeWidget.WBP_DefaultQuestNodeWidget_C'"));
-	if (QuestNodeUserWidgetFinder.Succeeded())
-	{
-		DefaultQuestNodeWidgetClass = QuestNodeUserWidgetFinder.Class;
-	}
+	FailedNodeColor = FLinearColor(0.38f, 0.f, 0.f);
+	SuccessNodeColor = FLinearColor(0.f, 0.38f, 0.f);
+	TaskNodeColor = FLinearColor(0.65f, 0.28f, 0.f);
+	StateNodeColor = FLinearColor(0.1f, 0.1f, 0.1f);
+	PersistentTasksNodeColor = FLinearColor(0.1f, 0.1f, 0.1f);
+	RootNodeColor = FLinearColor(0.1f, 0.1f, 0.1f);
 }
 
 UQuestEditorSettings::~UQuestEditorSettings()
