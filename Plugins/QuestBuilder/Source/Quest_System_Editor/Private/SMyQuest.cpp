@@ -8,10 +8,10 @@
 #include "GraphActionNode.h"
 #include "SGraphPalette.h"
 #include "QuestBuilderEditorUtils.h"
-#include "Quest_System_EditorCommands.h"
+#include "QuestBuilder_EditorCommands.h"
 #include "Widgets/Input/SSearchBox.h"
 #include "QuestBuilderEditor.h"
-#include "Quest_System_EditorCommands.h"
+#include "QuestBuilder_EditorCommands.h"
 #include "SlateOptMacros.h"
 #include "SQuestPalette.h"
 
@@ -478,7 +478,7 @@ void SMyQuest::BuildAddNewMenu(FMenuBuilder& MenuBuilder)
 
 	if (UQuestSystemGraph* CurrentBlueprint = GetQuestSystemObj())
 	{
-		MenuBuilder.AddMenuEntry(FQuest_System_EditorCommands::Get().AddNewQuestGraph);
+		MenuBuilder.AddMenuEntry(FQuestBuilder_EditorCommands::Get().AddNewQuestGraph);
 		
 	}
 	MenuBuilder.EndSection();
@@ -565,7 +565,7 @@ FReply SMyQuest::OnAddButtonClickedOnSection(int32 InSectionID)
 	switch (InSectionID)
 	{
 	case QuestSectionID::QUESTGRAPH:
-		CommandList->ExecuteAction(FQuest_System_EditorCommands::Get().AddNewQuestGraph.ToSharedRef());
+		CommandList->ExecuteAction(FQuestBuilder_EditorCommands::Get().AddNewQuestGraph.ToSharedRef());
 		break;
 	}
 

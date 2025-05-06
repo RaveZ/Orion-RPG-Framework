@@ -2,8 +2,8 @@
 
 
 #include "QuestBuilderEditorToolbar.h"
-#include "Quest_System_EditorCommands.h"
-#include "Quest_System_EditorStyle.h"
+#include "QuestBuilder_EditorCommands.h"
+#include "QuestBuilder_EditorStyle.h"
 #include "QuestBuilderEditor.h"
 
 #define LOCTEXT_NAMESPACE "QuestBuilderEditorToolbar"
@@ -29,7 +29,7 @@ void FQuestBuilderEditorToolbar::FillQuestSystemToolbar(FToolBarBuilder& Toolbar
 		const FSlateIcon NewTaskIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "BTEditor.Graph.NewTask");
 
 		
-		ToolbarBuilder.AddToolBarButton(FQuest_System_EditorCommands::Get().NewTask,
+		ToolbarBuilder.AddToolBarButton(FQuestBuilder_EditorCommands::Get().NewTask,
 			NAME_None,
 			NewTaskLabel,
 			NewTaskTooltip,
@@ -45,7 +45,7 @@ void FQuestBuilderEditorToolbar::FillQuestSystemToolbar(FToolBarBuilder& Toolbar
 		const FSlateIcon NewConditionIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "BTEditor.Graph.BTNode.Decorator.Conditional.Icon");
 
 
-		ToolbarBuilder.AddToolBarButton(FQuest_System_EditorCommands::Get().NewQuestCondition,
+		ToolbarBuilder.AddToolBarButton(FQuestBuilder_EditorCommands::Get().NewQuestCondition,
 			NAME_None,
 			NewConditionLabel,
 			NewConditionTooltip,
@@ -61,7 +61,7 @@ void FQuestBuilderEditorToolbar::FillQuestSystemToolbar(FToolBarBuilder& Toolbar
 		const FSlateIcon NewEventIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.CustomEvent_16x");
 
 
-		ToolbarBuilder.AddToolBarButton(FQuest_System_EditorCommands::Get().NewQuestEvent,
+		ToolbarBuilder.AddToolBarButton(FQuestBuilder_EditorCommands::Get().NewQuestEvent,
 			NAME_None,
 			NewEventLabel,
 			NewEventTooltip,
@@ -77,7 +77,7 @@ void FQuestBuilderEditorToolbar::FillQuestSystemToolbar(FToolBarBuilder& Toolbar
 		const FSlateIcon QuestSettingIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "ProjectSettings.TabIcon");
 
 
-		ToolbarBuilder.AddToolBarButton(FQuest_System_EditorCommands::Get().QuestSetting,
+		ToolbarBuilder.AddToolBarButton(FQuestBuilder_EditorCommands::Get().QuestSetting,
 			NAME_None,
 			QuestSettingLabel,
 			QuestSettingTooltip,

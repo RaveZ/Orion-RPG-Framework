@@ -14,7 +14,7 @@
 #include "GraphEditorActions.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "QuestBuilderEditorToolbar.h"
-#include "Quest_System_EditorCommands.h"
+#include "QuestBuilder_EditorCommands.h"
 #include "QuestBuilderEdGraph.h"
 #include "QuestBuilderEdNode.h"
 #include "Kismet2/KismetEditorUtilities.h"
@@ -77,15 +77,6 @@ void FQuestBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShare
 		EditingQuestGraph = QuestGraphToEdit;
 	}
 
-	//Make sure the graph schema is not null
-	for (auto& QuestGraphPage : EditingQuestGraph->QuestGraphPages)
-	{
-		if (QuestGraphPage->Schema == nullptr)
-		{
-			QuestGraphPage->Schema = UEdGraphSchema_QuestBuilder::StaticClass();
-		}
-	}
-
 	//Binding Functionality
 	EditingQuestGraph->GetOutermost()->PackageMarkedDirtyEvent.AddRaw(this, &FQuestBuilderEditor::OnPackageMarkedDirty);
 
@@ -127,7 +118,7 @@ void FQuestBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShare
 		FGenericCommands::Register();
 		FGraphEditorCommands::Register();
 		FMyQuestCommands::Register();
-		FQuest_System_EditorCommands::Register();
+		FQuestBuilder_EditorCommands::Register();
 
 		TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
 
@@ -254,29 +245,29 @@ void FQuestBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& I
 
 void FQuestBuilderEditor::BindCommands()
 {
-	ToolkitCommands->MapAction(FQuest_System_EditorCommands::Get().NewTask,
+	ToolkitCommands->MapAction(FQuestBuilder_EditorCommands::Get().NewTask,
 		FExecuteAction::CreateSP(this, &FQuestBuilderEditor::CreateNewTask),
 		FCanExecuteAction::CreateSP(this, &FQuestBuilderEditor::CanCreateNewTask),
 		FIsActionChecked(),
 		FIsActionButtonVisible::CreateSP(this, &FQuestBuilderEditor::IsNewTaskButtonVisible)
 	);
 
-	ToolkitCommands->MapAction(FQuest_System_EditorCommands::Get().NewQuestCondition,
+	ToolkitCommands->MapAction(FQuestBuilder_EditorCommands::Get().NewQuestCondition,
 		FExecuteAction::CreateSP(this, &FQuestBuilderEditor::CreateNewQuestCondition),
 		FCanExecuteAction::CreateSP(this, &FQuestBuilderEditor::CanCreateQuestCondition)
 	);
 
-	ToolkitCommands->MapAction(FQuest_System_EditorCommands::Get().NewQuestEvent,
+	ToolkitCommands->MapAction(FQuestBuilder_EditorCommands::Get().NewQuestEvent,
 		FExecuteAction::CreateSP(this, &FQuestBuilderEditor::CreateNewQuestEvent),
 		FCanExecuteAction::CreateSP(this, &FQuestBuilderEditor::CanCreateQuestEvent)
 	); 
 	
-	ToolkitCommands->MapAction(FQuest_System_EditorCommands::Get().QuestSetting,
+	ToolkitCommands->MapAction(FQuestBuilder_EditorCommands::Get().QuestSetting,
 		FExecuteAction::CreateSP(this, &FQuestBuilderEditor::OpenQuestSetting),
 		FCanExecuteAction::CreateSP(this, &FQuestBuilderEditor::CanOpenQuestSetting)
 	);
 	
-	ToolkitCommands->MapAction(FQuest_System_EditorCommands::Get().AddNewQuestGraph,
+	ToolkitCommands->MapAction(FQuestBuilder_EditorCommands::Get().AddNewQuestGraph,
 		FExecuteAction::CreateSP(this, &FQuestBuilderEditor::NewDocument_OnClicked, CGT_NewQuestGraph),
 		FCanExecuteAction::CreateSP(this, &FQuestBuilderEditor::InEditingMode),
 		FIsActionChecked(),
@@ -296,26 +287,26 @@ void FQuestBuilderEditor::CreateCommandList()
 	// however it should be safe, since commands are being used only within this editor
 	// if it ever crashes, this function will have to go away and be reimplemented in each derived class
 
-	GraphEditorCommands->MapAction(FQuest_System_EditorCommands::Get().AddNewQuestGraph,
+	GraphEditorCommands->MapAction(FQuestBuilder_EditorCommands::Get().AddNewQuestGraph,
 		FExecuteAction::CreateSP(this, &FQuestBuilderEditor::NewDocument_OnClicked, CGT_NewQuestGraph),
 		FCanExecuteAction::CreateSP(this, &FQuestBuilderEditor::InEditingMode),
 		FIsActionChecked(),
 		FIsActionButtonVisible::CreateSP(this, &FQuestBuilderEditor::NewDocument_IsVisibleForType, CGT_NewQuestGraph)
 	);
 
-	GraphEditorCommands->MapAction(FQuest_System_EditorCommands::Get().NewTask,
+	GraphEditorCommands->MapAction(FQuestBuilder_EditorCommands::Get().NewTask,
 		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CreateNewTask),
 		FCanExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CanCreateNewTask));
 
-	GraphEditorCommands->MapAction(FQuest_System_EditorCommands::Get().NewQuestCondition,
+	GraphEditorCommands->MapAction(FQuestBuilder_EditorCommands::Get().NewQuestCondition,
 		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CreateNewQuestEvent),
 		FCanExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CanCreateQuestEvent));
 	
-	GraphEditorCommands->MapAction(FQuest_System_EditorCommands::Get().NewQuestEvent,
+	GraphEditorCommands->MapAction(FQuestBuilder_EditorCommands::Get().NewQuestEvent,
 		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CreateNewQuestCondition),
 		FCanExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CanCreateQuestCondition));
 
-	GraphEditorCommands->MapAction(FQuest_System_EditorCommands::Get().QuestSetting,
+	GraphEditorCommands->MapAction(FQuestBuilder_EditorCommands::Get().QuestSetting,
 		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::OpenQuestSetting),
 		FCanExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CanOpenQuestSetting));
 

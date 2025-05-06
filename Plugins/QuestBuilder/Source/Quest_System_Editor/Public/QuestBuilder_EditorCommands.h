@@ -4,14 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "Framework/Commands/Commands.h"
-#include "Quest_System_EditorStyle.h"
+#include "QuestBuilder_EditorStyle.h"
 
-class FQuest_System_EditorCommands : public TCommands<FQuest_System_EditorCommands>
+class FQuestBuilder_EditorCommands : public TCommands<FQuestBuilder_EditorCommands>
 {
 public:
 
-	FQuest_System_EditorCommands()
-		: TCommands<FQuest_System_EditorCommands>(TEXT("Quest_System_Editor"), NSLOCTEXT("Contexts", "Quest_System_Editor", "Quest_System_Editor Plugin"), NAME_None, FQuest_System_EditorStyle::GetStyleSetName())
+	FQuestBuilder_EditorCommands()
+		: TCommands<FQuestBuilder_EditorCommands>(TEXT("Quest_System_Editor"), NSLOCTEXT("Contexts", "Quest_System_Editor", "Quest_System_Editor Plugin"), NAME_None, FQuestBuilder_EditorStyle::GetStyleSetName())
 	{
 	}
 

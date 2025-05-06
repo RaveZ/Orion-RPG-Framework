@@ -1,8 +1,8 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 #include "Quest_System_Editor.h"
-#include "Quest_System_EditorStyle.h"
-#include "Quest_System_EditorCommands.h"
+#include "QuestBuilder_EditorStyle.h"
+#include "QuestBuilder_EditorCommands.h"
 #include "QuestSystemGraphNode.h"
 #include "Task/QuestTask.h"
 #include "IAssetTools.h"
@@ -31,9 +31,9 @@ void FQuest_System_EditorModule::StartupModule()
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	
 	//Initialize
-	FQuest_System_EditorStyle::Initialize();
-	FQuest_System_EditorStyle::ReloadTextures();
-	FQuest_System_EditorCommands::Register();
+	FQuestBuilder_EditorStyle::Initialize();
+	FQuestBuilder_EditorStyle::ReloadTextures();
+	FQuestBuilder_EditorCommands::Register();
 
 	//Register Settings Menu For Quest Builder
 	RegisterSettings();
@@ -67,9 +67,9 @@ void FQuest_System_EditorModule::ShutdownModule()
 
 	UToolMenus::UnregisterOwner(this);
 
-	FQuest_System_EditorStyle::Shutdown();
+	FQuestBuilder_EditorStyle::Shutdown();
 
-	FQuest_System_EditorCommands::Unregister();
+	FQuestBuilder_EditorCommands::Unregister();
 
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(Quest_System_EditorTabName);
 

@@ -6,7 +6,7 @@
 #include "Styling/SlateStyle.h"
 
 /**  */
-class FQuest_System_EditorStyle
+class FQuestBuilder_EditorStyle
 {
 public:
 

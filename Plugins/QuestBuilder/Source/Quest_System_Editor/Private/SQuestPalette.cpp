@@ -2,7 +2,7 @@
 
 
 #include "SQuestPalette.h"
-#include "Quest_System_EditorStyle.h"
+#include "QuestBuilder_EditorStyle.h"
 #include "SlateOptMacros.h"	
 #include "TutorialMetaData.h"
 #include "SMyQuest.h"
