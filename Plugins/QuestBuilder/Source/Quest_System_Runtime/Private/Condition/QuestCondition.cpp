@@ -4,10 +4,10 @@
 #include "Condition/QuestCondition.h"
 #include "UObject/UObjectIterator.h"
 #include "QuestComponent.h"
-#include "QuestSystem.h"
-#include "QuestSystemGraph.h"
-#include "QuestSystemGraphNode.h"
-#include "QuestSystemGraphNode_Root.h"
+#include "Quest.h"
+#include "QuestBuilderGraph.h"
+#include "QuestBuilderNode.h"
+#include "QuestBuilderNode_Root.h"
 
 #define LOCTEXT_NAMESPACE "QuestCondition"
 
@@ -45,7 +45,7 @@ UQuestComponent* UQuestCondition::GetQuestComponent() const
 	return QuestGraph->QuestComponent;
 }
 
-UQuestSystemGraph* UQuestCondition::GetOwningQuestGraph() const
+UQuestBuilderGraph* UQuestCondition::GetOwningQuestGraph() const
 {
 	if (!QuestGraph)
 		return nullptr;
@@ -53,7 +53,7 @@ UQuestSystemGraph* UQuestCondition::GetOwningQuestGraph() const
 	return QuestGraph;
 }
 
-UQuestSystem* UQuestCondition::GetOwningQuestSystem() const
+UQuest* UQuestCondition::GetOwningQuestSystem() const
 {
 	return QuestSystem;
 }
@@ -61,9 +61,9 @@ UQuestSystem* UQuestCondition::GetOwningQuestSystem() const
 TArray<FName> UQuestCondition::GetAllQuestID()
 {
 	TArray<FName> QuestIDs;
-	for (TObjectIterator<UQuestSystemGraph> It; It; ++It)
+	for (TObjectIterator<UQuestBuilderGraph> It; It; ++It)
 	{
-		for (UQuestSystem* Quest : It->QuestSystems)
+		for (UQuest* Quest : It->QuestSystems)
 		{
 			QuestIDs.Add(Quest->QuestID);
 		}
@@ -77,18 +77,18 @@ TArray<FName> UQuestCondition::GetAllNodeID()
 	TArray<FName> NodeIDs;
 	if (bUseQuestID)
 	{
-		for (TObjectIterator<UQuestSystemGraph> It; It; ++It)
+		for (TObjectIterator<UQuestBuilderGraph> It; It; ++It)
 		{
-			for (UQuestSystem* Quest : It->QuestSystems)
+			for (UQuest* Quest : It->QuestSystems)
 			{
 				if (Quest)
 				{
 					if (Quest->QuestID != QuestID) continue;
-					for (UQuestSystemGraphNode* Node : Quest->AllNodes)
+					for (UQuestBuilderNode* Node : Quest->AllNodes)
 					{
 						if (Node)
 						{
-							if (UQuestSystemGraphNode_Root* RootNode = Cast<UQuestSystemGraphNode_Root>(Node)) continue;
+							if (UQuestBuilderNode_Root* RootNode = Cast<UQuestBuilderNode_Root>(Node)) continue;
 							NodeIDs.Emplace(Node->ID);
 						}
 					}
@@ -104,11 +104,11 @@ TArray<FName> UQuestCondition::GetAllNodeID()
 	{
 		if (GetOwningQuestSystem())
 		{
-			for (UQuestSystemGraphNode* Node : GetOwningQuestSystem()->AllNodes)
+			for (UQuestBuilderNode* Node : GetOwningQuestSystem()->AllNodes)
 			{
 				if (Node)
 				{
-					if (UQuestSystemGraphNode_Root* RootNode = Cast<UQuestSystemGraphNode_Root>(Node)) continue;
+					if (UQuestBuilderNode_Root* RootNode = Cast<UQuestBuilderNode_Root>(Node)) continue;
 					NodeIDs.Emplace(Node->ID);
 				}
 			}

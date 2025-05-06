@@ -29,7 +29,7 @@ void FMyQuestCommands::RegisterCommands()
 }
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
-void SMyQuest::Construct(const FArguments& InArgs, TWeakPtr<FQuestBuilderEditor> InQuestEditor, const UQuestSystemGraph* InQuestSystemGraph)
+void SMyQuest::Construct(const FArguments& InArgs, TWeakPtr<FQuestBuilderEditor> InQuestEditor, const UQuestBuilderGraph* InQuestSystemGraph)
 {
 	bNeedsRefresh = false;
 	bShowReplicatedVariablesOnly = false;
@@ -106,7 +106,7 @@ void SMyQuest::Construct(const FArguments& InArgs, TWeakPtr<FQuestBuilderEditor>
 	else
 	{
 		// we're in read only mode when there's no quest editor:
-		QuestSystemGraph = const_cast<UQuestSystemGraph*>(InQuestSystemGraph);
+		QuestSystemGraph = const_cast<UQuestBuilderGraph*>(InQuestSystemGraph);
 		check(QuestSystemGraph);
 		ToolbarBuilderWidget = SNew(SBox);
 	}
@@ -304,7 +304,7 @@ TSharedRef<SWidget> SMyQuest::OnCreateWidgetForAction(FCreateWidgetForActionData
 
 void SMyQuest::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 {
-	UQuestSystemGraph* QuestSystemObj = GetQuestSystemObj();
+	UQuestBuilderGraph* QuestSystemObj = GetQuestSystemObj();
 	check(QuestSystemObj);
 
 	TSharedPtr<FQuestBuilderEditor> QuestSystemEditor = QuestEditorPtr.Pin();
@@ -388,7 +388,7 @@ void SMyQuest::ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction)
 	const bool bIsShiftPressed = FSlateApplication::Get().GetModifierKeys().IsShiftDown();
 	FDocumentTracker::EOpenDocumentCause OpenMode = bIsShiftPressed ? FDocumentTracker::ForceOpenNewDocument : FDocumentTracker::OpenNewDocument;
 
-	UQuestSystemGraph* QuestSystemObj = QuestEditorPtr.Pin()->GetQuestSystemObj();
+	UQuestBuilderGraph* QuestSystemObj = QuestEditorPtr.Pin()->GetQuestSystemObj();
 	if (InAction.IsValid())
 	{
 		if (InAction->GetTypeId() == FAssetSchemaAction_QuestSystemGraph::StaticGetTypeId())
@@ -476,7 +476,7 @@ void SMyQuest::BuildAddNewMenu(FMenuBuilder& MenuBuilder)
 {
 	MenuBuilder.BeginSection("AddNewItem", LOCTEXT("AddOperations", "Add New"));
 
-	if (UQuestSystemGraph* CurrentBlueprint = GetQuestSystemObj())
+	if (UQuestBuilderGraph* CurrentBlueprint = GetQuestSystemObj())
 	{
 		MenuBuilder.AddMenuEntry(FQuestBuilder_EditorCommands::Get().AddNewQuestGraph);
 		

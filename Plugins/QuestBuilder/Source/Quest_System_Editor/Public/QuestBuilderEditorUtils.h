@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "QuestBuilderEdNode.h"
-#include "QuestSystemGraph.h"
+#include "QuestBuilderGraph.h"
 
 /**
  * 
@@ -36,7 +36,7 @@ public:
 
 	/** Returns all nodes in all graphs of the specified class */
 	template< class T >
-	static inline void GetAllNodesOfClass(const UQuestSystemGraph* QuestSystemGraph, TArray<T*>& OutNodes)
+	static inline void GetAllNodesOfClass(const UQuestBuilderGraph* QuestSystemGraph, TArray<T*>& OutNodes)
 	{
 		TArray<UEdGraph*> AllGraphs;
 		QuestSystemGraph->GetAllGraphs(AllGraphs);
@@ -50,25 +50,25 @@ public:
 	}
 
 	/**
-	 * Removes the supplied node from the UQuestSystemGraph.
+	 * Removes the supplied node from the UQuestBuilderGraph.
 	 *
 	 * @param Node				The node to remove.
-	 * @param bDontRecompile	If true, the UQuestSystemGraph will not be marked as modified, and will not be recompiled.  Useful for if you are removing several node at once, and don't want to recompile each time
+	 * @param bDontRecompile	If true, the UQuestBuilderGraph will not be marked as modified, and will not be recompiled.  Useful for if you are removing several node at once, and don't want to recompile each time
 	 */
-	static void RemoveNode(UQuestSystemGraph* QuestSystemGraph, UQuestBuilderEdNode* Node, bool bDontRecompile = false);
+	static void RemoveNode(UQuestBuilderGraph* QuestSystemGraph, UQuestBuilderEdNode* Node, bool bDontRecompile = false);
 
 	/**
-	 * Removes the supplied graph from the UQuestSystemGraph.
+	 * Removes the supplied graph from the UQuestBuilderGraph.
 	 *
-	 * @param UQuestSystemGraph	The UQuestSystemGraph containing the graph
+	 * @param UQuestBuilderGraph	The UQuestBuilderGraph containing the graph
 	 * @param GraphToRemove		The graph to remove.
 	 */
-	static void RemoveGraph(UQuestSystemGraph* QuestSystemGraph, class UEdGraph* GraphToRemove);
+	static void RemoveGraph(UQuestBuilderGraph* QuestSystemGraph, class UEdGraph* GraphToRemove);
 
 
 	/** Adds an questgraph page to this Quest Editor */
-	static void AddQuestGraphPage(UQuestSystemGraph* InQuestSystemGraph, class UEdGraph* Graph);
+	static void AddQuestGraphPage(UQuestBuilderGraph* InQuestSystemGraph, class UEdGraph* Graph);
 
 	/** Returns the event graph, if any */
-	static UEdGraph* FindQuestGraph(const UQuestSystemGraph* QuestSystemGraph);
+	static UEdGraph* FindQuestGraph(const UQuestBuilderGraph* QuestSystemGraph);
 };

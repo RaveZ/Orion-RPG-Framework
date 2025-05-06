@@ -4,24 +4,24 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
-#include "QuestSystemGraph.generated.h"
+#include "QuestBuilderGraph.generated.h"
 
 
-class UQuestSystem;
+class UQuest;
 class UQuestComponent;
-class UQuestSystemGraphNode;
-class UQuestSystemGraphEdge;
+class UQuestBuilderNode;
+class UQuestBuilderEdge;
 class AController;
 class APawn;
 class UQuestBuilderEdGraph;
 
 UCLASS(Blueprintable)
-class QUEST_SYSTEM_RUNTIME_API UQuestSystemGraph : public UObject
+class QUEST_SYSTEM_RUNTIME_API UQuestBuilderGraph : public UObject
 {
 	GENERATED_BODY()
 public:
-	UQuestSystemGraph();
-	virtual ~UQuestSystemGraph();
+	UQuestBuilderGraph();
+	virtual ~UQuestBuilderGraph();
 
 	/**This data will be displayed on the category for your quest log*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "QuestSystemGraph")
@@ -32,7 +32,7 @@ public:
 
 	/** Set of QuestSystem linked with Quest Graph Pages */
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraph")
-		TArray< TObjectPtr<UQuestSystem>> QuestSystems;
+		TArray< TObjectPtr<UQuest>> QuestSystems;
 
 	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly, Category = "QuestSystemGraph")
 		bool bEdgeEnabled;

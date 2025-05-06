@@ -6,9 +6,9 @@
 #include "QuestBuilderEdNode_Root.h"
 #include "QuestBuilderEdNode.h"
 #include "QuestBuilderEdNode.h"
-#include "QuestSystemGraphEdge.h"
-#include "QuestSystemGraphNode.h"
-#include "QuestSystemGraphNode_Objective.h"
+#include "QuestBuilderEdge.h"
+#include "QuestBuilderNode.h"
+#include "QuestBuilderNode_Objective.h"
 #include "Condition/QuestCondition.h"
 #include "Event/QuestEvent.h"
 #include "Task/QuestTask.h"
@@ -26,7 +26,7 @@ void UQuestBuilderEdGraph::RebuildQuestSystemGraph()
 {
 	//LOG_INFO(TEXT("UQuestSystemGraphEdGraph::RebuildQuestBuilder has been called"));
 
-	UQuestSystemGraph* Graph = GetQuestSystemGraph();
+	UQuestBuilderGraph* Graph = GetQuestSystemGraph();
 
 	Clear();
 	
@@ -56,7 +56,7 @@ void UQuestBuilderEdGraph::RebuildQuestSystemGraph()
 			if (EdNode->QuestSystemGraphNode == nullptr)
 				continue;
 
-			UQuestSystemGraphNode* QuestSystemGraphNode = EdNode->QuestSystemGraphNode;
+			UQuestBuilderNode* QuestSystemGraphNode = EdNode->QuestSystemGraphNode;
 
 			NodeMap.Add(QuestSystemGraphNode, EdNode);
 
@@ -72,7 +72,7 @@ void UQuestBuilderEdGraph::RebuildQuestSystemGraph()
 
 				for (int LinkToIdx = 0; LinkToIdx < Pin->LinkedTo.Num(); ++LinkToIdx)
 				{
-					UQuestSystemGraphNode* ChildNode = nullptr;
+					UQuestBuilderNode* ChildNode = nullptr;
 					if (UQuestBuilderEdNode* EdNode_Child = Cast<UQuestBuilderEdNode>(Pin->LinkedTo[LinkToIdx]->GetOwningNode()))
 					{
 						ChildNode = EdNode_Child->QuestSystemGraphNode;
@@ -99,7 +99,7 @@ void UQuestBuilderEdGraph::RebuildQuestSystemGraph()
 				}
 			}
 
-			if (UQuestSystemGraphNode_Objective* ObjectiveNode = Cast<UQuestSystemGraphNode_Objective>(QuestSystemGraphNode))
+			if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestSystemGraphNode))
 			{
 				for (UQuestTask* Task : ObjectiveNode->Tasks)
 				{
@@ -137,7 +137,7 @@ void UQuestBuilderEdGraph::RebuildQuestSystemGraph()
 		{
 			UQuestBuilderEdNode* StartNode = EdgeNode->GetStartNode();
 			UQuestBuilderEdNode* EndNode = EdgeNode->GetEndNode();
-			UQuestSystemGraphEdge* Edge = EdgeNode->QuestSystemGraphEdge;
+			UQuestBuilderEdge* Edge = EdgeNode->QuestSystemGraphEdge;
 
 			if (StartNode == nullptr || EndNode == nullptr || Edge == nullptr)
 			{
@@ -165,7 +165,7 @@ void UQuestBuilderEdGraph::RebuildQuestSystemGraph()
 
 	for (int i = 0; i < QuestSystem->AllNodes.Num(); ++i)
 	{
-		UQuestSystemGraphNode* Node = QuestSystem->AllNodes[i];
+		UQuestBuilderNode* Node = QuestSystem->AllNodes[i];
 		if (Node->ParentNodes.Num() == 0)
 		{
 			//use this line below if you want to automatically detect rootnodes based on their parent
@@ -180,7 +180,7 @@ void UQuestBuilderEdGraph::RebuildQuestSystemGraph()
 
 	
 
-	QuestSystem->RootNodes.Sort([&](const UQuestSystemGraphNode& L, const UQuestSystemGraphNode& R)
+	QuestSystem->RootNodes.Sort([&](const UQuestBuilderNode& L, const UQuestBuilderNode& R)
 	{
 		UQuestBuilderEdNode* EdNode_LNode = NodeMap[&L];
 		UQuestBuilderEdNode* EdNode_RNode = NodeMap[&R];
@@ -190,9 +190,9 @@ void UQuestBuilderEdGraph::RebuildQuestSystemGraph()
 	
 }
 
-UQuestSystemGraph* UQuestBuilderEdGraph::GetQuestSystemGraph() const
+UQuestBuilderGraph* UQuestBuilderEdGraph::GetQuestSystemGraph() const
 {
-	return CastChecked<UQuestSystemGraph>(GetOuter());
+	return CastChecked<UQuestBuilderGraph>(GetOuter());
 }
 
 bool UQuestBuilderEdGraph::Modify(bool bAlwaysMarkDirty)
@@ -228,7 +228,7 @@ void UQuestBuilderEdGraph::Clear()
 	{
 		if (UQuestBuilderEdNode* EdNode = Cast<UQuestBuilderEdNode>(Nodes[i]))
 		{
-			UQuestSystemGraphNode* QuestGraphNode = EdNode->QuestSystemGraphNode;
+			UQuestBuilderNode* QuestGraphNode = EdNode->QuestSystemGraphNode;
 			if (QuestGraphNode)
 			{
 				QuestGraphNode->ParentNodes.Reset();
@@ -239,22 +239,22 @@ void UQuestBuilderEdGraph::Clear()
 	}
 }
 
-void UQuestBuilderEdGraph::SortNodes(UQuestSystemGraphNode* RootNode)
+void UQuestBuilderEdGraph::SortNodes(UQuestBuilderNode* RootNode)
 {
 	int Level = 0;
-	TArray<UQuestSystemGraphNode*> CurrLevelNodes = { RootNode };
-	TArray<UQuestSystemGraphNode*> NextLevelNodes;
-	TSet<UQuestSystemGraphNode*> Visited;
+	TArray<UQuestBuilderNode*> CurrLevelNodes = { RootNode };
+	TArray<UQuestBuilderNode*> NextLevelNodes;
+	TSet<UQuestBuilderNode*> Visited;
 
 	while (CurrLevelNodes.Num() != 0)
 	{
 		int32 LevelWidth = 0;
 		for (int i = 0; i < CurrLevelNodes.Num(); ++i)
 		{
-			UQuestSystemGraphNode* Node = CurrLevelNodes[i];
+			UQuestBuilderNode* Node = CurrLevelNodes[i];
 			Visited.Add(Node);
 
-			auto Comp = [&](const UQuestSystemGraphNode& L, const UQuestSystemGraphNode& R)
+			auto Comp = [&](const UQuestBuilderNode& L, const UQuestBuilderNode& R)
 			{
 				UQuestBuilderEdNode* EdNode_LNode = NodeMap[&L];
 				UQuestBuilderEdNode* EdNode_RNode = NodeMap[&R];
@@ -266,7 +266,7 @@ void UQuestBuilderEdGraph::SortNodes(UQuestSystemGraphNode* RootNode)
 
 			for (int j = 0; j < Node->ChildrenNodes.Num(); ++j)
 			{
-				UQuestSystemGraphNode* ChildNode = Node->ChildrenNodes[j];
+				UQuestBuilderNode* ChildNode = Node->ChildrenNodes[j];
 				if (!Visited.Contains(ChildNode))
 					NextLevelNodes.Add(Node->ChildrenNodes[j]);
 			}

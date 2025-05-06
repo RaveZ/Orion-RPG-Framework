@@ -1,33 +1,33 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "QuestSystem.h"
-#include "QuestSystemGraph.h"
-#include "QuestSystemGraphNode.h"
-#include "QuestSystemGraphEdge.h"
-#include "QuestSystemGraphNode_Objective.h"
-#include "QuestSystemGraphNode_Root.h"
+#include "Quest.h"
+#include "QuestBuilderGraph.h"
+#include "QuestBuilderNode.h"
+#include "QuestBuilderEdge.h"
+#include "QuestBuilderNode_Objective.h"
+#include "QuestBuilderNode_Root.h"
 
 
 #define LOCTEXT_NAMESPACE "QuestSystem"
 
 
 
-UQuestSystem::UQuestSystem()
+UQuest::UQuest()
 {
 }
 
-int UQuestSystem::GetLevelNum() const
+int UQuest::GetLevelNum() const
 {
 	int Level = 0;
-	TArray<UQuestSystemGraphNode*> CurrLevelNodes = RootNodes;
-	TArray<UQuestSystemGraphNode*> NextLevelNodes;
+	TArray<UQuestBuilderNode*> CurrLevelNodes = RootNodes;
+	TArray<UQuestBuilderNode*> NextLevelNodes;
 
 	while (CurrLevelNodes.Num() != 0)
 	{
 		for (int i = 0; i < CurrLevelNodes.Num(); ++i)
 		{
-			UQuestSystemGraphNode* Node = CurrLevelNodes[i];
+			UQuestBuilderNode* Node = CurrLevelNodes[i];
 			check(Node != nullptr);
 
 			for (int j = 0; j < Node->ChildrenNodes.Num(); ++j)
@@ -44,10 +44,10 @@ int UQuestSystem::GetLevelNum() const
 	return Level;
 }
 
-void UQuestSystem::GetNodesByLevel(int Level, TArray<UQuestSystemGraphNode*>& Nodes)
+void UQuest::GetNodesByLevel(int Level, TArray<UQuestBuilderNode*>& Nodes)
 {
 	int CurrLEvel = 0;
-	TArray<UQuestSystemGraphNode*> NextLevelNodes;
+	TArray<UQuestBuilderNode*> NextLevelNodes;
 
 	Nodes = RootNodes;
 
@@ -58,7 +58,7 @@ void UQuestSystem::GetNodesByLevel(int Level, TArray<UQuestSystemGraphNode*>& No
 
 		for (int i = 0; i < Nodes.Num(); ++i)
 		{
-			UQuestSystemGraphNode* Node = Nodes[i];
+			UQuestBuilderNode* Node = Nodes[i];
 			check(Node != nullptr);
 
 			for (int j = 0; j < Node->ChildrenNodes.Num(); ++j)
@@ -73,7 +73,7 @@ void UQuestSystem::GetNodesByLevel(int Level, TArray<UQuestSystemGraphNode*>& No
 	}
 }
 
-AController* UQuestSystem::GetOwningController()
+AController* UQuest::GetOwningController()
 {
 	if (!QuestGraph)
 		return nullptr;
@@ -81,7 +81,7 @@ AController* UQuestSystem::GetOwningController()
 	return QuestGraph->OwningController;
 }
 
-APawn* UQuestSystem::GetOwningPawn()
+APawn* UQuest::GetOwningPawn()
 {
 	if (!QuestGraph)
 		return nullptr;
@@ -89,7 +89,7 @@ APawn* UQuestSystem::GetOwningPawn()
 	return QuestGraph->OwningPawn;
 }
 
-UQuestComponent* UQuestSystem::GetQuestComponent()
+UQuestComponent* UQuest::GetQuestComponent()
 {
 	if (!QuestGraph)
 		return nullptr;
@@ -97,7 +97,7 @@ UQuestComponent* UQuestSystem::GetQuestComponent()
 	return QuestGraph->QuestComponent;
 }
 
-UQuestSystemGraph* UQuestSystem::GetOwningQuestGraph() const
+UQuestBuilderGraph* UQuest::GetOwningQuestGraph() const
 {
 	if (!QuestGraph)
 		return nullptr;
@@ -105,11 +105,11 @@ UQuestSystemGraph* UQuestSystem::GetOwningQuestGraph() const
 	return QuestGraph;
 }
 
-void UQuestSystem::ClearGraph()
+void UQuest::ClearGraph()
 {
 	for (int i = 0; i < AllNodes.Num(); ++i)
 	{
-		UQuestSystemGraphNode* Node = AllNodes[i];
+		UQuestBuilderNode* Node = AllNodes[i];
 		if (Node)
 		{
 			Node->ParentNodes.Empty();
@@ -123,7 +123,7 @@ void UQuestSystem::ClearGraph()
 }
 
 #if WITH_EDITOR
-void UQuestSystem::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+void UQuest::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 	if (QuestGraph)

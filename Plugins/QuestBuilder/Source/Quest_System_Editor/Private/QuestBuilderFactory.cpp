@@ -1,7 +1,7 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 #include "QuestBuilderFactory.h"
-#include "QuestSystemGraph.h"
+#include "QuestBuilderGraph.h"
 #include "QuestBuilderEditor.h"
 #include "ClassViewerModule.h"
 #include "ClassViewerFilter.h"
@@ -56,7 +56,7 @@ public:
 
 UQuestBuilderFactory::UQuestBuilderFactory(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	SupportedClass = UQuestSystemGraph::StaticClass();
+	SupportedClass = UQuestBuilderGraph::StaticClass();
 	bCreateNew = true;
 	bEditAfterNew = true;
 }
@@ -71,11 +71,11 @@ UObject* UQuestBuilderFactory::FactoryCreateNew(UClass* Class, UObject* InParent
 {
 	if (QuestSystemGraphClass != nullptr)
 	{
-		return NewObject<UQuestSystemGraph>(InParent, QuestSystemGraphClass, Name, Flags | RF_Transactional);
+		return NewObject<UQuestBuilderGraph>(InParent, QuestSystemGraphClass, Name, Flags | RF_Transactional);
 	}
 	else
 	{
-		check(Class->IsChildOf(UQuestSystemGraph::StaticClass()));
+		check(Class->IsChildOf(UQuestBuilderGraph::StaticClass()));
 		return NewObject<UObject>(InParent, Class, Name, Flags | RF_Transactional);
 	}
 }
@@ -136,7 +136,7 @@ const FSlateBrush* FQuestGraphEditorSummoner::GetTabIconForObject(const FWorkflo
 EAssetCommandResult UAssetDefinition_QuestEditor::OpenAssets(const FAssetOpenArgs& OpenArgs) const
 {
 	const EToolkitMode::Type Mode = OpenArgs.ToolkitHost.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
-	for (UQuestSystemGraph* QuestGraph : OpenArgs.LoadObjects<UQuestSystemGraph>())
+	for (UQuestBuilderGraph* QuestGraph : OpenArgs.LoadObjects<UQuestBuilderGraph>())
 	{
 		FQuest_System_EditorModule& QuestSystemEditorModule = FModuleManager::GetModuleChecked<FQuest_System_EditorModule>("Quest_System_Editor");
 		QuestSystemEditorModule.CheckClassCache();

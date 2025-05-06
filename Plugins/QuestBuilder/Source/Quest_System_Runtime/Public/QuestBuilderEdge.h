@@ -4,31 +4,31 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "QuestSystemGraphEdge.generated.h"
+#include "QuestBuilderEdge.generated.h"
 
 
-class UQuestSystemGraph;
-class UQuestSystemGraphNode;
+class UQuestBuilderGraph;
+class UQuestBuilderNode;
 
 UCLASS(Blueprintable)
-class QUEST_SYSTEM_RUNTIME_API UQuestSystemGraphEdge : public UObject
+class QUEST_SYSTEM_RUNTIME_API UQuestBuilderEdge : public UObject
 {
 	GENERATED_BODY()
 public:
-	UQuestSystemGraphEdge();
-	virtual ~UQuestSystemGraphEdge();
+	UQuestBuilderEdge();
+	virtual ~UQuestBuilderEdge();
 
 	UPROPERTY(VisibleAnywhere, Category = "QuestBuilderNode")
-		TObjectPtr<UQuestSystemGraph> Graph;
+		TObjectPtr<UQuestBuilderGraph> Graph;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderEdge")
-		TObjectPtr<UQuestSystemGraphNode> StartNode;
+		TObjectPtr<UQuestBuilderNode> StartNode;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderEdge")
-		TObjectPtr<UQuestSystemGraphNode> EndNode;
+		TObjectPtr<UQuestBuilderNode> EndNode;
 
 	UFUNCTION(BlueprintPure, Category = "QuestBuilderEdge")
-		UQuestSystemGraph* GetGraph() const;
+		UQuestBuilderGraph* GetGraph() const;
 
 #if WITH_EDITORONLY_DATA
 	UPROPERTY(EditDefaultsOnly, Category = "QuestBuilderNode_Editor")

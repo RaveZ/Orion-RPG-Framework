@@ -2,12 +2,12 @@
 
 
 #include "Event/RestartQuest.h"
-#include "QuestSystem.h"
+#include "Quest.h"
 #include "QuestComponent.h"
-#include "QuestSystemGraph.h"
-#include "QuestSystemGraphNode.h"
-#include "QuestSystemGraphNode_Objective.h"
-#include "QuestSystemGraphNode_Root.h"
+#include "QuestBuilderGraph.h"
+#include "QuestBuilderNode.h"
+#include "QuestBuilderNode_Objective.h"
+#include "QuestBuilderNode_Root.h"
 
 URestartQuest::URestartQuest()
 {

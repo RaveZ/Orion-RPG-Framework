@@ -12,7 +12,7 @@
 
 class FToolBarBuilder;
 class FMenuBuilder;
-class UQuestSystem;
+class UQuest;
 
 
 

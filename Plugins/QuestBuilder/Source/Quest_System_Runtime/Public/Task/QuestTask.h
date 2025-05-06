@@ -8,10 +8,10 @@
 #include "QuestTask.generated.h"
 
 
-class UQuestSystemGraph;
-class UQuestSystem;
+class UQuestBuilderGraph;
+class UQuest;
 class UQuestComponent;
-class UQuestSystemGraphNode_Objective;
+class UQuestBuilderNode_Objective;
 
 
 
@@ -57,14 +57,14 @@ public:
 		float TickInterval;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Task")
-		TObjectPtr<UQuestSystemGraph> QuestGraph;
+		TObjectPtr<UQuestBuilderGraph> QuestGraph;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Task")
-		TObjectPtr<UQuestSystem> QuestSystem;
+		TObjectPtr<UQuest> QuestSystem;
 
 
 	UPROPERTY(BlueprintReadOnly, Category = "Task")
-		TObjectPtr<UQuestSystemGraphNode_Objective> ObjectiveNode;
+		TObjectPtr<UQuestBuilderNode_Objective> ObjectiveNode;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Task")
 		ETaskState TaskState = ETaskState::E_Active;
@@ -108,10 +108,10 @@ public:
 		UQuestComponent* GetQuestComponent() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Task")
-		UQuestSystemGraph* GetOwningQuestGraph() const;
+		UQuestBuilderGraph* GetOwningQuestGraph() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Task")
-		UQuestSystem* GetOwningQuestSystem() const;
+		UQuest* GetOwningQuestSystem() const;
 
 	/**Add amount and check if the required amount has fulfilled, then complete the task*/
 	UFUNCTION(BlueprintCallable, Category = "Task")

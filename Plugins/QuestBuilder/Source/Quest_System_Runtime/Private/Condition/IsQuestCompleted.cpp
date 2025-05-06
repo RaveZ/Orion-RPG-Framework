@@ -3,7 +3,7 @@
 
 #include "Condition/IsQuestCompleted.h"
 #include "QuestComponent.h"
-#include "QuestSystem.h"
+#include "Quest.h"
 
 UIsQuestCompleted::UIsQuestCompleted()
 {
@@ -12,7 +12,7 @@ UIsQuestCompleted::UIsQuestCompleted()
 
 bool UIsQuestCompleted::IsConditionMet_Implementation() const
 {
-    if (UQuestSystem* FoundedQuest = GetQuestComponent()->QuestSystemMap.FindRef(QuestID))
+    if (UQuest* FoundedQuest = GetQuestComponent()->QuestSystemMap.FindRef(QuestID))
     {
         switch (FoundedQuest->QuestState)
         {

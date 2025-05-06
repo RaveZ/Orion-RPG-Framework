@@ -1,19 +1,19 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "QuestSystemGraphNode.h"
-#include "QuestSystemGraphEdge.h"
-#include "QuestSystem.h"
+#include "QuestBuilderNode.h"
+#include "QuestBuilderEdge.h"
+#include "Quest.h"
 #include "Event/QuestEvent.h"
 #include "Condition/QuestCondition.h"
-#include "QuestSystemGraph.h"
+#include "QuestBuilderGraph.h"
 
 #define LOCTEXT_NAMESPACE "QuestSystemGraphNode"
 
-UQuestSystemGraphNode::UQuestSystemGraphNode()
+UQuestBuilderNode::UQuestBuilderNode()
 {
 #if WITH_EDITORONLY_DATA
-	CompatibleGraphType = UQuestSystemGraph::StaticClass();
+	CompatibleGraphType = UQuestBuilderGraph::StaticClass();
 
 	FLinearColor Default(0.05f, 0.05f, 0.05f);
 	BackgroundColor = Default;
@@ -21,23 +21,23 @@ UQuestSystemGraphNode::UQuestSystemGraphNode()
 #endif
 }
 
-UQuestSystemGraphNode::~UQuestSystemGraphNode()
+UQuestBuilderNode::~UQuestBuilderNode()
 {
 }
 
-UQuestSystemGraphEdge* UQuestSystemGraphNode::GetEdge(UQuestSystemGraphNode* ChildNode)
+UQuestBuilderEdge* UQuestBuilderNode::GetEdge(UQuestBuilderNode* ChildNode)
 {
 	return Edges.Contains(ChildNode) ? Edges.FindChecked(ChildNode) : nullptr;
 }
 
 
-FText UQuestSystemGraphNode::GetDescription_Implementation() const
+FText UQuestBuilderNode::GetDescription_Implementation() const
 {
 	return Description;
 }
 
 
-FString UQuestSystemGraphNode::GetShortTypeName(const UObject* Ob)
+FString UQuestBuilderNode::GetShortTypeName(const UObject* Ob)
 {
 	if ((Ob == nullptr) || (Ob->GetClass() == nullptr))
 	{
@@ -62,27 +62,27 @@ FString UQuestSystemGraphNode::GetShortTypeName(const UObject* Ob)
 
 
 #if WITH_EDITOR
-bool UQuestSystemGraphNode::IsNameEditable() const
+bool UQuestBuilderNode::IsNameEditable() const
 {
 	return true;
 }
 
-FLinearColor UQuestSystemGraphNode::GetBackgroundColor() const
+FLinearColor UQuestBuilderNode::GetBackgroundColor() const
 {
 	return BackgroundColor;
 }
 
-FText UQuestSystemGraphNode::GetNodeTitle() const
+FText UQuestBuilderNode::GetNodeTitle() const
 {
-	return FText::FromString(UQuestSystemGraphNode::GetShortTypeName(this));
+	return FText::FromString(UQuestBuilderNode::GetShortTypeName(this));
 }
 
-FText UQuestSystemGraphNode::GetNodeDescription() const
+FText UQuestBuilderNode::GetNodeDescription() const
 {
 	return FText::FromString(TEXT("This is NodeBase"));
 }
 
-FText UQuestSystemGraphNode::GetEventsText() const
+FText UQuestBuilderNode::GetEventsText() const
 {
 	FString EventListText;
 
@@ -99,7 +99,7 @@ FText UQuestSystemGraphNode::GetEventsText() const
 	return FText::FromString(EventListText);
 }
 
-FText UQuestSystemGraphNode::GetConditionsText() const
+FText UQuestBuilderNode::GetConditionsText() const
 {
 	FString ConditionListText;
 
@@ -117,16 +117,16 @@ FText UQuestSystemGraphNode::GetConditionsText() const
 	return FText::FromString(ConditionListText);
 }
 
-void UQuestSystemGraphNode::SetNodeTitle(const FText& NewTitle)
+void UQuestBuilderNode::SetNodeTitle(const FText& NewTitle)
 {
 }
 
-bool UQuestSystemGraphNode::CanCreateConnection(UQuestSystemGraphNode* Other, FText& ErrorMessage)
+bool UQuestBuilderNode::CanCreateConnection(UQuestBuilderNode* Other, FText& ErrorMessage)
 {
 	return true;
 }
 
-bool UQuestSystemGraphNode::CanCreateConnectionTo(UQuestSystemGraphNode* Other, int32 NumberOfChildrenNodes, FText& ErrorMessage)
+bool UQuestBuilderNode::CanCreateConnectionTo(UQuestBuilderNode* Other, int32 NumberOfChildrenNodes, FText& ErrorMessage)
 {
 	if (ChildrenLimitType == ENodeLimits::Limited && NumberOfChildrenNodes >= ChildrenLimit)
 	{
@@ -138,7 +138,7 @@ bool UQuestSystemGraphNode::CanCreateConnectionTo(UQuestSystemGraphNode* Other, 
 	
 }
 
-bool UQuestSystemGraphNode::CanCreateConnectionFrom(UQuestSystemGraphNode* Other, int32 NumberOfParentNodes, FText& ErrorMessage)
+bool UQuestBuilderNode::CanCreateConnectionFrom(UQuestBuilderNode* Other, int32 NumberOfParentNodes, FText& ErrorMessage)
 {
 	if (ParentLimitType == ENodeLimits::Limited && NumberOfParentNodes >= ParentLimit)
 	{
@@ -151,12 +151,12 @@ bool UQuestSystemGraphNode::CanCreateConnectionFrom(UQuestSystemGraphNode* Other
 
 #endif
 
-bool UQuestSystemGraphNode::IsLeafNode() const
+bool UQuestBuilderNode::IsLeafNode() const
 {
 	return ChildrenNodes.Num() == 0;
 }
 
-UQuestSystemGraph* UQuestSystemGraphNode::GetOwningQuestGraph() const
+UQuestBuilderGraph* UQuestBuilderNode::GetOwningQuestGraph() const
 {
 	if (!QuestGraph)
 		return nullptr;
@@ -164,13 +164,13 @@ UQuestSystemGraph* UQuestSystemGraphNode::GetOwningQuestGraph() const
 	return QuestGraph;
 }
 
-UQuestSystem* UQuestSystemGraphNode::GetOwningQuestSystem() const
+UQuest* UQuestBuilderNode::GetOwningQuestSystem() const
 {
 	return QuestSystem;
 }
 
 
-AController* UQuestSystemGraphNode::GetOwningController() const
+AController* UQuestBuilderNode::GetOwningController() const
 {
 	if (!QuestGraph)
 		return nullptr;
@@ -179,7 +179,7 @@ AController* UQuestSystemGraphNode::GetOwningController() const
 	return QuestGraph->OwningController;
 }
 
-APawn* UQuestSystemGraphNode::GetOwningPawn() const
+APawn* UQuestBuilderNode::GetOwningPawn() const
 {
 	if (!QuestGraph)
 		return nullptr;
@@ -187,7 +187,7 @@ APawn* UQuestSystemGraphNode::GetOwningPawn() const
 	return QuestGraph->OwningPawn;
 }
 
-UQuestComponent* UQuestSystemGraphNode::GetQuestComponent() const
+UQuestComponent* UQuestBuilderNode::GetQuestComponent() const
 {
 	if (!QuestGraph)
 		return nullptr;

@@ -1,15 +1,15 @@
 ﻿// Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "QuestSystemGraphNode_Objective.h"
+#include "QuestBuilderNode_Objective.h"
 #include "Task/QuestTask.h"
-#include "QuestSystem.h"
+#include "Quest.h"
 #include "QuestComponent.h"
 
 
 #define LOCTEXT_NAMESPACE "QuestSystemGraphNode_TaskManager"
 
-bool UQuestSystemGraphNode_Objective::IsAllTaskCompleted()
+bool UQuestBuilderNode_Objective::IsAllTaskCompleted()
 {
     int progress = 0;
     int completeSum = 0;
@@ -38,17 +38,17 @@ bool UQuestSystemGraphNode_Objective::IsAllTaskCompleted()
 }
 
 #if WITH_EDITOR
-FText UQuestSystemGraphNode_Objective::GetNodeTitle() const
+FText UQuestBuilderNode_Objective::GetNodeTitle() const
 {
-    return FText::FromName(ID).IsEmpty() ? FText::FromString(UQuestSystemGraphNode::GetShortTypeName(this)) : FText::FromName(ID);
+    return FText::FromName(ID).IsEmpty() ? FText::FromString(UQuestBuilderNode::GetShortTypeName(this)) : FText::FromName(ID);
 }
 
-void UQuestSystemGraphNode_Objective::SetNodeTitle(const FText& NewTitle)
+void UQuestBuilderNode_Objective::SetNodeTitle(const FText& NewTitle)
 {
     ID = FName(NewTitle.ToString());
 }
 
-FText UQuestSystemGraphNode_Objective::GetNodeDescription() const
+FText UQuestBuilderNode_Objective::GetNodeDescription() const
 {
     FString TaskDesc;
 

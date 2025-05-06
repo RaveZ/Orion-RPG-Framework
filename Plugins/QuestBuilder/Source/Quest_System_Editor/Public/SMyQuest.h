@@ -44,7 +44,7 @@ public:
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */
-	void Construct(const FArguments& InArgs, TWeakPtr<FQuestBuilderEditor> InQuestEditor, const UQuestSystemGraph* InQuestSystemGraph = nullptr);
+	void Construct(const FArguments& InArgs, TWeakPtr<FQuestBuilderEditor> InQuestEditor, const UQuestBuilderGraph* InQuestSystemGraph = nullptr);
 	~SMyQuest();
 
 	/* SWidget interface */
@@ -55,7 +55,7 @@ public:
 	FAssetSchemaAction_QuestSystemGraph* SelectionAsGraph() const;
 
 	/** Accessor the blueprint object from the main editor */
-	UQuestSystemGraph* GetQuestSystemObj() const { return QuestSystemGraph; }
+	UQuestBuilderGraph* GetQuestSystemObj() const { return QuestSystemGraph; }
 
 	/** Initiates a rename on the selected action node, if possible */
 	void OnRequestRenameOnActionNode();
@@ -91,7 +91,7 @@ private:
 	FReply OnActionDragged(const TArray< TSharedPtr<FEdGraphSchemaAction> >& InActions, const FPointerEvent& MouseEvent);
 	FReply OnCategoryDragged(const FText& InCategory, const FPointerEvent& MouseEvent);
 	void OnActionSelected(const TArray< TSharedPtr<FEdGraphSchemaAction> >& InActions);
-	//void OnActionSelectedHelper(TSharedPtr<FEdGraphSchemaAction> InAction, TWeakPtr<FQuestBuilderEditor> InQuestEditor, UQuestSystemGraph* InQuestSystemGraph, TSharedRef<SKismetInspector> Inspector);
+	//void OnActionSelectedHelper(TSharedPtr<FEdGraphSchemaAction> InAction, TWeakPtr<FQuestBuilderEditor> InQuestEditor, UQuestBuilderGraph* InQuestSystemGraph, TSharedRef<SKismetInspector> Inspector);
 	void OnGlobalActionSelected(const TArray< TSharedPtr<FEdGraphSchemaAction> >& InActions, ESelectInfo::Type InSelectionType);
 	void OnActionDoubleClicked(const TArray< TSharedPtr<FEdGraphSchemaAction> >& InActions);
 	void ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction);
@@ -164,7 +164,7 @@ private:
 	TWeakPtr<FQuestBuilderEditor> QuestEditorPtr;
 
 	/** The Quest graph being displayed: */
-	UQuestSystemGraph* QuestSystemGraph;
+	UQuestBuilderGraph* QuestSystemGraph;
 
 	/** The Ed Graph being displayed: */
 	UEdGraph* EdGraph;

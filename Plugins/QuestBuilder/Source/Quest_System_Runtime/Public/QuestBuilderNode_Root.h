@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "QuestSystemGraphNode.h"
+#include "QuestBuilderNode.h"
 #include "UObject/NoExportTypes.h"
-#include "QuestSystemGraphNode_Root.generated.h"
+#include "QuestBuilderNode_Root.generated.h"
 
 
 
 UCLASS(HideCategories = ("Events", BranchingConditions, "Detail"))
-class QUEST_SYSTEM_RUNTIME_API UQuestSystemGraphNode_Root : public UQuestSystemGraphNode
+class QUEST_SYSTEM_RUNTIME_API UQuestBuilderNode_Root : public UQuestBuilderNode
 {
 	GENERATED_BODY()
 

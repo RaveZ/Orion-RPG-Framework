@@ -9,7 +9,7 @@
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 #include "EdGraphSchema_QuestBuilder.h"
 #include "QuestBuilderEdGraph.h"
-#include "QuestSystemGraph.h"
+#include "QuestBuilderGraph.h"
 #include "Condition/QuestCondition.h"
 #include "QuestBuilderFunctionLibrary.h"
 #include "Event/QuestEvent.h"
@@ -25,12 +25,12 @@ void SQuestPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActi
 
 }
 
-void SQuestPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestSystemGraph* InQuestSystemGraph)
+void SQuestPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestBuilderGraph* InQuestSystemGraph)
 {
 	Construct(InArgs, InCreateData, InQuestSystemGraph, TWeakPtr<FQuestBuilderEditor>());
 }
 
-void SQuestPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestSystemGraph* InQuestSystemGraph, TWeakPtr<FQuestBuilderEditor> InQuestEditor)
+void SQuestPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestBuilderGraph* InQuestSystemGraph, TWeakPtr<FQuestBuilderEditor> InQuestEditor)
 {
 	check(InCreateData->Action.IsValid());
 	check(InQuestSystemGraph);
@@ -172,9 +172,9 @@ bool SQuestPaletteItem::OnNameTextVerifyChanged(const FText& InNewText, FText& O
 		OriginalName = QuestEdGraph->QuestSystem->QuestID;
 	}
 
-	for (TObjectIterator<UQuestSystem> It; It; ++It)
+	for (TObjectIterator<UQuest> It; It; ++It)
 	{
-		if (UQuestSystem* QuestSystem = Cast<UQuestSystem>(*It))
+		if (UQuest* QuestSystem = Cast<UQuest>(*It))
 		{
 			if (FName(InNewText.ToString()) == OriginalName)
 			{

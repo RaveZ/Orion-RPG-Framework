@@ -7,9 +7,9 @@
 #include "UObject/NoExportTypes.h"
 #include "QuestEvent.generated.h"
 
-class UQuestSystemGraph;
-class UQuestSystemGraphNode;
-class UQuestSystem;
+class UQuestBuilderGraph;
+class UQuestBuilderNode;
+class UQuest;
 
 
 UENUM(BlueprintType)
@@ -31,11 +31,11 @@ public:
 	UQuestEvent();
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestEvent")
-		TObjectPtr<UQuestSystemGraph> QuestGraph;
+		TObjectPtr<UQuestBuilderGraph> QuestGraph;
 		
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestEvent")
-		TObjectPtr<UQuestSystemGraphNode> OwningNode;
+		TObjectPtr<UQuestBuilderNode> OwningNode;
 
 	/**Display quest ID in property panel?*/
 	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
@@ -58,7 +58,7 @@ public:
 		bool EndLaunched = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestEvent")
-		TObjectPtr<UQuestSystem> QuestSystem;
+		TObjectPtr<UQuest> QuestSystem;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "QuestEvent")
 		EEventRunType EventRunType = EEventRunType::E_Start;
@@ -83,10 +83,10 @@ public:
 		UQuestComponent* GetQuestComponent() const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestEvent")
-		UQuestSystemGraph* GetOwningQuestGraph() const;
+		UQuestBuilderGraph* GetOwningQuestGraph() const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestEvent")
-		UQuestSystem* GetOwningQuestSystem() const;
+		UQuest* GetOwningQuestSystem() const;
 
 	UFUNCTION(CallInEditor, BlueprintCallable)
 	virtual TArray<FName> GetAllQuestID();

@@ -2,7 +2,7 @@
 
 
 #include "QuestBuilderEdNode_State.h"
-#include "QuestSystemGraphNode.h"
+#include "QuestBuilderNode.h"
 
 UQuestBuilderEdNode_State::UQuestBuilderEdNode_State()
 {
@@ -15,7 +15,7 @@ void UQuestBuilderEdNode_State::AllocateDefaultPins()
 
 FText UQuestBuilderEdNode_State::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	const UQuestSystemGraphNode* MyNode = Cast<UQuestSystemGraphNode>(QuestSystemGraphNode);
+	const UQuestBuilderNode* MyNode = Cast<UQuestBuilderNode>(QuestSystemGraphNode);
 	if (MyNode != NULL)
 	{
 		return MyNode->GetNodeTitle();

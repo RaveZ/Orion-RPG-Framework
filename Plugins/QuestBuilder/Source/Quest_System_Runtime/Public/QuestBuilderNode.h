@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "QuestSystemGraphNode.generated.h"
+#include "QuestBuilderNode.generated.h"
 
-class UQuestSystemGraph;
-class UQuestSystem;
+class UQuestBuilderGraph;
+class UQuest;
 class UQuestCondition;
 class UQuestEvent;
-class UQuestSystemGraphEdge;
+class UQuestBuilderEdge;
 
 UENUM(BlueprintType)
 enum class ENodeLimits : uint8
@@ -22,13 +22,13 @@ enum class ENodeLimits : uint8
 
 
 UCLASS(Blueprintable, EditInlineNew)
-class QUEST_SYSTEM_RUNTIME_API UQuestSystemGraphNode : public UObject
+class QUEST_SYSTEM_RUNTIME_API UQuestBuilderNode : public UObject
 {
 	GENERATED_BODY()
 
 public:
-	UQuestSystemGraphNode();
-	virtual ~UQuestSystemGraphNode();
+	UQuestBuilderNode();
+	virtual ~UQuestBuilderNode();
 
 	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Detail")
 		FName ID;
@@ -43,23 +43,23 @@ public:
 		TArray<TObjectPtr<UQuestCondition>> Conditions;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
-		TObjectPtr<UQuestSystemGraph> QuestGraph;
+		TObjectPtr<UQuestBuilderGraph> QuestGraph;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
-		TObjectPtr<UQuestSystem> QuestSystem;
+		TObjectPtr<UQuest> QuestSystem;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
-		TArray<TObjectPtr<UQuestSystemGraphNode>> ParentNodes;
+		TArray<TObjectPtr<UQuestBuilderNode>> ParentNodes;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
-		TArray<TObjectPtr<UQuestSystemGraphNode>> ChildrenNodes;
+		TArray<TObjectPtr<UQuestBuilderNode>> ChildrenNodes;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
-		TMap<TObjectPtr<UQuestSystemGraphNode>, TObjectPtr<UQuestSystemGraphEdge>> Edges;
+		TMap<TObjectPtr<UQuestBuilderNode>, TObjectPtr<UQuestBuilderEdge>> Edges;
 
 
 	UFUNCTION(BlueprintCallable, Category = "QuestSystemGraphNode")
-		virtual UQuestSystemGraphEdge* GetEdge(UQuestSystemGraphNode* ChildNode);
+		virtual UQuestBuilderEdge* GetEdge(UQuestBuilderNode* ChildNode);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestSystemGraphNode")
 		bool IsLeafNode() const;
@@ -75,10 +75,10 @@ public:
 		UQuestComponent* GetQuestComponent() const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestSystemGraphNode")
-		UQuestSystemGraph* GetOwningQuestGraph() const;
+		UQuestBuilderGraph* GetOwningQuestGraph() const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestSystemGraphNode")
-		UQuestSystem* GetOwningQuestSystem() const;
+		UQuest* GetOwningQuestSystem() const;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestSystemGraphNode")
 		FText GetDescription() const;
@@ -100,7 +100,7 @@ public:
 
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
-		TSubclassOf<UQuestSystemGraph> CompatibleGraphType;
+		TSubclassOf<UQuestBuilderGraph> CompatibleGraphType;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
 		FLinearColor BackgroundColor;
@@ -137,9 +137,9 @@ public:
 
 	virtual void SetNodeTitle(const FText& NewTitle);
 
-	virtual bool CanCreateConnection(UQuestSystemGraphNode* Other, FText& ErrorMessage);
+	virtual bool CanCreateConnection(UQuestBuilderNode* Other, FText& ErrorMessage);
 
-	virtual bool CanCreateConnectionTo(UQuestSystemGraphNode* Other, int32 NumberOfChildrenNodes, FText& ErrorMessage);
-	virtual bool CanCreateConnectionFrom(UQuestSystemGraphNode* Other, int32 NumberOfParentNodes, FText& ErrorMessage);
+	virtual bool CanCreateConnectionTo(UQuestBuilderNode* Other, int32 NumberOfChildrenNodes, FText& ErrorMessage);
+	virtual bool CanCreateConnectionFrom(UQuestBuilderNode* Other, int32 NumberOfParentNodes, FText& ErrorMessage);
 #endif
 };

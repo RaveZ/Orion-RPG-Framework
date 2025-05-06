@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
-#include "QuestSystem.h"
+#include "Quest.h"
 #include "Task/QuestTask.h"
 #include "QuestData.generated.h"
 

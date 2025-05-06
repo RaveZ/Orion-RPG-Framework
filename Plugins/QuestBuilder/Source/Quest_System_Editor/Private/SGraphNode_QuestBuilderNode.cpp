@@ -17,9 +17,9 @@
 #include "GraphEditorSettings.h"
 #include "SCommentBubble.h"
 #include "SLevelOfDetailBranchNode.h"
-#include "QuestSystemGraphNode.h"
+#include "QuestBuilderNode.h"
 #include "QuestBuilderEdNode_Root.h"
-#include "QuestSystemGraphNode_Objective.h"
+#include "QuestBuilderNode_Objective.h"
 #include "QuestBuilderSetting.h"	
 #include "Fonts/SlateFontInfo.h"
 #include "Condition/QuestCondition.h"
@@ -200,7 +200,7 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 	TSharedPtr<STextBlock> DescriptionText;
 
 	UQuestBuilderEdNode* QuestEditorNode = Cast<UQuestBuilderEdNode>(GraphNode);
-	UQuestSystemGraphNode* QuestSystemNode = QuestEditorNode ? QuestEditorNode->QuestSystemGraphNode : nullptr;
+	UQuestBuilderNode* QuestSystemNode = QuestEditorNode ? QuestEditorNode->QuestSystemGraphNode : nullptr;
 
 	UWorld* World = GEditor->GetEditorWorldContext().World();
 
@@ -533,7 +533,7 @@ bool SGraphNode_QuestBuilderNode::IsNameReadOnly() const
 	UQuestBuilderEdNode* EdNode_Node = Cast<UQuestBuilderEdNode>(GraphNode);
 	check(EdNode_Node != nullptr);
 
-	UQuestSystemGraph* QuestSystemGraph = EdNode_Node->QuestSystemGraphNode->QuestGraph;
+	UQuestBuilderGraph* QuestSystemGraph = EdNode_Node->QuestSystemGraphNode->QuestGraph;
 	check(QuestSystemGraph != nullptr);
 
 	return (!QuestSystemGraph->bCanRenameNode || !EdNode_Node->QuestSystemGraphNode->IsNameEditable()) || SGraphNode::IsNameReadOnly();
@@ -553,9 +553,9 @@ EVisibility SGraphNode_QuestBuilderNode::GetDescriptionVisibility() const
 EVisibility SGraphNode_QuestBuilderNode::GetTaskVisibility() const
 {
 	UQuestBuilderEdNode* QuestEditorNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	UQuestSystemGraphNode* QuestSystemNode = QuestEditorNode ? QuestEditorNode->QuestSystemGraphNode : nullptr;
+	UQuestBuilderNode* QuestSystemNode = QuestEditorNode ? QuestEditorNode->QuestSystemGraphNode : nullptr;
 
-	if (UQuestSystemGraphNode_Objective* QuestSystemNodeObjective = Cast<UQuestSystemGraphNode_Objective>(QuestSystemNode))
+	if (UQuestBuilderNode_Objective* QuestSystemNodeObjective = Cast<UQuestBuilderNode_Objective>(QuestSystemNode))
 	{
 		return EVisibility::Visible;
 	}
@@ -569,7 +569,7 @@ FText SGraphNode_QuestBuilderNode::GetEventsText() const
 EVisibility SGraphNode_QuestBuilderNode::GetEventsVisibility() const
 {
 	UQuestBuilderEdNode* QuestEditorNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	UQuestSystemGraphNode* QuestSystemNode = QuestEditorNode ? QuestEditorNode->QuestSystemGraphNode : nullptr;
+	UQuestBuilderNode* QuestSystemNode = QuestEditorNode ? QuestEditorNode->QuestSystemGraphNode : nullptr;
 	if (QuestSystemNode && !QuestSystemNode->Events.IsEmpty())
 	{
 		return EVisibility::Visible;
@@ -584,7 +584,7 @@ FText SGraphNode_QuestBuilderNode::GetConditionsText() const
 EVisibility SGraphNode_QuestBuilderNode::GetConditionsVisibility() const
 {
 	UQuestBuilderEdNode* QuestEditorNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	UQuestSystemGraphNode* QuestSystemNode = QuestEditorNode ? QuestEditorNode->QuestSystemGraphNode : nullptr;
+	UQuestBuilderNode* QuestSystemNode = QuestEditorNode ? QuestEditorNode->QuestSystemGraphNode : nullptr;
 	if (QuestSystemNode && !QuestSystemNode->Conditions.IsEmpty())
 	{
 		return EVisibility::Visible;
@@ -611,9 +611,9 @@ bool SGraphNode_QuestBuilderNode::OnVerifyNameTextChanged(const FText& InText, F
 	}
 
 
-	for (TObjectIterator<UQuestSystemGraphNode> It; It; ++It)
+	for (TObjectIterator<UQuestBuilderNode> It; It; ++It)
 	{
-		if (UQuestSystemGraphNode* QuestSystem = Cast<UQuestSystemGraphNode>(*It))
+		if (UQuestBuilderNode* QuestSystem = Cast<UQuestBuilderNode>(*It))
 		{
 			if (FName(InText.ToString()) == OriginalName)
 			{
@@ -645,7 +645,7 @@ void SGraphNode_QuestBuilderNode::OnNameTextCommited(const FText& InText, ETextC
 	FName OriginalName;
 
 	UQuestBuilderEdNode* MyNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	UQuestSystemGraphNode* QuestSystemNode = MyNode ? MyNode->QuestSystemGraphNode : nullptr;
+	UQuestBuilderNode* QuestSystemNode = MyNode ? MyNode->QuestSystemGraphNode : nullptr;
 
 	if (MyNode != nullptr && MyNode->QuestSystemGraphNode != nullptr)
 	{
@@ -777,7 +777,7 @@ FText SGraphNode_QuestBuilderNode::GetIndexText() const
 	if (ShouldShowExecutionIndex())
 	{
 		// show execution index (debugging purposes)
-		UQuestSystemGraphNode* QuestSystemNode = QuestEditorNode ? QuestEditorNode->QuestSystemGraphNode : nullptr;
+		UQuestBuilderNode* QuestSystemNode = QuestEditorNode ? QuestEditorNode->QuestSystemGraphNode : nullptr;
 		Index = (QuestSystemNode && QuestSystemNode->ExecutionIndex < 0xffff) ? QuestSystemNode->ExecutionIndex : -1;
 	}
 	else

@@ -2,9 +2,9 @@
 
 
 #include "Condition/IsObjectiveCompleted.h"
-#include "QuestSystemGraphNode_Objective.h"
+#include "QuestBuilderNode_Objective.h"
 #include "QuestComponent.h"
-#include "QuestSystem.h"
+#include "Quest.h"
 
 UIsObjectiveCompleted::UIsObjectiveCompleted()
 {
@@ -18,9 +18,9 @@ bool UIsObjectiveCompleted::IsConditionMet_Implementation() const
     for (const auto& It : GetQuestComponent()->QuestSystemMap)
     {
         FName Key = It.Key;
-        UQuestSystem* Quest = It.Value;
+        UQuest* Quest = It.Value;
 
-        if (UQuestSystemGraphNode_Objective* ObjectiveNode =  Cast<UQuestSystemGraphNode_Objective>(Quest->NodeMap.FindRef(NodeID)))
+        if (UQuestBuilderNode_Objective* ObjectiveNode =  Cast<UQuestBuilderNode_Objective>(Quest->NodeMap.FindRef(NodeID)))
         {
             return ObjectiveNode->IsAllTaskCompleted();
         }

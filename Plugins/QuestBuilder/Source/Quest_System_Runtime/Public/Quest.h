@@ -5,12 +5,12 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "UObject/NoExportTypes.h"
-#include "QuestSystem.generated.h"
+#include "Quest.generated.h"
 
 class UQuestCondition;
-class UQuestSystemGraphNode;
-class UQuestSystemGraphEdge;
-class UQuestSystemGraphNode_Root;
+class UQuestBuilderNode;
+class UQuestBuilderEdge;
+class UQuestBuilderNode_Root;
 
 UENUM(BlueprintType)
 enum class EQuestState : uint8
@@ -29,14 +29,14 @@ enum class EQuestState : uint8
 
 
 UCLASS(Blueprintable)
-class QUEST_SYSTEM_RUNTIME_API UQuestSystem : public UObject
+class QUEST_SYSTEM_RUNTIME_API UQuest : public UObject
 {
 	GENERATED_BODY()
 public:
-	UQuestSystem();
+	UQuest();
 
 	UPROPERTY(VisibleDefaultsOnly, Category = "QuestAssets")
-	TObjectPtr<UQuestSystemGraph> QuestGraph;
+	TObjectPtr<UQuestBuilderGraph> QuestGraph;
 
 	/** Quest ID */
 	UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly, Category = "QuestSystem")
@@ -78,23 +78,23 @@ public:
 		EQuestState QuestState = EQuestState::E_Locked;
 	
 	UPROPERTY(BlueprintReadWrite, Category = "QuestSystem")
-		TObjectPtr<UQuestSystemGraphNode> CurrentNode;
+		TObjectPtr<UQuestBuilderNode> CurrentNode;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystem")
-		TArray< TObjectPtr<UQuestSystemGraphNode>> RootNodes;
+		TArray< TObjectPtr<UQuestBuilderNode>> RootNodes;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystem")
-		TArray< TObjectPtr<UQuestSystemGraphNode>> AllNodes;
+		TArray< TObjectPtr<UQuestBuilderNode>> AllNodes;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestSystem")
-		TMap<FName, TObjectPtr<UQuestSystemGraphNode>> NodeMap;
+		TMap<FName, TObjectPtr<UQuestBuilderNode>> NodeMap;
 
 
 	UFUNCTION(BlueprintCallable, Category = "QuestSystem")
 		int GetLevelNum() const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestSystem")
-		void GetNodesByLevel(int Level, TArray<UQuestSystemGraphNode*>& Nodes);
+		void GetNodesByLevel(int Level, TArray<UQuestBuilderNode*>& Nodes);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestSystem")
 		AController* GetOwningController();
@@ -106,7 +106,7 @@ public:
 		UQuestComponent* GetQuestComponent();
 
 	UFUNCTION(BlueprintCallable, Category = "QuestSystem")
-		UQuestSystemGraph* GetOwningQuestGraph() const;
+		UQuestBuilderGraph* GetOwningQuestGraph() const;
 	void ClearGraph();
 
 #if WITH_EDITOR

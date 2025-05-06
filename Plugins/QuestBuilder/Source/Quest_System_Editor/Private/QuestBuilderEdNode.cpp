@@ -2,7 +2,7 @@
 
 
 #include "QuestBuilderEdNode.h"
-#include "QuestSystemGraphNode.h"
+#include "QuestBuilderNode.h"
 
 UQuestBuilderEdNode::UQuestBuilderEdNode()
 {
@@ -14,7 +14,7 @@ UQuestBuilderEdNode::~UQuestBuilderEdNode()
 {
 }
 
-void UQuestBuilderEdNode::SetQuestSystemGraphNode(UQuestSystemGraphNode* InNode)
+void UQuestBuilderEdNode::SetQuestSystemGraphNode(UQuestBuilderNode* InNode)
 {
 	QuestSystemGraphNode = InNode;
 }

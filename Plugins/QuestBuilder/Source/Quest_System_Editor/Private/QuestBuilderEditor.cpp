@@ -2,7 +2,7 @@
 
 
 #include "QuestBuilderEditor.h"
-#include "QuestSystemGraphNode_Root.h"
+#include "QuestBuilderNode_Root.h"
 #include "Condition/QuestCondition.h"
 #include "EngineGlobals.h"
 #include "Editor/EditorEngine.h"
@@ -70,7 +70,7 @@ FQuestBuilderEditor::~FQuestBuilderEditor()
 
 void FQuestBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UObject* InObject)
 {
-	UQuestSystemGraph* QuestGraphToEdit = Cast<UQuestSystemGraph>(InObject);
+	UQuestBuilderGraph* QuestGraphToEdit = Cast<UQuestBuilderGraph>(InObject);
 
 	if (QuestGraphToEdit != nullptr)
 	{
@@ -540,10 +540,10 @@ FString FQuestBuilderEditor::GetReferencerName() const
 	return FString();
 }
 
-UQuestSystemGraph* FQuestBuilderEditor::GetQuestSystemObj() const
+UQuestBuilderGraph* FQuestBuilderEditor::GetQuestSystemObj() const
 {
 	return EditingQuestGraph;
-	//return GetEditingObjects().Num() == 1 ? Cast<UQuestSystemGraph>(GetEditingObjects()[0]) : nullptr;
+	//return GetEditingObjects().Num() == 1 ? Cast<UQuestBuilderGraph>(GetEditingObjects()[0]) : nullptr;
 }
 
 bool FQuestBuilderEditor::NewDocument_IsVisibleForType(ECreatedQuestDocumentType GraphType) const
@@ -701,7 +701,7 @@ void FQuestBuilderEditor::InitializeDocumentTab()
 {
 	check(IsEditingSingleQuestGraph());
 
-	UQuestSystemGraph* QuestSystemGraph = GetQuestSystemObj();
+	UQuestBuilderGraph* QuestSystemGraph = GetQuestSystemObj();
 	if (QuestSystemGraph->LastEditedDocuments.Num() == 0)
 	{
 			QuestSystemGraph->LastEditedDocuments.Add(FQuestBuilderEditorUtils::FindQuestGraph(QuestSystemGraph));
@@ -721,7 +721,7 @@ void FQuestBuilderEditor::InitializeDocumentTab()
 
 						for (UObject* OuterObject = InGraph->GetOuter(); OuterObject; OuterObject = OuterObject->GetOuter())
 						{
-							if (OuterObject->IsA<UQuestSystemGraph>())
+							if (OuterObject->IsA<UQuestBuilderGraph>())
 							{
 								// reached up to the QuestSystemGraph for the graph, we are done climbing the tree
 								OpenCause = FDocumentTracker::RestorePreviousDocument;
@@ -815,7 +815,7 @@ bool FQuestBuilderEditor::IsGraphInCurrentQuestGraph(const UEdGraph* InGraph) co
 {
 	bool bEditable = true;
 
-	UQuestSystemGraph* EditingBP = GetQuestSystemObj();
+	UQuestBuilderGraph* EditingBP = GetQuestSystemObj();
 	if (EditingBP)
 	{
 		TArray<UEdGraph*> Graphs;
@@ -1391,7 +1391,7 @@ void FQuestBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& New
 	}
 	else if (Selection.Num() == 1)
 	{
-		if (UQuestSystemGraphNode_Root* RootNode = Cast<UQuestSystemGraphNode_Root>(Selection[0]))
+		if (UQuestBuilderNode_Root* RootNode = Cast<UQuestBuilderNode_Root>(Selection[0]))
 		{
 			if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(ViewportWidget->GetCurrentGraph()))
 			{

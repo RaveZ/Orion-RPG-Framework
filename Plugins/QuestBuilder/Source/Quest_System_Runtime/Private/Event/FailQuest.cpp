@@ -2,10 +2,10 @@
 
 
 #include "Event/FailQuest.h"
-#include "QuestSystem.h"
+#include "Quest.h"
 #include "QuestComponent.h"
-#include "QuestSystemGraph.h"
-#include "QuestSystemGraphNode.h"
+#include "QuestBuilderGraph.h"
+#include "QuestBuilderNode.h"
 
 UFailQuest::UFailQuest()
 {

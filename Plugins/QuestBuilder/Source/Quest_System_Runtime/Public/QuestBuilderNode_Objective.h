@@ -3,13 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "QuestSystemGraphNode.h"
-#include "QuestSystemGraphNode_Objective.generated.h"
+#include "QuestBuilderNode.h"
+#include "QuestBuilderNode_Objective.generated.h"
 
 class UQuestTask;
 
 UCLASS(Blueprintable)
-class QUEST_SYSTEM_RUNTIME_API UQuestSystemGraphNode_Objective : public UQuestSystemGraphNode
+class QUEST_SYSTEM_RUNTIME_API UQuestBuilderNode_Objective : public UQuestBuilderNode
 {
 	GENERATED_BODY()
 

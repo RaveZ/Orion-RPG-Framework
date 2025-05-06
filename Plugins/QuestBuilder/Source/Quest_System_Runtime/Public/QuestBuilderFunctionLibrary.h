@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "QuestSystem.h"
+#include "Quest.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "QuestBuilderFunctionLibrary.generated.h"
 
@@ -43,7 +43,7 @@ public:
 	* @return The Quest.
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
-	static class UQuestSystem* FindQuestFromNodeID(const UObject* WorldContextObject, FName NodeID);
+	static class UQuest* FindQuestFromNodeID(const UObject* WorldContextObject, FName NodeID);
 
 	/**
 	* Check if the Current Node ID match with the given Node ID
@@ -67,5 +67,5 @@ public:
 	* @return The Quest component.
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
-	static class UQuestSystem* GetCurrentNavigatedQuest(const UObject* WorldContextObject);
+	static class UQuest* GetCurrentNavigatedQuest(const UObject* WorldContextObject);
 };

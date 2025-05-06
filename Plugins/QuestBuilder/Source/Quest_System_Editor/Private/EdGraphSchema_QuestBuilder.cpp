@@ -15,11 +15,11 @@
 #include "QuestBuilderEdNode_Edge.h"
 #include "QuestBuilderEdNode_Root.h"
 #include "GraphEditorActions.h"
-#include "QuestSystemGraph.h"
-#include "QuestSystemGraphEdge.h"
-#include "QuestSystemGraphNode_Root.h"
-#include "QuestSystemGraphNode_State.h"
-#include "QuestSystemGraphNode_Objective.h"
+#include "QuestBuilderGraph.h"
+#include "QuestBuilderEdge.h"
+#include "QuestBuilderNode_Root.h"
+#include "QuestBuilderNode_State.h"
+#include "QuestBuilderNode_Objective.h"
 #include "Task/QuestTask.h"
 
 
@@ -227,11 +227,11 @@ void UEdGraphSchema_QuestBuilder::GetBreakLinkToSubMenuActions(UToolMenu* Menu, 
 
 void UEdGraphSchema_QuestBuilder::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 {
-	UQuestSystemGraph* QuestGraph = CastChecked<UQuestSystemGraph>(Graph.GetOuter());
+	UQuestBuilderGraph* QuestGraph = CastChecked<UQuestBuilderGraph>(Graph.GetOuter());
 
 	FGraphNodeCreator<UQuestBuilderEdNode_Root> NodeCreator(Graph);
 	UQuestBuilderEdNode_Root* RootNode = NodeCreator.CreateNode();
-	RootNode->QuestSystemGraphNode = NewObject<UQuestSystemGraphNode>(RootNode, UQuestSystemGraphNode_Root::StaticClass());
+	RootNode->QuestSystemGraphNode = NewObject<UQuestBuilderNode>(RootNode, UQuestBuilderNode_Root::StaticClass());
 	RootNode->QuestSystemGraphNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName("RootNode");
 	RootNode->QuestSystemGraphNode->QuestGraph = QuestGraph;
 	RootNode->QuestSystemGraphNode->QuestGraph->QuestSystems = QuestGraph->QuestSystems;
@@ -246,14 +246,14 @@ EGraphType UEdGraphSchema_QuestBuilder::GetGraphType(const UEdGraph* TestEdGraph
 
 void UEdGraphSchema_QuestBuilder::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const
 {
-	UQuestSystemGraph* Graph = CastChecked<UQuestSystemGraph>(ContextMenuBuilder.CurrentGraph->GetOuter());
+	UQuestBuilderGraph* Graph = CastChecked<UQuestBuilderGraph>(ContextMenuBuilder.CurrentGraph->GetOuter());
 
 
 	const bool bNoParent = (ContextMenuBuilder.FromPin == NULL);
 
 	const FText AddToolTip = LOCTEXT("NewQuestBuilderNodeTooltip", "Add node here");
 
-	TSet<TSubclassOf<UQuestSystemGraphNode> > Visited;
+	TSet<TSubclassOf<UQuestBuilderNode> > Visited;
 
 
 
@@ -284,8 +284,8 @@ void UEdGraphSchema_QuestBuilder::GetGraphContextActions(FGraphContextMenuBuilde
 		UQuestBuilderEdNode* OpNode = NewObject<UQuestBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, GraphNodeClass);
 		OpNode->ClassData = NodeClass;
 		AddOpAction->NodeTemplate = OpNode;
-		AddOpAction->NodeTemplate->QuestSystemGraphNode = NewObject<UQuestSystemGraphNode>(AddOpAction->NodeTemplate, UQuestSystemGraphNode_Objective::StaticClass());
-		if (UQuestSystemGraphNode_Objective* ObjectiveNode = Cast<UQuestSystemGraphNode_Objective>(AddOpAction->NodeTemplate->QuestSystemGraphNode))
+		AddOpAction->NodeTemplate->QuestSystemGraphNode = NewObject<UQuestBuilderNode>(AddOpAction->NodeTemplate, UQuestBuilderNode_Objective::StaticClass());
+		if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(AddOpAction->NodeTemplate->QuestSystemGraphNode))
 		{
 			if (NodeClass.GetClass(true)->IsChildOf(UQuestTask::StaticClass()))
 			{
@@ -305,11 +305,11 @@ void UEdGraphSchema_QuestBuilder::GetGraphContextActions(FGraphContextMenuBuilde
 	TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> AddOpAction = UEdGraphSchema_QuestBuilder::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("QuestSystemGraphNodeAction", "Complete Quest"), LOCTEXT("QuestSystemGraphNodeTooltip", "Complete The Quest"));
 	UQuestBuilderEdNode* OpNode = NewObject<UQuestBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, UQuestBuilderEdNode_State::StaticClass());
 	AddOpAction->NodeTemplate = OpNode;
-	AddOpAction->NodeTemplate->QuestSystemGraphNode = NewObject<UQuestSystemGraphNode>(AddOpAction->NodeTemplate, UQuestSystemGraphNode_State::StaticClass());
+	AddOpAction->NodeTemplate->QuestSystemGraphNode = NewObject<UQuestBuilderNode>(AddOpAction->NodeTemplate, UQuestBuilderNode_State::StaticClass());
 	AddOpAction->NodeTemplate->QuestSystemGraphNode->QuestGraph = Graph;
 	AddOpAction->NodeTemplate->QuestSystemGraphNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName("StateNode");
 	AddOpAction->NodeTemplate->QuestSystemGraphNode->QuestGraph->QuestSystems = Graph->QuestSystems;
-	if (UQuestSystemGraphNode_State* NodeState = Cast< UQuestSystemGraphNode_State>(AddOpAction->NodeTemplate->QuestSystemGraphNode))
+	if (UQuestBuilderNode_State* NodeState = Cast< UQuestBuilderNode_State>(AddOpAction->NodeTemplate->QuestSystemGraphNode))
 	{
 		NodeState->QuestState = EQuestState::E_Complete;
 	}
@@ -318,11 +318,11 @@ void UEdGraphSchema_QuestBuilder::GetGraphContextActions(FGraphContextMenuBuilde
 	AddOpAction = UEdGraphSchema_QuestBuilder::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("QuestSystemGraphNodeAction", "Fail Quest"), LOCTEXT("QuestSystemGraphNodeTooltip", "Fail The Quest"));
 	OpNode = NewObject<UQuestBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, UQuestBuilderEdNode_State::StaticClass());
 	AddOpAction->NodeTemplate = OpNode;
-	AddOpAction->NodeTemplate->QuestSystemGraphNode = NewObject<UQuestSystemGraphNode>(AddOpAction->NodeTemplate, UQuestSystemGraphNode_State::StaticClass());
+	AddOpAction->NodeTemplate->QuestSystemGraphNode = NewObject<UQuestBuilderNode>(AddOpAction->NodeTemplate, UQuestBuilderNode_State::StaticClass());
 	AddOpAction->NodeTemplate->QuestSystemGraphNode->QuestGraph = Graph;
 	AddOpAction->NodeTemplate->QuestSystemGraphNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName("StateNode");
 	AddOpAction->NodeTemplate->QuestSystemGraphNode->QuestGraph->QuestSystems = Graph->QuestSystems;
-	if (UQuestSystemGraphNode_State* NodeState = Cast< UQuestSystemGraphNode_State>(AddOpAction->NodeTemplate->QuestSystemGraphNode))
+	if (UQuestBuilderNode_State* NodeState = Cast< UQuestBuilderNode_State>(AddOpAction->NodeTemplate->QuestSystemGraphNode))
 	{
 		NodeState->QuestState = EQuestState::E_Fail;
 	}
@@ -332,7 +332,7 @@ void UEdGraphSchema_QuestBuilder::GetGraphContextActions(FGraphContextMenuBuilde
 	/*AddOpAction = UEdGraphSchema_QuestBuilder::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("QuestSystemGraphNodeAction", "Add Custom State..."), LOCTEXT("QuestSystemGraphNodeTooltip", "Add Custom State..."));
 	OpNode = NewObject<UQuestBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, UQuestBuilderEdNode_State::StaticClass());
 	AddOpAction->NodeTemplate = OpNode;
-	AddOpAction->NodeTemplate->QuestSystemGraphNode = NewObject<UQuestSystemGraphNode>(AddOpAction->NodeTemplate, UQuestSystemGraphNode_State::StaticClass());
+	AddOpAction->NodeTemplate->QuestSystemGraphNode = NewObject<UQuestBuilderNode>(AddOpAction->NodeTemplate, UQuestBuilderNode_State::StaticClass());
 	AddOpAction->NodeTemplate->QuestSystemGraphNode->QuestGraph = Graph;
 	AddOpAction->NodeTemplate->QuestSystemGraphNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName("StateNode");
 	AddOpAction->NodeTemplate->QuestSystemGraphNode->QuestGraph->QuestSystems = Graph->QuestSystems;
@@ -493,13 +493,13 @@ bool UEdGraphSchema_QuestBuilder::CreateAutomaticConversionNodeAndConnections(UE
 	if (!NodeA || !NodeA->GetOutputPin() || !NodeB || !NodeB->GetInputPin())
 		return false;
 
-	UQuestSystemGraph* Graph = NodeA->QuestSystemGraphNode->GetOwningQuestGraph();
+	UQuestBuilderGraph* Graph = NodeA->QuestSystemGraphNode->GetOwningQuestGraph();
 
 	FVector2D InitPos((NodeA->NodePosX + NodeB->NodePosX) / 2, (NodeA->NodePosY + NodeB->NodePosY) / 2);
 
 	FAssetSchemaAction_QuestSystem_NewEdge Action;
 	Action.NodeTemplate = NewObject<UQuestBuilderEdNode_Edge>(NodeA->GetGraph());
-	Action.NodeTemplate->SetEdge(NewObject<UQuestSystemGraphEdge>(Action.NodeTemplate, UQuestSystemGraphEdge::StaticClass()));
+	Action.NodeTemplate->SetEdge(NewObject<UQuestBuilderEdge>(Action.NodeTemplate, UQuestBuilderEdge::StaticClass()));
 	UQuestBuilderEdNode_Edge* EdgeNode = Cast<UQuestBuilderEdNode_Edge>(Action.PerformAction(NodeA->GetGraph(), nullptr, InitPos, false));
 
 	// Always create connections from node A to B, don't allow adding in reverse

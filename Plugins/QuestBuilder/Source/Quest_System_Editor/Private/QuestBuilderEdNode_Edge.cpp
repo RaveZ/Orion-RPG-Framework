@@ -2,7 +2,7 @@
 
 
 #include "QuestBuilderEdNode_Edge.h"
-#include "QuestSystemGraphEdge.h"
+#include "QuestBuilderEdge.h"
 #include "QuestBuilderEdNode.h"
 
 #define LOCTEXT_NAMESPACE "EdNode_QuestSystemGraphEdge"
@@ -12,7 +12,7 @@ UQuestBuilderEdNode_Edge::UQuestBuilderEdNode_Edge()
 	bCanRenameNode = true;
 }
 
-void UQuestBuilderEdNode_Edge::SetEdge(UQuestSystemGraphEdge* Edge)
+void UQuestBuilderEdNode_Edge::SetEdge(UQuestBuilderEdge* Edge)
 {
 	QuestSystemGraphEdge = Edge;
 }

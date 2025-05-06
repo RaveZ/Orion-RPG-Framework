@@ -3,7 +3,7 @@
 #include "Quest_System_Editor.h"
 #include "QuestBuilder_EditorStyle.h"
 #include "QuestBuilder_EditorCommands.h"
-#include "QuestSystemGraphNode.h"
+#include "QuestBuilderNode.h"
 #include "Task/QuestTask.h"
 #include "IAssetTools.h"
 #include "ISettingsModule.h"

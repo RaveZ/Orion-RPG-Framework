@@ -1,9 +1,9 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 #include "QuestBuilderEditorUtils.h"
-#include "QuestSystemGraphNode.h"
+#include "QuestBuilderNode.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "QuestSystemGraph.h"
+#include "QuestBuilderGraph.h"
 
 
 #define LOCTEXT_NAMESPACE "QuestBuilderEditorUtils"
@@ -27,9 +27,9 @@ FName FQuestBuilderEditorUtils::FindUniqueQuestName(const FString& InBaseName)
 		bool bIsUnique = true;
 
 		// Check if the current name already exists in the quest graph pages
-		for (TObjectIterator<UQuestSystem> It; It; ++It)
+		for (TObjectIterator<UQuest> It; It; ++It)
 		{
-			if (UQuestSystem* QuestSystem = Cast<UQuestSystem>(*It))
+			if (UQuest* QuestSystem = Cast<UQuest>(*It))
 			{
 				FString FullName = QuestSystem->QuestID.ToString();
 
@@ -63,9 +63,9 @@ FName FQuestBuilderEditorUtils::FindUniqueNodeName(const FString& InBaseName)
 		bool bIsUnique = true;
 
 		// Check if the current name already exists in the quest graph pages
-		for (TObjectIterator<UQuestSystemGraphNode> It; It; ++It)
+		for (TObjectIterator<UQuestBuilderNode> It; It; ++It)
 		{
-			if (UQuestSystemGraphNode* Node = Cast<UQuestSystemGraphNode>(*It))
+			if (UQuestBuilderNode* Node = Cast<UQuestBuilderNode>(*It))
 			{
 				FString NodeID = Node->ID.ToString();
 
@@ -103,12 +103,12 @@ UEdGraph* FQuestBuilderEditorUtils::CreateNewGraph(UObject* ParentScope, const F
 
 	if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(NewGraph))
 	{
-		QuestGraph->QuestSystem = NewObject<UQuestSystem>(ParentScope, UQuestSystem::StaticClass(), NAME_None, RF_Transactional);
+		QuestGraph->QuestSystem = NewObject<UQuest>(ParentScope, UQuest::StaticClass(), NAME_None, RF_Transactional);
 		QuestGraph->QuestSystem->QuestGraph = QuestGraph->GetQuestSystemGraph();
 		QuestGraph->QuestSystem->QuestID = GraphName;
 		QuestGraph->QuestSystem->QuestName = FText::FromName(QuestGraph->QuestSystem->QuestID);
 
-		if (UQuestSystemGraph* QuestSystemGraph = Cast<UQuestSystemGraph>(QuestGraph->GetQuestSystemGraph()))
+		if (UQuestBuilderGraph* QuestSystemGraph = Cast<UQuestBuilderGraph>(QuestGraph->GetQuestSystemGraph()))
 		{
 			QuestSystemGraph->QuestSystems.Add(QuestGraph->QuestSystem);
 		}
@@ -121,7 +121,7 @@ UEdGraph* FQuestBuilderEditorUtils::CreateNewGraph(UObject* ParentScope, const F
 
 
 
-void FQuestBuilderEditorUtils::RemoveNode(UQuestSystemGraph* QuestSystemGraph, UQuestBuilderEdNode* Node, bool bDontRecompile)
+void FQuestBuilderEditorUtils::RemoveNode(UQuestBuilderGraph* QuestSystemGraph, UQuestBuilderEdNode* Node, bool bDontRecompile)
 {
 	check(Node);
 
@@ -150,7 +150,7 @@ void FQuestBuilderEditorUtils::RemoveNode(UQuestSystemGraph* QuestSystemGraph, U
 	}*/
 }
 
-void FQuestBuilderEditorUtils::RemoveGraph(UQuestSystemGraph* QuestSystemGraph, UEdGraph* GraphToRemove)
+void FQuestBuilderEditorUtils::RemoveGraph(UQuestBuilderGraph* QuestSystemGraph, UEdGraph* GraphToRemove)
 {
 	GraphToRemove->Modify();
 
@@ -212,7 +212,7 @@ void FQuestBuilderEditorUtils::RemoveGraph(UQuestSystemGraph* QuestSystemGraph, 
 	
 }
 
-void FQuestBuilderEditorUtils::AddQuestGraphPage(UQuestSystemGraph* QuestSystemGraph, UEdGraph* Graph)
+void FQuestBuilderEditorUtils::AddQuestGraphPage(UQuestBuilderGraph* QuestSystemGraph, UEdGraph* Graph)
 {
 #if WITH_EDITORONLY_DATA
 	QuestSystemGraph->QuestGraphPages.Add(Graph);
@@ -221,7 +221,7 @@ void FQuestBuilderEditorUtils::AddQuestGraphPage(UQuestSystemGraph* QuestSystemG
 }
 
 
-UEdGraph* FQuestBuilderEditorUtils::FindQuestGraph(const UQuestSystemGraph* QuestSystemGraph)
+UEdGraph* FQuestBuilderEditorUtils::FindQuestGraph(const UQuestBuilderGraph* QuestSystemGraph)
 {
 
 	for (UEdGraph* CurrentGraph : QuestSystemGraph->QuestGraphPages)

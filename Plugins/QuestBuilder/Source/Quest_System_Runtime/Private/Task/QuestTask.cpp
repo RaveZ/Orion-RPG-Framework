@@ -3,11 +3,11 @@
 
 #include "Task/QuestTask.h"
 #include "QuestComponent.h"
-#include "QuestSystem.h"
+#include "Quest.h"
 #include "Event/QuestEvent.h"
-#include "QuestSystemGraph.h"
-#include "QuestSystemGraphNode.h"
-#include "QuestSystemGraphNode_Objective.h"
+#include "QuestBuilderGraph.h"
+#include "QuestBuilderNode.h"
+#include "QuestBuilderNode_Objective.h"
 #include <TimerManager.h>
 
 UQuestTask::UQuestTask()
@@ -96,7 +96,7 @@ UQuestComponent* UQuestTask::GetQuestComponent() const
 	return QuestGraph->QuestComponent;
 }
 
-UQuestSystemGraph* UQuestTask::GetOwningQuestGraph() const
+UQuestBuilderGraph* UQuestTask::GetOwningQuestGraph() const
 {
 	if (!QuestGraph)
 		return nullptr;
@@ -104,7 +104,7 @@ UQuestSystemGraph* UQuestTask::GetOwningQuestGraph() const
 	return QuestGraph;
 }
 
-UQuestSystem* UQuestTask::GetOwningQuestSystem() const
+UQuest* UQuestTask::GetOwningQuestSystem() const
 {
 	return QuestSystem;
 }

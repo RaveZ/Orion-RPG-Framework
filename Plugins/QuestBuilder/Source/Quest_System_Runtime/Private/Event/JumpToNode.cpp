@@ -2,10 +2,10 @@
 
 
 #include "Event/JumpToNode.h"
-#include "QuestSystemGraphNode.h"
-#include "QuestSystemGraphNode_Root.h"
-#include "QuestSystemGraph.h"
-#include "QuestSystem.h"
+#include "QuestBuilderNode.h"
+#include "QuestBuilderNode_Root.h"
+#include "QuestBuilderGraph.h"
+#include "Quest.h"
 #include "QuestComponent.h"
 
 UJumpToNode::UJumpToNode()
@@ -15,7 +15,7 @@ UJumpToNode::UJumpToNode()
 
 void UJumpToNode::BeginEvent_Implementation()
 {
-	if (UQuestSystemGraphNode* FoundedNode = GetOwningQuestSystem()->NodeMap.FindRef(NodeID))
+	if (UQuestBuilderNode* FoundedNode = GetOwningQuestSystem()->NodeMap.FindRef(NodeID))
 	{
 		GetQuestComponent()->GoToNextNode(GetOwningQuestSystem(), FoundedNode);
 	}

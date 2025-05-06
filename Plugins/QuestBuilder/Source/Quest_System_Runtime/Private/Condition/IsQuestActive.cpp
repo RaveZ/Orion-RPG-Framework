@@ -3,7 +3,7 @@
 
 #include "Condition/IsQuestActive.h"
 #include "QuestComponent.h"
-#include "QuestSystem.h"
+#include "Quest.h"
 
 UIsQuestActive::UIsQuestActive()
 {
@@ -12,7 +12,7 @@ UIsQuestActive::UIsQuestActive()
 
 bool UIsQuestActive::IsConditionMet_Implementation() const
 {
-    if (UQuestSystem* FoundedQuest = GetQuestComponent()->QuestSystemMap.FindRef(QuestID))
+    if (UQuest* FoundedQuest = GetQuestComponent()->QuestSystemMap.FindRef(QuestID))
     {
         switch (FoundedQuest->QuestState)
         {

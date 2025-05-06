@@ -5,12 +5,12 @@
 #include "CoreMinimal.h"
 #include "EdGraph/EdGraphNode.h"
 #include "UObject/NoExportTypes.h"
-#include "QuestSystemGraph.h"
+#include "QuestBuilderGraph.h"
 #include "QuestBuilderEdNode_Edge.generated.h"
 
 
-class UQuestSystemGraphNode;
-class UQuestSystemGraphEdge;
+class UQuestBuilderNode;
+class UQuestBuilderEdge;
 class UQuestBuilderEdNode;
 class UEdGraph;
 
@@ -25,9 +25,9 @@ public:
 		TObjectPtr<UEdGraph> Graph;
 
 	UPROPERTY(VisibleAnywhere, Instanced, Category = "QuestSystemGraph")
-		TObjectPtr<UQuestSystemGraphEdge> QuestSystemGraphEdge;
+		TObjectPtr<UQuestBuilderEdge> QuestSystemGraphEdge;
 
-	void SetEdge(UQuestSystemGraphEdge* Edge);
+	void SetEdge(UQuestBuilderEdge* Edge);
 
 	virtual void AllocateDefaultPins() override;
 

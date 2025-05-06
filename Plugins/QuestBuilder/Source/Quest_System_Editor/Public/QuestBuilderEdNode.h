@@ -8,7 +8,7 @@
 #include "UObject/ObjectMacros.h"
 #include "UObject/NoExportTypes.h"
 #include "QuestBuilderEdGraph.h"
-#include "QuestSystemGraph.h"
+#include "QuestBuilderGraph.h"
 #include "QuestBuilderEdNode.generated.h"
 
 class UEdNode_QuestSystemEdge;
@@ -28,9 +28,9 @@ public:
 	struct FGraphNodeClassData ClassData;
 
 	UPROPERTY(VisibleAnywhere, Instanced, Category = "QuestSystemGraph")
-		TObjectPtr<UQuestSystemGraphNode> QuestSystemGraphNode;
+		TObjectPtr<UQuestBuilderNode> QuestSystemGraphNode;
 	
-	void SetQuestSystemGraphNode(UQuestSystemGraphNode* InNode);
+	void SetQuestSystemGraphNode(UQuestBuilderNode* InNode);
 	UQuestBuilderEdGraph* GetQuestSystemGraphEdGraph();
 
 	SGraphNode_QuestBuilderNode* SGraphNode;

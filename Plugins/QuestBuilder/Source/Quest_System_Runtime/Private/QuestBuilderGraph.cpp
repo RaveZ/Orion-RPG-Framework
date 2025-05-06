@@ -1,15 +1,15 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "QuestSystemGraph.h"
-#include "QuestSystem.h"
+#include "QuestBuilderGraph.h"
+#include "Quest.h"
 #include "QuestComponent.h"
-#include "QuestSystemGraphNode.h"
-#include "QuestSystemGraphEdge.h"
+#include "QuestBuilderNode.h"
+#include "QuestBuilderEdge.h"
 
 #define LOCTEXT_NAMESPACE "QuestSystemGraph"
 
-UQuestSystemGraph::UQuestSystemGraph()
+UQuestBuilderGraph::UQuestBuilderGraph()
 {
 	bEdgeEnabled = false;
 #if WITH_EDITORONLY_DATA
@@ -18,7 +18,7 @@ UQuestSystemGraph::UQuestSystemGraph()
 #endif
 }
 
-UQuestSystemGraph::~UQuestSystemGraph()
+UQuestBuilderGraph::~UQuestBuilderGraph()
 {
 	
 }
@@ -26,7 +26,7 @@ UQuestSystemGraph::~UQuestSystemGraph()
 
 
 #if WITH_EDITORONLY_DATA
-void UQuestSystemGraph::GetAllGraphs(TArray<UEdGraph*>& Graphs) const
+void UQuestBuilderGraph::GetAllGraphs(TArray<UEdGraph*>& Graphs) const
 {
 	
 

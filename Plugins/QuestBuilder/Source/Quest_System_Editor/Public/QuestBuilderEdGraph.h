@@ -4,12 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "EdGraph/EdGraph.h"
-#include "QuestSystem.h"
+#include "Quest.h"
 #include "QuestBuilderEdGraph.generated.h"
 
-class UQuestSystemGraph;
-class UQuestSystemGraphNode;
-class UQuestSystemGraphEdge;
+class UQuestBuilderGraph;
+class UQuestBuilderNode;
+class UQuestBuilderEdge;
 class UQuestBuilderEdNode;
 class UQuestBuilderEdNode_Edge;
 class UQuestBuilderEdNode_Edge;
@@ -24,25 +24,25 @@ public:
 
 	virtual void RebuildQuestSystemGraph();
 
-	UQuestSystemGraph* GetQuestSystemGraph() const;
+	UQuestBuilderGraph* GetQuestSystemGraph() const;
 
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
 	virtual void PostEditUndo() override;
 
 	/** QuestSystem linked with this UEdGraph */
 	UPROPERTY(VisibleAnywhere, Instanced, Category = "QuestSystemGraph")
-		TObjectPtr<UQuestSystem> QuestSystem;
+		TObjectPtr<UQuest> QuestSystem;
 
 	UPROPERTY(Transient)
-		TMap< TObjectPtr<UQuestSystemGraphNode>, TObjectPtr<UQuestBuilderEdNode>> NodeMap;
+		TMap< TObjectPtr<UQuestBuilderNode>, TObjectPtr<UQuestBuilderEdNode>> NodeMap;
 
 	UPROPERTY(Transient)
-		TMap< TObjectPtr<UQuestSystemGraphEdge>, TObjectPtr<UQuestBuilderEdNode_Edge>> EdgeMap;
+		TMap< TObjectPtr<UQuestBuilderEdge>, TObjectPtr<UQuestBuilderEdNode_Edge>> EdgeMap;
 
 
 	void Clear();
 
 protected:
 
-	void SortNodes(UQuestSystemGraphNode* RootNode);
+	void SortNodes(UQuestBuilderNode* RootNode);
 };

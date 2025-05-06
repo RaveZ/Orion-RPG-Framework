@@ -3,13 +3,13 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "QuestSystemGraphNode.h"
-#include "QuestSystem.h"
-#include "QuestSystemGraphNode_State.generated.h"
+#include "QuestBuilderNode.h"
+#include "Quest.h"
+#include "QuestBuilderNode_State.generated.h"
 
 
 UCLASS(/*HideCategories = ("Detail")*/)
-class QUEST_SYSTEM_RUNTIME_API UQuestSystemGraphNode_State : public UQuestSystemGraphNode
+class QUEST_SYSTEM_RUNTIME_API UQuestBuilderNode_State : public UQuestBuilderNode
 {
 	GENERATED_BODY()
 public:

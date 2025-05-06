@@ -1,13 +1,13 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "QuestSystemGraphNode_State.h"
+#include "QuestBuilderNode_State.h"
 #include "QuestComponent.h"
-#include "QuestSystem.h"
+#include "Quest.h"
 #include "Event/QuestEvent.h"
 
 
-void UQuestSystemGraphNode_State::BeginState()
+void UQuestBuilderNode_State::BeginState()
 {
     QuestSystem->QuestState = QuestState;
 
@@ -39,15 +39,15 @@ void UQuestSystemGraphNode_State::BeginState()
 }
 
 #if WITH_EDITOR
-FText UQuestSystemGraphNode_State::GetNodeTitle() const
+FText UQuestBuilderNode_State::GetNodeTitle() const
 {
-    return FText::FromName(ID).IsEmpty() ? FText::FromString(UQuestSystemGraphNode::GetShortTypeName(this)) : FText::FromName(ID);
+    return FText::FromName(ID).IsEmpty() ? FText::FromString(UQuestBuilderNode::GetShortTypeName(this)) : FText::FromName(ID);
 }
-void UQuestSystemGraphNode_State::SetNodeTitle(const FText& NewTitle)
+void UQuestBuilderNode_State::SetNodeTitle(const FText& NewTitle)
 {
     ID = FName(NewTitle.ToString());
 }
-FText UQuestSystemGraphNode_State::GetNodeDescription() const
+FText UQuestBuilderNode_State::GetNodeDescription() const
 {
     switch (QuestState)
     {
@@ -61,7 +61,7 @@ FText UQuestSystemGraphNode_State::GetNodeDescription() const
 }
 
 
-FLinearColor UQuestSystemGraphNode_State::GetBackgroundColor() const
+FLinearColor UQuestBuilderNode_State::GetBackgroundColor() const
 {
     FLinearColor FailQuestColor(.34f, .024f, .024f);
     FLinearColor CompleteQuestColor(0.20f, 0.32f, 0.15f);

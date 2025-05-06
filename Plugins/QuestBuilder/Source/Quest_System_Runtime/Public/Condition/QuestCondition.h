@@ -6,8 +6,8 @@
 #include "UObject/NoExportTypes.h"
 #include "QuestCondition.generated.h"
 
-class UQuestSystemGraph;
-class UQuestSystemGraphNode;
+class UQuestBuilderGraph;
+class UQuestBuilderNode;
 
 UCLASS(Abstract, Blueprintable, EditInlineNew, HideDropdown)
 class QUEST_SYSTEM_RUNTIME_API UQuestCondition : public UObject
@@ -15,10 +15,10 @@ class QUEST_SYSTEM_RUNTIME_API UQuestCondition : public UObject
 	GENERATED_BODY()
 public:
 	UPROPERTY(BlueprintReadOnly, Category = "QuestCondition")
-		TObjectPtr<UQuestSystemGraph> QuestGraph;
+		TObjectPtr<UQuestBuilderGraph> QuestGraph;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestCondition")
-		TObjectPtr<UQuestSystemGraphNode> OwningNode;
+		TObjectPtr<UQuestBuilderNode> OwningNode;
 
 	/**Display quest ID in property panel?*/
 	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
@@ -35,7 +35,7 @@ public:
 		FName NodeID;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "QuestCondition")
-		TObjectPtr<UQuestSystem> QuestSystem;
+		TObjectPtr<UQuest> QuestSystem;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestCondition")
 		bool IsConditionMet() const;
@@ -57,10 +57,10 @@ public:
 		UQuestComponent* GetQuestComponent() const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestCondition")
-		UQuestSystemGraph* GetOwningQuestGraph() const;
+		UQuestBuilderGraph* GetOwningQuestGraph() const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestCondition")
-		UQuestSystem* GetOwningQuestSystem() const;
+		UQuest* GetOwningQuestSystem() const;
 
 	UFUNCTION(CallInEditor)
 	virtual	TArray<FName> GetAllQuestID();

@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Delegates/Delegate.h"
-#include "QuestSystemGraph.h"
+#include "QuestBuilderGraph.h"
 #include "Factories/Factory.h"
 #include "UObject/Object.h"
 #include "AssetDefinitionDefault.h"
@@ -101,7 +101,7 @@ class UQuestBuilderFactory : public UFactory
 public:
 
 	UPROPERTY(EditAnywhere, Category = DataAsset)	
-		TSubclassOf<UQuestSystemGraph> QuestSystemGraphClass;
+		TSubclassOf<UQuestBuilderGraph> QuestSystemGraphClass;
 
 	virtual bool ConfigureProperties() override;
 	virtual UObject* FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn) override;
@@ -118,7 +118,7 @@ public:
 
 	virtual FText GetAssetDisplayName() const override { return FText::FromString("Quest Builder Graph"); }
 	virtual FLinearColor GetAssetColor() const override { return FLinearColor(FColor(48, 165, 171)); }
-	virtual TSoftClassPtr<UObject> GetAssetClass() const override { return UQuestSystemGraph::StaticClass(); }
+	virtual TSoftClassPtr<UObject> GetAssetClass() const override { return UQuestBuilderGraph::StaticClass(); }
 
 	virtual TConstArrayView<FAssetCategoryPath> GetAssetCategories() const override
 	{

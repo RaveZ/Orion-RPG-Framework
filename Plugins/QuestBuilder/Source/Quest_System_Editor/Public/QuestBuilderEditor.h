@@ -7,7 +7,7 @@
 #include "SSubobjectEditor.h"
 #include "Quest_System_Editor.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
-#include "QuestSystemGraph.h"
+#include "QuestBuilderGraph.h"
 
 class SMyQuest;
 
@@ -130,7 +130,7 @@ public:
 	// End of FSerializableObject interface
 
 	/** Returns a pointer to the Quest graph object we are currently editing, as long as we are editing exactly one */
-	virtual UQuestSystemGraph* GetQuestSystemObj() const;
+	virtual UQuestBuilderGraph* GetQuestSystemObj() const;
 
 	// Type of new document/graph being created by a menu item
 	enum ECreatedQuestDocumentType
@@ -314,7 +314,7 @@ protected:
 	TWeakPtr<FDocumentTabFactory> QuestEditorTabFactoryPtr;
 
 
-	UQuestSystemGraph* EditingQuestGraph;
+	UQuestBuilderGraph* EditingQuestGraph;
 
 
 	//Toolbar

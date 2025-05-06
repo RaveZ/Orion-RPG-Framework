@@ -2,11 +2,11 @@
 
 
 #include "QuestBuilderEdNode_Objective.h"
-#include "QuestSystemGraphNode.h"
+#include "QuestBuilderNode.h"
 
 FText UQuestBuilderEdNode_Objective::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	const UQuestSystemGraphNode* MyNode = Cast<UQuestSystemGraphNode>(QuestSystemGraphNode);
+	const UQuestBuilderNode* MyNode = Cast<UQuestBuilderNode>(QuestSystemGraphNode);
 
 	if (MyNode != NULL)
 	{

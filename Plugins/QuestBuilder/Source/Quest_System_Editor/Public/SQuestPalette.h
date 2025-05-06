@@ -31,10 +31,10 @@ public:
 	 * @param  InQuestEditor	A pointer to the Quest editor that the palette belongs to.
 	 */
 	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, TWeakPtr<FQuestBuilderEditor> InQuestEditor);
-	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestSystemGraph* InQuestSystemGraph);
+	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestBuilderGraph* InQuestSystemGraph);
 
 private:
-	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestSystemGraph* InQuestSystemGraph, TWeakPtr<FQuestBuilderEditor> InQuestEditor);
+	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestBuilderGraph* InQuestSystemGraph, TWeakPtr<FQuestBuilderEditor> InQuestEditor);
 
 	// SWidget Interface
 	virtual void OnDragEnter(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent) override;
@@ -61,7 +61,7 @@ private:
 	/** True if the class should be displayed in the tooltip */
 	bool bShowClassInTooltip;
 
-	UQuestSystemGraph* QuestSystemGraph;
+	UQuestBuilderGraph* QuestSystemGraph;
 
 	/** Pointer back to the Quest editor that owns this */
 	TWeakPtr<FQuestBuilderEditor> QuestEditorPtr;

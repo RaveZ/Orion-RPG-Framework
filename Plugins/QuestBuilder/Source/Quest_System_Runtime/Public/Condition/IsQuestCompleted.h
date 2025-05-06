@@ -7,7 +7,7 @@
 #include "IsQuestCompleted.generated.h"
 
 
-class UQuestSystem;
+class UQuest;
 
 UCLASS()
 class QUEST_SYSTEM_RUNTIME_API UIsQuestCompleted : public UQuestCondition
