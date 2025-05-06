@@ -1,38 +1,38 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "EdNode_QuestSystemNode.h"
+#include "QuestBuilderEdNode.h"
 #include "QuestSystemGraphNode.h"
 
-UEdNode_QuestSystemNode::UEdNode_QuestSystemNode()
+UQuestBuilderEdNode::UQuestBuilderEdNode()
 {
 	bIsReadOnly = false;
 	bCanRenameNode = true;
 }
 
-UEdNode_QuestSystemNode::~UEdNode_QuestSystemNode()
+UQuestBuilderEdNode::~UQuestBuilderEdNode()
 {
 }
 
-void UEdNode_QuestSystemNode::SetQuestSystemGraphNode(UQuestSystemGraphNode* InNode)
+void UQuestBuilderEdNode::SetQuestSystemGraphNode(UQuestSystemGraphNode* InNode)
 {
 	QuestSystemGraphNode = InNode;
 }
 
-UEdGraph_QuestSystemGraph* UEdNode_QuestSystemNode::GetQuestSystemGraphEdGraph()
+UQuestBuilderEdGraph* UQuestBuilderEdNode::GetQuestSystemGraphEdGraph()
 {
-	return Cast<UEdGraph_QuestSystemGraph>(GetGraph());
+	return Cast<UQuestBuilderEdGraph>(GetGraph());
 }
 
 
 
-void UEdNode_QuestSystemNode::AllocateDefaultPins()
+void UQuestBuilderEdNode::AllocateDefaultPins()
 {
 	CreatePin(EGPD_Input, "MultipleNodes", FName(), TEXT("In"));
 	CreatePin(EGPD_Output, "MultipleNodes", FName(), TEXT("Out"));
 }
 
-FText UEdNode_QuestSystemNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
+FText UQuestBuilderEdNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
 	if (QuestSystemGraphNode == nullptr)
 	{
@@ -44,22 +44,22 @@ FText UEdNode_QuestSystemNode::GetNodeTitle(ENodeTitleType::Type TitleType) cons
 	}
 }
 
-bool UEdNode_QuestSystemNode::CanDuplicateNode() const
+bool UQuestBuilderEdNode::CanDuplicateNode() const
 {
 	return bIsReadOnly ? false : Super::CanDuplicateNode();
 }
 
-bool UEdNode_QuestSystemNode::CanUserDeleteNode() const
+bool UQuestBuilderEdNode::CanUserDeleteNode() const
 {
 	return bIsReadOnly ? false : Super::CanUserDeleteNode();
 }
 
-void UEdNode_QuestSystemNode::PrepareForCopying()
+void UQuestBuilderEdNode::PrepareForCopying()
 {
 	QuestSystemGraphNode->Rename(nullptr, this, REN_DontCreateRedirectors | REN_DoNotDirty);
 }
 
-void UEdNode_QuestSystemNode::AutowireNewNode(UEdGraphPin* FromPin)
+void UQuestBuilderEdNode::AutowireNewNode(UEdGraphPin* FromPin)
 {
 	Super::AutowireNewNode(FromPin);
 
@@ -71,27 +71,27 @@ void UEdNode_QuestSystemNode::AutowireNewNode(UEdGraphPin* FromPin)
 	}
 }
 
-FText UEdNode_QuestSystemNode::GetDescription() const
+FText UQuestBuilderEdNode::GetDescription() const
 {
 	return QuestSystemGraphNode->GetNodeDescription();
 }
 
-FText UEdNode_QuestSystemNode::GetEventsText() const
+FText UQuestBuilderEdNode::GetEventsText() const
 {
 	return QuestSystemGraphNode->GetEventsText();
 }
 
-FText UEdNode_QuestSystemNode::GetConditionsText() const
+FText UQuestBuilderEdNode::GetConditionsText() const
 {
 	return QuestSystemGraphNode->GetConditionsText();
 }
 
-FLinearColor UEdNode_QuestSystemNode::GetBackgroundColor() const
+FLinearColor UQuestBuilderEdNode::GetBackgroundColor() const
 {
 	return QuestSystemGraphNode == nullptr ? FLinearColor::Black : QuestSystemGraphNode->GetBackgroundColor();
 }
 
-UEdGraphPin* UEdNode_QuestSystemNode::GetInputPin() const
+UEdGraphPin* UQuestBuilderEdNode::GetInputPin() const
 {
 	//return Pins[0];
 	for (int32 PinIndex = 0; PinIndex < Pins.Num(); PinIndex++)
@@ -105,7 +105,7 @@ UEdGraphPin* UEdNode_QuestSystemNode::GetInputPin() const
 	return nullptr;
 }
 
-UEdGraphPin* UEdNode_QuestSystemNode::GetOutputPin() const
+UEdGraphPin* UQuestBuilderEdNode::GetOutputPin() const
 {
 	//return Pins[1];
 	for (int32 PinIndex = 0; PinIndex < Pins.Num(); PinIndex++)
@@ -119,16 +119,16 @@ UEdGraphPin* UEdNode_QuestSystemNode::GetOutputPin() const
 	return nullptr;
 }
 
-void UEdNode_QuestSystemNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
+void UQuestBuilderEdNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
 }
 
-bool UEdNode_QuestSystemNode::UsesBlueprint() const
+bool UQuestBuilderEdNode::UsesBlueprint() const
 {
 	return QuestSystemGraphNode && QuestSystemGraphNode->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint);
 }
 
-void UEdNode_QuestSystemNode::PostEditUndo()
+void UQuestBuilderEdNode::PostEditUndo()
 {
 	UEdGraphNode::PostEditUndo();
 }

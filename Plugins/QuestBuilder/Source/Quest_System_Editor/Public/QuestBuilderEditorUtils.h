@@ -3,17 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "EdNode_QuestSystemNode.h"
+#include "QuestBuilderEdNode.h"
 #include "QuestSystemGraph.h"
 
 /**
  * 
  */
-class QUEST_SYSTEM_EDITOR_API FQuestSystemEditorUtils
+class QUEST_SYSTEM_EDITOR_API FQuestBuilderEditorUtils
 {
 public:
-	FQuestSystemEditorUtils();
-	~FQuestSystemEditorUtils();
+	FQuestBuilderEditorUtils();
+	~FQuestBuilderEditorUtils();
 
 
 	static FName FindUniqueQuestName(const FString& InBaseName);
@@ -55,7 +55,7 @@ public:
 	 * @param Node				The node to remove.
 	 * @param bDontRecompile	If true, the UQuestSystemGraph will not be marked as modified, and will not be recompiled.  Useful for if you are removing several node at once, and don't want to recompile each time
 	 */
-	static void RemoveNode(UQuestSystemGraph* QuestSystemGraph, UEdNode_QuestSystemNode* Node, bool bDontRecompile = false);
+	static void RemoveNode(UQuestSystemGraph* QuestSystemGraph, UQuestBuilderEdNode* Node, bool bDontRecompile = false);
 
 	/**
 	 * Removes the supplied graph from the UQuestSystemGraph.

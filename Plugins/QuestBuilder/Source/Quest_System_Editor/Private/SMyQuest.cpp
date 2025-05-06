@@ -7,7 +7,7 @@
 #include "SGraphActionMenu.h"
 #include "GraphActionNode.h"
 #include "SGraphPalette.h"
-#include "QuestSystemEditorUtils.h"
+#include "QuestBuilderEditorUtils.h"
 #include "Quest_System_EditorCommands.h"
 #include "Widgets/Input/SSearchBox.h"
 #include "QuestBuilderEditor.h"
@@ -353,7 +353,7 @@ void SMyQuest::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& 
 		{
 			TSharedPtr<FQuestBuilderEditor> QuestEditor = QuestEditorPtr.Pin();
 
-			if (UEdGraph_QuestSystemGraph* QuestGraph = Cast<UEdGraph_QuestSystemGraph>(QuestEditor->FocusedEdGraph))
+			if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(QuestEditor->FocusedEdGraph))
 			{
 				QuestEditor->PropertyWidget->SetObject(QuestGraph->QuestSystem);
 			}
@@ -402,7 +402,7 @@ void SMyQuest::ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction)
 
 				TSharedPtr<FQuestBuilderEditor> QuestEditor = QuestEditorPtr.Pin();
 
-				if (UEdGraph_QuestSystemGraph* QuestGraph = Cast<UEdGraph_QuestSystemGraph>(QuestEditor->ViewportWidget->GetCurrentGraph()))
+				if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(QuestEditor->ViewportWidget->GetCurrentGraph()))
 				{
 					QuestEditor->PropertyWidget->SetObject(QuestGraph->QuestSystem);
 				}
@@ -697,20 +697,20 @@ void SMyQuest::OnDeleteGraph(UEdGraph* InGraph)
 
 		
 		// Remove any  nodes bound to this graph
-		TArray<UEdNode_QuestSystemNode*> AllNodes;
-		FQuestSystemEditorUtils::GetAllNodesOfClass<UEdNode_QuestSystemNode>(GetQuestSystemObj(), AllNodes);
+		TArray<UQuestBuilderEdNode*> AllNodes;
+		FQuestBuilderEditorUtils::GetAllNodesOfClass<UQuestBuilderEdNode>(GetQuestSystemObj(), AllNodes);
 
 		const bool bDontRecompile = true;
-		for (UEdNode_QuestSystemNode* CompNode : AllNodes)
+		for (UQuestBuilderEdNode* CompNode : AllNodes)
 		{
 			if (CompNode->GetQuestSystemGraphEdGraph() == InGraph)
 			{
-				FQuestSystemEditorUtils::RemoveNode(GetQuestSystemObj(), CompNode, bDontRecompile);
+				FQuestBuilderEditorUtils::RemoveNode(GetQuestSystemObj(), CompNode, bDontRecompile);
 			}
 		}
 		
 
-		FQuestSystemEditorUtils::RemoveGraph(GetQuestSystemObj(), InGraph);
+		FQuestBuilderEditorUtils::RemoveGraph(GetQuestSystemObj(), InGraph);
 		QuestEditorPtr.Pin()->CloseDocumentTab(InGraph);
 
 
@@ -728,7 +728,7 @@ void SMyQuest::OpenGraph(FDocumentTracker::EOpenDocumentCause InCause, bool bOpe
 		// If we have no graph then this is an interface event, so focus on the event graph
 		/*if (!GraphToOpen)
 		{
-			GraphToOpen = FQuestSystemEditorUtils::FindQuestGraph(GetQuestSystemObj());
+			GraphToOpen = FQuestBuilderEditorUtils::FindQuestGraph(GetQuestSystemObj());
 		}*/
 	}
 

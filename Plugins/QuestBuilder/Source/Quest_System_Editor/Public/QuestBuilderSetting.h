@@ -4,17 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "Setting_QuestEditor.generated.h"
+#include "QuestBuilderSetting.generated.h"
 
 
 
 UCLASS(config = Engine, defaultconfig)
-class QUEST_SYSTEM_EDITOR_API UQuestEditorSettings : public UObject
+class QUEST_SYSTEM_EDITOR_API UQuestBuilderSetting : public UObject
 {
 	GENERATED_BODY()
 
-	UQuestEditorSettings();
-	virtual ~UQuestEditorSettings();
+	UQuestBuilderSetting();
+	virtual ~UQuestBuilderSetting();
 
 public:
 

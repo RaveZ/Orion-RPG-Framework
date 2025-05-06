@@ -2,8 +2,8 @@
 
 
 #include "QuestBuilder_ConnectionDrawingPolicy.h"
-#include "EdNode_QuestSystemNode.h"
-#include "EdNode_QuestSystemEdge.h"
+#include "QuestBuilderEdNode.h"
+#include "QuestBuilderEdNode_Edge.h"
 
 FQuestBuilder_ConnectionDrawingPolicy::FQuestBuilder_ConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj)
 	: FConnectionDrawingPolicy(InBackLayerID, InFrontLayerID, ZoomFactor, InClippingRect, InDrawElements)
@@ -122,10 +122,10 @@ FVector2D FQuestBuilder_ConnectionDrawingPolicy::ComputeSplineTangent(const FVec
 
 void FQuestBuilder_ConnectionDrawingPolicy::DetermineLinkGeometry(FArrangedChildren& ArrangedNodes, TSharedRef<SWidget>& OutputPinWidget, UEdGraphPin* OutputPin, UEdGraphPin* InputPin, FArrangedWidget*& StartWidgetGeometry, FArrangedWidget*& EndWidgetGeometry)
 {
-	if (UEdNode_QuestSystemEdge* EdgeNode = Cast<UEdNode_QuestSystemEdge>(InputPin->GetOwningNode()))
+	if (UQuestBuilderEdNode_Edge* EdgeNode = Cast<UQuestBuilderEdNode_Edge>(InputPin->GetOwningNode()))
 	{
-		UEdNode_QuestSystemNode* Start = EdgeNode->GetStartNode();
-		UEdNode_QuestSystemNode* End = EdgeNode->GetEndNode();
+		UQuestBuilderEdNode* Start = EdgeNode->GetStartNode();
+		UQuestBuilderEdNode* End = EdgeNode->GetEndNode();
 		if (Start != nullptr && End != nullptr)
 		{
 			int32* StartNodeIndex = NodeWidgetMap.Find(Start);

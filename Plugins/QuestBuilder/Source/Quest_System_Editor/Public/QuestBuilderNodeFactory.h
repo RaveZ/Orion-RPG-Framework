@@ -8,7 +8,7 @@
 /**
  * 
  */
-class FQuestSystemNodeFactory : public FGraphPanelNodeFactory
+class FQuestBuilderNodeFactory : public FGraphPanelNodeFactory
 {
 	virtual TSharedPtr<class SGraphNode> CreateNode(UEdGraphNode* Node) const override;
 };

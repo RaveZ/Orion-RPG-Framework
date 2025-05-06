@@ -15,15 +15,15 @@
 #include "Framework/Commands/GenericCommands.h"
 #include "QuestBuilderEditorToolbar.h"
 #include "Quest_System_EditorCommands.h"
-#include "EdGraph_QuestSystemGraph.h"
-#include "EdNode_QuestSystemNode.h"
+#include "QuestBuilderEdGraph.h"
+#include "QuestBuilderEdNode.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "K2Node.h"
-#include "EdNode_QuestSystemEdge.h"
+#include "QuestBuilderEdNode_Edge.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "EdGraphSchema_QuestBuilder.h"
-#include "QuestSystemEditorUtils.h"
+#include "QuestBuilderEditorUtils.h"
 #include "QuestBuilderFactory.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "SMyQuest.h"
@@ -41,9 +41,9 @@
 #define LOCTEXT_NAMESPACE "QuestBuilderEditor"
 
 const FName FQuestBuilderEditorTabs::MyQuestDetailID(TEXT("MyQuestDetail"));
-const FName FQuestBuilderEditorTabs::GenericGraphPropertyID(TEXT("GenericGraphProperty"));
+const FName FQuestBuilderEditorTabs::QuestBuilderPropertyID(TEXT("QuestBuilderProperty"));
 const FName FQuestBuilderEditorTabs::ViewportID(TEXT("Viewport"));
-const FName FQuestBuilderEditorTabs::GenericGraphEditorSettingsID(TEXT("GenericGraphEditorSettings"));
+const FName FQuestBuilderEditorTabs::QuestBuilderEditorSettingsID(TEXT("QuestBuilderEditorSettings"));
 
 const FName QuestBuilderEditorAppName = FName(TEXT("QuestBuilderEditorApp"));
 
@@ -137,7 +137,7 @@ void FQuestBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShare
 		CreateInternalWidgets();
 
 		// Layout
-		const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("Standalone_GenericGraphEditor_Layout_v1")
+		const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("Standalone_QuestBuilderEditor_Layout_v1")
 			->AddArea
 			(
 				FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
@@ -171,7 +171,7 @@ void FQuestBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShare
 						(
 							FTabManager::NewStack()
 							->SetSizeCoefficient(0.55f)
-							->AddTab(FQuestBuilderEditorTabs::GenericGraphPropertyID, ETabState::OpenedTab)
+							->AddTab(FQuestBuilderEditorTabs::QuestBuilderPropertyID, ETabState::OpenedTab)
 						)
 					)
 				)
@@ -217,7 +217,7 @@ void FQuestBuilderEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& InT
 {
 	DocumentManager->SetTabManager(InTabManager);
 
-	WorkspaceMenuCategory = InTabManager->AddLocalWorkspaceMenuCategory(LOCTEXT("WorkspaceMenu_GenericGraphEditor", "Generic Graph Editor"));
+	WorkspaceMenuCategory = InTabManager->AddLocalWorkspaceMenuCategory(LOCTEXT("WorkspaceMenu_QuestBuilderEditor", "Generic Graph Editor"));
 	auto WorkspaceMenuCategoryRef = WorkspaceMenuCategory.ToSharedRef();
 
 	FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
@@ -232,7 +232,7 @@ void FQuestBuilderEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& InT
 		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.EventGraph_16x"));
 
-	InTabManager->RegisterTabSpawner(FQuestBuilderEditorTabs::GenericGraphPropertyID, FOnSpawnTab::CreateSP(this, &FQuestBuilderEditor::SpawnTab_Details))
+	InTabManager->RegisterTabSpawner(FQuestBuilderEditorTabs::QuestBuilderPropertyID, FOnSpawnTab::CreateSP(this, &FQuestBuilderEditor::SpawnTab_Details))
 		.SetDisplayName(LOCTEXT("DetailsTab", "Property"))
 		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
@@ -244,8 +244,8 @@ void FQuestBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& I
 
 	InTabManager->UnregisterTabSpawner(FQuestBuilderEditorTabs::MyQuestDetailID);
 	InTabManager->UnregisterTabSpawner(FQuestBuilderEditorTabs::ViewportID);
-	InTabManager->UnregisterTabSpawner(FQuestBuilderEditorTabs::GenericGraphPropertyID);
-	InTabManager->UnregisterTabSpawner(FQuestBuilderEditorTabs::GenericGraphEditorSettingsID);
+	InTabManager->UnregisterTabSpawner(FQuestBuilderEditorTabs::QuestBuilderPropertyID);
+	InTabManager->UnregisterTabSpawner(FQuestBuilderEditorTabs::QuestBuilderEditorSettingsID);
 }
 
 
@@ -582,7 +582,7 @@ void FQuestBuilderEditor::NewDocument_OnClicked(ECreatedQuestDocumentType GraphT
 	
 
 	// Make sure the new name is valid
-	DocumentName = FQuestSystemEditorUtils::FindUniqueQuestName(DocumentNameText.ToString());
+	DocumentName = FQuestBuilderEditorUtils::FindUniqueQuestName(DocumentNameText.ToString());
 		
 	//check(IsEditingSingleBlueprint());
 
@@ -594,8 +594,8 @@ void FQuestBuilderEditor::NewDocument_OnClicked(ECreatedQuestDocumentType GraphT
 	
 	if (GraphType == CGT_NewQuestGraph)
 	{
-		NewGraph = FQuestSystemEditorUtils::CreateNewGraph(GetQuestSystemObj(), DocumentName, UEdGraph_QuestSystemGraph::StaticClass(), UEdGraphSchema_QuestBuilder::StaticClass());
-		FQuestSystemEditorUtils::AddQuestGraphPage(GetQuestSystemObj(), NewGraph);
+		NewGraph = FQuestBuilderEditorUtils::CreateNewGraph(GetQuestSystemObj(), DocumentName, UQuestBuilderEdGraph::StaticClass(), UEdGraphSchema_QuestBuilder::StaticClass());
+		FQuestBuilderEditorUtils::AddQuestGraphPage(GetQuestSystemObj(), NewGraph);
 	}
 	else
 	{
@@ -713,7 +713,7 @@ void FQuestBuilderEditor::InitializeDocumentTab()
 	UQuestSystemGraph* QuestSystemGraph = GetQuestSystemObj();
 	if (QuestSystemGraph->LastEditedDocuments.Num() == 0)
 	{
-			QuestSystemGraph->LastEditedDocuments.Add(FQuestSystemEditorUtils::FindQuestGraph(QuestSystemGraph));
+			QuestSystemGraph->LastEditedDocuments.Add(FQuestBuilderEditorUtils::FindQuestGraph(QuestSystemGraph));
 	}
 
 	for (int32 i = 0; i < QuestSystemGraph->LastEditedDocuments.Num(); i++)
@@ -893,7 +893,7 @@ TSharedRef<SDockTab> FQuestBuilderEditor::SpawnTab_Viewport(const FSpawnTabArgs&
 
 TSharedRef<SDockTab> FQuestBuilderEditor::SpawnTab_Details(const FSpawnTabArgs& Args)
 {
-	check(Args.GetTabId() == FQuestBuilderEditorTabs::GenericGraphPropertyID);
+	check(Args.GetTabId() == FQuestBuilderEditorTabs::QuestBuilderPropertyID);
 
 	return SNew(SDockTab)
 #if ENGINE_MAJOR_VERSION < 5
@@ -907,7 +907,7 @@ TSharedRef<SDockTab> FQuestBuilderEditor::SpawnTab_Details(const FSpawnTabArgs& 
 
 TSharedRef<SDockTab> FQuestBuilderEditor::SpawnTab_EditorSettings(const FSpawnTabArgs& Args)
 {
-	check(Args.GetTabId() == FQuestBuilderEditorTabs::GenericGraphEditorSettingsID);
+	check(Args.GetTabId() == FQuestBuilderEditorTabs::QuestBuilderEditorSettingsID);
 
 	return SNew(SDockTab)
 #if ENGINE_MAJOR_VERSION < 5
@@ -982,11 +982,12 @@ void FQuestBuilderEditor::RebuildQuestSystemGraph()
 
 	for (UEdGraph* EdGraph : EditingQuestGraph->QuestGraphPages)
 	{
-		check(EdGraph != nullptr);
-
-		if (UEdGraph_QuestSystemGraph* QuestGraph = Cast<UEdGraph_QuestSystemGraph>(EdGraph))
+		if (EdGraph)
 		{
-			QuestGraph->RebuildQuestSystemGraph();
+			if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(EdGraph))
+			{
+				QuestGraph->RebuildQuestSystemGraph();
+			}
 		}
 	}
 }
@@ -1023,7 +1024,7 @@ void FQuestBuilderEditor::DeleteSelectedNodes()
 		if (EdNode == nullptr || !EdNode->CanUserDeleteNode())
 			continue;;
 
-		if (UEdNode_QuestSystemNode* EdNode_Node = Cast<UEdNode_QuestSystemNode>(EdNode))
+		if (UQuestBuilderEdNode* EdNode_Node = Cast<UQuestBuilderEdNode>(EdNode))
 		{
 			EdNode_Node->Modify();
 
@@ -1123,10 +1124,10 @@ void FQuestBuilderEditor::CopySelectedNodes()
 			continue;
 		}
 
-		if (UEdNode_QuestSystemEdge* EdNode_Edge = Cast<UEdNode_QuestSystemEdge>(*SelectedIter))
+		if (UQuestBuilderEdNode_Edge* EdNode_Edge = Cast<UQuestBuilderEdNode_Edge>(*SelectedIter))
 		{
-			UEdNode_QuestSystemNode* StartNode = EdNode_Edge->GetStartNode();
-			UEdNode_QuestSystemNode* EndNode = EdNode_Edge->GetEndNode();
+			UQuestBuilderEdNode* StartNode = EdNode_Edge->GetStartNode();
+			UQuestBuilderEdNode* EndNode = EdNode_Edge->GetEndNode();
 
 			if (!SelectedNodes.Contains(StartNode) || !SelectedNodes.Contains(EndNode))
 			{
@@ -1201,9 +1202,9 @@ void FQuestBuilderEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVect
 
 			if (ShouldGetNewID)
 			{
-				if (UEdNode_QuestSystemNode* EdNode = Cast<UEdNode_QuestSystemNode>(*It))
+				if (UQuestBuilderEdNode* EdNode = Cast<UQuestBuilderEdNode>(*It))
 				{
-					EdNode->QuestSystemGraphNode->ID = FQuestSystemEditorUtils::FindUniqueNodeName(EdNode->QuestSystemGraphNode->ID.ToString());
+					EdNode->QuestSystemGraphNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName(EdNode->QuestSystemGraphNode->ID.ToString());
 				}
 			}
 			else
@@ -1392,7 +1393,7 @@ void FQuestBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& New
 
 	if (Selection.Num() == 0)
 	{
-		if (UEdGraph_QuestSystemGraph* QuestGraph = Cast<UEdGraph_QuestSystemGraph>(ViewportWidget->GetCurrentGraph()))
+		if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(ViewportWidget->GetCurrentGraph()))
 		{
 			PropertyWidget->SetObject(QuestGraph->QuestSystem);
 		}
@@ -1401,7 +1402,7 @@ void FQuestBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& New
 	{
 		if (UQuestSystemGraphNode_Root* RootNode = Cast<UQuestSystemGraphNode_Root>(Selection[0]))
 		{
-			if (UEdGraph_QuestSystemGraph* QuestGraph = Cast<UEdGraph_QuestSystemGraph>(ViewportWidget->GetCurrentGraph()))
+			if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(ViewportWidget->GetCurrentGraph()))
 			{
 				PropertyWidget->SetObject(QuestGraph->QuestSystem);
 			}
@@ -1419,7 +1420,7 @@ void FQuestBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& New
 
 void FQuestBuilderEditor::OnNodeDoubleClicked(UEdGraphNode* Node)
 {
-	UEdNode_QuestSystemNode* MyNode = Cast<UEdNode_QuestSystemNode>(Node);
+	UQuestBuilderEdNode* MyNode = Cast<UQuestBuilderEdNode>(Node);
 	if (MyNode && MyNode->QuestSystemGraphNode &&
 		MyNode->QuestSystemGraphNode->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint))
 	{

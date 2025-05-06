@@ -1,19 +1,19 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "EdNode_QuestSystemState.h"
+#include "QuestBuilderEdNode_State.h"
 #include "QuestSystemGraphNode.h"
 
-UEdNode_QuestSystemState::UEdNode_QuestSystemState()
+UQuestBuilderEdNode_State::UQuestBuilderEdNode_State()
 {
 }
 
-void UEdNode_QuestSystemState::AllocateDefaultPins()
+void UQuestBuilderEdNode_State::AllocateDefaultPins()
 {
 	CreatePin(EGPD_Input, "MultipleNode", TEXT("In"));
 }
 
-FText UEdNode_QuestSystemState::GetNodeTitle(ENodeTitleType::Type TitleType) const
+FText UQuestBuilderEdNode_State::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
 	const UQuestSystemGraphNode* MyNode = Cast<UQuestSystemGraphNode>(QuestSystemGraphNode);
 	if (MyNode != NULL)

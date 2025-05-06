@@ -8,7 +8,7 @@
 #include "SMyQuest.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 #include "EdGraphSchema_QuestBuilder.h"
-#include "EdGraph_QuestSystemGraph.h"
+#include "QuestBuilderEdGraph.h"
 #include "QuestSystemGraph.h"
 #include "Condition/QuestCondition.h"
 #include "QuestBuilderFunctionLibrary.h"
@@ -151,7 +151,7 @@ FText SQuestPaletteItem::GetDisplayText() const
 	{
 		TSharedPtr< FEdGraphSchemaAction > GraphAction = ActionPtr.Pin();
 		FAssetSchemaAction_QuestSystemGraph* QuestGraphAction = (FAssetSchemaAction_QuestSystemGraph*)GraphAction.Get();
-		if (UEdGraph_QuestSystemGraph* QuestEdGraph = Cast<UEdGraph_QuestSystemGraph>(QuestGraphAction->EdGraph))
+		if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(QuestGraphAction->EdGraph))
 		{
 			MenuDescriptionCache.SetCachedText(FText::FromName(QuestEdGraph->QuestSystem->QuestID), QuestSchema);
 		}
@@ -167,7 +167,7 @@ bool SQuestPaletteItem::OnNameTextVerifyChanged(const FText& InNewText, FText& O
 	FName OriginalName;
 
 	FAssetSchemaAction_QuestSystemGraph* QuestGraphAction = (FAssetSchemaAction_QuestSystemGraph*)ActionPtr.Pin().Get();
-	if (UEdGraph_QuestSystemGraph* QuestEdGraph = Cast<UEdGraph_QuestSystemGraph>(QuestGraphAction->EdGraph))
+	if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(QuestGraphAction->EdGraph))
 	{
 		OriginalName = QuestEdGraph->QuestSystem->QuestID;
 	}
@@ -207,7 +207,7 @@ void SQuestPaletteItem::OnNameTextCommitted(const FText& NewText, ETextCommit::T
    FName OriginalName;  
 
    FAssetSchemaAction_QuestSystemGraph* QuestGraphAction = (FAssetSchemaAction_QuestSystemGraph*)ActionPtr.Pin().Get();  
-   if (UEdGraph_QuestSystemGraph* QuestEdGraph = Cast<UEdGraph_QuestSystemGraph>(QuestGraphAction->EdGraph))  
+   if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(QuestGraphAction->EdGraph))  
    {  
 	   //Rename Succesful
        OriginalName = QuestEdGraph->QuestSystem->QuestID;  

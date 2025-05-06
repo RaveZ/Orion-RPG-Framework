@@ -7,21 +7,21 @@
 #include "AIGraphTypes.h"
 #include "UObject/ObjectMacros.h"
 #include "UObject/NoExportTypes.h"
-#include "EdGraph_QuestSystemGraph.h"
+#include "QuestBuilderEdGraph.h"
 #include "QuestSystemGraph.h"
-#include "EdNode_QuestSystemNode.generated.h"
+#include "QuestBuilderEdNode.generated.h"
 
 class UEdNode_QuestSystemEdge;
-class UEdGraph_QuestSystemGraph;
-class SGraphNode_QuestSystemNode;
+class UQuestBuilderEdGraph;
+class SGraphNode_QuestBuilderNode;
 
 UCLASS()
-class QUEST_SYSTEM_EDITOR_API UEdNode_QuestSystemNode : public UEdGraphNode
+class QUEST_SYSTEM_EDITOR_API UQuestBuilderEdNode : public UEdGraphNode
 {
 	GENERATED_BODY()
 public:
-	UEdNode_QuestSystemNode();
-	virtual ~UEdNode_QuestSystemNode();
+	UQuestBuilderEdNode();
+	virtual ~UQuestBuilderEdNode();
 
 	/** instance class */
 	UPROPERTY()
@@ -31,9 +31,9 @@ public:
 		TObjectPtr<UQuestSystemGraphNode> QuestSystemGraphNode;
 	
 	void SetQuestSystemGraphNode(UQuestSystemGraphNode* InNode);
-	UEdGraph_QuestSystemGraph* GetQuestSystemGraphEdGraph();
+	UQuestBuilderEdGraph* GetQuestSystemGraphEdGraph();
 
-	SGraphNode_QuestSystemNode* SGraphNode;
+	SGraphNode_QuestBuilderNode* SGraphNode;
 
 	//UedGraphnode interface
 	virtual void AllocateDefaultPins() override;

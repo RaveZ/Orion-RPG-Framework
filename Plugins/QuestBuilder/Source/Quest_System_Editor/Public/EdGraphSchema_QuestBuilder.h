@@ -8,8 +8,8 @@
 
 /** Action to add a node to the graph */
 
-class UEdNode_QuestSystemNode;
-class UEdNode_QuestSystemEdge;
+class UQuestBuilderEdNode;
+class UQuestBuilderEdNode_Edge;
 
 /** Action to add a node to the graph */
 USTRUCT()
@@ -26,7 +26,7 @@ public:
 	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 
-	TObjectPtr<UEdNode_QuestSystemNode> NodeTemplate;
+	TObjectPtr<UQuestBuilderEdNode> NodeTemplate;
 };
 
 USTRUCT()
@@ -43,7 +43,7 @@ public:
 	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 
-	TObjectPtr <UEdNode_QuestSystemEdge> NodeTemplate;
+	TObjectPtr <UQuestBuilderEdNode_Edge> NodeTemplate;
 };
 
 /** Reference to a  event graph (only used in 'docked' palette) */

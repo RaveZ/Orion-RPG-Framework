@@ -1,10 +1,11 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "EdGraph_QuestSystemGraph.h"
-#include "EdNode_QuestSystemEdge.h"
-#include "EdNode_QuestSystemRoot.h"
-#include "EdNode_QuestSystemNode.h"
+#include "QuestBuilderEdGraph.h"
+#include "QuestBuilderEdNode_Edge.h"
+#include "QuestBuilderEdNode_Root.h"
+#include "QuestBuilderEdNode.h"
+#include "QuestBuilderEdNode.h"
 #include "QuestSystemGraphEdge.h"
 #include "QuestSystemGraphNode.h"
 #include "QuestSystemGraphNode_Objective.h"
@@ -13,17 +14,17 @@
 #include "Task/QuestTask.h"
 
 
-UEdGraph_QuestSystemGraph::UEdGraph_QuestSystemGraph()
+UQuestBuilderEdGraph::UQuestBuilderEdGraph()
 {
 }
 
-UEdGraph_QuestSystemGraph::~UEdGraph_QuestSystemGraph()
+UQuestBuilderEdGraph::~UQuestBuilderEdGraph()
 {
 }
 
-void UEdGraph_QuestSystemGraph::RebuildQuestSystemGraph()
+void UQuestBuilderEdGraph::RebuildQuestSystemGraph()
 {
-	//LOG_INFO(TEXT("UQuestSystemGraphEdGraph::RebuildGenericGraph has been called"));
+	//LOG_INFO(TEXT("UQuestSystemGraphEdGraph::RebuildQuestBuilder has been called"));
 
 	UQuestSystemGraph* Graph = GetQuestSystemGraph();
 
@@ -50,7 +51,7 @@ void UEdGraph_QuestSystemGraph::RebuildQuestSystemGraph()
 
 	for (int i = 0; i < Nodes.Num(); ++i)
 	{
-		if (UEdNode_QuestSystemNode* EdNode = Cast<UEdNode_QuestSystemNode>(Nodes[i]))
+		if (UQuestBuilderEdNode* EdNode = Cast<UQuestBuilderEdNode>(Nodes[i]))
 		{
 			if (EdNode->QuestSystemGraphNode == nullptr)
 				continue;
@@ -72,13 +73,13 @@ void UEdGraph_QuestSystemGraph::RebuildQuestSystemGraph()
 				for (int LinkToIdx = 0; LinkToIdx < Pin->LinkedTo.Num(); ++LinkToIdx)
 				{
 					UQuestSystemGraphNode* ChildNode = nullptr;
-					if (UEdNode_QuestSystemNode* EdNode_Child = Cast<UEdNode_QuestSystemNode>(Pin->LinkedTo[LinkToIdx]->GetOwningNode()))
+					if (UQuestBuilderEdNode* EdNode_Child = Cast<UQuestBuilderEdNode>(Pin->LinkedTo[LinkToIdx]->GetOwningNode()))
 					{
 						ChildNode = EdNode_Child->QuestSystemGraphNode;
 					}
-					else if (UEdNode_QuestSystemEdge* EdNode_Edge = Cast<UEdNode_QuestSystemEdge>(Pin->LinkedTo[LinkToIdx]->GetOwningNode()))
+					else if (UQuestBuilderEdNode_Edge* EdNode_Edge = Cast<UQuestBuilderEdNode_Edge>(Pin->LinkedTo[LinkToIdx]->GetOwningNode()))
 					{
-						UEdNode_QuestSystemNode* Child = EdNode_Edge->GetEndNode();
+						UQuestBuilderEdNode* Child = EdNode_Edge->GetEndNode();
 						if (Child != nullptr)
 						{
 							ChildNode = Child->QuestSystemGraphNode;
@@ -93,7 +94,7 @@ void UEdGraph_QuestSystemGraph::RebuildQuestSystemGraph()
 					}
 					else
 					{
-						//LOG_ERROR(TEXT("UEdGraph_GenericGraph::RebuildGenericGraph can't find child node"));
+						//LOG_ERROR(TEXT("UEdGraph_QuestBuilder::RebuildQuestBuilder can't find child node"));
 					}
 				}
 			}
@@ -132,15 +133,15 @@ void UEdGraph_QuestSystemGraph::RebuildQuestSystemGraph()
 			}
 
 		}
-		else if (UEdNode_QuestSystemEdge* EdgeNode = Cast<UEdNode_QuestSystemEdge>(Nodes[i]))
+		else if (UQuestBuilderEdNode_Edge* EdgeNode = Cast<UQuestBuilderEdNode_Edge>(Nodes[i]))
 		{
-			UEdNode_QuestSystemNode* StartNode = EdgeNode->GetStartNode();
-			UEdNode_QuestSystemNode* EndNode = EdgeNode->GetEndNode();
+			UQuestBuilderEdNode* StartNode = EdgeNode->GetStartNode();
+			UQuestBuilderEdNode* EndNode = EdgeNode->GetEndNode();
 			UQuestSystemGraphEdge* Edge = EdgeNode->QuestSystemGraphEdge;
 
 			if (StartNode == nullptr || EndNode == nullptr || Edge == nullptr)
 			{
-				//LOG_ERROR(TEXT("UEdGraph_GenericGraph::RebuildGenericGraph add edge failed."));
+				//LOG_ERROR(TEXT("UEdGraph_QuestBuilder::RebuildQuestBuilder add edge failed."));
 				continue;
 			}
 
@@ -153,7 +154,7 @@ void UEdGraph_QuestSystemGraph::RebuildQuestSystemGraph()
 			Edge->StartNode->Edges.Add(Edge->EndNode, Edge);
 		}
 
-		if (UEdNode_QuestSystemRoot* RootNode = Cast<UEdNode_QuestSystemRoot>(Nodes[i]))
+		if (UQuestBuilderEdNode_Root* RootNode = Cast<UQuestBuilderEdNode_Root>(Nodes[i]))
 		{
 			if (RootNode->QuestSystemGraphNode == nullptr)
 				continue;
@@ -181,20 +182,20 @@ void UEdGraph_QuestSystemGraph::RebuildQuestSystemGraph()
 
 	QuestSystem->RootNodes.Sort([&](const UQuestSystemGraphNode& L, const UQuestSystemGraphNode& R)
 	{
-		UEdNode_QuestSystemNode* EdNode_LNode = NodeMap[&L];
-		UEdNode_QuestSystemNode* EdNode_RNode = NodeMap[&R];
+		UQuestBuilderEdNode* EdNode_LNode = NodeMap[&L];
+		UQuestBuilderEdNode* EdNode_RNode = NodeMap[&R];
 		return EdNode_LNode->NodePosX < EdNode_RNode->NodePosX;
 	});
 
 	
 }
 
-UQuestSystemGraph* UEdGraph_QuestSystemGraph::GetQuestSystemGraph() const
+UQuestSystemGraph* UQuestBuilderEdGraph::GetQuestSystemGraph() const
 {
 	return CastChecked<UQuestSystemGraph>(GetOuter());
 }
 
-bool UEdGraph_QuestSystemGraph::Modify(bool bAlwaysMarkDirty)
+bool UQuestBuilderEdGraph::Modify(bool bAlwaysMarkDirty)
 {
 	bool Rtn = Super::Modify(bAlwaysMarkDirty);
 
@@ -208,7 +209,7 @@ bool UEdGraph_QuestSystemGraph::Modify(bool bAlwaysMarkDirty)
 	return Rtn;
 }
 
-void UEdGraph_QuestSystemGraph::PostEditUndo()
+void UQuestBuilderEdGraph::PostEditUndo()
 {
 	Super::PostEditUndo();
 
@@ -216,7 +217,7 @@ void UEdGraph_QuestSystemGraph::PostEditUndo()
 	
 }
 
-void UEdGraph_QuestSystemGraph::Clear()
+void UQuestBuilderEdGraph::Clear()
 {
 	QuestSystem->ClearGraph();
 	QuestSystem->NodeMap.Reset();
@@ -225,7 +226,7 @@ void UEdGraph_QuestSystemGraph::Clear()
 
 	for (int i = 0; i < Nodes.Num(); ++i)
 	{
-		if (UEdNode_QuestSystemNode* EdNode = Cast<UEdNode_QuestSystemNode>(Nodes[i]))
+		if (UQuestBuilderEdNode* EdNode = Cast<UQuestBuilderEdNode>(Nodes[i]))
 		{
 			UQuestSystemGraphNode* QuestGraphNode = EdNode->QuestSystemGraphNode;
 			if (QuestGraphNode)
@@ -238,7 +239,7 @@ void UEdGraph_QuestSystemGraph::Clear()
 	}
 }
 
-void UEdGraph_QuestSystemGraph::SortNodes(UQuestSystemGraphNode* RootNode)
+void UQuestBuilderEdGraph::SortNodes(UQuestSystemGraphNode* RootNode)
 {
 	int Level = 0;
 	TArray<UQuestSystemGraphNode*> CurrLevelNodes = { RootNode };
@@ -255,8 +256,8 @@ void UEdGraph_QuestSystemGraph::SortNodes(UQuestSystemGraphNode* RootNode)
 
 			auto Comp = [&](const UQuestSystemGraphNode& L, const UQuestSystemGraphNode& R)
 			{
-				UEdNode_QuestSystemNode* EdNode_LNode = NodeMap[&L];
-				UEdNode_QuestSystemNode* EdNode_RNode = NodeMap[&R];
+				UQuestBuilderEdNode* EdNode_LNode = NodeMap[&L];
+				UQuestBuilderEdNode* EdNode_RNode = NodeMap[&R];
 				return EdNode_LNode->NodePosX < EdNode_RNode->NodePosX;
 			};
 

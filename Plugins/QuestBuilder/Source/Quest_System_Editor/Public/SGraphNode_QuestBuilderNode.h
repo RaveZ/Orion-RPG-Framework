@@ -5,18 +5,18 @@
 #include "CoreMinimal.h"
 #include "SGraphNode.h"
 #include "Widgets/SCompoundWidget.h"
-#include "EdNode_QuestSystemNode.h"
+#include "QuestBuilderEdNode.h"
 
-class UEdNode_QuestSystemNode;
-class QUEST_SYSTEM_EDITOR_API SGraphNode_QuestSystemNode : public SGraphNode
+class UQuestBuilderEdNode;
+class QUEST_SYSTEM_EDITOR_API SGraphNode_QuestBuilderNode : public SGraphNode
 {
 public:
-	SLATE_BEGIN_ARGS(SGraphNode_QuestSystemNode)
+	SLATE_BEGIN_ARGS(SGraphNode_QuestBuilderNode)
 	{}
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */
-	void Construct(const FArguments& InArgs, UEdNode_QuestSystemNode* InNode);
+	void Construct(const FArguments& InArgs, UQuestBuilderEdNode* InNode);
 	virtual void UpdateGraphNode() override;
 	virtual TArray<FOverlayWidgetInfo> GetOverlayWidgets(bool bSelected, const FVector2D& WidgetSize) const override;
 	virtual void CreatePinWidgets() override;

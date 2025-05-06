@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Setting_QuestEditor.h"
+#include "QuestBuilderSetting.h"
 #include "SSubobjectEditor.h"
 #include "Quest_System_Editor.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
@@ -25,9 +25,9 @@ struct FQuestBuilderEditorTabs
 {
 	// Tab identifiers
 	static const FName MyQuestDetailID;
-	static const FName GenericGraphPropertyID;
+	static const FName QuestBuilderPropertyID;
 	static const FName ViewportID;
-	static const FName GenericGraphEditorSettingsID;
+	static const FName QuestBuilderEditorSettingsID;
 };
 
 

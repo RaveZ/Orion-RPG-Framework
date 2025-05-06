@@ -1,11 +1,11 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "SGraphNode_QuestSystemEdge.h"
+#include "SGraphNode_QuestBuilderEdge.h"
 #include "SlateOptMacros.h"
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
-void SGraphNode_QuestSystemEdge::Construct(const FArguments& InArgs, UEdNode_QuestSystemEdge* InNode)
+void SGraphNode_QuestBuilderEdge::Construct(const FArguments& InArgs, UQuestBuilderEdNode_Edge* InNode)
 {
 }
 

@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "EdNode_QuestSystemNode.h"
-#include "EdNode_QuestSystemTask.generated.h"
+#include "QuestBuilderEdNode.h"
+#include "QuestBuilderEdNode_Objective.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class QUEST_SYSTEM_EDITOR_API UEdNode_QuestSystemTask : public UEdNode_QuestSystemNode
+class QUEST_SYSTEM_EDITOR_API UQuestBuilderEdNode_Objective : public UQuestBuilderEdNode
 {
 	GENERATED_BODY()
 public:

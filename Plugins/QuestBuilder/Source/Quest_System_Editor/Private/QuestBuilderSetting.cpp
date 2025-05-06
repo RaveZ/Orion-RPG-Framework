@@ -1,10 +1,10 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "Setting_QuestEditor.h"
+#include "QuestBuilderSetting.h"
 #include "UObject/ConstructorHelpers.h"
 
-UQuestEditorSettings::UQuestEditorSettings()
+UQuestBuilderSetting::UQuestBuilderSetting()
 {
 	FailedNodeColor = FLinearColor(0.38f, 0.f, 0.f);
 	SuccessNodeColor = FLinearColor(0.f, 0.38f, 0.f);
@@ -14,6 +14,6 @@ UQuestEditorSettings::UQuestEditorSettings()
 	RootNodeColor = FLinearColor(0.1f, 0.1f, 0.1f);
 }
 
-UQuestEditorSettings::~UQuestEditorSettings()
+UQuestBuilderSetting::~UQuestBuilderSetting()
 {
 }

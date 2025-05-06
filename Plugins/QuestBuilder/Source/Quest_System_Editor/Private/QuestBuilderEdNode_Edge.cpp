@@ -1,23 +1,23 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "EdNode_QuestSystemEdge.h"
+#include "QuestBuilderEdNode_Edge.h"
 #include "QuestSystemGraphEdge.h"
-#include "EdNode_QuestSystemNode.h"
+#include "QuestBuilderEdNode.h"
 
 #define LOCTEXT_NAMESPACE "EdNode_QuestSystemGraphEdge"
 
-UEdNode_QuestSystemEdge::UEdNode_QuestSystemEdge()
+UQuestBuilderEdNode_Edge::UQuestBuilderEdNode_Edge()
 {
 	bCanRenameNode = true;
 }
 
-void UEdNode_QuestSystemEdge::SetEdge(UQuestSystemGraphEdge* Edge)
+void UQuestBuilderEdNode_Edge::SetEdge(UQuestSystemGraphEdge* Edge)
 {
 	QuestSystemGraphEdge = Edge;
 }
 
-void UEdNode_QuestSystemEdge::AllocateDefaultPins()
+void UQuestBuilderEdNode_Edge::AllocateDefaultPins()
 {
 	UEdGraphPin* Inputs = CreatePin(EGPD_Input, TEXT("Edge"), FName(), TEXT("In"));
 	Inputs->bHidden = true;
@@ -25,7 +25,7 @@ void UEdNode_QuestSystemEdge::AllocateDefaultPins()
 	Outputs->bHidden = true;
 }
 
-FText UEdNode_QuestSystemEdge::GetNodeTitle(ENodeTitleType::Type TitleType) const
+FText UQuestBuilderEdNode_Edge::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
 	if (QuestSystemGraphEdge)
 	{
@@ -34,7 +34,7 @@ FText UEdNode_QuestSystemEdge::GetNodeTitle(ENodeTitleType::Type TitleType) cons
 	return FText();
 }
 
-void UEdNode_QuestSystemEdge::PinConnectionListChanged(UEdGraphPin* Pin)
+void UQuestBuilderEdNode_Edge::PinConnectionListChanged(UEdGraphPin* Pin)
 {
 	if (Pin->LinkedTo.Num() == 0)
 	{
@@ -51,12 +51,12 @@ void UEdNode_QuestSystemEdge::PinConnectionListChanged(UEdGraphPin* Pin)
 	}
 }
 
-void UEdNode_QuestSystemEdge::PrepareForCopying()
+void UQuestBuilderEdNode_Edge::PrepareForCopying()
 {
 	QuestSystemGraphEdge->Rename(nullptr, this, REN_DontCreateRedirectors | REN_DoNotDirty);
 }
 
-void UEdNode_QuestSystemEdge::CreateConnections(UEdNode_QuestSystemNode* Start, UEdNode_QuestSystemNode* End)
+void UQuestBuilderEdNode_Edge::CreateConnections(UQuestBuilderEdNode* Start, UQuestBuilderEdNode* End)
 {
 	Pins[0]->Modify();
 	Pins[0]->LinkedTo.Empty();
@@ -72,11 +72,11 @@ void UEdNode_QuestSystemEdge::CreateConnections(UEdNode_QuestSystemNode* Start, 
 	Pins[1]->MakeLinkTo(End->GetInputPin());
 }
 
-UEdNode_QuestSystemNode* UEdNode_QuestSystemEdge::GetStartNode()
+UQuestBuilderEdNode* UQuestBuilderEdNode_Edge::GetStartNode()
 {
 	if (Pins[0]->LinkedTo.Num() > 0)
 	{
-		return Cast<UEdNode_QuestSystemNode>(Pins[0]->LinkedTo[0]->GetOwningNode());
+		return Cast<UQuestBuilderEdNode>(Pins[0]->LinkedTo[0]->GetOwningNode());
 	}
 	else
 	{
@@ -84,11 +84,11 @@ UEdNode_QuestSystemNode* UEdNode_QuestSystemEdge::GetStartNode()
 	}
 }
 
-UEdNode_QuestSystemNode* UEdNode_QuestSystemEdge::GetEndNode()
+UQuestBuilderEdNode* UQuestBuilderEdNode_Edge::GetEndNode()
 {
 	if (Pins[1]->LinkedTo.Num() > 0)
 	{
-		return Cast<UEdNode_QuestSystemNode>(Pins[1]->LinkedTo[0]->GetOwningNode());
+		return Cast<UQuestBuilderEdNode>(Pins[1]->LinkedTo[0]->GetOwningNode());
 	}
 	else
 	{

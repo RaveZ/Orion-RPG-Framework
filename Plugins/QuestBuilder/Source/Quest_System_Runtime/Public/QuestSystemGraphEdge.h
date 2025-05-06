@@ -18,26 +18,26 @@ public:
 	UQuestSystemGraphEdge();
 	virtual ~UQuestSystemGraphEdge();
 
-	UPROPERTY(VisibleAnywhere, Category = "GenericGraphNode")
+	UPROPERTY(VisibleAnywhere, Category = "QuestBuilderNode")
 		TObjectPtr<UQuestSystemGraph> Graph;
 
-	UPROPERTY(BlueprintReadOnly, Category = "GenericGraphEdge")
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderEdge")
 		TObjectPtr<UQuestSystemGraphNode> StartNode;
 
-	UPROPERTY(BlueprintReadOnly, Category = "GenericGraphEdge")
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderEdge")
 		TObjectPtr<UQuestSystemGraphNode> EndNode;
 
-	UFUNCTION(BlueprintPure, Category = "GenericGraphEdge")
+	UFUNCTION(BlueprintPure, Category = "QuestBuilderEdge")
 		UQuestSystemGraph* GetGraph() const;
 
 #if WITH_EDITORONLY_DATA
-	UPROPERTY(EditDefaultsOnly, Category = "GenericGraphNode_Editor")
+	UPROPERTY(EditDefaultsOnly, Category = "QuestBuilderNode_Editor")
 		bool bShouldDrawTitle = false;
 
-	UPROPERTY(EditDefaultsOnly, Category = "GenericGraphNode_Editor")
+	UPROPERTY(EditDefaultsOnly, Category = "QuestBuilderNode_Editor")
 		FText NodeTitle;
 
-	UPROPERTY(EditDefaultsOnly, Category = "GenericGraphEdge")
+	UPROPERTY(EditDefaultsOnly, Category = "QuestBuilderEdge")
 		FLinearColor EdgeColour = FLinearColor(0.9f, 0.9f, 0.9f, 1.0f);
 #endif
 

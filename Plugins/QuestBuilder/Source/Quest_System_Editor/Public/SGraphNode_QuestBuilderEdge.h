@@ -5,18 +5,18 @@
 #include "CoreMinimal.h"
 #include "SGraphNode.h"
 #include "Widgets/SCompoundWidget.h"
-#include <EdNode_QuestSystemEdge.h>
+#include "QuestBuilderEdNode_Edge.h"
 
 /**
  * 
  */
-class QUEST_SYSTEM_EDITOR_API SGraphNode_QuestSystemEdge : public SGraphNode
+class QUEST_SYSTEM_EDITOR_API SGraphNode_QuestBuilderEdge : public SGraphNode
 {
 public:
-	SLATE_BEGIN_ARGS(SGraphNode_QuestSystemEdge)
+	SLATE_BEGIN_ARGS(SGraphNode_QuestBuilderEdge)
 	{}
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */
-	void Construct(const FArguments& InArgs, UEdNode_QuestSystemEdge* InNode);
+	void Construct(const FArguments& InArgs, UQuestBuilderEdNode_Edge* InNode);
 };

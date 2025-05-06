@@ -13,7 +13,7 @@ class UQuestSystemGraphNode;
 class UQuestSystemGraphEdge;
 class AController;
 class APawn;
-class UEdGraph_QuestSystemGraph;
+class UQuestBuilderEdGraph;
 
 UCLASS(Blueprintable)
 class QUEST_SYSTEM_RUNTIME_API UQuestSystemGraph : public UObject

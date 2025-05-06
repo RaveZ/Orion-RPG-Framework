@@ -16,7 +16,7 @@
 #include "Widgets/Text/STextBlock.h"
 #include "ToolMenus.h"
 #include "Styling/SlateStyleRegistry.h"
-#include "Setting_QuestEditor.h"
+#include "QuestBuilderSetting.h"
 #include "QuestData.h"
 
 
@@ -39,7 +39,7 @@ void FQuest_System_EditorModule::StartupModule()
 	RegisterSettings();
 
 	//Register GraphNodeFactory
-	GraphPanelNodeFactory_QuestEditor = MakeShareable(new FQuestSystemNodeFactory());
+	GraphPanelNodeFactory_QuestEditor = MakeShareable(new FQuestBuilderNodeFactory());
 	FEdGraphUtilities::RegisterVisualNodeFactory(GraphPanelNodeFactory_QuestEditor);
 	
 
@@ -101,7 +101,7 @@ void FQuest_System_EditorModule::RegisterSettings()
 		SettingsModule->RegisterSettings("Project", "Plugins", "Quest Builder - Editor",
 			LOCTEXT("QuestBuilderSettingsName", "Quest Builder - Editor"),
 			LOCTEXT("QuestBuilderSettingsDescription", "Configuration Settings for the Quest Builder Editor"),
-			GetMutableDefault<UQuestEditorSettings>()
+			GetMutableDefault<UQuestBuilderSetting>()
 		);
 
 	}

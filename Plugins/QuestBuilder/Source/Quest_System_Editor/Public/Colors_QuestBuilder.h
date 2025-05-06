@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 
-namespace QuestSystemColors
+namespace QuestBuilderColors
 {
 	namespace NodeBody
 	{

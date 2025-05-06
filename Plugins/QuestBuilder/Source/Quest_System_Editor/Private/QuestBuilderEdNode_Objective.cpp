@@ -1,10 +1,10 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "EdNode_QuestSystemTask.h"
+#include "QuestBuilderEdNode_Objective.h"
 #include "QuestSystemGraphNode.h"
 
-FText UEdNode_QuestSystemTask::GetNodeTitle(ENodeTitleType::Type TitleType) const
+FText UQuestBuilderEdNode_Objective::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
 	const UQuestSystemGraphNode* MyNode = Cast<UQuestSystemGraphNode>(QuestSystemGraphNode);
 

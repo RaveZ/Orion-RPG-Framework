@@ -3,22 +3,23 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EdGraph/EdGraphNode.h"
 #include "UObject/NoExportTypes.h"
-#include <QuestSystemGraph.h>
-#include "EdNode_QuestSystemEdge.generated.h"
+#include "QuestSystemGraph.h"
+#include "QuestBuilderEdNode_Edge.generated.h"
 
 
 class UQuestSystemGraphNode;
 class UQuestSystemGraphEdge;
-class UEdNode_QuestSystemNode;
+class UQuestBuilderEdNode;
 class UEdGraph;
 
 UCLASS()
-class QUEST_SYSTEM_EDITOR_API UEdNode_QuestSystemEdge : public UEdGraphNode
+class QUEST_SYSTEM_EDITOR_API UQuestBuilderEdNode_Edge : public UEdGraphNode
 {
 	GENERATED_BODY()
 public:
-	UEdNode_QuestSystemEdge();
+	UQuestBuilderEdNode_Edge();
 
 	UPROPERTY()
 		TObjectPtr<UEdGraph> Graph;
@@ -39,8 +40,8 @@ public:
 	virtual UEdGraphPin* GetInputPin() const { return Pins[0]; }
 	virtual UEdGraphPin* GetOutputPin() const { return Pins[1]; }
 
-	void CreateConnections(UEdNode_QuestSystemNode* Start, UEdNode_QuestSystemNode* End);
+	void CreateConnections(UQuestBuilderEdNode* Start, UQuestBuilderEdNode* End);
 
-	UEdNode_QuestSystemNode* GetStartNode();
-	UEdNode_QuestSystemNode* GetEndNode();
+	UQuestBuilderEdNode* GetStartNode();
+	UQuestBuilderEdNode* GetEndNode();
 };

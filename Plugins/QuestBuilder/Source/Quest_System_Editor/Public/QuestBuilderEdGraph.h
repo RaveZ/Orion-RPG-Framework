@@ -5,21 +5,22 @@
 #include "CoreMinimal.h"
 #include "EdGraph/EdGraph.h"
 #include "QuestSystem.h"
-#include "EdGraph_QuestSystemGraph.generated.h"
+#include "QuestBuilderEdGraph.generated.h"
 
 class UQuestSystemGraph;
 class UQuestSystemGraphNode;
 class UQuestSystemGraphEdge;
-class UEdNode_QuestSystemNode;
-class UEdNode_QuestSystemEdge;
+class UQuestBuilderEdNode;
+class UQuestBuilderEdNode_Edge;
+class UQuestBuilderEdNode_Edge;
 
 UCLASS()
-class QUEST_SYSTEM_EDITOR_API UEdGraph_QuestSystemGraph : public UEdGraph
+class QUEST_SYSTEM_EDITOR_API UQuestBuilderEdGraph : public UEdGraph
 {
 	GENERATED_BODY()
 public:
-	UEdGraph_QuestSystemGraph();
-	virtual ~UEdGraph_QuestSystemGraph();
+	UQuestBuilderEdGraph();
+	virtual ~UQuestBuilderEdGraph();
 
 	virtual void RebuildQuestSystemGraph();
 
@@ -33,10 +34,10 @@ public:
 		TObjectPtr<UQuestSystem> QuestSystem;
 
 	UPROPERTY(Transient)
-		TMap< TObjectPtr<UQuestSystemGraphNode>, TObjectPtr<UEdNode_QuestSystemNode>> NodeMap;
+		TMap< TObjectPtr<UQuestSystemGraphNode>, TObjectPtr<UQuestBuilderEdNode>> NodeMap;
 
 	UPROPERTY(Transient)
-		TMap< TObjectPtr<UQuestSystemGraphEdge>, TObjectPtr<UEdNode_QuestSystemEdge>> EdgeMap;
+		TMap< TObjectPtr<UQuestSystemGraphEdge>, TObjectPtr<UQuestBuilderEdNode_Edge>> EdgeMap;
 
 
 	void Clear();

@@ -1,20 +1,20 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "EdNode_QuestSystemRoot.h"
+#include "QuestBuilderEdNode_Root.h"
 
-UEdNode_QuestSystemRoot::UEdNode_QuestSystemRoot()
+UQuestBuilderEdNode_Root::UQuestBuilderEdNode_Root()
 {
 	bIsReadOnly = true;
 	bCanRenameNode = false;
 }
 
-void UEdNode_QuestSystemRoot::AllocateDefaultPins()
+void UQuestBuilderEdNode_Root::AllocateDefaultPins()
 {
 	CreatePin(EGPD_Output, "MultipleNode", TEXT("In"));
 }
 
-FText UEdNode_QuestSystemRoot::GetNodeTitle(ENodeTitleType::Type TitleType) const
+FText UQuestBuilderEdNode_Root::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
 	return NSLOCTEXT("BehaviorTreeEditor", "Root", "ROOT");
 	
