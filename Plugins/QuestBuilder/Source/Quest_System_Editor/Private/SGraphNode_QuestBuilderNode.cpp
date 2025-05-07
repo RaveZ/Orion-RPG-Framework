@@ -466,12 +466,12 @@ TArray<FOverlayWidgetInfo> SGraphNode_QuestBuilderNode::GetOverlayWidgets(bool b
 {
 	TArray<FOverlayWidgetInfo> Widgets;
 
-	/*check(IndexOverlay.IsValid());
+	check(IndexOverlay.IsValid());
 
 	FVector2D Origin(0.0f, 0.0f);
 	FOverlayWidgetInfo Overlay(IndexOverlay);
 	Overlay.OverlayOffset = FVector2D(WidgetSize.X - (IndexOverlay->GetDesiredSize().X * 0.5f), Origin.Y);
-	Widgets.Add(Overlay);*/
+	Widgets.Add(Overlay);
 
 	return Widgets;
 }
@@ -746,26 +746,46 @@ EVisibility SGraphNode_QuestBuilderNode::GetIndexVisibility() const
 		return EVisibility::Collapsed;
 	}
 
-	UQuestBuilderEdNode* StateNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	UEdGraphPin* MyInputPin = StateNode->GetInputPin();
+	UQuestBuilderEdNode* QuestEdNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
+	UEdGraphPin* MyInputPin = QuestEdNode->GetInputPin();
 	UEdGraphPin* MyParentOutputPin = NULL;
 	if (MyInputPin != NULL && MyInputPin->LinkedTo.Num() > 0)
 	{
 		MyParentOutputPin = MyInputPin->LinkedTo[0];
 	}
 
-	// Visible if we are in PIE or if we have siblings
-	const bool bCanShowIndex = ShouldShowExecutionIndex() || (MyParentOutputPin && MyParentOutputPin->LinkedTo.Num() > 1);
-
+	
 	// LOD this out once things get too small
 	TSharedPtr<SGraphPanel> MyOwnerPanel = GetOwnerPanel();
+
+	UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(GraphNode->GetGraph());
+
+	FGraphPanelSelectionSet SelectedNodes;
+	if (QuestEdGraph && QuestEdGraph->SEditorGraph)
+	{
+		SelectedNodes = QuestEdGraph->SEditorGraph->GetSelectedNodes();
+	}
+
+	UQuestBuilderNode* FirstSelectedNode = nullptr;
+	if (SelectedNodes.Num() > 0)
+	{
+		// Get the first element of the SelectedNodes set
+		UQuestBuilderEdNode* SelectedQuestEdNode = Cast<UQuestBuilderEdNode>(*SelectedNodes.CreateConstIterator());
+		FirstSelectedNode = SelectedQuestEdNode->QuestSystemGraphNode;
+	}
+
+	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(QuestEdNode->QuestSystemGraphNode);
+
+	// Visible if ((we are in PIE || if we have siblings) && (SelectedNodes only one && Matching parent with selected nodes))
+	const bool bCanShowIndex = (ShouldShowExecutionIndex() || (MyParentOutputPin && MyParentOutputPin->LinkedTo.Num() > 1)) && (SelectedNodes.Num() == 1 && (FirstSelectedNode && QuestNode) && (QuestNode->ParentNodes.Contains(FirstSelectedNode)));
+
 	return (bCanShowIndex && (!MyOwnerPanel.IsValid() || MyOwnerPanel->GetCurrentLOD() > EGraphRenderingLOD::LowDetail)) ? EVisibility::Visible : EVisibility::Collapsed;
 }
 
 FText SGraphNode_QuestBuilderNode::GetIndexText() const
 {
-	UQuestBuilderEdNode* QuestEditorNode = Cast<UQuestBuilderEdNode>(GraphNode);
-	UEdGraphPin* MyInputPin = QuestEditorNode->GetInputPin();
+	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
+	UEdGraphPin* MyInputPin = QuestEdNode->GetInputPin();
 	UEdGraphPin* MyParentOutputPin = NULL;
 	if (MyInputPin != NULL && MyInputPin->LinkedTo.Num() > 0)
 	{
@@ -774,27 +794,38 @@ FText SGraphNode_QuestBuilderNode::GetIndexText() const
 
 	int32 Index = 0;
 
-	if (ShouldShowExecutionIndex())
+	UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(GraphNode->GetGraph());
+
+	FGraphPanelSelectionSet SelectedNodes;
+	if (QuestEdGraph && QuestEdGraph->SEditorGraph)
 	{
-		// show execution index (debugging purposes)
-		UQuestBuilderNode* QuestSystemNode = QuestEditorNode ? QuestEditorNode->QuestSystemGraphNode : nullptr;
-		Index = (QuestSystemNode && QuestSystemNode->ExecutionIndex < 0xffff) ? QuestSystemNode->ExecutionIndex : -1;
+		SelectedNodes = QuestEdGraph->SEditorGraph->GetSelectedNodes();
 	}
-	else
+
+	UQuestBuilderNode* FirstSelectedNode = nullptr;
+	if (SelectedNodes.Num() > 0)
 	{
-		// show child index
-		if (MyParentOutputPin != NULL)
+		// Get the first element of the SelectedNodes set
+		UQuestBuilderEdNode* SelectedQuestEdNode = Cast<UQuestBuilderEdNode>(*SelectedNodes.CreateConstIterator());
+		FirstSelectedNode = SelectedQuestEdNode->QuestSystemGraphNode;
+	}
+
+	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(QuestEdNode->QuestSystemGraphNode);
+
+	if (QuestNode->ParentNodes.Contains(FirstSelectedNode))
+	{
+		for (int i = 0; i < FirstSelectedNode->ChildrenNodes.Num(); i++)
 		{
-			for (Index = 0; Index < MyParentOutputPin->LinkedTo.Num(); ++Index)
+			//Select this index if node matches with the selected node childrens
+			if (FirstSelectedNode->ChildrenNodes[i] == QuestNode)
 			{
-				if (MyParentOutputPin->LinkedTo[Index] == MyInputPin)
-				{
-					break;
-				}
+				Index = i + 1;//Index start from 1
+				break;
 			}
 		}
 	}
-
+	
+	
 	return FText::AsNumber(Index);
 }
 

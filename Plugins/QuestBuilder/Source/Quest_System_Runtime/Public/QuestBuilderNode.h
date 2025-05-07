@@ -91,10 +91,6 @@ public:
 	static FString GetShortTypeName(const UObject* Ob);
 
 
-	/** depth first index (execution order) */
-	UPROPERTY()
-	uint16 ExecutionIndex;
-
 	//////////////////////////////////////////////////////////////////////////
 #if WITH_EDITORONLY_DATA
 

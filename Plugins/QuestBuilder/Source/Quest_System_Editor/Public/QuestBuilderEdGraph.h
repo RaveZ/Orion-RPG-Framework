@@ -22,12 +22,15 @@ public:
 	UQuestBuilderEdGraph();
 	virtual ~UQuestBuilderEdGraph();
 
-	virtual void RebuildQuestSystemGraph();
+	virtual void RebuildQuestBuilderGraph(bool bForce = false);
+
+	virtual void SortAllChildrenNodes(bool bForce = false);
 
 	UQuestBuilderGraph* GetQuestSystemGraph() const;
 
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
-	virtual void PostEditUndo() override;
+
+	class SGraphEditor* SEditorGraph;
 
 	/** QuestSystem linked with this UEdGraph */
 	UPROPERTY(VisibleAnywhere, Instanced, Category = "QuestSystemGraph")
@@ -39,10 +42,15 @@ public:
 	UPROPERTY(Transient)
 		TMap< TObjectPtr<UQuestBuilderEdge>, TObjectPtr<UQuestBuilderEdNode_Edge>> EdgeMap;
 
-
 	void Clear();
 
+	void OnPackageMarkedDirty(UPackage* ModifiedPackage, bool bWasDirty);
 protected:
-
 	void SortNodes(UQuestBuilderNode* RootNode);
+	double LastRebuildTime = 0.f;
+	double LastSortTime = 0.f;
+
+#if WITH_EDITOR
+	virtual void PostEditUndo() override;
+#endif
 };

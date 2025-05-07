@@ -16,15 +16,39 @@
 
 UQuestBuilderEdGraph::UQuestBuilderEdGraph()
 {
+	GetOutermost()->PackageMarkedDirtyEvent.AddUObject(this, &UQuestBuilderEdGraph::OnPackageMarkedDirty);
+	LastRebuildTime = 0.f;
+	LastSortTime = 0.f;
 }
 
 UQuestBuilderEdGraph::~UQuestBuilderEdGraph()
 {
 }
 
-void UQuestBuilderEdGraph::RebuildQuestSystemGraph()
+
+
+void UQuestBuilderEdGraph::OnPackageMarkedDirty(UPackage* ModifiedPackage, bool bWasDirty)  
+{  
+   
+}
+
+
+void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 {
-	//LOG_INFO(TEXT("UQuestSystemGraphEdGraph::RebuildQuestBuilder has been called"));
+	const double CurrentTime = FPlatformTime::Seconds();
+
+	if (!bForce)
+	{
+		// Prevent the function from being called twice in the same timeframe (e.g., 1 second)
+		if (CurrentTime - LastRebuildTime < .5f)
+		{
+			return;
+		}
+	}
+
+	LastRebuildTime = CurrentTime;
+
+	UE_LOG(LogTemp, Log, TEXT("RebuildQuestBuilderGraph started."));
 
 	UQuestBuilderGraph* Graph = GetQuestSystemGraph();
 
@@ -92,10 +116,6 @@ void UQuestBuilderEdGraph::RebuildQuestSystemGraph()
 
 						ChildNode->ParentNodes.Add(QuestSystemGraphNode);
 					}
-					else
-					{
-						//LOG_ERROR(TEXT("UEdGraph_QuestBuilder::RebuildQuestBuilder can't find child node"));
-					}
 				}
 			}
 
@@ -141,7 +161,6 @@ void UQuestBuilderEdGraph::RebuildQuestSystemGraph()
 
 			if (StartNode == nullptr || EndNode == nullptr || Edge == nullptr)
 			{
-				//LOG_ERROR(TEXT("UEdGraph_QuestBuilder::RebuildQuestBuilder add edge failed."));
 				continue;
 			}
 
@@ -178,16 +197,54 @@ void UQuestBuilderEdGraph::RebuildQuestSystemGraph()
 		Node->Rename(nullptr, Graph, REN_DontCreateRedirectors | REN_DoNotDirty);
 	}
 
+	SortAllChildrenNodes(true);
 	
+}
 
-	QuestSystem->RootNodes.Sort([&](const UQuestBuilderNode& L, const UQuestBuilderNode& R)
+void UQuestBuilderEdGraph::SortAllChildrenNodes(bool bForce)
+{
+	const double CurrentTime = FPlatformTime::Seconds();
+
+	if (!bForce)
 	{
-		UQuestBuilderEdNode* EdNode_LNode = NodeMap[&L];
-		UQuestBuilderEdNode* EdNode_RNode = NodeMap[&R];
-		return EdNode_LNode->NodePosX < EdNode_RNode->NodePosX;
-	});
+		// Prevent the function from being called twice in the same timeframe (e.g., 1 second)
+		if (CurrentTime - LastSortTime < .5f)
+		{
+			return;
+		}
+	}
 
-	
+	LastSortTime = CurrentTime;
+	FTimerHandle TimerHandle;
+	if (GEditor)
+	{
+		GEditor->GetTimerManager()->SetTimer(
+			TimerHandle,
+			FTimerDelegate::CreateLambda([this]()
+				{
+					//sort children nodes based on the PosY of EdNode
+					for (auto& Node : QuestSystem->AllNodes)
+					{
+						Node->ChildrenNodes.Sort([&](const UQuestBuilderNode& B, const UQuestBuilderNode& T)
+							{
+								UQuestBuilderEdNode* EdNode_BNode = NodeMap.FindRef(&B);
+								UQuestBuilderEdNode* EdNode_TNode = NodeMap.FindRef(&T);
+								if (EdNode_BNode && EdNode_TNode)
+								{
+									return EdNode_TNode->NodePosY > EdNode_BNode->NodePosY;
+								}
+								else
+								{
+									return false;
+								}
+							});
+
+					}
+				}),
+			.5f, // Delay in seconds
+			false // Do not loop
+		);
+	}
 }
 
 UQuestBuilderGraph* UQuestBuilderEdGraph::GetQuestSystemGraph() const
@@ -209,13 +266,15 @@ bool UQuestBuilderEdGraph::Modify(bool bAlwaysMarkDirty)
 	return Rtn;
 }
 
+#if WITH_EDITOR
 void UQuestBuilderEdGraph::PostEditUndo()
 {
 	Super::PostEditUndo();
 
 	NotifyGraphChanged();
-	
+	RebuildQuestBuilderGraph();
 }
+#endif // WITH_EDITOR
 
 void UQuestBuilderEdGraph::Clear()
 {

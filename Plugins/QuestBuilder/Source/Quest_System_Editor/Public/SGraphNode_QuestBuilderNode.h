@@ -14,6 +14,7 @@ public:
 	SLATE_BEGIN_ARGS(SGraphNode_QuestBuilderNode)
 	{}
 	SLATE_END_ARGS()
+	// SWidget interface 
 
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs, UQuestBuilderEdNode* InNode);

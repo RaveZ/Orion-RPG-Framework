@@ -19,6 +19,7 @@
 #include "QuestBuilderEdNode.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "K2Node.h"
+#include "GraphEditAction.h"
 #include "QuestBuilderEdNode_Edge.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "HAL/PlatformApplicationMisc.h"
@@ -172,6 +173,32 @@ void FQuestBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShare
 		const bool bCreateDefaultToolbar = true;
 		InitAssetEditor(Mode, InitToolkitHost, QuestBuilderEditorAppName, StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, EditingQuestGraph, false);
 
+
+		if (EditingQuestGraph && EditingQuestGraph->bIsNewlyCreated)
+		{
+			NewDocument_OnClicked(CGT_NewQuestGraph);
+			EditingQuestGraph->bIsNewlyCreated = false;
+			EditingQuestGraph->Modify();
+		}
+		else
+		{
+			if (GetQuestSystemObj()->QuestGraphPages.Num() > 0)
+			{
+				OpenDocument(GetQuestSystemObj()->QuestGraphPages[0], FDocumentTracker::OpenNewDocument);
+				
+				//bind on graph changes
+				for (UEdGraph* EdGraph : EditingQuestGraph->QuestGraphPages)
+				{
+					if (EdGraph)
+					{
+						if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(EdGraph))
+						{
+							QuestGraph->AddOnGraphChangedHandler(FOnGraphChanged::FDelegate::CreateSP(this, &FQuestBuilderEditor::OnGraphChanged));
+						}
+					}
+				}
+			}
+		}
 	}
 	else
 	{
@@ -184,23 +211,9 @@ void FQuestBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShare
 		}
 	}
 
-	if (EditingQuestGraph && EditingQuestGraph->bIsNewlyCreated)
-	{
-		NewDocument_OnClicked(CGT_NewQuestGraph);
-		EditingQuestGraph->bIsNewlyCreated = false;
-		EditingQuestGraph->Modify();
-	}
-	else
-	{
-		if (GetQuestSystemObj()->QuestGraphPages.Num() > 0)
-		{
-			OpenDocument(GetQuestSystemObj()->QuestGraphPages[0], FDocumentTracker::OpenNewDocument);
-		}
-	}
 
 	RegenerateMenusAndToolbars();
-	
-	
+	RebuildQuestBuilderGraphPages();
 }
 
 
@@ -408,11 +421,8 @@ FString FQuestBuilderEditor::GetDocumentationLink() const
 
 void FQuestBuilderEditor::SaveAsset_Execute()
 {
-	
-	RebuildQuestSystemGraph();
-	
-
 	FAssetEditorToolkit::SaveAsset_Execute();
+
 }
 
 void FQuestBuilderEditor::RefreshEditors()
@@ -586,7 +596,9 @@ void FQuestBuilderEditor::NewDocument_OnClicked(ECreatedQuestDocumentType GraphT
 	if (GraphType == CGT_NewQuestGraph)
 	{
 		NewGraph = FQuestBuilderEditorUtils::CreateNewGraph(GetQuestSystemObj(), DocumentName, UQuestBuilderEdGraph::StaticClass(), UEdGraphSchema_QuestBuilder::StaticClass());
+		NewGraph->AddOnGraphChangedHandler(FOnGraphChanged::FDelegate::CreateSP(this, &FQuestBuilderEditor::OnGraphChanged));
 		FQuestBuilderEditorUtils::AddQuestGraphPage(GetQuestSystemObj(), NewGraph);
+
 	}
 	else
 	{
@@ -625,9 +637,6 @@ void FQuestBuilderEditor::CloseDocumentTab(const UObject* DocumentID)
 
 void FQuestBuilderEditor::RenameNewlyAddedAction(FName InActionName)
 {
-	//TabManager->TryInvokeTab(FBlueprintEditorTabs::MyBlueprintID);
-	//TryInvokingDetailsTab(/*Flash*/false);
-
 	if (MyQuestWidget.IsValid())
 	{
 		// Force a refresh immediately, the item has to be present in the list for the rename requests to be successful.
@@ -797,9 +806,13 @@ void FQuestBuilderEditor::OnGraphEditorFocused(const TSharedRef<class SGraphEdit
 		// The focused graph can be garbage as well
 		TWeakObjectPtr< UEdGraph > FocusedGraphPtr = ViewportWidget->GetCurrentGraph();
 		UEdGraph* FocusedGraph = FocusedGraphPtr.Get();
-
+		
 		if (FocusedGraph != nullptr)
 		{
+			if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(FocusedGraph))
+			{
+				QuestEdGraph->SEditorGraph = ViewportWidget.Get();
+			}
 			MyQuestWidget->Refresh();
 		}
 	}
@@ -964,7 +977,7 @@ TSharedRef<SGraphEditor> FQuestBuilderEditor::CreateGraphEditorWidget(TSharedRef
 }
 
 
-void FQuestBuilderEditor::RebuildQuestSystemGraph()
+void FQuestBuilderEditor::RebuildQuestBuilderGraphPages()
 {
 	if (EditingQuestGraph == nullptr)
 	{
@@ -977,9 +990,22 @@ void FQuestBuilderEditor::RebuildQuestSystemGraph()
 		{
 			if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(EdGraph))
 			{
-				QuestGraph->RebuildQuestSystemGraph();
+				QuestGraph->RebuildQuestBuilderGraph();
 			}
 		}
+	}
+}
+
+	
+
+
+
+void FQuestBuilderEditor::OnGraphChanged(const FEdGraphEditAction& Action)
+{
+	UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(Action.Graph);
+	if (QuestGraph)
+	{
+		//QuestGraph->RebuildQuestBuilderGraph();
 	}
 }
 void FQuestBuilderEditor::SelectAllNodes()
@@ -1166,7 +1192,6 @@ void FQuestBuilderEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVect
 	}
 	// Select the newly pasted stuff
 	UEdGraph* EdGraph = CurrentGraphEditor->GetCurrentGraph();
-
 	{
 		const FScopedTransaction Transaction(FGenericCommands::Get().Paste->GetDescription());
 		EdGraph->Modify();
@@ -1220,6 +1245,12 @@ void FQuestBuilderEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVect
 
 			// Give new node a different Guid from the old one
 			Node->CreateNewGuid();
+
+		}
+;
+		if (UEdGraphNode* LastNode = PastedNodes.Array()[PastedNodes.Num() - 1])
+		{
+			FocusedEdGraph->NotifyNodeChanged(LastNode);
 		}
 	}
 
@@ -1442,19 +1473,19 @@ void FQuestBuilderEditor::OnFinishedChangingProperties(const FPropertyChangedEve
 
 void FQuestBuilderEditor::OnPackageMarkedDirty(UPackage* ModifiedPackage, bool bWasDirty)
 {
-    // Schedule the graph rebuild after 1 second using a timer
-    FTimerHandle TimerHandle;
-	if (GEditor)
+	if (EditingQuestGraph)
 	{
-		GEditor->GetTimerManager()->SetTimer(
-			TimerHandle,
-			FTimerDelegate::CreateLambda([this]()
+		for (UEdGraph* EdGraph : EditingQuestGraph->QuestGraphPages)
+		{
+			if (EdGraph)
+			{
+				if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(EdGraph))
 				{
-					RebuildQuestSystemGraph();
-				}),
-			1.0f, // Delay in seconds
-			false // Do not loop
-		);
+					QuestGraph->SortAllChildrenNodes();
+				}
+			}
+		}
+
 	}
    
     
@@ -1464,12 +1495,12 @@ void FQuestBuilderEditor::OnPackageMarkedDirty(UPackage* ModifiedPackage, bool b
 
 void FQuestBuilderEditor::OnPackageSaved(const FString& PackageFileName, UObject* Outer)
 {
-	RebuildQuestSystemGraph();
+	RebuildQuestBuilderGraphPages();
 }
 #else // #if ENGINE_MAJOR_VERSION < 5
 void FQuestBuilderEditor::OnPackageSavedWithContext(const FString& PackageFileName, UPackage* Package, FObjectPostSaveContext ObjectSaveContext)
 {
-	RebuildQuestSystemGraph();
+	RebuildQuestBuilderGraphPages();
 	
 }
 

@@ -59,6 +59,7 @@ public:
 
 #if WITH_EDITOR
 	virtual void PostEditUndo() override;
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 
 	/** if set, all modifications (including delete/cut) are disabled */

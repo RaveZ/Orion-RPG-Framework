@@ -128,7 +128,16 @@ bool UQuestBuilderEdNode::UsesBlueprint() const
 	return QuestSystemGraphNode && QuestSystemGraphNode->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint);
 }
 
+#if WITH_EDITOR
 void UQuestBuilderEdNode::PostEditUndo()
 {
 	UEdGraphNode::PostEditUndo();
 }
+
+void UQuestBuilderEdNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	
+}
+#endif

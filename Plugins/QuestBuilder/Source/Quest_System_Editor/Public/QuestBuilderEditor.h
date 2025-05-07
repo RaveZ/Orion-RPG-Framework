@@ -218,6 +218,8 @@ private:
 	/** Helper to move focused graph when clicking on graph breadcrumb */
 	void OnChangeBreadCrumbGraph(class UEdGraph* InGraph);
 
+	/** A callback every time graph changed */
+	void OnGraphChanged(const FEdGraphEditAction& Action);
 
 protected:
 	TSharedRef<SDockTab> SpawnTab_Viewport(const FSpawnTabArgs& Args);
@@ -241,7 +243,7 @@ protected:
 
 	FGraphPanelSelectionSet GetSelectedNodes() const;
 
-	void RebuildQuestSystemGraph();
+	void RebuildQuestBuilderGraphPages();
 
 	// Delegates for graph editor commands
 	void SelectAllNodes();

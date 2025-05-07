@@ -272,9 +272,6 @@ void UEdGraphSchema_QuestBuilder::GetGraphContextActions(FGraphContextMenuBuilde
 		if (NodeClass.GetClass(true) == UQuestTask::StaticClass())
 			continue;
 
-
-		UE_LOG(LogTemp, Warning, TEXT("NodeClass: %s"), *FName::NameToDisplayString(NodeClass.ToString(), false));
-
 		const FText NodeTypeName = FText::FromString(FName::NameToDisplayString(NodeClass.ToString(), false));
 
 		TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> AddOpAction = UEdGraphSchema_QuestBuilder::AddNewNodeAction(TasksBuilder, NodeClass.GetCategory(), NodeTypeName, FText::GetEmpty());
@@ -460,15 +457,16 @@ bool UEdGraphSchema_QuestBuilder::TryCreateConnection(UEdGraphPin* A, UEdGraphPi
 				return false;
 		}
 	}
+	bool bSuccesful = false;
 	if (UQuestBuilderEdNode_State* StateNode = Cast<UQuestBuilderEdNode_State>(NodeA))
 	{
 		Super::TryCreateConnection(NodeB->GetOutputPin(), NodeA->GetInputPin());
-		return true;
+		bSuccesful =  true;
 	}
 	else if (UQuestBuilderEdNode_Root* RootNode = Cast<UQuestBuilderEdNode_Root>(NodeB))
 	{
 		Super::TryCreateConnection(NodeB->GetOutputPin(), NodeA->GetInputPin());
-		return true;
+		bSuccesful =  true;
 	}
 	else if (NodeA && NodeB)
 	{
@@ -476,12 +474,17 @@ bool UEdGraphSchema_QuestBuilder::TryCreateConnection(UEdGraphPin* A, UEdGraphPi
 		{
 			// Always create connections from node A to B, don't allow adding in reverse
 			Super::TryCreateConnection(NodeA->GetOutputPin(), NodeB->GetInputPin());
-			return true;
+			bSuccesful =  true;
 		}
-		return false;
 	}
+
+	if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(NodeA->GetGraph()))
+	{
+		QuestEdGraph->RebuildQuestBuilderGraph(true);
+	}
+
 	
-	return false;
+	return bSuccesful;
 }
 
 bool UEdGraphSchema_QuestBuilder::CreateAutomaticConversionNodeAndConnections(UEdGraphPin* A, UEdGraphPin* B) const
@@ -523,6 +526,10 @@ void UEdGraphSchema_QuestBuilder::BreakNodeLinks(UEdGraphNode& TargetNode) const
 	const FScopedTransaction Transaction(NSLOCTEXT("UnrealEd", "GraphEd_BreakNodeLinks", "Break Node Links"));
 
 	Super::BreakNodeLinks(TargetNode);
+	if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(TargetNode.GetGraph()))
+	{
+		QuestEdGraph->RebuildQuestBuilderGraph(true);
+	}
 }
 
 void UEdGraphSchema_QuestBuilder::BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const

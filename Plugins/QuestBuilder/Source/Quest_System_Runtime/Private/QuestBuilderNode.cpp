@@ -17,7 +17,6 @@ UQuestBuilderNode::UQuestBuilderNode()
 
 	FLinearColor Default(0.05f, 0.05f, 0.05f);
 	BackgroundColor = Default;
-	ExecutionIndex = 0;
 #endif
 }
 
