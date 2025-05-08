@@ -2,6 +2,7 @@
 
 
 #include "QuestBuilderEdNode.h"
+#include "QuestBuilderSetting.h"
 #include "QuestBuilderNode.h"
 
 UQuestBuilderEdNode::UQuestBuilderEdNode()
@@ -88,7 +89,7 @@ FText UQuestBuilderEdNode::GetConditionsText() const
 
 FLinearColor UQuestBuilderEdNode::GetBackgroundColor() const
 {
-	return QuestSystemGraphNode == nullptr ? FLinearColor::Black : QuestSystemGraphNode->GetBackgroundColor();
+	return GetDefault<UQuestBuilderSetting>()->RootNodeColor;
 }
 
 UEdGraphPin* UQuestBuilderEdNode::GetInputPin() const

@@ -45,9 +45,13 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
 		TArray< TObjectPtr<UQuestBuilderGraph>> QuestGraphs;
 
-	/** Map of Quest ID and attached Quest System That is Running*/
+	/** Map of Quest ID and attached Quest That is Running*/
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
-		TMap<FName, TObjectPtr<UQuest>> QuestSystemMap;
+		TMap<FName, TObjectPtr<UQuest>> QuestMap;
+
+	/** Map of Node ID and attached Node That is Running*/
+	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
+		TMap<FName, TObjectPtr<UQuestBuilderNode>> NodeMap;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestComponent")
 		bool bQuestLoaded = false;
@@ -127,22 +131,22 @@ public:
 		void EvaluateQuestSaveLoadState(UQuestBuilderGraph* QuestGraph);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void ActivateQuest(FName QuestID);
+		void ActivateQuest(FName ID);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void UnlockQuest(FName QuestID = NAME_None);
+		void UnlockQuest(FName ID = NAME_None);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void LockQuest(UQuest* InQuest = nullptr, FName QuestID = NAME_None);
+		void LockQuest(UQuest* InQuest = nullptr, FName ID = NAME_None);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void RestartQuest(FName QuestID, FName NodeID = NAME_None, bool bStartFromNodeID = false);
+		void RestartQuest(FName ID, FName NodeID = NAME_None, bool bStartFromNodeID = false);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void FailQuest(FName QuestID);
+		void FailQuest(FName ID);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void CompleteQuest(FName QuestID);
+		void CompleteQuest(FName ID);
 
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
@@ -158,7 +162,7 @@ public:
 		bool IsQuestActiveFromNodeID(FName NodeID) const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		bool IsQuestActiveFromQuestID(FName QuestID) const;
+		bool IsQuestActiveFromQuestID(FName ID) const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void UpdateQuest();

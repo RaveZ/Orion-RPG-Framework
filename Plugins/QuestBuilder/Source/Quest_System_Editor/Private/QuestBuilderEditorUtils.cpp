@@ -29,9 +29,9 @@ FName FQuestBuilderEditorUtils::FindUniqueQuestName(const FString& InBaseName)
 		// Check if the current name already exists in the quest graph pages
 		for (TObjectIterator<UQuest> It; It; ++It)
 		{
-			if (UQuest* QuestSystem = Cast<UQuest>(*It))
+			if (UQuest* Quest = Cast<UQuest>(*It))
 			{
-				FString FullName = QuestSystem->QuestID.ToString();
+				FString FullName = Quest->ID.ToString();
 
 				// If the current name matches a quest graph page name, it's not unique
 				if (FullName == UniqueName)
@@ -56,11 +56,23 @@ FName FQuestBuilderEditorUtils::FindUniqueQuestName(const FString& InBaseName)
 FName FQuestBuilderEditorUtils::FindUniqueNodeName(const FString& InBaseName)
 {
 	// Start with the base name
+	FString BaseName = InBaseName;
 	FString UniqueName = InBaseName;// Iterate through the quest graph pages until we find a unique name
 	
+	int32 UnderscoreIndex;
+	if (BaseName.FindLastChar(TEXT('_'), UnderscoreIndex))
+	{
+		FString Suffix = BaseName.Mid(UnderscoreIndex + 1);
+		if (Suffix.IsNumeric())
+		{
+			BaseName = BaseName.Left(UnderscoreIndex);
+		}
+	}
+
 	for (int i = 0;; i++)
 	{
 		bool bIsUnique = true;
+
 
 		// Check if the current name already exists in the quest graph pages
 		for (TObjectIterator<UQuestBuilderNode> It; It; ++It)
@@ -85,7 +97,7 @@ FName FQuestBuilderEditorUtils::FindUniqueNodeName(const FString& InBaseName)
 		}
 
 		// If the current name is not unique, append a number to it and try again
-		UniqueName = FString::Printf(TEXT("%s_%d"), *InBaseName, i + 1);
+		UniqueName = FString::Printf(TEXT("%s_%d"), *BaseName, i + 1);
 	}
 }
 
@@ -103,14 +115,14 @@ UEdGraph* FQuestBuilderEditorUtils::CreateNewGraph(UObject* ParentScope, const F
 
 	if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(NewGraph))
 	{
-		QuestGraph->QuestSystem = NewObject<UQuest>(ParentScope, UQuest::StaticClass(), NAME_None, RF_Transactional);
-		QuestGraph->QuestSystem->QuestGraph = QuestGraph->GetQuestSystemGraph();
-		QuestGraph->QuestSystem->QuestID = GraphName;
-		QuestGraph->QuestSystem->QuestName = FText::FromName(QuestGraph->QuestSystem->QuestID);
+		QuestGraph->Quest = NewObject<UQuest>(ParentScope, UQuest::StaticClass(), NAME_None, RF_Transactional);
+		QuestGraph->Quest->QuestGraph = QuestGraph->GetQuestSystemGraph();
+		QuestGraph->Quest->ID = GraphName;
+		QuestGraph->Quest->QuestName = FText::FromName(QuestGraph->Quest->ID);
 
-		if (UQuestBuilderGraph* QuestSystemGraph = Cast<UQuestBuilderGraph>(QuestGraph->GetQuestSystemGraph()))
+		if (UQuestBuilderGraph* QuestBuilderGraph = Cast<UQuestBuilderGraph>(QuestGraph->GetQuestSystemGraph()))
 		{
-			QuestSystemGraph->QuestSystems.Add(QuestGraph->QuestSystem);
+			QuestBuilderGraph->QuestList.Add(QuestGraph->Quest);
 		}
 
 	}
@@ -121,7 +133,7 @@ UEdGraph* FQuestBuilderEditorUtils::CreateNewGraph(UObject* ParentScope, const F
 
 
 
-void FQuestBuilderEditorUtils::RemoveNode(UQuestBuilderGraph* QuestSystemGraph, UQuestBuilderEdNode* Node, bool bDontRecompile)
+void FQuestBuilderEditorUtils::RemoveNode(UQuestBuilderGraph* QuestBuilderGraph, UQuestBuilderEdNode* Node, bool bDontRecompile)
 {
 	check(Node);
 
@@ -150,26 +162,26 @@ void FQuestBuilderEditorUtils::RemoveNode(UQuestBuilderGraph* QuestSystemGraph, 
 	}*/
 }
 
-void FQuestBuilderEditorUtils::RemoveGraph(UQuestBuilderGraph* QuestSystemGraph, UEdGraph* GraphToRemove)
+void FQuestBuilderEditorUtils::RemoveGraph(UQuestBuilderGraph* QuestBuilderGraph, UEdGraph* GraphToRemove)
 {
 	GraphToRemove->Modify();
 
 	for (UObject* TestOuter = GraphToRemove->GetOuter(); TestOuter; TestOuter = TestOuter->GetOuter())
 	{
-		if (TestOuter == QuestSystemGraph)
+		if (TestOuter == QuestBuilderGraph)
 		{
-			QuestSystemGraph->QuestGraphPages.Remove(GraphToRemove);
+			QuestBuilderGraph->QuestGraphPages.Remove(GraphToRemove);
 			if (UQuestBuilderEdGraph* QuestGraphToRemove = Cast<UQuestBuilderEdGraph>(GraphToRemove))
 			{
-				QuestSystemGraph->QuestSystems.Remove(QuestGraphToRemove->QuestSystem);
+				QuestBuilderGraph->QuestList.Remove(QuestGraphToRemove->Quest);
 			}
 
 			// Can't just call Remove, the object is wrapped in a struct
-			for (int EditedDocIdx = 0; EditedDocIdx < QuestSystemGraph->LastEditedDocuments.Num(); ++EditedDocIdx)
+			for (int EditedDocIdx = 0; EditedDocIdx < QuestBuilderGraph->LastEditedDocuments.Num(); ++EditedDocIdx)
 			{
-				if (QuestSystemGraph->LastEditedDocuments[EditedDocIdx].EditedObjectPath.ResolveObject() == GraphToRemove)
+				if (QuestBuilderGraph->LastEditedDocuments[EditedDocIdx].EditedObjectPath.ResolveObject() == GraphToRemove)
 				{
-					QuestSystemGraph->LastEditedDocuments.RemoveAt(EditedDocIdx);
+					QuestBuilderGraph->LastEditedDocuments.RemoveAt(EditedDocIdx);
 					break;
 				}
 			}
@@ -198,33 +210,33 @@ void FQuestBuilderEditorUtils::RemoveGraph(UQuestBuilderGraph* QuestSystemGraph,
 		{
 			if (SubGraph && SubGraph->GetOuter()->IsA(UEdGraphNode::StaticClass()))
 			{
-				FQuestBuilderEditorUtils::RemoveGraph(QuestSystemGraph, SubGraph);
+				FQuestBuilderEditorUtils::RemoveGraph(QuestBuilderGraph, SubGraph);
 			}
 		}
 	}
 
 	GraphToRemove->GetSchema()->HandleGraphBeingDeleted(*GraphToRemove);
 
-	GraphToRemove->Rename(nullptr, QuestSystemGraph ? QuestSystemGraph->GetOuter() : nullptr, REN_DoNotDirty | REN_DontCreateRedirectors);
+	GraphToRemove->Rename(nullptr, QuestBuilderGraph ? QuestBuilderGraph->GetOuter() : nullptr, REN_DoNotDirty | REN_DontCreateRedirectors);
 	GraphToRemove->ClearFlags(RF_Standalone | RF_Public);
 	GraphToRemove->RemoveFromRoot();
 
 	
 }
 
-void FQuestBuilderEditorUtils::AddQuestGraphPage(UQuestBuilderGraph* QuestSystemGraph, UEdGraph* Graph)
+void FQuestBuilderEditorUtils::AddQuestGraphPage(UQuestBuilderGraph* QuestBuilderGraph, UEdGraph* Graph)
 {
 #if WITH_EDITORONLY_DATA
-	QuestSystemGraph->QuestGraphPages.Add(Graph);
+	QuestBuilderGraph->QuestGraphPages.Add(Graph);
 	Graph->MarkPackageDirty();
 #endif	//#if WITH_EDITORONLY_DATA
 }
 
 
-UEdGraph* FQuestBuilderEditorUtils::FindQuestGraph(const UQuestBuilderGraph* QuestSystemGraph)
+UEdGraph* FQuestBuilderEditorUtils::FindQuestGraph(const UQuestBuilderGraph* QuestBuilderGraph)
 {
 
-	for (UEdGraph* CurrentGraph : QuestSystemGraph->QuestGraphPages)
+	for (UEdGraph* CurrentGraph : QuestBuilderGraph->QuestGraphPages)
 	{
 		if (CurrentGraph->GetFName().ToString().Contains(TEXT("QuestGraph")))
 		{

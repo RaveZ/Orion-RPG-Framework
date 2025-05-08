@@ -15,4 +15,5 @@ class QUEST_SYSTEM_EDITOR_API UQuestBuilderEdNode_Objective : public UQuestBuild
 	GENERATED_BODY()
 public:
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
+	virtual FLinearColor GetBackgroundColor() const override;
 };

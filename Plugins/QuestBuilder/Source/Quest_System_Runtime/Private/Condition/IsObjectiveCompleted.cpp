@@ -15,12 +15,12 @@ UIsObjectiveCompleted::UIsObjectiveCompleted()
 bool UIsObjectiveCompleted::IsConditionMet_Implementation() const
 {
 
-    for (const auto& It : GetQuestComponent()->QuestSystemMap)
+    for (const auto& It : GetQuestComponent()->QuestMap)
     {
         FName Key = It.Key;
-        UQuest* Quest = It.Value;
+        UQuest* QuestObj = It.Value;
 
-        if (UQuestBuilderNode_Objective* ObjectiveNode =  Cast<UQuestBuilderNode_Objective>(Quest->NodeMap.FindRef(NodeID)))
+        if (UQuestBuilderNode_Objective* ObjectiveNode =  Cast<UQuestBuilderNode_Objective>(QuestObj->NodeMap.FindRef(NodeID)))
         {
             return ObjectiveNode->IsAllTaskCompleted();
         }

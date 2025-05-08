@@ -32,7 +32,8 @@ UQuestComponent::UQuestComponent()
 void UQuestComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	QuestSystemMap.Empty();
+	QuestMap.Empty();
+	NodeMap.Empty();
 	bQuestLoaded = false;
 	//Set Dependency
 	OwningController = GetOwningController();
@@ -75,9 +76,9 @@ bool UQuestComponent::BeginQuest(UQuestBuilderGraph* QuestAsset)
 	EvaluateQuestSaveLoadState(QuestAsset);
 	bool bSuccess = true;
 
-	for (UQuest* QuestSystem : QuestAsset->QuestSystems)
+	for (UQuest* Quest : QuestAsset->QuestList)
 	{
-		EvaluateQuestCondition(QuestSystem);
+		EvaluateQuestCondition(Quest);
 	}
 
 	return bSuccess;
@@ -110,16 +111,20 @@ void UQuestComponent::CacheQuestGraphDependencies(UQuestBuilderGraph* QuestGraph
 		//Add QuestGraph to array
 		QuestGraphs.Add(QuestGraph);
 
-		for (UQuest* Quest : QuestGraph->QuestSystems)
+		for (auto& Quest : QuestGraph->QuestList)
 		{
-			QuestSystemMap.Emplace(Quest->QuestID, Quest);
+			QuestMap.Emplace(Quest->ID, Quest);
+			for (auto& Node : Quest->AllNodes)
+			{
+				NodeMap.Emplace(Node->ID, Node);
+			}
 		}
 	}
 }
 
 void UQuestComponent::EvaluateQuestSaveLoadState(UQuestBuilderGraph* QuestGraph)
 {
-	for (UQuest* Quest : QuestGraph->QuestSystems)
+	for (auto& Quest : QuestGraph->QuestList)
 	{
 		//check if quest has been loaded
 		if (!bQuestLoaded)
@@ -129,60 +134,60 @@ void UQuestComponent::EvaluateQuestSaveLoadState(UQuestBuilderGraph* QuestGraph)
 	}
 }
 
-void UQuestComponent::ActivateQuest(FName QuestID)
+void UQuestComponent::ActivateQuest(FName ID)
 {
-	if (UQuest* QuestSystem = QuestSystemMap.FindRef(QuestID))
+	if (UQuest* Quest = QuestMap.FindRef(ID))
 	{
-		QuestSystem->QuestState = EQuestState::E_Active;
-		if (QuestSystem->CurrentNode != nullptr)
+		Quest->QuestState = EQuestState::E_Active;
+		if (Quest->CurrentNode != nullptr)
 		{
-			BeginNode(QuestSystem);
+			BeginNode(Quest);
 		}
-		else if (QuestSystem->CurrentNode == nullptr)
+		else if (Quest->CurrentNode == nullptr)
 		{
-			OnQuestAdded.Broadcast(QuestSystem);
-			RestartQuest(QuestSystem->QuestID);
+			OnQuestAdded.Broadcast(Quest);
+			RestartQuest(Quest->ID);
 		}
 	}
 }
 
-void UQuestComponent::UnlockQuest(FName QuestID)
+void UQuestComponent::UnlockQuest(FName ID)
 {
-	if (UQuest* QuestSystem = QuestSystemMap.FindRef(QuestID))
+	if (UQuest* Quest = QuestMap.FindRef(ID))
 	{
-		QuestSystem->QuestState = EQuestState::E_Unlocked;
+		Quest->QuestState = EQuestState::E_Unlocked;
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("QuestComponent : Quest %s not found or null"), *QuestID.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("QuestComponent : Quest %s not found or null"), *ID.ToString());
 	}
 }
 
-void UQuestComponent::LockQuest(UQuest* InQuest, FName QuestID)
+void UQuestComponent::LockQuest(UQuest* InQuest, FName ID)
 {
-	UQuest* QuestSystem = nullptr;
+	UQuest* Quest = nullptr;
 	if (InQuest)
-		QuestSystem = InQuest;
+		Quest = InQuest;
 	else
-		QuestSystem = QuestSystemMap.FindRef(QuestID);
+		Quest = QuestMap.FindRef(ID);
 
-	if (QuestSystem)
+	if (Quest)
 	{
-		QuestSystem->QuestState = EQuestState::E_Locked;
-		QuestSystem->CurrentNode = nullptr;
-		QuestSystem->VisitedNodeIDs.Empty();
+		Quest->QuestState = EQuestState::E_Locked;
+		Quest->CurrentNode = nullptr;
+		Quest->VisitedNodeIDs.Empty();
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("QuestComponent : Quest %s not found or null"), *QuestID.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("QuestComponent : Quest %s not found or null"), *ID.ToString());
 	}
 }
 
-void UQuestComponent::RestartQuest(FName QuestID, FName NodeID, bool bStartFromNodeID)
+void UQuestComponent::RestartQuest(FName ID, FName NodeID, bool bStartFromNodeID)
 {
-	if (UQuest* QuestSystem = QuestSystemMap.FindRef(QuestID))
+	if (UQuest* Quest = QuestMap.FindRef(ID))
 	{
-		QuestSystem->QuestState = EQuestState::E_Active;
+		Quest->QuestState = EQuestState::E_Active;
 
 
 		bool bNodeFound = false;
@@ -191,20 +196,20 @@ void UQuestComponent::RestartQuest(FName QuestID, FName NodeID, bool bStartFromN
 
 		if (bStartFromNodeID)
 		{	
-			if (UQuestBuilderNode* FoundedNode = QuestSystem->NodeMap.FindRef(NodeID))
+			if (UQuestBuilderNode* FoundedNode = Quest->NodeMap.FindRef(NodeID))
 			{
 				bNodeFound = true;
 				//reset visited node children where the node started from
 				bool bCanDelete = false;
-				for (int i = 0; i < QuestSystem->VisitedNodeIDs.Num(); i++)
+				for (int i = 0; i < Quest->VisitedNodeIDs.Num(); i++)
 				{
-					if (QuestSystem->VisitedNodeIDs[i] == NodeID)
+					if (Quest->VisitedNodeIDs[i] == NodeID)
 					{
 						bCanDelete = true;
 					}
 					if (bCanDelete)
 					{
-						QuestSystem->VisitedNodeIDs.RemoveAt(i);
+						Quest->VisitedNodeIDs.RemoveAt(i);
 						i--;//ensure the next element not skipped
 					}
 				}
@@ -217,7 +222,7 @@ void UQuestComponent::RestartQuest(FName QuestID, FName NodeID, bool bStartFromN
 					UQuestBuilderNode* CurrentNodeStack = NodeStack.Pop();
 					if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(CurrentNodeStack))
 					{
-						for (UQuestTask* Task : ObjectiveNode->Tasks)
+						for (auto& Task : ObjectiveNode->Tasks)
 						{
 							if (Task)
 							{
@@ -226,7 +231,7 @@ void UQuestComponent::RestartQuest(FName QuestID, FName NodeID, bool bStartFromN
 							}
 						}
 					}
-					for (UQuestEvent* Event : CurrentNodeStack->Events)
+					for (auto& Event : CurrentNodeStack->Events)
 					{
 						if (Event)
 						{
@@ -241,7 +246,7 @@ void UQuestComponent::RestartQuest(FName QuestID, FName NodeID, bool bStartFromN
 					}
 				}
 
-				QuestSystem->CurrentNode = FoundedNode;
+				Quest->CurrentNode = FoundedNode;
 			}
 		}
 		
@@ -249,11 +254,11 @@ void UQuestComponent::RestartQuest(FName QuestID, FName NodeID, bool bStartFromN
 		if(!bNodeFound)
 		{
 			//reset all task data
-			for (UQuestBuilderNode* Node : QuestSystem->AllNodes)
+			for (auto& Node : Quest->AllNodes)
 			{
 				if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(Node))
 				{
-					for (UQuestTask* Task : ObjectiveNode->Tasks)
+					for (auto& Task : ObjectiveNode->Tasks)
 					{
 						if (Task)
 						{
@@ -263,7 +268,7 @@ void UQuestComponent::RestartQuest(FName QuestID, FName NodeID, bool bStartFromN
 						
 					}
 				}
-				for (UQuestEvent* Event : Node->Events)
+				for (auto& Event : Node->Events)
 				{
 					if (Event)
 					{
@@ -272,39 +277,39 @@ void UQuestComponent::RestartQuest(FName QuestID, FName NodeID, bool bStartFromN
 					}
 				}
 			}
-			QuestSystem->VisitedNodeIDs.Empty();
-			QuestSystem->CurrentNode = QuestSystem->RootNodes[0];
+			Quest->VisitedNodeIDs.Empty();
+			Quest->CurrentNode = Quest->RootNodes[0];
 		}
 		
 
-		BeginNode(QuestSystem);
+		BeginNode(Quest);
 	}
 }
 
-void UQuestComponent::FailQuest(FName QuestID)
+void UQuestComponent::FailQuest(FName ID)
 {
-	if (UQuest* QuestSystem = QuestSystemMap.FindRef(QuestID))
+	if (UQuest* Quest = QuestMap.FindRef(ID))
 	{
-		if (QuestSystem->QuestState != EQuestState::E_Fail)
+		if (Quest->QuestState != EQuestState::E_Fail)
 		{
-			QuestSystem->QuestState = EQuestState::E_Fail;
-			OnQuestFailed.Broadcast(QuestSystem);
+			Quest->QuestState = EQuestState::E_Fail;
+			OnQuestFailed.Broadcast(Quest);
 		}
-		QuestSystem->CurrentNode = nullptr;
+		Quest->CurrentNode = nullptr;
 
 	}
 }
 
-void UQuestComponent::CompleteQuest(FName QuestID)
+void UQuestComponent::CompleteQuest(FName ID)
 {
-	if (UQuest* QuestSystem = QuestSystemMap.FindRef(QuestID))
+	if (UQuest* Quest = QuestMap.FindRef(ID))
 	{
-		if (QuestSystem->QuestState != EQuestState::E_Complete)
+		if (Quest->QuestState != EQuestState::E_Complete)
 		{
-			QuestSystem->QuestState = EQuestState::E_Complete;
-			OnQuestCompleted.Broadcast(QuestSystem);
+			Quest->QuestState = EQuestState::E_Complete;
+			OnQuestCompleted.Broadcast(Quest);
 		}
-		QuestSystem->CurrentNode = nullptr;
+		Quest->CurrentNode = nullptr;
 
 	}
 }
@@ -369,14 +374,14 @@ APlayerController* UQuestComponent::GetOwningController() const
 UQuest* UQuestComponent::FindQuestFromNodeID(FName NodeIDParam) const
 {
 	UQuest* FoundedQuest = nullptr;
-	for (const auto& It : QuestSystemMap)
+	for (const auto& It : QuestMap)
 	{
 		FName Key = It.Key;
-		UQuest* QuestSystem = It.Value;
+		UQuest* Quest = It.Value;
 
-		if (UQuestBuilderNode* QuestNode = QuestSystem->NodeMap.FindRef(NodeIDParam))
+		if (UQuestBuilderNode* QuestNode = Quest->NodeMap.FindRef(NodeIDParam))
 		{
-			FoundedQuest = QuestSystem;
+			FoundedQuest = Quest;
 		}
 	}
 
@@ -386,7 +391,7 @@ UQuest* UQuestComponent::FindQuestFromNodeID(FName NodeIDParam) const
 
 UQuest* UQuestComponent::FindQuest(FName QuestIDParam) const
 {
-	if (UQuest* FoundedQuest = QuestSystemMap.FindRef(QuestIDParam))
+	if (UQuest* FoundedQuest = QuestMap.FindRef(QuestIDParam))
 	{
 		return FoundedQuest;
 	}
@@ -408,9 +413,9 @@ bool UQuestComponent::IsQuestActiveFromNodeID(FName NodeID) const
 	return false;
 }
 
-bool UQuestComponent::IsQuestActiveFromQuestID(FName QuestID) const
+bool UQuestComponent::IsQuestActiveFromQuestID(FName ID) const
 {
-	if (UQuest* FoundedQuest = QuestSystemMap.FindRef(QuestID))
+	if (UQuest* FoundedQuest = QuestMap.FindRef(ID))
 	{
 		if (FoundedQuest->QuestState == EQuestState::E_Active)
 		{
@@ -423,29 +428,29 @@ bool UQuestComponent::IsQuestActiveFromQuestID(FName QuestID) const
 
 void UQuestComponent::UpdateQuest()
 {
-	for (const auto& It : QuestSystemMap)
+	for (const auto& It : QuestMap)
 	{
 		FName Key = It.Key;
-		UQuest* QuestSystem = It.Value;
+		UQuest* Quest = It.Value;
 
-		EvaluateQuestCondition(QuestSystem);
+		EvaluateQuestCondition(Quest);
 
-		if(QuestSystem->QuestState == EQuestState::E_Active)
+		if(Quest->QuestState == EQuestState::E_Active)
 		{
-			if (QuestSystem->CurrentNode != nullptr)
+			if (Quest->CurrentNode != nullptr)
 			{
-				if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestSystem->CurrentNode))
+				if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(Quest->CurrentNode))
 				{
 					if (ObjectiveNode->IsAllTaskCompleted())
 					{
 						//evaluate next node condition
-						EvaluateNextNodeCondition(QuestSystem);
+						EvaluateNextNodeCondition(Quest);
 					}
 				}
 			}
-			else if (QuestSystem->CurrentNode == nullptr)
+			else if (Quest->CurrentNode == nullptr)
 			{
-				RestartQuest(QuestSystem->QuestID);
+				RestartQuest(Quest->ID);
 			}
 		}
 		
@@ -456,7 +461,7 @@ void UQuestComponent::UpdateQuest()
 void UQuestComponent::EvaluateNextNodeCondition(UQuest* QuestParam)
 {
 	UQuestBuilderNode* NextNode = nullptr;
-	for (UQuestBuilderNode* Node : QuestParam->CurrentNode->ChildrenNodes)
+	for (auto& Node : QuestParam->CurrentNode->ChildrenNodes)
 	{
 		if (NextNode == nullptr && Node->Conditions.IsEmpty())
 		{
@@ -465,7 +470,7 @@ void UQuestComponent::EvaluateNextNodeCondition(UQuest* QuestParam)
 		else if (!Node->Conditions.IsEmpty())
 		{
 			int SumConditionMet = 0;
-			for (UQuestCondition* Condition : Node->Conditions)
+			for (auto& Condition : Node->Conditions)
 			{
 				if (Condition && Condition->IsConditionMet())
 				{
@@ -484,7 +489,7 @@ void UQuestComponent::EvaluateNextNodeCondition(UQuest* QuestParam)
 	if (NextNode)
 	{
 		//End of a Node, Launch Event with the End and Both Type
-		for (UQuestEvent* Event : QuestParam->CurrentNode->Events)
+		for (auto& Event : QuestParam->CurrentNode->Events)
 		{
 			if (Event)
 			{
@@ -512,7 +517,7 @@ void UQuestComponent::EvaluateQuestCondition(UQuest* QuestParam)
 		return;
 
 	int SumConditionMet = 0;
-	for (UQuestCondition* Condition : QuestParam->Conditions)
+	for (auto& Condition : QuestParam->Conditions)
 	{
 		if (Condition && Condition->IsConditionMet())
 		{
@@ -533,16 +538,16 @@ void UQuestComponent::EvaluateQuestState(UQuest* QuestParam, int SumConditionMet
 		switch (QuestParam->DesiredQuestState)
 		{
 			case EQuestState::E_Active:
-				ActivateQuest(QuestParam->QuestID);
+				ActivateQuest(QuestParam->ID);
 				return;
 			case EQuestState::E_Fail:
-				FailQuest(QuestParam->QuestID);
+				FailQuest(QuestParam->ID);
 				return;
 			case EQuestState::E_Complete:
-				CompleteQuest(QuestParam->QuestID);
+				CompleteQuest(QuestParam->ID);
 				return;
 			case EQuestState::E_Unlocked:
-				UnlockQuest(QuestParam->QuestID);
+				UnlockQuest(QuestParam->ID);
 				return;
 		}
 		
@@ -559,7 +564,7 @@ void UQuestComponent::BeginNode(UQuest* QuestParam)
 {  
    if (QuestParam->CurrentNode == nullptr)  
    {  
-       UE_LOG(LogTemp, Warning, TEXT("BeginNode: CurrentNode is null for QuestID: %s"), *QuestParam->QuestID.ToString());  
+       UE_LOG(LogTemp, Warning, TEXT("BeginNode: CurrentNode is null for ID: %s"), *QuestParam->ID.ToString());  
        return;  
    }  
 
@@ -573,7 +578,7 @@ void UQuestComponent::BeginNode(UQuest* QuestParam)
    }
 
    //Start of the Node, Launch Event with the Start and Both Type
-   for (UQuestEvent* Event : QuestParam->CurrentNode->Events)
+   for (auto& Event : QuestParam->CurrentNode->Events)
    {
 	   if (Event)
 	   {
@@ -591,7 +596,7 @@ void UQuestComponent::BeginNode(UQuest* QuestParam)
    //Begin Node Functionality
    if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestParam->CurrentNode))
    {
-	   for (UQuestTask* Task : ObjectiveNode->Tasks)
+	   for (auto& Task : ObjectiveNode->Tasks)
 	   {
 		   if (Task)
 		   {
@@ -617,17 +622,17 @@ void UQuestComponent::Save_Implementation(const FString& SaveFileName, int SlotI
 	if (UQuestSaveObject* QuestSaveObject = Cast<UQuestSaveObject>(UGameplayStatics::CreateSaveGameObject(UQuestSaveObject::StaticClass())))
 	{
 		//Start Saving Data
-		for (const auto& It : QuestSystemMap)
+		for (const auto& It : QuestMap)
 		{
 			FName Key = It.Key;
-			UQuest* QuestSystem = It.Value;
+			UQuest* Quest = It.Value;
 				TMap<FName, FNodeData> NodeMapData;
-				for (UQuestBuilderNode* Node : QuestSystem->AllNodes)
+				for (auto& Node : Quest->AllNodes)
 				{
 					TArray<FTaskData> TaskDataArray;
 					if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(Node))
 					{
-						for (UQuestTask* Task : ObjectiveNode->Tasks)
+						for (auto& Task : ObjectiveNode->Tasks)
 						{
 							FTaskData TaskData;
 							if (Task)
@@ -640,7 +645,7 @@ void UQuestComponent::Save_Implementation(const FString& SaveFileName, int SlotI
 					}
 
 					TArray<FEventData> EventDataArray;
-					for (UQuestEvent* Event : Node->Events)
+					for (auto& Event : Node->Events)
 					{
 						FEventData EventData;
 						if (Event)
@@ -661,14 +666,14 @@ void UQuestComponent::Save_Implementation(const FString& SaveFileName, int SlotI
 					NodeMapData.Emplace(Node->ID, NodeData);
 				}
 				FQuestData QuestData;
-				if (QuestSystem->CurrentNode)
+				if (Quest->CurrentNode)
 				{
-					QuestData.CurrentNodeID = QuestSystem->CurrentNode->ID;
+					QuestData.CurrentNodeID = Quest->CurrentNode->ID;
 				}
-				QuestData.QuestState = QuestSystem->QuestState;
+				QuestData.QuestState = Quest->QuestState;
 				QuestData.NodeMapData = NodeMapData;
-				QuestData.VisitedNodeIDs = QuestSystem->VisitedNodeIDs;
-				QuestSaveObject->QuestMapData.Emplace(QuestSystem->QuestID, QuestData);
+				QuestData.VisitedNodeIDs = Quest->VisitedNodeIDs;
+				QuestSaveObject->QuestMapData.Emplace(Quest->ID, QuestData);
 			
 		}
 
@@ -686,12 +691,12 @@ void UQuestComponent::Load_Implementation(const FString& SaveFileName, int SlotI
 		UE_LOG(LogTemp, Warning, TEXT("Quest Component: Loading Save file failed, %s save file does not exist "), *SaveFileName);
 		return;
 	}
-	TMap<FName, UQuest*> QuestMap;
+	TMap<FName, UQuest*> QuestLoadMap;
 	for (TObjectIterator<UQuestBuilderGraph> It; It; ++It)
 	{
-		for (UQuest* Quest : It->QuestSystems)
+		for (auto& Quest : It->QuestList)
 		{
-			QuestMap.Add(Quest->QuestID, Quest);
+			QuestLoadMap.Add(Quest->ID, Quest);
 		}
 	}
 
@@ -701,10 +706,10 @@ void UQuestComponent::Load_Implementation(const FString& SaveFileName, int SlotI
 		bQuestLoaded = true;
 		for (const auto& QuestIt : LoadedData->QuestMapData)
 		{
-			FName QuestID = QuestIt.Key;
+			FName ID = QuestIt.Key;
 			FQuestData QuestData = QuestIt.Value;
 
-			UQuest* FoundedQuest = QuestMap.FindRef(QuestID);
+			UQuest* FoundedQuest = QuestLoadMap.FindRef(ID);
 			if (FoundedQuest != nullptr)
 			{
 				//Fill Quest Data Here
@@ -776,7 +781,7 @@ void UQuestComponent::StartNavigatingQuest(UQuest* Quest)
 {
 	if (Quest)
 	{
-        UE_LOG(LogTemp, Log, TEXT("Start Navigating Quest: %s"), *Quest->QuestID.ToString());  
+        UE_LOG(LogTemp, Log, TEXT("Start Navigating Quest: %s"), *Quest->ID.ToString());  
     }  
 }
 
@@ -784,7 +789,7 @@ void UQuestComponent::QuestFailed(UQuest* Quest)
 {
 	if (Quest)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Quest failed: %s"), *Quest->QuestID.ToString());
+		UE_LOG(LogTemp, Log, TEXT("Quest failed: %s"), *Quest->ID.ToString());
 	}
 }
 
@@ -792,7 +797,7 @@ void UQuestComponent::QuestCompleted(UQuest* Quest)
 {
 	if (Quest)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Quest Completed: %s"), *Quest->QuestID.ToString());
+		UE_LOG(LogTemp, Log, TEXT("Quest Completed: %s"), *Quest->ID.ToString());
 	}
 }
 
@@ -800,7 +805,7 @@ void UQuestComponent::QuestAdded(UQuest* Quest)
 {
 	if (Quest)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Quest Added: %s"), *Quest->QuestID.ToString());
+		UE_LOG(LogTemp, Log, TEXT("Quest Added: %s"), *Quest->ID.ToString());
 	}
 }
 

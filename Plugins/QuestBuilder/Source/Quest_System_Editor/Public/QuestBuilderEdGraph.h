@@ -32,9 +32,9 @@ public:
 
 	class SGraphEditor* SEditorGraph;
 
-	/** QuestSystem linked with this UEdGraph */
-	UPROPERTY(VisibleAnywhere, Instanced, Category = "QuestSystemGraph")
-		TObjectPtr<UQuest> QuestSystem;
+	/** Quest linked with this UEdGraph */
+	UPROPERTY(VisibleAnywhere, Instanced, Category = "QuestBuilderGraph")
+		TObjectPtr<UQuest> Quest;
 
 	UPROPERTY(Transient)
 		TMap< TObjectPtr<UQuestBuilderNode>, TObjectPtr<UQuestBuilderEdNode>> NodeMap;

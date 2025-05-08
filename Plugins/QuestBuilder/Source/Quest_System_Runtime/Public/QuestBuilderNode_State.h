@@ -17,6 +17,8 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "State")
         EQuestState QuestState;
 
+    virtual void Initialize() override;
+
     UFUNCTION(BlueprintCallable, Category = "State")
         void BeginState();
 

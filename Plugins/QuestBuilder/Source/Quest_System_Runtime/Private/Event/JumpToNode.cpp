@@ -15,9 +15,9 @@ UJumpToNode::UJumpToNode()
 
 void UJumpToNode::BeginEvent_Implementation()
 {
-	if (UQuestBuilderNode* FoundedNode = GetOwningQuestSystem()->NodeMap.FindRef(NodeID))
+	if (UQuestBuilderNode* FoundedNode = GetOwningQuest()->NodeMap.FindRef(NodeID))
 	{
-		GetQuestComponent()->GoToNextNode(GetOwningQuestSystem(), FoundedNode);
+		GetQuestComponent()->GoToNextNode(GetOwningQuest(), FoundedNode);
 	}
 }
 

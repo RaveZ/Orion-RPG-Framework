@@ -41,7 +41,7 @@ void SMyQuest::Construct(const FArguments& InArgs, TWeakPtr<FQuestBuilderEditor>
 
 	if (InQuestEditor.IsValid())
 	{
-		QuestSystemGraph = QuestEditorPtr.Pin()->GetQuestSystemObj();
+		QuestBuilderGraph = QuestEditorPtr.Pin()->GetQuestSystemObj();
 
 		CommandList = MakeShareable(new FUICommandList);
 
@@ -106,8 +106,8 @@ void SMyQuest::Construct(const FArguments& InArgs, TWeakPtr<FQuestBuilderEditor>
 	else
 	{
 		// we're in read only mode when there's no quest editor:
-		QuestSystemGraph = const_cast<UQuestBuilderGraph*>(InQuestSystemGraph);
-		check(QuestSystemGraph);
+		QuestBuilderGraph = const_cast<UQuestBuilderGraph*>(InQuestSystemGraph);
+		check(QuestBuilderGraph);
 		ToolbarBuilderWidget = SNew(SBox);
 	}
 
@@ -355,7 +355,7 @@ void SMyQuest::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& 
 
 			if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(QuestEditor->FocusedEdGraph))
 			{
-				QuestEditor->PropertyWidget->SetObject(QuestGraph->QuestSystem);
+				QuestEditor->PropertyWidget->SetObject(QuestGraph->Quest);
 			}
 		}
 	}
@@ -404,7 +404,7 @@ void SMyQuest::ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction)
 
 				if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(QuestEditor->ViewportWidget->GetCurrentGraph()))
 				{
-					QuestEditor->PropertyWidget->SetObject(QuestGraph->QuestSystem);
+					QuestEditor->PropertyWidget->SetObject(QuestGraph->Quest);
 				}
 			}
 		}
@@ -754,7 +754,7 @@ bool SMyQuest::SelectionHasContextMenu() const
 
 void SMyQuest::OnObjectPropertyChanged(UObject* InObject, FPropertyChangedEvent& InPropertyChangedEvent)
 {
-	if (InObject == QuestSystemGraph && (InPropertyChangedEvent.ChangeType != EPropertyChangeType::ValueSet && InPropertyChangedEvent.ChangeType != EPropertyChangeType::ArrayClear))
+	if (InObject == QuestBuilderGraph && (InPropertyChangedEvent.ChangeType != EPropertyChangeType::ValueSet && InPropertyChangedEvent.ChangeType != EPropertyChangeType::ArrayClear))
 	{
 		bNeedsRefresh = true;
 	}

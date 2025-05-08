@@ -3,12 +3,19 @@
 #include "CollisionQueryParams.h"
 #include "GameFramework/PlayerController.h"
 
+
+
+
 UOrionInteractionComponent::UOrionInteractionComponent()
 {
 	// Initialize variables
+	InteractionTraceChannel = ECC_WorldDynamic;
+	InteractionType = EOrionInteractionType::E_InteractionPawn;
+	InteractionRadius = 250.f;
 	InteractionTraceDistance = 300.0f;
 	InteractionTraceIntervalSecond = 0.3f;
 	bIsInteractionEnabled = false;
+	bDebugTrace = false;
 }
 
 void UOrionInteractionComponent::BeginPlay()
@@ -23,6 +30,7 @@ void UOrionInteractionComponent::BeginPlay()
         OwningController->OnPossessedPawnChanged.AddDynamic(this, &UOrionInteractionComponent::OnPossessedPawnChanged);
      
 	}
+	SetInteractionEnabled(true);
 }
 
 void UOrionInteractionComponent::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
@@ -124,35 +132,101 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 		return;
 	}
 
-	// Find interactable
+	UOrionInteractionTargetComponent* PrevInteractable = nullptr;
 	FVector TraceStart;
 	FRotator Rotation;
-	OwningController->GetPlayerViewPoint(TraceStart, Rotation);
-
-	const FVector TraceDirection = Rotation.Vector();
-	FVector TraceEnd = TraceStart + TraceDirection * InteractionTraceDistance;
+	InteractionhitResults.Empty();
 
 	FCollisionQueryParams CollisionQueryParams(SCENE_QUERY_STAT(AOrionInteractionComponent_UpdateInteracionTrace));
 	CollisionQueryParams.AddIgnoredActor(GetOwningPawn());
 
-	FHitResult HitResult;
-	GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_WorldDynamic, CollisionQueryParams);
 
-	UOrionInteractionTargetComponent* PrevInteractable = CurrentInteractable;
-	CurrentInteractable = nullptr;
-
-	if (HitResult.bBlockingHit && HitResult.GetComponent())
+	switch (InteractionType)
 	{
-		CurrentInteractable = Cast<UOrionInteractionTargetComponent>(HitResult.GetComponent());
-	}
+		case EOrionInteractionType::E_InteractionPawn:
+		{
+			TraceStart = GetOwningPawn()->GetActorLocation();
+			Rotation = GetOwningPawn()->GetActorRotation();
+			TraceStart += InteractionOffset;
+			FCollisionShape Sphere = FCollisionShape::MakeSphere(InteractionRadius);
 
+			TArray<FHitResult> HitResults;
+			GetWorld()->SweepMultiByChannel(HitResults, TraceStart, TraceStart, FQuat::Identity, InteractionTraceChannel, Sphere);
+
+			PrevInteractable = CurrentInteractable;
+			CurrentInteractable = nullptr;
+
+			for (auto& Hit : HitResults)
+			{
+				if (UOrionInteractionTargetComponent* TargetInteractable = Hit.GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>())
+				{
+					InteractionhitResults.Add(Hit);
+				}
+			}
+
+			if (InteractionIndex < InteractionhitResults.Num())
+			{
+				CurrentInteractable = InteractionhitResults[InteractionIndex].GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>();
+			}
+
+			if (bDebugTrace)
+			{
+				DrawDebugSphere(
+					GetWorld(),
+					TraceStart,
+					InteractionRadius,
+					12, // Number of segments
+					FColor::Red,
+					false, // Persistent lines
+					2.f, // Duration
+					0, // Depth priority
+					1.f // Line thickness
+				);
+			}
+			
+			break;
+		}
+			
+		case EOrionInteractionType::E_InteractionCamera:
+		{
+			OwningController->GetPlayerViewPoint(TraceStart, Rotation);
+
+			const FVector TraceDirection = Rotation.Vector();
+			FVector TraceEnd = TraceStart + TraceDirection * InteractionTraceDistance;
+
+			FHitResult HitResult;
+			GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, InteractionTraceChannel, CollisionQueryParams);
+			InteractionhitResults.Add(HitResult);
+
+			PrevInteractable = CurrentInteractable;
+			CurrentInteractable = nullptr;
+
+			if (InteractionhitResults[0].bBlockingHit && InteractionhitResults[0].GetComponent())
+			{
+				CurrentInteractable = InteractionhitResults[0].GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>();
+			}
+			if (bDebugTrace)
+			{
+				DrawDebugLine(
+					GetWorld(),
+					TraceStart,
+					TraceEnd,
+					FColor::Red,
+					false, // Persistent lines  
+					2.f,  // Duration  
+					0,    // Depth priority  
+					1.f   // Line thickness  
+				);
+			}
+			break;
+		}
+	}
 	// If we have previous interactable and we lose focus from it, cancel interaction
 	if (PrevInteractable && PrevInteractable->Mode == EOrionInteractionMode::Hold && PrevInteractable->IsInteractionInProgress() && CurrentInteractable == nullptr)
 	{
 		PrevInteractable->EndInteraction(false);
 	}
 
-	
 }
 
 void UOrionInteractionComponent::StartInteraction()

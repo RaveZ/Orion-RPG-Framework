@@ -2,6 +2,7 @@
 
 
 #include "QuestBuilderEdNode_Objective.h"
+#include "QuestBuilderSetting.h"
 #include "QuestBuilderNode.h"
 
 FText UQuestBuilderEdNode_Objective::GetNodeTitle(ENodeTitleType::Type TitleType) const
@@ -21,4 +22,9 @@ FText UQuestBuilderEdNode_Objective::GetNodeTitle(ENodeTitleType::Type TitleType
 	}
 
 	return Super::GetNodeTitle(TitleType);
+}
+
+FLinearColor UQuestBuilderEdNode_Objective::GetBackgroundColor() const
+{
+	return GetDefault<UQuestBuilderSetting>()->ObjectiveNodeColor;
 }

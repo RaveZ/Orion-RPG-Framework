@@ -58,7 +58,7 @@ public:
 		bool EndLaunched = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestEvent")
-		TObjectPtr<UQuest> QuestSystem;
+		TObjectPtr<UQuest> Quest;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "QuestEvent")
 		EEventRunType EventRunType = EEventRunType::E_Start;
@@ -86,13 +86,16 @@ public:
 		UQuestBuilderGraph* GetOwningQuestGraph() const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestEvent")
-		UQuest* GetOwningQuestSystem() const;
+		UQuest* GetOwningQuest() const;
 
 	UFUNCTION(CallInEditor, BlueprintCallable)
 	virtual TArray<FName> GetAllQuestID();
 
 	UFUNCTION(CallInEditor)
 	virtual TArray<FName> GetAllNodeID();
+
+	// Allows the Object to get a valid UWorld from it's outer.
+	virtual UWorld* GetWorld() const override;
 
 #if WITH_EDITOR
 protected:

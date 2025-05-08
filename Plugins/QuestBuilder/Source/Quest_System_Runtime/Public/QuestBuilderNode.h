@@ -42,45 +42,47 @@ public:
 	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = BranchingConditions, meta = (DisplayName = "Branching Conditions"))
 		TArray<TObjectPtr<UQuestCondition>> Conditions;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode")
 		TObjectPtr<UQuestBuilderGraph> QuestGraph;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
-		TObjectPtr<UQuest> QuestSystem;
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode")
+		TObjectPtr<UQuest> Quest;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode")
 		TArray<TObjectPtr<UQuestBuilderNode>> ParentNodes;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode")
 		TArray<TObjectPtr<UQuestBuilderNode>> ChildrenNodes;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode")
 		TMap<TObjectPtr<UQuestBuilderNode>, TObjectPtr<UQuestBuilderEdge>> Edges;
 
 
-	UFUNCTION(BlueprintCallable, Category = "QuestSystemGraphNode")
+	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
 		virtual UQuestBuilderEdge* GetEdge(UQuestBuilderNode* ChildNode);
 
-	UFUNCTION(BlueprintCallable, Category = "QuestSystemGraphNode")
+	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
 		bool IsLeafNode() const;
 
+	virtual void Initialize();
 
-	UFUNCTION(BlueprintCallable, Category = "QuestSystemGraphNode")
+
+	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
 		AController* GetOwningController() const;
 
-	UFUNCTION(BlueprintCallable, Category = "QuestSystemGraphNode")
+	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
 		APawn* GetOwningPawn() const;
 
-	UFUNCTION(BlueprintCallable, Category = "QuestSystemGraphNode")
+	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
 		UQuestComponent* GetQuestComponent() const;
 
-	UFUNCTION(BlueprintCallable, Category = "QuestSystemGraphNode")
+	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
 		UQuestBuilderGraph* GetOwningQuestGraph() const;
 
-	UFUNCTION(BlueprintCallable, Category = "QuestSystemGraphNode")
-		UQuest* GetOwningQuestSystem() const;
+	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
+		UQuest* GetOwningQuest() const;
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestSystemGraphNode")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestBuilderNode")
 		FText GetDescription() const;
 
 
@@ -95,23 +97,23 @@ public:
 #if WITH_EDITORONLY_DATA
 
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode")
 		TSubclassOf<UQuestBuilderGraph> CompatibleGraphType;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode")
 		FLinearColor BackgroundColor;
 
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode")
 		ENodeLimits ParentLimitType;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode", meta = (ClampMin = "0", EditCondition = "ParentLimitType == ENodeLimits::Limited", EditConditionHides))
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode", meta = (ClampMin = "0", EditCondition = "ParentLimitType == ENodeLimits::Limited", EditConditionHides))
 		int32 ParentLimit;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode")
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode")
 		ENodeLimits ChildrenLimitType;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraphNode", meta = (ClampMin = "0", EditCondition = "ChildrenLimitType == ENodeLimits::Limited", EditConditionHides))
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode", meta = (ClampMin = "0", EditCondition = "ChildrenLimitType == ENodeLimits::Limited", EditConditionHides))
 		int32 ChildrenLimit;
 
 

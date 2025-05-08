@@ -4,8 +4,9 @@ using UnrealBuildTool;
 public class Quest_System_Editor : ModuleRules
 {
 	public Quest_System_Editor(ReadOnlyTargetRules Target) : base(Target)
-	{
-		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
+    {
+        bLegacyPublicIncludePaths = false;
+        PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
 		PublicIncludePaths.AddRange(
 			new string[] 

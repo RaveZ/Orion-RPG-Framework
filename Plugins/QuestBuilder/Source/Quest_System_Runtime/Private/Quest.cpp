@@ -9,7 +9,7 @@
 #include "QuestBuilderNode_Root.h"
 
 
-#define LOCTEXT_NAMESPACE "QuestSystem"
+#define LOCTEXT_NAMESPACE "Quest"
 
 
 

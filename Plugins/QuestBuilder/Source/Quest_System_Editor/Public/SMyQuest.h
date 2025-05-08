@@ -55,7 +55,7 @@ public:
 	FAssetSchemaAction_QuestSystemGraph* SelectionAsGraph() const;
 
 	/** Accessor the blueprint object from the main editor */
-	UQuestBuilderGraph* GetQuestSystemObj() const { return QuestSystemGraph; }
+	UQuestBuilderGraph* GetQuestSystemObj() const { return QuestBuilderGraph; }
 
 	/** Initiates a rename on the selected action node, if possible */
 	void OnRequestRenameOnActionNode();
@@ -164,7 +164,7 @@ private:
 	TWeakPtr<FQuestBuilderEditor> QuestEditorPtr;
 
 	/** The Quest graph being displayed: */
-	UQuestBuilderGraph* QuestSystemGraph;
+	UQuestBuilderGraph* QuestBuilderGraph;
 
 	/** The Ed Graph being displayed: */
 	UEdGraph* EdGraph;

@@ -5,12 +5,6 @@
 
 UOrionInteractionTargetComponent::UOrionInteractionTargetComponent()
 {
-	ShapeColor = FColor::Cyan;
-	SetCollisionObjectType(ECC_WorldDynamic);
-	SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	SetCollisionResponseToAllChannels(ECR_Ignore);
-	SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
-
 	Mode = EOrionInteractionMode::Tap;
 	HoldDuration = 1.0f;
 	CurrentInteractor = nullptr;

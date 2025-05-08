@@ -9,6 +9,11 @@
 
 #define LOCTEXT_NAMESPACE "QuestSystemGraphNode_TaskManager"
 
+void UQuestBuilderNode_Objective::Initialize()
+{
+
+}
+
 bool UQuestBuilderNode_Objective::IsAllTaskCompleted()
 {
     int progress = 0;

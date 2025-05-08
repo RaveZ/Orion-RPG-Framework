@@ -35,7 +35,7 @@ public:
 		FName NodeID;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "QuestCondition")
-		TObjectPtr<UQuest> QuestSystem;
+		TObjectPtr<UQuest> Quest;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestCondition")
 		bool IsConditionMet() const;
@@ -60,7 +60,7 @@ public:
 		UQuestBuilderGraph* GetOwningQuestGraph() const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestCondition")
-		UQuest* GetOwningQuestSystem() const;
+		UQuest* GetOwningQuest() const;
 
 	UFUNCTION(CallInEditor)
 	virtual	TArray<FName> GetAllQuestID();
@@ -68,6 +68,8 @@ public:
 	UFUNCTION(CallInEditor)
 	virtual TArray<FName> GetAllNodeID();
 
+	// Allows the Object to get a valid UWorld from it's outer.
+	virtual UWorld* GetWorld() const override;
 #if WITH_EDITOR
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

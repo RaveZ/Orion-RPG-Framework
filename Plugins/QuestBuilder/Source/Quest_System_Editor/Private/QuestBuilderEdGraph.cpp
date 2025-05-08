@@ -54,9 +54,9 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 
 	Clear();
 	
-	if (QuestSystem->QuestName.IsEmpty())
+	if (Quest->QuestName.IsEmpty())
 	{
-		QuestSystem->QuestName = FText::FromName(QuestSystem->QuestID);
+		Quest->QuestName = FText::FromName(Quest->ID);
 	}
 
 	if (Graph->CategoryDisplayName.IsEmpty())
@@ -64,12 +64,12 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 		Graph->CategoryDisplayName = Graph->GetFName().ToString();
 	}
 
-	for (UQuestCondition* QuestCondition : QuestSystem->Conditions)
+	for (UQuestCondition* QuestCondition : Quest->Conditions)
 	{
 		if (QuestCondition != nullptr)
 		{
 			QuestCondition->QuestGraph = Graph;
-			QuestCondition->QuestSystem = QuestSystem;
+			QuestCondition->Quest = Quest;
 		}
 	}
 
@@ -84,8 +84,8 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 
 			NodeMap.Add(QuestSystemGraphNode, EdNode);
 
-			QuestSystem->AllNodes.Add(QuestSystemGraphNode);
-			QuestSystem->NodeMap.Emplace(QuestSystemGraphNode->ID, QuestSystemGraphNode);
+			Quest->AllNodes.Add(QuestSystemGraphNode);
+			Quest->NodeMap.Emplace(QuestSystemGraphNode->ID, QuestSystemGraphNode);
 
 			for (int PinIdx = 0; PinIdx < EdNode->Pins.Num(); ++PinIdx)
 			{
@@ -127,7 +127,7 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 					{
 						Task->ObjectiveNode = ObjectiveNode;
 						Task->QuestGraph = Graph;
-						Task->QuestSystem = QuestSystem;
+						Task->Quest = Quest;
 					}
 				}
 			}
@@ -138,7 +138,7 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 				{
 					QuestCondition->OwningNode = QuestSystemGraphNode;
 					QuestCondition->QuestGraph = Graph;
-					QuestCondition->QuestSystem = QuestSystem;
+					QuestCondition->Quest = Quest;
 				}
 			}
 			
@@ -148,7 +148,7 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 				{
 					QuestEvent->OwningNode = QuestSystemGraphNode;
 					QuestEvent->QuestGraph = Graph;
-					QuestEvent->QuestSystem = QuestSystem;
+					QuestEvent->Quest = Quest;
 				}
 			}
 
@@ -177,14 +177,14 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 		{
 			if (RootNode->QuestSystemGraphNode == nullptr)
 				continue;
-			QuestSystem->RootNodes.Add(RootNode->QuestSystemGraphNode);
+			Quest->RootNodes.Add(RootNode->QuestSystemGraphNode);
 		}
 
 	}
 
-	for (int i = 0; i < QuestSystem->AllNodes.Num(); ++i)
+	for (int i = 0; i < Quest->AllNodes.Num(); ++i)
 	{
-		UQuestBuilderNode* Node = QuestSystem->AllNodes[i];
+		UQuestBuilderNode* Node = Quest->AllNodes[i];
 		if (Node->ParentNodes.Num() == 0)
 		{
 			//use this line below if you want to automatically detect rootnodes based on their parent
@@ -193,7 +193,7 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 		}
 
 		Node->QuestGraph = Graph;
-		Node->QuestSystem = QuestSystem;
+		Node->Quest = Quest;
 		Node->Rename(nullptr, Graph, REN_DontCreateRedirectors | REN_DoNotDirty);
 	}
 
@@ -223,7 +223,7 @@ void UQuestBuilderEdGraph::SortAllChildrenNodes(bool bForce)
 			FTimerDelegate::CreateLambda([this]()
 				{
 					//sort children nodes based on the PosY of EdNode
-					for (auto& Node : QuestSystem->AllNodes)
+					for (auto& Node : Quest->AllNodes)
 					{
 						Node->ChildrenNodes.Sort([&](const UQuestBuilderNode& B, const UQuestBuilderNode& T)
 							{
@@ -278,8 +278,8 @@ void UQuestBuilderEdGraph::PostEditUndo()
 
 void UQuestBuilderEdGraph::Clear()
 {
-	QuestSystem->ClearGraph();
-	QuestSystem->NodeMap.Reset();
+	Quest->ClearGraph();
+	Quest->NodeMap.Reset();
 	NodeMap.Reset();
 	EdgeMap.Reset();
 

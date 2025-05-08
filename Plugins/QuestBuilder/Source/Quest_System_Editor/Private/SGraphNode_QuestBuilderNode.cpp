@@ -24,6 +24,7 @@
 #include "Fonts/SlateFontInfo.h"
 #include "Condition/QuestCondition.h"
 #include "Event/QuestEvent.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 
 #define LOCTEXT_NAMESPACE "EdNode_QuestBuilder"
 
@@ -533,10 +534,10 @@ bool SGraphNode_QuestBuilderNode::IsNameReadOnly() const
 	UQuestBuilderEdNode* EdNode_Node = Cast<UQuestBuilderEdNode>(GraphNode);
 	check(EdNode_Node != nullptr);
 
-	UQuestBuilderGraph* QuestSystemGraph = EdNode_Node->QuestSystemGraphNode->QuestGraph;
-	check(QuestSystemGraph != nullptr);
+	UQuestBuilderGraph* QuestBuilderGraph = EdNode_Node->QuestSystemGraphNode->QuestGraph;
+	check(QuestBuilderGraph != nullptr);
 
-	return (!QuestSystemGraph->bCanRenameNode || !EdNode_Node->QuestSystemGraphNode->IsNameEditable()) || SGraphNode::IsNameReadOnly();
+	return (!QuestBuilderGraph->bCanRenameNode || !EdNode_Node->QuestSystemGraphNode->IsNameEditable()) || SGraphNode::IsNameReadOnly();
 }
 FText SGraphNode_QuestBuilderNode::GetDescription() const
 {
@@ -591,18 +592,19 @@ EVisibility SGraphNode_QuestBuilderNode::GetConditionsVisibility() const
 	}
 	return EVisibility::Collapsed;
 }
+
 bool SGraphNode_QuestBuilderNode::OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage)
 {
-	FString TextAsString = InText.ToString();
+	FString FinalString = InText.ToString().TrimStartAndEnd();
 
 	FName OriginalName;
 
 	bool bValid(true);
 
-	if ((GetEditableNodeTitle() != InText.ToString()) && OnVerifyTextCommit.IsBound())
+	if ((GetEditableNodeTitle() != FinalString) && OnVerifyTextCommit.IsBound())
 	{
 		OutErrorMessage = LOCTEXT("RenameFailed_NotValid", "Name Not Valid.");
-		bValid = OnVerifyTextCommit.Execute(InText, GraphNode, OutErrorMessage);
+        bValid = OnVerifyTextCommit.Execute(FText::FromString(FinalString), GraphNode, OutErrorMessage);
 	}
 
 	if (UQuestBuilderEdNode* MyNode = Cast<UQuestBuilderEdNode>(GraphNode))
@@ -610,19 +612,30 @@ bool SGraphNode_QuestBuilderNode::OnVerifyNameTextChanged(const FText& InText, F
 		OriginalName = MyNode->QuestSystemGraphNode->ID;
 	}
 
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-	for (TObjectIterator<UQuestBuilderNode> It; It; ++It)
+	TArray<FAssetData> QuestGraphDataArray;
+	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+
+	for (const FAssetData& AssetData : QuestGraphDataArray)
 	{
-		if (UQuestBuilderNode* QuestSystem = Cast<UQuestBuilderNode>(*It))
+		UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
+		if (QuestGraph)
 		{
-			if (FName(InText.ToString()) == OriginalName)
+			for (auto& Quest : QuestGraph->QuestList)
 			{
-				return true;
-			}
-			if (QuestSystem->ID == FName(InText.ToString()))
-			{
-				OutErrorMessage = LOCTEXT("RenameFailed_NotValid", "This ID is already used in another Node.");
-				return false;
+				for (auto& QuestNode : Quest->AllNodes)
+				{
+					if (FName(FinalString) == OriginalName)
+					{
+						return true;
+					}
+					if (QuestNode->ID == FName(FinalString))
+					{
+						OutErrorMessage = LOCTEXT("RenameFailed_NotValid", "This ID is already used in another Node.");
+						return false;
+					}
+				}
 			}
 		}
 	}
@@ -640,7 +653,7 @@ void SGraphNode_QuestBuilderNode::OnNameTextCommited(const FText& InText, ETextC
 {
 	SGraphNode::OnNameTextCommited(InText, CommitInfo);
 
-	const FString NewNameString = InText.ToString();
+	const FString NewNameString = InText.ToString().TrimStartAndEnd();
 	const FName NewName = *NewNameString;
 	FName OriginalName;
 
@@ -651,32 +664,53 @@ void SGraphNode_QuestBuilderNode::OnNameTextCommited(const FText& InText, ETextC
 	{
 		UQuestBuilderEdGraph* QuestEdGraph = MyNode->GetQuestSystemGraphEdGraph();
 		OriginalName = QuestSystemNode->ID;
-		
+
 		//Finalize Node and Update GraphNode
 		const FScopedTransaction Transaction(LOCTEXT("QuestSystemEditorRenameNode", "Quest System Editor: Rename Node"));
 		MyNode->Modify();
 		MyNode->QuestSystemGraphNode->Modify();
-		MyNode->QuestSystemGraphNode->SetNodeTitle(InText);
+		MyNode->QuestSystemGraphNode->SetNodeTitle(FText::FromString(NewNameString));
 		UpdateGraphNode();
 
-		// Update the name of the node in the QuestSystemGraph
-		for (TObjectIterator<UQuestCondition> It; It; ++It)
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+		TArray<FAssetData> QuestGraphDataArray;
+		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+
+		for (const FAssetData& AssetData : QuestGraphDataArray)
 		{
-			if (UQuestCondition* QuestCondition = Cast<UQuestCondition>(*It))
+			UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
+			if (QuestGraph)
 			{
-				if (QuestCondition->NodeID == OriginalName)
+				for (auto& Quest : QuestGraph->QuestList)
 				{
-					QuestCondition->NodeID = NewName;
-				}
-			}
-		}
-		for (TObjectIterator<UQuestEvent> It; It; ++It)
-		{
-			if (UQuestEvent* QuestEvent = Cast<UQuestEvent>(*It))
-			{
-				if (QuestEvent->NodeID == OriginalName)
-				{
-					QuestEvent->NodeID = NewName;
+					for (auto& QuestCondition : Quest->Conditions)
+					{
+						if (QuestCondition && QuestCondition->NodeID == OriginalName)
+						{
+							QuestCondition->NodeID = NewName;
+							QuestCondition->Modify();
+						}
+					}
+					for (auto& Node : Quest->AllNodes)
+					{
+						for (auto& NodeCondition : Node->Conditions)
+						{
+							if (NodeCondition && NodeCondition->NodeID == OriginalName)
+							{
+								NodeCondition->NodeID = NewName;
+								NodeCondition->Modify();
+							}
+						}
+						for (auto& NodeEvent : Node->Events)
+						{
+							if (NodeEvent && NodeEvent->NodeID == OriginalName)
+							{
+								NodeEvent->NodeID = NewName;
+								NodeEvent->Modify();
+							}
+						}
+					}
 				}
 			}
 		}
@@ -686,17 +720,17 @@ void SGraphNode_QuestBuilderNode::OnNameTextCommited(const FText& InText, ETextC
 FSlateColor SGraphNode_QuestBuilderNode::GetBorderBackgroundColor() const
 {
 	UQuestBuilderEdNode* MyNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	return MyNode ? MyNode->GetBackgroundColor() : QuestBuilderColors::NodeBorder::HighlightAbortRange0;
+	return MyNode ? MyNode->GetBackgroundColor() : QuestBuilderColors::NodeBorder::HighlightAbortRange;
 }
 
 FSlateColor SGraphNode_QuestBuilderNode::GetNodeHighlightColor() const
 {
 	UQuestBuilderEdNode* MyNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	if (MyNode->QuestSystemGraphNode->QuestSystem == nullptr)
+	if (MyNode->QuestSystemGraphNode->Quest == nullptr)
 		return QuestBuilderColors::NodeBorder::NoHighlight;
 
 
-	if (MyNode->QuestSystemGraphNode->QuestSystem->CurrentNode == MyNode->QuestSystemGraphNode && (GEditor->bIsSimulatingInEditor || GEditor->PlayWorld))
+	if (MyNode->QuestSystemGraphNode->Quest->CurrentNode == MyNode->QuestSystemGraphNode && (GEditor->bIsSimulatingInEditor || GEditor->PlayWorld))
 	{
 		return QuestBuilderColors::NodeBorder::HighlightCurrentNode;
 		

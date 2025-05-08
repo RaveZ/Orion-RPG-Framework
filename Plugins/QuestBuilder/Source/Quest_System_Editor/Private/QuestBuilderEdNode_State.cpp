@@ -2,7 +2,9 @@
 
 
 #include "QuestBuilderEdNode_State.h"
+#include "QuestBuilderSetting.h"
 #include "QuestBuilderNode.h"
+#include "QuestBuilderNode_State.h"
 
 UQuestBuilderEdNode_State::UQuestBuilderEdNode_State()
 {
@@ -22,4 +24,22 @@ FText UQuestBuilderEdNode_State::GetNodeTitle(ENodeTitleType::Type TitleType) co
 	}
 
 	return Super::GetNodeTitle(TitleType);
+}
+
+FLinearColor UQuestBuilderEdNode_State::GetBackgroundColor() const
+{
+	FLinearColor Default(0.05f, 0.05f, 0.05f);
+	if (UQuestBuilderNode_State* StateNode = Cast<UQuestBuilderNode_State>(QuestSystemGraphNode))
+	{
+
+		switch (StateNode->QuestState)
+		{
+		case EQuestState::E_Complete:
+			return GetDefault<UQuestBuilderSetting>()->SuccessNodeColor;
+		case EQuestState::E_Fail:
+			return GetDefault<UQuestBuilderSetting>()->FailedNodeColor;
+		}
+	}
+
+	return GetDefault<UQuestBuilderSetting>()->RootNodeColor;
 }

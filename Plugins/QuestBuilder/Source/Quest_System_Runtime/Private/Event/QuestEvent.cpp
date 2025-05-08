@@ -55,9 +55,9 @@ UQuestBuilderGraph* UQuestEvent::GetOwningQuestGraph() const
 	return QuestGraph;
 }
 
-UQuest* UQuestEvent::GetOwningQuestSystem() const 
+UQuest* UQuestEvent::GetOwningQuest() const 
 {
-	return QuestSystem;
+	return Quest;
 }
 
 TArray<FName> UQuestEvent::GetAllQuestID()
@@ -65,9 +65,9 @@ TArray<FName> UQuestEvent::GetAllQuestID()
 	TArray<FName> QuestIDs;
 	for (TObjectIterator<UQuestBuilderGraph> It; It; ++It)
 	{
-		for (UQuest* Quest : It->QuestSystems)
+		for (UQuest* QuestObj : It->QuestList)
 		{
-			QuestIDs.Add(Quest->QuestID);
+			QuestIDs.Add(QuestObj->ID);
 		}
 	}
 
@@ -81,12 +81,12 @@ TArray<FName> UQuestEvent::GetAllNodeID()
 	{
 		for (TObjectIterator<UQuestBuilderGraph> It; It; ++It)
 		{
-			for (UQuest* Quest : It->QuestSystems)
+			for (UQuest* QuestObj : It->QuestList)
 			{
-				if (Quest)
+				if (QuestObj)
 				{
-					if (Quest->QuestID != QuestID) continue;
-					for (UQuestBuilderNode* Node : Quest->AllNodes)
+					if (QuestObj->ID != QuestID) continue;
+					for (UQuestBuilderNode* Node : QuestObj->AllNodes)
 					{
 						if (Node)
 						{
@@ -99,14 +99,12 @@ TArray<FName> UQuestEvent::GetAllNodeID()
 			}
 
 		}
-
-		return NodeIDs;
 	}
 	else
 	{
-		if (GetOwningQuestSystem())
+		if (GetOwningQuest())
 		{
-			for (UQuestBuilderNode* Node : GetOwningQuestSystem()->AllNodes)
+			for (UQuestBuilderNode* Node : GetOwningQuest()->AllNodes)
 			{
 				if (Node)
 				{
@@ -115,9 +113,25 @@ TArray<FName> UQuestEvent::GetAllNodeID()
 				}
 			}
 		}
-		return NodeIDs;
 	}
+	return NodeIDs;
 	
+}
+
+UWorld* UQuestEvent::GetWorld() const
+{
+	if (HasAllFlags(RF_ClassDefaultObject))
+	{
+		// If we are a CDO, we must return nullptr instead of calling Outer->GetWorld() to fool UObject::ImplementsGetWorld.
+		return nullptr;
+	}
+
+	if (GetQuestComponent())
+	{
+		return GetQuestComponent()->GetWorld();
+	}
+
+	return nullptr;
 }
 
 #if WITH_EDITOR

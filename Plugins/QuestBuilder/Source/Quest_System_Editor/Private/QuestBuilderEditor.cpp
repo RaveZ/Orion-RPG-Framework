@@ -660,13 +660,20 @@ void FQuestBuilderEditor::LogSimpleMessage(const FText& MessageText)
 
 TSharedRef<SWidget> FQuestBuilderEditor::CreateGraphTitleBarWidget(TSharedRef<FTabInfo> InTabInfo, UEdGraph* InGraph)
 {
-	// Create the title bar widget
+   // Create a horizontal box to serve as the title bar
 	return SNew(SBox);
-		/*SNew(SGraphTitleBar)
-		.EdGraphObj(InGraph)
-		.Kismet2(SharedThis(this))
-		.OnDifferentGraphCrumbClicked(this, &FQuestBuilderEditor::OnChangeBreadCrumbGraph)
-		.HistoryNavigationWidget(InTabInfo->CreateHistoryNavigationWidget());*/
+		
+		//SNew(SHorizontalBox)
+		//+ SHorizontalBox::Slot()
+		//.FillWidth(1.0f)
+		//.VAlign(VAlign_Center)
+		//.Padding(FMargin(5.0f, 0.0f))
+		//[
+		//	// Add the graph name as a text block
+		//	SNew(STextBlock)
+		//		.Text(FText::FromString(InGraph->GetName()))
+		//		.TextStyle(FAppStyle::Get(), "GraphBreadcrumbButtonText")
+		//];
 }
 
 
@@ -710,15 +717,15 @@ void FQuestBuilderEditor::InitializeDocumentTab()
 {
 	check(IsEditingSingleQuestGraph());
 
-	UQuestBuilderGraph* QuestSystemGraph = GetQuestSystemObj();
-	if (QuestSystemGraph->LastEditedDocuments.Num() == 0)
+	UQuestBuilderGraph* QuestBuilderGraph = GetQuestSystemObj();
+	if (QuestBuilderGraph->LastEditedDocuments.Num() == 0)
 	{
-			QuestSystemGraph->LastEditedDocuments.Add(FQuestBuilderEditorUtils::FindQuestGraph(QuestSystemGraph));
+			QuestBuilderGraph->LastEditedDocuments.Add(FQuestBuilderEditorUtils::FindQuestGraph(QuestBuilderGraph));
 	}
 
-	for (int32 i = 0; i < QuestSystemGraph->LastEditedDocuments.Num(); i++)
+	for (int32 i = 0; i < QuestBuilderGraph->LastEditedDocuments.Num(); i++)
 	{
-		if (UObject* Obj = QuestSystemGraph->LastEditedDocuments[i].EditedObjectPath.ResolveObject())
+		if (UObject* Obj = QuestBuilderGraph->LastEditedDocuments[i].EditedObjectPath.ResolveObject())
 		{
 			if (UEdGraph* Graph = Cast<UEdGraph>(Obj))
 			{
@@ -732,7 +739,7 @@ void FQuestBuilderEditor::InitializeDocumentTab()
 						{
 							if (OuterObject->IsA<UQuestBuilderGraph>())
 							{
-								// reached up to the QuestSystemGraph for the graph, we are done climbing the tree
+								// reached up to the QuestBuilderGraph for the graph, we are done climbing the tree
 								OpenCause = FDocumentTracker::RestorePreviousDocument;
 								break;
 							}
@@ -751,7 +758,7 @@ void FQuestBuilderEditor::InitializeDocumentTab()
 				if (TabWithGraph.IsValid())
 				{
 					TSharedRef<SGraphEditor> GraphEditor = StaticCastSharedRef<SGraphEditor>(TabWithGraph->GetContent());
-					GraphEditor->SetViewLocation(QuestSystemGraph->LastEditedDocuments[i].SavedViewOffset, QuestSystemGraph->LastEditedDocuments[i].SavedZoomAmount);
+					GraphEditor->SetViewLocation(QuestBuilderGraph->LastEditedDocuments[i].SavedViewOffset, QuestBuilderGraph->LastEditedDocuments[i].SavedZoomAmount);
 				}
 			}
 			else
@@ -939,13 +946,15 @@ TSharedRef<SDockTab> FQuestBuilderEditor::SpawnTab_MyQuest(const FSpawnTabArgs& 
 
 void FQuestBuilderEditor::CreateInternalWidgets()
 {
-	FDetailsViewArgs Args;
-	Args.bHideSelectionTip = true;
-	Args.NotifyHook = this;
-
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-	PropertyWidget = PropertyModule.CreateDetailView(Args);
-	PropertyWidget->SetObject(nullptr);
+
+	FDetailsViewArgs DetailsViewArgs;
+	DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
+	DetailsViewArgs.bHideSelectionTip = true;
+	DetailsViewArgs.NotifyHook = this;
+
+	PropertyWidget = PropertyModule.CreateDetailView(DetailsViewArgs);
+	PropertyWidget->SetObject( NULL );
 	PropertyWidget->OnFinishedChangingProperties().AddSP(this, &FQuestBuilderEditor::OnFinishedChangingProperties);
 
 
@@ -1058,6 +1067,7 @@ void FQuestBuilderEditor::DeleteSelectedNodes()
 			EdNode->Modify();
 			EdNode->DestroyNode();
 		}
+
 	}
 }
 bool FQuestBuilderEditor::CanDeleteNodes()
@@ -1247,11 +1257,7 @@ void FQuestBuilderEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVect
 			Node->CreateNewGuid();
 
 		}
-;
-		if (UEdGraphNode* LastNode = PastedNodes.Array()[PastedNodes.Num() - 1])
-		{
-			FocusedEdGraph->NotifyNodeChanged(LastNode);
-		}
+
 	}
 
 	// Update UI
@@ -1417,7 +1423,7 @@ void FQuestBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& New
 	{
 		if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(ViewportWidget->GetCurrentGraph()))
 		{
-			PropertyWidget->SetObject(QuestGraph->QuestSystem);
+			PropertyWidget->SetObject(QuestGraph->Quest);
 		}
 	}
 	else if (Selection.Num() == 1)
@@ -1426,7 +1432,7 @@ void FQuestBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& New
 		{
 			if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(ViewportWidget->GetCurrentGraph()))
 			{
-				PropertyWidget->SetObject(QuestGraph->QuestSystem);
+				PropertyWidget->SetObject(QuestGraph->Quest);
 			}
 		}
 		else

@@ -10,8 +10,10 @@
 #include "EdGraphSchema_QuestBuilder.h"
 #include "QuestBuilderEdGraph.h"
 #include "QuestBuilderGraph.h"
+#include "QuestBuilderNode.h"
 #include "Condition/QuestCondition.h"
 #include "QuestBuilderFunctionLibrary.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "Event/QuestEvent.h"
 
 
@@ -35,7 +37,7 @@ void SQuestPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActi
 	check(InCreateData->Action.IsValid());
 	check(InQuestSystemGraph);
 
-	QuestSystemGraph = InQuestSystemGraph;
+	QuestBuilderGraph = InQuestSystemGraph;
 
 	bShowClassInTooltip = InArgs._ShowClassInTooltip;
 
@@ -153,7 +155,7 @@ FText SQuestPaletteItem::GetDisplayText() const
 		FAssetSchemaAction_QuestSystemGraph* QuestGraphAction = (FAssetSchemaAction_QuestSystemGraph*)GraphAction.Get();
 		if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(QuestGraphAction->EdGraph))
 		{
-			MenuDescriptionCache.SetCachedText(FText::FromName(QuestEdGraph->QuestSystem->QuestID), QuestSchema);
+			MenuDescriptionCache.SetCachedText(FText::FromName(QuestEdGraph->Quest->ID), QuestSchema);
 		}
 	}
 
@@ -162,33 +164,42 @@ FText SQuestPaletteItem::GetDisplayText() const
 
 bool SQuestPaletteItem::OnNameTextVerifyChanged(const FText& InNewText, FText& OutErrorMessage)
 {
-	FString TextAsString = InNewText.ToString();
+	FString FinalString = InNewText.ToString().TrimStartAndEnd();
 
 	FName OriginalName;
 
 	FAssetSchemaAction_QuestSystemGraph* QuestGraphAction = (FAssetSchemaAction_QuestSystemGraph*)ActionPtr.Pin().Get();
 	if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(QuestGraphAction->EdGraph))
 	{
-		OriginalName = QuestEdGraph->QuestSystem->QuestID;
+		OriginalName = QuestEdGraph->Quest->ID;
 	}
 
-	for (TObjectIterator<UQuest> It; It; ++It)
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+	TArray<FAssetData> QuestGraphDataArray;
+	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+
+	for (const FAssetData& AssetData : QuestGraphDataArray)
 	{
-		if (UQuest* QuestSystem = Cast<UQuest>(*It))
+		UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
+		if (QuestGraph)
 		{
-			if (FName(InNewText.ToString()) == OriginalName)
+			for (auto& Quest : QuestGraph->QuestList)
 			{
-				return true;
-			}
-			if (FName(InNewText.ToString()).IsNone())
-			{
-				OutErrorMessage = LOCTEXT("RenameFailed_NotValid", "Empty ID is Not Valid.");
-				return false;
-			}
-			if (QuestSystem->QuestID == FName(InNewText.ToString()))
-			{
-				OutErrorMessage = LOCTEXT("RenameFailed_NotValid", "This ID is already used in another Quest.");
-				return false;
+				if (FName(FinalString) == OriginalName)
+				{
+					return true;
+				}
+				if (FName(FinalString).IsNone())
+				{
+					OutErrorMessage = LOCTEXT("RenameFailed_NotValid", "Empty ID is Not Valid.");
+					return false;
+				}
+				if (Quest->ID == FName(FinalString))
+				{
+					OutErrorMessage = LOCTEXT("RenameFailed_NotValid", "This ID is already used in another Quest.");
+					return false;
+				}
 			}
 		}
 	}
@@ -200,53 +211,77 @@ bool SQuestPaletteItem::OnNameTextVerifyChanged(const FText& InNewText, FText& O
 	return true;
 }
 
+#include "GameFramework/Actor.h"
+#include "Logging/LogMacros.h"
+
 void SQuestPaletteItem::OnNameTextCommitted(const FText& NewText, ETextCommit::Type InTextCommit)  
 {  
-   const FString NewNameString = NewText.ToString();  
-   const FName NewName = *NewNameString;  
-   FName OriginalName;  
+  const FString NewNameString = NewText.ToString().TrimStartAndEnd();  
+  const FName NewName = *NewNameString;  
+  FName OriginalName;  
 
-   FAssetSchemaAction_QuestSystemGraph* QuestGraphAction = (FAssetSchemaAction_QuestSystemGraph*)ActionPtr.Pin().Get();  
-   if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(QuestGraphAction->EdGraph))  
-   {  
-	   //Rename Succesful
-       OriginalName = QuestEdGraph->QuestSystem->QuestID;  
-       QuestEdGraph->QuestSystem->QuestID = NewName;  
-       QuestEdGraph->Rename(*(NewName.ToString()), QuestSystemGraph, REN_DoNotDirty | REN_ForceNoResetLoaders);  
+  FAssetSchemaAction_QuestSystemGraph* QuestGraphAction = (FAssetSchemaAction_QuestSystemGraph*)ActionPtr.Pin().Get();  
+  if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(QuestGraphAction->EdGraph))  
+  {
+      OriginalName = QuestEdGraph->Quest->ID;  
+      QuestEdGraph->Quest->ID = NewName;  
+      QuestEdGraph->Rename(*(NewName.ToString()), QuestBuilderGraph, REN_DoNotDirty | REN_ForceNoResetLoaders);  
 
-	   if (!QuestEdGraph->QuestSystem->QuestName.IsFromStringTable())
-	   {
-           if (QuestEdGraph->QuestSystem->QuestName.IsEmpty() || QuestEdGraph->QuestSystem->QuestName.EqualTo(FText::FromName(OriginalName)))
-		   {
-			   QuestEdGraph->QuestSystem->QuestName = FText::FromName(NewName);
-		   }
-	   }
 
-       for (TObjectIterator<UQuestCondition> It; It; ++It)  
-       {  
-           if (UQuestCondition* QuestCondition = Cast<UQuestCondition>(*It))  
-           {  
-               if (QuestCondition->QuestID == OriginalName)  
-               {  
-                   QuestCondition->QuestID = NewName;  
-               }  
-           }  
-       }  
+      if (!QuestEdGraph->Quest->QuestName.IsFromStringTable())
+      {
+          if (QuestEdGraph->Quest->QuestName.IsEmpty() || QuestEdGraph->Quest->QuestName.EqualTo(FText::FromName(OriginalName)))
+          {
+              QuestEdGraph->Quest->QuestName = FText::FromName(NewName);
+          }
+      }
 
-       for (TObjectIterator<UQuestEvent> It; It; ++It)  
-       {  
-           if (UQuestEvent* QuestEvent = Cast<UQuestEvent>(*It))  
-           {  
-               if (QuestEvent->QuestID == OriginalName)  
-               {  
-                   QuestEvent->QuestID = NewName;  
-               }  
-           }  
-       }  
-   }  
-   QuestEditorPtr.Pin()->GetMyQuestWidget()->Refresh();  
+      FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-   QuestEditorPtr.Pin()->GetQuestSystemObj()->Modify();  
+      TArray<FAssetData> QuestGraphDataArray;
+      AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+
+      for (const FAssetData& AssetData : QuestGraphDataArray)
+      {
+          UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
+          if (QuestGraph)
+          {
+              for (auto& Quest : QuestGraph->QuestList)
+              {
+                  for (auto& QuestCondition : Quest->Conditions)
+                  {
+                      if (QuestCondition && QuestCondition->QuestID == OriginalName)
+                      {
+                          QuestCondition->QuestID = NewName;
+                          QuestCondition->Modify();
+                      }
+                  }
+                  for (auto& Node : Quest->AllNodes)
+                  {
+                      for (auto& NodeCondition : Node->Conditions)
+                      {
+                          if (NodeCondition && NodeCondition->QuestID == OriginalName)
+                          {
+                              NodeCondition->QuestID = NewName;
+                              NodeCondition->Modify();
+                          }
+                      }
+                      for (auto& NodeEvent : Node->Events)
+                      {
+                          if (NodeEvent && NodeEvent->QuestID == OriginalName)
+                          {
+                              NodeEvent->QuestID = NewName;
+                              NodeEvent->Modify();
+                          }
+                      }
+                  }
+              }
+          }
+      }
+  }  
+  QuestEditorPtr.Pin()->GetMyQuestWidget()->Refresh();  
+
+  QuestEditorPtr.Pin()->GetQuestSystemObj()->Modify();  
 }
 
 TSharedPtr<SToolTip> SQuestPaletteItem::ConstructToolTipWidget() const

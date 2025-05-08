@@ -24,26 +24,29 @@ public:
 	virtual ~UQuestBuilderGraph();
 
 	/**This data will be displayed on the category for your quest log*/
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "QuestSystemGraph")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "QuestBuilderGraph")
 		FString CategoryDisplayName;
 
-	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly, Category = "QuestSystemGraph")
+	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly, Category = "QuestBuilderGraph")
 		FGameplayTagContainer GraphTags;
 
-	/** Set of QuestSystem linked with Quest Graph Pages */
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraph")
-		TArray< TObjectPtr<UQuest>> QuestSystems;
+	/** Set of Quest linked with Quest Graph Pages */
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
+		TArray< TObjectPtr<UQuest>> QuestList;
 
-	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly, Category = "QuestSystemGraph")
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
+		TMap<FName, TObjectPtr<UQuest>> QuestMap;
+
+	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly, Category = "QuestBuilderGraph")
 		bool bEdgeEnabled;
 
-	UPROPERTY(BlueprintReadWrite, Category = "QuestSystemGraph")
+	UPROPERTY(BlueprintReadWrite, Category = "QuestBuilderGraph")
 		TObjectPtr<AController> OwningController;
 
-	UPROPERTY(BlueprintReadWrite, Category = "QuestSystemGraph")
+	UPROPERTY(BlueprintReadWrite, Category = "QuestBuilderGraph")
 		TObjectPtr < UQuestComponent> QuestComponent;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraph")
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
 		TObjectPtr<APawn> OwningPawn;
 
 
@@ -52,10 +55,10 @@ public:
 	UPROPERTY()
 	TArray<TObjectPtr<UEdGraph>> QuestGraphPages;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraph")
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
 		bool bCanRenameNode;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystemGraph")
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
 		bool bCanBeCyclical;
 
 	/** Set of documents that were being edited in this blueprint, so we can open them right away */
@@ -63,7 +66,7 @@ public:
 	TArray<struct FEditedDocumentInfo> LastEditedDocuments;
 
 	/** Whether or not this blueprint is newly created, and hasn't been opened in an editor yet */
-	UPROPERTY(/*transient*/ BlueprintReadOnly, Category = "QuestSystemGraph")
+	UPROPERTY(/*transient*/ BlueprintReadOnly, Category = "QuestBuilderGraph")
 	bool bIsNewlyCreated = true;
 
 

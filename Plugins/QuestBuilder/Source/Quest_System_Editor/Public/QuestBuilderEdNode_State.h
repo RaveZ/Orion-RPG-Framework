@@ -16,16 +16,7 @@ class QUEST_SYSTEM_EDITOR_API UQuestBuilderEdNode_State : public UQuestBuilderEd
 	GENERATED_BODY()
 public:
 	UQuestBuilderEdNode_State();
-	//virtual void PostPlacedNewNode() override;
 	virtual void AllocateDefaultPins() override;
-	//virtual bool HasErrors() const override { return false; }
-	//virtual bool RefreshNodeClass() override { return false; }
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
-	// gets icon resource name for title bar 
-	//virtual FName GetNameIcon() const override;
-	//virtual FText GetTooltipText() const override;
-
-	/*virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
-	virtual void PostEditUndo() override;
-	virtual FText GetDescription() const override;*/
+	virtual FLinearColor GetBackgroundColor() const override;
 };

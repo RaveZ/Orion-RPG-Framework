@@ -59,7 +59,7 @@ public:
 	* @return bool.
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
-	static bool IsQuestAtState(const UObject* WorldContextObject, FName QuestID, EQuestState QuestState);
+	static bool IsQuestAtState(const UObject* WorldContextObject, FName ID, EQuestState QuestState);
 
 	/**
 	* Grab the Quest component from the local pawn or player controller, whichever it exists on.

@@ -60,7 +60,7 @@ public:
 		TObjectPtr<UQuestBuilderGraph> QuestGraph;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Task")
-		TObjectPtr<UQuest> QuestSystem;
+		TObjectPtr<UQuest> Quest;
 
 
 	UPROPERTY(BlueprintReadOnly, Category = "Task")
@@ -111,7 +111,7 @@ public:
 		UQuestBuilderGraph* GetOwningQuestGraph() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Task")
-		UQuest* GetOwningQuestSystem() const;
+		UQuest* GetOwningQuest() const;
 
 	/**Add amount and check if the required amount has fulfilled, then complete the task*/
 	UFUNCTION(BlueprintCallable, Category = "Task")

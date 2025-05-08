@@ -22,8 +22,8 @@ enum class EOrionInteractionMode : uint8
 /**
  * Interaction component
  */
-UCLASS( ClassGroup = (Orion), meta = (BlueprintSpawnableComponent) )
-class UOrionInteractionTargetComponent : public UBoxComponent
+UCLASS(ClassGroup = (Orion), meta = (BlueprintSpawnableComponent, DisplayName = "Interaction Target Component"))
+class UOrionInteractionTargetComponent : public UActorComponent
 {
 	GENERATED_BODY()
 	
@@ -63,21 +63,21 @@ private:
 public:
 	UOrionInteractionTargetComponent();
 
-	UFUNCTION(BlueprintPure, Category = "DO3|Interactable")
+	UFUNCTION(BlueprintPure, Category = "Interactable")
 	bool CanInteract() const;
 
 	void Focused(AActor* Interactor);
 
-	UFUNCTION(BlueprintCallable, Category = "DO3|Interactable")
+	UFUNCTION(BlueprintCallable, Category = "Interactable")
 	void StartInteraction(AActor* Interactor);
 
-	UFUNCTION(BlueprintCallable, Category = "DO3|Interactable")
+	UFUNCTION(BlueprintCallable, Category = "Interactable")
 	void EndInteraction(bool bCompleted);
 
-	UFUNCTION(BlueprintPure, Category = "DO3|Interactable")
+	UFUNCTION(BlueprintPure, Category = "Interactable")
 	bool IsInteractionInProgress() const;
 
-	UFUNCTION(BlueprintCallable, Category = "DO3|Interactable")
+	UFUNCTION(BlueprintCallable, Category = "Interactable")
 	void UpdateInteractionProgress(float Progress);
 
 private:

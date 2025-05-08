@@ -59,7 +59,7 @@ struct FQuestData
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "QuestID", MakeStructureDefaultValue = "None"), Category = QuestData)
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "ID", MakeStructureDefaultValue = "None"), Category = QuestData)
 	FName CurrentNodeID;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "QuestState"), Category = QuestData)
@@ -80,7 +80,7 @@ struct FQuestDataHandle
 	GENERATED_BODY()
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = QuestDataHandle, meta = (GetOptions = "Quest_System_Runtime.QuestBuilderFunctionLibrary.GetAllQuestID"))
-	FName QuestID;
+	FName ID;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = QuestDataHandle, meta = (GetOptions = "Quest_System_Runtime.QuestBuilderFunctionLibrary.GetNodeIDFromCachedQuest"))
 	FName NodeID;
@@ -88,7 +88,7 @@ struct FQuestDataHandle
 	/** Returns true if this handle is specifically pointing to nothing */
 	bool IsNull() const
 	{
-		return QuestID.IsNone() && NodeID.IsNone();
+		return ID.IsNone() && NodeID.IsNone();
 	}
 
 	QUEST_SYSTEM_RUNTIME_API void PostSerialize(const FArchive& Ar);

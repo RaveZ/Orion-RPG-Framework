@@ -2,6 +2,7 @@
 
 
 #include "QuestBuilderEdNode_Root.h"
+#include "QuestBuilderSetting.h"
 
 UQuestBuilderEdNode_Root::UQuestBuilderEdNode_Root()
 {
@@ -18,4 +19,9 @@ FText UQuestBuilderEdNode_Root::GetNodeTitle(ENodeTitleType::Type TitleType) con
 {
 	return NSLOCTEXT("BehaviorTreeEditor", "Root", "ROOT");
 	
+}
+
+FLinearColor UQuestBuilderEdNode_Root::GetBackgroundColor() const
+{
+	return GetDefault<UQuestBuilderSetting>()->RootNodeColor;
 }

@@ -7,7 +7,7 @@
 #include "QuestBuilderNode.h"
 #include "QuestBuilderEdge.h"
 
-#define LOCTEXT_NAMESPACE "QuestSystemGraph"
+#define LOCTEXT_NAMESPACE "QuestBuilderGraph"
 
 UQuestBuilderGraph::UQuestBuilderGraph()
 {

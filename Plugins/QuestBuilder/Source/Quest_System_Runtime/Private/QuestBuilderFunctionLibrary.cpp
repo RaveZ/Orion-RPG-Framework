@@ -26,9 +26,9 @@ TArray<FName> UQuestBuilderFunctionLibrary::GetAllQuestID()
         UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
         if (QuestGraph)
         {
-            for (UQuest* Quest : QuestGraph->QuestSystems)
+            for (UQuest* Quest : QuestGraph->QuestList)
             {
-                QuestIDs.Add(Quest->QuestID);
+                QuestIDs.Add(Quest->ID);
             }
         }
     }
@@ -49,10 +49,10 @@ TArray<FName> UQuestBuilderFunctionLibrary::GetNodeIDFromCachedQuest()
         UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
         if (QuestGraph)
         {
-            for (UQuest* Quest : QuestGraph->QuestSystems)
+            for (UQuest* Quest : QuestGraph->QuestList)
             {
-                //TODO : Fix Cached QuestID BUG
-                //if (Quest->QuestID != RuntimeModule.CachedQuestID) continue;
+                //TODO : Fix Cached ID BUG
+                //if (Quest->ID != RuntimeModule.CachedQuestID) continue;
                 for (UQuestBuilderNode* Node : Quest->AllNodes)
                 {
                     if (Node)
@@ -133,11 +133,11 @@ bool UQuestBuilderFunctionLibrary::IsCurrentNodeIDMatch(const UObject* WorldCont
     return false;
 }
 
-bool UQuestBuilderFunctionLibrary::IsQuestAtState(const UObject* WorldContextObject, FName QuestID, EQuestState QuestState)
+bool UQuestBuilderFunctionLibrary::IsQuestAtState(const UObject* WorldContextObject, FName ID, EQuestState QuestState)
 {
     if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
     {
-		UQuest* Quest = QuestComp->FindQuest(QuestID);
+		UQuest* Quest = QuestComp->FindQuest(ID);
 
         if (Quest && Quest->QuestState == QuestState)
         {

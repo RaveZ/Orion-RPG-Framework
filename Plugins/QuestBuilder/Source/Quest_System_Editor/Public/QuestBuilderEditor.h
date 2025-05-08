@@ -200,7 +200,7 @@ public:
 	/** Called when the graph editor tab is backgrounded */
 	virtual void OnGraphEditorBackgrounded(const TSharedRef<SGraphEditor>& InGraphEditor);
 
-	/** Checks to see if the provided graph is contained within the current QuestSystemGraph */
+	/** Checks to see if the provided graph is contained within the current QuestBuilderGraph */
 	bool IsGraphInCurrentQuestGraph(const UEdGraph* InGraph) const;
 
 

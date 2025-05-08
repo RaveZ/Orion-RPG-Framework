@@ -31,8 +31,6 @@ public:
 	FLinearColor RootNodeColor;
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
-	FLinearColor TaskNodeColor;
+	FLinearColor ObjectiveNodeColor;
 
-	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
-	FLinearColor PersistentTasksNodeColor;
 };

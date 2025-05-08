@@ -7,28 +7,37 @@
 #include "Event/QuestEvent.h"
 
 
+void UQuestBuilderNode_State::Initialize()
+{
+	BeginState();
+}
+
 void UQuestBuilderNode_State::BeginState()
 {
-    QuestSystem->QuestState = QuestState;
+    Quest->QuestState = QuestState;
 
     switch (QuestState)
     {
     case EQuestState::E_Complete:
-        GetQuestComponent()->OnQuestCompleted.Broadcast(QuestSystem);
+        GetQuestComponent()->OnQuestCompleted.Broadcast(Quest);
         break;
     case EQuestState::E_Fail:
-        GetQuestComponent()->OnQuestFailed.Broadcast(QuestSystem);
+        GetQuestComponent()->OnQuestFailed.Broadcast(Quest);
         break;
     }
 
     //End of a Node, Launch Event with the End and Both Type
-    for (UQuestEvent* Event : QuestSystem->CurrentNode->Events)
+    for (UQuestEvent* Event : Quest->CurrentNode->Events)
     {
         if (Event)
         {
             if (Event->EventRunType == EEventRunType::E_Both || Event->EventRunType == EEventRunType::E_End)
             {
-                Event->BeginEvent();
+                if (!Event->EndLaunched)
+                {
+                    Event->BeginEvent();
+                    Event->EndLaunched = true;
+                }
             }
         }
     }

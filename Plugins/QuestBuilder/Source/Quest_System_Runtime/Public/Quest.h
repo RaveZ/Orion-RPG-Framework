@@ -39,15 +39,15 @@ public:
 	TObjectPtr<UQuestBuilderGraph> QuestGraph;
 
 	/** Quest ID */
-	UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly, Category = "QuestSystem")
-		FName QuestID;
+	UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly, Category = "Quest")
+		FName ID;
 
 	/** Your Quest Name*/
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestSystem", meta = (MultiLine = true))
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quest", meta = (MultiLine = true))
 		FText QuestName;
 
 	/** Description for your quest*/
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestSystem", meta = (MultiLine = true))
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quest", meta = (MultiLine = true))
 		FText Description; 
 
 	/**Make your quest can be aborted*/
@@ -70,42 +70,42 @@ public:
 		EQuestState DesiredQuestState = EQuestState::E_Active;
 
 	/** List of All Visited Node IDs in Sequence*/
-	UPROPERTY(BlueprintReadWrite, Category = "QuestSystem")
+	UPROPERTY(BlueprintReadWrite, Category = "Quest")
 		TArray<FName> VisitedNodeIDs;
 
 	/**Your quest state, will be changed based on condition*/
-	UPROPERTY(BlueprintReadWrite, Category = "QuestSystem")
+	UPROPERTY(BlueprintReadWrite, Category = "Quest")
 		EQuestState QuestState = EQuestState::E_Locked;
 	
-	UPROPERTY(BlueprintReadWrite, Category = "QuestSystem")
+	UPROPERTY(BlueprintReadWrite, Category = "Quest")
 		TObjectPtr<UQuestBuilderNode> CurrentNode;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystem")
+	UPROPERTY(BlueprintReadOnly, Category = "Quest")
 		TArray< TObjectPtr<UQuestBuilderNode>> RootNodes;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystem")
+	UPROPERTY(BlueprintReadOnly, Category = "Quest")
 		TArray< TObjectPtr<UQuestBuilderNode>> AllNodes;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestSystem")
+	UPROPERTY(BlueprintReadOnly, Category = "Quest")
 		TMap<FName, TObjectPtr<UQuestBuilderNode>> NodeMap;
 
 
-	UFUNCTION(BlueprintCallable, Category = "QuestSystem")
+	UFUNCTION(BlueprintCallable, Category = "Quest")
 		int GetLevelNum() const;
 
-	UFUNCTION(BlueprintCallable, Category = "QuestSystem")
+	UFUNCTION(BlueprintCallable, Category = "Quest")
 		void GetNodesByLevel(int Level, TArray<UQuestBuilderNode*>& Nodes);
 
-	UFUNCTION(BlueprintCallable, Category = "QuestSystem")
+	UFUNCTION(BlueprintCallable, Category = "Quest")
 		AController* GetOwningController();
 
-	UFUNCTION(BlueprintCallable, Category = "QuestSystem")
+	UFUNCTION(BlueprintCallable, Category = "Quest")
 		APawn* GetOwningPawn();
 
-	UFUNCTION(BlueprintCallable, Category = "QuestSystem")
+	UFUNCTION(BlueprintCallable, Category = "Quest")
 		UQuestComponent* GetQuestComponent();
 
-	UFUNCTION(BlueprintCallable, Category = "QuestSystem")
+	UFUNCTION(BlueprintCallable, Category = "Quest")
 		UQuestBuilderGraph* GetOwningQuestGraph() const;
 	void ClearGraph();
 

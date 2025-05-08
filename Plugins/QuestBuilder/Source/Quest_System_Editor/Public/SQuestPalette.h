@@ -61,7 +61,7 @@ private:
 	/** True if the class should be displayed in the tooltip */
 	bool bShowClassInTooltip;
 
-	UQuestBuilderGraph* QuestSystemGraph;
+	UQuestBuilderGraph* QuestBuilderGraph;
 
 	/** Pointer back to the Quest editor that owns this */
 	TWeakPtr<FQuestBuilderEditor> QuestEditorPtr;

@@ -8,7 +8,7 @@
 #include "Condition/QuestCondition.h"
 #include "QuestBuilderGraph.h"
 
-#define LOCTEXT_NAMESPACE "QuestSystemGraphNode"
+#define LOCTEXT_NAMESPACE "QuestBuilderNode"
 
 UQuestBuilderNode::UQuestBuilderNode()
 {
@@ -155,6 +155,11 @@ bool UQuestBuilderNode::IsLeafNode() const
 	return ChildrenNodes.Num() == 0;
 }
 
+void UQuestBuilderNode::Initialize()
+{
+	//empty, override in child class
+}
+
 UQuestBuilderGraph* UQuestBuilderNode::GetOwningQuestGraph() const
 {
 	if (!QuestGraph)
@@ -163,9 +168,9 @@ UQuestBuilderGraph* UQuestBuilderNode::GetOwningQuestGraph() const
 	return QuestGraph;
 }
 
-UQuest* UQuestBuilderNode::GetOwningQuestSystem() const
+UQuest* UQuestBuilderNode::GetOwningQuest() const
 {
-	return QuestSystem;
+	return Quest;
 }
 
 

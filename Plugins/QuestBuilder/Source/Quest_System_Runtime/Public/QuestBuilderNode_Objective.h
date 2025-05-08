@@ -18,8 +18,11 @@ public:
 	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Objective", meta = (EditFixedOrder))
 		TArray<TObjectPtr<UQuestTask>> Tasks;
 
+	virtual void Initialize() override;
+
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 		bool IsAllTaskCompleted();
+
 
 
 #if WITH_EDITOR

@@ -23,7 +23,7 @@ UQuestTask::UQuestTask()
 
 bool UQuestTask::CompleteTask()
 {	
-	if (QuestSystem == nullptr)
+	if (Quest == nullptr)
         return false;
 
     TaskState = ETaskState::E_Complete;
@@ -104,9 +104,9 @@ UQuestBuilderGraph* UQuestTask::GetOwningQuestGraph() const
 	return QuestGraph;
 }
 
-UQuest* UQuestTask::GetOwningQuestSystem() const
+UQuest* UQuestTask::GetOwningQuest() const
 {
-	return QuestSystem;
+	return Quest;
 }
 
 

@@ -36,10 +36,10 @@ public:
 
 	/** Returns all nodes in all graphs of the specified class */
 	template< class T >
-	static inline void GetAllNodesOfClass(const UQuestBuilderGraph* QuestSystemGraph, TArray<T*>& OutNodes)
+	static inline void GetAllNodesOfClass(const UQuestBuilderGraph* QuestBuilderGraph, TArray<T*>& OutNodes)
 	{
 		TArray<UEdGraph*> AllGraphs;
-		QuestSystemGraph->GetAllGraphs(AllGraphs);
+		QuestBuilderGraph->GetAllGraphs(AllGraphs);
 		for (int32 i = 0; i < AllGraphs.Num(); i++)
 		{
 			check(AllGraphs[i] != NULL);
@@ -55,7 +55,7 @@ public:
 	 * @param Node				The node to remove.
 	 * @param bDontRecompile	If true, the UQuestBuilderGraph will not be marked as modified, and will not be recompiled.  Useful for if you are removing several node at once, and don't want to recompile each time
 	 */
-	static void RemoveNode(UQuestBuilderGraph* QuestSystemGraph, UQuestBuilderEdNode* Node, bool bDontRecompile = false);
+	static void RemoveNode(UQuestBuilderGraph* QuestBuilderGraph, UQuestBuilderEdNode* Node, bool bDontRecompile = false);
 
 	/**
 	 * Removes the supplied graph from the UQuestBuilderGraph.
@@ -63,12 +63,12 @@ public:
 	 * @param UQuestBuilderGraph	The UQuestBuilderGraph containing the graph
 	 * @param GraphToRemove		The graph to remove.
 	 */
-	static void RemoveGraph(UQuestBuilderGraph* QuestSystemGraph, class UEdGraph* GraphToRemove);
+	static void RemoveGraph(UQuestBuilderGraph* QuestBuilderGraph, class UEdGraph* GraphToRemove);
 
 
 	/** Adds an questgraph page to this Quest Editor */
 	static void AddQuestGraphPage(UQuestBuilderGraph* InQuestSystemGraph, class UEdGraph* Graph);
 
 	/** Returns the event graph, if any */
-	static UEdGraph* FindQuestGraph(const UQuestBuilderGraph* QuestSystemGraph);
+	static UEdGraph* FindQuestGraph(const UQuestBuilderGraph* QuestBuilderGraph);
 };

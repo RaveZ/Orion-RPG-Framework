@@ -24,7 +24,7 @@ public:
 	UPROPERTY()
 		TObjectPtr<UEdGraph> Graph;
 
-	UPROPERTY(VisibleAnywhere, Instanced, Category = "QuestSystemGraph")
+	UPROPERTY(VisibleAnywhere, Instanced, Category = "QuestBuilderGraph")
 		TObjectPtr<UQuestBuilderEdge> QuestSystemGraphEdge;
 
 	void SetEdge(UQuestBuilderEdge* Edge);
