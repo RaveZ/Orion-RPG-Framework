@@ -21,6 +21,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestCompleted, UQuest*, Quest);
 	
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestAdded, UQuest*, Quest);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestUnlocked, UQuest*, Quest);
 
 //Save/Load Delegate
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBeginSave, FString, SaveFileName);
@@ -75,6 +76,9 @@ public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 		FQuestAdded OnQuestAdded;
 
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
+		FQuestAdded OnQuestUnlocked;
+
 	/**Called when a save has begun*/
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Saving/Loading")
 		FOnBeginSave OnBeginSave;
@@ -105,6 +109,9 @@ public:
 
 	UFUNCTION()
 		virtual void QuestAdded(UQuest* Quest);
+
+	UFUNCTION()
+		virtual void QuestUnlocked(UQuest* Quest);
 
 	UFUNCTION()
 		virtual void BeginSave(FString SaveName);

@@ -43,6 +43,7 @@ void UQuestComponent::BeginPlay()
 	OnQuestFailed.AddDynamic(this, &UQuestComponent::QuestFailed);
 	OnQuestCompleted.AddDynamic(this, &UQuestComponent::QuestCompleted);
 	OnQuestAdded.AddDynamic(this, &UQuestComponent::QuestAdded);
+	OnQuestUnlocked.AddDynamic(this, &UQuestComponent::QuestUnlocked);
 	OnBeginSave.AddDynamic(this, &UQuestComponent::BeginSave);
 	OnSaveComplete.AddDynamic(this, &UQuestComponent::SaveComplete);
 	OnBeginLoad.AddDynamic(this, &UQuestComponent::BeginLoad);
@@ -156,6 +157,7 @@ void UQuestComponent::UnlockQuest(FName ID)
 	if (UQuest* Quest = QuestMap.FindRef(ID))
 	{
 		Quest->QuestState = EQuestState::E_Unlocked;
+		OnQuestUnlocked.Broadcast(Quest);
 	}
 	else
 	{
@@ -564,7 +566,7 @@ void UQuestComponent::BeginNode(UQuest* QuestParam)
 {  
    if (QuestParam->CurrentNode == nullptr)  
    {  
-       UE_LOG(LogTemp, Warning, TEXT("BeginNode: CurrentNode is null for ID: %s"), *QuestParam->ID.ToString());  
+       UE_LOG(LogTemp, Warning, TEXT("BeginNode: CurrentNode is null for Quest ID: %s"), *QuestParam->ID.ToString());  
        return;  
    }  
 
@@ -593,23 +595,8 @@ void UQuestComponent::BeginNode(UQuest* QuestParam)
 	   }
    }
 
-   //Begin Node Functionality
-   if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestParam->CurrentNode))
-   {
-	   for (auto& Task : ObjectiveNode->Tasks)
-	   {
-		   if (Task)
-		   {
-			   Task->BeginTask();
-		   }
-
-	   }
-   }
-
-   if (UQuestBuilderNode_State* StateNode = Cast<UQuestBuilderNode_State>(QuestParam->CurrentNode))
-   {
-	   StateNode->BeginState();
-   }
+   //InitializeNode
+   QuestParam->CurrentNode->Initialize();
 }
 
 
@@ -806,6 +793,14 @@ void UQuestComponent::QuestAdded(UQuest* Quest)
 	if (Quest)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Quest Added: %s"), *Quest->ID.ToString());
+	}
+}
+
+void UQuestComponent::QuestUnlocked(UQuest* Quest)
+{
+	if (Quest)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Quest Unlocked: %s"), *Quest->ID.ToString());
 	}
 }
 

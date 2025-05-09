@@ -73,16 +73,18 @@ FName FQuestBuilderEditorUtils::FindUniqueNodeName(const FString& InBaseName)
 	{
 		bool bIsUnique = true;
 
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-		// Check if the current name already exists in the quest graph pages
-		for (TObjectIterator<UQuestBuilderNode> It; It; ++It)
+		TArray<FAssetData> QuestGraphDataArray;
+		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+
+		for (const FAssetData& AssetData : QuestGraphDataArray)
 		{
-			if (UQuestBuilderNode* Node = Cast<UQuestBuilderNode>(*It))
+			UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
+			if (QuestGraph)
 			{
-				FString NodeID = Node->ID.ToString();
-
-				// If the current name matches a quest graph page name, it's not unique
-				if (NodeID == UniqueName)
+				UQuestBuilderNode* FoundedNode = QuestGraph->NodeIDMap.FindRef(FName(UniqueName));
+				if (FoundedNode)
 				{
 					bIsUnique = false;
 					break;
@@ -116,11 +118,11 @@ UEdGraph* FQuestBuilderEditorUtils::CreateNewGraph(UObject* ParentScope, const F
 	if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(NewGraph))
 	{
 		QuestGraph->Quest = NewObject<UQuest>(ParentScope, UQuest::StaticClass(), NAME_None, RF_Transactional);
-		QuestGraph->Quest->QuestGraph = QuestGraph->GetQuestSystemGraph();
+		QuestGraph->Quest->QuestGraph = QuestGraph->GetQuestBuilderGraph();
 		QuestGraph->Quest->ID = GraphName;
 		QuestGraph->Quest->QuestName = FText::FromName(QuestGraph->Quest->ID);
 
-		if (UQuestBuilderGraph* QuestBuilderGraph = Cast<UQuestBuilderGraph>(QuestGraph->GetQuestSystemGraph()))
+		if (UQuestBuilderGraph* QuestBuilderGraph = Cast<UQuestBuilderGraph>(QuestGraph->GetQuestBuilderGraph()))
 		{
 			QuestBuilderGraph->QuestList.Add(QuestGraph->Quest);
 		}

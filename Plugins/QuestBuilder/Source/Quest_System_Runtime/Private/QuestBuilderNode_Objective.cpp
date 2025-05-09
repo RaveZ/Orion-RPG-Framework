@@ -11,7 +11,19 @@
 
 void UQuestBuilderNode_Objective::Initialize()
 {
+	BeginAllTask();
+}
 
+void UQuestBuilderNode_Objective::BeginAllTask()
+{
+    for (auto& Task : Tasks)
+    {
+        if (Task)
+        {
+            Task->BeginTask();
+        }
+
+    }
 }
 
 bool UQuestBuilderNode_Objective::IsAllTaskCompleted()

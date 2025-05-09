@@ -17,7 +17,7 @@ UQuestBuilderEdNode::~UQuestBuilderEdNode()
 
 void UQuestBuilderEdNode::SetQuestSystemGraphNode(UQuestBuilderNode* InNode)
 {
-	QuestSystemGraphNode = InNode;
+	QuestBuilderNode = InNode;
 }
 
 UQuestBuilderEdGraph* UQuestBuilderEdNode::GetQuestSystemGraphEdGraph()
@@ -35,13 +35,13 @@ void UQuestBuilderEdNode::AllocateDefaultPins()
 
 FText UQuestBuilderEdNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	if (QuestSystemGraphNode == nullptr)
+	if (QuestBuilderNode == nullptr)
 	{
 		return Super::GetNodeTitle(TitleType);
 	}
 	else
 	{
-		return QuestSystemGraphNode->GetNodeTitle();
+		return QuestBuilderNode->GetNodeTitle();
 	}
 }
 
@@ -57,7 +57,7 @@ bool UQuestBuilderEdNode::CanUserDeleteNode() const
 
 void UQuestBuilderEdNode::PrepareForCopying()
 {
-	QuestSystemGraphNode->Rename(nullptr, this, REN_DontCreateRedirectors | REN_DoNotDirty);
+	QuestBuilderNode->Rename(nullptr, this, REN_DontCreateRedirectors | REN_DoNotDirty);
 }
 
 void UQuestBuilderEdNode::AutowireNewNode(UEdGraphPin* FromPin)
@@ -74,17 +74,17 @@ void UQuestBuilderEdNode::AutowireNewNode(UEdGraphPin* FromPin)
 
 FText UQuestBuilderEdNode::GetDescription() const
 {
-	return QuestSystemGraphNode->GetNodeDescription();
+	return QuestBuilderNode->GetNodeDescription();
 }
 
 FText UQuestBuilderEdNode::GetEventsText() const
 {
-	return QuestSystemGraphNode->GetEventsText();
+	return QuestBuilderNode->GetEventsText();
 }
 
 FText UQuestBuilderEdNode::GetConditionsText() const
 {
-	return QuestSystemGraphNode->GetConditionsText();
+	return QuestBuilderNode->GetConditionsText();
 }
 
 FLinearColor UQuestBuilderEdNode::GetBackgroundColor() const
@@ -126,7 +126,7 @@ void UQuestBuilderEdNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeC
 
 bool UQuestBuilderEdNode::UsesBlueprint() const
 {
-	return QuestSystemGraphNode && QuestSystemGraphNode->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint);
+	return QuestBuilderNode && QuestBuilderNode->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint);
 }
 
 #if WITH_EDITOR

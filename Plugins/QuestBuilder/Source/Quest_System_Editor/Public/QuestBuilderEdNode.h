@@ -28,7 +28,7 @@ public:
 	struct FGraphNodeClassData ClassData;
 
 	UPROPERTY(VisibleAnywhere, Instanced, Category = "QuestBuilderGraph")
-		TObjectPtr<UQuestBuilderNode> QuestSystemGraphNode;
+		TObjectPtr<UQuestBuilderNode> QuestBuilderNode;
 	
 	void SetQuestSystemGraphNode(UQuestBuilderNode* InNode);
 	UQuestBuilderEdGraph* GetQuestSystemGraphEdGraph();

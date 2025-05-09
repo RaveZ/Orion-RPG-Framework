@@ -130,7 +130,7 @@ public:
 	// End of FSerializableObject interface
 
 	/** Returns a pointer to the Quest graph object we are currently editing, as long as we are editing exactly one */
-	virtual UQuestBuilderGraph* GetQuestSystemObj() const;
+	virtual UQuestBuilderGraph* GetQuestBuilderGraph() const;
 
 	// Type of new document/graph being created by a menu item
 	enum ECreatedQuestDocumentType

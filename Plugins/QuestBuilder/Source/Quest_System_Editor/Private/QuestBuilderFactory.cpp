@@ -117,7 +117,7 @@ void FQuestGraphEditorSummoner::SaveState(TSharedPtr<SDockTab> Tab, TSharedPtr<F
 	if (Graph && QuestEditorPtr.Pin()->IsGraphInCurrentQuestGraph(Graph))
 	{
 		// Don't save references to external graphs.
-		QuestEditorPtr.Pin()->GetQuestSystemObj()->LastEditedDocuments.Add(FEditedDocumentInfo(Graph, ViewLocation, ZoomAmount));
+		QuestEditorPtr.Pin()->GetQuestBuilderGraph()->LastEditedDocuments.Add(FEditedDocumentInfo(Graph, ViewLocation, ZoomAmount));
 	}
 }
 

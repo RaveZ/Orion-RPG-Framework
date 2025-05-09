@@ -26,7 +26,11 @@ public:
 
 	virtual void SortAllChildrenNodes(bool bForce = false);
 
-	UQuestBuilderGraph* GetQuestSystemGraph() const;
+	virtual void CacheNodeIDMap();
+
+	virtual void AddToNodeIDMap(FName ID, UQuestBuilderNode* Node);
+
+	UQuestBuilderGraph* GetQuestBuilderGraph() const;
 
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
 
@@ -35,6 +39,10 @@ public:
 	/** Quest linked with this UEdGraph */
 	UPROPERTY(VisibleAnywhere, Instanced, Category = "QuestBuilderGraph")
 		TObjectPtr<UQuest> Quest;
+
+		/*Map of NodID iwth its UQuestBuilderNode*/
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
+		TMap<FName, TObjectPtr<UQuestBuilderNode>> NodeIDMap;
 
 	UPROPERTY(Transient)
 		TMap< TObjectPtr<UQuestBuilderNode>, TObjectPtr<UQuestBuilderEdNode>> NodeMap;

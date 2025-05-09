@@ -15,10 +15,12 @@ class QUEST_SYSTEM_RUNTIME_API UQuestBuilderNode_Objective : public UQuestBuilde
 
 public:
 	/**List of task for your objective*/
-	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Objective", meta = (EditFixedOrder))
+	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Objective", meta = (FullyExpand = true))
 		TArray<TObjectPtr<UQuestTask>> Tasks;
 
 	virtual void Initialize() override;
+
+	void BeginAllTask();
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 		bool IsAllTaskCompleted();

@@ -55,7 +55,7 @@ public:
 	FAssetSchemaAction_QuestSystemGraph* SelectionAsGraph() const;
 
 	/** Accessor the blueprint object from the main editor */
-	UQuestBuilderGraph* GetQuestSystemObj() const { return QuestBuilderGraph; }
+	UQuestBuilderGraph* GetQuestBuilderGraph() const { return QuestBuilderGraph; }
 
 	/** Initiates a rename on the selected action node, if possible */
 	void OnRequestRenameOnActionNode();

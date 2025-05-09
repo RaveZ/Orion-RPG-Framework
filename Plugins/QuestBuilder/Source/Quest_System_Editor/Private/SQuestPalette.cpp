@@ -23,7 +23,7 @@
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void SQuestPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, TWeakPtr<FQuestBuilderEditor> InQuestEditor)
 {
-	Construct(InArgs, InCreateData, InQuestEditor.Pin()->GetQuestSystemObj(), InQuestEditor);
+	Construct(InArgs, InCreateData, InQuestEditor.Pin()->GetQuestBuilderGraph(), InQuestEditor);
 
 }
 
@@ -281,7 +281,7 @@ void SQuestPaletteItem::OnNameTextCommitted(const FText& NewText, ETextCommit::T
   }  
   QuestEditorPtr.Pin()->GetMyQuestWidget()->Refresh();  
 
-  QuestEditorPtr.Pin()->GetQuestSystemObj()->Modify();  
+  QuestEditorPtr.Pin()->GetQuestBuilderGraph()->Modify();  
 }
 
 TSharedPtr<SToolTip> SQuestPaletteItem::ConstructToolTipWidget() const

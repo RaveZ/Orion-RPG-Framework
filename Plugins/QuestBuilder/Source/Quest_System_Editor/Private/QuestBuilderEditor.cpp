@@ -182,9 +182,9 @@ void FQuestBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShare
 		}
 		else
 		{
-			if (GetQuestSystemObj()->QuestGraphPages.Num() > 0)
+			if (GetQuestBuilderGraph()->QuestGraphPages.Num() > 0)
 			{
-				OpenDocument(GetQuestSystemObj()->QuestGraphPages[0], FDocumentTracker::OpenNewDocument);
+				OpenDocument(GetQuestBuilderGraph()->QuestGraphPages[0], FDocumentTracker::OpenNewDocument);
 				
 				//bind on graph changes
 				for (UEdGraph* EdGraph : EditingQuestGraph->QuestGraphPages)
@@ -550,10 +550,9 @@ FString FQuestBuilderEditor::GetReferencerName() const
 	return FString();
 }
 
-UQuestBuilderGraph* FQuestBuilderEditor::GetQuestSystemObj() const
+UQuestBuilderGraph* FQuestBuilderEditor::GetQuestBuilderGraph() const
 {
 	return EditingQuestGraph;
-	//return GetEditingObjects().Num() == 1 ? Cast<UQuestBuilderGraph>(GetEditingObjects()[0]) : nullptr;
 }
 
 bool FQuestBuilderEditor::NewDocument_IsVisibleForType(ECreatedQuestDocumentType GraphType) const
@@ -588,16 +587,16 @@ void FQuestBuilderEditor::NewDocument_OnClicked(ECreatedQuestDocumentType GraphT
 	//check(IsEditingSingleBlueprint());
 
 	const FScopedTransaction Transaction(LOCTEXT("AddNewQuestGraph", "Add New Quest Graph"));
-	GetQuestSystemObj()->Modify();
+	GetQuestBuilderGraph()->Modify();
 
 	UEdGraph* NewGraph = nullptr;
 
 	
 	if (GraphType == CGT_NewQuestGraph)
 	{
-		NewGraph = FQuestBuilderEditorUtils::CreateNewGraph(GetQuestSystemObj(), DocumentName, UQuestBuilderEdGraph::StaticClass(), UEdGraphSchema_QuestBuilder::StaticClass());
+		NewGraph = FQuestBuilderEditorUtils::CreateNewGraph(GetQuestBuilderGraph(), DocumentName, UQuestBuilderEdGraph::StaticClass(), UEdGraphSchema_QuestBuilder::StaticClass());
 		NewGraph->AddOnGraphChangedHandler(FOnGraphChanged::FDelegate::CreateSP(this, &FQuestBuilderEditor::OnGraphChanged));
-		FQuestBuilderEditorUtils::AddQuestGraphPage(GetQuestSystemObj(), NewGraph);
+		FQuestBuilderEditorUtils::AddQuestGraphPage(GetQuestBuilderGraph(), NewGraph);
 
 	}
 	else
@@ -717,7 +716,7 @@ void FQuestBuilderEditor::InitializeDocumentTab()
 {
 	check(IsEditingSingleQuestGraph());
 
-	UQuestBuilderGraph* QuestBuilderGraph = GetQuestSystemObj();
+	UQuestBuilderGraph* QuestBuilderGraph = GetQuestBuilderGraph();
 	if (QuestBuilderGraph->LastEditedDocuments.Num() == 0)
 	{
 			QuestBuilderGraph->LastEditedDocuments.Add(FQuestBuilderEditorUtils::FindQuestGraph(QuestBuilderGraph));
@@ -773,7 +772,7 @@ void FQuestBuilderEditor::InitializeDocumentTab()
 
 bool FQuestBuilderEditor::IsEditingSingleQuestGraph() const
 {
-	return GetQuestSystemObj() != nullptr;
+	return GetQuestBuilderGraph() != nullptr;
 }
 
 UEdGraph* FQuestBuilderEditor::GetFocusedGraph() const
@@ -835,7 +834,7 @@ bool FQuestBuilderEditor::IsGraphInCurrentQuestGraph(const UEdGraph* InGraph) co
 {
 	bool bEditable = true;
 
-	UQuestBuilderGraph* EditingBP = GetQuestSystemObj();
+	UQuestBuilderGraph* EditingBP = GetQuestBuilderGraph();
 	if (EditingBP)
 	{
 		TArray<UEdGraph*> Graphs;
@@ -853,7 +852,7 @@ FGraphAppearanceInfo FQuestBuilderEditor::GetGraphAppearance() const
 
 	if (FQuestBuilderEditor::IsPIESimulating())
 	{
-		if (GetQuestSystemObj()->QuestComponent)
+		if (GetQuestBuilderGraph()->QuestComponent)
 		{
 			AppearanceInfo.PIENotifyText = LOCTEXT("ActiveLabel", "ACTIVE");
 		}
@@ -950,8 +949,8 @@ void FQuestBuilderEditor::CreateInternalWidgets()
 
 	FDetailsViewArgs DetailsViewArgs;
 	DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
-	DetailsViewArgs.bHideSelectionTip = true;
 	DetailsViewArgs.NotifyHook = this;
+	DetailsViewArgs.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Hide;
 
 	PropertyWidget = PropertyModule.CreateDetailView(DetailsViewArgs);
 	PropertyWidget->SetObject( NULL );
@@ -993,6 +992,7 @@ void FQuestBuilderEditor::RebuildQuestBuilderGraphPages()
 		return;
 	}
 
+	GetQuestBuilderGraph()->NodeIDMap.Reset();
 	for (UEdGraph* EdGraph : EditingQuestGraph->QuestGraphPages)
 	{
 		if (EdGraph)
@@ -1014,7 +1014,7 @@ void FQuestBuilderEditor::OnGraphChanged(const FEdGraphEditAction& Action)
 	UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(Action.Graph);
 	if (QuestGraph)
 	{
-		//QuestGraph->RebuildQuestBuilderGraph();
+		QuestGraph->CacheNodeIDMap();
 	}
 }
 void FQuestBuilderEditor::SelectAllNodes()
@@ -1201,7 +1201,7 @@ void FQuestBuilderEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVect
 		return;
 	}
 	// Select the newly pasted stuff
-	UEdGraph* EdGraph = CurrentGraphEditor->GetCurrentGraph();
+	UEdGraph* EdGraph = DestinationGraph;
 	{
 		const FScopedTransaction Transaction(FGenericCommands::Get().Paste->GetDescription());
 		EdGraph->Modify();
@@ -1226,11 +1226,16 @@ void FQuestBuilderEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVect
 			AvgNodePosition.X += Node->NodePosX;
 			AvgNodePosition.Y += Node->NodePosY;
 
+			
 			if (ShouldGetNewID)
 			{
 				if (UQuestBuilderEdNode* EdNode = Cast<UQuestBuilderEdNode>(*It))
 				{
-					EdNode->QuestSystemGraphNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName(EdNode->QuestSystemGraphNode->ID.ToString());
+					EdNode->QuestBuilderNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName(EdNode->QuestBuilderNode->ID.ToString());
+					if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(EdGraph))
+					{
+						QuestEdGraph->AddToNodeIDMap(EdNode->QuestBuilderNode->ID, EdNode->QuestBuilderNode);
+					}
 				}
 			}
 			else
@@ -1375,7 +1380,7 @@ bool FQuestBuilderEditor::CanCreateQuestEvent() const
 }
 void FQuestBuilderEditor::OpenQuestSetting()
 {
-	PropertyWidget->SetObject(GetQuestSystemObj());
+	PropertyWidget->SetObject(GetQuestBuilderGraph());
 }
 bool FQuestBuilderEditor::CanOpenQuestSetting() const
 {
@@ -1449,10 +1454,10 @@ void FQuestBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& New
 void FQuestBuilderEditor::OnNodeDoubleClicked(UEdGraphNode* Node)
 {
 	UQuestBuilderEdNode* MyNode = Cast<UQuestBuilderEdNode>(Node);
-	if (MyNode && MyNode->QuestSystemGraphNode &&
-		MyNode->QuestSystemGraphNode->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint))
+	if (MyNode && MyNode->QuestBuilderNode &&
+		MyNode->QuestBuilderNode->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint))
 	{
-		UClass* NodeClass = MyNode->QuestSystemGraphNode->GetClass();
+		UClass* NodeClass = MyNode->QuestBuilderNode->GetClass();
 		UPackage* Pkg = NodeClass->GetOuterUPackage();
 		FString ClassName = NodeClass->GetName().LeftChop(2);
 		UBlueprint* BlueprintOb = FindObject<UBlueprint>(Pkg, *ClassName);

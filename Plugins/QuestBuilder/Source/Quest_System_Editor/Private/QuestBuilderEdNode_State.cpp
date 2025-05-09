@@ -17,7 +17,7 @@ void UQuestBuilderEdNode_State::AllocateDefaultPins()
 
 FText UQuestBuilderEdNode_State::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	const UQuestBuilderNode* MyNode = Cast<UQuestBuilderNode>(QuestSystemGraphNode);
+	const UQuestBuilderNode* MyNode = Cast<UQuestBuilderNode>(QuestBuilderNode);
 	if (MyNode != NULL)
 	{
 		return MyNode->GetNodeTitle();
@@ -29,7 +29,7 @@ FText UQuestBuilderEdNode_State::GetNodeTitle(ENodeTitleType::Type TitleType) co
 FLinearColor UQuestBuilderEdNode_State::GetBackgroundColor() const
 {
 	FLinearColor Default(0.05f, 0.05f, 0.05f);
-	if (UQuestBuilderNode_State* StateNode = Cast<UQuestBuilderNode_State>(QuestSystemGraphNode))
+	if (UQuestBuilderNode_State* StateNode = Cast<UQuestBuilderNode_State>(QuestBuilderNode))
 	{
 
 		switch (StateNode->QuestState)

@@ -37,6 +37,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
 		TMap<FName, TObjectPtr<UQuest>> QuestMap;
 
+	/*Map of NodID with its UQuestBuilderNode*/
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
+		TMap<FName, TObjectPtr<UQuestBuilderNode>> NodeIDMap;
+
 	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly, Category = "QuestBuilderGraph")
 		bool bEdgeEnabled;
 

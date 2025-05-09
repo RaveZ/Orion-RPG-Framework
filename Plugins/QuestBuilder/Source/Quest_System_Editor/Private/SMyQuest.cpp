@@ -41,7 +41,7 @@ void SMyQuest::Construct(const FArguments& InArgs, TWeakPtr<FQuestBuilderEditor>
 
 	if (InQuestEditor.IsValid())
 	{
-		QuestBuilderGraph = QuestEditorPtr.Pin()->GetQuestSystemObj();
+		QuestBuilderGraph = QuestEditorPtr.Pin()->GetQuestBuilderGraph();
 
 		CommandList = MakeShareable(new FUICommandList);
 
@@ -259,7 +259,7 @@ void SMyQuest::Refresh()
 	bNeedsRefresh = false;
 
 	// Conform to our interfaces here to ensure we catch any newly added functions
-	//FBlueprintEditorUtils::ConformImplementedInterfaces(GetQuestSystemObj());
+	//FBlueprintEditorUtils::ConformImplementedInterfaces(GetQuestBuilderGraph());
 
 	GraphActionMenu->RefreshAllActions(/*bPreserveExpansion=*/ true);
 }
@@ -299,12 +299,12 @@ void SMyQuest::ClearGraphActionMenuSelection()
 
 TSharedRef<SWidget> SMyQuest::OnCreateWidgetForAction(FCreateWidgetForActionData* const InCreateData)
 {
-	return QuestEditorPtr.IsValid() ? SNew(SQuestPaletteItem, InCreateData, QuestEditorPtr.Pin()) : SNew(SQuestPaletteItem, InCreateData, GetQuestSystemObj());
+	return QuestEditorPtr.IsValid() ? SNew(SQuestPaletteItem, InCreateData, QuestEditorPtr.Pin()) : SNew(SQuestPaletteItem, InCreateData, GetQuestBuilderGraph());
 }
 
 void SMyQuest::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 {
-	UQuestBuilderGraph* QuestSystemObj = GetQuestSystemObj();
+	UQuestBuilderGraph* QuestSystemObj = GetQuestBuilderGraph();
 	check(QuestSystemObj);
 
 	TSharedPtr<FQuestBuilderEditor> QuestSystemEditor = QuestEditorPtr.Pin();
@@ -388,7 +388,7 @@ void SMyQuest::ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction)
 	const bool bIsShiftPressed = FSlateApplication::Get().GetModifierKeys().IsShiftDown();
 	FDocumentTracker::EOpenDocumentCause OpenMode = bIsShiftPressed ? FDocumentTracker::ForceOpenNewDocument : FDocumentTracker::OpenNewDocument;
 
-	UQuestBuilderGraph* QuestSystemObj = QuestEditorPtr.Pin()->GetQuestSystemObj();
+	UQuestBuilderGraph* QuestSystemObj = QuestEditorPtr.Pin()->GetQuestBuilderGraph();
 	if (InAction.IsValid())
 	{
 		if (InAction->GetTypeId() == FAssetSchemaAction_QuestSystemGraph::StaticGetTypeId())
@@ -476,7 +476,7 @@ void SMyQuest::BuildAddNewMenu(FMenuBuilder& MenuBuilder)
 {
 	MenuBuilder.BeginSection("AddNewItem", LOCTEXT("AddOperations", "Add New"));
 
-	if (UQuestBuilderGraph* CurrentBlueprint = GetQuestSystemObj())
+	if (UQuestBuilderGraph* CurrentBlueprint = GetQuestBuilderGraph())
 	{
 		MenuBuilder.AddMenuEntry(FQuestBuilder_EditorCommands::Get().AddNewQuestGraph);
 		
@@ -511,7 +511,7 @@ void SMyQuest::OnCategoryNameCommitted(const FText& InNewText, ETextCommit::Type
 	{
 		const FScopedTransaction Transaction(LOCTEXT("RenameCategory", "Rename Category"));
 
-		GetQuestSystemObj()->Modify();
+		GetQuestBuilderGraph()->Modify();
 
 		Refresh();
 		SelectItemByName(FName(*CategoryName.ToString()), ESelectInfo::OnMouseClick, InAction.Pin()->SectionID, true);
@@ -691,26 +691,26 @@ void SMyQuest::OnDeleteGraph(UEdGraph* InGraph)
 		}
 
 		const FScopedTransaction Transaction(LOCTEXT("RemoveGraph", "Remove Graph"));
-		GetQuestSystemObj()->Modify();
+		GetQuestBuilderGraph()->Modify();
 
 		InGraph->Modify();
 
 		
 		// Remove any  nodes bound to this graph
 		TArray<UQuestBuilderEdNode*> AllNodes;
-		FQuestBuilderEditorUtils::GetAllNodesOfClass<UQuestBuilderEdNode>(GetQuestSystemObj(), AllNodes);
+		FQuestBuilderEditorUtils::GetAllNodesOfClass<UQuestBuilderEdNode>(GetQuestBuilderGraph(), AllNodes);
 
 		const bool bDontRecompile = true;
 		for (UQuestBuilderEdNode* CompNode : AllNodes)
 		{
 			if (CompNode->GetQuestSystemGraphEdGraph() == InGraph)
 			{
-				FQuestBuilderEditorUtils::RemoveNode(GetQuestSystemObj(), CompNode, bDontRecompile);
+				FQuestBuilderEditorUtils::RemoveNode(GetQuestBuilderGraph(), CompNode, bDontRecompile);
 			}
 		}
 		
 
-		FQuestBuilderEditorUtils::RemoveGraph(GetQuestSystemObj(), InGraph);
+		FQuestBuilderEditorUtils::RemoveGraph(GetQuestBuilderGraph(), InGraph);
 		QuestEditorPtr.Pin()->CloseDocumentTab(InGraph);
 
 
@@ -728,7 +728,7 @@ void SMyQuest::OpenGraph(FDocumentTracker::EOpenDocumentCause InCause, bool bOpe
 		// If we have no graph then this is an interface event, so focus on the event graph
 		/*if (!GraphToOpen)
 		{
-			GraphToOpen = FQuestBuilderEditorUtils::FindQuestGraph(GetQuestSystemObj());
+			GraphToOpen = FQuestBuilderEditorUtils::FindQuestGraph(GetQuestBuilderGraph());
 		}*/
 	}
 

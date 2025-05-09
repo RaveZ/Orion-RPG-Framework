@@ -7,7 +7,7 @@
 
 FText UQuestBuilderEdNode_Objective::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	const UQuestBuilderNode* MyNode = Cast<UQuestBuilderNode>(QuestSystemGraphNode);
+	const UQuestBuilderNode* MyNode = Cast<UQuestBuilderNode>(QuestBuilderNode);
 
 	if (MyNode != NULL)
 	{
