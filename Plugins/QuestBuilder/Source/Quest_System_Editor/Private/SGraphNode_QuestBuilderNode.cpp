@@ -22,8 +22,8 @@
 #include "QuestBuilderNode_Objective.h"
 #include "QuestBuilderSetting.h"	
 #include "Fonts/SlateFontInfo.h"
-#include "Condition/QuestCondition.h"
-#include "Event/QuestEvent.h"
+#include "Decorator/OrionDecorator.h"
+#include "Event/OrionEvent.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 
 #define LOCTEXT_NAMESPACE "EdNode_QuestBuilder"

@@ -1,7 +1,7 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "Condition/IsQuestCompleted.h"
+#include "Decorator/IsQuestCompleted.h"
 #include "QuestComponent.h"
 #include "Quest.h"
 

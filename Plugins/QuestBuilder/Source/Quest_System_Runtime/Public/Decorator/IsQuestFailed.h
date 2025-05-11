@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Condition/QuestCondition.h"
+#include "Decorator/OrionDecorator.h"
 #include "IsQuestFailed.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class QUEST_SYSTEM_RUNTIME_API UIsQuestFailed : public UQuestCondition
+class QUEST_SYSTEM_RUNTIME_API UIsQuestFailed : public UOrionDecorator
 {
 	GENERATED_BODY()
 

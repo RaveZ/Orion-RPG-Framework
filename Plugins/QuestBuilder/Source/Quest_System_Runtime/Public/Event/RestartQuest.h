@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Event/QuestEvent.h"
+#include "Event/OrionEvent.h"
 #include "RestartQuest.generated.h"
 
 /**
@@ -12,7 +12,7 @@
 
 
 UCLASS()
-class QUEST_SYSTEM_RUNTIME_API URestartQuest : public UQuestEvent
+class QUEST_SYSTEM_RUNTIME_API URestartQuest : public UOrionEvent
 {
 	GENERATED_BODY()
 public:

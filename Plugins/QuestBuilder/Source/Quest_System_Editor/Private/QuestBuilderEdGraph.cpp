@@ -9,8 +9,8 @@
 #include "QuestBuilderEdge.h"
 #include "QuestBuilderNode.h"
 #include "QuestBuilderNode_Objective.h"
-#include "Condition/QuestCondition.h"
-#include "Event/QuestEvent.h"
+#include "Decorator/OrionDecorator.h"
+#include "Event/OrionEvent.h"
 #include "Task/QuestTask.h"
 
 
@@ -64,7 +64,7 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 		Graph->CategoryDisplayName = Graph->GetFName().ToString();
 	}
 
-	for (UQuestCondition* QuestCondition : Quest->Conditions)
+	for (UOrionDecorator* QuestCondition : Quest->Conditions)
 	{
 		if (QuestCondition != nullptr)
 		{
@@ -132,7 +132,7 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 				}
 			}
 
-			for (UQuestCondition* QuestCondition : QuestBuilderNode->Conditions)
+			for (UOrionDecorator* QuestCondition : QuestBuilderNode->Conditions)
 			{
 				if (QuestCondition != nullptr)
 				{
@@ -142,7 +142,7 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 				}
 			}
 			
-			for (UQuestEvent* QuestEvent : QuestBuilderNode->Events)
+			for (UOrionEvent* QuestEvent : QuestBuilderNode->Events)
 			{
 				if (QuestEvent != nullptr)
 				{

@@ -3,8 +3,8 @@
 
 #include "QuestComponent.h"
 #include "Quest.h"
-#include "Condition/QuestCondition.h"
-#include "Event/QuestEvent.h"
+#include "Decorator/OrionDecorator.h"
+#include "Event/OrionEvent.h"
 #include "Task/QuestTask.h"
 #include "UObject/UObjectIterator.h"
 #include "QuestSaveObject.h"

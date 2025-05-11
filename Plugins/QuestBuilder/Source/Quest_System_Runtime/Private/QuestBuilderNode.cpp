@@ -4,8 +4,8 @@
 #include "QuestBuilderNode.h"
 #include "QuestBuilderEdge.h"
 #include "Quest.h"
-#include "Event/QuestEvent.h"
-#include "Condition/QuestCondition.h"
+#include "Event/OrionEvent.h"
+#include "Decorator/OrionDecorator.h"
 #include "QuestBuilderGraph.h"
 
 #define LOCTEXT_NAMESPACE "QuestBuilderNode"
@@ -85,7 +85,7 @@ FText UQuestBuilderNode::GetEventsText() const
 {
 	FString EventListText;
 
-	for (const UQuestEvent* Event : Events)
+	for (const UOrionEvent* Event : Events)
 	{
 		if (Event)
 		{
@@ -102,7 +102,7 @@ FText UQuestBuilderNode::GetConditionsText() const
 {
 	FString ConditionListText;
 
-	for (const UQuestCondition* Condition : Conditions)
+	for (const UOrionDecorator* Condition : Conditions)
 	{
 		if (Condition)
 		{

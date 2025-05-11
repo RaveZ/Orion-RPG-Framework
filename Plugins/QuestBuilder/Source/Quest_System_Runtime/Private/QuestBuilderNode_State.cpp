@@ -4,7 +4,7 @@
 #include "QuestBuilderNode_State.h"
 #include "QuestComponent.h"
 #include "Quest.h"
-#include "Event/QuestEvent.h"
+#include "Event/OrionEvent.h"
 
 
 void UQuestBuilderNode_State::Initialize()
@@ -27,7 +27,7 @@ void UQuestBuilderNode_State::BeginState()
     }
 
     //End of a Node, Launch Event with the End and Both Type
-    for (UQuestEvent* Event : Quest->CurrentNode->Events)
+    for (UOrionEvent* Event : Quest->CurrentNode->Events)
     {
         if (Event)
         {

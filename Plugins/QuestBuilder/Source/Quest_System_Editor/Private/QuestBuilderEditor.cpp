@@ -3,12 +3,12 @@
 
 #include "QuestBuilderEditor.h"
 #include "QuestBuilderNode_Root.h"
-#include "Condition/QuestCondition.h"
+#include "Decorator/OrionDecorator.h"
 #include "EngineGlobals.h"
 #include "Editor/EditorEngine.h"
 #include "Editor.h"
 #include "UnrealEdGlobals.h"
-#include "Event/QuestEvent.h"
+#include "Event/OrionEvent.h"
 #include "BlueprintEditor.h"
 #include "UObject/ObjectSaveContext.h"
 #include "GraphEditorActions.h"
@@ -1364,7 +1364,7 @@ bool FQuestBuilderEditor::IsNewTaskButtonVisible() const
 
 void FQuestBuilderEditor::CreateNewQuestCondition()
 {
-	HandleNewNodeClassPicked(UQuestCondition::StaticClass());
+	HandleNewNodeClassPicked(UOrionDecorator::StaticClass());
 }
 bool FQuestBuilderEditor::CanCreateQuestCondition() const
 {
@@ -1372,7 +1372,7 @@ bool FQuestBuilderEditor::CanCreateQuestCondition() const
 }
 void FQuestBuilderEditor::CreateNewQuestEvent()
 {
-	HandleNewNodeClassPicked(UQuestEvent::StaticClass());
+	HandleNewNodeClassPicked(UOrionEvent::StaticClass());
 }
 bool FQuestBuilderEditor::CanCreateQuestEvent() const
 {

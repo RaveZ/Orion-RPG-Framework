@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
-#include "QuestCondition.generated.h"
+#include "OrionDecorator.generated.h"
 
 class UQuestBuilderGraph;
 class UQuestBuilderNode;
 
 UCLASS(Abstract, Blueprintable, EditInlineNew, HideDropdown)
-class QUEST_SYSTEM_RUNTIME_API UQuestCondition : public UObject
+class QUEST_SYSTEM_RUNTIME_API UOrionDecorator : public UObject
 {
 	GENERATED_BODY()
 public:

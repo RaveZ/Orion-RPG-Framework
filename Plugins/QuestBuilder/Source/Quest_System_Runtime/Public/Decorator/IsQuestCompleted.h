@@ -3,19 +3,20 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Condition/QuestCondition.h"
-#include "IsQuestActive.generated.h"
+#include "Decorator/OrionDecorator.h"
+#include "IsQuestCompleted.generated.h"
 
-/**
- * 
- */
+
+class UQuest;
+
 UCLASS()
-class QUEST_SYSTEM_RUNTIME_API UIsQuestActive : public UQuestCondition
+class QUEST_SYSTEM_RUNTIME_API UIsQuestCompleted : public UOrionDecorator
 {
 	GENERATED_BODY()
 
 public:
-	UIsQuestActive();
+	UIsQuestCompleted();
+
 
 	virtual bool IsConditionMet_Implementation() const override;
 	virtual FString GetNodeDisplayText_Implementation() const override;

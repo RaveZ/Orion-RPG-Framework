@@ -8,8 +8,8 @@
 
 class UQuestBuilderGraph;
 class UQuest;
-class UQuestCondition;
-class UQuestEvent;
+class UOrionDecorator;
+class UOrionEvent;
 class UQuestBuilderEdge;
 
 UENUM(BlueprintType)
@@ -37,10 +37,10 @@ public:
 		FText Description;
 	
 	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Events")
-		TArray<TObjectPtr<UQuestEvent>> Events;
+		TArray<TObjectPtr<UOrionEvent>> Events;
 
 	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = BranchingConditions, meta = (DisplayName = "Branching Conditions"))
-		TArray<TObjectPtr<UQuestCondition>> Conditions;
+		TArray<TObjectPtr<UOrionDecorator>> Conditions;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode")
 		TObjectPtr<UQuestBuilderGraph> QuestGraph;

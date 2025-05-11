@@ -7,7 +7,7 @@
 #include "UObject/NoExportTypes.h"
 #include "Quest.generated.h"
 
-class UQuestCondition;
+class UOrionDecorator;
 class UQuestBuilderNode;
 class UQuestBuilderEdge;
 class UQuestBuilderNode_Root;
@@ -60,7 +60,7 @@ public:
 
 	/**Conditions to change the QuestState to DesiredQuestState*/
 	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "QuestConditions")
-		TArray<TObjectPtr<UQuestCondition>> Conditions;
+		TArray<TObjectPtr<UOrionDecorator>> Conditions;
 
 	/**
 	* Change the Quest State to this value after condition met

@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Event/QuestEvent.h"
+#include "Event/OrionEvent.h"
 #include "JumpToNode.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class QUEST_SYSTEM_RUNTIME_API UJumpToNode : public UQuestEvent
+class QUEST_SYSTEM_RUNTIME_API UJumpToNode : public UOrionEvent
 {
 	GENERATED_BODY()
 public:

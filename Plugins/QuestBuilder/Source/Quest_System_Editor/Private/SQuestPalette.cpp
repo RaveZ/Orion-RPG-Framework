@@ -11,10 +11,10 @@
 #include "QuestBuilderEdGraph.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode.h"
-#include "Condition/QuestCondition.h"
+#include "Decorator/OrionDecorator.h"
 #include "QuestBuilderFunctionLibrary.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "Event/QuestEvent.h"
+#include "Event/OrionEvent.h"
 
 
 #define LOCTEXT_NAMESPACE "QuestPaletteItem"

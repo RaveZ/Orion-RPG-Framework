@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Event/QuestEvent.h"
+#include "Event/OrionEvent.h"
 #include "FailQuest.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class QUEST_SYSTEM_RUNTIME_API UFailQuest : public UQuestEvent
+class QUEST_SYSTEM_RUNTIME_API UFailQuest : public UOrionEvent
 {
 	GENERATED_BODY()
 public:

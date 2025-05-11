@@ -4,7 +4,7 @@
 #include "Task/QuestTask.h"
 #include "QuestComponent.h"
 #include "Quest.h"
-#include "Event/QuestEvent.h"
+#include "Event/OrionEvent.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode.h"
 #include "QuestBuilderNode_Objective.h"

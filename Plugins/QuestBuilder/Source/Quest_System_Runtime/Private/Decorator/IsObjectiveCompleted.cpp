@@ -1,7 +1,7 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
 
-#include "Condition/IsObjectiveCompleted.h"
+#include "Decorator/IsObjectiveCompleted.h"
 #include "QuestBuilderNode_Objective.h"
 #include "QuestComponent.h"
 #include "Quest.h"

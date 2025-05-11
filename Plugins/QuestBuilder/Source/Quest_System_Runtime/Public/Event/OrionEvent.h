@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "QuestData.h"
 #include "UObject/NoExportTypes.h"
-#include "QuestEvent.generated.h"
+#include "OrionEvent.generated.h"
 
 class UQuestBuilderGraph;
 class UQuestBuilderNode;
@@ -24,11 +24,11 @@ enum class EEventRunType : uint8
 };
 
 UCLASS(Abstract, Blueprintable, EditInlineNew, HideDropdown)
-class QUEST_SYSTEM_RUNTIME_API UQuestEvent : public UObject
+class QUEST_SYSTEM_RUNTIME_API UOrionEvent : public UObject
 {
 	GENERATED_BODY()
 public:
-	UQuestEvent();
+	UOrionEvent();
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestEvent")
 		TObjectPtr<UQuestBuilderGraph> QuestGraph;

@@ -1,6 +1,6 @@
 // Copyright 2024 Ivan Chandra. All Rights Reserved.
 
-#include "Event/QuestEvent.h"
+#include "Event/OrionEvent.h"
 #include "UObject/UObjectIterator.h"
 #include "Quest_System_Runtime.h"
 #include "QuestComponent.h"
@@ -10,20 +10,20 @@
 #include "QuestBuilderNode_Objective.h"
 #include "QuestBuilderNode_Root.h"
 
-UQuestEvent::UQuestEvent()
+UOrionEvent::UOrionEvent()
 {
 }
 
-void UQuestEvent::BeginEvent_Implementation()
+void UOrionEvent::BeginEvent_Implementation()
 {
 }
 
-FString UQuestEvent::GetNodeDisplayText_Implementation() const
+FString UOrionEvent::GetNodeDisplayText_Implementation() const
 {
 	return GetName();
 }
 
-AController* UQuestEvent::GetOwningController() const
+AController* UOrionEvent::GetOwningController() const
 {
 	if (!QuestGraph)
 		return nullptr;
@@ -31,7 +31,7 @@ AController* UQuestEvent::GetOwningController() const
 	return QuestGraph->OwningController;
 }
 
-APawn* UQuestEvent::GetOwningPawn() const
+APawn* UOrionEvent::GetOwningPawn() const
 {
 	if (!QuestGraph)
 		return nullptr;
@@ -39,7 +39,7 @@ APawn* UQuestEvent::GetOwningPawn() const
 	return QuestGraph->OwningPawn;
 }
 
-UQuestComponent* UQuestEvent::GetQuestComponent() const
+UQuestComponent* UOrionEvent::GetQuestComponent() const
 {
 	if (!QuestGraph)
 		return nullptr;
@@ -47,7 +47,7 @@ UQuestComponent* UQuestEvent::GetQuestComponent() const
 	return QuestGraph->QuestComponent;
 }
 
-UQuestBuilderGraph* UQuestEvent::GetOwningQuestGraph() const
+UQuestBuilderGraph* UOrionEvent::GetOwningQuestGraph() const
 {
 	if (!QuestGraph)
 		return nullptr;
@@ -55,12 +55,12 @@ UQuestBuilderGraph* UQuestEvent::GetOwningQuestGraph() const
 	return QuestGraph;
 }
 
-UQuest* UQuestEvent::GetOwningQuest() const 
+UQuest* UOrionEvent::GetOwningQuest() const 
 {
 	return Quest;
 }
 
-TArray<FName> UQuestEvent::GetAllQuestID()
+TArray<FName> UOrionEvent::GetAllQuestID()
 {
 	TArray<FName> QuestIDs;
 	for (TObjectIterator<UQuestBuilderGraph> It; It; ++It)
@@ -74,7 +74,7 @@ TArray<FName> UQuestEvent::GetAllQuestID()
 	return QuestIDs;
 }
 
-TArray<FName> UQuestEvent::GetAllNodeID()
+TArray<FName> UOrionEvent::GetAllNodeID()
 {
 	TArray<FName> NodeIDs;
 	if (bUseQuestID)
@@ -118,7 +118,7 @@ TArray<FName> UQuestEvent::GetAllNodeID()
 	
 }
 
-UWorld* UQuestEvent::GetWorld() const
+UWorld* UOrionEvent::GetWorld() const
 {
 	if (HasAllFlags(RF_ClassDefaultObject))
 	{
@@ -135,13 +135,13 @@ UWorld* UQuestEvent::GetWorld() const
 }
 
 #if WITH_EDITOR
-void UQuestEvent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+void UOrionEvent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 	if (PropertyChangedEvent.Property)
 	{
 		FName PropertyName = PropertyChangedEvent.Property->GetFName();
-		if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuestEvent, QuestID))
+		if (PropertyName == GET_MEMBER_NAME_CHECKED(UOrionEvent, QuestID))
 		{
 			NodeID = NAME_None;
 		}
