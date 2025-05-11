@@ -39,7 +39,7 @@ public:
 	TObjectPtr<UQuestBuilderGraph> QuestGraph;
 
 	/** Quest ID */
-	UPROPERTY(BlueprintReadOnly, VisibleDefaultsOnly, Category = "Quest")
+	UPROPERTY(BlueprintReadOnly, VisibleInstanceOnly, Category = "Quest")
 		FName ID;
 
 	/** Your Quest Name*/

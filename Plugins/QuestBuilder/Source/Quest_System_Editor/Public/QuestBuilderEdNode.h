@@ -27,11 +27,10 @@ public:
 	UPROPERTY()
 	struct FGraphNodeClassData ClassData;
 
-	UPROPERTY(VisibleAnywhere, Instanced, Category = "QuestBuilderGraph")
-		TObjectPtr<UQuestBuilderNode> QuestBuilderNode;
+	UPROPERTY()
+	TObjectPtr<UObject> NodeInstance;
 	
-	void SetQuestSystemGraphNode(UQuestBuilderNode* InNode);
-	UQuestBuilderEdGraph* GetQuestSystemGraphEdGraph();
+	UQuestBuilderEdGraph* GetQuestBuilderEdGraph();
 
 	SGraphNode_QuestBuilderNode* SGraphNode;
 
@@ -39,9 +38,12 @@ public:
 	virtual void AllocateDefaultPins() override;
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	virtual bool CanDuplicateNode() const override;
+	virtual void PostPlacedNewNode() override;
 	virtual bool CanUserDeleteNode() const override;
 	virtual void PrepareForCopying() override;
 	virtual void AutowireNewNode(UEdGraphPin* FromPin) override;
+
+
 	virtual FText GetDescription() const;
 	virtual FText GetEventsText() const;
 	virtual FText GetConditionsText() const;
@@ -53,6 +55,9 @@ public:
 
 	/** Gets a list of actions that can be done to this particular node */
 	virtual void GetNodeContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const override;
+
+	/** initialize instance object  */
+	virtual void InitializeInstance();
 
 	/** Check if node instance uses blueprint for its implementation */
 	bool UsesBlueprint() const;

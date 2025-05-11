@@ -200,8 +200,8 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 
 	TSharedPtr<STextBlock> DescriptionText;
 
-	UQuestBuilderEdNode* QuestEditorNode = Cast<UQuestBuilderEdNode>(GraphNode);
-	UQuestBuilderNode* QuestSystemNode = QuestEditorNode ? QuestEditorNode->QuestBuilderNode : nullptr;
+	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
+	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
 
 	UWorld* World = GEditor->GetEditorWorldContext().World();
 
@@ -531,18 +531,18 @@ void SGraphNode_QuestBuilderNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 
 bool SGraphNode_QuestBuilderNode::IsNameReadOnly() const
 {
-	UQuestBuilderEdNode* EdNode_Node = Cast<UQuestBuilderEdNode>(GraphNode);
-	check(EdNode_Node != nullptr);
+	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
+	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
 
-	UQuestBuilderGraph* QuestBuilderGraph = EdNode_Node->QuestBuilderNode->QuestGraph;
-	check(QuestBuilderGraph != nullptr);
+	UQuestBuilderGraph* QuestGraph = QuestNode ? Cast<UQuestBuilderGraph>(QuestNode->GetOwningQuestGraph()) : nullptr;
 
-	return (!QuestBuilderGraph->bCanRenameNode || !EdNode_Node->QuestBuilderNode->IsNameEditable()) || SGraphNode::IsNameReadOnly();
+	return (QuestEdNode && QuestNode && QuestGraph) &&
+		(!QuestGraph->bCanRenameNode || !QuestNode->IsNameEditable()) || SGraphNode::IsNameReadOnly();
 }
 FText SGraphNode_QuestBuilderNode::GetDescription() const
 {
-	UQuestBuilderEdNode* QuestEditorNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	return QuestEditorNode ? QuestEditorNode->GetDescription() : FText::GetEmpty();
+	UQuestBuilderEdNode* QuestEdNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
+	return QuestEdNode ? QuestEdNode->GetDescription() : FText::GetEmpty();
 }
 EVisibility SGraphNode_QuestBuilderNode::GetDescriptionVisibility() const
 {
@@ -553,10 +553,10 @@ EVisibility SGraphNode_QuestBuilderNode::GetDescriptionVisibility() const
 }
 EVisibility SGraphNode_QuestBuilderNode::GetTaskVisibility() const
 {
-	UQuestBuilderEdNode* QuestEditorNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	UQuestBuilderNode* QuestSystemNode = QuestEditorNode ? QuestEditorNode->QuestBuilderNode : nullptr;
+	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
+	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
 
-	if (UQuestBuilderNode_Objective* QuestSystemNodeObjective = Cast<UQuestBuilderNode_Objective>(QuestSystemNode))
+	if (UQuestBuilderNode_Objective* QuestSystemNodeObjective = Cast<UQuestBuilderNode_Objective>(QuestNode))
 	{
 		return EVisibility::Visible;
 	}
@@ -564,14 +564,14 @@ EVisibility SGraphNode_QuestBuilderNode::GetTaskVisibility() const
 }
 FText SGraphNode_QuestBuilderNode::GetEventsText() const
 {
-	UQuestBuilderEdNode* QuestEditorNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	return QuestEditorNode ? QuestEditorNode->GetEventsText() : FText::GetEmpty();
+	UQuestBuilderEdNode* QuestEdNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
+	return QuestEdNode ? QuestEdNode->GetEventsText() : FText::GetEmpty();
 }
 EVisibility SGraphNode_QuestBuilderNode::GetEventsVisibility() const
 {
-	UQuestBuilderEdNode* QuestEditorNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	UQuestBuilderNode* QuestSystemNode = QuestEditorNode ? QuestEditorNode->QuestBuilderNode : nullptr;
-	if (QuestSystemNode && !QuestSystemNode->Events.IsEmpty())
+	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
+	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+	if (QuestNode && !QuestNode->Events.IsEmpty())
 	{
 		return EVisibility::Visible;
 	}
@@ -579,14 +579,14 @@ EVisibility SGraphNode_QuestBuilderNode::GetEventsVisibility() const
 }
 FText SGraphNode_QuestBuilderNode::GetConditionsText() const
 {
-	UQuestBuilderEdNode* QuestEditorNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	return QuestEditorNode ? QuestEditorNode->GetConditionsText() : FText::GetEmpty();
+	UQuestBuilderEdNode* QuestEdNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
+	return QuestEdNode ? QuestEdNode->GetConditionsText() : FText::GetEmpty();
 }
 EVisibility SGraphNode_QuestBuilderNode::GetConditionsVisibility() const
 {
-	UQuestBuilderEdNode* QuestEditorNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	UQuestBuilderNode* QuestSystemNode = QuestEditorNode ? QuestEditorNode->QuestBuilderNode : nullptr;
-	if (QuestSystemNode && !QuestSystemNode->Conditions.IsEmpty())
+	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
+	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+	if (QuestNode && !QuestNode->Conditions.IsEmpty())
 	{
 		return EVisibility::Visible;
 	}
@@ -607,9 +607,12 @@ bool SGraphNode_QuestBuilderNode::OnVerifyNameTextChanged(const FText& InText, F
         bValid = OnVerifyTextCommit.Execute(FText::FromString(FinalString), GraphNode, OutErrorMessage);
 	}
 
-	if (UQuestBuilderEdNode* MyNode = Cast<UQuestBuilderEdNode>(GraphNode))
+	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
+	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+
+	if (QuestNode)
 	{
-		OriginalName = MyNode->QuestBuilderNode->ID;
+		OriginalName = QuestNode->ID;
 	}
 
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
@@ -652,19 +655,19 @@ void SGraphNode_QuestBuilderNode::OnNameTextCommited(const FText& InText, ETextC
 	const FName NewName = *NewNameString;
 	FName OriginalName;
 
-	UQuestBuilderEdNode* MyNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	UQuestBuilderNode* QuestSystemNode = MyNode ? MyNode->QuestBuilderNode : nullptr;
+	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
+	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
 
-	if (MyNode != nullptr && MyNode->QuestBuilderNode != nullptr)
+	if (QuestEdNode && QuestNode)
 	{
-		UQuestBuilderEdGraph* QuestEdGraph = MyNode->GetQuestSystemGraphEdGraph();
-		OriginalName = QuestSystemNode->ID;
+		UQuestBuilderEdGraph* QuestEdGraph = QuestEdNode->GetQuestBuilderEdGraph();
+		OriginalName = QuestNode->ID;
 
 		//Finalize Node and Update GraphNode
 		const FScopedTransaction Transaction(LOCTEXT("QuestSystemEditorRenameNode", "Quest System Editor: Rename Node"));
-		MyNode->Modify();
-		MyNode->QuestBuilderNode->Modify();
-		MyNode->QuestBuilderNode->SetNodeTitle(FText::FromString(NewNameString));
+		QuestEdNode->Modify();
+		QuestNode->Modify();
+		QuestNode->SetNodeTitle(FText::FromString(NewNameString));
 		UpdateGraphNode();
 
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
@@ -714,18 +717,20 @@ void SGraphNode_QuestBuilderNode::OnNameTextCommited(const FText& InText, ETextC
 
 FSlateColor SGraphNode_QuestBuilderNode::GetBorderBackgroundColor() const
 {
-	UQuestBuilderEdNode* MyNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	return MyNode ? MyNode->GetBackgroundColor() : QuestBuilderColors::NodeBorder::HighlightAbortRange;
+	UQuestBuilderEdNode* QuestEdNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
+	return QuestEdNode ? QuestEdNode->GetBackgroundColor() : QuestBuilderColors::NodeBorder::HighlightAbortRange;
 }
 
 FSlateColor SGraphNode_QuestBuilderNode::GetNodeHighlightColor() const
 {
-	UQuestBuilderEdNode* MyNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	if (MyNode->QuestBuilderNode->Quest == nullptr)
+	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
+	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+
+	if (QuestNode->Quest == nullptr)
 		return QuestBuilderColors::NodeBorder::NoHighlight;
 
 
-	if (MyNode->QuestBuilderNode->Quest->CurrentNode == MyNode->QuestBuilderNode && (GEditor->bIsSimulatingInEditor || GEditor->PlayWorld))
+	if (QuestNode->Quest->CurrentNode == QuestNode && (GEditor->bIsSimulatingInEditor || GEditor->PlayWorld))
 	{
 		return QuestBuilderColors::NodeBorder::HighlightCurrentNode;
 		
@@ -758,8 +763,8 @@ const FSlateBrush* SGraphNode_QuestBuilderNode::GetNameIcon() const
 
 EVisibility SGraphNode_QuestBuilderNode::GetBlueprintIconVisibility() const
 {
-	UQuestBuilderEdNode* MyNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	const bool bCanShowIcon = (MyNode != nullptr && MyNode->UsesBlueprint());
+	UQuestBuilderEdNode* QuestEdNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
+	const bool bCanShowIcon = (QuestEdNode != nullptr && QuestEdNode->UsesBlueprint());
 
 	// LOD this out once things get too small
 	TSharedPtr<SGraphPanel> MyOwnerPanel = GetOwnerPanel();
@@ -800,10 +805,10 @@ EVisibility SGraphNode_QuestBuilderNode::GetIndexVisibility() const
 	{
 		// Get the first element of the SelectedNodes set
 		UQuestBuilderEdNode* SelectedQuestEdNode = Cast<UQuestBuilderEdNode>(*SelectedNodes.CreateConstIterator());
-		FirstSelectedNode = SelectedQuestEdNode->QuestBuilderNode;
+		FirstSelectedNode = SelectedQuestEdNode ? Cast<UQuestBuilderNode>(SelectedQuestEdNode->NodeInstance) : nullptr;
 	}
 
-	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(QuestEdNode->QuestBuilderNode);
+	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance);
 
 	// Visible if ((we are in PIE || if we have siblings) && (SelectedNodes only one && Matching parent with selected nodes))
 	const bool bCanShowIndex = (ShouldShowExecutionIndex() || (MyParentOutputPin && MyParentOutputPin->LinkedTo.Num() > 1)) && (SelectedNodes.Num() == 1 && (FirstSelectedNode && QuestNode) && (QuestNode->ParentNodes.Contains(FirstSelectedNode)));
@@ -836,10 +841,10 @@ FText SGraphNode_QuestBuilderNode::GetIndexText() const
 	{
 		// Get the first element of the SelectedNodes set
 		UQuestBuilderEdNode* SelectedQuestEdNode = Cast<UQuestBuilderEdNode>(*SelectedNodes.CreateConstIterator());
-		FirstSelectedNode = SelectedQuestEdNode->QuestBuilderNode;
+		FirstSelectedNode = SelectedQuestEdNode ? Cast<UQuestBuilderNode>(SelectedQuestEdNode->NodeInstance) : nullptr;
 	}
 
-	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(QuestEdNode->QuestBuilderNode);
+	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance);
 
 	if (QuestNode->ParentNodes.Contains(FirstSelectedNode))
 	{

@@ -7,11 +7,11 @@
 
 FText UQuestBuilderEdNode_Objective::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	const UQuestBuilderNode* MyNode = Cast<UQuestBuilderNode>(QuestBuilderNode);
+	const UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
 
-	if (MyNode != NULL)
+	if (QuestNode != NULL)
 	{
-		return MyNode->GetNodeTitle();
+		return QuestNode->GetNodeTitle();
 	}
 	else if (!ClassData.GetClassName().IsEmpty())
 	{

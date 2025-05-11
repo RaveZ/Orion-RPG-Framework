@@ -160,6 +160,12 @@ void UQuestBuilderNode::Initialize()
 	//empty, override in child class
 }
 
+void UQuestBuilderNode::InitializeFromAsset(UQuestBuilderGraph& Asset)
+{
+	QuestGraph = &Asset;
+}
+
+
 UQuestBuilderGraph* UQuestBuilderNode::GetOwningQuestGraph() const
 {
 	if (!QuestGraph)

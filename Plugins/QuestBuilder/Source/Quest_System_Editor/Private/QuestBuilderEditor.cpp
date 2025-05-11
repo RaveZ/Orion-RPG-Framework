@@ -1050,17 +1050,17 @@ void FQuestBuilderEditor::DeleteSelectedNodes()
 		if (EdNode == nullptr || !EdNode->CanUserDeleteNode())
 			continue;;
 
-		if (UQuestBuilderEdNode* EdNode_Node = Cast<UQuestBuilderEdNode>(EdNode))
+		if (UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(EdNode))
 		{
-			EdNode_Node->Modify();
+			QuestEdNode->Modify();
 
-			const UEdGraphSchema* Schema = EdNode_Node->GetSchema();
+			const UEdGraphSchema* Schema = QuestEdNode->GetSchema();
 			if (Schema != nullptr)
 			{
-				Schema->BreakNodeLinks(*EdNode_Node);
+				Schema->BreakNodeLinks(*QuestEdNode);
 			}
 
-			EdNode_Node->DestroyNode();
+			QuestEdNode->DestroyNode();
 		}
 		else
 		{
@@ -1231,10 +1231,11 @@ void FQuestBuilderEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVect
 			{
 				if (UQuestBuilderEdNode* EdNode = Cast<UQuestBuilderEdNode>(*It))
 				{
-					EdNode->QuestBuilderNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName(EdNode->QuestBuilderNode->ID.ToString());
+					UQuestBuilderNode* QuestNode = EdNode ? Cast<UQuestBuilderNode>(EdNode->NodeInstance) : nullptr;
+					QuestNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName(QuestNode->ID.ToString());
 					if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(EdGraph))
 					{
-						QuestEdGraph->AddToNodeIDMap(EdNode->QuestBuilderNode->ID, EdNode->QuestBuilderNode);
+						QuestEdGraph->AddToNodeIDMap(QuestNode->ID, QuestNode);
 					}
 				}
 			}
@@ -1417,12 +1418,7 @@ bool FQuestBuilderEditor::CanRenameNodes() const
 }
 void FQuestBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& NewSelection)
 {
-	TArray<UObject*> Selection;
-
-	for (UObject* SelectionEntry : NewSelection)
-	{
-		Selection.Add(SelectionEntry);
-	}
+	TArray<UObject*> Selection = FQuestBuilderEditorUtils::GetSelectionForPropertyEditor(NewSelection);
 
 	if (Selection.Num() == 0)
 	{
@@ -1453,11 +1449,13 @@ void FQuestBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& New
 
 void FQuestBuilderEditor::OnNodeDoubleClicked(UEdGraphNode* Node)
 {
-	UQuestBuilderEdNode* MyNode = Cast<UQuestBuilderEdNode>(Node);
-	if (MyNode && MyNode->QuestBuilderNode &&
-		MyNode->QuestBuilderNode->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint))
+	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(Node);
+	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+
+	if (QuestEdNode && QuestNode &&
+		QuestNode->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint))
 	{
-		UClass* NodeClass = MyNode->QuestBuilderNode->GetClass();
+		UClass* NodeClass = QuestNode->GetClass();
 		UPackage* Pkg = NodeClass->GetOuterUPackage();
 		FString ClassName = NodeClass->GetName().LeftChop(2);
 		UBlueprint* BlueprintOb = FindObject<UBlueprint>(Pkg, *ClassName);

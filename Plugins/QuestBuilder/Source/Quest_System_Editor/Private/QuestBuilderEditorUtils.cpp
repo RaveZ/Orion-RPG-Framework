@@ -250,5 +250,22 @@ UEdGraph* FQuestBuilderEditorUtils::FindQuestGraph(const UQuestBuilderGraph* Que
 	return nullptr;
 }
 
+TArray<UObject*> FQuestBuilderEditorUtils::GetSelectionForPropertyEditor(const TSet<UObject*>& InSelection)
+{
+	TArray<UObject*> Selection;
+
+	for (UObject* SelectionEntry : InSelection)
+	{
+		UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(SelectionEntry);
+		if (QuestEdNode)
+		{
+			Selection.Add(QuestEdNode->NodeInstance);
+			continue;
+		}
+	}
+
+	return Selection;
+}
+
 
 #undef LOCTEXT_NAMESPACE

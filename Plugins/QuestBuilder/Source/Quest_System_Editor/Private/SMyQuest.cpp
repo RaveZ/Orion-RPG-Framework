@@ -703,7 +703,7 @@ void SMyQuest::OnDeleteGraph(UEdGraph* InGraph)
 		const bool bDontRecompile = true;
 		for (UQuestBuilderEdNode* CompNode : AllNodes)
 		{
-			if (CompNode->GetQuestSystemGraphEdGraph() == InGraph)
+			if (CompNode->GetQuestBuilderEdGraph() == InGraph)
 			{
 				FQuestBuilderEditorUtils::RemoveNode(GetQuestBuilderGraph(), CompNode, bDontRecompile);
 			}

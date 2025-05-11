@@ -75,21 +75,21 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 	CacheNodeIDMap();
 	for (int i = 0; i < Nodes.Num(); ++i)
 	{
-		if (UQuestBuilderEdNode* EdNode = Cast<UQuestBuilderEdNode>(Nodes[i]))
+		if (UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(Nodes[i]))
 		{
-			if (EdNode->QuestBuilderNode == nullptr)
+			if (QuestEdNode->NodeInstance == nullptr)
 				continue;
 
-			UQuestBuilderNode* QuestBuilderNode = EdNode->QuestBuilderNode;
+			UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
 
-			NodeMap.Add(QuestBuilderNode, EdNode);
+			NodeMap.Add(QuestNode, QuestEdNode);
 
-			Quest->AllNodes.Add(QuestBuilderNode);
-			Quest->NodeMap.Emplace(QuestBuilderNode->ID, QuestBuilderNode);
+			Quest->AllNodes.Add(QuestNode);
+			Quest->NodeMap.Emplace(QuestNode->ID, QuestNode);
 
-			for (int PinIdx = 0; PinIdx < EdNode->Pins.Num(); ++PinIdx)
+			for (int PinIdx = 0; PinIdx < QuestEdNode->Pins.Num(); ++PinIdx)
 			{
-				UEdGraphPin* Pin = EdNode->Pins[PinIdx];
+				UEdGraphPin* Pin = QuestEdNode->Pins[PinIdx];
 
 				if (Pin->Direction != EEdGraphPinDirection::EGPD_Output)
 					continue;
@@ -99,27 +99,27 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 					UQuestBuilderNode* ChildNode = nullptr;
 					if (UQuestBuilderEdNode* EdNode_Child = Cast<UQuestBuilderEdNode>(Pin->LinkedTo[LinkToIdx]->GetOwningNode()))
 					{
-						ChildNode = EdNode_Child->QuestBuilderNode;
+						ChildNode = EdNode_Child ? Cast<UQuestBuilderNode>(EdNode_Child->NodeInstance) : nullptr;
 					}
 					else if (UQuestBuilderEdNode_Edge* EdNode_Edge = Cast<UQuestBuilderEdNode_Edge>(Pin->LinkedTo[LinkToIdx]->GetOwningNode()))
 					{
 						UQuestBuilderEdNode* Child = EdNode_Edge->GetEndNode();
 						if (Child != nullptr)
 						{
-							ChildNode = Child->QuestBuilderNode;
+							ChildNode = Child ? Cast<UQuestBuilderNode>(Child->NodeInstance) : nullptr;
 						}
 					}
 
 					if (ChildNode != nullptr)
 					{
-						QuestBuilderNode->ChildrenNodes.Add(ChildNode);
+						QuestNode->ChildrenNodes.Add(ChildNode);
 
-						ChildNode->ParentNodes.Add(QuestBuilderNode);
+						ChildNode->ParentNodes.Add(QuestNode);
 					}
 				}
 			}
 
-			if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestBuilderNode))
+			if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestNode))
 			{
 				for (UQuestTask* Task : ObjectiveNode->Tasks)
 				{
@@ -132,21 +132,21 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 				}
 			}
 
-			for (UOrionDecorator* QuestCondition : QuestBuilderNode->Conditions)
+			for (UOrionDecorator* QuestCondition : QuestNode->Conditions)
 			{
 				if (QuestCondition != nullptr)
 				{
-					QuestCondition->OwningNode = QuestBuilderNode;
+					QuestCondition->OwningNode = QuestNode;
 					QuestCondition->QuestGraph = Graph;
 					QuestCondition->Quest = Quest;
 				}
 			}
 			
-			for (UOrionEvent* QuestEvent : QuestBuilderNode->Events)
+			for (UOrionEvent* QuestEvent : QuestNode->Events)
 			{
 				if (QuestEvent != nullptr)
 				{
-					QuestEvent->OwningNode = QuestBuilderNode;
+					QuestEvent->OwningNode = QuestNode;
 					QuestEvent->QuestGraph = Graph;
 					QuestEvent->Quest = Quest;
 				}
@@ -168,16 +168,16 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 
 			Edge->Graph = Graph;
 			Edge->Rename(nullptr, Graph, REN_DontCreateRedirectors | REN_DoNotDirty);
-			Edge->StartNode = StartNode->QuestBuilderNode;
-			Edge->EndNode = EndNode->QuestBuilderNode;
+			Edge->StartNode = StartNode ? Cast<UQuestBuilderNode>(StartNode->NodeInstance) : nullptr; 
+			Edge->EndNode = EndNode ? Cast<UQuestBuilderNode>(EndNode->NodeInstance) : nullptr;
 			Edge->StartNode->Edges.Add(Edge->EndNode, Edge);
 		}
 
 		if (UQuestBuilderEdNode_Root* RootNode = Cast<UQuestBuilderEdNode_Root>(Nodes[i]))
 		{
-			if (RootNode->QuestBuilderNode == nullptr)
+			if (RootNode->NodeInstance == nullptr)
 				continue;
-			Quest->RootNodes.Add(RootNode->QuestBuilderNode);
+			Quest->RootNodes.Add(Cast<UQuestBuilderNode>(RootNode->NodeInstance));
 		}
 
 	}
@@ -222,7 +222,7 @@ void UQuestBuilderEdGraph::SortAllChildrenNodes(bool bForce)
 			TimerHandle,
 			FTimerDelegate::CreateLambda([this]()
 				{
-					//sort children nodes based on the PosY of EdNode
+					//sort children nodes based on the PosY of QuestEdNode
 					for (auto& Node : Quest->AllNodes)
 					{
 						Node->ChildrenNodes.Sort([&](const UQuestBuilderNode& B, const UQuestBuilderNode& T)
@@ -252,13 +252,13 @@ void UQuestBuilderEdGraph::CacheNodeIDMap()
 	NodeIDMap.Reset();
 	for (int i = 0; i < Nodes.Num(); ++i)
 	{
-		if (UQuestBuilderEdNode* EdNode = Cast<UQuestBuilderEdNode>(Nodes[i]))
+		if (UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(Nodes[i]))
 		{
-			if (EdNode->QuestBuilderNode == nullptr)
+			if (QuestEdNode->NodeInstance == nullptr)
 				continue;
 
-			UQuestBuilderNode* QuestBuilderNode = EdNode->QuestBuilderNode;
-			NodeIDMap.Emplace(QuestBuilderNode->ID, QuestBuilderNode);
+			UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+			NodeIDMap.Emplace(QuestNode->ID, QuestNode);
 
 		}
 	}
@@ -311,14 +311,14 @@ void UQuestBuilderEdGraph::Clear()
 
 	for (int i = 0; i < Nodes.Num(); ++i)
 	{
-		if (UQuestBuilderEdNode* EdNode = Cast<UQuestBuilderEdNode>(Nodes[i]))
+		if (UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(Nodes[i]))
 		{
-			UQuestBuilderNode* QuestGraphNode = EdNode->QuestBuilderNode;
-			if (QuestGraphNode)
+			UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+			if (QuestNode)
 			{
-				QuestGraphNode->ParentNodes.Reset();
-				QuestGraphNode->ChildrenNodes.Reset();
-				QuestGraphNode->Edges.Reset();
+				QuestNode->ParentNodes.Reset();
+				QuestNode->ChildrenNodes.Reset();
+				QuestNode->Edges.Reset();
 			}
 		}
 	}

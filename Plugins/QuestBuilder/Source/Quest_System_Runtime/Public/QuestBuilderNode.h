@@ -30,10 +30,10 @@ public:
 	UQuestBuilderNode();
 	virtual ~UQuestBuilderNode();
 
-	UPROPERTY(VisibleDefaultsOnly, BlueprintReadOnly, Category = "Detail")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Detail")
 		FName ID;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Detail", meta = (MultiLine = true))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (MultiLine = true))
 		FText Description;
 	
 	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Events")
@@ -57,7 +57,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode")
 		TMap<TObjectPtr<UQuestBuilderNode>, TObjectPtr<UQuestBuilderEdge>> Edges;
 
-
 	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
 		virtual UQuestBuilderEdge* GetEdge(UQuestBuilderNode* ChildNode);
 
@@ -65,6 +64,9 @@ public:
 		bool IsLeafNode() const;
 
 	virtual void Initialize();
+
+	/** initialize any asset related data */
+	virtual void InitializeFromAsset(UQuestBuilderGraph& Asset);
 
 
 	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")

@@ -4,6 +4,10 @@
 #include "QuestBuilderEdNode.h"
 #include "QuestBuilderSetting.h"
 #include "QuestBuilderNode.h"
+#include "QuestBuilderNode_Root.h"
+#include "QuestBuilderNode_Objective.h"
+#include "QuestBuilderNode_State.h"
+#include "QuestBuilderEditorUtils.h"
 
 UQuestBuilderEdNode::UQuestBuilderEdNode()
 {
@@ -15,12 +19,8 @@ UQuestBuilderEdNode::~UQuestBuilderEdNode()
 {
 }
 
-void UQuestBuilderEdNode::SetQuestSystemGraphNode(UQuestBuilderNode* InNode)
-{
-	QuestBuilderNode = InNode;
-}
 
-UQuestBuilderEdGraph* UQuestBuilderEdNode::GetQuestSystemGraphEdGraph()
+UQuestBuilderEdGraph* UQuestBuilderEdNode::GetQuestBuilderEdGraph()
 {
 	return Cast<UQuestBuilderEdGraph>(GetGraph());
 }
@@ -35,19 +35,73 @@ void UQuestBuilderEdNode::AllocateDefaultPins()
 
 FText UQuestBuilderEdNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	if (QuestBuilderNode == nullptr)
+	if (NodeInstance == nullptr)
 	{
 		return Super::GetNodeTitle(TitleType);
 	}
 	else
 	{
-		return QuestBuilderNode->GetNodeTitle();
+		const UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
+		return QuestNode->GetNodeTitle();
 	}
 }
 
 bool UQuestBuilderEdNode::CanDuplicateNode() const
 {
 	return bIsReadOnly ? false : Super::CanDuplicateNode();
+}
+
+void UQuestBuilderEdNode::PostPlacedNewNode()
+{
+	// NodeInstance can be already spawned by paste operation, don't override it
+
+	UClass* NodeClass = ClassData.GetClass(true);
+	if (NodeClass)
+	{
+		UEdGraph* MyGraph = GetGraph();
+		UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(GetGraph());
+		UObject* GraphOwner = MyGraph ? MyGraph->GetOuter() : nullptr;
+		if (GraphOwner)
+		{
+			if (NodeInstance == nullptr)
+			{
+				NodeInstance = NewObject<UObject>(GraphOwner, NodeClass);
+				NodeInstance->SetFlags(RF_Transactional);
+			}
+			InitializeInstance();
+
+			if (NodeInstance)
+			{
+				if (UQuestBuilderNode_Objective* ObjectiveQuestNode = Cast<UQuestBuilderNode_Objective>(NodeInstance))
+				{
+					ObjectiveQuestNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName("ObjectiveNode");
+				}
+				if (UQuestBuilderNode_Root* RootQuestNode = Cast<UQuestBuilderNode_Root>(NodeInstance))
+				{
+					RootQuestNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName("RootNode");
+				}
+				if (UQuestBuilderNode_State* StateQuestNode = Cast<UQuestBuilderNode_State>(NodeInstance))
+				{
+					StateQuestNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName("StateNode");
+				}
+			}
+			UQuestBuilderNode* QuestNode = NodeInstance ?  Cast<UQuestBuilderNode>(NodeInstance) : nullptr;
+			if (QuestNode)
+			{
+				QuestEdGraph->AddToNodeIDMap(QuestNode->ID, QuestNode);
+			}
+		}
+	}
+}
+
+void UQuestBuilderEdNode::InitializeInstance()
+{
+	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
+	UQuestBuilderGraph* QuestAsset = QuestNode ? Cast<UQuestBuilderGraph>(QuestNode->GetOuter()) : nullptr;
+	if (QuestNode && QuestAsset)
+	{
+		QuestNode->InitializeFromAsset(*QuestAsset);
+	}
 }
 
 bool UQuestBuilderEdNode::CanUserDeleteNode() const
@@ -57,7 +111,12 @@ bool UQuestBuilderEdNode::CanUserDeleteNode() const
 
 void UQuestBuilderEdNode::PrepareForCopying()
 {
-	QuestBuilderNode->Rename(nullptr, this, REN_DontCreateRedirectors | REN_DoNotDirty);
+	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
+	if (QuestNode)
+	{
+		QuestNode->Rename(nullptr, this, REN_DontCreateRedirectors | REN_DoNotDirty);
+
+	}
 }
 
 void UQuestBuilderEdNode::AutowireNewNode(UEdGraphPin* FromPin)
@@ -74,17 +133,32 @@ void UQuestBuilderEdNode::AutowireNewNode(UEdGraphPin* FromPin)
 
 FText UQuestBuilderEdNode::GetDescription() const
 {
-	return QuestBuilderNode->GetNodeDescription();
+	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
+	if (QuestNode)
+	{
+		return QuestNode->GetNodeDescription();
+	}
+	return FText::GetEmpty();
 }
 
 FText UQuestBuilderEdNode::GetEventsText() const
 {
-	return QuestBuilderNode->GetEventsText();
+	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
+	if (QuestNode)
+	{
+		return QuestNode->GetEventsText();
+	}
+	return FText::GetEmpty();
 }
 
 FText UQuestBuilderEdNode::GetConditionsText() const
 {
-	return QuestBuilderNode->GetConditionsText();
+	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
+	if (QuestNode)
+	{
+		return QuestNode->GetConditionsText();
+	}
+	return FText::GetEmpty();
 }
 
 FLinearColor UQuestBuilderEdNode::GetBackgroundColor() const
@@ -124,9 +198,16 @@ void UQuestBuilderEdNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeC
 {
 }
 
+
+
 bool UQuestBuilderEdNode::UsesBlueprint() const
 {
-	return QuestBuilderNode && QuestBuilderNode->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint);
+	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
+	if (QuestNode)
+	{
+		return QuestNode && QuestNode->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint);
+	}
+	return false;
 }
 
 #if WITH_EDITOR

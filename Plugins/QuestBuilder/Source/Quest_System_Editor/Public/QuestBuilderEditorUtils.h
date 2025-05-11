@@ -71,4 +71,7 @@ public:
 
 	/** Returns the event graph, if any */
 	static UEdGraph* FindQuestGraph(const UQuestBuilderGraph* QuestBuilderGraph);
+
+	/** Given a selection of nodes, return the instances that should be selected be selected for editing in the property panel */
+	static TArray<UObject*> GetSelectionForPropertyEditor(const TSet<UObject*>& InSelection);
 };
