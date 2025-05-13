@@ -20,6 +20,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "QuestCondition")
 		TObjectPtr<UQuestBuilderNode> OwningNode;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent")
+		bool InvertCondition = false;
+
 	/**Display quest ID in property panel?*/
 	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
 		bool bUseQuestID = false;

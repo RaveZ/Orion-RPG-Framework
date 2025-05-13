@@ -474,7 +474,8 @@ void UQuestComponent::EvaluateNextNodeCondition(UQuest* QuestParam)
 			int SumConditionMet = 0;
 			for (auto& Condition : Node->Conditions)
 			{
-				if (Condition && Condition->IsConditionMet())
+				bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->IsConditionMet() : Condition->IsConditionMet();
+				if (bConditionMet)
 				{
 					SumConditionMet++;
 				}
@@ -490,25 +491,11 @@ void UQuestComponent::EvaluateNextNodeCondition(UQuest* QuestParam)
 
 	if (NextNode)
 	{
-		//End of a Node, Launch Event with the End and Both Type
-		for (auto& Event : QuestParam->CurrentNode->Events)
-		{
-			if (Event)
-			{
-				if (Event->EventRunType == EEventRunType::E_Both || Event->EventRunType == EEventRunType::E_End)
-				{
-					if (!Event->EndLaunched)
-					{
-						Event->BeginEvent();
-						Event->EndLaunched = true;
-					}
-				}
-			}
-			
-		}
+		QuestParam->CurrentNode->BeginEvents(EEventRunType::E_End);
+		NextNode->BeginEvents(EEventRunType::E_Start);
+
 		//Go to next node if exist or condition met
 		GoToNextNode(QuestParam, NextNode);
-
 	}
 	
 }
@@ -521,7 +508,8 @@ void UQuestComponent::EvaluateQuestCondition(UQuest* QuestParam)
 	int SumConditionMet = 0;
 	for (auto& Condition : QuestParam->Conditions)
 	{
-		if (Condition && Condition->IsConditionMet())
+		bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->IsConditionMet() : Condition->IsConditionMet();
+		if (bConditionMet)
 		{
 			SumConditionMet++;
 		}
@@ -577,22 +565,6 @@ void UQuestComponent::BeginNode(UQuest* QuestParam)
    {
 	   EvaluateNextNodeCondition(QuestParam);
 	   return;
-   }
-
-   //Start of the Node, Launch Event with the Start and Both Type
-   for (auto& Event : QuestParam->CurrentNode->Events)
-   {
-	   if (Event)
-	   {
-		   if (Event->EventRunType == EEventRunType::E_Both || Event->EventRunType == EEventRunType::E_Start)
-		   {
-			   if (!Event->StartLaunched)
-			   {
-				   Event->BeginEvent();
-				   Event->StartLaunched = true;
-			   }
-		   }
-	   }
    }
 
    //InitializeNode

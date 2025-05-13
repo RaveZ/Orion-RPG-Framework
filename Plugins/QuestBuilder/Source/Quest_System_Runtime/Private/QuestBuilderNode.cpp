@@ -35,6 +35,21 @@ FText UQuestBuilderNode::GetDescription_Implementation() const
 	return Description;
 }
 
+void UQuestBuilderNode::BeginEvents(EEventRunType EventRunType)
+{
+	//End of a Node, Launch Event with the EventRunType param and Both Type
+	for (auto& Event : Events)
+	{
+		if (Event)
+		{
+			if (Event->EventRunType == EEventRunType::E_Both || Event->EventRunType == EventRunType)
+			{
+				Event->BeginEvent();
+			}
+		}
+	}
+}
+
 
 FString UQuestBuilderNode::GetShortTypeName(const UObject* Ob)
 {

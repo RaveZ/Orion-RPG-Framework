@@ -33,4 +33,7 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor ObjectiveNodeColor;
 
+	UPROPERTY(BlueprintReadOnly, config, Category = "Graph Rule")
+	bool bEdgeEnabled;
+
 };

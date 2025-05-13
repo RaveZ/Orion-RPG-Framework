@@ -11,7 +11,6 @@
 
 UQuestBuilderGraph::UQuestBuilderGraph()
 {
-	bEdgeEnabled = false;
 #if WITH_EDITORONLY_DATA
 
 	bCanRenameNode = true;

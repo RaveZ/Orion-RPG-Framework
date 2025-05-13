@@ -10,6 +10,7 @@ UQuestBuilderSetting::UQuestBuilderSetting()
 	SuccessNodeColor = FLinearColor(0.20f, 0.32f, 0.15f);
 	ObjectiveNodeColor = FLinearColor(0.05f, 0.05f, 0.05f);
 	RootNodeColor = FLinearColor(0.05f, 0.05f, 0.05f);
+	bEdgeEnabled = false;
 }
 
 UQuestBuilderSetting::~UQuestBuilderSetting()

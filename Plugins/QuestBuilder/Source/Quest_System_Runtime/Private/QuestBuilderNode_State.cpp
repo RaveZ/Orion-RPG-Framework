@@ -26,21 +26,7 @@ void UQuestBuilderNode_State::BeginState()
         break;
     }
 
-    //End of a Node, Launch Event with the End and Both Type
-    for (UOrionEvent* Event : Quest->CurrentNode->Events)
-    {
-        if (Event)
-        {
-            if (Event->EventRunType == EEventRunType::E_Both || Event->EventRunType == EEventRunType::E_End)
-            {
-                if (!Event->EndLaunched)
-                {
-                    Event->BeginEvent();
-                    Event->EndLaunched = true;
-                }
-            }
-        }
-    }
+	BeginEvents(EEventRunType::E_End);
 
     GetQuestComponent()->UpdateQuest();
 

@@ -4,6 +4,7 @@
 #include "EdGraphSchema_QuestBuilder.h"
 #include "ToolMenus.h"
 #include "Quest_System_Editor.h"
+#include "QuestBuilderSetting.h"
 #include "AIGraphTypes.h"
 #include "QuestBuilder_ConnectionDrawingPolicy.h"
 #include "Framework/Commands/GenericCommands.h"
@@ -433,8 +434,7 @@ const FPinConnectionResponse UEdGraphSchema_QuestBuilder::CanCreateConnection(co
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Invalid Node Connections"));
 	}
 
-	UQuestBuilderNode* QuestNodeOut = EdNode_Out ? Cast<UQuestBuilderNode>(EdNode_Out->NodeInstance) : nullptr;
-	if (QuestNodeOut && QuestNodeOut->GetOwningQuestGraph()->bEdgeEnabled)
+	if (GetDefault<UQuestBuilderSetting>()->bEdgeEnabled)
 	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_MAKE_WITH_CONVERSION_NODE, LOCTEXT("PinConnect", "Connect nodes with edge"));
 	}

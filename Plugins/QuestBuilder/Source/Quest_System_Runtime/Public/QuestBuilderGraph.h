@@ -24,7 +24,7 @@ public:
 	virtual ~UQuestBuilderGraph();
 
 	/**This data will be displayed on the category for your quest log*/
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "QuestBuilderGraph")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "QuestBuilderGraph")
 		FString CategoryDisplayName;
 
 	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly, Category = "QuestBuilderGraph")
@@ -41,8 +41,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
 		TMap<FName, TObjectPtr<UQuestBuilderNode>> NodeIDMap;
 
-	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly, Category = "QuestBuilderGraph")
-		bool bEdgeEnabled;
 
 	UPROPERTY(BlueprintReadWrite, Category = "QuestBuilderGraph")
 		TObjectPtr<AController> OwningController;

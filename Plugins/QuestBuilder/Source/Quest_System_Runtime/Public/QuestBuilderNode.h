@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Event/OrionEvent.h"	
 #include "QuestBuilderNode.generated.h"
 
 class UQuestBuilderGraph;
@@ -11,6 +12,7 @@ class UQuest;
 class UOrionDecorator;
 class UOrionEvent;
 class UQuestBuilderEdge;
+
 
 UENUM(BlueprintType)
 enum class ENodeLimits : uint8
@@ -87,9 +89,9 @@ public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestBuilderNode")
 		FText GetDescription() const;
 
-
 	virtual FText GetDescription_Implementation() const;
 
+	virtual void BeginEvents(enum EEventRunType EventRunType);
 
 	/** returns short name of object's class (BTTaskNode_Wait -> Wait) */
 	static FString GetShortTypeName(const UObject* Ob);
