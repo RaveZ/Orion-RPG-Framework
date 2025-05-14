@@ -73,15 +73,21 @@ bool UQuestComponent::BeginQuest(UQuestBuilderGraph* QuestAsset)
 		return false;
 	}
 
-	CacheQuestGraphDependencies(QuestAsset);
-	EvaluateQuestSaveLoadState(QuestAsset);
-	bool bSuccess = true;
+	bool bSuccess = false;
 
-	for (UQuest* Quest : QuestAsset->QuestList)
+	UQuestBuilderGraph* NewQuestGraph = MakeQuestGraphInstance(QuestAsset);
+	if (NewQuestGraph)
 	{
-		EvaluateQuestCondition(Quest);
-	}
+		CacheQuestGraphDependencies(NewQuestGraph);
+		EvaluateQuestSaveLoadState(NewQuestGraph);
 
+		for (UQuest* Quest : NewQuestGraph->QuestList)
+		{
+			EvaluateQuestCondition(Quest);
+		}
+		bSuccess = true;
+	}
+	
 	return bSuccess;
 }
 
@@ -108,6 +114,7 @@ void UQuestComponent::CacheQuestGraphDependencies(UQuestBuilderGraph* QuestGraph
 		QuestGraph->OwningController = OwningController;
 		QuestGraph->QuestComponent = this;
 		QuestGraph->OwningPawn = GetOwningPawn();
+		
 
 		//Add QuestGraph to array
 		QuestGraphs.Add(QuestGraph);
@@ -121,6 +128,35 @@ void UQuestComponent::CacheQuestGraphDependencies(UQuestBuilderGraph* QuestGraph
 			}
 		}
 	}
+}
+
+UQuestBuilderGraph* UQuestComponent::GetQuestGraphInstance(UQuestBuilderGraph* QuestGraph) const
+{
+	if (QuestGraph == nullptr)
+		return nullptr;
+	
+	for (auto& Inst : QuestGraphs)
+	{
+		if (Inst && Inst->GetClass()->IsChildOf(QuestGraph->GetClass()))
+		{
+			return Inst;
+		}
+	}
+	return nullptr;
+}
+
+class UQuestBuilderGraph* UQuestComponent::MakeQuestGraphInstance(UQuestBuilderGraph* QuestGraphTemplate)
+{
+	if (IsValid(QuestGraphTemplate))
+	{
+		//Duplicate the quest graph
+		UQuestBuilderGraph* NewQuestGraph = Cast<UQuestBuilderGraph>(StaticDuplicateObject(QuestGraphTemplate, this, NAME_None, RF_Transactional));
+		NewQuestGraph->SetFlags(RF_Transient | RF_DuplicateTransient);
+		return NewQuestGraph;
+		
+
+	}
+	return nullptr;
 }
 
 void UQuestComponent::EvaluateQuestSaveLoadState(UQuestBuilderGraph* QuestGraph)

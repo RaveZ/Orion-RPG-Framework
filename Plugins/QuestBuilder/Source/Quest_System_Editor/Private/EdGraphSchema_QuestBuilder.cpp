@@ -288,7 +288,7 @@ void UEdGraphSchema_QuestBuilder::GetGraphContextActions(FGraphContextMenuBuilde
 		{
 			if (NodeClass.GetClass(true)->IsChildOf(UQuestTask::StaticClass()))
 			{
-				ObjectiveNode->Tasks.Add(NewObject<UQuestTask>(AddOpAction->NodeTemplate, NodeClass.GetClass(true)));
+				ObjectiveNode->Tasks.Add(NewObject<UQuestTask>(OpNode->NodeInstance, NodeClass.GetClass(true)));
 			}
 		}
 	}

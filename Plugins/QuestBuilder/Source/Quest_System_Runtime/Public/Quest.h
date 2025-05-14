@@ -89,6 +89,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Quest")
 		TMap<FName, TObjectPtr<UQuestBuilderNode>> NodeMap;
 
+public:
+
+	virtual bool Initialize(class UQuestComponent* InitializingComp, class UQuest* QuestTemplate);
 
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 		int GetLevelNum() const;

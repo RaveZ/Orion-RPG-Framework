@@ -27,9 +27,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "QuestBuilderGraph")
 		FString CategoryDisplayName;
 
-	UPROPERTY(BlueprintReadOnly, BlueprintReadOnly, Category = "QuestBuilderGraph")
-		FGameplayTagContainer GraphTags;
-
 	/** Set of Quest linked with Quest Graph Pages */
 	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
 		TArray< TObjectPtr<UQuest>> QuestList;

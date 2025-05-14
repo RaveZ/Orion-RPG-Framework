@@ -1307,8 +1307,6 @@ void FQuestBuilderEditor::CreateNewTask()
 
 void FQuestBuilderEditor::HandleNewNodeClassPicked(UClass* InClass) const
 {
-	/*UE_CLOG(InClass == nullptr, LogBehaviorTreeEditor, Error, TEXT("Trying to handle new node of NULL class for Behavior Treee %s ")
-		, *GetNameSafe(BehaviorTree));*/
 
 	if (EditingQuestGraph != nullptr && InClass != nullptr && EditingQuestGraph->GetOutermost())
 	{

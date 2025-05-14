@@ -17,6 +17,24 @@ UQuest::UQuest()
 {
 }
 
+bool UQuest::Initialize(UQuestComponent* InitializingComp, UQuest* QuestTemplate)
+{
+	if (!HasAnyFlags(RF_ClassDefaultObject))
+	{
+		//We need a valid narrative component to make a quest for 
+		if (!InitializingComp)
+		{
+			return false;
+		}
+
+		if (QuestTemplate)
+		{
+			
+		}
+	}
+	return false;
+}
+
 int UQuest::GetLevelNum() const
 {
 	int Level = 0;

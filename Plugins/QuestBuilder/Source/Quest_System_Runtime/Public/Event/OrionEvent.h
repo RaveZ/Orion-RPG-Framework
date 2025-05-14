@@ -23,7 +23,7 @@ enum class EEventRunType : uint8
 	E_Both			UMETA(DisplayName = "BOTH"),
 };
 
-UCLASS(Abstract, Blueprintable, EditInlineNew, HideDropdown)
+UCLASS(Abstract, Blueprintable, EditInlineNew, HideDropdown, AutoExpandCategories = ("Default"))
 class QUEST_SYSTEM_RUNTIME_API UOrionEvent : public UObject
 {
 	GENERATED_BODY()

@@ -134,6 +134,12 @@ public:
 	UFUNCTION()
 		void CacheQuestGraphDependencies(UQuestBuilderGraph* QuestGraph);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestComponent")
+		class UQuestBuilderGraph* GetQuestGraphInstance(class UQuestBuilderGraph* QuestGraph) const;
+
+	UFUNCTION()
+		virtual class UQuestBuilderGraph* MakeQuestGraphInstance(UQuestBuilderGraph* QuestGraphTemplate);
+
 	UFUNCTION()
 		void EvaluateQuestSaveLoadState(UQuestBuilderGraph* QuestGraph);
 
@@ -164,6 +170,8 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		UQuest* FindQuest(FName QuestIDParam) const;
+
+
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		bool IsQuestActiveFromNodeID(FName NodeID) const;

@@ -22,7 +22,7 @@ enum class ETaskState : uint8
 	E_Active		UMETA(DisplayName = "ACTIVE"),
 	E_Complete		UMETA(DisplayName = "COMPLETE"),
 };
-UCLASS(Abstract, Blueprintable, EditInlineNew, HideDropdown, HideCategories = ("Hidden"))
+UCLASS(Abstract, Blueprintable, EditInlineNew, AutoExpandCategories = ("Default"))
 class QUEST_SYSTEM_RUNTIME_API UQuestTask : public UObject
 {
 	GENERATED_BODY()
