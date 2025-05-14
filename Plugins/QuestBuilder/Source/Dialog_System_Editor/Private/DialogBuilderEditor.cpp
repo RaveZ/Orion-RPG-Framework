@@ -1,8 +1,8 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
 #include "DialogBuilderEditor.h"
-#include "QuestBuilderNode_Root.h"
+#include "DialogBuilderNode_Root.h"
 #include "Decorator/OrionDecorator.h"
 #include "EngineGlobals.h"
 #include "Editor/EditorEngine.h"
@@ -28,7 +28,7 @@
 #include "DialogBuilderFactory.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "SMyDialog.h"
-#include "Task/QuestTask.h"
+
 #include "Dialog_System_Editor.h"
 #include "ContentBrowserModule.h"
 #include "ContentBrowserFrontEndFilterExtension.h"
@@ -39,19 +39,19 @@
 #include "Widgets/Notifications/SNotificationList.h"
 #include <Kismet2/KismetEditorUtilities.h>
 
-#define LOCTEXT_NAMESPACE "QuestBuilderEditor"
+#define LOCTEXT_NAMESPACE "DialogBuilderEditor"
 
-const FName FDialogBuilderEditorTabs::MyQuestDetailID(TEXT("MyQuestDetail"));
-const FName FDialogBuilderEditorTabs::QuestBuilderPropertyID(TEXT("QuestBuilderProperty"));
+const FName FDialogBuilderEditorTabs::MyDialogDetailID(TEXT("MyDialogDetail"));
+const FName FDialogBuilderEditorTabs::DialogBuilderPropertyID(TEXT("DialogBuilderProperty"));
 const FName FDialogBuilderEditorTabs::ViewportID(TEXT("Viewport"));
-const FName FDialogBuilderEditorTabs::QuestBuilderEditorSettingsID(TEXT("QuestBuilderEditorSettings"));
+const FName FDialogBuilderEditorTabs::DialogBuilderEditorSettingsID(TEXT("DialogBuilderEditorSettings"));
 
-const FName QuestBuilderEditorAppName = FName(TEXT("QuestBuilderEditorApp"));
+const FName DialogBuilderEditorAppName = FName(TEXT("DialogBuilderEditorApp"));
 
 //////////////////////////////////////////////////////////////////////////
 FDialogBuilderEditor::FDialogBuilderEditor()
 {
-	EditingQuestGraph = nullptr;
+	EditingDialogGraph = nullptr;
 
 #if ENGINE_MAJOR_VERSION < 5
 	OnPackageSavedDelegateHandle = UPackage::PackageSavedEvent.AddRaw(this, &FDialogBuilderEditor::OnPackageSaved);
@@ -71,15 +71,15 @@ FDialogBuilderEditor::~FDialogBuilderEditor()
 
 void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UObject* InObject)
 {
-	UQuestBuilderGraph* QuestGraphToEdit = Cast<UQuestBuilderGraph>(InObject);
+	UDialogBuilderGraph* DialogGraphToEdit = Cast<UDialogBuilderGraph>(InObject);
 
-	if (QuestGraphToEdit != nullptr)
+	if (DialogGraphToEdit != nullptr)
 	{
-		EditingQuestGraph = QuestGraphToEdit;
+		EditingDialogGraph = DialogGraphToEdit;
 	}
 
 	//Binding Functionality
-	EditingQuestGraph->GetOutermost()->PackageMarkedDirtyEvent.AddRaw(this, &FDialogBuilderEditor::OnPackageMarkedDirty);
+	EditingDialogGraph->GetOutermost()->PackageMarkedDirtyEvent.AddRaw(this, &FDialogBuilderEditor::OnPackageMarkedDirty);
 
 	TSharedPtr<FDialogBuilderEditor> ThisPtr(SharedThis(this));
 	if (!DocumentManager.IsValid())
@@ -94,15 +94,15 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 			));
 
 			// Also store off a reference to the grapheditor factory so we can find all the tabs spawned by it later.
-			QuestEditorTabFactoryPtr = GraphEditorFactory;
+			DialogEditorTabFactoryPtr = GraphEditorFactory;
 			DocumentManager->RegisterDocumentFactory(GraphEditorFactory);
 		}
 	}
 
 	TArray<UObject*> ObjectsToEdit;
-	if (EditingQuestGraph != nullptr)
+	if (EditingDialogGraph != nullptr)
 	{
-		ObjectsToEdit.Add(EditingQuestGraph);
+		ObjectsToEdit.Add(EditingDialogGraph);
 	}
 
 	//Make Toolbar
@@ -123,13 +123,13 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 
 		TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
 
-		ToolbarBuilder->AddQuestSystemToolbar(ToolbarExtender);
+		ToolbarBuilder->AddDialogSystemToolbar(ToolbarExtender);
 
 		BindCommands();
 		CreateInternalWidgets();
 
 		// Layout
-		const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("Standalone_QuestBuilderEditor_Layout_v1")
+		const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("Standalone_DialogBuilderEditor_Layout_v1")
 			->AddArea
 			(
 				FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
@@ -148,7 +148,7 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 					(
 						FTabManager::NewStack()
 						->SetSizeCoefficient(0.2f)
-						->AddTab(FDialogBuilderEditorTabs::MyQuestDetailID, ETabState::OpenedTab)
+						->AddTab(FDialogBuilderEditorTabs::MyDialogDetailID, ETabState::OpenedTab)
 					)
 					->Split
 					(
@@ -163,7 +163,7 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 						(
 							FTabManager::NewStack()
 							->SetSizeCoefficient(0.55f)
-							->AddTab(FDialogBuilderEditorTabs::QuestBuilderPropertyID, ETabState::OpenedTab)
+							->AddTab(FDialogBuilderEditorTabs::DialogBuilderPropertyID, ETabState::OpenedTab)
 						)
 					)
 				)
@@ -171,29 +171,29 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 
 		const bool bCreateDefaultStandaloneMenu = true;
 		const bool bCreateDefaultToolbar = true;
-		InitAssetEditor(Mode, InitToolkitHost, QuestBuilderEditorAppName, StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, EditingQuestGraph, false);
+		InitAssetEditor(Mode, InitToolkitHost, DialogBuilderEditorAppName, StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, EditingDialogGraph, false);
 
 
-		if (EditingQuestGraph && EditingQuestGraph->bIsNewlyCreated)
+		if (EditingDialogGraph && EditingDialogGraph->bIsNewlyCreated)
 		{
-			NewDocument_OnClicked(CGT_NewQuestGraph);
-			EditingQuestGraph->bIsNewlyCreated = false;
-			EditingQuestGraph->Modify();
+			NewDocument_OnClicked(CGT_NewDialogGraph);
+			EditingDialogGraph->bIsNewlyCreated = false;
+			EditingDialogGraph->Modify();
 		}
 		else
 		{
-			if (GetQuestBuilderGraph()->QuestGraphPages.Num() > 0)
+			if (GetDialogBuilderGraph()->DialogGraphPages.Num() > 0)
 			{
-				OpenDocument(GetQuestBuilderGraph()->QuestGraphPages[0], FDocumentTracker::OpenNewDocument);
+				OpenDocument(GetDialogBuilderGraph()->DialogGraphPages[0], FDocumentTracker::OpenNewDocument);
 				
 				//bind on graph changes
-				for (UEdGraph* EdGraph : EditingQuestGraph->QuestGraphPages)
+				for (UEdGraph* EdGraph : EditingDialogGraph->DialogGraphPages)
 				{
 					if (EdGraph)
 					{
-						if (UDialogBuilderEdGraph* QuestGraph = Cast<UDialogBuilderEdGraph>(EdGraph))
+						if (UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(EdGraph))
 						{
-							QuestGraph->AddOnGraphChangedHandler(FOnGraphChanged::FDelegate::CreateSP(this, &FDialogBuilderEditor::OnGraphChanged));
+							DialogGraph->AddOnGraphChangedHandler(FOnGraphChanged::FDelegate::CreateSP(this, &FDialogBuilderEditor::OnGraphChanged));
 						}
 					}
 				}
@@ -213,7 +213,7 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 
 
 	RegenerateMenusAndToolbars();
-	RebuildQuestBuilderGraphPages();
+	RebuildDialogBuilderGraphPages();
 }
 
 
@@ -221,12 +221,12 @@ void FDialogBuilderEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 {
 	DocumentManager->SetTabManager(InTabManager);
 
-	WorkspaceMenuCategory = InTabManager->AddLocalWorkspaceMenuCategory(LOCTEXT("WorkspaceMenu_QuestBuilderEditor", "Generic Graph Editor"));
+	WorkspaceMenuCategory = InTabManager->AddLocalWorkspaceMenuCategory(LOCTEXT("WorkspaceMenu_DialogBuilderEditor", "Generic Graph Editor"));
 	auto WorkspaceMenuCategoryRef = WorkspaceMenuCategory.ToSharedRef();
 
 	FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
 
-	InTabManager->RegisterTabSpawner(FDialogBuilderEditorTabs::MyQuestDetailID, FOnSpawnTab::CreateSP(this, &FDialogBuilderEditor::SpawnTab_MyQuest))
+	InTabManager->RegisterTabSpawner(FDialogBuilderEditorTabs::MyDialogDetailID, FOnSpawnTab::CreateSP(this, &FDialogBuilderEditor::SpawnTab_MyDialog))
 		.SetDisplayName(LOCTEXT("Dialog Details", "My Dialog"))
 		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
@@ -236,7 +236,7 @@ void FDialogBuilderEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.EventGraph_16x"));
 
-	InTabManager->RegisterTabSpawner(FDialogBuilderEditorTabs::QuestBuilderPropertyID, FOnSpawnTab::CreateSP(this, &FDialogBuilderEditor::SpawnTab_Details))
+	InTabManager->RegisterTabSpawner(FDialogBuilderEditorTabs::DialogBuilderPropertyID, FOnSpawnTab::CreateSP(this, &FDialogBuilderEditor::SpawnTab_Details))
 		.SetDisplayName(LOCTEXT("DetailsTab", "Property"))
 		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
@@ -246,10 +246,10 @@ void FDialogBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& 
 {
 	FAssetEditorToolkit::UnregisterTabSpawners(InTabManager);
 
-	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::MyQuestDetailID);
+	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::MyDialogDetailID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::ViewportID);
-	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::QuestBuilderPropertyID);
-	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::QuestBuilderEditorSettingsID);
+	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogBuilderPropertyID);
+	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogBuilderEditorSettingsID);
 }
 
 
@@ -265,26 +265,26 @@ void FDialogBuilderEditor::BindCommands()
 		FIsActionButtonVisible::CreateSP(this, &FDialogBuilderEditor::IsNewTaskButtonVisible)
 	);
 
-	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().NewQuestCondition,
-		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::CreateNewQuestCondition),
-		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanCreateQuestCondition)
+	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().NewDialogCondition,
+		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::CreateNewDialogCondition),
+		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanCreateDialogCondition)
 	);
 
-	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().NewQuestEvent,
-		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::CreateNewQuestEvent),
-		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanCreateQuestEvent)
+	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().NewDialogEvent,
+		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::CreateNewDialogEvent),
+		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanCreateDialogEvent)
 	); 
 	
-	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().QuestSetting,
-		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::OpenQuestSetting),
-		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanOpenQuestSetting)
+	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().DialogSetting,
+		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::OpenDialogSetting),
+		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanOpenDialogSetting)
 	);
 	
-	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().AddNewQuestGraph,
-		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::NewDocument_OnClicked, CGT_NewQuestGraph),
+	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().AddNewDialogGraph,
+		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::NewDocument_OnClicked, CGT_NewDialogGraph),
 		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::InEditingMode),
 		FIsActionChecked(),
-		FIsActionButtonVisible::CreateSP(this, &FDialogBuilderEditor::NewDocument_IsVisibleForType, CGT_NewQuestGraph)
+		FIsActionButtonVisible::CreateSP(this, &FDialogBuilderEditor::NewDocument_IsVisibleForType, CGT_NewDialogGraph)
 	);
 
 }
@@ -300,28 +300,28 @@ void FDialogBuilderEditor::CreateCommandList()
 	// however it should be safe, since commands are being used only within this editor
 	// if it ever crashes, this function will have to go away and be reimplemented in each derived class
 
-	GraphEditorCommands->MapAction(FDialogBuilder_EditorCommands::Get().AddNewQuestGraph,
-		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::NewDocument_OnClicked, CGT_NewQuestGraph),
+	GraphEditorCommands->MapAction(FDialogBuilder_EditorCommands::Get().AddNewDialogGraph,
+		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::NewDocument_OnClicked, CGT_NewDialogGraph),
 		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::InEditingMode),
 		FIsActionChecked(),
-		FIsActionButtonVisible::CreateSP(this, &FDialogBuilderEditor::NewDocument_IsVisibleForType, CGT_NewQuestGraph)
+		FIsActionButtonVisible::CreateSP(this, &FDialogBuilderEditor::NewDocument_IsVisibleForType, CGT_NewDialogGraph)
 	);
 
 	GraphEditorCommands->MapAction(FDialogBuilder_EditorCommands::Get().NewTask,
 		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CreateNewTask),
 		FCanExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CanCreateNewTask));
 
-	GraphEditorCommands->MapAction(FDialogBuilder_EditorCommands::Get().NewQuestCondition,
-		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CreateNewQuestEvent),
-		FCanExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CanCreateQuestEvent));
+	GraphEditorCommands->MapAction(FDialogBuilder_EditorCommands::Get().NewDialogCondition,
+		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CreateNewDialogEvent),
+		FCanExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CanCreateDialogEvent));
 	
-	GraphEditorCommands->MapAction(FDialogBuilder_EditorCommands::Get().NewQuestEvent,
-		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CreateNewQuestCondition),
-		FCanExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CanCreateQuestCondition));
+	GraphEditorCommands->MapAction(FDialogBuilder_EditorCommands::Get().NewDialogEvent,
+		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CreateNewDialogCondition),
+		FCanExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CanCreateDialogCondition));
 
-	GraphEditorCommands->MapAction(FDialogBuilder_EditorCommands::Get().QuestSetting,
-		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::OpenQuestSetting),
-		FCanExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CanOpenQuestSetting));
+	GraphEditorCommands->MapAction(FDialogBuilder_EditorCommands::Get().DialogSetting,
+		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::OpenDialogSetting),
+		FCanExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CanOpenDialogSetting));
 
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().SelectAll,
@@ -379,28 +379,28 @@ FGraphPanelSelectionSet FDialogBuilderEditor::GetSelectedNodes() const
 
 FName FDialogBuilderEditor::GetToolkitFName() const
 {
-	return FName("FQuestGraphEditor");
+	return FName("FDialogGraphEditor");
 }
 
 FText FDialogBuilderEditor::GetBaseToolkitName() const
 {
-	return LOCTEXT("QuestGraphEditorAppLabel", "Dialog Graph Editor");
+	return LOCTEXT("DialogGraphEditorAppLabel", "Dialog Graph Editor");
 }
 
 
 FText FDialogBuilderEditor::GetToolkitName() const
 {
-	const bool bDirtyState = EditingQuestGraph->GetOutermost()->IsDirty();
+	const bool bDirtyState = EditingDialogGraph->GetOutermost()->IsDirty();
 
 	FFormatNamedArguments Args;
-	Args.Add(TEXT("QuestGraphName"), FText::FromString(EditingQuestGraph->GetName()));
+	Args.Add(TEXT("DialogGraphName"), FText::FromString(EditingDialogGraph->GetName()));
 	Args.Add(TEXT("DirtyState"), bDirtyState ? FText::FromString(TEXT("*")) : FText::GetEmpty());
-	return FText::Format(LOCTEXT("QuestGraphEditorToolkitName", "{QuestGraphName}{DirtyState}"), Args);
+	return FText::Format(LOCTEXT("DialogGraphEditorToolkitName", "{DialogGraphName}{DirtyState}"), Args);
 }
 
 FText FDialogBuilderEditor::GetToolkitToolTipText() const
 {
-	return FAssetEditorToolkit::GetToolTipTextForObject(EditingQuestGraph);
+	return FAssetEditorToolkit::GetToolTipTextForObject(EditingDialogGraph);
 }
 
 FLinearColor FDialogBuilderEditor::GetWorldCentricTabColorScale() const
@@ -410,7 +410,7 @@ FLinearColor FDialogBuilderEditor::GetWorldCentricTabColorScale() const
 
 FString FDialogBuilderEditor::GetWorldCentricTabPrefix() const
 {
-	return TEXT("QuestGraphEditor");
+	return TEXT("DialogGraphEditor");
 }
 
 FString FDialogBuilderEditor::GetDocumentationLink() const
@@ -430,7 +430,7 @@ void FDialogBuilderEditor::RefreshEditors()
 	
 }
 
-void FDialogBuilderEditor::RefreshMyQuest()
+void FDialogBuilderEditor::RefreshMyDialog()
 {
 }
 
@@ -442,7 +442,7 @@ void FDialogBuilderEditor::AddToSelection(UEdGraphNode* InNode)
 {
 }
 
-void FDialogBuilderEditor::JumpToHyperlink(const UObject* ObjectReference, bool bRequestRename)
+void FDialogBuilderEditor::JumpToHyperlink(const UObject* ObjectReference, bool bRedialogRename)
 {
 	//SetCurrentMode(FBlueprintEditorApplicationModes::StandardBlueprintEditorMode);
 	if (const UEdGraph* Graph = Cast<const UEdGraph>(ObjectReference))
@@ -542,7 +542,7 @@ void FDialogBuilderEditor::AddReferencedObjects(FReferenceCollector& Collector)
 		Collector.AddReferencedObjects(LocalEditingObjects);
 	}
 
-	Collector.AddReferencedObject(EditingQuestGraph);*/
+	Collector.AddReferencedObject(EditingDialogGraph);*/
 }
 
 FString FDialogBuilderEditor::GetReferencerName() const
@@ -550,25 +550,25 @@ FString FDialogBuilderEditor::GetReferencerName() const
 	return FString();
 }
 
-UQuestBuilderGraph* FDialogBuilderEditor::GetQuestBuilderGraph() const
+UDialogBuilderGraph* FDialogBuilderEditor::GetDialogBuilderGraph() const
 {
-	return EditingQuestGraph;
+	return EditingDialogGraph;
 }
 
-bool FDialogBuilderEditor::NewDocument_IsVisibleForType(ECreatedQuestDocumentType GraphType) const
+bool FDialogBuilderEditor::NewDocument_IsVisibleForType(ECreatedDialogDocumentType GraphType) const
 {
 	return true;
 }
 
-void FDialogBuilderEditor::NewDocument_OnClicked(ECreatedQuestDocumentType GraphType)
+void FDialogBuilderEditor::NewDocument_OnClicked(ECreatedDialogDocumentType GraphType)
 {
 	FText DocumentNameText;
 	bool bResetMyBlueprintFilter = false;
 
 	switch (GraphType)
 	{
-	case CGT_NewQuestGraph:
-		DocumentNameText = LOCTEXT("NewDocQuestGraphName", "QuestGraph");
+	case CGT_NewDialogGraph:
+		DocumentNameText = LOCTEXT("NewDocDialogGraphName", "DialogGraph");
 		bResetMyBlueprintFilter = true;
 		break;
 	
@@ -582,21 +582,21 @@ void FDialogBuilderEditor::NewDocument_OnClicked(ECreatedQuestDocumentType Graph
 	
 
 	// Make sure the new name is valid
-	DocumentName = FDialogBuilderEditorUtils::FindUniqueQuestName(DocumentNameText.ToString());
+	DocumentName = FDialogBuilderEditorUtils::FindUniqueDialogName(DocumentNameText.ToString());
 		
 	//check(IsEditingSingleBlueprint());
 
-	const FScopedTransaction Transaction(LOCTEXT("AddNewQuestGraph", "Add New Dialog Graph"));
-	GetQuestBuilderGraph()->Modify();
+	const FScopedTransaction Transaction(LOCTEXT("AddNewDialogGraph", "Add New Dialog Graph"));
+	GetDialogBuilderGraph()->Modify();
 
 	UEdGraph* NewGraph = nullptr;
 
 	
-	if (GraphType == CGT_NewQuestGraph)
+	if (GraphType == CGT_NewDialogGraph)
 	{
-		NewGraph = FDialogBuilderEditorUtils::CreateNewGraph(GetQuestBuilderGraph(), DocumentName, UDialogBuilderEdGraph::StaticClass(), UEdGraphSchema_DialogBuilder::StaticClass());
+		NewGraph = FDialogBuilderEditorUtils::CreateNewGraph(GetDialogBuilderGraph(), DocumentName, UDialogBuilderEdGraph::StaticClass(), UEdGraphSchema_DialogBuilder::StaticClass());
 		NewGraph->AddOnGraphChangedHandler(FOnGraphChanged::FDelegate::CreateSP(this, &FDialogBuilderEditor::OnGraphChanged));
-		FDialogBuilderEditorUtils::AddQuestGraphPage(GetQuestBuilderGraph(), NewGraph);
+		FDialogBuilderEditorUtils::AddDialogGraphPage(GetDialogBuilderGraph(), NewGraph);
 
 	}
 	else
@@ -636,12 +636,12 @@ void FDialogBuilderEditor::CloseDocumentTab(const UObject* DocumentID)
 
 void FDialogBuilderEditor::RenameNewlyAddedAction(FName InActionName)
 {
-	if (MyQuestWidget.IsValid())
+	if (MyDialogWidget.IsValid())
 	{
-		// Force a refresh immediately, the item has to be present in the list for the rename requests to be successful.
-		MyQuestWidget->Refresh();
-		MyQuestWidget->SelectItemByName(InActionName, ESelectInfo::OnMouseClick);
-		MyQuestWidget->OnRequestRenameOnActionNode();
+		// Force a refresh immediately, the item has to be present in the list for the rename redialogs to be successful.
+		MyDialogWidget->Refresh();
+		MyDialogWidget->SelectItemByName(InActionName, ESelectInfo::OnMouseClick);
+		MyDialogWidget->OnRedialogRenameOnActionNode();
 	}
 }
 
@@ -714,50 +714,50 @@ bool FDialogBuilderEditor::FindOpenTabsContainingDocument(const UObject* Documen
 
 void FDialogBuilderEditor::InitializeDocumentTab()
 {
-	check(IsEditingSingleQuestGraph());
+	check(IsEditingSingleDialogGraph());
 
-	UQuestBuilderGraph* QuestBuilderGraph = GetQuestBuilderGraph();
-	if (QuestBuilderGraph->LastEditedDocuments.Num() == 0)
+	UDialogBuilderGraph* DialogBuilderGraph = GetDialogBuilderGraph();
+	if (DialogBuilderGraph->LastEditedDocuments.Num() == 0)
 	{
-			QuestBuilderGraph->LastEditedDocuments.Add(FDialogBuilderEditorUtils::FindQuestGraph(QuestBuilderGraph));
+			DialogBuilderGraph->LastEditedDocuments.Add(FDialogBuilderEditorUtils::FindDialogGraph(DialogBuilderGraph));
 	}
 
-	for (int32 i = 0; i < QuestBuilderGraph->LastEditedDocuments.Num(); i++)
+	for (int32 i = 0; i < DialogBuilderGraph->LastEditedDocuments.Num(); i++)
 	{
-		if (UObject* Obj = QuestBuilderGraph->LastEditedDocuments[i].EditedObjectPath.ResolveObject())
+		if (UObject* Obj = DialogBuilderGraph->LastEditedDocuments[i].EditedObjectPath.ResolveObject())
 		{
 			if (UEdGraph* Graph = Cast<UEdGraph>(Obj))
 			{
 				struct LocalStruct
 				{
-					static TSharedPtr<SDockTab> OpenGraphTree(FDialogBuilderEditor* InQuestSystemGraphEditor, UEdGraph* InGraph)
+					static TSharedPtr<SDockTab> OpenGraphTree(FDialogBuilderEditor* InDialogSystemGraphEditor, UEdGraph* InGraph)
 					{
 						FDocumentTracker::EOpenDocumentCause OpenCause = FDocumentTracker::QuickNavigateCurrentDocument;
 
 						for (UObject* OuterObject = InGraph->GetOuter(); OuterObject; OuterObject = OuterObject->GetOuter())
 						{
-							if (OuterObject->IsA<UQuestBuilderGraph>())
+							if (OuterObject->IsA<UDialogBuilderGraph>())
 							{
-								// reached up to the QuestBuilderGraph for the graph, we are done climbing the tree
+								// reached up to the DialogBuilderGraph for the graph, we are done climbing the tree
 								OpenCause = FDocumentTracker::RestorePreviousDocument;
 								break;
 							}
 							else if (UEdGraph* OuterGraph = Cast<UEdGraph>(OuterObject))
 							{
 								// Found another graph, open it up
-								OpenGraphTree(InQuestSystemGraphEditor, OuterGraph);
+								OpenGraphTree(InDialogSystemGraphEditor, OuterGraph);
 								break;
 							}
 						}
 
-						return InQuestSystemGraphEditor->OpenDocument(InGraph, OpenCause);
+						return InDialogSystemGraphEditor->OpenDocument(InGraph, OpenCause);
 					}
 				};
 				TSharedPtr<SDockTab> TabWithGraph = LocalStruct::OpenGraphTree(this, Graph);
 				if (TabWithGraph.IsValid())
 				{
 					TSharedRef<SGraphEditor> GraphEditor = StaticCastSharedRef<SGraphEditor>(TabWithGraph->GetContent());
-					GraphEditor->SetViewLocation(QuestBuilderGraph->LastEditedDocuments[i].SavedViewOffset, QuestBuilderGraph->LastEditedDocuments[i].SavedZoomAmount);
+					GraphEditor->SetViewLocation(DialogBuilderGraph->LastEditedDocuments[i].SavedViewOffset, DialogBuilderGraph->LastEditedDocuments[i].SavedZoomAmount);
 				}
 			}
 			else
@@ -770,9 +770,9 @@ void FDialogBuilderEditor::InitializeDocumentTab()
 
 
 
-bool FDialogBuilderEditor::IsEditingSingleQuestGraph() const
+bool FDialogBuilderEditor::IsEditingSingleDialogGraph() const
 {
-	return GetQuestBuilderGraph() != nullptr;
+	return GetDialogBuilderGraph() != nullptr;
 }
 
 UEdGraph* FDialogBuilderEditor::GetFocusedGraph() const
@@ -807,7 +807,7 @@ void FDialogBuilderEditor::OnGraphEditorFocused(const TSharedRef<class SGraphEdi
 	//FocusInspectorOnGraphSelection(SelectedNodes, /*bForceRefresh=*/ true);
 
 	// During undo, garbage graphs can be temporarily brought into focus, ensure that before a refresh of the MyBlueprint window that the graph is owned by a Blueprint
-	if (ViewportWidget.IsValid() && MyQuestWidget.IsValid())
+	if (ViewportWidget.IsValid() && MyDialogWidget.IsValid())
 	{
 		// The focused graph can be garbage as well
 		TWeakObjectPtr< UEdGraph > FocusedGraphPtr = ViewportWidget->GetCurrentGraph();
@@ -815,11 +815,11 @@ void FDialogBuilderEditor::OnGraphEditorFocused(const TSharedRef<class SGraphEdi
 		
 		if (FocusedGraph != nullptr)
 		{
-			if (UDialogBuilderEdGraph* QuestEdGraph = Cast<UDialogBuilderEdGraph>(FocusedGraph))
+			if (UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(FocusedGraph))
 			{
-				QuestEdGraph->SEditorGraph = ViewportWidget.Get();
+				DialogEdGraph->SEditorGraph = ViewportWidget.Get();
 			}
-			MyQuestWidget->Refresh();
+			MyDialogWidget->Refresh();
 		}
 	}
 
@@ -830,11 +830,11 @@ void FDialogBuilderEditor::OnGraphEditorBackgrounded(const TSharedRef<SGraphEdit
 {
 }
 
-bool FDialogBuilderEditor::IsGraphInCurrentQuestGraph(const UEdGraph* InGraph) const
+bool FDialogBuilderEditor::IsGraphInCurrentDialogGraph(const UEdGraph* InGraph) const
 {
 	bool bEditable = true;
 
-	UQuestBuilderGraph* EditingBP = GetQuestBuilderGraph();
+	UDialogBuilderGraph* EditingBP = GetDialogBuilderGraph();
 	if (EditingBP)
 	{
 		TArray<UEdGraph*> Graphs;
@@ -852,7 +852,7 @@ FGraphAppearanceInfo FDialogBuilderEditor::GetGraphAppearance() const
 
 	if (FDialogBuilderEditor::IsPIESimulating())
 	{
-		if (GetQuestBuilderGraph()->QuestComponent)
+		if (GetDialogBuilderGraph()->DialogComponent)
 		{
 			AppearanceInfo.PIENotifyText = LOCTEXT("ActiveLabel", "ACTIVE");
 		}
@@ -903,7 +903,7 @@ TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_Viewport(const FSpawnTabArgs
 
 TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_Details(const FSpawnTabArgs& Args)
 {
-	check(Args.GetTabId() == FDialogBuilderEditorTabs::QuestBuilderPropertyID);
+	check(Args.GetTabId() == FDialogBuilderEditorTabs::DialogBuilderPropertyID);
 
 	return SNew(SDockTab)
 #if ENGINE_MAJOR_VERSION < 5
@@ -917,7 +917,7 @@ TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_Details(const FSpawnTabArgs&
 
 TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_EditorSettings(const FSpawnTabArgs& Args)
 {
-	check(Args.GetTabId() == FDialogBuilderEditorTabs::QuestBuilderEditorSettingsID);
+	check(Args.GetTabId() == FDialogBuilderEditorTabs::DialogBuilderEditorSettingsID);
 
 	return SNew(SDockTab)
 #if ENGINE_MAJOR_VERSION < 5
@@ -929,17 +929,17 @@ TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_EditorSettings(const FSpawnT
 		];
 }
 
-TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_MyQuest(const FSpawnTabArgs& Args)
+TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_MyDialog(const FSpawnTabArgs& Args)
 {
-	check(Args.GetTabId() == FDialogBuilderEditorTabs::MyQuestDetailID);
+	check(Args.GetTabId() == FDialogBuilderEditorTabs::MyDialogDetailID);
 
 	return SNew(SDockTab)
 #if ENGINE_MAJOR_VERSION < 5
 		.Icon(FAppStyle::GetBrush("LevelEditor.Tabs.Details"))
 #endif // #if ENGINE_MAJOR_VERSION < 5
-		.Label(LOCTEXT("MyQuest_Title", "My Dialog"))
+		.Label(LOCTEXT("MyDialog_Title", "My Dialog"))
 		[
-			MyQuestWidget.ToSharedRef()
+			MyDialogWidget.ToSharedRef()
 		];
 }
 
@@ -957,7 +957,7 @@ void FDialogBuilderEditor::CreateInternalWidgets()
 	PropertyWidget->OnFinishedChangingProperties().AddSP(this, &FDialogBuilderEditor::OnFinishedChangingProperties);
 
 
-	this->MyQuestWidget = SNew(SMyDialog, SharedThis(this));
+	this->MyDialogWidget = SNew(SMyDialog, SharedThis(this));
 }
 
 TSharedRef<SGraphEditor> FDialogBuilderEditor::CreateGraphEditorWidget(TSharedRef<class FTabInfo> InTabInfo, UEdGraph* InGraph)
@@ -985,21 +985,21 @@ TSharedRef<SGraphEditor> FDialogBuilderEditor::CreateGraphEditorWidget(TSharedRe
 }
 
 
-void FDialogBuilderEditor::RebuildQuestBuilderGraphPages()
+void FDialogBuilderEditor::RebuildDialogBuilderGraphPages()
 {
-	if (EditingQuestGraph == nullptr)
+	if (EditingDialogGraph == nullptr)
 	{
 		return;
 	}
 
-	GetQuestBuilderGraph()->NodeIDMap.Reset();
-	for (UEdGraph* EdGraph : EditingQuestGraph->QuestGraphPages)
+	GetDialogBuilderGraph()->NodeIDMap.Reset();
+	for (UEdGraph* EdGraph : EditingDialogGraph->DialogGraphPages)
 	{
 		if (EdGraph)
 		{
-			if (UDialogBuilderEdGraph* QuestGraph = Cast<UDialogBuilderEdGraph>(EdGraph))
+			if (UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(EdGraph))
 			{
-				QuestGraph->RebuildQuestBuilderGraph();
+				DialogGraph->RebuildDialogBuilderGraph();
 			}
 		}
 	}
@@ -1011,10 +1011,10 @@ void FDialogBuilderEditor::RebuildQuestBuilderGraphPages()
 
 void FDialogBuilderEditor::OnGraphChanged(const FEdGraphEditAction& Action)
 {
-	UDialogBuilderEdGraph* QuestGraph = Cast<UDialogBuilderEdGraph>(Action.Graph);
-	if (QuestGraph)
+	UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(Action.Graph);
+	if (DialogGraph)
 	{
-		QuestGraph->CacheNodeIDMap();
+		DialogGraph->CacheNodeIDMap();
 	}
 }
 void FDialogBuilderEditor::SelectAllNodes()
@@ -1050,17 +1050,17 @@ void FDialogBuilderEditor::DeleteSelectedNodes()
 		if (EdNode == nullptr || !EdNode->CanUserDeleteNode())
 			continue;;
 
-		if (UDialogBuilderEdNode* QuestEdNode = Cast<UDialogBuilderEdNode>(EdNode))
+		if (UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(EdNode))
 		{
-			QuestEdNode->Modify();
+			DialogEdNode->Modify();
 
-			const UEdGraphSchema* Schema = QuestEdNode->GetSchema();
+			const UEdGraphSchema* Schema = DialogEdNode->GetSchema();
 			if (Schema != nullptr)
 			{
-				Schema->BreakNodeLinks(*QuestEdNode);
+				Schema->BreakNodeLinks(*DialogEdNode);
 			}
 
-			QuestEdNode->DestroyNode();
+			DialogEdNode->DestroyNode();
 		}
 		else
 		{
@@ -1231,11 +1231,11 @@ void FDialogBuilderEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVec
 			{
 				if (UDialogBuilderEdNode* EdNode = Cast<UDialogBuilderEdNode>(*It))
 				{
-					UQuestBuilderNode* QuestNode = EdNode ? Cast<UQuestBuilderNode>(EdNode->NodeInstance) : nullptr;
-					QuestNode->ID = FDialogBuilderEditorUtils::FindUniqueNodeName(QuestNode->ID.ToString());
-					if (UDialogBuilderEdGraph* QuestEdGraph = Cast<UDialogBuilderEdGraph>(EdGraph))
+					UDialogBuilderNode* DialogNode = EdNode ? Cast<UDialogBuilderNode>(EdNode->NodeInstance) : nullptr;
+					DialogNode->ID = FDialogBuilderEditorUtils::FindUniqueNodeName(DialogNode->ID.ToString());
+					if (UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(EdGraph))
 					{
-						QuestEdGraph->AddToNodeIDMap(QuestNode->ID, QuestNode);
+						DialogEdGraph->AddToNodeIDMap(DialogNode->ID, DialogNode);
 					}
 				}
 			}
@@ -1302,7 +1302,6 @@ bool FDialogBuilderEditor::CanDuplicateNodes()
 }
 void FDialogBuilderEditor::CreateNewTask()
 {
-	HandleNewNodeClassPicked(UQuestTask::StaticClass());
 }
 
 void FDialogBuilderEditor::HandleNewNodeClassPicked(UClass* InClass) const
@@ -1310,11 +1309,11 @@ void FDialogBuilderEditor::HandleNewNodeClassPicked(UClass* InClass) const
 	/*UE_CLOG(InClass == nullptr, LogBehaviorTreeEditor, Error, TEXT("Trying to handle new node of NULL class for Behavior Treee %s ")
 		, *GetNameSafe(BehaviorTree));*/
 
-	if (EditingQuestGraph != nullptr && InClass != nullptr && EditingQuestGraph->GetOutermost())
+	if (EditingDialogGraph != nullptr && InClass != nullptr && EditingDialogGraph->GetOutermost())
 	{
 		const FString ClassName = FBlueprintEditorUtils::GetClassNameWithoutSuffix(InClass);
 
-		FString PathName = EditingQuestGraph->GetOutermost()->GetPathName();
+		FString PathName = EditingDialogGraph->GetOutermost()->GetPathName();
 		PathName = FPaths::GetPath(PathName);
 
 		// Now that we've generated some reasonable default locations/names for the package, allow the user to have the final say
@@ -1363,27 +1362,27 @@ bool FDialogBuilderEditor::IsNewTaskButtonVisible() const
 	return true;
 }
 
-void FDialogBuilderEditor::CreateNewQuestCondition()
+void FDialogBuilderEditor::CreateNewDialogCondition()
 {
 	HandleNewNodeClassPicked(UOrionDecorator::StaticClass());
 }
-bool FDialogBuilderEditor::CanCreateQuestCondition() const
+bool FDialogBuilderEditor::CanCreateDialogCondition() const
 {
 	return true;
 }
-void FDialogBuilderEditor::CreateNewQuestEvent()
+void FDialogBuilderEditor::CreateNewDialogEvent()
 {
 	HandleNewNodeClassPicked(UOrionEvent::StaticClass());
 }
-bool FDialogBuilderEditor::CanCreateQuestEvent() const
+bool FDialogBuilderEditor::CanCreateDialogEvent() const
 {
 	return true;
 }
-void FDialogBuilderEditor::OpenQuestSetting()
+void FDialogBuilderEditor::OpenDialogSetting()
 {
-	PropertyWidget->SetObject(GetQuestBuilderGraph());
+	PropertyWidget->SetObject(GetDialogBuilderGraph());
 }
-bool FDialogBuilderEditor::CanOpenQuestSetting() const
+bool FDialogBuilderEditor::CanOpenDialogSetting() const
 {
 	return true;
 }
@@ -1422,18 +1421,18 @@ void FDialogBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& Ne
 
 	if (Selection.Num() == 0)
 	{
-		if (UDialogBuilderEdGraph* QuestGraph = Cast<UDialogBuilderEdGraph>(ViewportWidget->GetCurrentGraph()))
+		if (UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(ViewportWidget->GetCurrentGraph()))
 		{
-			PropertyWidget->SetObject(QuestGraph->Dialog);
+			PropertyWidget->SetObject(DialogGraph->Dialog);
 		}
 	}
 	else if (Selection.Num() == 1)
 	{
-		if (UQuestBuilderNode_Root* RootNode = Cast<UQuestBuilderNode_Root>(Selection[0]))
+		if (UDialogBuilderNode_Root* RootNode = Cast<UDialogBuilderNode_Root>(Selection[0]))
 		{
-			if (UDialogBuilderEdGraph* QuestGraph = Cast<UDialogBuilderEdGraph>(ViewportWidget->GetCurrentGraph()))
+			if (UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(ViewportWidget->GetCurrentGraph()))
 			{
-				PropertyWidget->SetObject(QuestGraph->Dialog);
+				PropertyWidget->SetObject(DialogGraph->Dialog);
 			}
 		}
 		else
@@ -1449,13 +1448,13 @@ void FDialogBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& Ne
 
 void FDialogBuilderEditor::OnNodeDoubleClicked(UEdGraphNode* Node)
 {
-	UDialogBuilderEdNode* QuestEdNode = Cast<UDialogBuilderEdNode>(Node);
-	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(Node);
+	UDialogBuilderNode* DialogNode = DialogEdNode ? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance) : nullptr;
 
-	if (QuestEdNode && QuestNode &&
-		QuestNode->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint))
+	if (DialogEdNode && DialogNode &&
+		DialogNode->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint))
 	{
-		UClass* NodeClass = QuestNode->GetClass();
+		UClass* NodeClass = DialogNode->GetClass();
 		UPackage* Pkg = NodeClass->GetOuterUPackage();
 		FString ClassName = NodeClass->GetName().LeftChop(2);
 		UBlueprint* BlueprintOb = FindObject<UBlueprint>(Pkg, *ClassName);
@@ -1468,10 +1467,10 @@ void FDialogBuilderEditor::OnNodeDoubleClicked(UEdGraphNode* Node)
 
 void FDialogBuilderEditor::OnFinishedChangingProperties(const FPropertyChangedEvent& PropertyChangedEvent)
 {
-	if (EditingQuestGraph == nullptr)
+	if (EditingDialogGraph == nullptr)
 		return;
 
-	for (UEdGraph* EdGraph : EditingQuestGraph->QuestGraphPages)
+	for (UEdGraph* EdGraph : EditingDialogGraph->DialogGraphPages)
 	{
 		EdGraph->GetSchema()->ForceVisualizationCacheClear();
 	}
@@ -1482,15 +1481,15 @@ void FDialogBuilderEditor::OnFinishedChangingProperties(const FPropertyChangedEv
 
 void FDialogBuilderEditor::OnPackageMarkedDirty(UPackage* ModifiedPackage, bool bWasDirty)
 {
-	if (EditingQuestGraph)
+	if (EditingDialogGraph)
 	{
-		for (UEdGraph* EdGraph : EditingQuestGraph->QuestGraphPages)
+		for (UEdGraph* EdGraph : EditingDialogGraph->DialogGraphPages)
 		{
 			if (EdGraph)
 			{
-				if (UDialogBuilderEdGraph* QuestGraph = Cast<UDialogBuilderEdGraph>(EdGraph))
+				if (UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(EdGraph))
 				{
-					QuestGraph->SortAllChildrenNodes();
+					DialogGraph->SortAllChildrenNodes();
 				}
 			}
 		}
@@ -1504,12 +1503,12 @@ void FDialogBuilderEditor::OnPackageMarkedDirty(UPackage* ModifiedPackage, bool 
 
 void FDialogBuilderEditor::OnPackageSaved(const FString& PackageFileName, UObject* Outer)
 {
-	RebuildQuestBuilderGraphPages();
+	RebuildDialogBuilderGraphPages();
 }
 #else // #if ENGINE_MAJOR_VERSION < 5
 void FDialogBuilderEditor::OnPackageSavedWithContext(const FString& PackageFileName, UPackage* Package, FObjectPostSaveContext ObjectSaveContext)
 {
-	RebuildQuestBuilderGraphPages();
+	RebuildDialogBuilderGraphPages();
 	
 }
 

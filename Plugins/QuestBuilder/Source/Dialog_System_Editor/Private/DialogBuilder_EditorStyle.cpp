@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #include "DialogBuilder_EditorStyle.h"
 #include "Styling/SlateStyleRegistry.h"
@@ -29,7 +29,7 @@ void FDialogBuilder_EditorStyle::Shutdown()
 
 FName FDialogBuilder_EditorStyle::GetStyleSetName()
 {
-	static FName StyleSetName(TEXT("QuestBuilder_EditorStyle"));
+	static FName StyleSetName(TEXT("DialogBuilder_EditorStyle"));
 	return StyleSetName;
 }
 
@@ -43,9 +43,9 @@ TSharedRef< FSlateStyleSet > FDialogBuilder_EditorStyle::Create()
 	TSharedRef< FSlateStyleSet > Style = MakeShareable(new FSlateStyleSet("DialogBuilder_EditorStyle"));
 	Style->SetContentRoot(IPluginManager::Get().FindPlugin("QuestBuilder")->GetBaseDir() / TEXT("Resources"));
 
-	Style->Set("QuestBuilder.OpenPluginWindow", new IMAGE_BRUSH_SVG(TEXT("PlaceholderButtonIcon"), Icon20x20));
-	Style->Set("QuestBuilder.questicon", new IMAGE_BRUSH_SVG(TEXT("questicon"), Icon40x40));
-	Style->Set("QuestBuilder.questicon.small", new IMAGE_BRUSH_SVG(TEXT("questicon"), Icon20x20));
+	Style->Set("DialogBuilder.OpenPluginWindow", new IMAGE_BRUSH_SVG(TEXT("PlaceholderButtonIcon"), Icon20x20));
+	Style->Set("DialogBuilder.dialogicon", new IMAGE_BRUSH_SVG(TEXT("dialogicon"), Icon40x40));
+	Style->Set("DialogBuilder.dialogicon.small", new IMAGE_BRUSH_SVG(TEXT("dialogicon"), Icon20x20));
 	return Style;
 }
 

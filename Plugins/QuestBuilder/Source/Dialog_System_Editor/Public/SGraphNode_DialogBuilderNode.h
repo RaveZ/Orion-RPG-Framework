@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #pragma once
 
@@ -53,7 +53,7 @@ public:
 
 protected:
 	TSharedPtr<SHorizontalBox> OutputPinBox;
-	TSharedPtr<SWidget> QuestNodeWidgetRef;
+	TSharedPtr<SWidget> DialogNodeWidgetRef;
 
 	/** The widget we use to display the index of the node */
 	TSharedPtr<SWidget> IndexOverlay;

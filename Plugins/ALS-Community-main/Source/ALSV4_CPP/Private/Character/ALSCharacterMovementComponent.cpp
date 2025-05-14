@@ -23,13 +23,13 @@ void UALSCharacterMovementComponent::OnMovementUpdated(float DeltaTime, const FV
 	}
 
 	// Set Movement Settings
-	if (bRequestMovementSettingsChange)
+	if (bRedialogMovementSettingsChange)
 	{
 		const float UpdateMaxWalkSpeed = CurrentMovementSettings.GetSpeedForGait(AllowedGait);
 		MaxWalkSpeed = UpdateMaxWalkSpeed;
 		MaxWalkSpeedCrouched = UpdateMaxWalkSpeed;
 
-		bRequestMovementSettingsChange = false;
+		bRedialogMovementSettingsChange = false;
 	}
 }
 
@@ -70,7 +70,7 @@ void UALSCharacterMovementComponent::UpdateFromCompressedFlags(uint8 Flags) // C
 {
 	Super::UpdateFromCompressedFlags(Flags);
 
-	bRequestMovementSettingsChange = (Flags & FSavedMove_Character::FLAG_Custom_0) != 0;
+	bRedialogMovementSettingsChange = (Flags & FSavedMove_Character::FLAG_Custom_0) != 0;
 }
 
 class FNetworkPredictionData_Client* UALSCharacterMovementComponent::GetPredictionData_Client() const
@@ -93,7 +93,7 @@ void UALSCharacterMovementComponent::FSavedMove_My::Clear()
 {
 	Super::Clear();
 
-	bSavedRequestMovementSettingsChange = false;
+	bSavedRedialogMovementSettingsChange = false;
 	SavedAllowedGait = EALSGait::Walking;
 }
 
@@ -101,7 +101,7 @@ uint8 UALSCharacterMovementComponent::FSavedMove_My::GetCompressedFlags() const
 {
 	uint8 Result = Super::GetCompressedFlags();
 
-	if (bSavedRequestMovementSettingsChange)
+	if (bSavedRedialogMovementSettingsChange)
 	{
 		Result |= FLAG_Custom_0;
 	}
@@ -119,7 +119,7 @@ void UALSCharacterMovementComponent::FSavedMove_My::SetMoveFor(ACharacter* Chara
 	UALSCharacterMovementComponent* CharacterMovement = Cast<UALSCharacterMovementComponent>(Character->GetCharacterMovement());
 	if (CharacterMovement)
 	{
-		bSavedRequestMovementSettingsChange = CharacterMovement->bRequestMovementSettingsChange;
+		bSavedRedialogMovementSettingsChange = CharacterMovement->bRedialogMovementSettingsChange;
 		SavedAllowedGait = CharacterMovement->AllowedGait;
 	}
 }
@@ -179,7 +179,7 @@ void UALSCharacterMovementComponent::SetMovementSettings(FALSMovementSettings Ne
 {
 	// Set the current movement settings from the owner
 	CurrentMovementSettings = NewMovementSettings;
-	bRequestMovementSettingsChange = true;
+	bRedialogMovementSettingsChange = true;
 }
 
 void UALSCharacterMovementComponent::SetAllowedGait(EALSGait NewAllowedGait)
@@ -193,7 +193,7 @@ void UALSCharacterMovementComponent::SetAllowedGait(EALSGait NewAllowedGait)
 			{
 				Server_SetAllowedGait(NewAllowedGait);
 			}
-			bRequestMovementSettingsChange = true;
+			bRedialogMovementSettingsChange = true;
 			return;
 		}
 		if (!PawnOwner->HasAuthority())

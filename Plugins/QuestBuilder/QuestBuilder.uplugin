@@ -3,8 +3,8 @@
 	"Version": 1,
 	"VersionName": "1.0",
 	"FriendlyName": "Quest Builder Plugin",
-	"Description": "The Quest Builder is a powerful tool using node graph based editor that enables you to craft engaging, immersive, and dynamic quests for your players.",
-	"Category": "Quest And Dialog",
+	"Description": "The Dialog Builder is a powerful tool using node graph based editor that enables you to craft engaging, immersive, and dynamic dialogs for your players.",
+	"Category": "Dialog And Dialog",
 	"CreatedBy": "IC",
 	"CreatedByURL": "",
 	"DocsURL": "https://material-goat-8ea.notion.site/Dialog-Builder-Documentation-41f81136a72a4e02a9d714ac224355af",
@@ -15,22 +15,14 @@
 	"Installed": true,
 	"Modules": [
 		{
-			"Name": "Quest_System_Editor",
-			"Type": "UncookedOnly",
-			"LoadingPhase": "PreDefault",
+			"Name": "Dialog_System_Runtime",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
 			"PlatformAllowList": [
 				"Win64",
+				"Android",
 				"Linux",
-				"Mac"
-			]
-		},
-		{
-			"Name": "Dialog_System_Editor",
-			"Type": "UncookedOnly",
-			"LoadingPhase": "PreDefault",
-			"PlatformAllowList": [
-				"Win64",
-				"Linux",
+				"IOS",
 				"Mac"
 			]
 		},
@@ -40,12 +32,36 @@
 			"LoadingPhase": "Default",
 			"PlatformAllowList": [
 				"Win64",
-				"Linux",
-				"Mac",
 				"Android",
+				"Linux",
 				"IOS",
-				"TVOS"
+				"Mac"
+			]
+		},
+		{
+			"Name": "Dialog_System_Editor",
+			"Type": "UncookedOnly",
+			"LoadingPhase": "PreDefault",
+			"PlatformAllowList": [
+				"Win64",
+				"Android",
+				"Linux",
+				"IOS",
+				"Mac"
+			]
+		},
+		{
+			"Name": "Quest_System_Editor",
+			"Type": "UncookedOnly",
+			"LoadingPhase": "PreDefault",
+			"PlatformAllowList": [
+				"Win64",
+				"Android",
+				"Linux",
+				"IOS",
+				"Mac"
 			]
 		}
+
 	]
 }

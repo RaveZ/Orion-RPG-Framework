@@ -1,12 +1,12 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #include "DialogBuilderEditorUtils.h"
-#include "QuestBuilderNode.h"
+#include "DialogBuilderNode.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "QuestBuilderGraph.h"
+#include "DialogBuilderGraph.h"
 
 
-#define LOCTEXT_NAMESPACE "QuestBuilderEditorUtils"
+#define LOCTEXT_NAMESPACE "DialogBuilderEditorUtils"
 
 FDialogBuilderEditorUtils::FDialogBuilderEditorUtils()
 {
@@ -16,31 +16,31 @@ FDialogBuilderEditorUtils::~FDialogBuilderEditorUtils()
 {
 }
 
-FName FDialogBuilderEditorUtils::FindUniqueQuestName(const FString& InBaseName)
+FName FDialogBuilderEditorUtils::FindUniqueDialogName(const FString& InBaseName)
 {
 	// Start with the base name
 	FString UniqueName = InBaseName;
 
-	// Iterate through the quest graph pages until we find a unique name
+	// Iterate through the dialog graph pages until we find a unique name
 	for (int i = 0;; i++)
 	{
 		bool bIsUnique = true;
 
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-		TArray<FAssetData> QuestGraphDataArray;
-		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+		TArray<FAssetData> DialogGraphDataArray;
+		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), DialogGraphDataArray);
 
-		for (const FAssetData& AssetData : QuestGraphDataArray)
+		for (const FAssetData& AssetData : DialogGraphDataArray)
 		{
-			UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
-			if (QuestGraph)
+			UDialogBuilderGraph* DialogGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
+			if (DialogGraph)
 			{
-				for (auto& Quest : QuestGraph->QuestList)
+				for (auto& Dialog : DialogGraph->DialogList)
 				{
-					FString FullName = Quest->ID.ToString();
+					FString FullName = Dialog->ID.ToString();
 
-					// If the current name matches a quest graph page name, it's not unique
+					// If the current name matches a dialog graph page name, it's not unique
 					if (FullName == UniqueName)
 					{
 						bIsUnique = false;
@@ -65,7 +65,7 @@ FName FDialogBuilderEditorUtils::FindUniqueNodeName(const FString& InBaseName)
 {
 	// Start with the base name
 	FString BaseName = InBaseName;
-	FString UniqueName = InBaseName;// Iterate through the quest graph pages until we find a unique name
+	FString UniqueName = InBaseName;// Iterate through the dialog graph pages until we find a unique name
 	
 	int32 UnderscoreIndex;
 	if (BaseName.FindLastChar(TEXT('_'), UnderscoreIndex))
@@ -83,15 +83,15 @@ FName FDialogBuilderEditorUtils::FindUniqueNodeName(const FString& InBaseName)
 
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-		TArray<FAssetData> QuestGraphDataArray;
-		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+		TArray<FAssetData> DialogGraphDataArray;
+		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), DialogGraphDataArray);
 
-		for (const FAssetData& AssetData : QuestGraphDataArray)
+		for (const FAssetData& AssetData : DialogGraphDataArray)
 		{
-			UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
-			if (QuestGraph)
+			UDialogBuilderGraph* DialogGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
+			if (DialogGraph)
 			{
-				UQuestBuilderNode* FoundedNode = QuestGraph->NodeIDMap.FindRef(FName(UniqueName));
+				UDialogBuilderNode* FoundedNode = DialogGraph->NodeIDMap.FindRef(FName(UniqueName));
 				if (FoundedNode)
 				{
 					bIsUnique = false;
@@ -123,16 +123,16 @@ UEdGraph* FDialogBuilderEditorUtils::CreateNewGraph(UObject* ParentScope, const 
 	NewGraph->GetSchema()->CreateDefaultNodesForGraph(*NewGraph);
 	NewGraph->Rename(*(GraphName.ToString()), ParentScope, REN_DoNotDirty | REN_ForceNoResetLoaders);
 
-	if (UDialogBuilderEdGraph* QuestGraph = Cast<UDialogBuilderEdGraph>(NewGraph))
+	if (UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(NewGraph))
 	{
-		QuestGraph->Dialog = NewObject<UQuest>(ParentScope, UQuest::StaticClass(), NAME_None, RF_Transactional);
-		QuestGraph->Dialog->QuestGraph = QuestGraph->GetQuestBuilderGraph();
-		QuestGraph->Dialog->ID = GraphName;
-		QuestGraph->Dialog->QuestName = FText::FromName(QuestGraph->Dialog->ID);
+		DialogGraph->Dialog = NewObject<UDialog>(ParentScope, UDialog::StaticClass(), NAME_None, RF_Transactional);
+		DialogGraph->Dialog->DialogGraph = DialogGraph->GetDialogBuilderGraph();
+		DialogGraph->Dialog->ID = GraphName;
+		DialogGraph->Dialog->DialogName = FText::FromName(DialogGraph->Dialog->ID);
 
-		if (UQuestBuilderGraph* QuestBuilderGraph = Cast<UQuestBuilderGraph>(QuestGraph->GetQuestBuilderGraph()))
+		if (UDialogBuilderGraph* DialogBuilderGraph = Cast<UDialogBuilderGraph>(DialogGraph->GetDialogBuilderGraph()))
 		{
-			QuestBuilderGraph->QuestList.Add(QuestGraph->Dialog);
+			DialogBuilderGraph->DialogList.Add(DialogGraph->Dialog);
 		}
 
 	}
@@ -143,7 +143,7 @@ UEdGraph* FDialogBuilderEditorUtils::CreateNewGraph(UObject* ParentScope, const 
 
 
 
-void FDialogBuilderEditorUtils::RemoveNode(UQuestBuilderGraph* QuestBuilderGraph, UDialogBuilderEdNode* Node, bool bDontRecompile)
+void FDialogBuilderEditorUtils::RemoveNode(UDialogBuilderGraph* DialogBuilderGraph, UDialogBuilderEdNode* Node, bool bDontRecompile)
 {
 	check(Node);
 
@@ -172,26 +172,26 @@ void FDialogBuilderEditorUtils::RemoveNode(UQuestBuilderGraph* QuestBuilderGraph
 	}*/
 }
 
-void FDialogBuilderEditorUtils::RemoveGraph(UQuestBuilderGraph* QuestBuilderGraph, UEdGraph* GraphToRemove)
+void FDialogBuilderEditorUtils::RemoveGraph(UDialogBuilderGraph* DialogBuilderGraph, UEdGraph* GraphToRemove)
 {
 	GraphToRemove->Modify();
 
 	for (UObject* TestOuter = GraphToRemove->GetOuter(); TestOuter; TestOuter = TestOuter->GetOuter())
 	{
-		if (TestOuter == QuestBuilderGraph)
+		if (TestOuter == DialogBuilderGraph)
 		{
-			QuestBuilderGraph->QuestGraphPages.Remove(GraphToRemove);
-			if (UDialogBuilderEdGraph* QuestGraphToRemove = Cast<UDialogBuilderEdGraph>(GraphToRemove))
+			DialogBuilderGraph->DialogGraphPages.Remove(GraphToRemove);
+			if (UDialogBuilderEdGraph* DialogGraphToRemove = Cast<UDialogBuilderEdGraph>(GraphToRemove))
 			{
-				QuestBuilderGraph->QuestList.Remove(QuestGraphToRemove->Dialog);
+				DialogBuilderGraph->DialogList.Remove(DialogGraphToRemove->Dialog);
 			}
 
 			// Can't just call Remove, the object is wrapped in a struct
-			for (int EditedDocIdx = 0; EditedDocIdx < QuestBuilderGraph->LastEditedDocuments.Num(); ++EditedDocIdx)
+			for (int EditedDocIdx = 0; EditedDocIdx < DialogBuilderGraph->LastEditedDocuments.Num(); ++EditedDocIdx)
 			{
-				if (QuestBuilderGraph->LastEditedDocuments[EditedDocIdx].EditedObjectPath.ResolveObject() == GraphToRemove)
+				if (DialogBuilderGraph->LastEditedDocuments[EditedDocIdx].EditedObjectPath.ResolveObject() == GraphToRemove)
 				{
-					QuestBuilderGraph->LastEditedDocuments.RemoveAt(EditedDocIdx);
+					DialogBuilderGraph->LastEditedDocuments.RemoveAt(EditedDocIdx);
 					break;
 				}
 			}
@@ -220,35 +220,35 @@ void FDialogBuilderEditorUtils::RemoveGraph(UQuestBuilderGraph* QuestBuilderGrap
 		{
 			if (SubGraph && SubGraph->GetOuter()->IsA(UEdGraphNode::StaticClass()))
 			{
-				FDialogBuilderEditorUtils::RemoveGraph(QuestBuilderGraph, SubGraph);
+				FDialogBuilderEditorUtils::RemoveGraph(DialogBuilderGraph, SubGraph);
 			}
 		}
 	}
 
 	GraphToRemove->GetSchema()->HandleGraphBeingDeleted(*GraphToRemove);
 
-	GraphToRemove->Rename(nullptr, QuestBuilderGraph ? QuestBuilderGraph->GetOuter() : nullptr, REN_DoNotDirty | REN_DontCreateRedirectors);
+	GraphToRemove->Rename(nullptr, DialogBuilderGraph ? DialogBuilderGraph->GetOuter() : nullptr, REN_DoNotDirty | REN_DontCreateRedirectors);
 	GraphToRemove->ClearFlags(RF_Standalone | RF_Public);
 	GraphToRemove->RemoveFromRoot();
 
 	
 }
 
-void FDialogBuilderEditorUtils::AddQuestGraphPage(UQuestBuilderGraph* QuestBuilderGraph, UEdGraph* Graph)
+void FDialogBuilderEditorUtils::AddDialogGraphPage(UDialogBuilderGraph* DialogBuilderGraph, UEdGraph* Graph)
 {
 #if WITH_EDITORONLY_DATA
-	QuestBuilderGraph->QuestGraphPages.Add(Graph);
+	DialogBuilderGraph->DialogGraphPages.Add(Graph);
 	Graph->MarkPackageDirty();
 #endif	//#if WITH_EDITORONLY_DATA
 }
 
 
-UEdGraph* FDialogBuilderEditorUtils::FindQuestGraph(const UQuestBuilderGraph* QuestBuilderGraph)
+UEdGraph* FDialogBuilderEditorUtils::FindDialogGraph(const UDialogBuilderGraph* DialogBuilderGraph)
 {
 
-	for (UEdGraph* CurrentGraph : QuestBuilderGraph->QuestGraphPages)
+	for (UEdGraph* CurrentGraph : DialogBuilderGraph->DialogGraphPages)
 	{
-		if (CurrentGraph->GetFName().ToString().Contains(TEXT("QuestGraph")))
+		if (CurrentGraph->GetFName().ToString().Contains(TEXT("DialogGraph")))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Current graph name: %s"), *CurrentGraph->GetFName().ToString());
 			return CurrentGraph;
@@ -264,10 +264,10 @@ TArray<UObject*> FDialogBuilderEditorUtils::GetSelectionForPropertyEditor(const 
 
 	for (UObject* SelectionEntry : InSelection)
 	{
-		UDialogBuilderEdNode* QuestEdNode = Cast<UDialogBuilderEdNode>(SelectionEntry);
-		if (QuestEdNode)
+		UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(SelectionEntry);
+		if (DialogEdNode)
 		{
-			Selection.Add(QuestEdNode->NodeInstance);
+			Selection.Add(DialogEdNode->NodeInstance);
 			continue;
 		}
 	}

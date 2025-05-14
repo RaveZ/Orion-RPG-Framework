@@ -1,13 +1,13 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderSetting.h"
-#include "QuestBuilderNode.h"
-#include "Quest.h"
-#include "QuestBuilderNode_Root.h"
-#include "QuestBuilderNode_Objective.h"
-#include "QuestBuilderNode_State.h"
+#include "DialogBuilderNode.h"
+#include "Dialog.h"
+#include "DialogBuilderNode_Root.h"
+#include "DialogBuilderNode_Objective.h"
+#include "DialogBuilderNode_State.h"
 #include "DialogBuilderEditorUtils.h"
 
 UDialogBuilderEdNode::UDialogBuilderEdNode()
@@ -21,7 +21,7 @@ UDialogBuilderEdNode::~UDialogBuilderEdNode()
 }
 
 
-UDialogBuilderEdGraph* UDialogBuilderEdNode::GetQuestBuilderEdGraph()
+UDialogBuilderEdGraph* UDialogBuilderEdNode::GetDialogBuilderEdGraph()
 {
 	return Cast<UDialogBuilderEdGraph>(GetGraph());
 }
@@ -42,8 +42,8 @@ FText UDialogBuilderEdNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 	}
 	else
 	{
-		const UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
-		return QuestNode->GetNodeTitle();
+		const UDialogBuilderNode* DialogNode = Cast<UDialogBuilderNode>(NodeInstance);
+		return DialogNode->GetNodeTitle();
 	}
 }
 
@@ -60,7 +60,7 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 	if (NodeClass)
 	{
 		UEdGraph* MyGraph = GetGraph();
-		UDialogBuilderEdGraph* QuestEdGraph = Cast<UDialogBuilderEdGraph>(GetGraph());
+		UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(GetGraph());
 		UObject* GraphOwner = MyGraph ? MyGraph->GetOuter() : nullptr;
 		if (GraphOwner)
 		{
@@ -73,19 +73,19 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 
 			if (NodeInstance)
 			{
-				if (UQuestBuilderNode_Objective* ObjectiveQuestNode = Cast<UQuestBuilderNode_Objective>(NodeInstance))
+				if (UDialogBuilderNode_Objective* ObjectiveDialogNode = Cast<UDialogBuilderNode_Objective>(NodeInstance))
 				{
-					ObjectiveQuestNode->ID = FDialogBuilderEditorUtils::FindUniqueNodeName("ObjectiveNode");
+					ObjectiveDialogNode->ID = FDialogBuilderEditorUtils::FindUniqueNodeName("ObjectiveNode");
 				}
-				if (UQuestBuilderNode_State* StateQuestNode = Cast<UQuestBuilderNode_State>(NodeInstance))
+				if (UDialogBuilderNode_State* StateDialogNode = Cast<UDialogBuilderNode_State>(NodeInstance))
 				{
-					StateQuestNode->ID = FDialogBuilderEditorUtils::FindUniqueNodeName("StateNode");
+					StateDialogNode->ID = FDialogBuilderEditorUtils::FindUniqueNodeName("StateNode");
 				}
 			}
-			UQuestBuilderNode* QuestNode = NodeInstance ?  Cast<UQuestBuilderNode>(NodeInstance) : nullptr;
-			if (QuestNode)
+			UDialogBuilderNode* DialogNode = NodeInstance ?  Cast<UDialogBuilderNode>(NodeInstance) : nullptr;
+			if (DialogNode)
 			{
-				QuestEdGraph->AddToNodeIDMap(QuestNode->ID, QuestNode);
+				DialogEdGraph->AddToNodeIDMap(DialogNode->ID, DialogNode);
 			}
 		}
 	}
@@ -93,12 +93,12 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 
 void UDialogBuilderEdNode::InitializeInstance()
 {
-	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
-	UQuestBuilderGraph* QuestAsset = QuestNode ? Cast<UQuestBuilderGraph>(QuestNode->GetOuter()) : nullptr;
-	UQuest* Dialog = GetQuestBuilderEdGraph() ? GetQuestBuilderEdGraph()->Dialog : nullptr;
-	if (Dialog && QuestNode && QuestAsset)
+	UDialogBuilderNode* DialogNode = Cast<UDialogBuilderNode>(NodeInstance);
+	UDialogBuilderGraph* DialogAsset = DialogNode ? Cast<UDialogBuilderGraph>(DialogNode->GetOuter()) : nullptr;
+	UDialog* Dialog = GetDialogBuilderEdGraph() ? GetDialogBuilderEdGraph()->Dialog : nullptr;
+	if (Dialog && DialogNode && DialogAsset)
 	{
-		QuestNode->InitializeFromAsset(*QuestAsset, *Dialog);
+		DialogNode->InitializeFromAsset(*DialogAsset, *Dialog);
 
 	}
 }
@@ -110,10 +110,10 @@ bool UDialogBuilderEdNode::CanUserDeleteNode() const
 
 void UDialogBuilderEdNode::PrepareForCopying()
 {
-	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
-	if (QuestNode)
+	UDialogBuilderNode* DialogNode = Cast<UDialogBuilderNode>(NodeInstance);
+	if (DialogNode)
 	{
-		QuestNode->Rename(nullptr, this, REN_DontCreateRedirectors | REN_DoNotDirty);
+		DialogNode->Rename(nullptr, this, REN_DontCreateRedirectors | REN_DoNotDirty);
 
 	}
 }
@@ -132,30 +132,30 @@ void UDialogBuilderEdNode::AutowireNewNode(UEdGraphPin* FromPin)
 
 FText UDialogBuilderEdNode::GetDescription() const
 {
-	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
-	if (QuestNode)
+	UDialogBuilderNode* DialogNode = Cast<UDialogBuilderNode>(NodeInstance);
+	if (DialogNode)
 	{
-		return QuestNode->GetNodeDescription();
+		return DialogNode->GetNodeDescription();
 	}
 	return FText::GetEmpty();
 }
 
 FText UDialogBuilderEdNode::GetEventsText() const
 {
-	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
-	if (QuestNode)
+	UDialogBuilderNode* DialogNode = Cast<UDialogBuilderNode>(NodeInstance);
+	if (DialogNode)
 	{
-		return QuestNode->GetEventsText();
+		return DialogNode->GetEventsText();
 	}
 	return FText::GetEmpty();
 }
 
 FText UDialogBuilderEdNode::GetConditionsText() const
 {
-	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
-	if (QuestNode)
+	UDialogBuilderNode* DialogNode = Cast<UDialogBuilderNode>(NodeInstance);
+	if (DialogNode)
 	{
-		return QuestNode->GetConditionsText();
+		return DialogNode->GetConditionsText();
 	}
 	return FText::GetEmpty();
 }
@@ -201,10 +201,10 @@ void UDialogBuilderEdNode::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNode
 
 bool UDialogBuilderEdNode::UsesBlueprint() const
 {
-	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
-	if (QuestNode)
+	UDialogBuilderNode* DialogNode = Cast<UDialogBuilderNode>(NodeInstance);
+	if (DialogNode)
 	{
-		return QuestNode && QuestNode->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint);
+		return DialogNode && DialogNode->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint);
 	}
 	return false;
 }

@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 using UnrealBuildTool;
 
 public class Dialog_System_Editor : ModuleRules
@@ -25,6 +25,7 @@ public class Dialog_System_Editor : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
+                "Dialog_System_Runtime",
                 "Quest_System_Runtime",
                 "Core",
                 "CoreUObject",

@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #pragma once
 
@@ -12,7 +12,7 @@
 
 class FToolBarBuilder;
 class FMenuBuilder;
-class UQuest;
+class UDialog;
 
 
 
@@ -37,13 +37,13 @@ private:
 
 
 
-	class UQuestEditorSettings* SettingsPtr;
+	class UDialogEditorSettings* SettingsPtr;
 private:
 	TSharedPtr<class FUICommandList> PluginCommands;
 	TSharedPtr<FDialogBuilderNodeFactory> GraphPanelNodeFactory_DialogEditor;
 	TSharedPtr<class IDetailsView> PropertyWidget;
 
-	EAssetTypeCategories::Type QuestEditorAssetCategoryBit;
+	EAssetTypeCategories::Type DialogEditorAssetCategoryBit;
 	TArray< TSharedPtr<IAssetTypeActions> > CreatedAssetTypeActions;
 
 	TSharedPtr<struct FGraphNodeClassHelper> ClassCache;

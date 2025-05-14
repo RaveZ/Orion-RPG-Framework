@@ -1,14 +1,14 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #include "DialogBuilderFactory.h"
-#include "QuestBuilderGraph.h"
+#include "DialogBuilderGraph.h"
 #include "DialogBuilderEditor.h"
 #include "ClassViewerModule.h"
 #include "ClassViewerFilter.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Kismet2/SClassPickerDialog.h"
 
-#define LOCTEXT_NAMESPACE "Quest_Editor"
+#define LOCTEXT_NAMESPACE "Dialog_Editor"
 
 class FAssetClassParentFilter : public IClassViewerFilter
 {
@@ -56,7 +56,7 @@ public:
 
 UDialogBuilderFactory::UDialogBuilderFactory(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	SupportedClass = UQuestBuilderGraph::StaticClass();
+	SupportedClass = UDialogBuilderGraph::StaticClass();
 	bCreateNew = true;
 	bEditAfterNew = true;
 }
@@ -69,19 +69,19 @@ bool UDialogBuilderFactory::ConfigureProperties()
 
 UObject* UDialogBuilderFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
 {
-	if (QuestSystemGraphClass != nullptr)
+	if (DialogSystemGraphClass != nullptr)
 	{
-		return NewObject<UQuestBuilderGraph>(InParent, QuestSystemGraphClass, Name, Flags | RF_Transactional);
+		return NewObject<UDialogBuilderGraph>(InParent, DialogSystemGraphClass, Name, Flags | RF_Transactional);
 	}
 	else
 	{
-		check(Class->IsChildOf(UQuestBuilderGraph::StaticClass()));
+		check(Class->IsChildOf(UDialogBuilderGraph::StaticClass()));
 		return NewObject<UObject>(InParent, Class, Name, Flags | RF_Transactional);
 	}
 }
 
-FDialogGraphEditorSummoner::FDialogGraphEditorSummoner(TSharedPtr<class FDialogBuilderEditor> InQuestEditorPtr, FOnCreateGraphEditorWidget CreateGraphEditorWidgetCallback) : FDocumentTabFactoryForObjects<UEdGraph>(FDialogBuilderEditorTabs::ViewportID, InQuestEditorPtr)
-, QuestEditorPtr(InQuestEditorPtr)
+FDialogGraphEditorSummoner::FDialogGraphEditorSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr, FOnCreateGraphEditorWidget CreateGraphEditorWidgetCallback) : FDocumentTabFactoryForObjects<UEdGraph>(FDialogBuilderEditorTabs::ViewportID, InDialogEditorPtr)
+, DialogEditorPtr(InDialogEditorPtr)
 , OnCreateGraphEditorWidget(CreateGraphEditorWidgetCallback)
 {
 }
@@ -89,13 +89,13 @@ FDialogGraphEditorSummoner::FDialogGraphEditorSummoner(TSharedPtr<class FDialogB
 void FDialogGraphEditorSummoner::OnTabActivated(TSharedPtr<SDockTab> Tab) const
 {
 	TSharedRef<SGraphEditor> GraphEditor = StaticCastSharedRef<SGraphEditor>(Tab->GetContent());
-	QuestEditorPtr.Pin()->OnGraphEditorFocused(GraphEditor);
+	DialogEditorPtr.Pin()->OnGraphEditorFocused(GraphEditor);
 }
 
 void FDialogGraphEditorSummoner::OnTabBackgrounded(TSharedPtr<SDockTab> Tab) const
 {
 	TSharedRef<SGraphEditor> GraphEditor = StaticCastSharedRef<SGraphEditor>(Tab->GetContent());
-	QuestEditorPtr.Pin()->OnGraphEditorBackgrounded(GraphEditor);
+	DialogEditorPtr.Pin()->OnGraphEditorBackgrounded(GraphEditor);
 }
 
 void FDialogGraphEditorSummoner::OnTabRefreshed(TSharedPtr<SDockTab> Tab) const
@@ -114,10 +114,10 @@ void FDialogGraphEditorSummoner::SaveState(TSharedPtr<SDockTab> Tab, TSharedPtr<
 
 	UEdGraph* Graph = Payload->IsValid() ? FTabPayload_UObject::CastChecked<UEdGraph>(Payload) : nullptr;
 
-	if (Graph && QuestEditorPtr.Pin()->IsGraphInCurrentQuestGraph(Graph))
+	if (Graph && DialogEditorPtr.Pin()->IsGraphInCurrentDialogGraph(Graph))
 	{
 		// Don't save references to external graphs.
-		QuestEditorPtr.Pin()->GetQuestBuilderGraph()->LastEditedDocuments.Add(FEditedDocumentInfo(Graph, ViewLocation, ZoomAmount));
+		DialogEditorPtr.Pin()->GetDialogBuilderGraph()->LastEditedDocuments.Add(FEditedDocumentInfo(Graph, ViewLocation, ZoomAmount));
 	}
 }
 
@@ -136,13 +136,13 @@ const FSlateBrush* FDialogGraphEditorSummoner::GetTabIconForObject(const FWorkfl
 EAssetCommandResult UAssetDefinition_DialogBuilder::OpenAssets(const FAssetOpenArgs& OpenArgs) const
 {
 	const EToolkitMode::Type Mode = OpenArgs.ToolkitHost.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
-	for (UQuestBuilderGraph* QuestGraph : OpenArgs.LoadObjects<UQuestBuilderGraph>())
+	for (UDialogBuilderGraph* DialogGraph : OpenArgs.LoadObjects<UDialogBuilderGraph>())
 	{
-		FDialog_System_EditorModule& QuestSystemEditorModule = FModuleManager::GetModuleChecked<FDialog_System_EditorModule>("Dialog_System_Editor");
-		QuestSystemEditorModule.CheckClassCache();
+		FDialog_System_EditorModule& DialogSystemEditorModule = FModuleManager::GetModuleChecked<FDialog_System_EditorModule>("Dialog_System_Editor");
+		DialogSystemEditorModule.CheckClassCache();
 
 		const TSharedRef<FDialogBuilderEditor> CustomObjectToolkit(new FDialogBuilderEditor());
-		CustomObjectToolkit->Initialize(Mode, OpenArgs.ToolkitHost, QuestGraph);
+		CustomObjectToolkit->Initialize(Mode, OpenArgs.ToolkitHost, DialogGraph);
 	}
 
 	return EAssetCommandResult::Handled;

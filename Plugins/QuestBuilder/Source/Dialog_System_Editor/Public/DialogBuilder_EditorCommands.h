@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #pragma once
 
@@ -22,11 +22,11 @@ public:
 	TSharedPtr< FUICommandInfo > OpenPluginWindow;
 
 	// New documents
-	TSharedPtr< FUICommandInfo > AddNewQuestGraph;
+	TSharedPtr< FUICommandInfo > AddNewDialogGraph;
 	
 	//Toolbar
 	TSharedPtr<FUICommandInfo> NewTask;
-	TSharedPtr<FUICommandInfo> NewQuestCondition;
-	TSharedPtr<FUICommandInfo> NewQuestEvent;
-	TSharedPtr<FUICommandInfo> QuestSetting;
+	TSharedPtr<FUICommandInfo> NewDialogCondition;
+	TSharedPtr<FUICommandInfo> NewDialogEvent;
+	TSharedPtr<FUICommandInfo> DialogSetting;
 };

@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
 #include "SMyDialog.h"
@@ -16,7 +16,7 @@
 #include "SDialogPalette.h"
 
 
-#define LOCTEXT_NAMESPACE "MyQuest"
+#define LOCTEXT_NAMESPACE "MyDialog"
 
 void FMyDialogCommands::RegisterCommands()
 {
@@ -29,23 +29,23 @@ void FMyDialogCommands::RegisterCommands()
 }
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
-void SMyDialog::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEditor> InQuestEditor, const UQuestBuilderGraph* InQuestSystemGraph)
+void SMyDialog::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEditor> InDialogEditor, const UDialogBuilderGraph* InDialogSystemGraph)
 {
 	bNeedsRefresh = false;
 	bShowReplicatedVariablesOnly = false;
 
-	QuestEditorPtr = InQuestEditor;
+	DialogEditorPtr = InDialogEditor;
 	EdGraph = nullptr;
 
 	TSharedPtr<SWidget> ToolbarBuilderWidget = TSharedPtr<SWidget>();
 
-	if (InQuestEditor.IsValid())
+	if (InDialogEditor.IsValid())
 	{
-		QuestBuilderGraph = QuestEditorPtr.Pin()->GetQuestBuilderGraph();
+		DialogBuilderGraph = DialogEditorPtr.Pin()->GetDialogBuilderGraph();
 
 		CommandList = MakeShareable(new FUICommandList);
 
-		CommandList->Append(InQuestEditor.Pin()->GetToolkitCommands());
+		CommandList->Append(InDialogEditor.Pin()->GetToolkitCommands());
 
 		CommandList->MapAction(FMyDialogCommands::Get().OpenGraph,
 			FExecuteAction::CreateSP(this, &SMyDialog::OnOpenGraph),
@@ -86,8 +86,8 @@ void SMyDialog::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEdito
 		ToolbarBuilderWidget = SNullWidget::NullWidget;
 
 		CommandList->MapAction(FGenericCommands::Get().Rename,
-			FExecuteAction::CreateSP(this, &SMyDialog::OnRequestRenameOnActionNode),
-			FCanExecuteAction::CreateSP(this, &SMyDialog::CanRequestRenameOnActionNode));
+			FExecuteAction::CreateSP(this, &SMyDialog::OnRedialogRenameOnActionNode),
+			FCanExecuteAction::CreateSP(this, &SMyDialog::CanRedialogRenameOnActionNode));
 
 		CommandList->MapAction(FGenericCommands::Get().Copy,
 			FExecuteAction::CreateSP(this, &SMyDialog::OnCopy),
@@ -105,9 +105,9 @@ void SMyDialog::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEdito
 	}
 	else
 	{
-		// we're in read only mode when there's no quest editor:
-		QuestBuilderGraph = const_cast<UQuestBuilderGraph*>(InQuestSystemGraph);
-		check(QuestBuilderGraph);
+		// we're in read only mode when there's no dialog editor:
+		DialogBuilderGraph = const_cast<UDialogBuilderGraph*>(InDialogSystemGraph);
+		check(DialogBuilderGraph);
 		ToolbarBuilderWidget = SNew(SBox);
 	}
 
@@ -127,7 +127,7 @@ void SMyDialog::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEdito
 		.OnActionDoubleClicked(this, &SMyDialog::OnActionDoubleClicked)
 		.OnContextMenuOpening(this, &SMyDialog::OnContextMenuOpening)
 		.OnCategoryTextCommitted(this, &SMyDialog::OnCategoryNameCommitted)
-		.OnCanRenameSelectedAction(this, &SMyDialog::CanRequestRenameOnActionNode)
+		.OnCanRenameSelectedAction(this, &SMyDialog::CanRedialogRenameOnActionNode)
 		.OnGetSectionTitle(this, &SMyDialog::OnGetSectionTitle)
 		.OnGetSectionWidget(this, &SMyDialog::OnGetSectionWidget)
 		.OnActionMatchesName(this, &SMyDialog::HandleActionMatchesName)
@@ -144,7 +144,7 @@ void SMyDialog::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEdito
 				SNew(SBorder)
 					.Padding(4.0f)
 					.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-					.AddMetaData<FTagMetaData>(FTagMetaData(TEXT("MyQuestPanel")))
+					.AddMetaData<FTagMetaData>(FTagMetaData(TEXT("MyDialogPanel")))
 					[
 						SNew(SVerticalBox)
 
@@ -178,7 +178,7 @@ void SMyDialog::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEdito
 
 	//ResetLastPinType();
 
-	if (!QuestEditorPtr.IsValid())
+	if (!DialogEditorPtr.IsValid())
 	{
 		Refresh();
 	}
@@ -238,11 +238,11 @@ FAssetSchemaAction_DialogBuilderGraph* SMyDialog::SelectionAsGraph() const
 {
 	return SelectionAsType<FAssetSchemaAction_DialogBuilderGraph>(GraphActionMenu);
 }
-void SMyDialog::OnRequestRenameOnActionNode()
+void SMyDialog::OnRedialogRenameOnActionNode()
 {
 	// Attempt to rename in both menus, only one of them will have anything selected
 	GraphActionMenu->OnRequestRenameOnActionNode();
-	if (QuestEditorPtr.IsValid())
+	if (DialogEditorPtr.IsValid())
 	{
 
 	}
@@ -259,7 +259,7 @@ void SMyDialog::Refresh()
 	bNeedsRefresh = false;
 
 	// Conform to our interfaces here to ensure we catch any newly added functions
-	//FBlueprintEditorUtils::ConformImplementedInterfaces(GetQuestBuilderGraph());
+	//FBlueprintEditorUtils::ConformImplementedInterfaces(GetDialogBuilderGraph());
 
 	GraphActionMenu->RefreshAllActions(/*bPreserveExpansion=*/ true);
 }
@@ -299,24 +299,24 @@ void SMyDialog::ClearGraphActionMenuSelection()
 
 TSharedRef<SWidget> SMyDialog::OnCreateWidgetForAction(FCreateWidgetForActionData* const InCreateData)
 {
-	return QuestEditorPtr.IsValid() ? SNew(SDialogPaletteItem, InCreateData, QuestEditorPtr.Pin()) : SNew(SDialogPaletteItem, InCreateData, GetQuestBuilderGraph());
+	return DialogEditorPtr.IsValid() ? SNew(SDialogPaletteItem, InCreateData, DialogEditorPtr.Pin()) : SNew(SDialogPaletteItem, InCreateData, GetDialogBuilderGraph());
 }
 
 void SMyDialog::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 {
-	UQuestBuilderGraph* QuestSystemObj = GetQuestBuilderGraph();
-	check(QuestSystemObj);
+	UDialogBuilderGraph* DialogSystemObj = GetDialogBuilderGraph();
+	check(DialogSystemObj);
 
-	TSharedPtr<FDialogBuilderEditor> QuestSystemEditor = QuestEditorPtr.Pin();
+	TSharedPtr<FDialogBuilderEditor> DialogSystemEditor = DialogEditorPtr.Pin();
 
 	EFieldIteratorFlags::SuperClassFlags FieldIteratorSuperFlag = EFieldIteratorFlags::IncludeSuper;
 
-	if (QuestSystemEditor.IsValid())
+	if (DialogSystemEditor.IsValid())
 	{
 		// Grab ubergraph pages
-		for (int32 i = 0; i < QuestSystemObj->QuestGraphPages.Num(); i++)
+		for (int32 i = 0; i < DialogSystemObj->DialogGraphPages.Num(); i++)
 		{
-			UEdGraph* Graph = QuestSystemObj->QuestGraphPages[i];
+			UEdGraph* Graph = DialogSystemObj->DialogGraphPages[i];
 			check(Graph);
 
 			FGraphDisplayInfo DisplayInfo;
@@ -347,15 +347,15 @@ void SMyDialog::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>&
 	if (InAction.IsValid())
 	{
 		FAssetSchemaAction_DialogBuilderGraph* GraphAction = (FAssetSchemaAction_DialogBuilderGraph*)InAction.Get();
-		QuestEditorPtr.Pin()->FocusedEdGraph = GraphAction->EdGraph;
+		DialogEditorPtr.Pin()->FocusedEdGraph = GraphAction->EdGraph;
 
 		if (GraphAction->EdGraph)
 		{
-			TSharedPtr<FDialogBuilderEditor> QuestEditor = QuestEditorPtr.Pin();
+			TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
 
-			if (UDialogBuilderEdGraph* QuestGraph = Cast<UDialogBuilderEdGraph>(QuestEditor->FocusedEdGraph))
+			if (UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(DialogEditor->FocusedEdGraph))
 			{
-				QuestEditor->PropertyWidget->SetObject(QuestGraph->Dialog);
+				DialogEditor->PropertyWidget->SetObject(DialogGraph->Dialog);
 			}
 		}
 	}
@@ -372,7 +372,7 @@ void SMyDialog::OnGlobalActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAct
 
 void SMyDialog::OnActionDoubleClicked(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions)
 {
-	if (!QuestEditorPtr.IsValid())
+	if (!DialogEditorPtr.IsValid())
 	{
 		return;
 	}
@@ -388,23 +388,23 @@ void SMyDialog::ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction)
 	const bool bIsShiftPressed = FSlateApplication::Get().GetModifierKeys().IsShiftDown();
 	FDocumentTracker::EOpenDocumentCause OpenMode = bIsShiftPressed ? FDocumentTracker::ForceOpenNewDocument : FDocumentTracker::OpenNewDocument;
 
-	UQuestBuilderGraph* QuestSystemObj = QuestEditorPtr.Pin()->GetQuestBuilderGraph();
+	UDialogBuilderGraph* DialogSystemObj = DialogEditorPtr.Pin()->GetDialogBuilderGraph();
 	if (InAction.IsValid())
 	{
 		if (InAction->GetTypeId() == FAssetSchemaAction_DialogBuilderGraph::StaticGetTypeId())
 		{
 			FAssetSchemaAction_DialogBuilderGraph* GraphAction = (FAssetSchemaAction_DialogBuilderGraph*)InAction.Get();
-			QuestEditorPtr.Pin()->FocusedEdGraph = GraphAction->EdGraph;
+			DialogEditorPtr.Pin()->FocusedEdGraph = GraphAction->EdGraph;
 
 			if (GraphAction->EdGraph)
 			{
-				QuestEditorPtr.Pin()->JumpToHyperlink(GraphAction->EdGraph);
+				DialogEditorPtr.Pin()->JumpToHyperlink(GraphAction->EdGraph);
 
-				TSharedPtr<FDialogBuilderEditor> QuestEditor = QuestEditorPtr.Pin();
+				TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
 
-				if (UDialogBuilderEdGraph* QuestGraph = Cast<UDialogBuilderEdGraph>(QuestEditor->ViewportWidget->GetCurrentGraph()))
+				if (UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(DialogEditor->ViewportWidget->GetCurrentGraph()))
 				{
-					QuestEditor->PropertyWidget->SetObject(QuestGraph->Dialog);
+					DialogEditor->PropertyWidget->SetObject(DialogGraph->Dialog);
 				}
 			}
 		}
@@ -413,7 +413,7 @@ void SMyDialog::ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction)
 
 TSharedPtr<SWidget> SMyDialog::OnContextMenuOpening()
 {
-	if (!QuestEditorPtr.IsValid())
+	if (!DialogEditorPtr.IsValid())
 	{
 		return TSharedPtr<SWidget>();
 	}
@@ -476,9 +476,9 @@ void SMyDialog::BuildAddNewMenu(FMenuBuilder& MenuBuilder)
 {
 	MenuBuilder.BeginSection("AddNewItem", LOCTEXT("AddOperations", "Add New"));
 
-	if (UQuestBuilderGraph* CurrentBlueprint = GetQuestBuilderGraph())
+	if (UDialogBuilderGraph* CurrentBlueprint = GetDialogBuilderGraph())
 	{
-		MenuBuilder.AddMenuEntry(FDialogBuilder_EditorCommands::Get().AddNewQuestGraph);
+		MenuBuilder.AddMenuEntry(FDialogBuilder_EditorCommands::Get().AddNewDialogGraph);
 		
 	}
 	MenuBuilder.EndSection();
@@ -511,13 +511,13 @@ void SMyDialog::OnCategoryNameCommitted(const FText& InNewText, ETextCommit::Typ
 	{
 		const FScopedTransaction Transaction(LOCTEXT("RenameCategory", "Rename Category"));
 
-		GetQuestBuilderGraph()->Modify();
+		GetDialogBuilderGraph()->Modify();
 
 		Refresh();
 		SelectItemByName(FName(*CategoryName.ToString()), ESelectInfo::OnMouseClick, InAction.Pin()->SectionID, true);
 	}
 }
-bool SMyDialog::CanRequestRenameOnActionNode(TWeakPtr<struct FGraphActionNode> InSelectedNode) const
+bool SMyDialog::CanRedialogRenameOnActionNode(TWeakPtr<struct FGraphActionNode> InSelectedNode) const
 {
 	return true;
 }
@@ -529,7 +529,7 @@ FText SMyDialog::OnGetSectionTitle(int32 InSectionID)
 	switch (InSectionID)
 	{
 	case DialogSectionID::DIALOGGRAPH:
-		SeperatorTitle = NSLOCTEXT("GraphActionNode", "QuestGraphs", "QuestGraphs");
+		SeperatorTitle = NSLOCTEXT("GraphActionNode", "DialogGraphs", "DialogGraphs");
 		break; 
 	default:
 	case DialogSectionID::NONE:
@@ -549,7 +549,7 @@ TSharedRef<SWidget> SMyDialog::OnGetSectionWidget(TSharedRef<SWidget> RowWidget,
 	switch (InSectionID)
 	{
 	case DialogSectionID::DIALOGGRAPH:
-		AddNewText = LOCTEXT("AddNewQuestGraph", "New Dialog Graph");
+		AddNewText = LOCTEXT("AddNewDialogGraph", "New Dialog Graph");
 		MetaDataTag = TEXT("AddNewGraph");
 		break;
 	default:
@@ -560,12 +560,12 @@ TSharedRef<SWidget> SMyDialog::OnGetSectionWidget(TSharedRef<SWidget> RowWidget,
 }
 FReply SMyDialog::OnAddButtonClickedOnSection(int32 InSectionID)
 {
-	TSharedPtr<FDialogBuilderEditor> QuestEditor = QuestEditorPtr.Pin();
+	TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
 
 	switch (InSectionID)
 	{
 	case DialogSectionID::DIALOGGRAPH:
-		CommandList->ExecuteAction(FDialogBuilder_EditorCommands::Get().AddNewQuestGraph.ToSharedRef());
+		CommandList->ExecuteAction(FDialogBuilder_EditorCommands::Get().AddNewDialogGraph.ToSharedRef());
 		break;
 	}
 
@@ -635,7 +635,7 @@ bool SMyDialog::CanDeleteEntry() const
 	return false;
 }
 
-bool SMyDialog::CanRequestRenameOnActionNode() const
+bool SMyDialog::CanRedialogRenameOnActionNode() const
 {
 	TArray<TSharedPtr<FEdGraphSchemaAction> > SelectedActions;
 	GraphActionMenu->GetSelectedActions(SelectedActions);
@@ -691,27 +691,27 @@ void SMyDialog::OnDeleteGraph(UEdGraph* InGraph)
 		}
 
 		const FScopedTransaction Transaction(LOCTEXT("RemoveGraph", "Remove Graph"));
-		GetQuestBuilderGraph()->Modify();
+		GetDialogBuilderGraph()->Modify();
 
 		InGraph->Modify();
 
 		
 		// Remove any  nodes bound to this graph
 		TArray<UDialogBuilderEdNode*> AllNodes;
-		FDialogBuilderEditorUtils::GetAllNodesOfClass<UDialogBuilderEdNode>(GetQuestBuilderGraph(), AllNodes);
+		FDialogBuilderEditorUtils::GetAllNodesOfClass<UDialogBuilderEdNode>(GetDialogBuilderGraph(), AllNodes);
 
 		const bool bDontRecompile = true;
 		for (UDialogBuilderEdNode* CompNode : AllNodes)
 		{
-			if (CompNode->GetQuestBuilderEdGraph() == InGraph)
+			if (CompNode->GetDialogBuilderEdGraph() == InGraph)
 			{
-				FDialogBuilderEditorUtils::RemoveNode(GetQuestBuilderGraph(), CompNode, bDontRecompile);
+				FDialogBuilderEditorUtils::RemoveNode(GetDialogBuilderGraph(), CompNode, bDontRecompile);
 			}
 		}
 		
 
-		FDialogBuilderEditorUtils::RemoveGraph(GetQuestBuilderGraph(), InGraph);
-		QuestEditorPtr.Pin()->CloseDocumentTab(InGraph);
+		FDialogBuilderEditorUtils::RemoveGraph(GetDialogBuilderGraph(), InGraph);
+		DialogEditorPtr.Pin()->CloseDocumentTab(InGraph);
 
 
 		InGraph = NULL;
@@ -728,7 +728,7 @@ void SMyDialog::OpenGraph(FDocumentTracker::EOpenDocumentCause InCause, bool bOp
 		// If we have no graph then this is an interface event, so focus on the event graph
 		/*if (!GraphToOpen)
 		{
-			GraphToOpen = FDialogBuilderEditorUtils::FindQuestGraph(GetQuestBuilderGraph());
+			GraphToOpen = FDialogBuilderEditorUtils::FindDialogGraph(GetDialogBuilderGraph());
 		}*/
 	}
 
@@ -736,11 +736,11 @@ void SMyDialog::OpenGraph(FDocumentTracker::EOpenDocumentCause InCause, bool bOp
 	{
 		if (bOpenExternalGraphInNewEditor )
 		{
-			QuestEditorPtr.Pin()->JumpToHyperlink(GraphToOpen, false);
+			DialogEditorPtr.Pin()->JumpToHyperlink(GraphToOpen, false);
 		}
 		else
 		{
-			QuestEditorPtr.Pin()->OpenDocument(GraphToOpen, InCause);
+			DialogEditorPtr.Pin()->OpenDocument(GraphToOpen, InCause);
 		}
 	}
 }
@@ -754,7 +754,7 @@ bool SMyDialog::SelectionHasContextMenu() const
 
 void SMyDialog::OnObjectPropertyChanged(UObject* InObject, FPropertyChangedEvent& InPropertyChangedEvent)
 {
-	if (InObject == QuestBuilderGraph && (InPropertyChangedEvent.ChangeType != EPropertyChangeType::ValueSet && InPropertyChangedEvent.ChangeType != EPropertyChangeType::ArrayClear))
+	if (InObject == DialogBuilderGraph && (InPropertyChangedEvent.ChangeType != EPropertyChangeType::ValueSet && InPropertyChangedEvent.ChangeType != EPropertyChangeType::ArrayClear))
 	{
 		bNeedsRefresh = true;
 	}

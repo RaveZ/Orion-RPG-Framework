@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #pragma once
 
@@ -8,10 +8,10 @@
 #include "UObject/ObjectMacros.h"
 #include "UObject/NoExportTypes.h"
 #include "DialogBuilderEdGraph.h"
-#include "QuestBuilderGraph.h"
+#include "DialogBuilderGraph.h"
 #include "DialogBuilderEdNode.generated.h"
 
-class UEdNode_QuestSystemEdge;
+class UEdNode_DialogSystemEdge;
 class UDialogBuilderEdGraph;
 class SGraphNode_DialogBuilderNode;
 
@@ -30,7 +30,7 @@ public:
 	UPROPERTY()
 	TObjectPtr<UObject> NodeInstance;
 	
-	UDialogBuilderEdGraph* GetQuestBuilderEdGraph();
+	UDialogBuilderEdGraph* GetDialogBuilderEdGraph();
 
 	SGraphNode_DialogBuilderNode* SGraphNode;
 

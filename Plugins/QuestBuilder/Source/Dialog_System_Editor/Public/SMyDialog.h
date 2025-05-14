@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #pragma once
 
@@ -19,7 +19,7 @@ class FMyDialogCommands : public TCommands<FMyDialogCommands>
 public:
 	/** Constructor */
 	FMyDialogCommands()
-		: TCommands<FMyDialogCommands>(TEXT("MyQuest"), NSLOCTEXT("Contexts", "My Dialog", "My Dialog"), NAME_None, FAppStyle::GetAppStyleSetName())
+		: TCommands<FMyDialogCommands>(TEXT("MyDialog"), NSLOCTEXT("Contexts", "My Dialog", "My Dialog"), NAME_None, FAppStyle::GetAppStyleSetName())
 	{
 	}
 
@@ -44,7 +44,7 @@ public:
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */
-	void Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEditor> InQuestEditor, const UQuestBuilderGraph* InQuestSystemGraph = nullptr);
+	void Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEditor> InDialogEditor, const UDialogBuilderGraph* InDialogSystemGraph = nullptr);
 	~SMyDialog();
 
 	/* SWidget interface */
@@ -55,10 +55,10 @@ public:
 	FAssetSchemaAction_DialogBuilderGraph* SelectionAsGraph() const;
 
 	/** Accessor the blueprint object from the main editor */
-	UQuestBuilderGraph* GetQuestBuilderGraph() const { return QuestBuilderGraph; }
+	UDialogBuilderGraph* GetDialogBuilderGraph() const { return DialogBuilderGraph; }
 
 	/** Initiates a rename on the selected action node, if possible */
-	void OnRequestRenameOnActionNode();
+	void OnRedialogRenameOnActionNode();
 
 	/** Callbacks for Paste Commands */
 	void OnPasteGeneric();
@@ -91,7 +91,7 @@ private:
 	FReply OnActionDragged(const TArray< TSharedPtr<FEdGraphSchemaAction> >& InActions, const FPointerEvent& MouseEvent);
 	FReply OnCategoryDragged(const FText& InCategory, const FPointerEvent& MouseEvent);
 	void OnActionSelected(const TArray< TSharedPtr<FEdGraphSchemaAction> >& InActions);
-	//void OnActionSelectedHelper(TSharedPtr<FEdGraphSchemaAction> InAction, TWeakPtr<FDialogBuilderEditor> InQuestEditor, UQuestBuilderGraph* InQuestSystemGraph, TSharedRef<SKismetInspector> Inspector);
+	//void OnActionSelectedHelper(TSharedPtr<FEdGraphSchemaAction> InAction, TWeakPtr<FDialogBuilderEditor> InDialogEditor, UDialogBuilderGraph* InDialogSystemGraph, TSharedRef<SKismetInspector> Inspector);
 	void OnGlobalActionSelected(const TArray< TSharedPtr<FEdGraphSchemaAction> >& InActions, ESelectInfo::Type InSelectionType);
 	void OnActionDoubleClicked(const TArray< TSharedPtr<FEdGraphSchemaAction> >& InActions);
 	void ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction);
@@ -102,7 +102,7 @@ private:
 	TSharedRef<SWidget> CreateAddToSectionButton(int32 InSectionID, TWeakPtr<SWidget> WeakRowWidget, FText AddNewText, FName MetaDataTag);
 
 	void OnCategoryNameCommitted(const FText& InNewText, ETextCommit::Type InTextCommit, TWeakPtr< struct FGraphActionNode > InAction);
-	bool CanRequestRenameOnActionNode(TWeakPtr<struct FGraphActionNode> InSelectedNode) const;
+	bool CanRedialogRenameOnActionNode(TWeakPtr<struct FGraphActionNode> InSelectedNode) const;
 	FText OnGetSectionTitle(int32 InSectionID);
 	TSharedRef<SWidget> OnGetSectionWidget(TSharedRef<SWidget> RowWidget, int32 InSectionID);
 	//EVisibility OnGetSectionTextVisibility(TWeakPtr<SWidget> RowWidget, int32 InSectionID) const;
@@ -124,7 +124,7 @@ private:
 	void OnFocusNodeInNewTab();
 	void OnDeleteEntry();
 	bool CanDeleteEntry() const;
-	bool CanRequestRenameOnActionNode() const;
+	bool CanRedialogRenameOnActionNode() const;
 	bool IsDuplicateActionVisible() const;
 	bool CanDuplicateAction() const;
 	void OnDuplicateAction();
@@ -161,10 +161,10 @@ private:
 	TSharedPtr<class SGraphActionMenu> GraphActionMenu;
 
 	/** Pointer back to the Dialog editor that owns us */
-	TWeakPtr<FDialogBuilderEditor> QuestEditorPtr;
+	TWeakPtr<FDialogBuilderEditor> DialogEditorPtr;
 
 	/** The Dialog graph being displayed: */
-	UQuestBuilderGraph* QuestBuilderGraph;
+	UDialogBuilderGraph* DialogBuilderGraph;
 
 	/** The Ed Graph being displayed: */
 	UEdGraph* EdGraph;

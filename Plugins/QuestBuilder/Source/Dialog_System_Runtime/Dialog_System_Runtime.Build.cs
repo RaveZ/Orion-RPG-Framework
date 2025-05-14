@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 using UnrealBuildTool;
 using EpicGames.Core;  // IMPORTANT - CONTAINS JsonObject 
 
@@ -27,6 +27,7 @@ public class Dialog_System_Runtime : ModuleRules
                 "Core",
                 "CoreUObject",
                 "Engine",
+                "Quest_System_Runtime",
             }
             );
 
@@ -44,28 +45,6 @@ public class Dialog_System_Runtime : ModuleRules
             {
 			}
             );
-
-        // Add pre-processor macros for the OrionRPGFramework plugin based on enabled state (optional plugin)
-        PublicDefinitions.Add("WITH_ORION_COMBAT_FRAMEWORK=0");
-        if (JsonObject.TryRead(Target.ProjectFile, out var rawObject))
-        {
-            if (rawObject.TryGetObjectArrayField("Plugins", out var pluginObjects))
-            {
-                foreach (JsonObject pluginObject in pluginObjects)
-                {
-                    pluginObject.TryGetStringField("Name", out var pluginName);
-
-                    pluginObject.TryGetBoolField("Enabled", out var pluginEnabled);
-
-                    if (pluginName == "OrionCombatFramework" && pluginEnabled)
-                    {
-                        PrivateDependencyModuleNames.Add("OrionCombatFramework");
-                        PublicDefinitions.Add("WITH_ORION_COMBAT_FRAMEWORK=1");
-                        PublicDefinitions.Remove("WITH_ORION_COMBAT_FRAMEWORK=0");
-                    }
-                }
-            }
-        }
 
     }
 }

@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #pragma once
 
@@ -28,13 +28,13 @@ public:
 	 *
 	 * @param  InArgs				A set of slate arguments, defined above.
 	 * @param  InCreateData			A set of data associated with a FEdGraphSchemaAction that this item represents.
-	 * @param  InQuestEditor	A pointer to the Dialog editor that the palette belongs to.
+	 * @param  InDialogEditor	A pointer to the Dialog editor that the palette belongs to.
 	 */
-	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, TWeakPtr<FDialogBuilderEditor> InQuestEditor);
-	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestBuilderGraph* InQuestSystemGraph);
+	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, TWeakPtr<FDialogBuilderEditor> InDialogEditor);
+	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UDialogBuilderGraph* InDialogSystemGraph);
 
 private:
-	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestBuilderGraph* InQuestSystemGraph, TWeakPtr<FDialogBuilderEditor> InQuestEditor);
+	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UDialogBuilderGraph* InDialogSystemGraph, TWeakPtr<FDialogBuilderEditor> InDialogEditor);
 
 	// SWidget Interface
 	virtual void OnDragEnter(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent) override;
@@ -61,10 +61,10 @@ private:
 	/** True if the class should be displayed in the tooltip */
 	bool bShowClassInTooltip;
 
-	UQuestBuilderGraph* QuestBuilderGraph;
+	UDialogBuilderGraph* DialogBuilderGraph;
 
 	/** Pointer back to the Dialog editor that owns this */
-	TWeakPtr<FDialogBuilderEditor> QuestEditorPtr;
+	TWeakPtr<FDialogBuilderEditor> DialogEditorPtr;
 
 	/** Cache for the MenuDescription to be displayed for this item */
 	FNodeTextCache MenuDescriptionCache;
@@ -73,10 +73,10 @@ private:
 /**
  * 
  */
-class DIALOG_SYSTEM_EDITOR_API SQuestPalette : public SCompoundWidget
+class DIALOG_SYSTEM_EDITOR_API SDialogPalette : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SQuestPalette)
+	SLATE_BEGIN_ARGS(SDialogPalette)
 	{}
 	SLATE_END_ARGS()
 
@@ -85,9 +85,9 @@ public:
 	 * the specified Dialog.
 	 *
 	 * @param  InArgs				A set of slate arguments, defined above.
-	 * @param  InQuestEditor	A pointer to the Dialog editor that this palette belongs to.
+	 * @param  InDialogEditor	A pointer to the Dialog editor that this palette belongs to.
 	 */
-	void Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEditor> InQuestEditor);
+	void Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEditor> InDialogEditor);
 
 private:
 	/**

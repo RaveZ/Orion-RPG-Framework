@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #pragma once
 
@@ -15,7 +15,7 @@ class UQuestBuilderEdge;
 
 
 UENUM(BlueprintType)
-enum class ENodeLimits : uint8
+enum class EDialogNodeLimits : uint8
 {
 	Unlimited,
 	Limited
@@ -109,15 +109,15 @@ public:
 
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode")
-		ENodeLimits ParentLimitType;
+		EDialogNodeLimits ParentLimitType;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode", meta = (ClampMin = "0", EditCondition = "ParentLimitType == ENodeLimits::Limited", EditConditionHides))
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode", meta = (ClampMin = "0", EditCondition = "ParentLimitType == EDialogNodeLimits::Limited", EditConditionHides))
 		int32 ParentLimit;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode")
-		ENodeLimits ChildrenLimitType;
+		EDialogNodeLimits ChildrenLimitType;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode", meta = (ClampMin = "0", EditCondition = "ChildrenLimitType == ENodeLimits::Limited", EditConditionHides))
+	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode", meta = (ClampMin = "0", EditCondition = "ChildrenLimitType == EDialogNodeLimits::Limited", EditConditionHides))
 		int32 ChildrenLimit;
 
 

@@ -68,22 +68,22 @@ public:
 	FTimerHandle TimerHandle_UpdateInteractionTrace;
 
 public:
-	UFUNCTION(BlueprintPure, Category = "QuestComponent")
+	UFUNCTION(BlueprintPure, Category = "DialogComponent")
 	virtual APawn* GetOwningPawn() const;
 
-	UFUNCTION(BlueprintPure, Category = "QuestComponent")
+	UFUNCTION(BlueprintPure, Category = "DialogComponent")
 	virtual APlayerController* GetOwningController() const;
 
 	UFUNCTION()
 	virtual void OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn);
 public:
-	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+	UFUNCTION(BlueprintCallable, Category = "DialogComponent")
 	void SetInteractionEnabled(bool bEnabled);
 
-	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+	UFUNCTION(BlueprintCallable, Category = "DialogComponent")
 	void StartInteraction();
 
-	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+	UFUNCTION(BlueprintCallable, Category = "DialogComponent")
 	void CancelInteraction();
 private:
 	void UpdateInteractionTrace();

@@ -1,10 +1,10 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #include "Dialog_System_Editor.h"
 #include "DialogBuilder_EditorStyle.h"
 #include "DialogBuilder_EditorCommands.h"
-#include "QuestBuilderNode.h"
-#include "Task/QuestTask.h"
+#include "DialogBuilderNode.h"
+
 #include "IAssetTools.h"
 #include "ISettingsModule.h"
 #include "ISettingsSection.h"
@@ -17,7 +17,7 @@
 #include "ToolMenus.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "DialogBuilderSetting.h"
-#include "QuestData.h"
+#include "DialogData.h"
 
 
 #define LOCTEXT_NAMESPACE "FDialog_System_EditorModule"
@@ -87,9 +87,6 @@ void FDialog_System_EditorModule::CheckClassCache()
 {
 	if (!ClassCache.IsValid())
 	{
-		ClassCache = MakeShareable(new FGraphNodeClassHelper(UQuestTask::StaticClass()));
-		FGraphNodeClassHelper::AddObservedBlueprintClasses(UQuestTask::StaticClass());
-		ClassCache->UpdateAvailableBlueprintClasses();
 	}
 }
 

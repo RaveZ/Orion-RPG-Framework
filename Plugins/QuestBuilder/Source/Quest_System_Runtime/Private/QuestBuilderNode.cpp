@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
 #include "QuestBuilderNode.h"
@@ -142,7 +142,7 @@ bool UQuestBuilderNode::CanCreateConnection(UQuestBuilderNode* Other, FText& Err
 
 bool UQuestBuilderNode::CanCreateConnectionTo(UQuestBuilderNode* Other, int32 NumberOfChildrenNodes, FText& ErrorMessage)
 {
-	if (ChildrenLimitType == ENodeLimits::Limited && NumberOfChildrenNodes >= ChildrenLimit)
+	if (ChildrenLimitType == EDialogNodeLimits::Limited && NumberOfChildrenNodes >= ChildrenLimit)
 	{
 		ErrorMessage = FText::FromString("Children limit exceeded");
 		return false;
@@ -154,7 +154,7 @@ bool UQuestBuilderNode::CanCreateConnectionTo(UQuestBuilderNode* Other, int32 Nu
 
 bool UQuestBuilderNode::CanCreateConnectionFrom(UQuestBuilderNode* Other, int32 NumberOfParentNodes, FText& ErrorMessage)
 {
-	if (ParentLimitType == ENodeLimits::Limited && NumberOfParentNodes >= ParentLimit)
+	if (ParentLimitType == EDialogNodeLimits::Limited && NumberOfParentNodes >= ParentLimit)
 	{
 		ErrorMessage = FText::FromString("Parent limit exceeded");
 		return false;

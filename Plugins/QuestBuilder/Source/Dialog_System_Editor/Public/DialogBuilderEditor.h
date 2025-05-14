@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #pragma once
 
@@ -7,7 +7,7 @@
 #include "SSubobjectEditor.h"
 #include "Dialog_System_Editor.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
-#include "QuestBuilderGraph.h"
+#include "DialogBuilderGraph.h"
 
 class SMyDialog;
 
@@ -24,10 +24,10 @@ namespace DialogSectionID
 struct FDialogBuilderEditorTabs
 {
 	// Tab identifiers
-	static const FName MyQuestDetailID;
-	static const FName QuestBuilderPropertyID;
+	static const FName MyDialogDetailID;
+	static const FName DialogBuilderPropertyID;
 	static const FName ViewportID;
-	static const FName QuestBuilderEditorSettingsID;
+	static const FName DialogBuilderEditorSettingsID;
 };
 
 
@@ -37,11 +37,11 @@ struct FDialogBuilderEditorTabs
 class DIALOG_SYSTEM_EDITOR_API IDialogEditor : public FWorkflowCentricApplication
 {
 public:
-	virtual void JumpToHyperlink(const UObject* ObjectReference, bool bRequestRename) = 0;
+	virtual void JumpToHyperlink(const UObject* ObjectReference, bool bRedialogRename) = 0;
 	virtual void JumpToPin(const UEdGraphPin* PinToFocusOn) = 0;
 
 	/** Invokes the search UI and sets the mode and search terms optionally */
-	virtual void SummonSearchUI(bool bSetFindWithinQuestSystem, FString NewSearchTerms = FString(), bool bSelectFirstResult = false) = 0;
+	virtual void SummonSearchUI(bool bSetFindWithinDialogSystem, FString NewSearchTerms = FString(), bool bSelectFirstResult = false) = 0;
 
 	/** Invokes the Find and Replace UI */
 	virtual void SummonFindAndReplaceUI() = 0;
@@ -51,7 +51,7 @@ public:
 
 	virtual void RefreshEditors() = 0;
 
-	virtual void RefreshMyQuest() = 0;
+	virtual void RefreshMyDialog() = 0;
 
 	virtual void RefreshInspector() = 0;
 
@@ -107,10 +107,10 @@ public:
 	
 	//IDialogEditor
 	virtual void RefreshEditors() override;
-	virtual void RefreshMyQuest();
+	virtual void RefreshMyDialog();
 	virtual void RefreshInspector();
 	virtual void AddToSelection(UEdGraphNode* InNode) override;
-	virtual void JumpToHyperlink(const UObject* ObjectReference, bool bRequestRename = false) override;
+	virtual void JumpToHyperlink(const UObject* ObjectReference, bool bRedialogRename = false) override;
 	virtual void JumpToPin(const class UEdGraphPin* Pin) override;
 	virtual void SummonSearchUI(bool bSetFindWithinBlueprint, FString NewSearchTerms = FString(), bool bSelectFirstResult = false) override;
 	virtual void SummonFindAndReplaceUI() override;
@@ -130,26 +130,26 @@ public:
 	// End of FSerializableObject interface
 
 	/** Returns a pointer to the Dialog graph object we are currently editing, as long as we are editing exactly one */
-	virtual UQuestBuilderGraph* GetQuestBuilderGraph() const;
+	virtual UDialogBuilderGraph* GetDialogBuilderGraph() const;
 
 	// Type of new document/graph being created by a menu item
-	enum ECreatedQuestDocumentType
+	enum ECreatedDialogDocumentType
 	{
 		CGT_None,
-		CGT_NewQuestGraph,
+		CGT_NewDialogGraph,
 	};
 
 	// Called to see if the new document menu items is visible for this type
 	virtual bool IsSectionVisible(DialogSectionID::Type InSectionID) const { return true; }
-	virtual bool NewDocument_IsVisibleForType(ECreatedQuestDocumentType GraphType) const;
-	EVisibility NewDocument_GetVisibilityForType(ECreatedQuestDocumentType GraphType) const
+	virtual bool NewDocument_IsVisibleForType(ECreatedDialogDocumentType GraphType) const;
+	EVisibility NewDocument_GetVisibilityForType(ECreatedDialogDocumentType GraphType) const
 	{
 		return NewDocument_IsVisibleForType(GraphType) ? EVisibility::Visible : EVisibility::Collapsed;
 	}
 
 	/** Called when New Function button is clicked */
-	virtual void NewDocument_OnClicked(ECreatedQuestDocumentType GraphType);
-	FReply NewDocument_OnClick(ECreatedQuestDocumentType GraphType) { NewDocument_OnClicked(GraphType); return FReply::Handled(); }
+	virtual void NewDocument_OnClicked(ECreatedDialogDocumentType GraphType);
+	FReply NewDocument_OnClick(ECreatedDialogDocumentType GraphType) { NewDocument_OnClicked(GraphType); return FReply::Handled(); }
 
 	/** Returns true if in editing mode */
 	bool InEditingMode() const;
@@ -184,7 +184,7 @@ public:
 	void InitializeDocumentTab();
 
 	/**	Returns whether the editor is currently editing a single Dialog object */
-	bool IsEditingSingleQuestGraph() const;
+	bool IsEditingSingleDialogGraph() const;
 
 	/**
 	 * Returns the currently focused graph in the Dialog editor
@@ -200,12 +200,12 @@ public:
 	/** Called when the graph editor tab is backgrounded */
 	virtual void OnGraphEditorBackgrounded(const TSharedRef<SGraphEditor>& InGraphEditor);
 
-	/** Checks to see if the provided graph is contained within the current QuestBuilderGraph */
-	bool IsGraphInCurrentQuestGraph(const UEdGraph* InGraph) const;
+	/** Checks to see if the provided graph is contained within the current DialogBuilderGraph */
+	bool IsGraphInCurrentDialogGraph(const UEdGraph* InGraph) const;
 
 
 	//Getter
-	TSharedPtr<SMyDialog> GetMyQuestWidget() const { return MyQuestWidget; }
+	TSharedPtr<SMyDialog> GetMyDialogWidget() const { return MyDialogWidget; }
 
 
 	FGraphAppearanceInfo GetGraphAppearance() const;
@@ -225,7 +225,7 @@ protected:
 	TSharedRef<SDockTab> SpawnTab_Viewport(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_Details(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_EditorSettings(const FSpawnTabArgs& Args); 
-	TSharedRef<SDockTab> SpawnTab_MyQuest(const FSpawnTabArgs& Args);
+	TSharedRef<SDockTab> SpawnTab_MyDialog(const FSpawnTabArgs& Args);
 	
 	void CreateInternalWidgets();
 
@@ -243,7 +243,7 @@ protected:
 
 	FGraphPanelSelectionSet GetSelectedNodes() const;
 
-	void RebuildQuestBuilderGraphPages();
+	void RebuildDialogBuilderGraphPages();
 
 	// Delegates for graph editor commands
 	void SelectAllNodes();
@@ -268,14 +268,14 @@ protected:
 	bool CanCreateNewTask() const;
 	bool IsNewTaskButtonVisible() const;
 
-	void CreateNewQuestCondition();
-	bool CanCreateQuestCondition() const;
+	void CreateNewDialogCondition();
+	bool CanCreateDialogCondition() const;
 
-	void CreateNewQuestEvent();
-	bool CanCreateQuestEvent() const;
+	void CreateNewDialogEvent();
+	bool CanCreateDialogEvent() const;
 	
-	void OpenQuestSetting();
-	bool CanOpenQuestSetting() const;
+	void OpenDialogSetting();
+	bool CanOpenDialogSetting() const;
 
 	void OnRenameNode();
 	bool CanRenameNodes() const;
@@ -313,10 +313,10 @@ public:
 protected:
 
 	/** Factory that spawns graph editors; used to look up all tabs spawned by it. */
-	TWeakPtr<FDocumentTabFactory> QuestEditorTabFactoryPtr;
+	TWeakPtr<FDocumentTabFactory> DialogEditorTabFactoryPtr;
 
 
-	UQuestBuilderGraph* EditingQuestGraph;
+	UDialogBuilderGraph* EditingDialogGraph;
 
 
 	//Toolbar
@@ -326,7 +326,7 @@ protected:
 	FDelegateHandle OnPackageSavedDelegateHandle;
 
 	TSharedPtr<class IDetailsView> EditorSettingsWidget;
-	TSharedPtr<class SMyDialog> MyQuestWidget;
+	TSharedPtr<class SMyDialog> MyDialogWidget;
 
 	/** The command list for this editor */
 	TSharedPtr<FUICommandList> GraphEditorCommands;

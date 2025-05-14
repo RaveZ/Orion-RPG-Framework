@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
 #include "DialogBuilderEditorToolbar.h"
@@ -6,21 +6,21 @@
 #include "DialogBuilder_EditorStyle.h"
 #include "DialogBuilderEditor.h"
 
-#define LOCTEXT_NAMESPACE "QuestBuilderEditorToolbar"
-void FDialogBuilderEditorToolbar::AddQuestSystemToolbar(TSharedPtr<FExtender> Extender)
+#define LOCTEXT_NAMESPACE "DialogBuilderEditorToolbar"
+void FDialogBuilderEditorToolbar::AddDialogSystemToolbar(TSharedPtr<FExtender> Extender)
 {
-	check(QuestSystemEditor.IsValid());
-	TSharedPtr<FDialogBuilderEditor> QuestSystemEditorPtr = QuestSystemEditor.Pin();
+	check(DialogSystemEditor.IsValid());
+	TSharedPtr<FDialogBuilderEditor> DialogSystemEditorPtr = DialogSystemEditor.Pin();
 	
 	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
-	ToolbarExtender->AddToolBarExtension("Asset", EExtensionHook::After, QuestSystemEditorPtr->GetToolkitCommands(), FToolBarExtensionDelegate::CreateSP(this, &FDialogBuilderEditorToolbar::FillQuestSystemToolbar));
-	QuestSystemEditorPtr->AddToolbarExtender(ToolbarExtender);
+	ToolbarExtender->AddToolBarExtension("Asset", EExtensionHook::After, DialogSystemEditorPtr->GetToolkitCommands(), FToolBarExtensionDelegate::CreateSP(this, &FDialogBuilderEditorToolbar::FillDialogSystemToolbar));
+	DialogSystemEditorPtr->AddToolbarExtender(ToolbarExtender);
 }
 
-void FDialogBuilderEditorToolbar::FillQuestSystemToolbar(FToolBarBuilder& ToolbarBuilder)
+void FDialogBuilderEditorToolbar::FillDialogSystemToolbar(FToolBarBuilder& ToolbarBuilder)
 {
-	check(QuestSystemEditor.IsValid());
-	TSharedPtr<FDialogBuilderEditor> QuestSystemEditorPtr = QuestSystemEditor.Pin();
+	check(DialogSystemEditor.IsValid());
+	TSharedPtr<FDialogBuilderEditor> DialogSystemEditorPtr = DialogSystemEditor.Pin();
 
 	ToolbarBuilder.BeginSection("Dialog System");
 	{
@@ -40,12 +40,12 @@ void FDialogBuilderEditorToolbar::FillQuestSystemToolbar(FToolBarBuilder& Toolba
 
 	ToolbarBuilder.BeginSection("Dialog System");
 	{
-		const FText NewConditionLabel = LOCTEXT("NewQuestCondition_Label", "New Dialog Condition");
-		const FText NewConditionTooltip = LOCTEXT("NewQuestCondition_ToolTip", "Create a new Dialog Condition Blueprint from a base class");
+		const FText NewConditionLabel = LOCTEXT("NewDialogCondition_Label", "New Dialog Condition");
+		const FText NewConditionTooltip = LOCTEXT("NewDialogCondition_ToolTip", "Create a new Dialog Condition Blueprint from a base class");
 		const FSlateIcon NewConditionIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "BTEditor.Graph.BTNode.Decorator.Conditional.Icon");
 
 
-		ToolbarBuilder.AddToolBarButton(FDialogBuilder_EditorCommands::Get().NewQuestCondition,
+		ToolbarBuilder.AddToolBarButton(FDialogBuilder_EditorCommands::Get().NewDialogCondition,
 			NAME_None,
 			NewConditionLabel,
 			NewConditionTooltip,
@@ -56,12 +56,12 @@ void FDialogBuilderEditorToolbar::FillQuestSystemToolbar(FToolBarBuilder& Toolba
 
 	ToolbarBuilder.BeginSection("Dialog System");
 	{
-		const FText NewEventLabel = LOCTEXT("NewQuestEvent_Label", "New Dialog Event");
-		const FText NewEventTooltip = LOCTEXT("NewQuestEvent_ToolTip", "Create a new Dialog Event Blueprint from a base class");
+		const FText NewEventLabel = LOCTEXT("NewDialogEvent_Label", "New Dialog Event");
+		const FText NewEventTooltip = LOCTEXT("NewDialogEvent_ToolTip", "Create a new Dialog Event Blueprint from a base class");
 		const FSlateIcon NewEventIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.CustomEvent_16x");
 
 
-		ToolbarBuilder.AddToolBarButton(FDialogBuilder_EditorCommands::Get().NewQuestEvent,
+		ToolbarBuilder.AddToolBarButton(FDialogBuilder_EditorCommands::Get().NewDialogEvent,
 			NAME_None,
 			NewEventLabel,
 			NewEventTooltip,
@@ -72,16 +72,16 @@ void FDialogBuilderEditorToolbar::FillQuestSystemToolbar(FToolBarBuilder& Toolba
 
 	ToolbarBuilder.BeginSection("Dialog System");
 	{
-		const FText QuestSettingLabel = LOCTEXT("QuestSetting_Label", "Dialog Default Info");
-		const FText QuestSettingTooltip = LOCTEXT("QuestSetting_ToolTip", "Access Dialog Default Info");
-		const FSlateIcon QuestSettingIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "ProjectSettings.TabIcon");
+		const FText DialogSettingLabel = LOCTEXT("DialogSetting_Label", "Dialog Default Info");
+		const FText DialogSettingTooltip = LOCTEXT("DialogSetting_ToolTip", "Access Dialog Default Info");
+		const FSlateIcon DialogSettingIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "ProjectSettings.TabIcon");
 
 
-		ToolbarBuilder.AddToolBarButton(FDialogBuilder_EditorCommands::Get().QuestSetting,
+		ToolbarBuilder.AddToolBarButton(FDialogBuilder_EditorCommands::Get().DialogSetting,
 			NAME_None,
-			QuestSettingLabel,
-			QuestSettingTooltip,
-			QuestSettingIcon
+			DialogSettingLabel,
+			DialogSettingTooltip,
+			DialogSettingIcon
 		);
 	}
 	ToolbarBuilder.EndSection();

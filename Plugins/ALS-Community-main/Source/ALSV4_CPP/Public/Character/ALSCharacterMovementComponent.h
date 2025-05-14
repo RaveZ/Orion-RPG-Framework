@@ -30,7 +30,7 @@ class ALSV4_CPP_API UALSCharacterMovementComponent : public UCharacterMovementCo
 		virtual void PrepMoveFor(class ACharacter* Character) override;
 
 		// Walk Speed Update
-		uint8 bSavedRequestMovementSettingsChange : 1;
+		uint8 bSavedRedialogMovementSettingsChange : 1;
 		EALSGait SavedAllowedGait = EALSGait::Walking;
 	};
 
@@ -55,7 +55,7 @@ class ALSV4_CPP_API UALSCharacterMovementComponent : public UCharacterMovementCo
 
 	// Movement Settings Variables
 	UPROPERTY()
-	uint8 bRequestMovementSettingsChange = 1;
+	uint8 bRedialogMovementSettingsChange = 1;
 
 	UPROPERTY()
 	EALSGait AllowedGait = EALSGait::Walking;

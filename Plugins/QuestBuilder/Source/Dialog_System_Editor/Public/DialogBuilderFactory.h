@@ -1,10 +1,10 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Delegates/Delegate.h"
-#include "QuestBuilderGraph.h"
+#include "DialogBuilderGraph.h"
 #include "Factories/Factory.h"
 #include "UObject/Object.h"
 #include "AssetDefinitionDefault.h"
@@ -16,7 +16,7 @@
 #include "DialogBuilderFactory.generated.h"
 
 
-#define LOCTEXT_NAMESPACE "QuestBuilderFactory"
+#define LOCTEXT_NAMESPACE "DialogBuilderFactory"
 
 /////////////////////////////////////////////////////
 // FLocalKismetCallbacks
@@ -57,7 +57,7 @@ struct FDialogGraphEditorSummoner : public FDocumentTabFactoryForObjects<UEdGrap
 public:
 	DECLARE_DELEGATE_RetVal_TwoParams(TSharedRef<SGraphEditor>, FOnCreateGraphEditorWidget, TSharedRef<FTabInfo>, UEdGraph*);
 public:
-	FDialogGraphEditorSummoner(TSharedPtr<class FDialogBuilderEditor> InQuestEditorPtr, FOnCreateGraphEditorWidget CreateGraphEditorWidgetCallback);
+	FDialogGraphEditorSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr, FOnCreateGraphEditorWidget CreateGraphEditorWidgetCallback);
 
 	virtual void OnTabActivated(TSharedPtr<SDockTab> Tab) const override;
 
@@ -86,7 +86,7 @@ protected:
 	//virtual TSharedRef<FGenericTabHistory> CreateTabHistoryNode(TSharedPtr<FTabPayload> Payload) override;
 
 protected:
-	TWeakPtr<class FDialogBuilderEditor> QuestEditorPtr;
+	TWeakPtr<class FDialogBuilderEditor> DialogEditorPtr;
 	FOnCreateGraphEditorWidget OnCreateGraphEditorWidget;
 };
 
@@ -101,7 +101,7 @@ class UDialogBuilderFactory : public UFactory
 public:
 
 	UPROPERTY(EditAnywhere, Category = DataAsset)	
-		TSubclassOf<UQuestBuilderGraph> QuestSystemGraphClass;
+		TSubclassOf<UDialogBuilderGraph> DialogSystemGraphClass;
 
 	virtual bool ConfigureProperties() override;
 	virtual UObject* FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn) override;
@@ -118,7 +118,7 @@ public:
 
 	virtual FText GetAssetDisplayName() const override { return FText::FromString("Dialog Builder Graph"); }
 	virtual FLinearColor GetAssetColor() const override { return FLinearColor(FColor(48, 165, 171)); }
-	virtual TSoftClassPtr<UObject> GetAssetClass() const override { return UQuestBuilderGraph::StaticClass(); }
+	virtual TSoftClassPtr<UObject> GetAssetClass() const override { return UDialogBuilderGraph::StaticClass(); }
 
 	virtual TConstArrayView<FAssetCategoryPath> GetAssetCategories() const override
 	{

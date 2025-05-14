@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #pragma once
 
@@ -6,6 +6,14 @@
 #include "GameplayTagContainer.h"
 #include "DialogBuilderGraph.generated.h"
 
+
+class UDialog;
+class UDialogComponent;
+class UDialogBuilderNode;
+class UDialogBuilderEdge;
+class AController;
+class APawn;
+class UDialogBuilderEdGraph;
 
 UCLASS(Blueprintable)
 class DIALOG_SYSTEM_RUNTIME_API UDialogBuilderGraph : public UObject
@@ -15,6 +23,49 @@ public:
 	UDialogBuilderGraph();
 	virtual ~UDialogBuilderGraph();
 
+	/**This data will be displayed on the category for your dialog log*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DialogBuilderGraph")
+		FString CategoryDisplayName;
+
+	/** Set of Dialog linked with Dialog Graph Pages */
+	UPROPERTY(BlueprintReadOnly, Category = "DialogBuilderGraph")
+		TArray< TObjectPtr<UDialog>> DialogList;
+
+	UPROPERTY(BlueprintReadOnly, Category = "DialogBuilderGraph")
+		TMap<FName, TObjectPtr<UDialog>> DialogMap;
+
+	/*Map of NodID with its UDialogBuilderNode*/
+	UPROPERTY(BlueprintReadOnly, Category = "DialogBuilderGraph")
+		TMap<FName, TObjectPtr<UDialogBuilderNode>> NodeIDMap;
+
+
+	UPROPERTY(BlueprintReadWrite, Category = "DialogBuilderGraph")
+		TObjectPtr<AController> OwningController;
+
+	UPROPERTY(BlueprintReadWrite, Category = "DialogBuilderGraph")
+		TObjectPtr < UDialogComponent> DialogComponent;
+
+	UPROPERTY(BlueprintReadOnly, Category = "DialogBuilderGraph")
+		TObjectPtr<APawn> OwningPawn;
+
+
+#if WITH_EDITORONLY_DATA
+	/** Set of dialog-graph pages */
+	UPROPERTY()
+	TArray<TObjectPtr<UEdGraph>> DialogGraphPages;
+
+	/** Set of documents that were being edited in this blueprint, so we can open them right away */
+	UPROPERTY()
+	TArray<struct FEditedDocumentInfo> LastEditedDocuments;
+
+	/** Whether or not this blueprint is newly created, and hasn't been opened in an editor yet */
+	UPROPERTY(/*transient*/ BlueprintReadOnly, Category = "DialogBuilderGraph")
+	bool bIsNewlyCreated = true;
+
+
+	/** Get all graphs in this DialogEditor */
+	void GetAllGraphs(TArray<UEdGraph*>& Graphs) const;
+#endif
 
 };
 

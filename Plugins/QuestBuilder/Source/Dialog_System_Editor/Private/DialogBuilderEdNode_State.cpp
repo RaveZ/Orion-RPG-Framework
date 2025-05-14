@@ -1,10 +1,10 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
 #include "DialogBuilderEdNode_State.h"
 #include "DialogBuilderSetting.h"
-#include "QuestBuilderNode.h"
-#include "QuestBuilderNode_State.h"
+#include "DialogBuilderNode.h"
+#include "DialogBuilderNode_State.h"
 
 UDialogBuilderEdNode_State::UDialogBuilderEdNode_State()
 {
@@ -17,7 +17,7 @@ void UDialogBuilderEdNode_State::AllocateDefaultPins()
 
 FText UDialogBuilderEdNode_State::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	const UQuestBuilderNode* MyNode = Cast<UQuestBuilderNode>(NodeInstance);
+	const UDialogBuilderNode* MyNode = Cast<UDialogBuilderNode>(NodeInstance);
 	if (MyNode != NULL)
 	{
 		return MyNode->GetNodeTitle();
@@ -29,14 +29,14 @@ FText UDialogBuilderEdNode_State::GetNodeTitle(ENodeTitleType::Type TitleType) c
 FLinearColor UDialogBuilderEdNode_State::GetBackgroundColor() const
 {
 	FLinearColor Default(0.05f, 0.05f, 0.05f);
-	if (UQuestBuilderNode_State* StateNode = Cast<UQuestBuilderNode_State>(NodeInstance))
+	if (UDialogBuilderNode_State* StateNode = Cast<UDialogBuilderNode_State>(NodeInstance))
 	{
 
-		switch (StateNode->QuestState)
+		switch (StateNode->DialogState)
 		{
-		case EQuestState::E_Complete:
+		case EDialogState::E_Complete:
 			return GetDefault<UDialogBuilderSetting>()->SuccessNodeColor;
-		case EQuestState::E_Fail:
+		case EDialogState::E_Fail:
 			return GetDefault<UDialogBuilderSetting>()->FailedNodeColor;
 		}
 	}

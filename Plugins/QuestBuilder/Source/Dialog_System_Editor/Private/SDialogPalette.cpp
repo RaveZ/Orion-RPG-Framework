@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
 #include "SDialogPalette.h"
@@ -9,41 +9,41 @@
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 #include "EdGraphSchema_DialogBuilder.h"
 #include "DialogBuilderEdGraph.h"
-#include "QuestBuilderGraph.h"
-#include "QuestBuilderNode.h"
+#include "DialogBuilderGraph.h"
+#include "DialogBuilderNode.h"
 #include "Decorator/OrionDecorator.h"
-#include "QuestBuilderFunctionLibrary.h"
+#include "DialogBuilderFunctionLibrary.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Event/OrionEvent.h"
 
 
-#define LOCTEXT_NAMESPACE "QuestPaletteItem"
+#define LOCTEXT_NAMESPACE "DialogPaletteItem"
 
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
-void SDialogPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, TWeakPtr<FDialogBuilderEditor> InQuestEditor)
+void SDialogPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, TWeakPtr<FDialogBuilderEditor> InDialogEditor)
 {
-	Construct(InArgs, InCreateData, InQuestEditor.Pin()->GetQuestBuilderGraph(), InQuestEditor);
+	Construct(InArgs, InCreateData, InDialogEditor.Pin()->GetDialogBuilderGraph(), InDialogEditor);
 
 }
 
-void SDialogPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestBuilderGraph* InQuestSystemGraph)
+void SDialogPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UDialogBuilderGraph* InDialogSystemGraph)
 {
-	Construct(InArgs, InCreateData, InQuestSystemGraph, TWeakPtr<FDialogBuilderEditor>());
+	Construct(InArgs, InCreateData, InDialogSystemGraph, TWeakPtr<FDialogBuilderEditor>());
 }
 
-void SDialogPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UQuestBuilderGraph* InQuestSystemGraph, TWeakPtr<FDialogBuilderEditor> InQuestEditor)
+void SDialogPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UDialogBuilderGraph* InDialogSystemGraph, TWeakPtr<FDialogBuilderEditor> InDialogEditor)
 {
 	check(InCreateData->Action.IsValid());
-	check(InQuestSystemGraph);
+	check(InDialogSystemGraph);
 
-	QuestBuilderGraph = InQuestSystemGraph;
+	DialogBuilderGraph = InDialogSystemGraph;
 
 	bShowClassInTooltip = InArgs._ShowClassInTooltip;
 
 	TSharedPtr<FEdGraphSchemaAction> GraphAction = InCreateData->Action;
 	ActionPtr = InCreateData->Action;
-	QuestEditorPtr = InQuestEditor;
+	DialogEditorPtr = InDialogEditor;
 
 	// construct the icon widget
 	FSlateBrush const* IconBrush = FAppStyle::GetBrush(TEXT("GraphEditor.EventGraph_16x"));
@@ -100,7 +100,7 @@ END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 void SDialogPaletteItem::OnDragEnter(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent)
 {
-	if (QuestEditorPtr.IsValid())
+	if (DialogEditorPtr.IsValid())
 	{
 		SGraphPaletteItem::OnDragEnter(MyGeometry, DragDropEvent);
 	}
@@ -148,14 +148,14 @@ TSharedRef<SWidget> SDialogPaletteItem::CreateTextSlotWidget(FCreateWidgetForAct
 
 FText SDialogPaletteItem::GetDisplayText() const
 {
-	const UEdGraphSchema_DialogBuilder* QuestSchema = GetDefault<UEdGraphSchema_DialogBuilder>();
-	if (MenuDescriptionCache.IsOutOfDate(QuestSchema))
+	const UEdGraphSchema_DialogBuilder* DialogSchema = GetDefault<UEdGraphSchema_DialogBuilder>();
+	if (MenuDescriptionCache.IsOutOfDate(DialogSchema))
 	{
 		TSharedPtr< FEdGraphSchemaAction > GraphAction = ActionPtr.Pin();
-		FAssetSchemaAction_DialogBuilderGraph* QuestGraphAction = (FAssetSchemaAction_DialogBuilderGraph*)GraphAction.Get();
-		if (UDialogBuilderEdGraph* QuestEdGraph = Cast<UDialogBuilderEdGraph>(QuestGraphAction->EdGraph))
+		FAssetSchemaAction_DialogBuilderGraph* DialogGraphAction = (FAssetSchemaAction_DialogBuilderGraph*)GraphAction.Get();
+		if (UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(DialogGraphAction->EdGraph))
 		{
-			MenuDescriptionCache.SetCachedText(FText::FromName(QuestEdGraph->Dialog->ID), QuestSchema);
+			MenuDescriptionCache.SetCachedText(FText::FromName(DialogEdGraph->Dialog->ID), DialogSchema);
 		}
 	}
 
@@ -168,23 +168,23 @@ bool SDialogPaletteItem::OnNameTextVerifyChanged(const FText& InNewText, FText& 
 
 	FName OriginalName;
 
-	FAssetSchemaAction_DialogBuilderGraph* QuestGraphAction = (FAssetSchemaAction_DialogBuilderGraph*)ActionPtr.Pin().Get();
-	if (UDialogBuilderEdGraph* QuestEdGraph = Cast<UDialogBuilderEdGraph>(QuestGraphAction->EdGraph))
+	FAssetSchemaAction_DialogBuilderGraph* DialogGraphAction = (FAssetSchemaAction_DialogBuilderGraph*)ActionPtr.Pin().Get();
+	if (UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(DialogGraphAction->EdGraph))
 	{
-		OriginalName = QuestEdGraph->Dialog->ID;
+		OriginalName = DialogEdGraph->Dialog->ID;
 	}
 
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-	TArray<FAssetData> QuestGraphDataArray;
-	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+	TArray<FAssetData> DialogGraphDataArray;
+	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), DialogGraphDataArray);
 
-	for (const FAssetData& AssetData : QuestGraphDataArray)
+	for (const FAssetData& AssetData : DialogGraphDataArray)
 	{
-		UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
-		if (QuestGraph)
+		UDialogBuilderGraph* DialogGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
+		if (DialogGraph)
 		{
-			for (auto& Dialog : QuestGraph->QuestList)
+			for (auto& Dialog : DialogGraph->DialogList)
 			{
 				if (FName(FinalString) == OriginalName)
 				{
@@ -220,68 +220,68 @@ void SDialogPaletteItem::OnNameTextCommitted(const FText& NewText, ETextCommit::
   const FName NewName = *NewNameString;  
   FName OriginalName;  
 
-  FAssetSchemaAction_DialogBuilderGraph* QuestGraphAction = (FAssetSchemaAction_DialogBuilderGraph*)ActionPtr.Pin().Get();  
-  if (UDialogBuilderEdGraph* QuestEdGraph = Cast<UDialogBuilderEdGraph>(QuestGraphAction->EdGraph))  
+  FAssetSchemaAction_DialogBuilderGraph* DialogGraphAction = (FAssetSchemaAction_DialogBuilderGraph*)ActionPtr.Pin().Get();  
+  if (UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(DialogGraphAction->EdGraph))  
   {
-      OriginalName = QuestEdGraph->Dialog->ID;  
-      QuestEdGraph->Dialog->ID = NewName;  
-      QuestEdGraph->Rename(*(NewName.ToString()), QuestBuilderGraph, REN_DoNotDirty | REN_ForceNoResetLoaders);  
+      OriginalName = DialogEdGraph->Dialog->ID;  
+      DialogEdGraph->Dialog->ID = NewName;  
+      DialogEdGraph->Rename(*(NewName.ToString()), DialogBuilderGraph, REN_DoNotDirty | REN_ForceNoResetLoaders);  
 
 
-      if (!QuestEdGraph->Dialog->QuestName.IsFromStringTable())
+      if (!DialogEdGraph->Dialog->DialogName.IsFromStringTable())
       {
-          if (QuestEdGraph->Dialog->QuestName.IsEmpty() || QuestEdGraph->Dialog->QuestName.EqualTo(FText::FromName(OriginalName)))
+          if (DialogEdGraph->Dialog->DialogName.IsEmpty() || DialogEdGraph->Dialog->DialogName.EqualTo(FText::FromName(OriginalName)))
           {
-              QuestEdGraph->Dialog->QuestName = FText::FromName(NewName);
+              DialogEdGraph->Dialog->DialogName = FText::FromName(NewName);
           }
       }
 
       FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-      TArray<FAssetData> QuestGraphDataArray;
-      AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+      TArray<FAssetData> DialogGraphDataArray;
+      AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), DialogGraphDataArray);
 
-      for (const FAssetData& AssetData : QuestGraphDataArray)
+      /*for (const FAssetData& AssetData : DialogGraphDataArray)
       {
-          UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
-          if (QuestGraph)
+          UDialogBuilderGraph* DialogGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
+          if (DialogGraph)
           {
-              for (auto& Dialog : QuestGraph->QuestList)
+              for (auto& Dialog : DialogGraph->DialogList)
               {
-                  for (auto& QuestCondition : Dialog->Conditions)
+                  for (auto& DialogCondition : Dialog->Conditions)
                   {
-                      if (QuestCondition && QuestCondition->QuestID == OriginalName)
+                      if (DialogCondition && DialogCondition->DialogID == OriginalName)
                       {
-                          QuestCondition->QuestID = NewName;
-                          QuestCondition->Modify();
+                          DialogCondition->DialogID = NewName;
+                          DialogCondition->Modify();
                       }
                   }
                   for (auto& Node : Dialog->AllNodes)
                   {
                       for (auto& NodeCondition : Node->Conditions)
                       {
-                          if (NodeCondition && NodeCondition->QuestID == OriginalName)
+                          if (NodeCondition && NodeCondition->DialogID == OriginalName)
                           {
-                              NodeCondition->QuestID = NewName;
+                              NodeCondition->DialogID = NewName;
                               NodeCondition->Modify();
                           }
                       }
                       for (auto& NodeEvent : Node->Events)
                       {
-                          if (NodeEvent && NodeEvent->QuestID == OriginalName)
+                          if (NodeEvent && NodeEvent->DialogID == OriginalName)
                           {
-                              NodeEvent->QuestID = NewName;
+                              NodeEvent->DialogID = NewName;
                               NodeEvent->Modify();
                           }
                       }
                   }
               }
           }
-      }
+      }*/
   }  
-  QuestEditorPtr.Pin()->GetMyQuestWidget()->Refresh();  
+  DialogEditorPtr.Pin()->GetMyDialogWidget()->Refresh();  
 
-  QuestEditorPtr.Pin()->GetQuestBuilderGraph()->Modify();  
+  DialogEditorPtr.Pin()->GetDialogBuilderGraph()->Modify();  
 }
 
 TSharedPtr<SToolTip> SDialogPaletteItem::ConstructToolTipWidget() const
@@ -295,11 +295,11 @@ FText SDialogPaletteItem::GetToolTipText() const
 	return FText::FromString(TEXT(""));
 }
 
-void SQuestPalette::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEditor> InQuestEditor)
+void SDialogPalette::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEditor> InDialogEditor)
 {
 }
 
-void SQuestPalette::OnSplitterResized() const
+void SDialogPalette::OnSplitterResized() const
 {
 }
 

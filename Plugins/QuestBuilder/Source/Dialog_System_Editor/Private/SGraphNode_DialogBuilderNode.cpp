@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
 #include "SGraphNode_DialogBuilderNode.h"
@@ -17,16 +17,16 @@
 #include "GraphEditorSettings.h"
 #include "SCommentBubble.h"
 #include "SLevelOfDetailBranchNode.h"
-#include "QuestBuilderNode.h"
+#include "DialogBuilderNode.h"
 #include "DialogBuilderEdNode_Root.h"
-#include "QuestBuilderNode_Objective.h"
+#include "DialogBuilderNode_Objective.h"
 #include "DialogBuilderSetting.h"	
 #include "Fonts/SlateFontInfo.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 
-#define LOCTEXT_NAMESPACE "EdNode_QuestBuilder"
+#define LOCTEXT_NAMESPACE "EdNode_DialogBuilder"
 
 #define ALWAYS_SHOW_QUEST_EXECUTION_INDEX 1
 
@@ -40,10 +40,10 @@ bool ShouldShowExecutionIndex()
 }
 
 //////////////////////////////////////////////////////////////////////////
-class SQuestSystemPin : public SGraphPin
+class SDialogSystemPin : public SGraphPin
 {
 public:
-	SLATE_BEGIN_ARGS(SQuestSystemPin) {}
+	SLATE_BEGIN_ARGS(SDialogSystemPin) {}
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, UEdGraphPin* InPin)
@@ -59,10 +59,10 @@ public:
 		check(Schema);
 
 		SBorder::Construct(SBorder::FArguments()
-			.BorderImage(this, &SQuestSystemPin::GetPinBorder)
-			.BorderBackgroundColor(this, &SQuestSystemPin::GetPinColor)
-			.OnMouseButtonDown(this, &SQuestSystemPin::OnPinMouseDown)
-			.Cursor(this, &SQuestSystemPin::GetPinCursor)
+			.BorderImage(this, &SDialogSystemPin::GetPinBorder)
+			.BorderBackgroundColor(this, &SDialogSystemPin::GetPinColor)
+			.OnMouseButtonDown(this, &SDialogSystemPin::OnPinMouseDown)
+			.Cursor(this, &SDialogSystemPin::GetPinCursor)
 			.Padding(FMargin(5.0f))
 		);
 	}
@@ -88,7 +88,7 @@ protected:
 
 
 /** Widget for overlaying an execution-order index onto a node */
-class SQuestNodeIndex : public SCompoundWidget
+class SDialogNodeIndex : public SCompoundWidget
 {
 public:
 	/** Delegate event fired when the hover state of this widget changes */
@@ -97,7 +97,7 @@ public:
 	/** Delegate used to receive the color of the node, depending on hover state and state of other siblings */
 	DECLARE_DELEGATE_RetVal_OneParam(FSlateColor, FOnGetIndexColor, bool /* bHovered */);
 
-	SLATE_BEGIN_ARGS(SQuestNodeIndex) {}
+	SLATE_BEGIN_ARGS(SDialogNodeIndex) {}
 		SLATE_ATTRIBUTE(FText, Text)
 		SLATE_EVENT(FOnHoverStateChanged, OnHoverStateChanged)
 		SLATE_EVENT(FOnGetIndexColor, OnGetIndexColor)
@@ -128,7 +128,7 @@ public:
 					[
 						SNew(SBorder)
 							.BorderImage(IndexBrush)
-							.BorderBackgroundColor(this, &SQuestNodeIndex::GetColor)
+							.BorderBackgroundColor(this, &SDialogNodeIndex::GetColor)
 							.Padding(FMargin(4.0f, 0.0f, 4.0f, 1.0f))
 							.VAlign(VAlign_Center)
 							.HAlign(HAlign_Center)
@@ -200,12 +200,12 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 
 	TSharedPtr<STextBlock> DescriptionText;
 
-	UDialogBuilderEdNode* QuestEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
-	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+	UDialogBuilderNode* DialogNode = DialogEdNode ? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance) : nullptr;
 
 	UWorld* World = GEditor->GetEditorWorldContext().World();
 
-	IndexOverlay = SNew(SQuestNodeIndex)
+	IndexOverlay = SNew(SDialogNodeIndex)
 		.ToolTipText(this, &SGraphNode_DialogBuilderNode::GetIndexTooltipText)
 		.Visibility(this, &SGraphNode_DialogBuilderNode::GetIndexVisibility)
 		.Text(this, &SGraphNode_DialogBuilderNode::GetIndexText)
@@ -486,7 +486,7 @@ void SGraphNode_DialogBuilderNode::CreatePinWidgets()
 		UEdGraphPin* MyPin = StateNode->Pins[PinIdx];
 		if (!MyPin->bHidden)
 		{
-			TSharedPtr<SGraphPin> NewPin = SNew(SQuestSystemPin, MyPin);
+			TSharedPtr<SGraphPin> NewPin = SNew(SDialogSystemPin, MyPin);
 
 			AddPin(NewPin.ToSharedRef());
 		}
@@ -531,18 +531,18 @@ void SGraphNode_DialogBuilderNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 
 bool SGraphNode_DialogBuilderNode::IsNameReadOnly() const
 {
-	UDialogBuilderEdNode* QuestEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
-	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+	UDialogBuilderNode* DialogNode = DialogEdNode ? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance) : nullptr;
 
-	UQuestBuilderGraph* QuestGraph = QuestNode ? Cast<UQuestBuilderGraph>(QuestNode->GetOwningQuestGraph()) : nullptr;
+	UDialogBuilderGraph* DialogGraph = DialogNode ? Cast<UDialogBuilderGraph>(DialogNode->GetOwningDialogGraph()) : nullptr;
 
-	return (QuestEdNode && QuestNode && QuestGraph) &&
-		(!GetDefault<UDialogBuilderSetting>()->bCanRenameNode || !QuestNode->IsNameEditable()) || SGraphNode::IsNameReadOnly();
+	return (DialogEdNode && DialogNode && DialogGraph) &&
+		(!GetDefault<UDialogBuilderSetting>()->bCanRenameNode || !DialogNode->IsNameEditable()) || SGraphNode::IsNameReadOnly();
 }
 FText SGraphNode_DialogBuilderNode::GetDescription() const
 {
-	UDialogBuilderEdNode* QuestEdNode = CastChecked<UDialogBuilderEdNode>(GraphNode);
-	return QuestEdNode ? QuestEdNode->GetDescription() : FText::GetEmpty();
+	UDialogBuilderEdNode* DialogEdNode = CastChecked<UDialogBuilderEdNode>(GraphNode);
+	return DialogEdNode ? DialogEdNode->GetDescription() : FText::GetEmpty();
 }
 EVisibility SGraphNode_DialogBuilderNode::GetDescriptionVisibility() const
 {
@@ -553,10 +553,10 @@ EVisibility SGraphNode_DialogBuilderNode::GetDescriptionVisibility() const
 }
 EVisibility SGraphNode_DialogBuilderNode::GetTaskVisibility() const
 {
-	UDialogBuilderEdNode* QuestEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
-	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+	UDialogBuilderNode* DialogNode = DialogEdNode ? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance) : nullptr;
 
-	if (UQuestBuilderNode_Objective* QuestSystemNodeObjective = Cast<UQuestBuilderNode_Objective>(QuestNode))
+	if (UDialogBuilderNode_Objective* DialogSystemNodeObjective = Cast<UDialogBuilderNode_Objective>(DialogNode))
 	{
 		return EVisibility::Visible;
 	}
@@ -564,14 +564,14 @@ EVisibility SGraphNode_DialogBuilderNode::GetTaskVisibility() const
 }
 FText SGraphNode_DialogBuilderNode::GetEventsText() const
 {
-	UDialogBuilderEdNode* QuestEdNode = CastChecked<UDialogBuilderEdNode>(GraphNode);
-	return QuestEdNode ? QuestEdNode->GetEventsText() : FText::GetEmpty();
+	UDialogBuilderEdNode* DialogEdNode = CastChecked<UDialogBuilderEdNode>(GraphNode);
+	return DialogEdNode ? DialogEdNode->GetEventsText() : FText::GetEmpty();
 }
 EVisibility SGraphNode_DialogBuilderNode::GetEventsVisibility() const
 {
-	UDialogBuilderEdNode* QuestEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
-	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
-	if (QuestNode && !QuestNode->Events.IsEmpty())
+	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+	UDialogBuilderNode* DialogNode = DialogEdNode ? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance) : nullptr;
+	if (DialogNode && !DialogNode->Events.IsEmpty())
 	{
 		return EVisibility::Visible;
 	}
@@ -579,14 +579,14 @@ EVisibility SGraphNode_DialogBuilderNode::GetEventsVisibility() const
 }
 FText SGraphNode_DialogBuilderNode::GetConditionsText() const
 {
-	UDialogBuilderEdNode* QuestEdNode = CastChecked<UDialogBuilderEdNode>(GraphNode);
-	return QuestEdNode ? QuestEdNode->GetConditionsText() : FText::GetEmpty();
+	UDialogBuilderEdNode* DialogEdNode = CastChecked<UDialogBuilderEdNode>(GraphNode);
+	return DialogEdNode ? DialogEdNode->GetConditionsText() : FText::GetEmpty();
 }
 EVisibility SGraphNode_DialogBuilderNode::GetConditionsVisibility() const
 {
-	UDialogBuilderEdNode* QuestEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
-	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
-	if (QuestNode && !QuestNode->Conditions.IsEmpty())
+	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+	UDialogBuilderNode* DialogNode = DialogEdNode ? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance) : nullptr;
+	if (DialogNode && !DialogNode->Conditions.IsEmpty())
 	{
 		return EVisibility::Visible;
 	}
@@ -607,29 +607,29 @@ bool SGraphNode_DialogBuilderNode::OnVerifyNameTextChanged(const FText& InText, 
         bValid = OnVerifyTextCommit.Execute(FText::FromString(FinalString), GraphNode, OutErrorMessage);
 	}
 
-	UDialogBuilderEdNode* QuestEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
-	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+	UDialogBuilderNode* DialogNode = DialogEdNode ? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance) : nullptr;
 
-	if (QuestNode)
+	if (DialogNode)
 	{
-		OriginalName = QuestNode->ID;
+		OriginalName = DialogNode->ID;
 	}
 
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-	TArray<FAssetData> QuestGraphDataArray;
-	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+	TArray<FAssetData> DialogGraphDataArray;
+	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), DialogGraphDataArray);
 
-	for (const FAssetData& AssetData : QuestGraphDataArray)
+	for (const FAssetData& AssetData : DialogGraphDataArray)
 	{
-		UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
-		if (QuestGraph)
+		UDialogBuilderGraph* DialogGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
+		if (DialogGraph)
 		{
 			if (FName(FinalString) == OriginalName)
 			{
 				return true;
 			}
-			UQuestBuilderNode* FoundedDuplicateNode = QuestGraph->NodeIDMap.FindRef(FName(FinalString));
+			UDialogBuilderNode* FoundedDuplicateNode = DialogGraph->NodeIDMap.FindRef(FName(FinalString));
 			if(FoundedDuplicateNode)
 			{
 				OutErrorMessage = LOCTEXT("RenameFailed_NotValid", "This ID is already used in another Node.");
@@ -655,39 +655,39 @@ void SGraphNode_DialogBuilderNode::OnNameTextCommited(const FText& InText, EText
 	const FName NewName = *NewNameString;
 	FName OriginalName;
 
-	UDialogBuilderEdNode* QuestEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
-	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+	UDialogBuilderNode* DialogNode = DialogEdNode ? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance) : nullptr;
 
-	if (QuestEdNode && QuestNode)
+	if (DialogEdNode && DialogNode)
 	{
-		UDialogBuilderEdGraph* QuestEdGraph = QuestEdNode->GetQuestBuilderEdGraph();
-		OriginalName = QuestNode->ID;
+		UDialogBuilderEdGraph* DialogEdGraph = DialogEdNode->GetDialogBuilderEdGraph();
+		OriginalName = DialogNode->ID;
 
 		//Finalize Node and Update GraphNode
-		const FScopedTransaction Transaction(LOCTEXT("QuestSystemEditorRenameNode", "Dialog System Editor: Rename Node"));
-		QuestEdNode->Modify();
-		QuestNode->Modify();
-		QuestNode->SetNodeTitle(FText::FromString(NewNameString));
+		const FScopedTransaction Transaction(LOCTEXT("DialogSystemEditorRenameNode", "Dialog System Editor: Rename Node"));
+		DialogEdNode->Modify();
+		DialogNode->Modify();
+		DialogNode->SetNodeTitle(FText::FromString(NewNameString));
 		UpdateGraphNode();
 
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-		TArray<FAssetData> QuestGraphDataArray;
-		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+		TArray<FAssetData> DialogGraphDataArray;
+		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), DialogGraphDataArray);
 
-		for (const FAssetData& AssetData : QuestGraphDataArray)
+		for (const FAssetData& AssetData : DialogGraphDataArray)
 		{
-			UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
-			if (QuestGraph)
+			UDialogBuilderGraph* DialogGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
+			if (DialogGraph)
 			{
-				for (auto& Dialog : QuestGraph->QuestList)
+				for (auto& Dialog : DialogGraph->DialogList)
 				{
-					for (auto& QuestCondition : Dialog->Conditions)
+					for (auto& DialogCondition : Dialog->Conditions)
 					{
-						if (QuestCondition && QuestCondition->NodeID == OriginalName)
+						if (DialogCondition && DialogCondition->NodeID == OriginalName)
 						{
-							QuestCondition->NodeID = NewName;
-							QuestCondition->Modify();
+							DialogCondition->NodeID = NewName;
+							DialogCondition->Modify();
 						}
 					}
 					for (auto& Node : Dialog->AllNodes)
@@ -717,20 +717,20 @@ void SGraphNode_DialogBuilderNode::OnNameTextCommited(const FText& InText, EText
 
 FSlateColor SGraphNode_DialogBuilderNode::GetBorderBackgroundColor() const
 {
-	UDialogBuilderEdNode* QuestEdNode = CastChecked<UDialogBuilderEdNode>(GraphNode);
-	return QuestEdNode ? QuestEdNode->GetBackgroundColor() : DialogBuilderColors::NodeBorder::HighlightAbortRange;
+	UDialogBuilderEdNode* DialogEdNode = CastChecked<UDialogBuilderEdNode>(GraphNode);
+	return DialogEdNode ? DialogEdNode->GetBackgroundColor() : DialogBuilderColors::NodeBorder::HighlightAbortRange;
 }
 
 FSlateColor SGraphNode_DialogBuilderNode::GetNodeHighlightColor() const
 {
-	UDialogBuilderEdNode* QuestEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
-	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+	UDialogBuilderNode* DialogNode = DialogEdNode ? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance) : nullptr;
 
-	if (QuestNode->Quest == nullptr)
+	if (DialogNode->Dialog == nullptr)
 		return DialogBuilderColors::NodeBorder::NoHighlight;
 
 
-	if (QuestNode->Quest->CurrentNode == QuestNode && (GEditor->bIsSimulatingInEditor || GEditor->PlayWorld))
+	if (DialogNode->Dialog->CurrentNode == DialogNode && (GEditor->bIsSimulatingInEditor || GEditor->PlayWorld))
 	{
 		return DialogBuilderColors::NodeBorder::HighlightCurrentNode;
 		
@@ -763,8 +763,8 @@ const FSlateBrush* SGraphNode_DialogBuilderNode::GetNameIcon() const
 
 EVisibility SGraphNode_DialogBuilderNode::GetBlueprintIconVisibility() const
 {
-	UDialogBuilderEdNode* QuestEdNode = CastChecked<UDialogBuilderEdNode>(GraphNode);
-	const bool bCanShowIcon = (QuestEdNode != nullptr && QuestEdNode->UsesBlueprint());
+	UDialogBuilderEdNode* DialogEdNode = CastChecked<UDialogBuilderEdNode>(GraphNode);
+	const bool bCanShowIcon = (DialogEdNode != nullptr && DialogEdNode->UsesBlueprint());
 
 	// LOD this out once things get too small
 	TSharedPtr<SGraphPanel> MyOwnerPanel = GetOwnerPanel();
@@ -780,8 +780,8 @@ EVisibility SGraphNode_DialogBuilderNode::GetIndexVisibility() const
 		return EVisibility::Collapsed;
 	}
 
-	UDialogBuilderEdNode* QuestEdNode = CastChecked<UDialogBuilderEdNode>(GraphNode);
-	UEdGraphPin* MyInputPin = QuestEdNode->GetInputPin();
+	UDialogBuilderEdNode* DialogEdNode = CastChecked<UDialogBuilderEdNode>(GraphNode);
+	UEdGraphPin* MyInputPin = DialogEdNode->GetInputPin();
 	UEdGraphPin* MyParentOutputPin = NULL;
 	if (MyInputPin != NULL && MyInputPin->LinkedTo.Num() > 0)
 	{
@@ -792,34 +792,34 @@ EVisibility SGraphNode_DialogBuilderNode::GetIndexVisibility() const
 	// LOD this out once things get too small
 	TSharedPtr<SGraphPanel> MyOwnerPanel = GetOwnerPanel();
 
-	UDialogBuilderEdGraph* QuestEdGraph = Cast<UDialogBuilderEdGraph>(GraphNode->GetGraph());
+	UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(GraphNode->GetGraph());
 
 	FGraphPanelSelectionSet SelectedNodes;
-	if (QuestEdGraph && QuestEdGraph->SEditorGraph)
+	if (DialogEdGraph && DialogEdGraph->SEditorGraph)
 	{
-		SelectedNodes = QuestEdGraph->SEditorGraph->GetSelectedNodes();
+		SelectedNodes = DialogEdGraph->SEditorGraph->GetSelectedNodes();
 	}
 
-	UQuestBuilderNode* FirstSelectedNode = nullptr;
+	UDialogBuilderNode* FirstSelectedNode = nullptr;
 	if (SelectedNodes.Num() > 0)
 	{
 		// Get the first element of the SelectedNodes set
-		UDialogBuilderEdNode* SelectedQuestEdNode = Cast<UDialogBuilderEdNode>(*SelectedNodes.CreateConstIterator());
-		FirstSelectedNode = SelectedQuestEdNode ? Cast<UQuestBuilderNode>(SelectedQuestEdNode->NodeInstance) : nullptr;
+		UDialogBuilderEdNode* SelectedDialogEdNode = Cast<UDialogBuilderEdNode>(*SelectedNodes.CreateConstIterator());
+		FirstSelectedNode = SelectedDialogEdNode ? Cast<UDialogBuilderNode>(SelectedDialogEdNode->NodeInstance) : nullptr;
 	}
 
-	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance);
+	UDialogBuilderNode* DialogNode = Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance);
 
 	// Visible if ((we are in PIE || if we have siblings) && (SelectedNodes only one && Matching parent with selected nodes))
-	const bool bCanShowIndex = (ShouldShowExecutionIndex() || (MyParentOutputPin && MyParentOutputPin->LinkedTo.Num() > 1)) && (SelectedNodes.Num() == 1 && (FirstSelectedNode && QuestNode) && (QuestNode->ParentNodes.Contains(FirstSelectedNode)));
+	const bool bCanShowIndex = (ShouldShowExecutionIndex() || (MyParentOutputPin && MyParentOutputPin->LinkedTo.Num() > 1)) && (SelectedNodes.Num() == 1 && (FirstSelectedNode && DialogNode) && (DialogNode->ParentNodes.Contains(FirstSelectedNode)));
 
 	return (bCanShowIndex && (!MyOwnerPanel.IsValid() || MyOwnerPanel->GetCurrentLOD() > EGraphRenderingLOD::LowDetail)) ? EVisibility::Visible : EVisibility::Collapsed;
 }
 
 FText SGraphNode_DialogBuilderNode::GetIndexText() const
 {
-	UDialogBuilderEdNode* QuestEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
-	UEdGraphPin* MyInputPin = QuestEdNode->GetInputPin();
+	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+	UEdGraphPin* MyInputPin = DialogEdNode->GetInputPin();
 	UEdGraphPin* MyParentOutputPin = NULL;
 	if (MyInputPin != NULL && MyInputPin->LinkedTo.Num() > 0)
 	{
@@ -828,30 +828,30 @@ FText SGraphNode_DialogBuilderNode::GetIndexText() const
 
 	int32 Index = 0;
 
-	UDialogBuilderEdGraph* QuestEdGraph = Cast<UDialogBuilderEdGraph>(GraphNode->GetGraph());
+	UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(GraphNode->GetGraph());
 
 	FGraphPanelSelectionSet SelectedNodes;
-	if (QuestEdGraph && QuestEdGraph->SEditorGraph)
+	if (DialogEdGraph && DialogEdGraph->SEditorGraph)
 	{
-		SelectedNodes = QuestEdGraph->SEditorGraph->GetSelectedNodes();
+		SelectedNodes = DialogEdGraph->SEditorGraph->GetSelectedNodes();
 	}
 
-	UQuestBuilderNode* FirstSelectedNode = nullptr;
+	UDialogBuilderNode* FirstSelectedNode = nullptr;
 	if (SelectedNodes.Num() > 0)
 	{
 		// Get the first element of the SelectedNodes set
-		UDialogBuilderEdNode* SelectedQuestEdNode = Cast<UDialogBuilderEdNode>(*SelectedNodes.CreateConstIterator());
-		FirstSelectedNode = SelectedQuestEdNode ? Cast<UQuestBuilderNode>(SelectedQuestEdNode->NodeInstance) : nullptr;
+		UDialogBuilderEdNode* SelectedDialogEdNode = Cast<UDialogBuilderEdNode>(*SelectedNodes.CreateConstIterator());
+		FirstSelectedNode = SelectedDialogEdNode ? Cast<UDialogBuilderNode>(SelectedDialogEdNode->NodeInstance) : nullptr;
 	}
 
-	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance);
+	UDialogBuilderNode* DialogNode = Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance);
 
-	if (QuestNode->ParentNodes.Contains(FirstSelectedNode))
+	if (DialogNode->ParentNodes.Contains(FirstSelectedNode))
 	{
 		for (int i = 0; i < FirstSelectedNode->ChildrenNodes.Num(); i++)
 		{
 			//Select this index if node matches with the selected node childrens
-			if (FirstSelectedNode->ChildrenNodes[i] == QuestNode)
+			if (FirstSelectedNode->ChildrenNodes[i] == DialogNode)
 			{
 				Index = i + 1;//Index start from 1
 				break;

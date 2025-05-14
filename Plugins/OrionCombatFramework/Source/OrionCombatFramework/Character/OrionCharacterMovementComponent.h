@@ -29,7 +29,7 @@ class ORIONCOMBATFRAMEWORK_API UOrionCharacterMovementComponent : public UCharac
 		virtual void PrepMoveFor(class ACharacter* Character) override;
 
 		// Walk Speed Update
-		uint8 bSavedRequestMovementSettingsChange : 1;
+		uint8 bSavedRedialogMovementSettingsChange : 1;
 		EOrionGait SavedAllowedGait = EOrionGait::Walking;
 	};
 
@@ -54,7 +54,7 @@ class ORIONCOMBATFRAMEWORK_API UOrionCharacterMovementComponent : public UCharac
 
 	// Movement Settings Variables
 	UPROPERTY()
-	uint8 bRequestMovementSettingsChange = 1;
+	uint8 bRedialogMovementSettingsChange = 1;
 
 	UPROPERTY()
 	EOrionGait AllowedGait = EOrionGait::Walking;

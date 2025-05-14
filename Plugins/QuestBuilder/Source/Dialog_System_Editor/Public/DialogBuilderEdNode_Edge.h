@@ -1,16 +1,16 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "EdGraph/EdGraphNode.h"
 #include "UObject/NoExportTypes.h"
-#include "QuestBuilderGraph.h"
+#include "DialogBuilderGraph.h"
 #include "DialogBuilderEdNode_Edge.generated.h"
 
 
-class UQuestBuilderNode;
-class UQuestBuilderEdge;
+class UDialogBuilderNode;
+class UDialogBuilderEdge;
 class UDialogBuilderEdNode;
 class UEdGraph;
 
@@ -24,10 +24,10 @@ public:
 	UPROPERTY()
 		TObjectPtr<UEdGraph> Graph;
 
-	UPROPERTY(VisibleAnywhere, Instanced, Category = "QuestBuilderGraph")
-		TObjectPtr<UQuestBuilderEdge> QuestSystemGraphEdge;
+	UPROPERTY(VisibleAnywhere, Instanced, Category = "DialogBuilderGraph")
+		TObjectPtr<UDialogBuilderEdge> DialogSystemGraphEdge;
 
-	void SetEdge(UQuestBuilderEdge* Edge);
+	void SetEdge(UDialogBuilderEdge* Edge);
 
 	virtual void AllocateDefaultPins() override;
 

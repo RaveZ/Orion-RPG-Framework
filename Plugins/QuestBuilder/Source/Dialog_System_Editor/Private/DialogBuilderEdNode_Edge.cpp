@@ -1,20 +1,20 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
 #include "DialogBuilderEdNode_Edge.h"
-#include "QuestBuilderEdge.h"
+#include "DialogBuilderEdge.h"
 #include "DialogBuilderEdNode.h"
 
-#define LOCTEXT_NAMESPACE "EdNode_QuestSystemGraphEdge"
+#define LOCTEXT_NAMESPACE "EdNode_DialogSystemGraphEdge"
 
 UDialogBuilderEdNode_Edge::UDialogBuilderEdNode_Edge()
 {
 	bCanRenameNode = true;
 }
 
-void UDialogBuilderEdNode_Edge::SetEdge(UQuestBuilderEdge* Edge)
+void UDialogBuilderEdNode_Edge::SetEdge(UDialogBuilderEdge* Edge)
 {
-	QuestSystemGraphEdge = Edge;
+	DialogSystemGraphEdge = Edge;
 }
 
 void UDialogBuilderEdNode_Edge::AllocateDefaultPins()
@@ -27,9 +27,9 @@ void UDialogBuilderEdNode_Edge::AllocateDefaultPins()
 
 FText UDialogBuilderEdNode_Edge::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	if (QuestSystemGraphEdge)
+	if (DialogSystemGraphEdge)
 	{
-		return QuestSystemGraphEdge->GetNodeTitle();
+		return DialogSystemGraphEdge->GetNodeTitle();
 	}
 	return FText();
 }
@@ -53,7 +53,7 @@ void UDialogBuilderEdNode_Edge::PinConnectionListChanged(UEdGraphPin* Pin)
 
 void UDialogBuilderEdNode_Edge::PrepareForCopying()
 {
-	QuestSystemGraphEdge->Rename(nullptr, this, REN_DontCreateRedirectors | REN_DoNotDirty);
+	DialogSystemGraphEdge->Rename(nullptr, this, REN_DontCreateRedirectors | REN_DoNotDirty);
 }
 
 void UDialogBuilderEdNode_Edge::CreateConnections(UDialogBuilderEdNode* Start, UDialogBuilderEdNode* End)

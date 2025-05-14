@@ -1,4 +1,4 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
 #include "EdGraphSchema_DialogBuilder.h"
@@ -16,15 +16,15 @@
 #include "DialogBuilderEdNode_Edge.h"
 #include "DialogBuilderEdNode_Root.h"
 #include "GraphEditorActions.h"
-#include "QuestBuilderGraph.h"
-#include "QuestBuilderEdge.h"
-#include "QuestBuilderNode_Root.h"
-#include "QuestBuilderNode_State.h"
-#include "QuestBuilderNode_Objective.h"
-#include "Task/QuestTask.h"
+#include "DialogBuilderGraph.h"
+#include "DialogBuilderEdge.h"
+#include "DialogBuilderNode_Root.h"
+#include "DialogBuilderNode_State.h"
+#include "DialogBuilderNode_Objective.h"
 
 
-#define LOCTEXT_NAMESPACE "EdGraphSchema_QuestBuilder"
+
+#define LOCTEXT_NAMESPACE "EdGraphSchema_DialogBuilder"
 
 namespace
 {
@@ -149,7 +149,7 @@ UEdGraphNode* FAssetSchemaAction_DialogBuilder_NewEdge::PerformAction(UEdGraph* 
 
 	if (NodeTemplate != nullptr)
 	{
-		const FScopedTransaction Transaction(LOCTEXT("QuestGraphEditorNewEdge", "Dialog Graph Editor: New Edge"));
+		const FScopedTransaction Transaction(LOCTEXT("DialogGraphEditorNewEdge", "Dialog Graph Editor: New Edge"));
 		ParentGraph->Modify();
 		if (FromPin != nullptr)
 			FromPin->Modify();
@@ -165,7 +165,7 @@ UEdGraphNode* FAssetSchemaAction_DialogBuilder_NewEdge::PerformAction(UEdGraph* 
 		NodeTemplate->NodePosX = Location.X;
 		NodeTemplate->NodePosY = Location.Y;
 
-		NodeTemplate->QuestSystemGraphEdge->SetFlags(RF_Transactional);
+		NodeTemplate->DialogSystemGraphEdge->SetFlags(RF_Transactional);
 		NodeTemplate->SetFlags(RF_Transactional);
 
 		ResultNode = NodeTemplate;
@@ -185,7 +185,7 @@ void UEdGraphSchema_DialogBuilder::GetBreakLinkToSubMenuActions(UToolMenu* Menu,
 	// Make sure we have a unique name for every entry in the list
 	TMap< FString, uint32 > LinkTitleCount;
 
-	FToolMenuSection& Section = Menu->FindOrAddSection("QuestBuilderAssetGraphSchemaPinActions");
+	FToolMenuSection& Section = Menu->FindOrAddSection("DialogBuilderAssetGraphSchemaPinActions");
 
 	// Add all the links we could break from
 	for (TArray<class UEdGraphPin*>::TConstIterator Links(InGraphPin->LinkedTo); Links; ++Links)
@@ -228,11 +228,11 @@ void UEdGraphSchema_DialogBuilder::GetBreakLinkToSubMenuActions(UToolMenu* Menu,
 
 void UEdGraphSchema_DialogBuilder::CreateDefaultNodesForGraph(UEdGraph& Graph) const
 {
-	UQuestBuilderGraph* QuestGraph = CastChecked<UQuestBuilderGraph>(Graph.GetOuter());
+	UDialogBuilderGraph* DialogGraph = CastChecked<UDialogBuilderGraph>(Graph.GetOuter());
 
 	FGraphNodeCreator<UDialogBuilderEdNode_Root> NodeCreator(Graph);
 	UDialogBuilderEdNode_Root* RootNode = NodeCreator.CreateNode();
-	RootNode->NodeInstance = NewObject<UObject>(QuestGraph, UQuestBuilderNode_Root::StaticClass());
+	RootNode->NodeInstance = NewObject<UObject>(DialogGraph, UDialogBuilderNode_Root::StaticClass());
 	RootNode->NodeInstance->SetFlags(RF_Transactional);
 	NodeCreator.Finalize();
 	SetNodeMetaData(RootNode, FNodeMetadata::DefaultGraphNode);
@@ -245,15 +245,15 @@ EGraphType UEdGraphSchema_DialogBuilder::GetGraphType(const UEdGraph* TestEdGrap
 
 void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const
 {
-	UQuestBuilderGraph* QuestGraph = CastChecked<UQuestBuilderGraph>(ContextMenuBuilder.CurrentGraph->GetOuter());
+	UDialogBuilderGraph* DialogGraph = CastChecked<UDialogBuilderGraph>(ContextMenuBuilder.CurrentGraph->GetOuter());
 
 	UEdGraph* EdGraph = (UEdGraph*)ContextMenuBuilder.CurrentGraph;
 
 	const bool bNoParent = (ContextMenuBuilder.FromPin == NULL);
 
-	const FText AddToolTip = LOCTEXT("NewQuestBuilderNodeTooltip", "Add node here");
+	const FText AddToolTip = LOCTEXT("NewDialogBuilderNodeTooltip", "Add node here");
 
-	TSet<TSubclassOf<UQuestBuilderNode> > Visited;
+	TSet<TSubclassOf<UDialogBuilderNode> > Visited;
 
 
 
@@ -263,35 +263,7 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 	FCategorizedGraphActionListBuilder TasksBuilder(TEXT("Task"));
 
 	TArray<FGraphNodeClassData> NodeClasses;
-	ClassCache.GatherClasses(UQuestTask::StaticClass(), NodeClasses);
 	
-
-	for (auto& NodeClass : NodeClasses)
-	{
-		if (NodeClass.GetClass(true) == UQuestTask::StaticClass())
-			continue;
-
-		const FText NodeTypeName = FText::FromString(FName::NameToDisplayString(NodeClass.ToString(), false));
-
-		TSharedPtr<FAssetSchemaAction_DialogBuilder_NewNode> AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(TasksBuilder, NodeClass.GetCategory(), NodeTypeName, FText::GetEmpty());
-		UClass* ObjectiveEdNodeClass = UDialogBuilderEdNode_Objective::StaticClass();
-		UClass* ObjectiveNodeClass = UQuestBuilderNode_Objective::StaticClass();
-
-		UDialogBuilderEdNode* OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, ObjectiveEdNodeClass);
-		FGraphNodeClassData ObjectiveClassData = FGraphNodeClassData(ObjectiveNodeClass, "ObjectiveClassData");
-		OpNode->ClassData = ObjectiveClassData;
-		AddOpAction->NodeTemplate = OpNode;
-		OpNode->NodeInstance = NewObject<UObject>(QuestGraph, ObjectiveNodeClass);
-		OpNode->NodeInstance->SetFlags(RF_Transactional);
-
-		if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(OpNode->NodeInstance))
-		{
-			if (NodeClass.GetClass(true)->IsChildOf(UQuestTask::StaticClass()))
-			{
-				ObjectiveNode->Tasks.Add(NewObject<UQuestTask>(AddOpAction->NodeTemplate, NodeClass.GetClass(true)));
-			}
-		}
-	}
 	ContextMenuBuilder.Append(TasksBuilder);
 
 
@@ -299,43 +271,43 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 
 	//State : Complete Dialog
 	UClass* StateEdNodeClass = UDialogBuilderEdNode_State::StaticClass();
-	UClass* StateNodeClass = UQuestBuilderNode_State::StaticClass();
+	UClass* StateNodeClass = UDialogBuilderNode_State::StaticClass();
 
-	TSharedPtr<FAssetSchemaAction_DialogBuilder_NewNode> AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("QuestSystemGraphNodeAction", "Complete Dialog"), LOCTEXT("QuestSystemGraphNodeTooltip", "Complete The Dialog"));
+	TSharedPtr<FAssetSchemaAction_DialogBuilder_NewNode> AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("DialogSystemGraphNodeAction", "Complete Dialog"), LOCTEXT("DialogSystemGraphNodeTooltip", "Complete The Dialog"));
 	UDialogBuilderEdNode* OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, StateEdNodeClass);
 	FGraphNodeClassData StateClassData = FGraphNodeClassData(StateNodeClass, "StateClassData");
 	OpNode->ClassData = StateClassData;
 	AddOpAction->NodeTemplate = OpNode;
-	OpNode->NodeInstance = NewObject<UObject>(QuestGraph, StateNodeClass);
+	OpNode->NodeInstance = NewObject<UObject>(DialogGraph, StateNodeClass);
 	OpNode->NodeInstance->SetFlags(RF_Transactional);
 
-	if (UQuestBuilderNode_State* NodeState = Cast< UQuestBuilderNode_State>(OpNode->NodeInstance))
+	if (UDialogBuilderNode_State* NodeState = Cast< UDialogBuilderNode_State>(OpNode->NodeInstance))
 	{
-		NodeState->QuestState = EQuestState::E_Complete;
+		NodeState->DialogState = EDialogState::E_Complete;
 	}
 
 	//State : Fail Dialog
-	AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("QuestSystemGraphNodeAction", "Fail Dialog"), LOCTEXT("QuestSystemGraphNodeTooltip", "Fail The Dialog"));
+	AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("DialogSystemGraphNodeAction", "Fail Dialog"), LOCTEXT("DialogSystemGraphNodeTooltip", "Fail The Dialog"));
 	OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, UDialogBuilderEdNode_State::StaticClass());
 	OpNode->ClassData = StateClassData;
 	AddOpAction->NodeTemplate = OpNode;
-	OpNode->NodeInstance = NewObject<UObject>(QuestGraph, StateNodeClass);
+	OpNode->NodeInstance = NewObject<UObject>(DialogGraph, StateNodeClass);
 	OpNode->NodeInstance->SetFlags(RF_Transactional);
 
-	if (UQuestBuilderNode_State* NodeState = Cast< UQuestBuilderNode_State>(OpNode->NodeInstance))
+	if (UDialogBuilderNode_State* NodeState = Cast< UDialogBuilderNode_State>(OpNode->NodeInstance))
 	{
-		NodeState->QuestState = EQuestState::E_Fail;
+		NodeState->DialogState = EDialogState::E_Fail;
 	}
 	ContextMenuBuilder.Append(StateBuilder);
 
 	//State : Custom State
-	/*AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("QuestSystemGraphNodeAction", "Add Custom State..."), LOCTEXT("QuestSystemGraphNodeTooltip", "Add Custom State..."));
+	/*AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("DialogSystemGraphNodeAction", "Add Custom State..."), LOCTEXT("DialogSystemGraphNodeTooltip", "Add Custom State..."));
 	OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, UDialogBuilderEdNode_State::StaticClass());
 	AddOpAction->NodeTemplate = OpNode;
-	AddOpAction->NodeTemplate->QuestBuilderNode = NewObject<UQuestBuilderNode>(AddOpAction->NodeTemplate, UQuestBuilderNode_State::StaticClass());
-	AddOpAction->NodeTemplate->QuestBuilderNode->QuestGraph = Graph;
-	AddOpAction->NodeTemplate->QuestBuilderNode->ID = FDialogBuilderEditorUtils::FindUniqueNodeName("StateNode");
-	AddOpAction->NodeTemplate->QuestBuilderNode->QuestGraph->QuestList = Graph->QuestList;
+	AddOpAction->NodeTemplate->DialogBuilderNode = NewObject<UDialogBuilderNode>(AddOpAction->NodeTemplate, UDialogBuilderNode_State::StaticClass());
+	AddOpAction->NodeTemplate->DialogBuilderNode->DialogGraph = Graph;
+	AddOpAction->NodeTemplate->DialogBuilderNode->ID = FDialogBuilderEditorUtils::FindUniqueNodeName("StateNode");
+	AddOpAction->NodeTemplate->DialogBuilderNode->DialogGraph->DialogList = Graph->DialogList;
 	ContextMenuBuilder.Append(StateBuilder);*/
 }
 
@@ -351,7 +323,7 @@ FGraphNodeClassHelper& UEdGraphSchema_DialogBuilder::GetClassCache() const
 void UEdGraphSchema_DialogBuilder::GetContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
 	if (Context->Pin) {
-		FToolMenuSection& Section = Menu->AddSection("QuestSystemGraphAssetGraphSchemaNodeActions", LOCTEXT("PinActionsMenuHeader", "Pin Actions"));
+		FToolMenuSection& Section = Menu->AddSection("DialogSystemGraphAssetGraphSchemaNodeActions", LOCTEXT("PinActionsMenuHeader", "Pin Actions"));
 		// Only display the 'Break Links' option if there is a link to break!
 			if (Context->Pin->LinkedTo.Num() > 0)
 			{
@@ -375,7 +347,7 @@ void UEdGraphSchema_DialogBuilder::GetContextMenuActions(UToolMenu* Menu, UGraph
 	else if (Context->Node)
 	{
 		{
-			FToolMenuSection& Section = Menu->AddSection("QuestBuilderAssetGraphSchemaNodeActions", LOCTEXT("ClassActionsMenuHeader", "Node Actions"));
+			FToolMenuSection& Section = Menu->AddSection("DialogBuilderAssetGraphSchemaNodeActions", LOCTEXT("ClassActionsMenuHeader", "Node Actions"));
 			Section.AddMenuEntry(FGenericCommands::Get().Rename);
 			Section.AddMenuEntry(FGenericCommands::Get().Delete);
 			Section.AddMenuEntry(FGenericCommands::Get().Cut);
@@ -406,7 +378,7 @@ const FPinConnectionResponse UEdGraphSchema_DialogBuilder::CanCreateConnection(c
 
 	if (EdNode_Out == nullptr || EdNode_In == nullptr)
 	{
-		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinError", "Not a valid UQuestGraphEdNode"));
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinError", "Not a valid UDialogGraphEdNode"));
 	}
 
 	//Determine if we can have cycles or not
@@ -490,9 +462,9 @@ bool UEdGraphSchema_DialogBuilder::TryCreateConnection(UEdGraphPin* A, UEdGraphP
 		}
 	}
 
-	if (UDialogBuilderEdGraph* QuestEdGraph = Cast<UDialogBuilderEdGraph>(NodeA->GetGraph()))
+	if (UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(NodeA->GetGraph()))
 	{
-		QuestEdGraph->RebuildQuestBuilderGraph(true);
+		DialogEdGraph->RebuildDialogBuilderGraph(true);
 	}
 
 	
@@ -508,14 +480,14 @@ bool UEdGraphSchema_DialogBuilder::CreateAutomaticConversionNodeAndConnections(U
 	if (!NodeA || !NodeA->GetOutputPin() || !NodeB || !NodeB->GetInputPin())
 		return false;
 
-	UQuestBuilderNode* QuestNodeA = NodeA ? Cast<UQuestBuilderNode>(NodeA->NodeInstance) : nullptr;
-	UQuestBuilderGraph* Graph = NodeA && QuestNodeA ? QuestNodeA->GetOwningQuestGraph() : nullptr;
+	UDialogBuilderNode* DialogNodeA = NodeA ? Cast<UDialogBuilderNode>(NodeA->NodeInstance) : nullptr;
+	UDialogBuilderGraph* Graph = NodeA && DialogNodeA ? DialogNodeA->GetOwningDialogGraph() : nullptr;
 
 	FVector2D InitPos((NodeA->NodePosX + NodeB->NodePosX) / 2, (NodeA->NodePosY + NodeB->NodePosY) / 2);
 
 	FAssetSchemaAction_DialogBuilder_NewEdge Action;
 	Action.NodeTemplate = NewObject<UDialogBuilderEdNode_Edge>(NodeA->GetGraph());
-	Action.NodeTemplate->SetEdge(NewObject<UQuestBuilderEdge>(Action.NodeTemplate, UQuestBuilderEdge::StaticClass()));
+	Action.NodeTemplate->SetEdge(NewObject<UDialogBuilderEdge>(Action.NodeTemplate, UDialogBuilderEdge::StaticClass()));
 	UDialogBuilderEdNode_Edge* EdgeNode = Cast<UDialogBuilderEdNode_Edge>(Action.PerformAction(NodeA->GetGraph(), nullptr, InitPos, false));
 
 	// Always create connections from node A to B, don't allow adding in reverse
@@ -539,9 +511,9 @@ void UEdGraphSchema_DialogBuilder::BreakNodeLinks(UEdGraphNode& TargetNode) cons
 	const FScopedTransaction Transaction(NSLOCTEXT("UnrealEd", "GraphEd_BreakNodeLinks", "Break Node Links"));
 
 	Super::BreakNodeLinks(TargetNode);
-	if (UDialogBuilderEdGraph* QuestEdGraph = Cast<UDialogBuilderEdGraph>(TargetNode.GetGraph()))
+	if (UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(TargetNode.GetGraph()))
 	{
-		QuestEdGraph->RebuildQuestBuilderGraph(true);
+		DialogEdGraph->RebuildDialogBuilderGraph(true);
 	}
 }
 

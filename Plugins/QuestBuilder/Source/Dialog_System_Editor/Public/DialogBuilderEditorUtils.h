@@ -1,10 +1,10 @@
-// Copyright 2024 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "DialogBuilderEdNode.h"
-#include "QuestBuilderGraph.h"
+#include "DialogBuilderGraph.h"
 
 /**
  * 
@@ -16,7 +16,7 @@ public:
 	~FDialogBuilderEditorUtils();
 
 
-	static FName FindUniqueQuestName(const FString& InBaseName);
+	static FName FindUniqueDialogName(const FString& InBaseName);
 
 	
 
@@ -36,10 +36,10 @@ public:
 
 	/** Returns all nodes in all graphs of the specified class */
 	template< class T >
-	static inline void GetAllNodesOfClass(const UQuestBuilderGraph* QuestBuilderGraph, TArray<T*>& OutNodes)
+	static inline void GetAllNodesOfClass(const UDialogBuilderGraph* DialogBuilderGraph, TArray<T*>& OutNodes)
 	{
 		TArray<UEdGraph*> AllGraphs;
-		QuestBuilderGraph->GetAllGraphs(AllGraphs);
+		DialogBuilderGraph->GetAllGraphs(AllGraphs);
 		for (int32 i = 0; i < AllGraphs.Num(); i++)
 		{
 			check(AllGraphs[i] != NULL);
@@ -50,27 +50,27 @@ public:
 	}
 
 	/**
-	 * Removes the supplied node from the UQuestBuilderGraph.
+	 * Removes the supplied node from the UDialogBuilderGraph.
 	 *
 	 * @param Node				The node to remove.
-	 * @param bDontRecompile	If true, the UQuestBuilderGraph will not be marked as modified, and will not be recompiled.  Useful for if you are removing several node at once, and don't want to recompile each time
+	 * @param bDontRecompile	If true, the UDialogBuilderGraph will not be marked as modified, and will not be recompiled.  Useful for if you are removing several node at once, and don't want to recompile each time
 	 */
-	static void RemoveNode(UQuestBuilderGraph* QuestBuilderGraph, UDialogBuilderEdNode* Node, bool bDontRecompile = false);
+	static void RemoveNode(UDialogBuilderGraph* DialogBuilderGraph, UDialogBuilderEdNode* Node, bool bDontRecompile = false);
 
 	/**
-	 * Removes the supplied graph from the UQuestBuilderGraph.
+	 * Removes the supplied graph from the UDialogBuilderGraph.
 	 *
-	 * @param UQuestBuilderGraph	The UQuestBuilderGraph containing the graph
+	 * @param UDialogBuilderGraph	The UDialogBuilderGraph containing the graph
 	 * @param GraphToRemove		The graph to remove.
 	 */
-	static void RemoveGraph(UQuestBuilderGraph* QuestBuilderGraph, class UEdGraph* GraphToRemove);
+	static void RemoveGraph(UDialogBuilderGraph* DialogBuilderGraph, class UEdGraph* GraphToRemove);
 
 
-	/** Adds an QuestGraph page to this Dialog Editor */
-	static void AddQuestGraphPage(UQuestBuilderGraph* InQuestSystemGraph, class UEdGraph* Graph);
+	/** Adds an DialogGraph page to this Dialog Editor */
+	static void AddDialogGraphPage(UDialogBuilderGraph* InDialogSystemGraph, class UEdGraph* Graph);
 
 	/** Returns the event graph, if any */
-	static UEdGraph* FindQuestGraph(const UQuestBuilderGraph* QuestBuilderGraph);
+	static UEdGraph* FindDialogGraph(const UDialogBuilderGraph* DialogBuilderGraph);
 
 	/** Given a selection of nodes, return the instances that should be selected be selected for editing in the property panel */
 	static TArray<UObject*> GetSelectionForPropertyEditor(const TSet<UObject*>& InSelection);
