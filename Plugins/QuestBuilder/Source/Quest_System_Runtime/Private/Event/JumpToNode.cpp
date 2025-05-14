@@ -13,7 +13,7 @@ UJumpToNode::UJumpToNode()
 	bUseNodeID = true;
 }
 
-void UJumpToNode::BeginEvent_Implementation()
+void UJumpToNode::BeginEvent_Implementation(AController* OwnerController, APawn* ControlledPawn)
 {
 	if (UQuestBuilderNode* FoundedNode = GetOwningQuest()->NodeMap.FindRef(NodeID))
 	{

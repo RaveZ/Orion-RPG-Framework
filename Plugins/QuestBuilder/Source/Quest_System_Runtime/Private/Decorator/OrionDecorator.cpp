@@ -11,7 +11,7 @@
 
 #define LOCTEXT_NAMESPACE "QuestCondition"
 
-bool UOrionDecorator::IsConditionMet_Implementation() const
+bool UOrionDecorator::PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const
 {
 	return true;
 }

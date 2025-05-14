@@ -16,6 +16,6 @@ class QUEST_SYSTEM_RUNTIME_API UJumpToNode : public UOrionEvent
 public:
 	UJumpToNode();
 
-	virtual void BeginEvent_Implementation() override;
+	virtual void BeginEvent_Implementation(AController* OwnerController, APawn* ControlledPawn) override;
 	virtual FString GetNodeDisplayText_Implementation() const override;
 };

@@ -41,9 +41,9 @@ public:
 		TObjectPtr<UQuest> Quest;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestCondition")
-		bool IsConditionMet() const;
+		bool PerformConditionCheck(AController* OwnerController, APawn* ControlledPawn) const;
 
-		virtual bool IsConditionMet_Implementation() const;
+		virtual bool PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestCondition")
 	FString GetNodeDisplayText() const;

@@ -19,7 +19,7 @@ public:
 	URestartQuest();
 
 	
-	virtual void BeginEvent_Implementation() override;
+	virtual void BeginEvent_Implementation(AController* OwnerController, APawn* ControlledPawn) override;
 	virtual FString GetNodeDisplayText_Implementation() const override;
 
 };

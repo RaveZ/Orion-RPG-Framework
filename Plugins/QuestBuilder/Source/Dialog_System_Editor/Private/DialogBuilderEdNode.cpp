@@ -4,6 +4,7 @@
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderSetting.h"
 #include "QuestBuilderNode.h"
+#include "Quest.h"
 #include "QuestBuilderNode_Root.h"
 #include "QuestBuilderNode_Objective.h"
 #include "QuestBuilderNode_State.h"
@@ -76,10 +77,6 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 				{
 					ObjectiveQuestNode->ID = FDialogBuilderEditorUtils::FindUniqueNodeName("ObjectiveNode");
 				}
-				if (UQuestBuilderNode_Root* RootQuestNode = Cast<UQuestBuilderNode_Root>(NodeInstance))
-				{
-					RootQuestNode->ID = FDialogBuilderEditorUtils::FindUniqueNodeName("RootNode");
-				}
 				if (UQuestBuilderNode_State* StateQuestNode = Cast<UQuestBuilderNode_State>(NodeInstance))
 				{
 					StateQuestNode->ID = FDialogBuilderEditorUtils::FindUniqueNodeName("StateNode");
@@ -98,9 +95,11 @@ void UDialogBuilderEdNode::InitializeInstance()
 {
 	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
 	UQuestBuilderGraph* QuestAsset = QuestNode ? Cast<UQuestBuilderGraph>(QuestNode->GetOuter()) : nullptr;
-	if (QuestNode && QuestAsset)
+	UQuest* Dialog = GetQuestBuilderEdGraph() ? GetQuestBuilderEdGraph()->Dialog : nullptr;
+	if (Dialog && QuestNode && QuestAsset)
 	{
-		QuestNode->InitializeFromAsset(*QuestAsset);
+		QuestNode->InitializeFromAsset(*QuestAsset, *Dialog);
+
 	}
 }
 

@@ -15,6 +15,9 @@
 
 UQuest::UQuest()
 {
+	bCanQuestBeAborted = false;
+	bCanRetakeQuest = false;
+	QuestState = EQuestState::E_Locked;
 }
 
 bool UQuest::Initialize(UQuestComponent* InitializingComp, UQuest* QuestTemplate)

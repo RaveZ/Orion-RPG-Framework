@@ -65,9 +65,9 @@ public:
 
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestEvent")
-		void BeginEvent();
+		void BeginEvent(AController* OwnerController, APawn* ControlledPawn);
 
-	virtual void BeginEvent_Implementation();
+	virtual void BeginEvent_Implementation(AController* OwnerController, APawn* ControlledPawn);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestEvent")
 	FString GetNodeDisplayText() const;

@@ -14,7 +14,7 @@ UOrionEvent::UOrionEvent()
 {
 }
 
-void UOrionEvent::BeginEvent_Implementation()
+void UOrionEvent::BeginEvent_Implementation(AController* OwnerController, APawn* ControlledPawn)
 {
 }
 

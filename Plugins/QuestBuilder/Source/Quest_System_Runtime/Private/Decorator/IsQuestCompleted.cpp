@@ -10,7 +10,7 @@ UIsQuestCompleted::UIsQuestCompleted()
     bUseQuestID = true;
 }
 
-bool UIsQuestCompleted::IsConditionMet_Implementation() const
+bool UIsQuestCompleted::PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const
 {
     if (UQuest* FoundedQuest = GetQuestComponent()->QuestMap.FindRef(QuestID))
     {

@@ -281,7 +281,7 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 		FGraphNodeClassData ObjectiveClassData = FGraphNodeClassData(ObjectiveNodeClass, "ObjectiveClassData");
 		OpNode->ClassData = ObjectiveClassData;
 		AddOpAction->NodeTemplate = OpNode;
-		OpNode->NodeInstance = NewObject<UObject>(EdGraph, ObjectiveNodeClass);
+		OpNode->NodeInstance = NewObject<UObject>(QuestGraph, ObjectiveNodeClass);
 		OpNode->NodeInstance->SetFlags(RF_Transactional);
 
 		if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(OpNode->NodeInstance))
@@ -306,7 +306,7 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 	FGraphNodeClassData StateClassData = FGraphNodeClassData(StateNodeClass, "StateClassData");
 	OpNode->ClassData = StateClassData;
 	AddOpAction->NodeTemplate = OpNode;
-	OpNode->NodeInstance = NewObject<UObject>(EdGraph, StateNodeClass);
+	OpNode->NodeInstance = NewObject<UObject>(QuestGraph, StateNodeClass);
 	OpNode->NodeInstance->SetFlags(RF_Transactional);
 
 	if (UQuestBuilderNode_State* NodeState = Cast< UQuestBuilderNode_State>(OpNode->NodeInstance))
@@ -319,7 +319,7 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 	OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, UDialogBuilderEdNode_State::StaticClass());
 	OpNode->ClassData = StateClassData;
 	AddOpAction->NodeTemplate = OpNode;
-	OpNode->NodeInstance = NewObject<UObject>(EdGraph, StateNodeClass);
+	OpNode->NodeInstance = NewObject<UObject>(QuestGraph, StateNodeClass);
 	OpNode->NodeInstance->SetFlags(RF_Transactional);
 
 	if (UQuestBuilderNode_State* NodeState = Cast< UQuestBuilderNode_State>(OpNode->NodeInstance))

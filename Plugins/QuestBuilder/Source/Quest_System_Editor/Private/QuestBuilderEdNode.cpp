@@ -76,10 +76,6 @@ void UQuestBuilderEdNode::PostPlacedNewNode()
 				{
 					ObjectiveQuestNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName("ObjectiveNode");
 				}
-				if (UQuestBuilderNode_Root* RootQuestNode = Cast<UQuestBuilderNode_Root>(NodeInstance))
-				{
-					RootQuestNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName("RootNode");
-				}
 				if (UQuestBuilderNode_State* StateQuestNode = Cast<UQuestBuilderNode_State>(NodeInstance))
 				{
 					StateQuestNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName("StateNode");
@@ -98,9 +94,11 @@ void UQuestBuilderEdNode::InitializeInstance()
 {
 	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
 	UQuestBuilderGraph* QuestAsset = QuestNode ? Cast<UQuestBuilderGraph>(QuestNode->GetOuter()) : nullptr;
-	if (QuestNode && QuestAsset)
+	UQuest* Quest = GetQuestBuilderEdGraph() ? GetQuestBuilderEdGraph()->Quest : nullptr;
+	if (Quest && QuestNode && QuestAsset)
 	{
-		QuestNode->InitializeFromAsset(*QuestAsset);
+		QuestNode->InitializeFromAsset(*QuestAsset, *Quest);
+
 	}
 }
 

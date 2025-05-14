@@ -12,7 +12,7 @@ UIsObjectiveCompleted::UIsObjectiveCompleted()
 	bUseNodeID = true;
 }
 
-bool UIsObjectiveCompleted::IsConditionMet_Implementation() const
+bool UIsObjectiveCompleted::PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const
 {
 
     for (const auto& It : GetQuestComponent()->QuestMap)

@@ -12,7 +12,7 @@ UUnlockQuest::UUnlockQuest()
 	bUseQuestID = true;
 }
 
-void UUnlockQuest::BeginEvent_Implementation()
+void UUnlockQuest::BeginEvent_Implementation(AController* OwnerController, APawn* ControlledPawn)
 {
 	if (!QuestID.IsNone())
 	{

@@ -27,7 +27,7 @@ bool UQuestTask::CompleteTask()
         return false;
 
     TaskState = ETaskState::E_Complete;
-    K2_TaskCompleted();
+    K2_TaskCompleted(GetOwningController(), GetOwningPawn());
 	GetQuestComponent()->UpdateQuest();
     GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast();
 
@@ -46,7 +46,7 @@ bool UQuestTask::IsTaskCompleted()
 
 void UQuestTask::BeginTask()  
 {  
-   K2_BeginTask();  
+   K2_BeginTask(GetOwningController(), GetOwningPawn());
 
    if (GetQuestComponent() && bIsTaskTickable)
    {  

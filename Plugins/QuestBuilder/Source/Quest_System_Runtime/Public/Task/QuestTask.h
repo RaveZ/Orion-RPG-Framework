@@ -80,10 +80,10 @@ public:
 public:
 
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Begin Task", Category = "Task")
-		void K2_BeginTask();
+		void K2_BeginTask(AController* OwnerController, APawn* ControlledPawn);
 
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Task Completed", Category = "Task")
-		void K2_TaskCompleted();
+		void K2_TaskCompleted(AController* OwnerController, APawn* ControlledPawn);
 
 	UFUNCTION(BlueprintCallable, Category = "Task")
 		virtual void BeginTask();

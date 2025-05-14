@@ -86,7 +86,7 @@ public:
 	 *
 	 * @param  InArgs				A set of slate arguments, defined above.
 	 * @param  InQuestEditor	A pointer to the Quest editor that this palette belongs to.
-	 */
+	 */ 
 	void Construct(const FArguments& InArgs, TWeakPtr<FQuestBuilderEditor> InQuestEditor);
 
 private:

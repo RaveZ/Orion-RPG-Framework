@@ -44,7 +44,7 @@ void UQuestBuilderNode::BeginEvents(EEventRunType EventRunType)
 		{
 			if (Event->EventRunType == EEventRunType::E_Both || Event->EventRunType == EventRunType)
 			{
-				Event->BeginEvent();
+				Event->BeginEvent(GetOwningController(), GetOwningPawn());
 			}
 		}
 	}
@@ -163,6 +163,7 @@ bool UQuestBuilderNode::CanCreateConnectionFrom(UQuestBuilderNode* Other, int32 
 	return true;
 }
 
+
 #endif
 
 bool UQuestBuilderNode::IsLeafNode() const
@@ -175,9 +176,10 @@ void UQuestBuilderNode::Initialize()
 	//empty, override in child class
 }
 
-void UQuestBuilderNode::InitializeFromAsset(UQuestBuilderGraph& Asset)
+void UQuestBuilderNode::InitializeFromAsset(UQuestBuilderGraph& OwningQuestGraph, UQuest& OwningQuest)
 {
-	QuestGraph = &Asset;
+	QuestGraph = &OwningQuestGraph;
+	Quest = &OwningQuest;
 }
 
 

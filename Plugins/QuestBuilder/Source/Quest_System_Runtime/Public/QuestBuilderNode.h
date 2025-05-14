@@ -68,7 +68,7 @@ public:
 	virtual void Initialize();
 
 	/** initialize any asset related data */
-	virtual void InitializeFromAsset(UQuestBuilderGraph& Asset);
+	virtual void InitializeFromAsset(UQuestBuilderGraph& OwningQuestGraph, UQuest& OwningQuest);
 
 
 	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")

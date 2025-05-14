@@ -12,7 +12,7 @@ UFailQuest::UFailQuest()
 	bUseQuestID = true;
 }
 
-void UFailQuest::BeginEvent_Implementation()
+void UFailQuest::BeginEvent_Implementation(AController* OwnerController, APawn* ControlledPawn)
 {
 	if (!QuestID.IsNone())
 	{

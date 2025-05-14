@@ -510,7 +510,7 @@ void UQuestComponent::EvaluateNextNodeCondition(UQuest* QuestParam)
 			int SumConditionMet = 0;
 			for (auto& Condition : Node->Conditions)
 			{
-				bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->IsConditionMet() : Condition->IsConditionMet();
+				bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
 				if (bConditionMet)
 				{
 					SumConditionMet++;
@@ -544,7 +544,7 @@ void UQuestComponent::EvaluateQuestCondition(UQuest* QuestParam)
 	int SumConditionMet = 0;
 	for (auto& Condition : QuestParam->Conditions)
 	{
-		bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->IsConditionMet() : Condition->IsConditionMet();
+		bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
 		if (bConditionMet)
 		{
 			SumConditionMet++;

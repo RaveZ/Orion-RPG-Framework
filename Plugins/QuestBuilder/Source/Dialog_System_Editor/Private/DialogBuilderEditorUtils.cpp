@@ -26,18 +26,26 @@ FName FDialogBuilderEditorUtils::FindUniqueQuestName(const FString& InBaseName)
 	{
 		bool bIsUnique = true;
 
-		// Check if the current name already exists in the quest graph pages
-		for (TObjectIterator<UQuest> It; It; ++It)
-		{
-			if (UQuest* Dialog = Cast<UQuest>(*It))
-			{
-				FString FullName = Dialog->ID.ToString();
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
-				// If the current name matches a quest graph page name, it's not unique
-				if (FullName == UniqueName)
+		TArray<FAssetData> QuestGraphDataArray;
+		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+
+		for (const FAssetData& AssetData : QuestGraphDataArray)
+		{
+			UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
+			if (QuestGraph)
+			{
+				for (auto& Quest : QuestGraph->QuestList)
 				{
-					bIsUnique = false;
-					break;
+					FString FullName = Quest->ID.ToString();
+
+					// If the current name matches a quest graph page name, it's not unique
+					if (FullName == UniqueName)
+					{
+						bIsUnique = false;
+						break;
+					}
 				}
 			}
 		}

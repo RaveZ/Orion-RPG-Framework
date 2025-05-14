@@ -15,7 +15,7 @@ URestartQuest::URestartQuest()
 	bUseNodeID = true;
 }
 
-void URestartQuest::BeginEvent_Implementation()
+void URestartQuest::BeginEvent_Implementation(AController* OwnerController, APawn* ControlledPawn)
 {
 	if (!QuestID.IsNone())
 	{
