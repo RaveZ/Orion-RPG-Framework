@@ -36,4 +36,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, config, Category = "Graph Rule")
 	bool bEdgeEnabled;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Graph Rule")
+	bool bCanRenameNode;
+
+	UPROPERTY(BlueprintReadOnly, config, Category = "Graph Rule")
+	bool bCanBeCyclical;
 };

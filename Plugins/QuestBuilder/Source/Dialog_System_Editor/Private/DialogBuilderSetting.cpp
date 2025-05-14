@@ -11,6 +11,8 @@ UDialogBuilderSetting::UDialogBuilderSetting()
 	ObjectiveNodeColor = FLinearColor(0.05f, 0.05f, 0.05f);
 	RootNodeColor = FLinearColor(0.05f, 0.05f, 0.05f);
 	bEdgeEnabled = false;
+	bCanRenameNode = true;
+	bCanBeCyclical = false;
 }
 
 UDialogBuilderSetting::~UDialogBuilderSetting()

@@ -414,7 +414,7 @@ const FPinConnectionResponse UEdGraphSchema_QuestBuilder::CanCreateConnection(co
 	auto EdGraph = Cast<UQuestBuilderEdGraph>(Out->GetOwningNode()->GetGraph());
 	if (EdGraph != nullptr)
 	{
-		bAllowCycles = EdGraph->GetQuestBuilderGraph()->bCanBeCyclical;
+		bAllowCycles = GetDefault<UQuestBuilderSetting>()->bCanBeCyclical;
 	}
 
 	// check for cycles

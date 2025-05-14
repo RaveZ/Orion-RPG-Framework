@@ -57,12 +57,6 @@ public:
 	UPROPERTY()
 	TArray<TObjectPtr<UEdGraph>> QuestGraphPages;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
-		bool bCanRenameNode;
-
-	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
-		bool bCanBeCyclical;
-
 	/** Set of documents that were being edited in this blueprint, so we can open them right away */
 	UPROPERTY()
 	TArray<struct FEditedDocumentInfo> LastEditedDocuments;

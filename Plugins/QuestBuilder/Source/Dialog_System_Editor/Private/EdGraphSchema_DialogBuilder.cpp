@@ -414,7 +414,7 @@ const FPinConnectionResponse UEdGraphSchema_DialogBuilder::CanCreateConnection(c
 	auto EdGraph = Cast<UDialogBuilderEdGraph>(Out->GetOwningNode()->GetGraph());
 	if (EdGraph != nullptr)
 	{
-		bAllowCycles = EdGraph->GetQuestBuilderGraph()->bCanBeCyclical;
+		bAllowCycles = GetDefault<UDialogBuilderSetting>()->bCanBeCyclical;
 	}
 
 	// check for cycles

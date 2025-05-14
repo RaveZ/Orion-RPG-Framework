@@ -537,7 +537,7 @@ bool SGraphNode_DialogBuilderNode::IsNameReadOnly() const
 	UQuestBuilderGraph* QuestGraph = QuestNode ? Cast<UQuestBuilderGraph>(QuestNode->GetOwningQuestGraph()) : nullptr;
 
 	return (QuestEdNode && QuestNode && QuestGraph) &&
-		(!QuestGraph->bCanRenameNode || !QuestNode->IsNameEditable()) || SGraphNode::IsNameReadOnly();
+		(!GetDefault<UDialogBuilderSetting>()->bCanRenameNode || !QuestNode->IsNameEditable()) || SGraphNode::IsNameReadOnly();
 }
 FText SGraphNode_DialogBuilderNode::GetDescription() const
 {

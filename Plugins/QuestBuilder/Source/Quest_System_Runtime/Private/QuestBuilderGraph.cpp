@@ -11,10 +11,6 @@
 
 UQuestBuilderGraph::UQuestBuilderGraph()
 {
-#if WITH_EDITORONLY_DATA
-
-	bCanRenameNode = true;
-#endif
 }
 
 UQuestBuilderGraph::~UQuestBuilderGraph()
