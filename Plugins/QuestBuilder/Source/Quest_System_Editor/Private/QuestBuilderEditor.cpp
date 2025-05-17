@@ -999,7 +999,7 @@ void FQuestBuilderEditor::RebuildQuestBuilderGraphPages()
 		{
 			if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(EdGraph))
 			{
-				QuestGraph->RebuildQuestBuilderGraph();
+				QuestGraph->UpdateAsset();
 			}
 		}
 	}
@@ -1137,14 +1137,17 @@ void FQuestBuilderEditor::CopySelectedNodes()
 {
 	// Export the selected nodes and place the text on the clipboard
 	FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
+	TArray<UQuestBuilderEdNode*> SubNodes;
 
 	FString ExportedText;
 
 	ShouldGetNewID = true;
 
+	int32 CopySubNodeIndex = 0;
 	for (FGraphPanelSelectionSet::TIterator SelectedIter(SelectedNodes); SelectedIter; ++SelectedIter)
 	{
 		UEdGraphNode* Node = Cast<UEdGraphNode>(*SelectedIter);
+		UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(Node);
 		if (Node == nullptr)
 		{
 			SelectedIter.RemoveCurrent();
@@ -1164,11 +1167,41 @@ void FQuestBuilderEditor::CopySelectedNodes()
 		}
 
 		Node->PrepareForCopying();
+
+		if (QuestEdNode)
+		{
+			QuestEdNode->CopySubNodeIndex = CopySubNodeIndex;
+
+			// append all subnodes for selection
+			for (int32 Idx = 0; Idx < QuestEdNode->SubNodes.Num(); Idx++)
+			{
+				QuestEdNode->SubNodes[Idx]->CopySubNodeIndex = CopySubNodeIndex;
+				SubNodes.Add(QuestEdNode->SubNodes[Idx]);
+			}
+
+			CopySubNodeIndex++;
+		}
+
+		for (int32 Idx = 0; Idx < SubNodes.Num(); Idx++)
+		{
+			SelectedNodes.Add(SubNodes[Idx]);
+			SubNodes[Idx]->PrepareForCopying();
+		}
 	}
 
 	FEdGraphUtilities::ExportNodesToText(SelectedNodes, ExportedText);
 	FPlatformApplicationMisc::ClipboardCopy(*ExportedText);
+
+	for (FGraphPanelSelectionSet::TIterator SelectedIter(SelectedNodes); SelectedIter; ++SelectedIter)
+	{
+		UQuestBuilderEdNode* Node = Cast<UQuestBuilderEdNode>(*SelectedIter);
+		if (Node)
+		{
+			Node->PostCopyNode();
+		}
+	}
 }
+
 bool FQuestBuilderEditor::CanCopyNodes()
 {
 	// If any of the nodes can be duplicated then we should allow copying
@@ -1448,12 +1481,11 @@ void FQuestBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& New
 void FQuestBuilderEditor::OnNodeDoubleClicked(UEdGraphNode* Node)
 {
 	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(Node);
-	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
 
-	if (QuestEdNode && QuestNode &&
-		QuestNode->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint))
+	if (QuestEdNode && 
+		QuestEdNode->NodeInstance->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint))
 	{
-		UClass* NodeClass = QuestNode->GetClass();
+		UClass* NodeClass = QuestEdNode->NodeInstance->GetClass();
 		UPackage* Pkg = NodeClass->GetOuterUPackage();
 		FString ClassName = NodeClass->GetName().LeftChop(2);
 		UBlueprint* BlueprintOb = FindObject<UBlueprint>(Pkg, *ClassName);
@@ -1479,23 +1511,7 @@ void FQuestBuilderEditor::OnFinishedChangingProperties(const FPropertyChangedEve
 #include "Async/Async.h"
 
 void FQuestBuilderEditor::OnPackageMarkedDirty(UPackage* ModifiedPackage, bool bWasDirty)
-{
-	if (EditingQuestGraph)
-	{
-		for (UEdGraph* EdGraph : EditingQuestGraph->QuestGraphPages)
-		{
-			if (EdGraph)
-			{
-				if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(EdGraph))
-				{
-					QuestGraph->SortAllChildrenNodes();
-				}
-			}
-		}
-
-	}
-   
-    
+{   
 }
 //Called when saving our file graph
 #if ENGINE_MAJOR_VERSION < 5

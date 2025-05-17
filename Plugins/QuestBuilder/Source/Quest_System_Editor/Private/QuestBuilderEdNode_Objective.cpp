@@ -28,3 +28,10 @@ FLinearColor UQuestBuilderEdNode_Objective::GetBackgroundColor() const
 {
 	return GetDefault<UQuestBuilderSetting>()->ObjectiveNodeColor;
 }
+
+void UQuestBuilderEdNode_Objective::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
+{
+	AddContextMenuActionsTasks(Menu, "QuestBuilderEdNode", Context);
+	AddContextMenuActionsEvents(Menu, "QuestBuilderEdNode", Context);
+	AddContextMenuActionsDecorators(Menu, "QuestBuilderEdNode", Context);
+}

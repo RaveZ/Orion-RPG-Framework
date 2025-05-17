@@ -15,7 +15,7 @@ class AController;
 class APawn;
 class UQuestBuilderEdGraph;
 
-UCLASS(Blueprintable)
+UCLASS(Blueprintable, BlueprintType)
 class QUEST_SYSTEM_RUNTIME_API UQuestBuilderGraph : public UObject
 {
 	GENERATED_BODY()
@@ -27,12 +27,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "QuestBuilderGraph")
 		FString CategoryDisplayName;
 
+	/** AssetID */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "QuestBuilderGraph")
+		FName ID;
+
 	/** Set of Quest linked with Quest Graph Pages */
 	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
 		TArray< TObjectPtr<UQuest>> QuestList;
-
-	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
-		TMap<FName, TObjectPtr<UQuest>> QuestMap;
 
 	/*Map of NodID with its UQuestBuilderNode*/
 	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
@@ -48,6 +49,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
 		TObjectPtr<APawn> OwningPawn;
 
+		virtual void Initialize();
+		virtual void Deinitialize();
 
 #if WITH_EDITORONLY_DATA
 	/** Set of quest-graph pages */

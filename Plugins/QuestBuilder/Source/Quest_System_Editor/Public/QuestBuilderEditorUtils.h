@@ -18,7 +18,7 @@ public:
 
 	static FName FindUniqueQuestName(const FString& InBaseName);
 
-	
+	static FName FindUniqueQuestGraphName(const FString& InBaseName);
 
 	static FName FindUniqueNodeName(const FString& InBaseName);
 

@@ -18,9 +18,16 @@ UQuestBuilderGraph::~UQuestBuilderGraph()
 	
 }
 
-
+void UQuestBuilderGraph::Initialize()
+{
+}
+void UQuestBuilderGraph::Deinitialize()
+{
+	ID = NAME_None;
+}
 
 #if WITH_EDITORONLY_DATA
+
 void UQuestBuilderGraph::GetAllGraphs(TArray<UEdGraph*>& Graphs) const
 {
 	

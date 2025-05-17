@@ -31,12 +31,17 @@ bool UQuestTask::CompleteTask()
 	GetQuestComponent()->UpdateQuest();
     GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast();
 
+	Deactivate();
+	return true;
+}
+
+void UQuestTask::Deactivate()
+{
 	//clear tick timer handle
 	if (UWorld* World = GetWorld())
 	{
 		World->GetTimerManager().ClearTimer(TimerHandle_TickTask);
 	}
-	return true;
 }
 
 bool UQuestTask::IsTaskCompleted()
@@ -124,6 +129,44 @@ void UQuestTask::AddAmount(int AmountToAdd)
 FText UQuestTask::GetDescription_Implementation() const
 {
     return Description.IsEmpty() ? FText::FromString(GetName()) : Description;
+}
+
+FString UQuestTask::GetNodeName()
+{
+	return NodeName.Len() ? NodeName : GetShortTypeName(this);
+}
+
+FString UQuestTask::GetShortTypeName(UObject* Ob)
+{
+	if ((Ob == nullptr) || (Ob->GetClass() == nullptr))
+	{
+		return TEXT("None");
+	}
+
+	FString TypeDesc = Ob->GetClass()->GetName();
+
+	if (Ob->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint))
+	{
+		
+		TypeDesc =  Ob->GetClass()->GetName().LeftChop(2);
+	}
+
+	// Insert space before each capital letter (except the first character) and remove underscores
+	FString Result;
+	for (int32 i = 0; i < TypeDesc.Len(); ++i)
+	{
+		if (TypeDesc[i] != TEXT('_'))
+		{
+			TCHAR Char = TypeDesc[i];
+			if (i > 0 && FChar::IsUpper(Char) && !FChar::IsWhitespace(TypeDesc[i - 1]))
+			{
+				Result += TEXT(" ");
+			}
+			Result += Char;
+		}
+	}
+
+	return Result;
 }
 
 UWorld* UQuestTask::GetWorld() const

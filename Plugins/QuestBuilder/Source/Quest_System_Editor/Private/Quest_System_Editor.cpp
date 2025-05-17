@@ -5,6 +5,8 @@
 #include "QuestBuilder_EditorCommands.h"
 #include "QuestBuilderNode.h"
 #include "Task/QuestTask.h"
+#include "Decorator/OrionDecorator.h"
+#include "Event/OrionEvent.h"
 #include "IAssetTools.h"
 #include "ISettingsModule.h"
 #include "ISettingsSection.h"
@@ -79,18 +81,33 @@ void FQuest_System_EditorModule::ShutdownModule()
 		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	}
 
-	ClassCache.Reset();
+	TaskClassCache.Reset();
+	DecoratorClassCache.Reset();
+	EventClassCache.Reset();
 }
 
 
 void FQuest_System_EditorModule::CheckClassCache()
 {
-	if (!ClassCache.IsValid())
+	if (!TaskClassCache.IsValid())
 	{
-		ClassCache = MakeShareable(new FGraphNodeClassHelper(UQuestTask::StaticClass()));
+		TaskClassCache = MakeShareable(new FGraphNodeClassHelper(UQuestTask::StaticClass()));
 		FGraphNodeClassHelper::AddObservedBlueprintClasses(UQuestTask::StaticClass());
-		ClassCache->UpdateAvailableBlueprintClasses();
+		TaskClassCache->UpdateAvailableBlueprintClasses();
 	}
+	if (!DecoratorClassCache.IsValid())
+	{
+		DecoratorClassCache = MakeShareable(new FGraphNodeClassHelper(UOrionDecorator::StaticClass()));
+		FGraphNodeClassHelper::AddObservedBlueprintClasses(UOrionDecorator::StaticClass());
+		DecoratorClassCache->UpdateAvailableBlueprintClasses();
+	}
+	if (!EventClassCache.IsValid())
+	{
+		EventClassCache = MakeShareable(new FGraphNodeClassHelper(UOrionEvent::StaticClass()));
+		FGraphNodeClassHelper::AddObservedBlueprintClasses(UOrionEvent::StaticClass());
+		EventClassCache->UpdateAvailableBlueprintClasses();
+	}
+
 }
 
 void FQuest_System_EditorModule::RegisterSettings()

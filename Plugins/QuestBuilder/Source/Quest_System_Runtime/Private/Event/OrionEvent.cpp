@@ -118,6 +118,44 @@ TArray<FName> UOrionEvent::GetAllNodeID()
 	
 }
 
+FString UOrionEvent::GetNodeName()
+{
+	return NodeName.Len() ? NodeName : GetShortTypeName(this);
+}
+
+FString UOrionEvent::GetShortTypeName(UObject* Ob)
+{
+	if ((Ob == nullptr) || (Ob->GetClass() == nullptr))
+	{
+		return TEXT("None");
+	}
+
+	FString TypeDesc = Ob->GetClass()->GetName();
+
+	if (Ob->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint))
+	{
+
+		TypeDesc = Ob->GetClass()->GetName().LeftChop(2);
+	}
+
+	// Insert space before each capital letter (except the first character) and remove underscores
+	FString Result;
+	for (int32 i = 0; i < TypeDesc.Len(); ++i)
+	{
+		if (TypeDesc[i] != TEXT('_'))
+		{
+			TCHAR Char = TypeDesc[i];
+			if (i > 0 && FChar::IsUpper(Char) && !FChar::IsWhitespace(TypeDesc[i - 1]))
+			{
+				Result += TEXT(" ");
+			}
+			Result += Char;
+		}
+	}
+
+	return Result;
+}
+
 UWorld* UOrionEvent::GetWorld() const
 {
 	if (HasAllFlags(RF_ClassDefaultObject))

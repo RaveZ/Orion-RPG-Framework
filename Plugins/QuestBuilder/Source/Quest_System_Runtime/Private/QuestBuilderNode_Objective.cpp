@@ -14,6 +14,17 @@ void UQuestBuilderNode_Objective::Initialize()
 	BeginAllTask();
 }
 
+void UQuestBuilderNode_Objective::Deinitialize()
+{
+    for (auto& Task : Tasks)
+    {
+        if (Task)
+        {
+            Task->Deactivate();
+        }
+    }
+}
+
 void UQuestBuilderNode_Objective::BeginAllTask()
 {
     for (auto& Task : Tasks)
@@ -67,7 +78,7 @@ void UQuestBuilderNode_Objective::SetNodeTitle(const FText& NewTitle)
 
 FText UQuestBuilderNode_Objective::GetNodeDescription() const
 {
-    FString TaskDesc;
+    /*FString TaskDesc;
 
     for (const UQuestTask* Task : Tasks)
     {
@@ -79,7 +90,8 @@ FText UQuestBuilderNode_Objective::GetNodeDescription() const
         
     }
 
-    return FText::FromString(TaskDesc);
+    return FText::FromString(TaskDesc);*/
+    return Description;
 }
 #endif
 

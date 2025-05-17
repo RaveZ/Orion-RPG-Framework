@@ -30,9 +30,12 @@ class QUEST_SYSTEM_RUNTIME_API UOrionEvent : public UObject
 public:
 	UOrionEvent();
 
+	/** node name */
+	UPROPERTY(Category = Description, EditAnywhere)
+	FString NodeName;
+
 	UPROPERTY(BlueprintReadOnly, Category = "QuestEvent")
 		TObjectPtr<UQuestBuilderGraph> QuestGraph;
-		
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestEvent")
 		TObjectPtr<UQuestBuilderNode> OwningNode;
@@ -50,12 +53,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bUseNodeID == true", HideEditConditionToggle, EditConditionHides, GetOptions = "GetAllNodeID"))
 		FName NodeID;
-
-	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
-		bool StartLaunched = false;
-
-	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
-		bool EndLaunched = false;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestEvent")
 		TObjectPtr<UQuest> Quest;
@@ -93,6 +90,11 @@ public:
 
 	UFUNCTION(CallInEditor)
 	virtual TArray<FName> GetAllNodeID();
+
+
+	/** @return name of node */
+	FString GetNodeName();
+	FString GetShortTypeName(UObject* Ob);
 
 	// Allows the Object to get a valid UWorld from it's outer.
 	virtual UWorld* GetWorld() const override;

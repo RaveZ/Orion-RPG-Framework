@@ -33,7 +33,7 @@ void UQuestBuilderEdGraph::OnPackageMarkedDirty(UPackage* ModifiedPackage, bool 
 }
 
 
-void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
+void UQuestBuilderEdGraph::UpdateAsset(bool bForce)
 {
 	const double CurrentTime = FPlatformTime::Seconds();
 
@@ -48,21 +48,13 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 
 	LastRebuildTime = CurrentTime;
 
-	UE_LOG(LogTemp, Log, TEXT("RebuildQuestBuilderGraph started."));
+	UE_LOG(LogTemp, Log, TEXT("UpdateAsset started."));
 
 	UQuestBuilderGraph* Graph = GetQuestBuilderGraph();
 
 	Clear();
-	
-	if (Quest->QuestName.IsEmpty())
-	{
-		Quest->QuestName = FText::FromName(Quest->ID);
-	}
 
-	if (Graph->CategoryDisplayName.IsEmpty())
-	{
-		Graph->CategoryDisplayName = Graph->GetFName().ToString();
-	}
+	CacheNodeIDMap();
 
 	for (UOrionDecorator* QuestCondition : Quest->Conditions)
 	{
@@ -72,7 +64,7 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 			QuestCondition->Quest = Quest;
 		}
 	}
-	CacheNodeIDMap();
+
 	for (int i = 0; i < Nodes.Num(); ++i)
 	{
 		if (UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(Nodes[i]))
@@ -82,11 +74,30 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 
 			UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
 
-			NodeMap.Add(QuestNode, QuestEdNode);
+			// parent chain
+			QuestEdNode->ParentNode = NULL;
+			for (int32 iAux = 0; iAux < QuestEdNode->Events.Num(); iAux++)
+			{
+				QuestEdNode->Events[iAux]->ParentNode = QuestEdNode;
+			}
 
+			for (int32 iAux = 0; iAux < QuestEdNode->Decorators.Num(); iAux++)
+			{
+				QuestEdNode->Decorators[iAux]->ParentNode = QuestEdNode;
+			}
+
+			for (int32 iAux = 0; iAux < QuestEdNode->Tasks.Num(); iAux++)
+			{
+				QuestEdNode->Tasks[iAux]->ParentNode = QuestEdNode;
+			}
+
+			//cache quest and node dependencies
+			NodeMap.Add(QuestNode, QuestEdNode);
 			Quest->AllNodes.Add(QuestNode);
 			Quest->NodeMap.Emplace(QuestNode->ID, QuestNode);
 
+
+			//link child and parent nodes
 			for (int PinIdx = 0; PinIdx < QuestEdNode->Pins.Num(); ++PinIdx)
 			{
 				UEdGraphPin* Pin = QuestEdNode->Pins[PinIdx];
@@ -201,6 +212,136 @@ void UQuestBuilderEdGraph::RebuildQuestBuilderGraph(bool bForce)
 	
 }
 
+void UQuestBuilderEdGraph::OnSubNodeDropped()
+{
+	NotifyGraphChanged();
+}
+
+bool UQuestBuilderEdGraph::UpdateUnknownNodeClasses()
+{
+	bool bUpdated = false;
+	for (int32 NodeIdx = 0; NodeIdx < Nodes.Num(); NodeIdx++)
+	{
+		UQuestBuilderEdNode* MyNode = Cast<UQuestBuilderEdNode>(Nodes[NodeIdx]);
+		if (MyNode)
+		{
+			const bool bUpdatedNode = MyNode->RefreshNodeClass();
+			bUpdated = bUpdated || bUpdatedNode;
+
+			for (int32 SubNodeIdx = 0; SubNodeIdx < MyNode->SubNodes.Num(); SubNodeIdx++)
+			{
+				if (MyNode->SubNodes[SubNodeIdx])
+				{
+					const bool bUpdatedSubNode = MyNode->SubNodes[SubNodeIdx]->RefreshNodeClass();
+					bUpdated = bUpdated || bUpdatedSubNode;
+				}
+			}
+		}
+	}
+
+	return bUpdated;
+}
+
+void UpdateQuestGraphNodeErrorMessage(UQuestBuilderEdNode& Node)
+{
+	// Broke out setting error message in to own function so it can be reused when iterating nodes collection.
+	if (Node.NodeInstance)
+	{
+		Node.ErrorMessage = FGraphNodeClassHelper::GetDeprecationMessage(Node.NodeInstance->GetClass());
+
+		// Only check for node-specific errors if the node is not deprecated
+		if (Node.ErrorMessage.IsEmpty())
+		{
+			Node.UpdateErrorMessage();
+
+			// For node-specific validation we don't want to spam the log with errors
+			return;
+		}
+	}
+	else
+	{
+		// Null instance. Do we have any meaningful class data?
+		FString StoredClassName = Node.ClassData.GetClassName();
+		StoredClassName.RemoveFromEnd(TEXT("_C"));
+
+		if (!StoredClassName.IsEmpty())
+		{
+			// There is class data here but the instance was not be created.
+			static const FString IsMissingClassMessage(" class missing. Referenced by ");
+			Node.ErrorMessage = StoredClassName + IsMissingClassMessage + Node.GetFullName();
+		}
+	}
+
+	if (Node.HasErrors())
+	{
+		UE_LOG(LogTemp, Error, TEXT("%s"), *Node.ErrorMessage);
+	}
+}
+
+void UQuestBuilderEdGraph::UpdateDeprecatedClasses()
+{
+	// This function sets error messages and logs errors about nodes.
+
+	for (int32 Idx = 0, IdxNum = Nodes.Num(); Idx < IdxNum; ++Idx)
+	{
+		UQuestBuilderEdNode* Node = Cast<UQuestBuilderEdNode>(Nodes[Idx]);
+		if (Node != nullptr)
+		{
+			UpdateQuestGraphNodeErrorMessage(*Node);
+
+			for (int32 SubIdx = 0, SubIdxNum = Node->SubNodes.Num(); SubIdx < SubIdxNum; ++SubIdx)
+			{
+				if (Node->SubNodes[SubIdx] != nullptr)
+				{
+					UpdateQuestGraphNodeErrorMessage(*Node->SubNodes[SubIdx]);
+				}
+			}
+		}
+	}
+}
+
+void UQuestBuilderEdGraph::UpdateClassData()
+{
+	for (int32 Idx = 0; Idx < Nodes.Num(); Idx++)
+	{
+		UQuestBuilderEdNode* Node = Cast<UQuestBuilderEdNode>(Nodes[Idx]);
+		if (Node)
+		{
+			Node->UpdateNodeClassData();
+
+			for (int32 SubIdx = 0; SubIdx < Node->SubNodes.Num(); SubIdx++)
+			{
+				if (UQuestBuilderEdNode* SubNode = Node->SubNodes[SubIdx])
+				{
+					SubNode->UpdateNodeClassData();
+				}
+			}
+		}
+	}
+}
+
+void UQuestBuilderEdGraph::RemoveUnknownSubNodes()
+{
+	for (int32 Index = 0; Index < Nodes.Num(); ++Index)
+	{
+		UQuestBuilderEdNode* Node = Cast<UQuestBuilderEdNode>(Nodes[Index]);
+		if (Node)
+		{
+			for (int32 SubIdx = Node->SubNodes.Num() - 1; SubIdx >= 0; SubIdx--)
+			{
+				const bool bIsDecorator = Node->Decorators.Contains(Node->SubNodes[SubIdx]);
+				const bool bIsService = Node->Events.Contains(Node->SubNodes[SubIdx]);
+				const bool bIsTask = Node->Tasks.Contains(Node->SubNodes[SubIdx]);
+
+				if (!bIsDecorator && !bIsService && !bIsTask)
+				{
+					Node->SubNodes.RemoveAt(SubIdx);
+				}
+			}
+		}
+	}
+}
+
 void UQuestBuilderEdGraph::SortAllChildrenNodes(bool bForce)
 {
 	const double CurrentTime = FPlatformTime::Seconds();
@@ -223,21 +364,9 @@ void UQuestBuilderEdGraph::SortAllChildrenNodes(bool bForce)
 			FTimerDelegate::CreateLambda([this]()
 				{
 					//sort children nodes based on the PosY of QuestEdNode
-					for (auto& Node : Quest->AllNodes)
+					for (auto& EdNode : Nodes)
 					{
-						Node->ChildrenNodes.Sort([&](const UQuestBuilderNode& B, const UQuestBuilderNode& T)
-							{
-								UQuestBuilderEdNode* EdNode_BNode = NodeMap.FindRef(&B);
-								UQuestBuilderEdNode* EdNode_TNode = NodeMap.FindRef(&T);
-								if (EdNode_BNode && EdNode_TNode)
-								{
-									return EdNode_TNode->NodePosY > EdNode_BNode->NodePosY;
-								}
-								else
-								{
-									return false;
-								}
-							});
+						RebuildChildOrder(EdNode);
 
 					}
 				}),
@@ -245,6 +374,25 @@ void UQuestBuilderEdGraph::SortAllChildrenNodes(bool bForce)
 			false // Do not loop
 		);
 	}
+}
+
+void UQuestBuilderEdGraph::RebuildChildOrder(UEdGraphNode* ParentNode)
+{
+	UQuestBuilderEdNode* QuestParentEdNode = Cast<UQuestBuilderEdNode>(ParentNode);
+	UQuestBuilderNode* QuestParentNode = QuestParentEdNode ? Cast<UQuestBuilderNode>(QuestParentEdNode->NodeInstance) : nullptr;
+	QuestParentNode->ChildrenNodes.Sort([&](const UQuestBuilderNode& B, const UQuestBuilderNode& T)
+	{
+		UQuestBuilderEdNode* EdNode_BNode = NodeMap.FindRef(&B);
+		UQuestBuilderEdNode* EdNode_TNode = NodeMap.FindRef(&T);
+		if (EdNode_BNode && EdNode_TNode)
+		{
+			return EdNode_TNode->NodePosY > EdNode_BNode->NodePosY;
+		}
+		else
+		{
+			return false;
+		}
+	});
 }
 
 void UQuestBuilderEdGraph::CacheNodeIDMap()
@@ -273,6 +421,7 @@ void UQuestBuilderEdGraph::AddToNodeIDMap(FName ID, UQuestBuilderNode* Node)
 	GetQuestBuilderGraph()->NodeIDMap.Emplace(ID, Node);
 }
 
+
 UQuestBuilderGraph* UQuestBuilderEdGraph::GetQuestBuilderGraph() const
 {
 	return CastChecked<UQuestBuilderGraph>(GetOuter());
@@ -298,7 +447,55 @@ void UQuestBuilderEdGraph::PostEditUndo()
 	Super::PostEditUndo();
 
 	NotifyGraphChanged();
-	RebuildQuestBuilderGraph();
+	UpdateAsset();
+}
+
+void UQuestBuilderEdGraph::CollectAllNodeInstances(TSet<UObject*>& NodeInstances)
+{
+	for (int32 Idx = 0; Idx < Nodes.Num(); Idx++)
+	{
+		UQuestBuilderEdNode* MyNode = Cast<UQuestBuilderEdNode>(Nodes[Idx]);
+		if (MyNode)
+		{
+			NodeInstances.Add(MyNode->NodeInstance);
+
+			for (int32 SubIdx = 0; SubIdx < MyNode->SubNodes.Num(); SubIdx++)
+			{
+				if (MyNode->SubNodes[SubIdx])
+				{
+					NodeInstances.Add(MyNode->SubNodes[SubIdx]->NodeInstance);
+				}
+			}
+		}
+	}
+}
+void UQuestBuilderEdGraph::UpdateVersion_UnifiedSubNodes()
+{
+	for (int32 NodeIdx = 0; NodeIdx < Nodes.Num(); NodeIdx++)
+	{
+		UQuestBuilderEdNode* MyNode = Cast<UQuestBuilderEdNode>(Nodes[NodeIdx]);
+		if (MyNode == nullptr)
+		{
+			continue;
+		}
+
+		MyNode->SubNodes.Reset(MyNode->Decorators.Num() + MyNode->Events.Num() + MyNode->Tasks.Num());
+
+		for (int32 SubIdx = 0; SubIdx < MyNode->Decorators.Num(); SubIdx++)
+		{
+			MyNode->SubNodes.Add(MyNode->Decorators[SubIdx]);
+		}
+
+		for (int32 SubIdx = 0; SubIdx < MyNode->Events.Num(); SubIdx++)
+		{
+			MyNode->SubNodes.Add(MyNode->Events[SubIdx]);
+		}
+
+		for (int32 SubIdx = 0; SubIdx < MyNode->Tasks.Num(); SubIdx++)
+		{
+			MyNode->SubNodes.Add(MyNode->Tasks[SubIdx]);
+		}
+	}
 }
 #endif // WITH_EDITOR
 

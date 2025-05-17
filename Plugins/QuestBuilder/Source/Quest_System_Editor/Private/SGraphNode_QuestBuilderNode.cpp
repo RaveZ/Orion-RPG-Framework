@@ -9,6 +9,7 @@
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/SToolTip.h"
 #include "SGraphPanel.h"
+#include "NodeFactory.h"
 #include "Components/VerticalBox.h"
 #include "SGraphPreviewer.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
@@ -19,12 +20,17 @@
 #include "SLevelOfDetailBranchNode.h"
 #include "QuestBuilderNode.h"
 #include "QuestBuilderEdNode_Root.h"
+#include "QuestBuilderEdNode_Objective.h"
 #include "QuestBuilderNode_Objective.h"
 #include "QuestBuilderSetting.h"	
 #include "Fonts/SlateFontInfo.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "QuestBuilderEdSubNode_Decorator.h"
+#include "QuestBuilderEdSubNode_Event.h"
+#include "QuestBuilderEdSubNode_Task.h"
+#include "IDocumentation.h"
 
 #define LOCTEXT_NAMESPACE "EdNode_QuestBuilder"
 
@@ -175,33 +181,127 @@ private:
 
 void SGraphNode_QuestBuilderNode::Construct(const FArguments& InArgs, UQuestBuilderEdNode* InNode)
 {
+	SetCursor(EMouseCursor::CardinalCross);
 	GraphNode = InNode;
 	UpdateGraphNode();
 	InNode->SGraphNode = this;
+	bDragMarkerVisible = false;
 }
+
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 {
+	bDragMarkerVisible = false;
 	InputPins.Empty();
 	OutputPins.Empty();
 
+	if (DecoratorsBox.IsValid())
+	{
+		DecoratorsBox->ClearChildren();
+	}
+	else
+	{
+		SAssignNew(DecoratorsBox, SVerticalBox);
+	}
+
+	if (EventsBox.IsValid())
+	{
+		EventsBox->ClearChildren();
+	}
+	else
+	{
+		SAssignNew(EventsBox, SVerticalBox);
+	}
+
+	if (TasksBox.IsValid())
+	{
+		TasksBox->ClearChildren();
+	}
+	else
+	{
+		SAssignNew(TasksBox, SVerticalBox);
+	}
+
 	// Reset variables that are going to be exposed, in case we are refreshing an already setup node.
 	RightNodeBox.Reset();
-	LeftNodeBox.Reset();
-
-	const FMargin NodePadding = FMargin(4.f);
-	const FMargin NamePadding = FMargin(2);
-
-	TSharedPtr<SErrorText> ErrorText;
-	TSharedPtr<SVerticalBox> NodeBody;
-	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, GraphNode);
-	TWeakPtr<SNodeTitle> WeakNodeTitle = NodeTitle;
-
-	TSharedPtr<STextBlock> DescriptionText;
+	LeftNodeBox.Reset(); 
+	DecoratorWidgets.Reset();
+	EventsWidgets.Reset();
+	TasksWidgets.Reset();
+	SubNodes.Reset();
+	OutputPinBox.Reset();
 
 	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
 	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+
+	if (QuestEdNode)
+	{
+		for (int32 i = 0; i < QuestEdNode->Decorators.Num(); i++)
+		{
+			if (QuestEdNode->Decorators[i])
+			{
+				TSharedPtr<SGraphNode> NewNode = FNodeFactory::CreateNodeWidget(QuestEdNode->Decorators[i]);
+				if (OwnerGraphPanelPtr.IsValid())
+				{
+					NewNode->SetOwner(OwnerGraphPanelPtr.Pin().ToSharedRef());
+					OwnerGraphPanelPtr.Pin()->AttachGraphEvents(NewNode);
+				}
+				AddDecorator(NewNode);
+				NewNode->UpdateGraphNode();
+			}
+		}
+		for (int32 i = 0; i < QuestEdNode->Events.Num(); i++)
+		{
+			if (QuestEdNode->Events[i])
+			{
+				TSharedPtr<SGraphNode> NewNode = FNodeFactory::CreateNodeWidget(QuestEdNode->Events[i]);
+				if (OwnerGraphPanelPtr.IsValid())
+				{
+					NewNode->SetOwner(OwnerGraphPanelPtr.Pin().ToSharedRef());
+					OwnerGraphPanelPtr.Pin()->AttachGraphEvents(NewNode);
+				}
+				AddEvent(NewNode);
+				NewNode->UpdateGraphNode();
+			}
+		}
+		for (int32 i = 0; i < QuestEdNode->Tasks.Num(); i++)
+		{
+			if (QuestEdNode->Tasks[i])
+			{
+				TSharedPtr<SGraphNode> NewNode = FNodeFactory::CreateNodeWidget(QuestEdNode->Tasks[i]);
+				if (OwnerGraphPanelPtr.IsValid())
+				{
+					NewNode->SetOwner(OwnerGraphPanelPtr.Pin().ToSharedRef());
+					OwnerGraphPanelPtr.Pin()->AttachGraphEvents(NewNode);
+				}
+				AddTask(NewNode);
+				NewNode->UpdateGraphNode();
+			}
+		}
+	}
+
+	TSharedPtr<SErrorText> ErrorText;
+	TSharedPtr<STextBlock> DescriptionText;
+	TSharedPtr<SNodeTitle> NodeTitle = SNew(SNodeTitle, GraphNode);
+	TWeakPtr<SNodeTitle> WeakNodeTitle = NodeTitle;
+
+	auto GetNodeTitlePlaceholderWidth = [WeakNodeTitle]() -> FOptionalSize
+		{
+			TSharedPtr<SNodeTitle> NodeTitlePin = WeakNodeTitle.Pin();
+			const float DesiredWidth = (NodeTitlePin.IsValid()) ? NodeTitlePin->GetTitleSize().X : 0.0f;
+			return FMath::Max(75.0f, DesiredWidth);
+		};
+	auto GetNodeTitlePlaceholderHeight = [WeakNodeTitle]() -> FOptionalSize
+		{
+			TSharedPtr<SNodeTitle> NodeTitlePin = WeakNodeTitle.Pin();
+			const float DesiredHeight = (NodeTitlePin.IsValid()) ? NodeTitlePin->GetTitleSize().Y : 0.0f;
+			return FMath::Max(22.0f, DesiredHeight);
+		};
+
+	const FMargin NodePadding = (Cast<UQuestBuilderEdSubNode_Decorator>(GraphNode) || Cast<UQuestBuilderEdSubNode_Event>(GraphNode) || Cast<UQuestBuilderEdSubNode_Task>(GraphNode))
+		? FMargin(1.f)
+		: FMargin(8.0f);
 
 	UWorld* World = GEditor->GetEditorWorldContext().World();
 
@@ -212,9 +312,6 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 		.OnHoverStateChanged(this, &SGraphNode_QuestBuilderNode::OnIndexHoverStateChanged)
 		.OnGetIndexColor(this, &SGraphNode_QuestBuilderNode::GetIndexColor);
 	
-	auto SizeBox = SNew(SBox);
-	SizeBox->SetMinDesiredWidth(250.f);
-	SizeBox->SetMinDesiredHeight(60.f);
 
 	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	this->GetOrAddSlot(ENodeZone::Center)
@@ -223,59 +320,92 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 		[
 			SNew(SBorder)
 				.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
-				.Padding(3.0f)
-				.BorderBackgroundColor(this, &SGraphNode_QuestBuilderNode::GetNodeHighlightColor)
+				.Padding(0.0f)
+				.BorderBackgroundColor(this, &SGraphNode_QuestBuilderNode::GetBorderBackgroundColor)
+				.OnMouseButtonDown(this, &SGraphNode_QuestBuilderNode::OnMouseDown)
 				[
-					SNew(SBorder)
-						.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
-						.Padding(0.0f)
-						.BorderBackgroundColor(this, &SGraphNode_QuestBuilderNode::GetBorderBackgroundColor)
-						//.OnMouseButtonDown(this, &SGraphNode_QuestBuilderNode::OnMouseDown)
-						[
-							SNew(SOverlay)
-								+ SOverlay::Slot()
-								[
-									SizeBox
-								]
-							// Pins and node details
-							+ SOverlay::Slot()
-								.HAlign(HAlign_Fill)
-								.VAlign(VAlign_Fill)
-								[
-									SNew(SHorizontalBox)
+						SNew(SOverlay)
+						// Pins and node details
+						+ SOverlay::Slot()
+							.HAlign(HAlign_Fill)
+							.VAlign(VAlign_Fill)
+							[
+								SNew(SHorizontalBox)
 
-										// INPUT PIN AREA
-										+ SHorizontalBox::Slot()
-										.AutoWidth()
-										[
-											SNew(SBox)
-												.MinDesiredHeight(NodePadding.Top)
-												[
-													SAssignNew(LeftNodeBox, SVerticalBox)
-												]
-										]
+									// INPUT PIN AREA
+									+ SHorizontalBox::Slot()
+									.AutoWidth()
+									[
+										SNew(SBox)
+											.MinDesiredWidth(NodePadding.Left)
+											[
+												SAssignNew(LeftNodeBox, SVerticalBox)
+											]
+									]
 
-										// STATE NAME AREA
-										+ SHorizontalBox::Slot()
-										.Padding(FMargin(NodePadding.Left, 0.0f, NodePadding.Right, 0.0f))
-										[
-											SNew(SVerticalBox)
-												+ SVerticalBox::Slot()
-												.AutoHeight()
+									// STATE NAME AREA
+									+ SHorizontalBox::Slot()
+									.Padding(FMargin(NodePadding))
+									[
+										SNew(SVerticalBox)
+											+ SVerticalBox::Slot()
+											.AutoHeight()
+											[
+												SAssignNew(NodeBody, SBorder)
+												.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+												.BorderBackgroundColor(this, &SGraphNode_QuestBuilderNode::GetBackgroundColor)
+												.HAlign(HAlign_Fill)
+												.VAlign(VAlign_Center)
+												.Visibility(EVisibility::SelfHitTestInvisible)
 												[
 													SNew(SOverlay)
-														+ SOverlay::Slot()
-														.HAlign(HAlign_Center)
+													+ SOverlay::Slot()
+													.HAlign(HAlign_Fill)
+													.VAlign(VAlign_Fill)
+													[
+														SNew(SVerticalBox)
+														+ SVerticalBox::Slot()
+														.HAlign(HAlign_Fill)
 														.VAlign(VAlign_Center)
-														.Padding(7.0f)
+														.AutoHeight()
 														[
-															SAssignNew(NodeBody, SVerticalBox)
-
-																// Title
-																+ SVerticalBox::Slot()
-																.AutoHeight()
+															SNew(SHorizontalBox)
+															.Visibility(this, &SGraphNode_QuestBuilderNode::GetTitleVisibility)
+															+ SHorizontalBox::Slot()
+															.AutoWidth()
+															[
+																// POPUP ERROR MESSAGE
+																SAssignNew(ErrorText, SErrorText)
+																	.BackgroundColor(this, &SGraphNode_QuestBuilderNode::GetErrorColor)
+																	.ToolTipText(this, &SGraphNode_QuestBuilderNode::GetErrorMsgToolTip)
+															]
+															+ SHorizontalBox::Slot()
+															.AutoWidth()
+															[
+																SNew(SLevelOfDetailBranchNode)
+																.UseLowDetailSlot(this, &SGraphNode_QuestBuilderNode::UseLowDetailNodeTitles)
+																.LowDetail()
 																[
-																	SNew(SVerticalBox)
+																	SNew(SBox)
+																		.WidthOverride_Lambda(GetNodeTitlePlaceholderWidth)
+																		.HeightOverride_Lambda(GetNodeTitlePlaceholderHeight)
+																]
+																.HighDetail()
+																[
+																	SNew(SHorizontalBox)
+																	+ SHorizontalBox::Slot()
+																	.AutoWidth()
+																	.VAlign(VAlign_Center)
+																	[
+																		SNew(SImage)
+																			.Image(this, &SGraphNode_QuestBuilderNode::GetNameIcon)
+																			//.Visibility(this, &SGraphNode_QuestBuilderNode::GetParentNodeVisibility)
+																	]
+																	+ SHorizontalBox::Slot()
+																	.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+																	[
+																		SNew(SVerticalBox)
+																		.Visibility(this, &SGraphNode_QuestBuilderNode::GetParentNodeVisibility)
 																		+ SVerticalBox::Slot()
 																		.AutoHeight()
 																		[
@@ -286,6 +416,25 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 																				.OnTextCommitted(this, &SGraphNode_QuestBuilderNode::OnNameTextCommited)
 																				.IsReadOnly(this, &SGraphNode_QuestBuilderNode::IsNameReadOnly)
 																				.IsSelected(this, &SGraphNode_QuestBuilderNode::IsSelectedExclusively)
+																				.Justification(ETextJustify::Center)
+																		]
+																		+ SVerticalBox::Slot()
+																		.AutoHeight()
+																		[
+																			NodeTitle.ToSharedRef()
+																		]
+																	]
+																	+ SHorizontalBox::Slot()
+																	.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+																	[
+																		SNew(SVerticalBox)
+																		.Visibility(this, &SGraphNode_QuestBuilderNode::GetSubNodeVisibility)
+																		+ SVerticalBox::Slot()
+																		.AutoHeight()
+																		[
+																			SNew(STextBlock)
+																				.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
+																				.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
 																				.Clipping(EWidgetClipping::Inherit)
 																		]
 																		+ SVerticalBox::Slot()
@@ -293,145 +442,205 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 																		[
 																			NodeTitle.ToSharedRef()
 																		]
-
+																	]
 																]
-																// Error Msg
-																+ SVerticalBox::Slot()
-																.AutoHeight()
-																[
-																	SAssignNew(ErrorText, SErrorText)
-																		.BackgroundColor(this, &SGraphNode_QuestBuilderNode::GetErrorColor)
-																		.ToolTipText(this, &SGraphNode_QuestBuilderNode::GetErrorMsgToolTip)
-																]
-																	
-														]
-												]
-												// Description
-												+ SVerticalBox::Slot()
-												.AutoHeight()
-												.HAlign(HAlign_Fill)
-												.VAlign(VAlign_Center)
-												[
-													SNew(SVerticalBox)
+															]
+														]	
 														+ SVerticalBox::Slot()
-														.Padding(FMargin(5.0f, 0.0f, 5.0f, 3.0f))
 														.AutoHeight()
+														.Padding(FMargin(4.0f, 0.0f, 4.0f, 2.0f))
 														[
-															// TASK TITLE
-															SNew(STextBlock)
-																.Visibility(this, &SGraphNode_QuestBuilderNode::GetTaskVisibility)
-                                                                .Text(LOCTEXT("TaskLabel", "TASK"))
-																.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
-																.Justification(ETextJustify::Center)
-																.Clipping(EWidgetClipping::Inherit)
-														]
-														+ SVerticalBox::Slot()
-														.Padding(FMargin(5.0f, 0.0f, 5.0f, 8.0f))
-														.AutoHeight()
-														[
-															// DESCRIPTION MESSAGE | Including Task Datas
-															SNew(STextBlock)
+															// DESCRIPTION MESSAGE
+															SAssignNew(DescriptionText, STextBlock)
 																.Visibility(this, &SGraphNode_QuestBuilderNode::GetDescriptionVisibility)
 																.Text(this, &SGraphNode_QuestBuilderNode::GetDescription)
-																.Justification(ETextJustify::Center)
-																.Clipping(EWidgetClipping::Inherit)
 														]
-															
+													]
 												]
+											]
+											+ SVerticalBox::Slot()
+											.AutoHeight()
+											[
+												SAssignNew(NodeBody, SBorder)
+													.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+													.BorderBackgroundColor(QuestBuilderColors::NodeBorder::SubNodeBorder)
+													.HAlign(HAlign_Fill)
+													.VAlign(VAlign_Center)
+													.Visibility(this, &SGraphNode_QuestBuilderNode::GetTaskVisibility)
+													[
+														SNew(SOverlay)
+															+ SOverlay::Slot()
+															.HAlign(HAlign_Fill)
+															.VAlign(VAlign_Fill)
+															[
+																SNew(SVerticalBox)
+																	+ SVerticalBox::Slot()
+																	.HAlign(HAlign_Fill)
+																	.VAlign(VAlign_Center)
+																	.AutoHeight()
+																	[
+																		SNew(SHorizontalBox)
+																			/*+ SHorizontalBox::Slot()
+																			.AutoWidth()
+																			.VAlign(VAlign_Center)
+																			[
+																				SNew(SImage)
+																					.Image(FAppStyle::GetBrush(TEXT("BTEditor.Graph.NewTask")))
+																			]*/
+																			+ SHorizontalBox::Slot()
+																			.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+																			[
+																				SNew(STextBlock)
+																					.Text(LOCTEXT("TaskLabel", "Tasks"))
+																					.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+																					.Clipping(EWidgetClipping::Inherit)
+																			]
+																	]
+																	+ SVerticalBox::Slot()
+																	.Padding(FMargin(8.0f, 0, 0, 0))
+																	.AutoHeight()
+																	[
+																		TasksBox.ToSharedRef()
+																	]
+															]
+													]
+											]
+											+ SVerticalBox::Slot()
+											.AutoHeight()
+											[
+												SAssignNew(NodeBody, SBorder)
+													.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+													.BorderBackgroundColor(QuestBuilderColors::NodeBorder::SubNodeBorder)
+													.HAlign(HAlign_Fill)
+													.VAlign(VAlign_Center)
+													.Visibility(this, &SGraphNode_QuestBuilderNode::GetEventsVisibility)
+													[
+														SNew(SOverlay)
+															+ SOverlay::Slot()
+															.HAlign(HAlign_Fill)
+															.VAlign(VAlign_Fill)
+															[
+																SNew(SVerticalBox)
+																	+ SVerticalBox::Slot()
+																	.HAlign(HAlign_Fill)
+																	.VAlign(VAlign_Center)
+																	.AutoHeight()
+																	[
+																		SNew(SHorizontalBox)
+																			/*+ SHorizontalBox::Slot()
+																			.AutoWidth()
+																			.VAlign(VAlign_Center)
+																			[
+																				SNew(SImage)
+																					.Image(FAppStyle::GetBrush(TEXT("GraphEditor.CustomEvent_16x")))
+																			]*/
+																			+ SHorizontalBox::Slot()
+																			.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+																			[
+																				SNew(STextBlock)
+																					.Text(LOCTEXT("TaskLabel", "Events"))
+																					.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+																					.Clipping(EWidgetClipping::Inherit)
+																			]
+																	]
+																	+ SVerticalBox::Slot()
+																	.Padding(FMargin(8.0f, 0, 0, 0))
+																	.AutoHeight()
+																	[
+																		EventsBox.ToSharedRef()
+																	]
+															]
+													]
+											]
+											+ SVerticalBox::Slot()
+											.AutoHeight()
+											[
+												SAssignNew(NodeBody, SBorder)
+													.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+													.BorderBackgroundColor(QuestBuilderColors::NodeBorder::SubNodeBorder)
+													.HAlign(HAlign_Fill)
+													.VAlign(VAlign_Center)
+													.Visibility(this, &SGraphNode_QuestBuilderNode::GetDecoratorVisibility)
+													[
+														SNew(SOverlay)
+															+ SOverlay::Slot()
+															.HAlign(HAlign_Fill)
+															.VAlign(VAlign_Fill)
+															[
+																SNew(SVerticalBox)
+																	+ SVerticalBox::Slot()
+																	.HAlign(HAlign_Fill)
+																	.VAlign(VAlign_Center)
+																	.AutoHeight()
+																	[
+																		SNew(SHorizontalBox)
+																			/*+ SHorizontalBox::Slot()
+																			.AutoWidth()
+																			.VAlign(VAlign_Center)
+																			[
+																				SNew(SImage)
+																					.Image(FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Decorator.Conditional.Icon")))
+																			]*/
+																			+ SHorizontalBox::Slot()
+																			.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+																			[
+																				SNew(STextBlock)
+																					.Text(LOCTEXT("TaskLabel", "Decorators"))
+																					.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+																					.Clipping(EWidgetClipping::Inherit)
+																			]
+																	]
+																	+ SVerticalBox::Slot()
+																	.Padding(FMargin(8.0f, 0, 0, 0))
+																	.AutoHeight()
+																	[
+																		DecoratorsBox.ToSharedRef()
+																	]
+															]
+													]
+											]
 
-												// Events
-												+ SVerticalBox::Slot()
-												.AutoHeight()
-												.HAlign(HAlign_Fill)
-												.VAlign(VAlign_Center)
-												[
-													SNew(SVerticalBox)
-														+ SVerticalBox::Slot()
-														.Padding(FMargin(5.0f, 0.0f, 5.0f, 3.0f))
-														.AutoHeight()
-														[
-															// EVENT TITLE
-															SNew(STextBlock)
-																.Visibility(this, &SGraphNode_QuestBuilderNode::GetEventsVisibility)
-																.Text(LOCTEXT("TaskLabel", "EVENT"))
-																.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
-																.Justification(ETextJustify::Center)
-																.Clipping(EWidgetClipping::Inherit)
-														]
-														+ SVerticalBox::Slot()
-														.Padding(FMargin(5.0f, 0.0f, 5.0f, 8.0f))
-														.AutoHeight()
-														[
-															//Events Text
-															SNew(STextBlock)
-																.Visibility(this, &SGraphNode_QuestBuilderNode::GetEventsVisibility)
-																.Text(this, &SGraphNode_QuestBuilderNode::GetEventsText)
-																.Justification(ETextJustify::Center)
-																.Clipping(EWidgetClipping::Inherit)
-														]
+									]
 
-												]
+									// OUTPUT PIN AREA
+									+ SHorizontalBox::Slot()
+									.AutoWidth()
+									[
+										SNew(SBox)
+											.MinDesiredWidth(NodePadding.Right)
+											[
+												SAssignNew(RightNodeBox, SVerticalBox)
+											]
+									]
+							]
+							// Drag marker overlay
+							+ SOverlay::Slot()
+							.HAlign(HAlign_Fill)
+							.VAlign(VAlign_Top)
+							[
+								SNew(SBorder)
+									.BorderBackgroundColor(QuestBuilderColors::Action::DragMarker)
+									.ColorAndOpacity(QuestBuilderColors::Action::DragMarker)
+									.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+									.Visibility(this, &SGraphNode_QuestBuilderNode::GetDragOverMarkerVisibility)
+									[
+										SNew(SBox)
+											.HeightOverride(4.f)
+									]
+							]
 
-												// Conditions
-												+ SVerticalBox::Slot()
-												.AutoHeight()
-												.HAlign(HAlign_Fill)
-												.VAlign(VAlign_Center)
-												[
-													SNew(SVerticalBox)
-														+ SVerticalBox::Slot()
-														.Padding(FMargin(5.0f, 0.0f, 5.0f, 3.0f))
-														.AutoHeight()
-														[
-															// BRANCHING CONDITION TITLE
-															SNew(STextBlock)
-																.Visibility(this, &SGraphNode_QuestBuilderNode::GetConditionsVisibility)
-																.Text(LOCTEXT("TaskLabel", "BRANCHING CONDITION"))
-																.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
-																.Justification(ETextJustify::Center)
-																.Clipping(EWidgetClipping::Inherit)
-														]
-														+ SVerticalBox::Slot()
-														.Padding(FMargin(5.0f, 0.0f, 5.0f, 8.0f))
-														.AutoHeight()
-														[
-															//Events Text
-															SNew(STextBlock)
-																.Visibility(this, &SGraphNode_QuestBuilderNode::GetConditionsVisibility)
-																.Text(this, &SGraphNode_QuestBuilderNode::GetConditionsText)
-																.Justification(ETextJustify::Center)
-																.Clipping(EWidgetClipping::Inherit)
-														]
-
-												]
-
-										]
-
-										// OUTPUT PIN AREA
-										+ SHorizontalBox::Slot()
-										.AutoWidth()
-										[
-											SNew(SBox)
-												.MinDesiredHeight(NodePadding.Bottom)
-												[
-													SAssignNew(RightNodeBox, SVerticalBox)
-
-												]
-										]
-								]
-
-
-								// Blueprint indicator overlay
-								+SOverlay::Slot()
-								.HAlign(HAlign_Left)
-								.VAlign(VAlign_Top)
-								[
-									SNew(SImage)
-										.Image(FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Blueprint")))
-										.Visibility(this, &SGraphNode_QuestBuilderNode::GetBlueprintIconVisibility)
-								]
-						]
+							// Blueprint indicator overlay
+							+SOverlay::Slot()
+							.HAlign(HAlign_Right)
+							.VAlign(VAlign_Top)
+							[
+								SNew(SImage)
+									.Image(FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Blueprint")))
+									.Visibility(this, &SGraphNode_QuestBuilderNode::GetBlueprintIconVisibility)
+							]
+						
 				]
+				
 		];
 		// Create comment bubble
 		TSharedPtr<SCommentBubble> CommentBubble;
@@ -463,16 +672,196 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 	CreatePinWidgets();
 }
 
+void SGraphNode_QuestBuilderNode::OnDragEnter(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent)
+{
+	// Is someone dragging a node?
+	TSharedPtr<FDragNode> DragConnectionOp = DragDropEvent.GetOperationAs<FDragNode>();
+	if (DragConnectionOp.IsValid())
+	{
+		// Inform the Drag and Drop operation that we are hovering over this node.
+		TSharedPtr<SGraphNode> SubNode = GetSubNodeUnderCursor(MyGeometry, DragDropEvent);
+		DragConnectionOp->SetHoveredNode(SubNode.IsValid() ? SubNode : SharedThis(this));
+
+		UQuestBuilderEdNode* TestNode = Cast<UQuestBuilderEdNode>(GraphNode);
+		if (DragConnectionOp->IsValidOperation() && TestNode && TestNode->IsSubNode())
+		{
+			SetDragMarker(true);
+		}
+	}
+
+	SGraphNode::OnDragEnter(MyGeometry, DragDropEvent);
+}
+
+FReply SGraphNode_QuestBuilderNode::OnDragOver(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent)
+{
+	// Is someone dragging a node?
+	TSharedPtr<FDragNode> DragConnectionOp = DragDropEvent.GetOperationAs<FDragNode>();
+	if (DragConnectionOp.IsValid())
+	{
+		// Inform the Drag and Drop operation that we are hovering over this node.
+		TSharedPtr<SGraphNode> SubNode = GetSubNodeUnderCursor(MyGeometry, DragDropEvent);
+		DragConnectionOp->SetHoveredNode(SubNode.IsValid() ? SubNode : SharedThis(this));
+	}
+	return SGraphNode::OnDragOver(MyGeometry, DragDropEvent);
+}
+
+void SGraphNode_QuestBuilderNode::OnDragLeave(const FDragDropEvent& DragDropEvent)
+{
+	TSharedPtr<FDragNode> DragConnectionOp = DragDropEvent.GetOperationAs<FDragNode>();
+	if (DragConnectionOp.IsValid())
+	{
+		// Inform the Drag and Drop operation that we are not hovering any pins
+		DragConnectionOp->SetHoveredNode(TSharedPtr<SGraphNode>(NULL));
+	}
+
+	SetDragMarker(false);
+	SGraphNode::OnDragLeave(DragDropEvent);
+}
+
+FReply SGraphNode_QuestBuilderNode::OnDrop(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent)
+{
+	SetDragMarker(false);
+
+	TSharedPtr<FDragQuestGraphNode> DragNodeOp = DragDropEvent.GetOperationAs<FDragQuestGraphNode>();
+	if (DragNodeOp.IsValid())
+	{
+		if (!DragNodeOp->IsValidOperation())
+		{
+			return FReply::Handled();
+		}
+
+		const float DragTime = float(FPlatformTime::Seconds() - DragNodeOp->StartTime);
+		if (DragTime < 0.25f)
+		{
+			return FReply::Handled();
+		}
+
+		UQuestBuilderEdNode* MyNode = Cast<UQuestBuilderEdNode>(GraphNode);
+		if (MyNode == nullptr || MyNode->IsSubNode())
+		{
+			return FReply::Unhandled();
+		}
+
+		const FScopedTransaction Transaction(NSLOCTEXT("UnrealEd", "GraphEd_DragDropNode", "Drag&Drop Node"));
+		bool bReorderOperation = true;
+
+		const TArray< TSharedRef<SGraphNode> >& DraggedNodes = DragNodeOp->GetNodes();
+		for (int32 Idx = 0; Idx < DraggedNodes.Num(); Idx++)
+		{
+			UQuestBuilderEdNode* DraggedNode = Cast<UQuestBuilderEdNode>(DraggedNodes[Idx]->GetNodeObj());
+			if (DraggedNode && DraggedNode->ParentNode)
+			{
+				if (DraggedNode->ParentNode != GraphNode)
+				{
+					bReorderOperation = false;
+				}
+
+				DraggedNode->ParentNode->RemoveSubNode(DraggedNode);
+			}
+		}
+
+		UQuestBuilderEdNode* DropTargetNode = DragNodeOp->GetDropTargetNode();
+		const int32 InsertIndex = MyNode->FindSubNodeDropIndex(DropTargetNode);
+
+		for (int32 Idx = 0; Idx < DraggedNodes.Num(); Idx++)
+		{
+			UQuestBuilderEdNode* DraggedTestNode = Cast<UQuestBuilderEdNode>(DraggedNodes[Idx]->GetNodeObj());
+			DraggedTestNode->Modify();
+			DraggedTestNode->ParentNode = MyNode;
+
+			MyNode->Modify();
+			MyNode->InsertSubNodeAt(DraggedTestNode, InsertIndex);
+		}
+
+		if (bReorderOperation)
+		{
+			UpdateGraphNode();
+		}
+		else
+		{
+			UQuestBuilderEdGraph* MyGraph = MyNode->GetQuestBuilderEdGraph();
+			if (MyGraph)
+			{
+				MyGraph->OnSubNodeDropped();
+			}
+		}
+	}
+
+	return SGraphNode::OnDrop(MyGeometry, DragDropEvent);
+}
+
+
+FReply SGraphNode_QuestBuilderNode::OnMouseMove(const FGeometry& SenderGeometry, const FPointerEvent& MouseEvent)
+{
+	if (MouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton) && !(GEditor->bIsSimulatingInEditor || GEditor->PlayWorld))
+	{
+		//if we are holding mouse over a subnode
+		UQuestBuilderEdNode* TestNode = Cast<UQuestBuilderEdNode>(GraphNode);
+		if (TestNode && TestNode->IsSubNode())
+		{
+			const TSharedRef<SGraphPanel>& Panel = GetOwnerPanel().ToSharedRef();
+			const TSharedRef<SGraphNode>& Node = SharedThis(this);
+			return FReply::Handled().BeginDragDrop(FDragQuestGraphNode::New(Panel, Node));
+		}
+	}
+
+	if (!MouseEvent.IsMouseButtonDown(EKeys::LeftMouseButton) && bDragMarkerVisible)
+	{
+		SetDragMarker(false);
+	}
+
+	return FReply::Unhandled();
+}
+
+TSharedRef<SGraphNode> SGraphNode_QuestBuilderNode::GetNodeUnderMouse(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent)
+{
+	TSharedPtr<SGraphNode> SubNode = GetSubNodeUnderCursor(MyGeometry, MouseEvent);
+	return SubNode.IsValid() ? SubNode.ToSharedRef() : StaticCastSharedRef<SGraphNode>(AsShared());
+}
+
+void SGraphNode_QuestBuilderNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
+{
+	SGraphNode::MoveTo(NewPosition, NodeFilter, bMarkDirty);
+
+	// keep node order (defined by linked pins) up to date with actual positions
+	// this function will keep spamming on every mouse move update
+	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
+	if (QuestEdNode && !QuestEdNode->IsSubNode())
+	{
+		UQuestBuilderEdGraph* QuestEdGraph = QuestEdNode->GetQuestBuilderEdGraph();
+		if (QuestEdGraph)
+		{
+			for (int32 Idx = 0; Idx < QuestEdNode->Pins.Num(); Idx++)
+			{
+				UEdGraphPin* Pin = QuestEdNode->Pins[Idx];
+				if (Pin && Pin->Direction == EGPD_Input && Pin->LinkedTo.Num() == 1)
+				{
+					UEdGraphPin* ParentPin = Pin->LinkedTo[0];
+					if (ParentPin)
+					{
+						QuestEdGraph->RebuildChildOrder(ParentPin->GetOwningNode());
+					}
+				}
+			}
+		}
+	}
+}
+
 TArray<FOverlayWidgetInfo> SGraphNode_QuestBuilderNode::GetOverlayWidgets(bool bSelected, const FVector2D& WidgetSize) const
 {
 	TArray<FOverlayWidgetInfo> Widgets;
 
+	check(NodeBody.IsValid());
 	check(IndexOverlay.IsValid());
 
 	FVector2D Origin(0.0f, 0.0f);
+	
+
 	FOverlayWidgetInfo Overlay(IndexOverlay);
 	Overlay.OverlayOffset = FVector2D(WidgetSize.X - (IndexOverlay->GetDesiredSize().X * 0.5f), Origin.Y);
 	Widgets.Add(Overlay);
+
+	
 
 	return Widgets;
 }
@@ -486,11 +875,24 @@ void SGraphNode_QuestBuilderNode::CreatePinWidgets()
 		UEdGraphPin* MyPin = StateNode->Pins[PinIdx];
 		if (!MyPin->bHidden)
 		{
-			TSharedPtr<SGraphPin> NewPin = SNew(SQuestSystemPin, MyPin);
+			TSharedPtr<SGraphPin> NewPin = SNew(SQuestSystemPin, MyPin)
+				.ToolTipText(this, &SGraphNode_QuestBuilderNode::GetPinTooltip, MyPin);
 
 			AddPin(NewPin.ToSharedRef());
 		}
 	}
+}
+
+TSharedPtr<SToolTip> SGraphNode_QuestBuilderNode::GetComplexTooltip()
+{
+	const UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
+	const bool bHasErrors = QuestEdNode && QuestEdNode->HasErrors();
+
+	if (!bHasErrors)
+	{
+	}
+	return IDocumentation::Get()->CreateToolTip(TAttribute<FText>(this, &SGraphNode::GetNodeTooltip), NULL, GraphNode->GetDocumentationLink(), GraphNode->GetDocumentationExcerptName());
+
 }
 
 void SGraphNode_QuestBuilderNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
@@ -529,6 +931,20 @@ void SGraphNode_QuestBuilderNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 	}
 }
 
+void SGraphNode_QuestBuilderNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPanel)
+{
+	SGraphNode::SetOwner(OwnerPanel);
+
+	for (auto& ChildWidget : SubNodes)
+	{
+		if (ChildWidget.IsValid())
+		{
+			ChildWidget->SetOwner(OwnerPanel);
+			OwnerPanel->AttachGraphEvents(ChildWidget);
+		}
+	}
+}
+
 bool SGraphNode_QuestBuilderNode::IsNameReadOnly() const
 {
 	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
@@ -538,6 +954,21 @@ bool SGraphNode_QuestBuilderNode::IsNameReadOnly() const
 
 	return (QuestEdNode && QuestNode && QuestGraph) &&
 		(!GetDefault<UQuestBuilderSetting>()->bCanRenameNode || !QuestNode->IsNameEditable()) || SGraphNode::IsNameReadOnly();
+}
+FReply SGraphNode_QuestBuilderNode::OnMouseDown(const FGeometry& SenderGeometry, const FPointerEvent& MouseEvent)
+{
+	UQuestBuilderEdNode* TestNode = Cast<UQuestBuilderEdNode>(GraphNode);
+	if (TestNode && TestNode->IsSubNode())
+	{
+		GetOwnerPanel()->SelectionManager.ClickedOnNode(GraphNode, MouseEvent);
+		return FReply::Handled();
+	}
+
+	return FReply::Unhandled();
+}
+FReply SGraphNode_QuestBuilderNode::OnMouseButtonDoubleClick(const FGeometry& InMyGeometry, const FPointerEvent& InMouseEvent)
+{
+	return SGraphNode::OnMouseButtonDoubleClick(InMyGeometry, InMouseEvent);
 }
 FText SGraphNode_QuestBuilderNode::GetDescription() const
 {
@@ -553,44 +984,101 @@ EVisibility SGraphNode_QuestBuilderNode::GetDescriptionVisibility() const
 }
 EVisibility SGraphNode_QuestBuilderNode::GetTaskVisibility() const
 {
-	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
-	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
-
-	if (UQuestBuilderNode_Objective* QuestSystemNodeObjective = Cast<UQuestBuilderNode_Objective>(QuestNode))
+	UQuestBuilderEdNode_Objective* QuestEdNodeObjective = Cast<UQuestBuilderEdNode_Objective>(GraphNode);
+	if (QuestEdNodeObjective && QuestEdNodeObjective->Tasks.Num())
 	{
 		return EVisibility::Visible;
 	}
 	return EVisibility::Collapsed;
-}
-FText SGraphNode_QuestBuilderNode::GetEventsText() const
-{
-	UQuestBuilderEdNode* QuestEdNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	return QuestEdNode ? QuestEdNode->GetEventsText() : FText::GetEmpty();
 }
 EVisibility SGraphNode_QuestBuilderNode::GetEventsVisibility() const
 {
 	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
-	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
-	if (QuestNode && !QuestNode->Events.IsEmpty())
+	if (QuestEdNode && QuestEdNode->Events.Num())
 	{
 		return EVisibility::Visible;
 	}
 	return EVisibility::Collapsed;
 }
-FText SGraphNode_QuestBuilderNode::GetConditionsText() const
-{
-	UQuestBuilderEdNode* QuestEdNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	return QuestEdNode ? QuestEdNode->GetConditionsText() : FText::GetEmpty();
-}
-EVisibility SGraphNode_QuestBuilderNode::GetConditionsVisibility() const
+EVisibility SGraphNode_QuestBuilderNode::GetDecoratorVisibility() const
 {
 	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
-	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
-	if (QuestNode && !QuestNode->Conditions.IsEmpty())
+	if (QuestEdNode && QuestEdNode->Decorators.Num())
 	{
 		return EVisibility::Visible;
 	}
 	return EVisibility::Collapsed;
+}
+
+void SGraphNode_QuestBuilderNode::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
+{
+	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
+}
+
+void SGraphNode_QuestBuilderNode::AddDecorator(TSharedPtr<SGraphNode> DecoratorWidget)
+{
+	DecoratorsBox->AddSlot()
+		.AutoHeight()
+		[
+			DecoratorWidget.ToSharedRef()
+		];
+
+	DecoratorWidgets.Add(DecoratorWidget);
+	AddSubNode(DecoratorWidget);
+}
+
+void SGraphNode_QuestBuilderNode::AddEvent(TSharedPtr<SGraphNode> EventWidget)
+{
+	EventsBox->AddSlot().AutoHeight()
+		[
+			EventWidget.ToSharedRef()
+		];
+	EventsWidgets.Add(EventWidget);
+	AddSubNode(EventWidget);
+}
+
+void SGraphNode_QuestBuilderNode::AddTask(TSharedPtr<SGraphNode> TaskWidget)
+{
+	TasksBox->AddSlot().AutoHeight()
+		[
+			TaskWidget.ToSharedRef()
+		];
+	TasksWidgets.Add(TaskWidget);
+	AddSubNode(TaskWidget);
+}
+
+void SGraphNode_QuestBuilderNode::AddSubNode(TSharedPtr<SGraphNode> SubNodeWidget)
+{
+	SubNodes.Add(SubNodeWidget);
+}
+
+TSharedPtr<SGraphNode> SGraphNode_QuestBuilderNode::GetSubNodeUnderCursor(const FGeometry& WidgetGeometry, const FPointerEvent& MouseEvent)
+{
+	TSharedPtr<SGraphNode> ResultNode;
+
+	// We just need to find the one WidgetToFind among our descendants.
+	TSet< TSharedRef<SWidget> > SubWidgetsSet;
+	for (int32 i = 0; i < SubNodes.Num(); i++)
+	{
+		SubWidgetsSet.Add(SubNodes[i].ToSharedRef());
+	}
+
+	TMap<TSharedRef<SWidget>, FArrangedWidget> Result;
+	FindChildGeometries(WidgetGeometry, SubWidgetsSet, Result);
+
+	if (Result.Num() > 0)
+	{
+		FArrangedChildren ArrangedChildren(EVisibility::Visible);
+		Result.GenerateValueArray(ArrangedChildren.GetInternalArray());
+
+		const int32 HoveredIndex = SWidget::FindChildUnderMouse(ArrangedChildren, MouseEvent);
+		if (HoveredIndex != INDEX_NONE)
+		{
+			ResultNode = StaticCastSharedRef<SGraphNode>(ArrangedChildren[HoveredIndex].Widget);
+		}
+	}
+
+	return ResultNode;
 }
 
 bool SGraphNode_QuestBuilderNode::OnVerifyNameTextChanged(const FText& InText, FText& OutErrorMessage)
@@ -641,9 +1129,36 @@ bool SGraphNode_QuestBuilderNode::OnVerifyNameTextChanged(const FText& InText, F
 
 	return bValid;
 }
+bool SGraphNode_QuestBuilderNode::UseLowDetailNodeTitles() const
+{
+	if (InlineEditableText.IsValid())
+	{
+		if (const SGraphPanel* MyOwnerPanel = GetOwnerPanel().Get())
+		{
+			return (MyOwnerPanel->GetCurrentLOD() <= EGraphRenderingLOD::LowestDetail) && !InlineEditableText->IsInEditMode();
+		}
+	}
+
+	return false;
+}
 FText SGraphNode_QuestBuilderNode::GetPinTooltip(UEdGraphPin* GraphPinObj) const
 {
-	return FText();
+	FText HoverText = FText::GetEmpty();
+
+	check(GraphPinObj != nullptr);
+	UEdGraphNode* OwningGraphNode = GraphPinObj->GetOwningNode();
+	if (OwningGraphNode != nullptr)
+	{
+		FString HoverStr;
+		OwningGraphNode->GetPinHoverText(*GraphPinObj, /*out*/HoverStr);
+		if (!HoverStr.IsEmpty())
+		{
+			HoverText = FText::FromString(HoverStr);
+		}
+	}
+
+	return HoverText;
+
 }
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -715,40 +1230,66 @@ void SGraphNode_QuestBuilderNode::OnNameTextCommited(const FText& InText, ETextC
 	}
 }
 
-FSlateColor SGraphNode_QuestBuilderNode::GetBorderBackgroundColor() const
-{
-	UQuestBuilderEdNode* QuestEdNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
-	return QuestEdNode ? QuestEdNode->GetBackgroundColor() : QuestBuilderColors::NodeBorder::HighlightAbortRange;
-}
-
-FSlateColor SGraphNode_QuestBuilderNode::GetNodeHighlightColor() const
-{
-	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
-	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
-
-	if (QuestNode->Quest == nullptr)
-		return QuestBuilderColors::NodeBorder::NoHighlight;
-
-
-	if (QuestNode->Quest->CurrentNode == QuestNode && (GEditor->bIsSimulatingInEditor || GEditor->PlayWorld))
-	{
-		return QuestBuilderColors::NodeBorder::HighlightCurrentNode;
-		
-	}
-	else
-	{
-		return QuestBuilderColors::NodeBorder::NoHighlight;
-	}
-}
-
 FSlateColor SGraphNode_QuestBuilderNode::GetBackgroundColor() const
 {
-	return QuestBuilderColors::NodeBody::Default;
+	UQuestBuilderEdNode* QuestEdNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
+
+	FLinearColor NodeColor = QuestBuilderColors::NodeBody::Default;
+	if (QuestEdNode && QuestEdNode->HasErrors())
+	{
+		NodeColor = QuestBuilderColors::NodeBody::Error;
+	}
+	else if (QuestEdNode)
+	{
+		NodeColor = QuestEdNode->GetBackgroundColor();
+	}
+
+	return NodeColor;
+}
+
+FSlateColor SGraphNode_QuestBuilderNode::GetBorderBackgroundColor() const
+{
+	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
+	UQuestBuilderEdNode* QuestParentNode = QuestEdNode ? Cast<UQuestBuilderEdNode>(QuestEdNode->ParentNode) : nullptr;
+	const bool bSelectedSubNode = QuestParentNode && GetOwnerPanel()->SelectionManager.SelectedNodes.Contains(GraphNode);
+
+
+	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+
+	return bSelectedSubNode ? QuestBuilderColors::NodeBorder::Selected :
+		QuestEdNode && !QuestEdNode->IsSubNode() ? QuestEdNode->GetBackgroundColor() :
+		QuestBuilderColors::NodeBorder::Inactive;
+
+}
+
+EVisibility SGraphNode_QuestBuilderNode::GetTitleVisibility() const
+{
+	return EVisibility::Visible;
+}
+
+EVisibility SGraphNode_QuestBuilderNode::GetParentNodeVisibility() const
+{
+	UQuestBuilderEdNode* TestNode = Cast<UQuestBuilderEdNode>(GraphNode);
+	if (TestNode && TestNode->IsSubNode())
+	{
+		return EVisibility::Collapsed;
+	}
+	return EVisibility::Visible;
+}
+
+EVisibility SGraphNode_QuestBuilderNode::GetSubNodeVisibility() const
+{
+	UQuestBuilderEdNode* TestNode = Cast<UQuestBuilderEdNode>(GraphNode);
+	if (TestNode && TestNode->IsSubNode())
+	{
+		return EVisibility::Visible;
+	}
+	return EVisibility::Collapsed;
 }
 
 EVisibility SGraphNode_QuestBuilderNode::GetDragOverMarkerVisibility() const
 {
-	return EVisibility::Visible;
+	return bDragMarkerVisible ? EVisibility::Visible : EVisibility::Collapsed;
 }
 
 EVisibility SGraphNode_QuestBuilderNode::GetDebuggerSearchFailedMarkerVisibility() const
@@ -758,7 +1299,17 @@ EVisibility SGraphNode_QuestBuilderNode::GetDebuggerSearchFailedMarkerVisibility
 
 const FSlateBrush* SGraphNode_QuestBuilderNode::GetNameIcon() const
 {
+	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
+	if (QuestEdNode != nullptr)
+	{
+		return FAppStyle::GetBrush(QuestEdNode->GetNameIcon());
+	}
 	return FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Icon"));
+}
+
+void SGraphNode_QuestBuilderNode::SetDragMarker(bool bEnabled)
+{
+	bDragMarkerVisible = bEnabled;
 }
 
 EVisibility SGraphNode_QuestBuilderNode::GetBlueprintIconVisibility() const
@@ -889,5 +1440,34 @@ void SGraphNode_QuestBuilderNode::OnIndexHoverStateChanged(bool bHovered)
 {
 }
 
+TSharedRef<FDragQuestGraphNode> FDragQuestGraphNode::New(const TSharedRef<SGraphPanel>& InGraphPanel, const TSharedRef<SGraphNode>& InDraggedNode)
+{
+	TSharedRef<FDragQuestGraphNode> Operation = MakeShareable(new FDragQuestGraphNode);
+	Operation->StartTime = FPlatformTime::Seconds();
+	Operation->GraphPanel = InGraphPanel;
+	Operation->DraggedNodes.Add(InDraggedNode);
+	// adjust the decorator away from the current mouse location a small amount based on cursor size
+	Operation->DecoratorAdjust = FSlateApplication::Get().GetCursorSize();
+	Operation->Construct();
+	return Operation;
+}
+
+TSharedRef<FDragQuestGraphNode> FDragQuestGraphNode::New(const TSharedRef<SGraphPanel>& InGraphPanel, const TArray<TSharedRef<SGraphNode>>& InDraggedNodes)
+{
+	TSharedRef<FDragQuestGraphNode> Operation = MakeShareable(new FDragQuestGraphNode);
+	Operation->StartTime = FPlatformTime::Seconds();
+	Operation->GraphPanel = InGraphPanel;
+	Operation->DraggedNodes = InDraggedNodes;
+	Operation->DecoratorAdjust = FSlateApplication::Get().GetCursorSize();
+	Operation->Construct();
+	return Operation;
+}
+
+UQuestBuilderEdNode* FDragQuestGraphNode::GetDropTargetNode() const
+{
+	return Cast<UQuestBuilderEdNode>(GetHoveredNode());
+}
+
 
 #undef LOCTEXT_NAMESPACE
+

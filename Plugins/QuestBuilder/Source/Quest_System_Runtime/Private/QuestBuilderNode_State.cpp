@@ -44,15 +44,24 @@ void UQuestBuilderNode_State::SetNodeTitle(const FText& NewTitle)
 }
 FText UQuestBuilderNode_State::GetNodeDescription() const
 {
+    FString StateDesc;
+
     switch (QuestState)
     {
     case EQuestState::E_Complete:
-        return FText::FromString(TEXT("Complete Quest"));
+        StateDesc = "Complete Quest";
+        break;
     case EQuestState::E_Fail:
-        return FText::FromString(TEXT("Fail Quest"));
+        StateDesc = "Fail Quest";
+        break;
     default:
-        return FText::FromString(TEXT("Default State"));
+        StateDesc = "Default State";
+        break;
     }
+
+	StateDesc += "\n" + Description.ToString();
+
+	return FText::FromString(StateDesc);
 }
 
 

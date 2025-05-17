@@ -19,6 +19,7 @@ public:
 		TArray<TObjectPtr<UQuestTask>> Tasks;
 
 	virtual void Initialize() override;
+	virtual void Deinitialize() override;
 
 	void BeginAllTask();
 

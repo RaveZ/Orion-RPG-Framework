@@ -54,8 +54,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
 		TMap<FName, TObjectPtr<UQuestBuilderNode>> NodeMap;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestComponent")
-		bool bQuestLoaded = false;
 
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
 		TObjectPtr<UQuest> CurrentNavigatedQuest;
@@ -140,9 +138,6 @@ public:
 	UFUNCTION()
 		virtual class UQuestBuilderGraph* MakeQuestGraphInstance(UQuestBuilderGraph* QuestGraphTemplate);
 
-	UFUNCTION()
-		void EvaluateQuestSaveLoadState(UQuestBuilderGraph* QuestGraph);
-
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void ActivateQuest(FName ID);
 
@@ -161,9 +156,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void CompleteQuest(FName ID);
 
-
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void StartNavigateQuest(UQuest* InQuest);
+
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		UQuest* FindQuestFromNodeID(FName NodeIDParam) const;
@@ -183,6 +178,9 @@ public:
 		void UpdateQuest();
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		void ResetAllQuest();
+
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void EvaluateNextNodeCondition(UQuest* QuestParam);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
@@ -197,12 +195,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void BeginNode(UQuest* QuestParam);
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Saving")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintAuthorityOnly, Category = "Saving")
 		void Save(const FString& SaveFileName, int SlotIndex);
 
 	virtual void Save_Implementation(const FString& SaveFileName, int SlotIndex);
 	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Saving")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintAuthorityOnly, Category = "Saving")
 		void Load(const FString& SaveFileName, int SlotIndex);
 
 	virtual void Load_Implementation(const FString& SaveFileName, int SlotIndex);

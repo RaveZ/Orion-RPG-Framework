@@ -5,6 +5,7 @@
 #include "QuestBuilderEditor.h"
 #include "ClassViewerModule.h"
 #include "ClassViewerFilter.h"
+#include "QuestBuilderEditorUtils.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Kismet2/SClassPickerDialog.h"
 
@@ -57,6 +58,7 @@ public:
 UQuestBuilderFactory::UQuestBuilderFactory(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
 	SupportedClass = UQuestBuilderGraph::StaticClass();
+	QuestSystemGraphClass = UQuestBuilderGraph::StaticClass();
 	bCreateNew = true;
 	bEditAfterNew = true;
 }
@@ -69,15 +71,17 @@ bool UQuestBuilderFactory::ConfigureProperties()
 
 UObject* UQuestBuilderFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
 {
-	if (QuestSystemGraphClass != nullptr)
+	check(Class->IsChildOf(UQuestBuilderGraph::StaticClass()));
+	UQuestBuilderGraph* QuestGraph = nullptr;
+	if (QuestSystemGraphClass)
 	{
-		return NewObject<UQuestBuilderGraph>(InParent, QuestSystemGraphClass, Name, Flags | RF_Transactional);
+		QuestGraph =  NewObject<UQuestBuilderGraph>(InParent, QuestSystemGraphClass, Name, Flags | RF_Transactional);
+		QuestGraph->ID = FQuestBuilderEditorUtils::FindUniqueQuestGraphName("QuestBuilderAsset");
+		QuestGraph->CategoryDisplayName = QuestGraph->GetFName().ToString();
+		
 	}
-	else
-	{
-		check(Class->IsChildOf(UQuestBuilderGraph::StaticClass()));
-		return NewObject<UObject>(InParent, Class, Name, Flags | RF_Transactional);
-	}
+
+	return QuestGraph;
 }
 
 FQuestGraphEditorSummoner::FQuestGraphEditorSummoner(TSharedPtr<class FQuestBuilderEditor> InQuestEditorPtr, FOnCreateGraphEditorWidget CreateGraphEditorWidgetCallback) : FDocumentTabFactoryForObjects<UEdGraph>(FQuestBuilderEditorTabs::ViewportID, InQuestEditorPtr)

@@ -61,6 +61,46 @@ FName FQuestBuilderEditorUtils::FindUniqueQuestName(const FString& InBaseName)
 	}
 }
 
+FName FQuestBuilderEditorUtils::FindUniqueQuestGraphName(const FString& InBaseName)
+{
+	// Start with the base name
+	FString UniqueName = InBaseName;
+
+	// Iterate through the quest graph pages until we find a unique name
+	for (int i = 0;; i++)
+	{
+		bool bIsUnique = true;
+
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+		TArray<FAssetData> QuestGraphDataArray;
+		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+
+		for (const FAssetData& AssetData : QuestGraphDataArray)
+		{
+			UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
+			if (QuestGraph)
+			{
+				FString FullName = QuestGraph->ID.ToString();
+				if (FullName == UniqueName)
+				{
+					bIsUnique = false;
+					break;
+				}
+			}
+		}
+
+		// If the current name is unique, return it
+		if (bIsUnique)
+		{
+			return FName(*UniqueName);
+		}
+
+		// If the current name is not unique, append a number to it and try again
+		UniqueName = FString::Printf(TEXT("%s%d"), *InBaseName, i + 1);
+	}
+}
+
 FName FQuestBuilderEditorUtils::FindUniqueNodeName(const FString& InBaseName)
 {
 	// Start with the base name

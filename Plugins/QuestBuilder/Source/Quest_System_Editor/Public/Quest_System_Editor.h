@@ -25,7 +25,9 @@ public:
 	virtual void ShutdownModule() override;
 	
 	
-	TSharedPtr<struct FGraphNodeClassHelper> GetClassCache() { return ClassCache; }
+	TSharedPtr<struct FGraphNodeClassHelper> GetTaskClassCache() { return TaskClassCache; }
+	TSharedPtr<struct FGraphNodeClassHelper> GetDecoratorClassCache() { return DecoratorClassCache; }
+	TSharedPtr<struct FGraphNodeClassHelper> GetEventClassCache() { return EventClassCache; }
 	
 	void CheckClassCache();
 
@@ -46,5 +48,7 @@ private:
 	EAssetTypeCategories::Type QuestEditorAssetCategoryBit;
 	TArray< TSharedPtr<IAssetTypeActions> > CreatedAssetTypeActions;
 
-	TSharedPtr<struct FGraphNodeClassHelper> ClassCache;
+	TSharedPtr<struct FGraphNodeClassHelper> TaskClassCache;
+	TSharedPtr<struct FGraphNodeClassHelper> DecoratorClassCache;
+	TSharedPtr<struct FGraphNodeClassHelper> EventClassCache;
 };

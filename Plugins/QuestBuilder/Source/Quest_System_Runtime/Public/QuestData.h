@@ -9,68 +9,51 @@
 #include "QuestData.generated.h"
 
 /** Task Data To Be Saved */
-USTRUCT(BlueprintType)
+USTRUCT()
 struct FTaskData
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "CurrentAmount", MakeStructureDefaultValue = "0"), Category = TaskData)
+	UPROPERTY(SaveGame)
 	int CurrentAmount = 0;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = TaskData)
+	UPROPERTY(SaveGame)
 	ETaskState TaskState = ETaskState::E_Active;
 };
 
-/** Event Data To Be Saved */
-USTRUCT(BlueprintType)
-struct FEventData
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "StartLaunched?"), Category = EventData)
-	bool StartLaunched = false;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "EndLaunched?"), Category = EventData)
-	bool EndLaunched = false;
-};
-
 /** Node Data To Be Saved */
-USTRUCT(BlueprintType)
+USTRUCT()
 struct FNodeData
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "NodeID", MakeStructureDefaultValue = "None"), Category = NodeData)
+	UPROPERTY(SaveGame)
 	FName NodeID;
 
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "EventDatas"), Category = NodeData)
-	TArray<FEventData> EventDatas;
-
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "TaskDatas"), Category = NodeData)
+	UPROPERTY(SaveGame)
 	TArray<FTaskData> TaskDatas;
 };
 
 
 
 /** Quest Data To Be Saved */
-USTRUCT(BlueprintType)
+USTRUCT()
 struct FQuestData
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "ID", MakeStructureDefaultValue = "None"), Category = QuestData)
+	UPROPERTY(SaveGame)
 	FName CurrentNodeID;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "QuestState"), Category = QuestData)
+	UPROPERTY(SaveGame)
 	EQuestState QuestState = EQuestState::E_Locked;
 
 	/** Map of Node ID and it's Node Data Struct */
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, meta = (DisplayName = "NodeMapData"), Category = QuestData)
+	UPROPERTY(SaveGame)
 	TMap<FName, FNodeData> NodeMapData;
 
 	/** List of All Visited Node IDs in Sequence*/
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = QuestData)
+	UPROPERTY(SaveGame)
 	TArray<FName> VisitedNodeIDs;
 };
 

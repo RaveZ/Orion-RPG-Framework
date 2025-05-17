@@ -6,57 +6,67 @@
 #include "EdGraph/EdGraphSchema.h"
 #include "EdGraphSchema_QuestBuilder.generated.h"
 
+namespace EQuestSubNode
+{
+	enum Type {
+		Decorator,
+		Event,
+		Task
+	};
+}
+
 /** Action to add a node to the graph */
 
 class UQuestBuilderEdNode;
+class UQuestBuilderEdSubNode_Event;
+class UQuestBuilderEdSubNode_Decorator;
+class UQuestBuilderEdSubNode_Task;
 class UQuestBuilderEdNode_Edge;
 
 struct FGraphNodeClassHelper;
+struct FGraphNodeClassData;
 
 UCLASS(MinimalAPI)
 class UEdGraphSchema_QuestBuilder : public UEdGraphSchema
 {
 	GENERATED_BODY()
 public:
-
+	UEdGraphSchema_QuestBuilder();
 	void GetBreakLinkToSubMenuActions(class UToolMenu* Menu, class UEdGraphPin* InGraphPin);
 
 	//~ Begin EdGraphSchema Interface
 	virtual void CreateDefaultNodesForGraph(UEdGraph& Graph) const override;
 	virtual EGraphType GetGraphType(const UEdGraph* TestEdGraph) const override;
-
 	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
-
 	virtual void GetContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const override;
-
 	virtual const FPinConnectionResponse CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const override;
-
+	virtual const FPinConnectionResponse CanMergeNodes(const UEdGraphNode* A, const UEdGraphNode* B) const override;
 	virtual bool TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const override;
 	virtual bool CreateAutomaticConversionNodeAndConnections(UEdGraphPin* A, UEdGraphPin* B) const override;
-
 	virtual class FConnectionDrawingPolicy* CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, class FSlateWindowElementList& InDrawElements, class UEdGraph* InGraphObj) const override;
-
 	virtual FLinearColor GetPinTypeColor(const FEdGraphPinType& PinType) const override;
-
 	virtual void BreakNodeLinks(UEdGraphNode& TargetNode) const override;
-
 	virtual void BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const override;
-
 	virtual void BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const override;
-
 	virtual UEdGraphPin* DropPinOnNode(UEdGraphNode* InTargetNode, const FName& InSourcePinName, const FEdGraphPinType& InSourcePinType, EEdGraphPinDirection InSourcePinDirection) const override;
-
 	virtual bool SupportsDropPinOnNode(UEdGraphNode* InTargetNode, const FEdGraphPinType& InSourcePinType, EEdGraphPinDirection InSourcePinDirection, FText& OutErrorMessage) const override;
-
 	virtual bool IsCacheVisualizationOutOfDate(int32 InVisualizationCacheID) const override;
-
 	virtual int32 GetCurrentVisualizationCacheID() const override;
-
 	virtual void ForceVisualizationCacheClear() const override;
+	//end EdGraphSchema Interface
 
+	virtual void GetGraphNodeContextActions(FGraphContextMenuBuilder& ContextMenuBuilder, int32 SubNodeFlags) const;
+	virtual void GetSubNodeClasses(int32 SubNodeFlags, TArray<FGraphNodeClassData>& ClassData, UClass*& GraphNodeClass) const;
+
+
+	TSubclassOf<UQuestBuilderEdSubNode_Decorator> DecoratorClass;
+	TSubclassOf<UQuestBuilderEdSubNode_Event> EventClass;
+	TSubclassOf<UQuestBuilderEdSubNode_Task> TaskClass;
 protected:
-	virtual FGraphNodeClassHelper& GetClassCache() const;
+	virtual FGraphNodeClassHelper& GetClassCache(int32 SubNodeFlags) const;
 	static TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> AddNewNodeAction(FGraphActionListBuilderBase& ContextMenuBuilder, const FText& Category, const FText& MenuDesc, const FText& Tooltip);
+	static TSharedPtr<FAssetSchemaAction_QuestSystem_NewSubNode> AddNewSubNodeAction(FGraphActionListBuilderBase& ContextMenuBuilder, const FText& Category, const FText& MenuDesc, const FText& Tooltip);
+
 private:
 	static int32 CurrentCacheRefreshID;
 };
@@ -123,3 +133,37 @@ struct QUEST_SYSTEM_EDITOR_API FAssetSchemaAction_QuestSystemGraph : public FEdG
 	{}
 };
 
+/** Action to add a subnode to the selected node */
+USTRUCT()
+struct QUEST_SYSTEM_EDITOR_API FAssetSchemaAction_QuestSystem_NewSubNode : public FEdGraphSchemaAction
+{
+	GENERATED_USTRUCT_BODY();
+
+	/** Template of node we want to create */
+	UPROPERTY()
+	TObjectPtr<class UQuestBuilderEdNode> NodeTemplate;
+
+	/** parent node */
+	UPROPERTY()
+	TObjectPtr<class UQuestBuilderEdNode> ParentNode;
+
+	FAssetSchemaAction_QuestSystem_NewSubNode()
+		: FEdGraphSchemaAction()
+		, NodeTemplate(nullptr)
+		, ParentNode(nullptr)
+	{
+	}
+
+	FAssetSchemaAction_QuestSystem_NewSubNode(FText InNodeCategory, FText InMenuDesc, FText InToolTip, const int32 InGrouping)
+		: FEdGraphSchemaAction(MoveTemp(InNodeCategory), MoveTemp(InMenuDesc), MoveTemp(InToolTip), InGrouping)
+		, NodeTemplate(nullptr)
+		, ParentNode(nullptr)
+	{
+	}
+
+	//~ Begin FEdGraphSchemaAction Interface
+	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
+	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, TArray<UEdGraphPin*>& FromPins, const FVector2D Location, bool bSelectNewNode = true) override;
+	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
+	//~ End FEdGraphSchemaAction Interface
+};

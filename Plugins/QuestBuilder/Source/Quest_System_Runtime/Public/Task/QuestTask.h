@@ -30,6 +30,10 @@ class QUEST_SYSTEM_RUNTIME_API UQuestTask : public UObject
 public:
 	UQuestTask();
 
+	/** node name */
+	UPROPERTY(Category = Description, EditAnywhere)
+	FString NodeName;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Task", meta = (MultiLine = true))
 		FText Description;
 
@@ -91,6 +95,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Task")
 		virtual bool CompleteTask();
 
+	UFUNCTION(BlueprintCallable, Category = "Task")
+		virtual void Deactivate();
+
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 		bool IsTaskCompleted();
 
@@ -121,6 +128,11 @@ public:
 		FText GetDescription() const;
 
 	virtual FText GetDescription_Implementation() const;
+
+
+	/** @return name of node */
+	FString GetNodeName();
+	FString GetShortTypeName(UObject* Ob);
 
 	// Allows the Object to get a valid UWorld from it's outer.
 	virtual UWorld* GetWorld() const override;

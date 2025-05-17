@@ -8,8 +8,9 @@ UQuestBuilderSetting::UQuestBuilderSetting()
 {
 	FailedNodeColor = FLinearColor(.34f, .024f, .024f);
 	SuccessNodeColor = FLinearColor(0.20f, 0.32f, 0.15f);
-	ObjectiveNodeColor = FLinearColor(0.05f, 0.05f, 0.05f);
-	RootNodeColor = FLinearColor(0.05f, 0.05f, 0.05f);
+	ObjectiveNodeColor = FLinearColor(0.15f, 0.15f, 0.15f);
+	SubNodeColor = FLinearColor(0.05f, 0.05f, 0.05f, 0.7f);
+	RootNodeColor = FLinearColor(0.5f, 0.5f, 0.5f, 0.2f);
 	bEdgeEnabled = false;
 	bCanRenameNode = true;
 	bCanBeCyclical = false;

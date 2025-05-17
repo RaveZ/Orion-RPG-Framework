@@ -20,6 +20,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "QuestCondition")
 		TObjectPtr<UQuestBuilderNode> OwningNode;
 
+	/** node name */
+	UPROPERTY(Category = Description, EditAnywhere)
+	FString NodeName;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent")
 		bool InvertCondition = false;
 
@@ -70,6 +74,10 @@ public:
 
 	UFUNCTION(CallInEditor)
 	virtual TArray<FName> GetAllNodeID();
+
+	/** @return name of node */
+	FString GetNodeName();
+	FString GetShortTypeName(UObject* Ob);
 
 	// Allows the Object to get a valid UWorld from it's outer.
 	virtual UWorld* GetWorld() const override;

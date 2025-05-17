@@ -44,10 +44,6 @@ void UDialogComponent::BeginPlay()
 	OnDialogCompleted.AddDynamic(this, &UDialogComponent::DialogCompleted);
 	OnDialogAdded.AddDynamic(this, &UDialogComponent::DialogAdded);
 	OnDialogUnlocked.AddDynamic(this, &UDialogComponent::DialogUnlocked);
-	OnBeginSave.AddDynamic(this, &UDialogComponent::BeginSave);
-	OnSaveComplete.AddDynamic(this, &UDialogComponent::SaveComplete);
-	OnBeginLoad.AddDynamic(this, &UDialogComponent::BeginLoad);
-	OnLoadComplete.AddDynamic(this, &UDialogComponent::LoadComplete);
 
 }
 
@@ -252,14 +248,7 @@ void UDialogComponent::RestartQuest(FName ID, FName NodeID, bool bStartFromNodeI
 				while (NodeStack.Num() > 0)
 				{
 					UDialogBuilderNode* CurrentNodeStack = NodeStack.Pop();
-					for (auto& Event : CurrentNodeStack->Events)
-					{
-						if (Event)
-						{
-							Event->StartLaunched = false;
-							Event->EndLaunched = false;
-						}
-					}
+					
 					// Traverse child node
 					for (int i = 0; i < CurrentNodeStack->ChildrenNodes.Num(); i++)
 					{
@@ -279,14 +268,6 @@ void UDialogComponent::RestartQuest(FName ID, FName NodeID, bool bStartFromNodeI
 			{
 				if (UDialogBuilderNode_Objective* ObjectiveNode = Cast<UDialogBuilderNode_Objective>(Node))
 				{
-				}
-				for (auto& Event : Node->Events)
-				{
-					if (Event)
-					{
-						Event->StartLaunched = false;
-						Event->EndLaunched = false;
-					}
 				}
 			}
 			Dialog->VisitedNodeIDs.Empty();

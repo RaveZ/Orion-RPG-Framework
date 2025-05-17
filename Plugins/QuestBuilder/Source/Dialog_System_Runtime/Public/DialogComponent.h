@@ -24,10 +24,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogAdded, UDialog*, Dialog);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogUnlocked, UDialog*, Dialog);
 
 //Save/Load Delegate
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBeginSave, FString, SaveFileName);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSaveComplete, FString, SaveFileName);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBeginLoad, FString, SaveFileName);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLoadComplete, FString, SaveFileName);
 
 UCLASS(meta=(BlueprintSpawnableComponent), Blueprintable, HideDropdown, ClassGroup = "DialogBuilder", DisplayName = "Dialog Component")
 class DIALOG_SYSTEM_RUNTIME_API UDialogComponent : public UActorComponent
@@ -78,22 +74,6 @@ public:
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
 		FDialogAdded OnDialogUnlocked;
-
-	/**Called when a save has begun*/
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Saving/Loading")
-		FOnBeginSave OnBeginSave;
-
-	/**Called when a save has completed*/
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Saving/Loading")
-		FOnSaveComplete OnSaveComplete;
-
-	/**Called when a load has begun*/
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Saving/Loading")
-		FOnBeginLoad OnBeginLoad;
-
-	/**Called when a load has completed*/
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Saving/Loading")
-		FOnLoadComplete OnLoadComplete;
 
 	UFUNCTION()
 		virtual void DialogObjectiveUpdated();

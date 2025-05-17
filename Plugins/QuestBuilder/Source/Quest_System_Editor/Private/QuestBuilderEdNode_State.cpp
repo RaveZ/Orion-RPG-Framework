@@ -43,3 +43,9 @@ FLinearColor UQuestBuilderEdNode_State::GetBackgroundColor() const
 
 	return GetDefault<UQuestBuilderSetting>()->RootNodeColor;
 }
+
+void UQuestBuilderEdNode_State::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
+{
+	AddContextMenuActionsEvents(Menu, "QuestBuilderEdNode", Context);
+	AddContextMenuActionsDecorators(Menu, "QuestBuilderEdNode", Context);
+}

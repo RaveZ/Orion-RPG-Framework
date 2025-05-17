@@ -20,22 +20,28 @@ UQuest::UQuest()
 	QuestState = EQuestState::E_Locked;
 }
 
-bool UQuest::Initialize(UQuestComponent* InitializingComp, UQuest* QuestTemplate)
+bool UQuest::Initialize(UQuestComponent* InitializingComp)
 {
 	if (!HasAnyFlags(RF_ClassDefaultObject))
 	{
-		//We need a valid narrative component to make a quest for 
+		//We need a valid Quest component to make a quest for 
 		if (!InitializingComp)
 		{
 			return false;
 		}
-
-		if (QuestTemplate)
-		{
-			
-		}
 	}
 	return false;
+}
+
+void UQuest::Deinitialize()
+{
+	VisitedNodeIDs.Empty();
+	CurrentNode = nullptr;
+	
+	for (auto& node : AllNodes)
+	{
+		node->Deinitialize();
+	}
 }
 
 int UQuest::GetLevelNum() const

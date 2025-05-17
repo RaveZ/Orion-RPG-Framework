@@ -176,6 +176,11 @@ void UQuestBuilderNode::Initialize()
 	//empty, override in child class
 }
 
+void UQuestBuilderNode::Deinitialize()
+{
+	//empty, override in child class
+}
+
 void UQuestBuilderNode::InitializeFromAsset(UQuestBuilderGraph& OwningQuestGraph, UQuest& OwningQuest)
 {
 	QuestGraph = &OwningQuestGraph;

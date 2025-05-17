@@ -22,13 +22,19 @@ public:
 	UQuestBuilderEdGraph();
 	virtual ~UQuestBuilderEdGraph();
 
-	virtual void RebuildQuestBuilderGraph(bool bForce = false);
-
+	virtual void UpdateAsset(bool bForce = false);
 	virtual void SortAllChildrenNodes(bool bForce = false);
-
+	virtual void RebuildChildOrder(UEdGraphNode* ParentNode);
 	virtual void CacheNodeIDMap();
-
 	virtual void AddToNodeIDMap(FName ID, UQuestBuilderNode* Node);
+
+
+	virtual void OnSubNodeDropped();
+
+	bool UpdateUnknownNodeClasses();
+	void UpdateDeprecatedClasses();
+	void UpdateClassData();
+	void RemoveUnknownSubNodes();
 
 	UQuestBuilderGraph* GetQuestBuilderGraph() const;
 
@@ -61,4 +67,7 @@ protected:
 #if WITH_EDITOR
 	virtual void PostEditUndo() override;
 #endif
+protected:
+	virtual void CollectAllNodeInstances(TSet<UObject*>& NodeInstances);
+	void UpdateVersion_UnifiedSubNodes();
 };

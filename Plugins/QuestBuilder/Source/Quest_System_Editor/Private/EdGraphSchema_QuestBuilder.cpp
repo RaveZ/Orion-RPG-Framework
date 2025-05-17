@@ -15,6 +15,9 @@
 #include "QuestBuilderEdNode_State.h"
 #include "QuestBuilderEdNode_Edge.h"
 #include "QuestBuilderEdNode_Root.h"
+#include "QuestBuilderEdSubNode_Decorator.h"
+#include "QuestBuilderEdSubNode_Event.h"
+#include "QuestBuilderEdSubNode_Task.h"
 #include "GraphEditorActions.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderEdge.h"
@@ -22,6 +25,8 @@
 #include "QuestBuilderNode_State.h"
 #include "QuestBuilderNode_Objective.h"
 #include "Task/QuestTask.h"
+#include "Decorator/OrionDecorator.h"
+#include "Event/OrionEvent.h"
 
 
 #define LOCTEXT_NAMESPACE "EdGraphSchema_QuestBuilder"
@@ -180,6 +185,13 @@ void FAssetSchemaAction_QuestSystem_NewEdge::AddReferencedObjects(FReferenceColl
 }
 
 
+UEdGraphSchema_QuestBuilder::UEdGraphSchema_QuestBuilder()
+{
+	DecoratorClass = UQuestBuilderEdSubNode_Decorator::StaticClass();
+	EventClass = UQuestBuilderEdSubNode_Event::StaticClass();
+	TaskClass = UQuestBuilderEdSubNode_Task::StaticClass();
+}
+
 void UEdGraphSchema_QuestBuilder::GetBreakLinkToSubMenuActions(UToolMenu* Menu, UEdGraphPin* InGraphPin)
 {
 	// Make sure we have a unique name for every entry in the list
@@ -258,7 +270,7 @@ void UEdGraphSchema_QuestBuilder::GetGraphContextActions(FGraphContextMenuBuilde
 
 
 	//Task
-	FGraphNodeClassHelper& ClassCache = GetClassCache();
+	FGraphNodeClassHelper& ClassCache = GetClassCache(EQuestSubNode::Task);
 
 	FCategorizedGraphActionListBuilder TasksBuilder(TEXT("Task"));
 
@@ -340,10 +352,71 @@ void UEdGraphSchema_QuestBuilder::GetGraphContextActions(FGraphContextMenuBuilde
 }
 
 
-FGraphNodeClassHelper& UEdGraphSchema_QuestBuilder::GetClassCache() const
+
+void UEdGraphSchema_QuestBuilder::GetGraphNodeContextActions(FGraphContextMenuBuilder& ContextMenuBuilder, int32 SubNodeFlags) const
+{
+	UEdGraph* Graph = (UEdGraph*)ContextMenuBuilder.CurrentGraph;
+	UClass* GraphNodeClass = nullptr;
+	TArray<FGraphNodeClassData> NodeClasses;
+	GetSubNodeClasses(SubNodeFlags, NodeClasses, GraphNodeClass);
+
+	if (GraphNodeClass)
+	{
+		for (const auto& NodeClass : NodeClasses)
+		{
+			const FText NodeTypeName = FText::FromString(FName::NameToDisplayString(NodeClass.ToString(), false));
+
+			UQuestBuilderEdNode* OpNode = NewObject<UQuestBuilderEdNode>(Graph, GraphNodeClass);
+			OpNode->ClassData = NodeClass;
+
+			TSharedPtr<FAssetSchemaAction_QuestSystem_NewSubNode> AddOpAction = UEdGraphSchema_QuestBuilder::AddNewSubNodeAction(ContextMenuBuilder, NodeClass.GetCategory(), NodeTypeName, NodeClass.GetTooltip());
+			AddOpAction->ParentNode = Cast<UQuestBuilderEdNode>(ContextMenuBuilder.SelectedObjects[0]);
+			AddOpAction->NodeTemplate = OpNode;
+		}
+	}
+
+}
+
+void UEdGraphSchema_QuestBuilder::GetSubNodeClasses(int32 SubNodeFlags, TArray<FGraphNodeClassData>& ClassData, UClass*& GraphNodeClass) const
+{
+	FGraphNodeClassHelper& ClassCache = GetClassCache(SubNodeFlags);
+
+	if (SubNodeFlags == EQuestSubNode::Decorator)
+	{
+		ClassCache.GatherClasses(UOrionDecorator::StaticClass(), ClassData);
+		GraphNodeClass = DecoratorClass;
+	}
+	else if (SubNodeFlags == EQuestSubNode::Event)
+	{
+		ClassCache.GatherClasses(UOrionEvent::StaticClass(), ClassData);
+		GraphNodeClass = EventClass;
+	}
+	else if (SubNodeFlags == EQuestSubNode::Task)
+	{
+		ClassCache.GatherClasses(UQuestTask::StaticClass(), ClassData);
+		GraphNodeClass = TaskClass;
+	}
+}
+
+
+FGraphNodeClassHelper& UEdGraphSchema_QuestBuilder::GetClassCache(int32 SubNodeFlags) const
 {
 	FQuest_System_EditorModule& EditorModule = FModuleManager::GetModuleChecked<FQuest_System_EditorModule>(TEXT("Quest_System_Editor"));
-	FGraphNodeClassHelper* ClassHelper = EditorModule.GetClassCache().Get();
+	FGraphNodeClassHelper* ClassHelper = nullptr;
+	if (SubNodeFlags == EQuestSubNode::Decorator)
+	{
+		ClassHelper = EditorModule.GetDecoratorClassCache().Get();
+	}
+	else if (SubNodeFlags == EQuestSubNode::Event)
+	{
+		ClassHelper = EditorModule.GetEventClassCache().Get();
+	}
+	else if (SubNodeFlags == EQuestSubNode::Task)
+	{
+		ClassHelper = EditorModule.GetTaskClassCache().Get();
+	}
+	
+	
 	check(ClassHelper);
 	return *ClassHelper;
 }
@@ -444,6 +517,35 @@ const FPinConnectionResponse UEdGraphSchema_QuestBuilder::CanCreateConnection(co
 	}
 }
 
+const FPinConnectionResponse UEdGraphSchema_QuestBuilder::CanMergeNodes(const UEdGraphNode* NodeA, const UEdGraphNode* NodeB) const
+{
+	// Make sure the nodes are not the same 
+	if (NodeA == NodeB)
+	{
+		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, TEXT("Both are the same node"));
+	}
+
+	const UQuestBuilderEdNode* QuestEdNodeA = Cast<UQuestBuilderEdNode>(NodeA);
+	const UQuestBuilderEdNode* QuestEdNodeB = Cast<UQuestBuilderEdNode>(NodeB);
+
+	const bool bNodeAIsDecorator = NodeA->IsA(UQuestBuilderEdSubNode_Decorator::StaticClass());
+	const bool bNodeAIsEvent = NodeA->IsA(UQuestBuilderEdSubNode_Event::StaticClass());
+	const bool bNodeAIsTask = NodeA->IsA(UQuestBuilderEdSubNode_Task::StaticClass());
+	const bool bNodeBIsObjective = NodeB->IsA(UQuestBuilderEdNode_Objective::StaticClass());
+	const bool bNodeBIsState = NodeB->IsA(UQuestBuilderEdNode_State::StaticClass());
+	const bool bNodeBIsDecorator = NodeB->IsA(UQuestBuilderEdSubNode_Decorator::StaticClass());
+	const bool bNodeBIsEvent = NodeB->IsA(UQuestBuilderEdSubNode_Event::StaticClass());
+	const bool bNodeBIsTask = NodeB->IsA(UQuestBuilderEdSubNode_Task::StaticClass());
+
+	if ((bNodeAIsDecorator && (bNodeBIsDecorator || bNodeBIsState || bNodeBIsObjective))
+		|| (bNodeAIsEvent && (bNodeBIsEvent || bNodeBIsState || bNodeBIsObjective))
+		|| (bNodeAIsTask) && (bNodeBIsTask || bNodeBIsObjective))
+	{
+		return FPinConnectionResponse(CONNECT_RESPONSE_MAKE, TEXT(""));
+	}
+	return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, TEXT(""));
+}
+
 bool UEdGraphSchema_QuestBuilder::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const
 {
 	// We don't actually care about the pin, we want the node that is being dragged between
@@ -492,7 +594,7 @@ bool UEdGraphSchema_QuestBuilder::TryCreateConnection(UEdGraphPin* A, UEdGraphPi
 
 	if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(NodeA->GetGraph()))
 	{
-		QuestEdGraph->RebuildQuestBuilderGraph(true);
+		QuestEdGraph->UpdateAsset(true);
 	}
 
 	
@@ -541,7 +643,7 @@ void UEdGraphSchema_QuestBuilder::BreakNodeLinks(UEdGraphNode& TargetNode) const
 	Super::BreakNodeLinks(TargetNode);
 	if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(TargetNode.GetGraph()))
 	{
-		QuestEdGraph->RebuildQuestBuilderGraph(true);
+		QuestEdGraph->UpdateAsset(true);
 	}
 }
 
@@ -593,7 +695,6 @@ void UEdGraphSchema_QuestBuilder::ForceVisualizationCacheClear() const
 	++CurrentCacheRefreshID;
 }
 
-
 TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> UEdGraphSchema_QuestBuilder::AddNewNodeAction(FGraphActionListBuilderBase& ContextMenuBuilder, const FText& Category, const FText& MenuDesc, const FText& Tooltip)
 {
 	TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> NewAction = TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode>(new FAssetSchemaAction_QuestSystem_NewNode(Category, MenuDesc, Tooltip, 0));
@@ -602,5 +703,32 @@ TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> UEdGraphSchema_QuestBuilder::
 	return NewAction;
 }
 
+TSharedPtr<FAssetSchemaAction_QuestSystem_NewSubNode> UEdGraphSchema_QuestBuilder::AddNewSubNodeAction(FGraphActionListBuilderBase& ContextMenuBuilder, const FText& Category, const FText& MenuDesc, const FText& Tooltip)
+{
+	TSharedPtr<FAssetSchemaAction_QuestSystem_NewSubNode> NewAction = TSharedPtr<FAssetSchemaAction_QuestSystem_NewSubNode>(new FAssetSchemaAction_QuestSystem_NewSubNode(Category, MenuDesc, Tooltip, 0));
+	ContextMenuBuilder.AddAction(NewAction);
+	return NewAction;
+}
+
 
 #undef LOCTEXT_NAMESPACE
+
+UEdGraphNode* FAssetSchemaAction_QuestSystem_NewSubNode::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode)
+{
+	ParentNode->AddSubNode(NodeTemplate, ParentGraph);
+	return NULL;
+}
+
+UEdGraphNode* FAssetSchemaAction_QuestSystem_NewSubNode::PerformAction(UEdGraph* ParentGraph, TArray<UEdGraphPin*>& FromPins, const FVector2D Location, bool bSelectNewNode)
+{
+	return PerformAction(ParentGraph, NULL, Location, bSelectNewNode);
+}
+
+void FAssetSchemaAction_QuestSystem_NewSubNode::AddReferencedObjects(FReferenceCollector& Collector)
+{
+	FEdGraphSchemaAction::AddReferencedObjects(Collector);
+
+	// These don't get saved to disk, but we want to make sure the objects don't get GC'd while the action array is around
+	Collector.AddReferencedObject(NodeTemplate);
+	Collector.AddReferencedObject(ParentNode);
+}

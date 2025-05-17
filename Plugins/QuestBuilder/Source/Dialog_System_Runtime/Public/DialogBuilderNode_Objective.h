@@ -20,5 +20,6 @@ public:
 	virtual FText GetNodeTitle() const override;
 	virtual void SetNodeTitle(const FText& NewTitle);
 	virtual FText GetNodeDescription() const override;
+	
 #endif
 };

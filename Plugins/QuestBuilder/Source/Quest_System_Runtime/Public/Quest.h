@@ -91,7 +91,8 @@ public:
 
 public:
 
-	virtual bool Initialize(class UQuestComponent* InitializingComp, class UQuest* QuestTemplate);
+	virtual bool Initialize(class UQuestComponent* InitializingComp);
+	virtual void Deinitialize();
 
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 		int GetLevelNum() const;

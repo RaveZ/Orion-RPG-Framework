@@ -66,6 +66,7 @@ public:
 		bool IsLeafNode() const;
 
 	virtual void Initialize();
+	virtual void Deinitialize();
 
 	/** initialize any asset related data */
 	virtual void InitializeFromAsset(UQuestBuilderGraph& OwningQuestGraph, UQuest& OwningQuest);
