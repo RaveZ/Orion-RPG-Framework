@@ -451,14 +451,14 @@ void UDialogComponent::EvaluateNextNodeCondition(UDialog* DialogParam)
 	UDialogBuilderNode* NextNode = nullptr;
 	for (auto& Node : DialogParam->CurrentNode->ChildrenNodes)
 	{
-		if (NextNode == nullptr && Node->Conditions.IsEmpty())
+		if (NextNode == nullptr && Node->Decorators.IsEmpty())
 		{
 			NextNode = Node;
 		}
-		else if (!Node->Conditions.IsEmpty())
+		else if (!Node->Decorators.IsEmpty())
 		{
 			int SumConditionMet = 0;
-			for (auto& Condition : Node->Conditions)
+			for (auto& Condition : Node->Decorators)
 			{
 				bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
 				if (bConditionMet)
@@ -466,7 +466,7 @@ void UDialogComponent::EvaluateNextNodeCondition(UDialog* DialogParam)
 					SumConditionMet++;
 				}
 			}
-			if (SumConditionMet >= Node->Conditions.Num())
+			if (SumConditionMet >= Node->Decorators.Num())
 			{
 				NextNode = Node;
 				//break loop to ensure the met condition doesn't get overrided
@@ -492,7 +492,7 @@ void UDialogComponent::EvaluateDialogCondition(UDialog* DialogParam)
 		return;
 
 	int SumConditionMet = 0;
-	for (auto& Condition : DialogParam->Conditions)
+	for (auto& Condition : DialogParam->Decorators)
 	{
 		bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
 		if (bConditionMet)
@@ -509,7 +509,7 @@ void UDialogComponent::EvaluateDialogState(UDialog* DialogParam, int SumConditio
 	if (DialogParam->DialogState == EDialogState::E_Complete || DialogParam->DialogState == EDialogState::E_Fail)
 		return;
 
-	if (SumConditionMet >= DialogParam->Conditions.Num())
+	if (SumConditionMet >= DialogParam->Decorators.Num())
 	{
 		switch (DialogParam->DesiredDialogState)
 		{

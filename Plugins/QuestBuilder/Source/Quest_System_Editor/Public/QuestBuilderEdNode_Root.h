@@ -18,6 +18,7 @@ class QUEST_SYSTEM_EDITOR_API UQuestBuilderEdNode_Root : public UQuestBuilderEdN
 public:
 	UQuestBuilderEdNode_Root();
 	virtual void AllocateDefaultPins() override;
+	virtual FText GetTooltipText() const override;
 	virtual bool CanDuplicateNode() const override { return false; }
 	virtual bool CanUserDeleteNode() const override { return false; }
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;

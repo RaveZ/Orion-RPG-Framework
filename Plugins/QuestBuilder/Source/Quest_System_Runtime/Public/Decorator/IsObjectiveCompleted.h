@@ -7,7 +7,8 @@
 #include "IsObjectiveCompleted.generated.h"
 
 /**
- * 
+ * Is objective completed decorator node.
+ * Desc
  */
 UCLASS()
 class QUEST_SYSTEM_RUNTIME_API UIsObjectiveCompleted : public UOrionDecorator

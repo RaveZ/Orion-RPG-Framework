@@ -117,7 +117,7 @@ FText UDialogBuilderNode::GetConditionsText() const
 {
 	FString ConditionListText;
 
-	for (const UOrionDecorator* Condition : Conditions)
+	for (const UOrionDecorator* Condition : Decorators)
 	{
 		if (Condition)
 		{

@@ -8,6 +8,8 @@
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode.h"
 #include "QuestBuilderNode_Root.h"
+#include "QuestBuilderFunctionLibrary.h"	
+#include "AssetRegistry/AssetRegistryModule.h"
 
 #define LOCTEXT_NAMESPACE "QuestCondition"
 
@@ -21,51 +23,34 @@ FString UOrionDecorator::GetNodeDisplayText_Implementation() const
 	return GetName();
 }
 
-AController* UOrionDecorator::GetOwningController() const
-{
-	if (!QuestGraph)
-		return nullptr;
-
-	return QuestGraph->OwningController;
-}
-
-APawn* UOrionDecorator::GetOwningPawn() const
-{
-	if (!QuestGraph)
-		return nullptr;
-
-	return QuestGraph->OwningPawn;
-}
-
 UQuestComponent* UOrionDecorator::GetQuestComponent() const
 {
-	if (!QuestGraph)
-		return nullptr;
-
-	return QuestGraph->QuestComponent;
+	if (GetWorld())
+	{
+		return UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
+	}
+	return nullptr;
 }
 
-UQuestBuilderGraph* UOrionDecorator::GetOwningQuestGraph() const
-{
-	if (!QuestGraph)
-		return nullptr;
 
-	return QuestGraph;
-}
-
-UQuest* UOrionDecorator::GetOwningQuest() const
-{
-	return Quest;
-}
 
 TArray<FName> UOrionDecorator::GetAllQuestID()
 {
 	TArray<FName> QuestIDs;
-	for (TObjectIterator<UQuestBuilderGraph> It; It; ++It)
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+	TArray<FAssetData> QuestGraphDataArray;
+	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+
+	for (const FAssetData& AssetData : QuestGraphDataArray)
 	{
-		for (UQuest* QuestObj : It->QuestList)
+		UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
+		if (QuestGraphAsset)
 		{
-			QuestIDs.Add(QuestObj->ID);
+			for (UQuest* QuestObj : QuestGraphAsset->QuestList)
+			{
+				QuestIDs.Add(QuestObj->ID);
+			}
 		}
 	}
 
@@ -77,11 +62,17 @@ TArray<FName> UOrionDecorator::GetAllNodeID()
 	TArray<FName> NodeIDs;
 	if (bUseQuestID)
 	{
-		for (TObjectIterator<UQuestBuilderGraph> It; It; ++It)
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+		TArray<FAssetData> QuestGraphDataArray;
+		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+
+		for (const FAssetData& AssetData : QuestGraphDataArray)
 		{
-			for (UQuest* QuestObj : It->QuestList)
+			UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
+			if (QuestGraphAsset)
 			{
-				if (QuestObj)
+				for (UQuest* QuestObj : QuestGraphAsset->QuestList)
 				{
 					if (QuestObj->ID != QuestID) continue;
 					for (UQuestBuilderNode* Node : QuestObj->AllNodes)
@@ -93,25 +84,11 @@ TArray<FName> UOrionDecorator::GetAllNodeID()
 						}
 					}
 				}
-
 			}
-
 		}
-
 	}
 	else
 	{
-		if (GetOwningQuest())
-		{
-			for (UQuestBuilderNode* Node : GetOwningQuest()->AllNodes)
-			{
-				if (Node)
-				{
-					if (UQuestBuilderNode_Root* RootNode = Cast<UQuestBuilderNode_Root>(Node)) continue;
-					NodeIDs.Emplace(Node->ID);
-				}
-			}
-		}
 	}
 	return NodeIDs;
 }
@@ -162,9 +139,18 @@ UWorld* UOrionDecorator::GetWorld() const
 		return nullptr;
 	}
 
-	if (GetQuestComponent())
+
+	UObject* Outer = GetOuter();
+
+	while (Outer)
 	{
-		return GetQuestComponent()->GetWorld();
+		UWorld* World = Outer->GetWorld();
+		if (World)
+		{
+			return World;
+		}
+
+		Outer = Outer->GetOuter();
 	}
 
 	return nullptr;

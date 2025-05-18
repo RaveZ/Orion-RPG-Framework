@@ -63,7 +63,7 @@ void UDialogBuilderEdGraph::RebuildDialogBuilderGraph(bool bForce)
 		Graph->CategoryDisplayName = Graph->GetFName().ToString();
 	}
 
-	/*for (UOrionDecorator* DialogCondition : Dialog->Conditions)
+	/*for (UOrionDecorator* DialogCondition : Dialog->Decorators)
 	{
 		if (DialogCondition != nullptr)
 		{
@@ -118,7 +118,7 @@ void UDialogBuilderEdGraph::RebuildDialogBuilderGraph(bool bForce)
 			}
 
 
-			/*for (UOrionDecorator* DialogCondition : DialogNode->Conditions)
+			/*for (UOrionDecorator* DialogCondition : DialogNode->Decorators)
 			{
 				if (DialogCondition != nullptr)
 				{

@@ -2,6 +2,7 @@
 
 
 #include "QuestBuilderEdNode_Objective.h"
+#include "QuestBuilderNode_Objective.h"
 #include "QuestBuilderSetting.h"
 #include "QuestBuilderNode.h"
 
@@ -27,6 +28,18 @@ FText UQuestBuilderEdNode_Objective::GetNodeTitle(ENodeTitleType::Type TitleType
 FLinearColor UQuestBuilderEdNode_Objective::GetBackgroundColor() const
 {
 	return GetDefault<UQuestBuilderSetting>()->ObjectiveNodeColor;
+}
+
+FText UQuestBuilderEdNode_Objective::GetTooltipText() const
+{
+	const UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(NodeInstance);
+	if (ObjectiveNode)
+	{
+		return FText::Format(FText::FromString(TEXT("Objective Node\n{0}")),
+			NSLOCTEXT("QuestBuilderEditor", "ObjectiveNodeScopeTooltip", "This Node serves as the central unit within your quest graph.\nEncapsulating a series of tasks, events, and decorators that define the player's objectives.\nRight click the node to start adding a subnodes."));
+	}
+
+	return Super::GetTooltipText();
 }
 
 void UQuestBuilderEdNode_Objective::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const

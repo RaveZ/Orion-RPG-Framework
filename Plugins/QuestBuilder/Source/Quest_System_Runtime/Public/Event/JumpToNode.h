@@ -7,7 +7,8 @@
 #include "JumpToNode.generated.h"
 
 /**
- * 
+ * Jump to node event node.
+ * Desc
  */
 UCLASS()
 class QUEST_SYSTEM_RUNTIME_API UJumpToNode : public UOrionEvent

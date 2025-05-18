@@ -395,12 +395,14 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 																	SNew(SHorizontalBox)
 																	+ SHorizontalBox::Slot()
 																	.AutoWidth()
-																	.VAlign(VAlign_Center)
+																	.VAlign(VAlign_Top)
+																	.Padding(FMargin(0.0f, 5.0f, 0.0f, 0.0f))
 																	[
 																		SNew(SImage)
 																			.Image(this, &SGraphNode_QuestBuilderNode::GetNameIcon)
 																			//.Visibility(this, &SGraphNode_QuestBuilderNode::GetParentNodeVisibility)
 																	]
+																		//if parent node
 																	+ SHorizontalBox::Slot()
 																	.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 																	[
@@ -423,7 +425,18 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 																		[
 																			NodeTitle.ToSharedRef()
 																		]
+																		+ SVerticalBox::Slot()
+																		.AutoHeight()
+																		.Padding(FMargin(2.0f, 0.0f, 2.0f, 4.0f))
+																		[
+																			// DESCRIPTION MESSAGE
+																			SAssignNew(DescriptionText, STextBlock)
+																				.Visibility(this, &SGraphNode_QuestBuilderNode::GetDescriptionVisibility)
+																				.Text(this, &SGraphNode_QuestBuilderNode::GetDescription)
+																				.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Bold"))
+																		]
 																	]
+																		//if subnode
 																	+ SHorizontalBox::Slot()
 																	.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 																	[
@@ -442,19 +455,21 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 																		[
 																			NodeTitle.ToSharedRef()
 																		]
+																		+ SVerticalBox::Slot()
+																		.AutoHeight()
+																			.Padding(FMargin(2.0f, 0.0f, 2.0f, 4.0f))
+																		[
+																			// DESCRIPTION MESSAGE
+																			SAssignNew(DescriptionText, STextBlock)
+																				.Visibility(this, &SGraphNode_QuestBuilderNode::GetDescriptionVisibility)
+																				.Text(this, &SGraphNode_QuestBuilderNode::GetDescription)
+																				.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Bold"))
+																		]
 																	]
 																]
 															]
 														]	
-														+ SVerticalBox::Slot()
-														.AutoHeight()
-														.Padding(FMargin(4.0f, 0.0f, 4.0f, 2.0f))
-														[
-															// DESCRIPTION MESSAGE
-															SAssignNew(DescriptionText, STextBlock)
-																.Visibility(this, &SGraphNode_QuestBuilderNode::GetDescriptionVisibility)
-																.Text(this, &SGraphNode_QuestBuilderNode::GetDescription)
-														]
+														
 													]
 												]
 											]
@@ -1197,7 +1212,7 @@ void SGraphNode_QuestBuilderNode::OnNameTextCommited(const FText& InText, ETextC
 			{
 				for (auto& Quest : QuestGraph->QuestList)
 				{
-					for (auto& QuestCondition : Quest->Conditions)
+					for (auto& QuestCondition : Quest->Decorators)
 					{
 						if (QuestCondition && QuestCondition->NodeID == OriginalName)
 						{
@@ -1207,7 +1222,7 @@ void SGraphNode_QuestBuilderNode::OnNameTextCommited(const FText& InText, ETextC
 					}
 					for (auto& Node : Quest->AllNodes)
 					{
-						for (auto& NodeCondition : Node->Conditions)
+						for (auto& NodeCondition : Node->Decorators)
 						{
 							if (NodeCondition && NodeCondition->NodeID == OriginalName)
 							{
@@ -1238,6 +1253,10 @@ FSlateColor SGraphNode_QuestBuilderNode::GetBackgroundColor() const
 	if (QuestEdNode && QuestEdNode->HasErrors())
 	{
 		NodeColor = QuestBuilderColors::NodeBody::Error;
+	}
+	else if (!QuestEdNode->IsSubNode())
+	{
+		NodeColor = QuestBuilderColors::NodeBorder::NoHighlight;
 	}
 	else if (QuestEdNode)
 	{

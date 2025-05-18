@@ -248,7 +248,7 @@ void SQuestPaletteItem::OnNameTextCommitted(const FText& NewText, ETextCommit::T
           {
               for (auto& Quest : QuestGraph->QuestList)
               {
-                  for (auto& QuestCondition : Quest->Conditions)
+                  for (auto& QuestCondition : Quest->Decorators)
                   {
                       if (QuestCondition && QuestCondition->QuestID == OriginalName)
                       {
@@ -258,7 +258,7 @@ void SQuestPaletteItem::OnNameTextCommitted(const FText& NewText, ETextCommit::T
                   }
                   for (auto& Node : Quest->AllNodes)
                   {
-                      for (auto& NodeCondition : Node->Conditions)
+                      for (auto& NodeCondition : Node->Decorators)
                       {
                           if (NodeCondition && NodeCondition->QuestID == OriginalName)
                           {

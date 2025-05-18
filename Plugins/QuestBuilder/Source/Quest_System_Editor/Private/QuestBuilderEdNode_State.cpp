@@ -26,6 +26,18 @@ FText UQuestBuilderEdNode_State::GetNodeTitle(ENodeTitleType::Type TitleType) co
 	return Super::GetNodeTitle(TitleType);
 }
 
+FText UQuestBuilderEdNode_State::GetTooltipText() const
+{
+	const UQuestBuilderNode_State* StateNode = Cast<UQuestBuilderNode_State>(NodeInstance);
+	if (StateNode)
+	{
+		return FText::Format(FText::FromString(TEXT("State Node\n{0}")),
+			NSLOCTEXT("QuestBuilderEditor", "StateNodeScopeTooltip", "This Node signifies the conclusion point of a quest, determining its outcome, either Completed or Failed.\nThis node contain series of events, and decorators.\nRight click the node to start adding a subnodes."));
+	}
+
+	return Super::GetTooltipText();
+}
+
 FLinearColor UQuestBuilderEdNode_State::GetBackgroundColor() const
 {
 	FLinearColor Default(0.05f, 0.05f, 0.05f);

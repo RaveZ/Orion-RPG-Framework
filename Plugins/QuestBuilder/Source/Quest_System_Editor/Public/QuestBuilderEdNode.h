@@ -74,6 +74,7 @@ public:
 	virtual FText GetTooltipText() const override;
 	virtual void FindDiffs(class UEdGraphNode* OtherNode, struct FDiffResults& Results) override;
 	virtual bool CanDuplicateNode() const override;
+	virtual void DestroyNode() override;
 	virtual void PostPlacedNewNode() override;
 	virtual bool CanUserDeleteNode() const override;
 	virtual void PrepareForCopying() override;

@@ -248,7 +248,7 @@ void SDialogPaletteItem::OnNameTextCommitted(const FText& NewText, ETextCommit::
           {
               for (auto& Dialog : DialogGraph->DialogList)
               {
-                  for (auto& DialogCondition : Dialog->Conditions)
+                  for (auto& DialogCondition : Dialog->Decorators)
                   {
                       if (DialogCondition && DialogCondition->DialogID == OriginalName)
                       {
@@ -258,7 +258,7 @@ void SDialogPaletteItem::OnNameTextCommitted(const FText& NewText, ETextCommit::
                   }
                   for (auto& Node : Dialog->AllNodes)
                   {
-                      for (auto& NodeCondition : Node->Conditions)
+                      for (auto& NodeCondition : Node->Decorators)
                       {
                           if (NodeCondition && NodeCondition->DialogID == OriginalName)
                           {

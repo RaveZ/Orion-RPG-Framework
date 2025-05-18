@@ -23,6 +23,7 @@ enum class EEventRunType : uint8
 	E_Both			UMETA(DisplayName = "BOTH"),
 };
 
+
 UCLASS(Abstract, Blueprintable, EditInlineNew, HideDropdown, AutoExpandCategories = ("Default"))
 class QUEST_SYSTEM_RUNTIME_API UOrionEvent : public UObject
 {
@@ -33,12 +34,6 @@ public:
 	/** node name */
 	UPROPERTY(Category = Description, EditAnywhere)
 	FString NodeName;
-
-	UPROPERTY(BlueprintReadOnly, Category = "QuestEvent")
-		TObjectPtr<UQuestBuilderGraph> QuestGraph;
-
-	UPROPERTY(BlueprintReadOnly, Category = "QuestEvent")
-		TObjectPtr<UQuestBuilderNode> OwningNode;
 
 	/**Display quest ID in property panel?*/
 	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
@@ -54,9 +49,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bUseNodeID == true", HideEditConditionToggle, EditConditionHides, GetOptions = "GetAllNodeID"))
 		FName NodeID;
 
-	UPROPERTY(BlueprintReadOnly, Category = "QuestEvent")
-		TObjectPtr<UQuest> Quest;
-
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "QuestEvent")
 		EEventRunType EventRunType = EEventRunType::E_Start;
 
@@ -71,19 +63,7 @@ public:
 	virtual FString GetNodeDisplayText_Implementation() const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestEvent")
-		AController* GetOwningController() const;
-
-	UFUNCTION(BlueprintCallable, Category = "QuestEvent")
-		APawn* GetOwningPawn() const;
-
-	UFUNCTION(BlueprintCallable, Category = "QuestEvent")
 		UQuestComponent* GetQuestComponent() const;
-
-	UFUNCTION(BlueprintCallable, Category = "QuestEvent")
-		UQuestBuilderGraph* GetOwningQuestGraph() const;
-
-	UFUNCTION(BlueprintCallable, Category = "QuestEvent")
-		UQuest* GetOwningQuest() const;
 
 	UFUNCTION(CallInEditor, BlueprintCallable)
 	virtual TArray<FName> GetAllQuestID();

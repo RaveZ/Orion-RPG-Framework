@@ -372,7 +372,7 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 
 												]
 
-												// Conditions
+												// Decorators
 												+ SVerticalBox::Slot()
 												.AutoHeight()
 												.HAlign(HAlign_Fill)
@@ -586,7 +586,7 @@ EVisibility SGraphNode_DialogBuilderNode::GetConditionsVisibility() const
 {
 	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
 	UDialogBuilderNode* DialogNode = DialogEdNode ? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance) : nullptr;
-	if (DialogNode && !DialogNode->Conditions.IsEmpty())
+	if (DialogNode && !DialogNode->Decorators.IsEmpty())
 	{
 		return EVisibility::Visible;
 	}
@@ -682,7 +682,7 @@ void SGraphNode_DialogBuilderNode::OnNameTextCommited(const FText& InText, EText
 			{
 				for (auto& Dialog : DialogGraph->DialogList)
 				{
-					for (auto& DialogCondition : Dialog->Conditions)
+					for (auto& DialogCondition : Dialog->Decorators)
 					{
 						if (DialogCondition && DialogCondition->NodeID == OriginalName)
 						{
@@ -692,7 +692,7 @@ void SGraphNode_DialogBuilderNode::OnNameTextCommited(const FText& InText, EText
 					}
 					for (auto& Node : Dialog->AllNodes)
 					{
-						for (auto& NodeCondition : Node->Conditions)
+						for (auto& NodeCondition : Node->Decorators)
 						{
 							if (NodeCondition && NodeCondition->NodeID == OriginalName)
 							{

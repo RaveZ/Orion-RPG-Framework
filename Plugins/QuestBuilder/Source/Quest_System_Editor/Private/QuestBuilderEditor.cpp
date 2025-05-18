@@ -1236,8 +1236,37 @@ void FQuestBuilderEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVect
 	// Select the newly pasted stuff
 	UEdGraph* EdGraph = DestinationGraph;
 	{
+		// Undo/Redo support
 		const FScopedTransaction Transaction(FGenericCommands::Get().Paste->GetDescription());
+		UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(EdGraph);
+
 		EdGraph->Modify();
+
+		UQuestBuilderEdNode* SelectedParent = NULL;
+		bool bHasMultipleNodesSelected = false;
+
+		const FGraphPanelSelectionSet SelectedNodes = GetSelectedNodes();
+		for (FGraphPanelSelectionSet::TConstIterator SelectedIter(SelectedNodes); SelectedIter; ++SelectedIter)
+		{
+			UQuestBuilderEdNode* Node = Cast<UQuestBuilderEdNode>(*SelectedIter);
+			if (Node && Node->IsSubNode())
+			{
+				Node = Node->ParentNode;
+			}
+
+			if (Node)
+			{
+				if (SelectedParent == nullptr)
+				{
+					SelectedParent = Node;
+				}
+				else
+				{
+					bHasMultipleNodesSelected = true;
+					break;
+				}
+			}
+		}
 
 		// Clear the selection set (newly pasted stuff will be selected)
 		CurrentGraphEditor->ClearSelectionSet();
@@ -1253,20 +1282,27 @@ void FQuestBuilderEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVect
 		//Average position of nodes so we can move them while still maintaining relative distances to each other
 		FVector2D AvgNodePosition(0.0f, 0.0f);
 
+		// Number of nodes used to calculate AvgNodePosition
+		int32 AvgCount = 0;
+
 		for (TSet<UEdGraphNode*>::TIterator It(PastedNodes); It; ++It)
 		{
-			UEdGraphNode* Node = *It;
-			AvgNodePosition.X += Node->NodePosX;
-			AvgNodePosition.Y += Node->NodePosY;
-
-			
-			if (ShouldGetNewID)
+			UEdGraphNode* EdNode = *It;
+			UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(EdNode);
+			if (EdNode && (QuestEdNode == nullptr || !QuestEdNode->IsSubNode()))
 			{
-				if (UQuestBuilderEdNode* EdNode = Cast<UQuestBuilderEdNode>(*It))
+				AvgNodePosition.X += EdNode->NodePosX;
+				AvgNodePosition.Y += EdNode->NodePosY;
+				++AvgCount;
+			}
+			
+			if (ShouldGetNewID && QuestEdNode && !QuestEdNode->IsSubNode())
+			{
+				UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+				if (QuestNode)
 				{
-					UQuestBuilderNode* QuestNode = EdNode ? Cast<UQuestBuilderNode>(EdNode->NodeInstance) : nullptr;
 					QuestNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName(QuestNode->ID.ToString());
-					if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(EdGraph))
+					if (QuestEdGraph)
 					{
 						QuestEdGraph->AddToNodeIDMap(QuestNode->ID, QuestNode);
 					}
@@ -1278,23 +1314,81 @@ void FQuestBuilderEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVect
 			}
 		}
 
-		float InvNumNodes = 1.0f / float(PastedNodes.Num());
-		AvgNodePosition.X *= InvNumNodes;
-		AvgNodePosition.Y *= InvNumNodes;
+		if (AvgCount > 0)
+		{
+			float InvNumNodes = 1.0f / float(AvgCount);
+			AvgNodePosition.X *= InvNumNodes;
+			AvgNodePosition.Y *= InvNumNodes;
+		}
+		
+		bool bPastedParentNode = false;
+
+		TMap<FGuid/*New*/, FGuid/*Old*/> NewToOldNodeMapping;
+
+		TMap<int32, UQuestBuilderEdNode*> ParentMap;
+		for (TSet<UEdGraphNode*>::TIterator It(PastedNodes); It; ++It)
+		{
+			UEdGraphNode* PasteNode = *It;
+			UQuestBuilderEdNode* PasteQuestEdNode = Cast<UQuestBuilderEdNode>(PasteNode);
+
+			if (PasteNode && (PasteQuestEdNode == nullptr || !PasteQuestEdNode->IsSubNode()))
+			{
+				bPastedParentNode = true;
+
+				// Select the newly pasted stuff
+				CurrentGraphEditor->SetNodeSelection(PasteNode, true);
+
+				const FVector::FReal NodePosX = (PasteNode->NodePosX - AvgNodePosition.X) + Location.X;
+				const FVector::FReal NodePosY = (PasteNode->NodePosY - AvgNodePosition.Y) + Location.Y;
+
+				PasteNode->NodePosX = static_cast<int32>(NodePosX);
+				PasteNode->NodePosY = static_cast<int32>(NodePosY);
+
+				PasteNode->SnapToGrid(16);
+
+				const FGuid OldGuid = PasteNode->NodeGuid;
+
+				// Give new node a different Guid from the old one
+				PasteNode->CreateNewGuid();
+
+				const FGuid NewGuid = PasteNode->NodeGuid;
+
+				NewToOldNodeMapping.Add(NewGuid, OldGuid);
+
+				if (PasteQuestEdNode)
+				{
+					PasteQuestEdNode->RemoveAllSubNodes();
+					ParentMap.Add(PasteQuestEdNode->CopySubNodeIndex, PasteQuestEdNode);
+				}
+			}
+		}
 
 		for (TSet<UEdGraphNode*>::TIterator It(PastedNodes); It; ++It)
 		{
-			UEdGraphNode* Node = *It;
-			CurrentGraphEditor->SetNodeSelection(Node, true);
+			UQuestBuilderEdNode* PasteNode = Cast<UQuestBuilderEdNode>(*It);
+			if (PasteNode && PasteNode->IsSubNode())
+			{
+				PasteNode->NodePosX = 0;
+				PasteNode->NodePosY = 0;
 
-			Node->NodePosX = (Node->NodePosX - AvgNodePosition.X) + Location.X;
-			Node->NodePosY = (Node->NodePosY - AvgNodePosition.Y) + Location.Y;
+				// remove subnode from graph, it will be referenced from parent node
+				PasteNode->DestroyNode();
 
-			Node->SnapToGrid(16);
-
-			// Give new node a different Guid from the old one
-			Node->CreateNewGuid();
-
+				PasteNode->ParentNode = ParentMap.FindRef(PasteNode->CopySubNodeIndex);
+				if (PasteNode->ParentNode)
+				{
+					PasteNode->ParentNode->AddSubNode(PasteNode, EdGraph);
+				}
+				else if (!bHasMultipleNodesSelected && !bPastedParentNode && SelectedParent)
+				{
+					PasteNode->ParentNode = SelectedParent;
+					SelectedParent->AddSubNode(PasteNode, EdGraph);
+				}
+			}
+		}
+		if (QuestEdGraph)
+		{
+			QuestEdGraph->UpdateClassData();
 		}
 
 	}

@@ -15,7 +15,7 @@ class QUEST_SYSTEM_RUNTIME_API UQuestBuilderNode_Objective : public UQuestBuilde
 
 public:
 	/**List of task for your objective*/
-	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Objective", meta = (FullyExpand = true))
+	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Objective", meta = (FullyExpand = true))
 		TArray<TObjectPtr<UQuestTask>> Tasks;
 
 	virtual void Initialize() override;

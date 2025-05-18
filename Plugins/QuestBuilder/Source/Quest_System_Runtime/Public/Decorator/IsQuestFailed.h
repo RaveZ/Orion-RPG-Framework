@@ -7,7 +7,8 @@
 #include "IsQuestFailed.generated.h"
 
 /**
- * 
+ * Is quest failed decorator node.
+ * Desc
  */
 UCLASS()
 class QUEST_SYSTEM_RUNTIME_API UIsQuestFailed : public UOrionDecorator

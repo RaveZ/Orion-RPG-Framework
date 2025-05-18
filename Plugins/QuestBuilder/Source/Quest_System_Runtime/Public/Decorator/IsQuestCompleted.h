@@ -8,7 +8,10 @@
 
 
 class UQuest;
-
+/**
+ * Is quest completed decorator node.
+ * Desc
+ */
 UCLASS()
 class QUEST_SYSTEM_RUNTIME_API UIsQuestCompleted : public UOrionDecorator
 {

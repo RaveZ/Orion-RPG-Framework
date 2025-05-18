@@ -7,7 +7,8 @@
 #include "ActivateQuest.generated.h"
 
 /**
- * 
+ * Activate quest event node.
+ * Desc
  */
 UCLASS()
 class QUEST_SYSTEM_RUNTIME_API UActivateQuest : public UOrionEvent

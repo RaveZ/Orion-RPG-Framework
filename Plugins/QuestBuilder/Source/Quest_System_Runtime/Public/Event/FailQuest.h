@@ -7,7 +7,8 @@
 #include "FailQuest.generated.h"
 
 /**
- * 
+ * Fail quest event node.
+ * Desc
  */
 UCLASS()
 class QUEST_SYSTEM_RUNTIME_API UFailQuest : public UOrionEvent

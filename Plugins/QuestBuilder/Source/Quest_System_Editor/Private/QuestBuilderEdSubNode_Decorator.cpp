@@ -35,6 +35,15 @@ FName UQuestBuilderEdSubNode_Decorator::GetNameIcon() const
 FText UQuestBuilderEdSubNode_Decorator::GetDescription() const
 {
 	UOrionDecorator* Decorator = Cast<UOrionDecorator>(NodeInstance);
-	
-	return Decorator ? FText::FromString(Decorator->GetNodeDisplayText()) : FText();
+	if (Decorator)
+	{
+		FString Desc = Decorator->GetNodeDisplayText();
+		if (Decorator->InvertCondition)
+		{
+            Desc += "\n" + FString::Printf(TEXT("Invert Condition : %s"), Decorator->InvertCondition ? TEXT("True") : TEXT("False"));
+		}
+		return FText::FromString(Desc);
+	}
+
+	return FText();
 }

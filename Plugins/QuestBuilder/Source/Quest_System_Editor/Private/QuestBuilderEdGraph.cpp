@@ -56,14 +56,7 @@ void UQuestBuilderEdGraph::UpdateAsset(bool bForce)
 
 	CacheNodeIDMap();
 
-	for (UOrionDecorator* QuestCondition : Quest->Conditions)
-	{
-		if (QuestCondition != nullptr)
-		{
-			QuestCondition->QuestGraph = Graph;
-			QuestCondition->Quest = Quest;
-		}
-	}
+	UpdateAllSubnodeDependencies();
 
 	for (int i = 0; i < Nodes.Num(); ++i)
 	{
@@ -74,22 +67,6 @@ void UQuestBuilderEdGraph::UpdateAsset(bool bForce)
 
 			UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
 
-			// parent chain
-			QuestEdNode->ParentNode = NULL;
-			for (int32 iAux = 0; iAux < QuestEdNode->Events.Num(); iAux++)
-			{
-				QuestEdNode->Events[iAux]->ParentNode = QuestEdNode;
-			}
-
-			for (int32 iAux = 0; iAux < QuestEdNode->Decorators.Num(); iAux++)
-			{
-				QuestEdNode->Decorators[iAux]->ParentNode = QuestEdNode;
-			}
-
-			for (int32 iAux = 0; iAux < QuestEdNode->Tasks.Num(); iAux++)
-			{
-				QuestEdNode->Tasks[iAux]->ParentNode = QuestEdNode;
-			}
 
 			//cache quest and node dependencies
 			NodeMap.Add(QuestNode, QuestEdNode);
@@ -143,26 +120,6 @@ void UQuestBuilderEdGraph::UpdateAsset(bool bForce)
 				}
 			}
 
-			for (UOrionDecorator* QuestCondition : QuestNode->Conditions)
-			{
-				if (QuestCondition != nullptr)
-				{
-					QuestCondition->OwningNode = QuestNode;
-					QuestCondition->QuestGraph = Graph;
-					QuestCondition->Quest = Quest;
-				}
-			}
-			
-			for (UOrionEvent* QuestEvent : QuestNode->Events)
-			{
-				if (QuestEvent != nullptr)
-				{
-					QuestEvent->OwningNode = QuestNode;
-					QuestEvent->QuestGraph = Graph;
-					QuestEvent->Quest = Quest;
-				}
-			}
-
 		}
 		else if (UQuestBuilderEdNode_Edge* EdgeNode = Cast<UQuestBuilderEdNode_Edge>(Nodes[i]))
 		{
@@ -211,6 +168,57 @@ void UQuestBuilderEdGraph::UpdateAsset(bool bForce)
 	SortAllChildrenNodes(true);
 	
 }
+
+void UQuestBuilderEdGraph::UpdateAllSubnodeDependencies()
+{
+	for (int i = 0; i < Nodes.Num(); ++i)
+	{
+		if (UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(Nodes[i]))
+		{
+			if (QuestEdNode->NodeInstance == nullptr)
+				continue;
+			UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+
+			// parent chain
+			QuestEdNode->ParentNode = NULL;
+
+			QuestNode->Events.Reset();
+			for (int32 iAux = 0; iAux < QuestEdNode->Events.Num(); iAux++)
+			{
+				QuestEdNode->Events[iAux]->ParentNode = QuestEdNode;
+				if (UOrionEvent* EventInstance = Cast<UOrionEvent>(QuestEdNode->Events[iAux]->NodeInstance))
+				{
+					QuestNode->Events.Add(EventInstance);
+				}
+			}
+
+
+			QuestNode->Decorators.Reset();
+			for (int32 iAux = 0; iAux < QuestEdNode->Decorators.Num(); iAux++)
+			{
+				QuestEdNode->Decorators[iAux]->ParentNode = QuestEdNode;
+				if (UOrionDecorator* DecoratorInstance = Cast<UOrionDecorator>(QuestEdNode->Decorators[iAux]->NodeInstance))
+				{
+					QuestNode->Decorators.Add(DecoratorInstance);
+				}
+			}
+
+			if (UQuestBuilderNode_Objective* QuestObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestEdNode->NodeInstance))
+			{
+				QuestObjectiveNode->Tasks.Reset();
+				for (int32 iAux = 0; iAux < QuestEdNode->Tasks.Num(); iAux++)
+				{
+					QuestEdNode->Tasks[iAux]->ParentNode = QuestEdNode;
+					if (UQuestTask* TaskInstance = Cast<UQuestTask>(QuestEdNode->Tasks[iAux]->NodeInstance))
+					{
+						QuestObjectiveNode->Tasks.Add(TaskInstance);
+					}
+				}
+			}
+		}
+	}
+}
+
 
 void UQuestBuilderEdGraph::OnSubNodeDropped()
 {
@@ -376,6 +384,7 @@ void UQuestBuilderEdGraph::SortAllChildrenNodes(bool bForce)
 	}
 }
 
+
 void UQuestBuilderEdGraph::RebuildChildOrder(UEdGraphNode* ParentNode)
 {
 	UQuestBuilderEdNode* QuestParentEdNode = Cast<UQuestBuilderEdNode>(ParentNode);
@@ -432,6 +441,8 @@ bool UQuestBuilderEdGraph::Modify(bool bAlwaysMarkDirty)
 	bool Rtn = Super::Modify(bAlwaysMarkDirty);
 
 	GetQuestBuilderGraph()->Modify();
+
+	UpdateAllSubnodeDependencies();
 
 	for (int32 i = 0; i < Nodes.Num(); ++i)
 	{

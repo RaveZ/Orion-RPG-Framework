@@ -5,19 +5,25 @@
 #include "QuestBuilderNode.h"
 #include "QuestBuilderNode_Root.h"
 #include "QuestBuilderGraph.h"
+#include "QuestBuilderFunctionLibrary.h"
 #include "Quest.h"
 #include "QuestComponent.h"
 
 UJumpToNode::UJumpToNode()
 {
+	bUseQuestID = true;
 	bUseNodeID = true;
 }
 
 void UJumpToNode::BeginEvent_Implementation(AController* OwnerController, APawn* ControlledPawn)
 {
-	if (UQuestBuilderNode* FoundedNode = GetOwningQuest()->NodeMap.FindRef(NodeID))
+	if (UQuest* FoundedQuest = UQuestBuilderFunctionLibrary::FindQuestFromNodeID(GetWorld(), NodeID))
 	{
-		GetQuestComponent()->GoToNextNode(GetOwningQuest(), FoundedNode);
+		UQuestBuilderNode* FoundedNode = FoundedQuest->NodeMap.FindRef(NodeID);
+		if (FoundedNode)
+		{
+			GetQuestComponent()->GoToNextNode(FoundedQuest, FoundedNode);
+		}
 	}
 }
 

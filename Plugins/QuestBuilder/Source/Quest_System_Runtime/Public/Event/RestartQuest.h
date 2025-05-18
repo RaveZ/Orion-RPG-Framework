@@ -7,7 +7,8 @@
 #include "RestartQuest.generated.h"
 
 /**
- * 
+ * Restart quest event node.
+ * Desc
  */
 
 

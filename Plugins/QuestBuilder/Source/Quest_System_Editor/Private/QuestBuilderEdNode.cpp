@@ -63,7 +63,37 @@ FText UQuestBuilderEdNode::GetTooltipText() const
 
 	if (TooltipDesc.IsEmpty())
 	{
-		TooltipDesc = Super::GetTooltipText();
+		if (!NodeInstance)
+		{
+			FString StoredClassName = ClassData.GetClassName();
+			StoredClassName.RemoveFromEnd(TEXT("_C"));
+
+			TooltipDesc = FText::Format(LOCTEXT("NodeClassError", "Class {0} not found, make sure it's saved!"), FText::FromString(StoredClassName));
+		}
+		else
+		{
+			if (ErrorMessage.Len() > 0)
+			{
+				TooltipDesc = FText::FromString(ErrorMessage);
+			}
+			else
+			{
+				if (NodeInstance->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint) && !NodeInstance->GetClass()->GetPackage()->HasAnyPackageFlags(PKG_Cooked))
+				{
+					FAssetData AssetData(NodeInstance->GetClass()->ClassGeneratedBy);
+					FString Description = AssetData.GetTagValueRef<FString>(GET_MEMBER_NAME_CHECKED(UBlueprint, BlueprintDescription));
+					if (!Description.IsEmpty())
+					{
+						Description.ReplaceInline(TEXT("\\n"), TEXT("\n"));
+						TooltipDesc = FText::FromString(MoveTemp(Description));
+					}
+				}
+				else
+				{
+					TooltipDesc = NodeInstance->GetClass()->GetToolTipText();
+				}
+			}
+		}
 	}
 
 	return TooltipDesc;
@@ -149,6 +179,16 @@ void UQuestBuilderEdNode::FindDiffs(UEdGraphNode* OtherNode, FDiffResults& Resul
 bool UQuestBuilderEdNode::CanDuplicateNode() const
 {
 	return bIsReadOnly ? false : Super::CanDuplicateNode();
+}
+
+void UQuestBuilderEdNode::DestroyNode()
+{
+	if (ParentNode)
+	{
+		ParentNode->RemoveSubNode(this);
+	}
+
+	UEdGraphNode::DestroyNode();
 }
 
 void UQuestBuilderEdNode::PostPlacedNewNode()
@@ -255,7 +295,7 @@ void UQuestBuilderEdNode::AddSubNode(UQuestBuilderEdNode* SubNode, UEdGraph* Par
 	OnSubNodeAdded(SubNode);
 
 	ParentGraph->NotifyGraphChanged();
-	GetQuestBuilderEdGraph()->UpdateAsset();
+	GetQuestBuilderEdGraph()->UpdateAllSubnodeDependencies();
 }
 
 void UQuestBuilderEdNode::RemoveSubNode(UQuestBuilderEdNode* SubNode)
@@ -264,11 +304,13 @@ void UQuestBuilderEdNode::RemoveSubNode(UQuestBuilderEdNode* SubNode)
 	SubNodes.RemoveSingle(SubNode);
 
 	OnSubNodeRemoved(SubNode);
+	GetGraph()->Modify();
 }
 
 void UQuestBuilderEdNode::RemoveAllSubNodes()
 {
 	SubNodes.Reset();
+	GetGraph()->Modify();
 }
 
 void UQuestBuilderEdNode::OnSubNodeRemoved(UQuestBuilderEdNode* SubNode)
@@ -382,6 +424,7 @@ void UQuestBuilderEdNode::InsertSubNodeAt(UQuestBuilderEdNode* SubNode, int32 Dr
 			}
 		}
 	}
+	GetGraph()->Modify();
 }
 
 bool UQuestBuilderEdNode::IsSubNode() const

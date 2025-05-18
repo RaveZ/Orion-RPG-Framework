@@ -14,12 +14,6 @@ class QUEST_SYSTEM_RUNTIME_API UOrionDecorator : public UObject
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(BlueprintReadOnly, Category = "QuestCondition")
-		TObjectPtr<UQuestBuilderGraph> QuestGraph;
-
-	UPROPERTY(BlueprintReadOnly, Category = "QuestCondition")
-		TObjectPtr<UQuestBuilderNode> OwningNode;
-
 	/** node name */
 	UPROPERTY(Category = Description, EditAnywhere)
 	FString NodeName;
@@ -40,9 +34,6 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bUseNodeID == true", HideEditConditionToggle, EditConditionHides, GetOptions = "GetAllNodeID"))
 		FName NodeID;
-	
-	UPROPERTY(BlueprintReadOnly, Category = "QuestCondition")
-		TObjectPtr<UQuest> Quest;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestCondition")
 		bool PerformConditionCheck(AController* OwnerController, APawn* ControlledPawn) const;
@@ -55,19 +46,7 @@ public:
 	virtual FString GetNodeDisplayText_Implementation() const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestCondition")
-		AController* GetOwningController() const;
-
-	UFUNCTION(BlueprintCallable, Category = "QuestCondition")
-		APawn* GetOwningPawn() const;
-
-	UFUNCTION(BlueprintCallable, Category = "QuestCondition")
 		UQuestComponent* GetQuestComponent() const;
-
-	UFUNCTION(BlueprintCallable, Category = "QuestCondition")
-		UQuestBuilderGraph* GetOwningQuestGraph() const;
-
-	UFUNCTION(BlueprintCallable, Category = "QuestCondition")
-		UQuest* GetOwningQuest() const;
 
 	UFUNCTION(CallInEditor)
 	virtual	TArray<FName> GetAllQuestID();

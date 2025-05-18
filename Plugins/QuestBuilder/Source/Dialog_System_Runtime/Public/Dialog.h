@@ -58,9 +58,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "DialogConditions", meta = (DisplayName = "CanRetakeDialog"))
 		bool bCanRetakeDialog = false;
 
-	/**Conditions to change the DialogState to DesiredDialogState*/
+	/**Decorators to change the DialogState to DesiredDialogState*/
 	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "DialogConditions")
-		TArray<TObjectPtr<UOrionDecorator>> Conditions;
+		TArray<TObjectPtr<UOrionDecorator>> Decorators;
 
 	/**
 	* Change the Dialog State to this value after condition met

@@ -15,7 +15,7 @@ namespace QuestBuilderColors
 
 	namespace NodeBorder
 	{
-		const FLinearColor SubNodeBorder(0.2f, 0.2f, 0.2f, 0.2f);
+		const FLinearColor SubNodeBorder(0.3f, 0.3f, 0.3f, 0.2f);
 		const FLinearColor Inactive(0.08f, 0.08f, 0.08f);
 		const FLinearColor Root(0.2f, 0.2f, 0.2f, 0.2f);
 		const FLinearColor Selected(1.00f, 0.08f, 0.08f);

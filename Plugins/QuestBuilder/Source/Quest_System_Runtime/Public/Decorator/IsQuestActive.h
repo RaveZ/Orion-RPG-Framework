@@ -7,7 +7,8 @@
 #include "IsQuestActive.generated.h"
 
 /**
- * 
+ * Is quest active decorator node.
+ * Desc
  */
 UCLASS()
 class QUEST_SYSTEM_RUNTIME_API UIsQuestActive : public UOrionDecorator

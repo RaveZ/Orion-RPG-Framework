@@ -128,7 +128,7 @@ void UQuestTask::AddAmount(int AmountToAdd)
 
 FText UQuestTask::GetDescription_Implementation() const
 {
-    return Description.IsEmpty() ? FText::FromString(GetName()) : Description;
+    return Description.IsEmpty() ? FText::FromString("Description...") : Description;
 }
 
 FString UQuestTask::GetNodeName()
@@ -177,9 +177,17 @@ UWorld* UQuestTask::GetWorld() const
 		return nullptr;
 	}
 
-	if (GetQuestComponent())
+	UObject* Outer = GetOuter();
+
+	while (Outer)
 	{
-		return GetQuestComponent()->GetWorld();
+		UWorld* World = Outer->GetWorld();
+		if (World)
+		{
+			return World;
+		}
+
+		Outer = Outer->GetOuter();
 	}
 
 	return nullptr;

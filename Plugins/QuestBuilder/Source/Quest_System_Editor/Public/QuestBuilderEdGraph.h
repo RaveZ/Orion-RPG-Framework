@@ -24,6 +24,7 @@ public:
 
 	virtual void UpdateAsset(bool bForce = false);
 	virtual void SortAllChildrenNodes(bool bForce = false);
+	virtual void UpdateAllSubnodeDependencies();
 	virtual void RebuildChildOrder(UEdGraphNode* ParentNode);
 	virtual void CacheNodeIDMap();
 	virtual void AddToNodeIDMap(FName ID, UQuestBuilderNode* Node);

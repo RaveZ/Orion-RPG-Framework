@@ -38,11 +38,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (MultiLine = true))
 		FText Description;
 	
-	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Events")
+	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Events")
 		TArray<TObjectPtr<UOrionEvent>> Events;
 
-	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = BranchingConditions, meta = (DisplayName = "Branching Conditions"))
-		TArray<TObjectPtr<UOrionDecorator>> Conditions;
+	UPROPERTY(Instanced, BlueprintReadOnly, Category = Decorators, meta = (DisplayName = "Decorators"))
+		TArray<TObjectPtr<UOrionDecorator>> Decorators;
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode")
 		TObjectPtr<UQuestBuilderGraph> QuestGraph;

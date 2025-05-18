@@ -506,14 +506,14 @@ void UQuestComponent::EvaluateNextNodeCondition(UQuest* QuestParam)
 	UQuestBuilderNode* NextNode = nullptr;
 	for (auto& Node : QuestParam->CurrentNode->ChildrenNodes)
 	{
-		if (NextNode == nullptr && Node->Conditions.IsEmpty())
+		if (NextNode == nullptr && Node->Decorators.IsEmpty())
 		{
 			NextNode = Node;
 		}
-		else if (!Node->Conditions.IsEmpty())
+		else if (!Node->Decorators.IsEmpty())
 		{
 			int SumConditionMet = 0;
-			for (auto& Condition : Node->Conditions)
+			for (auto& Condition : Node->Decorators)
 			{
 				bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
 				if (bConditionMet)
@@ -521,7 +521,7 @@ void UQuestComponent::EvaluateNextNodeCondition(UQuest* QuestParam)
 					SumConditionMet++;
 				}
 			}
-			if (SumConditionMet >= Node->Conditions.Num())
+			if (SumConditionMet >= Node->Decorators.Num())
 			{
 				NextNode = Node;
 				//break loop to ensure the met condition doesn't get overrided
@@ -532,11 +532,24 @@ void UQuestComponent::EvaluateNextNodeCondition(UQuest* QuestParam)
 
 	if (NextNode)
 	{
-		QuestParam->CurrentNode->BeginEvents(EEventRunType::E_End);
-		NextNode->BeginEvents(EEventRunType::E_Start);
+		UQuestBuilderNode* CachedCurrentNode = QuestParam->CurrentNode;
 
-		//Go to next node if exist or condition met
-		GoToNextNode(QuestParam, NextNode);
+		CachedCurrentNode->BeginEvents(EEventRunType::E_End);
+
+		//Check if the current node has changed after the events. it means we dont need to go to next node
+		if (CachedCurrentNode != QuestParam->CurrentNode)
+		{
+			QuestParam->CurrentNode->BeginEvents(EEventRunType::E_Start);
+		}
+		else
+		{
+			GoToNextNode(QuestParam, NextNode);
+			//Now Current Node supposed to be the NextNode, ensure the next node == current node before launching event
+			if (QuestParam->CurrentNode == NextNode)
+			{
+				NextNode->BeginEvents(EEventRunType::E_Start);
+			}
+		}
 	}
 	
 }
@@ -547,7 +560,7 @@ void UQuestComponent::EvaluateQuestCondition(UQuest* QuestParam)
 		return;
 
 	int SumConditionMet = 0;
-	for (auto& Condition : QuestParam->Conditions)
+	for (auto& Condition : QuestParam->Decorators)
 	{
 		bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
 		if (bConditionMet)
@@ -564,7 +577,7 @@ void UQuestComponent::EvaluateQuestState(UQuest* QuestParam, int SumConditionMet
 	if (QuestParam->QuestState == EQuestState::E_Complete || QuestParam->QuestState == EQuestState::E_Fail)
 		return;
 
-	if (SumConditionMet >= QuestParam->Conditions.Num())
+	if (SumConditionMet >= QuestParam->Decorators.Num())
 	{
 		switch (QuestParam->DesiredQuestState)
 		{

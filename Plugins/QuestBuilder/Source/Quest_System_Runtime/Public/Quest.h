@@ -58,9 +58,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestConditions", meta = (DisplayName = "CanRetakeQuest"))
 		bool bCanRetakeQuest = false;
 
-	/**Conditions to change the QuestState to DesiredQuestState*/
+	/**Decorators to change the QuestState to DesiredQuestState*/
 	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "QuestConditions")
-		TArray<TObjectPtr<UOrionDecorator>> Conditions;
+		TArray<TObjectPtr<UOrionDecorator>> Decorators;
 
 	/**
 	* Change the Quest State to this value after condition met

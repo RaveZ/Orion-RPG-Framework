@@ -7,7 +7,8 @@
 #include "UnlockQuest.generated.h"
 
 /**
- * 
+ * Unlock quest event node.
+ * Desc
  */
 UCLASS()
 class QUEST_SYSTEM_RUNTIME_API UUnlockQuest : public UOrionEvent
