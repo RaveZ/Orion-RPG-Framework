@@ -5,6 +5,7 @@
 #include "Quest_System_Runtime.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode.h"
+#include "QuestBuilderNode_Objective.h"
 #include "QuestBuilderNode_Root.h"
 #include "Quest.h"
 #include "QuestData.h"
@@ -107,11 +108,11 @@ UQuestComponent* UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(AActo
     return nullptr;
 }
 
-UQuest* UQuestBuilderFunctionLibrary::FindQuestFromNodeID(const UObject* WorldContextObject, FName NodeID)
+UQuest* UQuestBuilderFunctionLibrary::FindQuest(const UObject* WorldContextObject, FName QuestID)
 {   
     if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
     {
-        UQuest* Quest = QuestComp->FindQuestFromNodeID(NodeID);
+        UQuest* Quest = QuestComp->QuestMap.FindRef(QuestID);
         
 		if (Quest)
 		{
@@ -121,17 +122,22 @@ UQuest* UQuestBuilderFunctionLibrary::FindQuestFromNodeID(const UObject* WorldCo
     return nullptr;
 }
 
-bool UQuestBuilderFunctionLibrary::IsCurrentNodeIDMatch(const UObject* WorldContextObject, FName NodeID)
+bool UQuestBuilderFunctionLibrary::CanProgressQuestObjective(const UObject* WorldContextObject, FName QuestID, FName NodeID)
 {
-    UQuest* Quest = FindQuestFromNodeID(WorldContextObject, NodeID);
-    
-    if (Quest && Quest->CurrentNode && Quest->CurrentNode->ID == NodeID)
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
     {
-        return true;
+        UQuest* Quest = QuestComp->QuestMap.FindRef(QuestID);
+        if (Quest && Quest->CurrentNode && Quest->QuestState == EQuestState::E_Active)
+        {
+            if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(Quest->CurrentNode))
+            {
+                return true;
+            }
+        }
     }
-    
     return false;
 }
+
 
 bool UQuestBuilderFunctionLibrary::IsQuestAtState(const UObject* WorldContextObject, FName ID, EQuestState QuestState)
 {

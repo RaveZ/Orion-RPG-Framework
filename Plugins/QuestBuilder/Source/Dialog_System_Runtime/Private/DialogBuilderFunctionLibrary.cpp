@@ -121,17 +121,6 @@ UDialog* UDialogBuilderFunctionLibrary::FindDialogFromNodeID(const UObject* Worl
     return nullptr;
 }
 
-bool UDialogBuilderFunctionLibrary::IsCurrentNodeIDMatch(const UObject* WorldContextObject, FName NodeID)
-{
-    UDialog* Dialog = FindDialogFromNodeID(WorldContextObject, NodeID);
-    
-    if (Dialog && Dialog->CurrentNode && Dialog->CurrentNode->ID == NodeID)
-    {
-        return true;
-    }
-    
-    return false;
-}
 
 bool UDialogBuilderFunctionLibrary::IsDialogAtState(const UObject* WorldContextObject, FName ID, EDialogState DialogState)
 {

@@ -65,6 +65,8 @@ bool UQuestBuilderNode_Objective::IsAllTaskCompleted()
     
 }
 
+
+
 #if WITH_EDITOR
 FText UQuestBuilderNode_Objective::GetNodeTitle() const
 {

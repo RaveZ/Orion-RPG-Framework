@@ -73,6 +73,53 @@ FString UQuestBuilderNode::GetShortTypeName(const UObject* Ob)
 	return TypeDesc;
 }
 
+void UQuestBuilderNode::EvaluateUniqueID()
+{
+	if (UQuest* OwningQuest = GetOwningQuest())
+	{
+		TArray<UQuestBuilderNode*> QuestNodes = OwningQuest->AllNodes;
+		TArray<FName> NodeIDs;
+
+		for (auto& Node : QuestNodes)
+		{
+			if (Node != this)
+			{
+				NodeIDs.Add(Node->ID);
+			}
+		}
+
+		int32 FinalSuffix = 1;
+		FName NewID = ID;
+		FString BaseName = NewID.ToString();
+		int32 UnderscoreIndex;
+
+		if (BaseName.FindLastChar(TEXT('_'), UnderscoreIndex))
+		{
+			FString Suffix = BaseName.Mid(UnderscoreIndex + 1);
+			if (Suffix.IsNumeric())
+			{
+				BaseName = BaseName.Left(UnderscoreIndex);
+			}
+		}
+
+		if (!NodeIDs.Contains(NewID))
+		{
+			return;
+		}
+
+		// Check if the new ID already exists in the array
+		while (NodeIDs.Contains(NewID))
+		{
+			// If it does, add a numeric suffix and try again
+			NewID = FName(*FString::Printf(TEXT("%s_%d"), *BaseName, FinalSuffix));
+			FinalSuffix++;
+		}
+
+		ID = NewID;
+	}
+}
+
+
 
 
 #if WITH_EDITOR
@@ -163,6 +210,20 @@ bool UQuestBuilderNode::CanCreateConnectionFrom(UQuestBuilderNode* Other, int32 
 	return true;
 }
 
+void UQuestBuilderNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	if (PropertyChangedEvent.MemberProperty)
+	{
+		//If we changed the ID, make sure it doesn't conflict with any other IDs in the quest
+		if (PropertyChangedEvent.MemberProperty->GetFName() == GET_MEMBER_NAME_CHECKED(UQuestBuilderNode, ID))
+		{
+			EvaluateUniqueID();
+		}
+	}
+}
+
 
 #endif
 
@@ -185,6 +246,8 @@ void UQuestBuilderNode::InitializeFromAsset(UQuestBuilderGraph& OwningQuestGraph
 {
 	QuestGraph = &OwningQuestGraph;
 	Quest = &OwningQuest;
+	Quest->AllNodes.Add(this);
+	Quest->NodeMap.Emplace(ID, this);
 }
 
 

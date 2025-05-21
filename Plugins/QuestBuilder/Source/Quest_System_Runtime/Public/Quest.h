@@ -113,6 +113,8 @@ public:
 		UQuestBuilderGraph* GetOwningQuestGraph() const;
 	void ClearGraph();
 
+	virtual void EvaluateUniqueID();
+
 #if WITH_EDITOR
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

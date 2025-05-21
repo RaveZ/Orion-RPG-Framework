@@ -17,7 +17,7 @@ UJumpToNode::UJumpToNode()
 
 void UJumpToNode::BeginEvent_Implementation(AController* OwnerController, APawn* ControlledPawn)
 {
-	if (UQuest* FoundedQuest = UQuestBuilderFunctionLibrary::FindQuestFromNodeID(GetWorld(), NodeID))
+	if (UQuest* FoundedQuest = GetQuestComponent()->QuestMap.FindRef(QuestID))
 	{
 		UQuestBuilderNode* FoundedNode = FoundedQuest->NodeMap.FindRef(NodeID);
 		if (FoundedNode)
@@ -29,5 +29,5 @@ void UJumpToNode::BeginEvent_Implementation(AController* OwnerController, APawn*
 
 FString UJumpToNode::GetNodeDisplayText_Implementation() const
 {
-	return FString::Printf(TEXT("Jump To Node :  %s"), *NodeID.ToString());
+	return FString::Printf(TEXT("In Quest: %s \nIn Node: %s"), *QuestID.ToString(), *NodeID.ToString());
 }

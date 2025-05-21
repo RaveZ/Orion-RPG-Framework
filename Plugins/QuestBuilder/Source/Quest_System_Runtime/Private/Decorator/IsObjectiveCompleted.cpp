@@ -5,6 +5,8 @@
 #include "QuestBuilderNode_Objective.h"
 #include "QuestComponent.h"
 #include "Quest.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "QuestBuilderGraph.h"
 
 UIsObjectiveCompleted::UIsObjectiveCompleted()
 {
@@ -30,5 +32,40 @@ bool UIsObjectiveCompleted::PerformConditionCheck_Implementation(AController* Ow
 
 FString UIsObjectiveCompleted::GetNodeDisplayText_Implementation() const
 {
-    return FString::Printf(TEXT("Is Objective Completed :  %s"), *NodeID.ToString());
+    return FString::Printf(TEXT("In Quest: %s \nIn Objective: %s"), *QuestID.ToString(), *NodeID.ToString());
+}
+
+TArray<FName> UIsObjectiveCompleted::GetAllNodeID()
+{
+	TArray<FName> NodeIDs;
+	if (bUseQuestID)
+	{
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+		TArray<FAssetData> QuestGraphDataArray;
+		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+
+		for (const FAssetData& AssetData : QuestGraphDataArray)
+		{
+			UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
+			if (QuestGraphAsset)
+			{
+				for (UQuest* QuestObj : QuestGraphAsset->QuestList)
+				{
+					if (QuestObj->ID != QuestID) continue;
+					for (UQuestBuilderNode* Node : QuestObj->AllNodes)
+					{
+						if (Node)
+						{
+							if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(Node))
+							{
+								NodeIDs.Emplace(Node->ID);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	return NodeIDs;
 }

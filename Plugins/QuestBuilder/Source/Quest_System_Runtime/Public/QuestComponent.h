@@ -50,11 +50,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
 		TMap<FName, TObjectPtr<UQuest>> QuestMap;
 
-	/** Map of Node ID and attached Node That is Running*/
-	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
-		TMap<FName, TObjectPtr<UQuestBuilderNode>> NodeMap;
-
-
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
 		TObjectPtr<UQuest> CurrentNavigatedQuest;
 

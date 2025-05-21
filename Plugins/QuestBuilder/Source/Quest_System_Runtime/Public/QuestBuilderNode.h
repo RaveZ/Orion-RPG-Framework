@@ -32,7 +32,7 @@ public:
 	UQuestBuilderNode();
 	virtual ~UQuestBuilderNode();
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Detail")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Detail", meta = (DisplayPriority = 0))
 		FName ID;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (MultiLine = true))
@@ -98,6 +98,8 @@ public:
 	static FString GetShortTypeName(const UObject* Ob);
 
 
+	virtual void EvaluateUniqueID();
+public:
 	//////////////////////////////////////////////////////////////////////////
 #if WITH_EDITORONLY_DATA
 
@@ -144,5 +146,7 @@ public:
 
 	virtual bool CanCreateConnectionTo(UQuestBuilderNode* Other, int32 NumberOfChildrenNodes, FText& ErrorMessage);
 	virtual bool CanCreateConnectionFrom(UQuestBuilderNode* Other, int32 NumberOfParentNodes, FText& ErrorMessage);
+
+	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
 };

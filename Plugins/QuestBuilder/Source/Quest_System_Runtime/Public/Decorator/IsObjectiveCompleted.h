@@ -20,4 +20,5 @@ public:
 
 	virtual bool PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const override;
 	virtual FString GetNodeDisplayText_Implementation() const override;
+	virtual TArray<FName> GetAllNodeID() override;
 };

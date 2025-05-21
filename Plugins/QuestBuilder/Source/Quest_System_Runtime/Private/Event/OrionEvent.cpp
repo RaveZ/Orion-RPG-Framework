@@ -117,6 +117,7 @@ FString UOrionEvent::GetShortTypeName(UObject* Ob)
 	}
 
 	// Insert space before each capital letter (except the first character) and remove underscores
+	// Do not add space if the previous character is uppercase (abbreviation)
 	FString Result;
 	for (int32 i = 0; i < TypeDesc.Len(); ++i)
 	{
@@ -125,7 +126,11 @@ FString UOrionEvent::GetShortTypeName(UObject* Ob)
 			TCHAR Char = TypeDesc[i];
 			if (i > 0 && FChar::IsUpper(Char) && !FChar::IsWhitespace(TypeDesc[i - 1]))
 			{
-				Result += TEXT(" ");
+				// Only add space if previous character is not uppercase (not abbreviation)
+				if (!FChar::IsUpper(TypeDesc[i - 1]))
+				{
+					Result += TEXT(" ");
+				}
 			}
 			Result += Char;
 		}

@@ -72,16 +72,16 @@ public:
 	virtual void AllocateDefaultPins() override;
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	virtual FText GetTooltipText() const override;
-	virtual void FindDiffs(class UEdGraphNode* OtherNode, struct FDiffResults& Results) override;
-	virtual bool CanDuplicateNode() const override;
 	virtual void DestroyNode() override;
+	virtual bool CanDuplicateNode() const override;
 	virtual void PostPlacedNewNode() override;
 	virtual bool CanUserDeleteNode() const override;
 	virtual void PrepareForCopying() override;
 	virtual void AutowireNewNode(UEdGraphPin* FromPin) override;
+	virtual void FindDiffs(class UEdGraphNode* OtherNode, struct FDiffResults& Results) override;
 	//end UedGraphnode interface
 
-
+	void UpdateSubnodeDependencies();
 	void AddSubNode(UQuestBuilderEdNode* SubNode, class UEdGraph* ParentGraph);
 	void RemoveSubNode(UQuestBuilderEdNode* SubNode);
 	virtual void RemoveAllSubNodes();
@@ -102,6 +102,8 @@ public:
 
 	/** gets icon resource name for title bar */
 	virtual FName GetNameIcon() const;
+
+	virtual void FindUniqueNodeName(const FString& InBaseName);
 
 	virtual FText GetDescription() const;
 	virtual FText GetEventsText() const;
@@ -130,6 +132,7 @@ public:
 
 	virtual void PostCopyNode();
 
+	virtual void ResetNodeOwner();
 protected:
 	/** creates add decorator... submenu */
 	void CreateAddDecoratorSubMenu(class UToolMenu* Menu, UEdGraph* Graph) const;
@@ -150,11 +153,10 @@ protected:
 	void AddContextMenuActionsTasks(class UToolMenu* Menu, const FName SectionName, class UGraphNodeContextMenuContext* Context) const;
 
 
-protected:
-	virtual void ResetNodeOwner();
 
 public:
 #if WITH_EDITOR
+	virtual void PostEditImport() override;
 	virtual void PostEditUndo() override;
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif

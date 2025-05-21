@@ -252,9 +252,33 @@ void FQuestBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& I
 	InTabManager->UnregisterTabSpawner(FQuestBuilderEditorTabs::QuestBuilderEditorSettingsID);
 }
 
+void FQuestBuilderEditor::PostUndo(bool bSuccess)
+{
+	if (bSuccess)
+	{
+		// Clear selection, to avoid holding refs to nodes that go away
+		if (TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor())
+		{
+			CurrentGraphEditor->ClearSelectionSet();
+			CurrentGraphEditor->NotifyGraphChanged();
+		}
+		FSlateApplication::Get().DismissAllMenus();
+	}
+}
 
-
-
+void FQuestBuilderEditor::PostRedo(bool bSuccess)
+{
+	if (bSuccess)
+	{
+		// Clear selection, to avoid holding refs to nodes that go away
+		if (TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor())
+		{
+			CurrentGraphEditor->ClearSelectionSet();
+			CurrentGraphEditor->NotifyGraphChanged();
+		}
+		FSlateApplication::Get().DismissAllMenus();
+	}
+}
 
 void FQuestBuilderEditor::BindCommands()
 {
@@ -362,7 +386,7 @@ void FQuestBuilderEditor::CreateCommandList()
 
 TSharedPtr<SGraphEditor> FQuestBuilderEditor::GetCurrGraphEditor() const
 {
-	return ViewportWidget;
+	return CurrentGraphWidget;
 }
 
 FGraphPanelSelectionSet FQuestBuilderEditor::GetSelectedNodes() const
@@ -568,7 +592,7 @@ void FQuestBuilderEditor::NewDocument_OnClicked(ECreatedQuestDocumentType GraphT
 	switch (GraphType)
 	{
 	case CGT_NewQuestGraph:
-		DocumentNameText = LOCTEXT("NewDocQuestGraphName", "QuestGraph");
+		DocumentNameText = LOCTEXT("NewDocQuestName", "Quest");
 		bResetMyBlueprintFilter = true;
 		break;
 	
@@ -799,7 +823,7 @@ UEdGraphNode* FQuestBuilderEditor::GetSingleSelectedNode() const
 void FQuestBuilderEditor::OnGraphEditorFocused(const TSharedRef<class SGraphEditor>& InGraphEditor)
 {
 	// Update the graph editor that is currently focused
-	ViewportWidget = InGraphEditor;
+	CurrentGraphWidget = InGraphEditor;
 	InGraphEditor->SetPinVisibility(SGraphEditor::EPinVisibility::Pin_Show);
 
 	// Update the inspector as well, to show selection from the focused graph editor
@@ -807,17 +831,17 @@ void FQuestBuilderEditor::OnGraphEditorFocused(const TSharedRef<class SGraphEdit
 	//FocusInspectorOnGraphSelection(SelectedNodes, /*bForceRefresh=*/ true);
 
 	// During undo, garbage graphs can be temporarily brought into focus, ensure that before a refresh of the MyBlueprint window that the graph is owned by a Blueprint
-	if (ViewportWidget.IsValid() && MyQuestWidget.IsValid())
+	if (CurrentGraphWidget.IsValid() && MyQuestWidget.IsValid())
 	{
 		// The focused graph can be garbage as well
-		TWeakObjectPtr< UEdGraph > FocusedGraphPtr = ViewportWidget->GetCurrentGraph();
+		TWeakObjectPtr< UEdGraph > FocusedGraphPtr = CurrentGraphWidget->GetCurrentGraph();
 		UEdGraph* FocusedGraph = FocusedGraphPtr.Get();
 		
 		if (FocusedGraph != nullptr)
 		{
 			if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(FocusedGraph))
 			{
-				QuestEdGraph->SEditorGraph = ViewportWidget.Get();
+				QuestEdGraph->SEditorGraph = CurrentGraphWidget.Get();
 			}
 			MyQuestWidget->Refresh();
 		}
@@ -893,9 +917,9 @@ TSharedRef<SDockTab> FQuestBuilderEditor::SpawnTab_Viewport(const FSpawnTabArgs&
 	TSharedRef<SDockTab> SpawnedTab = SNew(SDockTab)
 		.Label(LOCTEXT("ViewportTab_Title", "Viewport"));
 
-	if (ViewportWidget.IsValid())
+	if (CurrentGraphWidget.IsValid())
 	{
-		SpawnedTab->SetContent(ViewportWidget.ToSharedRef());
+		SpawnedTab->SetContent(CurrentGraphWidget.ToSharedRef());
 	}
 
 	return SpawnedTab;
@@ -992,7 +1016,6 @@ void FQuestBuilderEditor::RebuildQuestBuilderGraphPages()
 		return;
 	}
 
-	GetQuestBuilderGraph()->NodeIDMap.Reset();
 	for (UEdGraph* EdGraph : EditingQuestGraph->QuestGraphPages)
 	{
 		if (EdGraph)
@@ -1011,11 +1034,6 @@ void FQuestBuilderEditor::RebuildQuestBuilderGraphPages()
 
 void FQuestBuilderEditor::OnGraphChanged(const FEdGraphEditAction& Action)
 {
-	UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(Action.Graph);
-	if (QuestGraph)
-	{
-		QuestGraph->CacheNodeIDMap();
-	}
 }
 void FQuestBuilderEditor::SelectAllNodes()
 {
@@ -1182,11 +1200,12 @@ void FQuestBuilderEditor::CopySelectedNodes()
 			CopySubNodeIndex++;
 		}
 
-		for (int32 Idx = 0; Idx < SubNodes.Num(); Idx++)
-		{
-			SelectedNodes.Add(SubNodes[Idx]);
-			SubNodes[Idx]->PrepareForCopying();
-		}
+	}
+
+	for (int32 Idx = 0; Idx < SubNodes.Num(); Idx++)
+	{
+		SelectedNodes.Add(SubNodes[Idx]);
+		SubNodes[Idx]->PrepareForCopying();
 	}
 
 	FEdGraphUtilities::ExportNodesToText(SelectedNodes, ExportedText);
@@ -1241,6 +1260,11 @@ void FQuestBuilderEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVect
 		UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(EdGraph);
 
 		EdGraph->Modify();
+
+		if (QuestEdGraph)
+		{
+			QuestEdGraph->LockUpdates();
+		}
 
 		UQuestBuilderEdNode* SelectedParent = NULL;
 		bool bHasMultipleNodesSelected = false;
@@ -1301,11 +1325,7 @@ void FQuestBuilderEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVect
 				UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
 				if (QuestNode)
 				{
-					QuestNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName(QuestNode->ID.ToString());
-					if (QuestEdGraph)
-					{
-						QuestEdGraph->AddToNodeIDMap(QuestNode->ID, QuestNode);
-					}
+					QuestEdNode->FindUniqueNodeName(QuestNode->ID.ToString());
 				}
 			}
 			else
@@ -1386,22 +1406,33 @@ void FQuestBuilderEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVect
 				}
 			}
 		}
+
+		FixupPastedNodes(PastedNodes, NewToOldNodeMapping);
+
 		if (QuestEdGraph)
 		{
 			QuestEdGraph->UpdateClassData();
+			QuestEdGraph->UnlockUpdates();
+		}
+
+		// Update UI
+		CurrentGraphEditor->NotifyGraphChanged();
+
+		UObject* GraphOwner = EdGraph->GetOuter();
+		if (GraphOwner)
+		{
+			GraphOwner->PostEditChange();
+			GraphOwner->MarkPackageDirty();
 		}
 
 	}
 
-	// Update UI
-	CurrentGraphEditor->NotifyGraphChanged();
+	
+}
 
-	UObject* GraphOwner = EdGraph->GetOuter();
-	if (GraphOwner)
-	{
-		GraphOwner->PostEditChange();
-		GraphOwner->MarkPackageDirty();
-	}
+
+void FQuestBuilderEditor::FixupPastedNodes(const TSet<UEdGraphNode*>& NewPastedGraphNodes, const TMap<FGuid, FGuid>& NewToOldNodeMapping)
+{
 }
 
 bool FQuestBuilderEditor::CanPasteNodes() const
@@ -1541,13 +1572,14 @@ bool FQuestBuilderEditor::CanRenameNodes() const
 	return false;
 
 }
+
 void FQuestBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& NewSelection)
 {
 	TArray<UObject*> Selection = FQuestBuilderEditorUtils::GetSelectionForPropertyEditor(NewSelection);
 
 	if (Selection.Num() == 0)
 	{
-		if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(ViewportWidget->GetCurrentGraph()))
+		if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(CurrentGraphWidget->GetCurrentGraph()))
 		{
 			PropertyWidget->SetObject(QuestGraph->Quest);
 		}
@@ -1556,7 +1588,7 @@ void FQuestBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& New
 	{
 		if (UQuestBuilderNode_Root* RootNode = Cast<UQuestBuilderNode_Root>(Selection[0]))
 		{
-			if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(ViewportWidget->GetCurrentGraph()))
+			if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(CurrentGraphWidget->GetCurrentGraph()))
 			{
 				PropertyWidget->SetObject(QuestGraph->Quest);
 			}
@@ -1620,6 +1652,7 @@ void FQuestBuilderEditor::OnPackageSavedWithContext(const FString& PackageFileNa
 	RebuildQuestBuilderGraphPages();
 	
 }
+
 
 #endif // #else // #if ENGINE_MAJOR_VERSION < 5
 

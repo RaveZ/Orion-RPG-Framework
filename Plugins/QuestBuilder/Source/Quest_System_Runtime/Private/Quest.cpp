@@ -7,6 +7,7 @@
 #include "QuestBuilderEdge.h"
 #include "QuestBuilderNode_Objective.h"
 #include "QuestBuilderNode_Root.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 
 
 #define LOCTEXT_NAMESPACE "Quest"
@@ -145,16 +146,74 @@ void UQuest::ClearGraph()
 		}
 	}
 
+	VisitedNodeIDs.Empty();
 	AllNodes.Empty();
 	RootNodes.Empty();
+	NodeMap.Empty();
+}
+
+void UQuest::EvaluateUniqueID()
+{
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+	TArray<FAssetData> QuestGraphDataArray;
+	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+
+	TArray<UQuest*> Quests;
+	TArray<FName> QuestIDs;
+
+	for (const FAssetData& AssetData : QuestGraphDataArray)
+	{
+		UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
+		if (QuestGraphAsset)
+		{
+			for (auto& Quest : QuestGraphAsset->QuestList)
+			{
+				Quests.Add(Quest);
+			}
+		}
+	}
+
+	for (auto& Quest : Quests)
+	{
+		if (Quest != this)
+		{
+			QuestIDs.Add(Quest->ID);
+		}
+	}
+
+	int32 Suffix = 1;
+	FName NewID = ID;
+
+	if (!QuestIDs.Contains(NewID))
+	{
+		return;
+	}
+
+	// Check if the new ID already exists in the array
+	while (QuestIDs.Contains(NewID))
+	{
+		// If it does, add a numeric suffix and try again
+		NewID = FName(*FString::Printf(TEXT("%s%d"), *ID.ToString(), Suffix));
+		Suffix++;
+	}
+
+	ID = NewID;
+
 }
 
 #if WITH_EDITOR
 void UQuest::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-	if (QuestGraph)
+
+	if (PropertyChangedEvent.MemberProperty)
 	{
+		//If we changed the ID, make sure it doesn't conflict with any other IDs in the quest
+		if (PropertyChangedEvent.MemberProperty->GetFName() == GET_MEMBER_NAME_CHECKED(UQuest, ID))
+		{
+			EvaluateUniqueID();
+		}
 	}
 }
 #endif

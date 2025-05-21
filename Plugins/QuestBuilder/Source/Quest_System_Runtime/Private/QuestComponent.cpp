@@ -10,6 +10,7 @@
 #include "QuestSaveObject.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode_State.h"
+#include "QuestBuilderNode_Checkpoint.h"
 #include "QuestBuilderNode_Root.h"
 #include "QuestBuilderNode_Objective.h"
 #include "Kismet/GameplayStatics.h"
@@ -34,7 +35,6 @@ void UQuestComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	QuestMap.Empty();
-	NodeMap.Empty();
 	//Set Dependency
 	OwningController = GetOwningController();
 
@@ -121,10 +121,6 @@ void UQuestComponent::CacheQuestGraphDependencies(UQuestBuilderGraph* QuestGraph
 		for (auto& Quest : QuestGraph->QuestList)
 		{
 			QuestMap.Emplace(Quest->ID, Quest);
-			for (auto& Node : Quest->AllNodes)
-			{
-				NodeMap.Emplace(Node->ID, Node);
-			}
 		}
 	}
 }
@@ -446,14 +442,17 @@ bool UQuestComponent::IsQuestActiveFromQuestID(FName ID) const
 
 void UQuestComponent::UpdateQuest()
 {
-	for (const auto& It : QuestMap)
-	{
-		FName Key = It.Key;
-		UQuest* Quest = It.Value;
+    TArray<FName> QuestKeys;
+    QuestMap.GetKeys(QuestKeys);
+
+    for (int32 i = 0; i < QuestKeys.Num(); i++)
+    {
+		FName Key = QuestKeys[i];
+		UQuest* Quest = QuestMap.FindRef(Key);
 
 		EvaluateQuestCondition(Quest);
 
-		if(Quest->QuestState == EQuestState::E_Active)
+		if (Quest->QuestState == EQuestState::E_Active)
 		{
 			if (Quest->CurrentNode != nullptr)
 			{
@@ -465,15 +464,19 @@ void UQuestComponent::UpdateQuest()
 						EvaluateNextNodeCondition(Quest);
 					}
 				}
+				if (UQuestBuilderNode_Checkpoint* CheckpointNode = Cast<UQuestBuilderNode_Checkpoint>(Quest->CurrentNode))
+				{
+					//evaluate next node condition
+					EvaluateNextNodeCondition(Quest);
+
+				}
 			}
 			else if (Quest->CurrentNode == nullptr)
 			{
 				RestartQuest(Quest->ID);
 			}
 		}
-		
-		
-	}
+    }
 }
 
 void UQuestComponent::ResetAllQuest()
@@ -483,7 +486,6 @@ void UQuestComponent::ResetAllQuest()
 		if (QuestGraphs.IsValidIndex(j))
 		{
 			QuestGraphs[j]->Deinitialize();
-			QuestGraphs[j]->NodeIDMap.Empty();
 			for (int32 i = QuestGraphs[j]->QuestList.Num() - 1; i >= 0; --i)
 			{
 				if (QuestGraphs[j]->QuestList.IsValidIndex(i))
@@ -497,7 +499,6 @@ void UQuestComponent::ResetAllQuest()
 		
 	}
 	QuestMap.Empty();
-	NodeMap.Empty();	
 	CurrentNavigatedQuest = nullptr;
 }
 
@@ -536,7 +537,7 @@ void UQuestComponent::EvaluateNextNodeCondition(UQuest* QuestParam)
 
 		CachedCurrentNode->BeginEvents(EEventRunType::E_End);
 
-		//Check if the current node has changed after the events. it means we dont need to go to next node
+		//Check if the current node has changed after the events. it means we dont need to go to the next node anymore
 		if (CachedCurrentNode != QuestParam->CurrentNode)
 		{
 			QuestParam->CurrentNode->BeginEvents(EEventRunType::E_Start);
@@ -544,11 +545,7 @@ void UQuestComponent::EvaluateNextNodeCondition(UQuest* QuestParam)
 		else
 		{
 			GoToNextNode(QuestParam, NextNode);
-			//Now Current Node supposed to be the NextNode, ensure the next node == current node before launching event
-			if (QuestParam->CurrentNode == NextNode)
-			{
-				NextNode->BeginEvents(EEventRunType::E_Start);
-			}
+			NextNode->BeginEvents(EEventRunType::E_Start);
 		}
 	}
 	

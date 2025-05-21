@@ -26,16 +26,16 @@ public:
 	virtual void SortAllChildrenNodes(bool bForce = false);
 	virtual void UpdateAllSubnodeDependencies();
 	virtual void RebuildChildOrder(UEdGraphNode* ParentNode);
-	virtual void CacheNodeIDMap();
-	virtual void AddToNodeIDMap(FName ID, UQuestBuilderNode* Node);
-
-
 	virtual void OnSubNodeDropped();
 
 	bool UpdateUnknownNodeClasses();
 	void UpdateDeprecatedClasses();
 	void UpdateClassData();
 	void RemoveUnknownSubNodes();
+
+	bool IsLocked() const;
+	void LockUpdates();
+	void UnlockUpdates();
 
 	UQuestBuilderGraph* GetQuestBuilderGraph() const;
 
@@ -47,10 +47,6 @@ public:
 	UPROPERTY(VisibleAnywhere, Instanced, Category = "QuestBuilderGraph")
 		TObjectPtr<UQuest> Quest;
 
-		/*Map of NodID iwth its UQuestBuilderNode*/
-	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
-		TMap<FName, TObjectPtr<UQuestBuilderNode>> NodeIDMap;
-
 	UPROPERTY(Transient)
 		TMap< TObjectPtr<UQuestBuilderNode>, TObjectPtr<UQuestBuilderEdNode>> NodeMap;
 
@@ -61,6 +57,11 @@ public:
 
 	void OnPackageMarkedDirty(UPackage* ModifiedPackage, bool bWasDirty);
 protected:
+	/** if set, graph modifications won't cause updates in internal tree structure
+	 *  flag allows freezing update during heavy changes like pasting new nodes
+	 */
+	uint32 bLockUpdates : 1;
+
 	void SortNodes(UQuestBuilderNode* RootNode);
 	double LastRebuildTime = 0.f;
 	double LastSortTime = 0.f;

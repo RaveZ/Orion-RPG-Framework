@@ -36,7 +36,7 @@ FText UQuestBuilderEdNode_Objective::GetTooltipText() const
 	if (ObjectiveNode)
 	{
 		return FText::Format(FText::FromString(TEXT("Objective Node\n{0}")),
-			NSLOCTEXT("QuestBuilderEditor", "ObjectiveNodeScopeTooltip", "This Node serves as the central unit within your quest graph.\nEncapsulating a series of tasks, events, and decorators that define the player's objectives.\nRight click the node to start adding a subnodes."));
+			NSLOCTEXT("QuestBuilderEditor", "ObjectiveNodeScopeTooltip", "This Node serves as the central unit within your quest graph.\nEncapsulating a series of tasks, events, and decorators that define the player's objectives.\n**Right click the node to start adding a subnodes."));
 	}
 
 	return Super::GetTooltipText();

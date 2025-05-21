@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
 #include "Quest.h"
+#include "UObject/NoExportTypes.h"
 #include "Task/QuestTask.h"
 #include "QuestData.generated.h"
 
@@ -62,17 +63,19 @@ struct FQuestDataHandle
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = QuestDataHandle, meta = (GetOptions = "Quest_System_Runtime.QuestBuilderFunctionLibrary.GetAllQuestID"))
-	FName ID;
+public:
+	/**Wrapper Data to pick quest id using picker*/
+	UPROPERTY(Instanced, EditAnywhere, BlueprintReadWrite, Category = "Quest Data Handle", meta = (FullyExpand = true, AllowPrivateAccess = true))
+	TObjectPtr<UQuestHandle> QuestDataHandle;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = QuestDataHandle, meta = (GetOptions = "Quest_System_Runtime.QuestBuilderFunctionLibrary.GetNodeIDFromCachedQuest"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = QuestDataHandle, meta = (AllowPrivateAccess = true))
+	FName QuestID;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = QuestDataHandle, meta = (AllowPrivateAccess = true))
 	FName NodeID;
 
-	/** Returns true if this handle is specifically pointing to nothing */
-	bool IsNull() const
-	{
-		return ID.IsNone() && NodeID.IsNone();
-	}
+	// Constructor
+	FQuestDataHandle();
 
 	QUEST_SYSTEM_RUNTIME_API void PostSerialize(const FArchive& Ar);
 };
@@ -86,3 +89,23 @@ struct TStructOpsTypeTraits< FQuestDataHandle > : public TStructOpsTypeTraitsBas
 	};
 };
 
+
+UCLASS(Blueprintable, EditInlineNew, DefaultToInstanced, AutoExpandCategories = ("Default"))
+class QUEST_SYSTEM_RUNTIME_API UQuestHandle : public UObject
+{
+	GENERATED_BODY()
+
+	public:
+		UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = QuestDataHandle, meta = (GetOptions = "GetAllQuestID"))
+		FName QuestID;
+
+		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = QuestDataHandle, meta = (GetOptions = "GetAllNodeID"))
+		FName NodeID;
+
+
+		UFUNCTION(CallInEditor, BlueprintCallable)
+		virtual TArray<FName> GetAllQuestID();
+
+		UFUNCTION(CallInEditor)
+		virtual TArray<FName> GetAllNodeID();
+};

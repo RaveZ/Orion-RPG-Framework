@@ -16,7 +16,7 @@ namespace QuestSectionID
 	enum Type
 	{
 		NONE = 0,
-		QUESTGRAPH,	// Quest Graph
+		QUESTLIST,	// Quest Graph
 		//Add More to populate the section
 	};
 };
@@ -80,7 +80,7 @@ public:
 };
 
 
-class QUEST_SYSTEM_EDITOR_API FQuestBuilderEditor : public IQuestEditor, public FNotifyHook, public FGCObject
+class QUEST_SYSTEM_EDITOR_API FQuestBuilderEditor : public IQuestEditor, public FNotifyHook, public FGCObject, public FEditorUndoClient
 {
 public:
 	FQuestBuilderEditor();
@@ -93,6 +93,12 @@ public:
 	virtual void RegisterTabSpawners(const TSharedRef<FTabManager>& TabManager) override;
 	virtual void UnregisterTabSpawners(const TSharedRef<FTabManager>& TabManager) override;
 	// End of IToolkit interface
+
+
+	//~ Begin FEditorUndoClient Interface
+	virtual void PostUndo(bool bSuccess) override;
+	virtual void PostRedo(bool bSuccess) override;
+	// End of FEditorUndoClient
 
 	// FAssetEditorToolkit
 	virtual FName GetToolkitFName() const override;
@@ -115,7 +121,7 @@ public:
 	virtual void SummonSearchUI(bool bSetFindWithinBlueprint, FString NewSearchTerms = FString(), bool bSelectFirstResult = false) override;
 	virtual void SummonFindAndReplaceUI() override;
 	virtual TSharedPtr<SGraphEditor> OpenGraphAndBringToFront(UEdGraph* Graph, bool bSetFocus = true) override;
-
+	// End of IQuestEditor
 
 
 	//Toolbar
@@ -280,6 +286,8 @@ protected:
 	void OnRenameNode();
 	bool CanRenameNodes() const;
 
+
+
 	//////////////////////////////////////////////////////////////////////////
 	// graph editor event
 	void OnSelectedNodesChanged(const TSet<class UObject*>& NewSelection);
@@ -296,6 +304,8 @@ protected:
 	void OnPackageSavedWithContext(const FString& PackageFileName, UPackage* Package, FObjectPostSaveContext ObjectSaveContext);
 #endif // #else // #if ENGINE_MAJOR_VERSION < 5
 
+protected:
+	virtual void FixupPastedNodes(const TSet<UEdGraphNode*>& NewPastedGraphNodes, const TMap<FGuid/*New*/, FGuid/*Old*/>& NewToOldNodeMapping);
 
 public:
 
@@ -306,12 +316,11 @@ public:
 	UEdGraph* FocusedEdGraph;
 
 	/** Currently focused slate graph editor */
-	TSharedPtr<SGraphEditor> ViewportWidget;
+	TSharedPtr<SGraphEditor> CurrentGraphWidget;
 
 	/** determine if node should be checked for new unique ID*/
 	bool ShouldGetNewID = false;
 protected:
-
 	/** Factory that spawns graph editors; used to look up all tabs spawned by it. */
 	TWeakPtr<FDocumentTabFactory> QuestEditorTabFactoryPtr;
 

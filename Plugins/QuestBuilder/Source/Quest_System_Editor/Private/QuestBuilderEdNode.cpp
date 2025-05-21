@@ -11,12 +11,16 @@
 #include "QuestBuilderNode.h"
 #include "QuestBuilderNode_Root.h"
 #include "QuestBuilderNode_Objective.h"
+#include "QuestBuilderNode_Checkpoint.h"
 #include "QuestBuilderNode_State.h"
 #include "QuestBuilderEditorUtils.h"
 #include "GraphDiffControl.h"
 #include "Task/QuestTask.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "QuestBuilderGraph.h"
+#include "Quest.h"
 
 #define LOCTEXT_NAMESPACE "QuestBuilderEditor"
 
@@ -24,6 +28,7 @@ UQuestBuilderEdNode::UQuestBuilderEdNode()
 {
 	bIsReadOnly = false;
 	bCanRenameNode = true;
+	CopySubNodeIndex = 0;
 }
 
 UQuestBuilderEdNode::~UQuestBuilderEdNode()
@@ -95,6 +100,10 @@ FText UQuestBuilderEdNode::GetTooltipText() const
 			}
 		}
 	}
+	if (NodeInstance->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint) && !NodeInstance->GetClass()->GetPackage()->HasAnyPackageFlags(PKG_Cooked))
+	{
+		TooltipDesc = FText::FromString(TooltipDesc.ToString() + "\n**Double click node to open blueprint");
+	}
 
 	return TooltipDesc;
 }
@@ -102,6 +111,21 @@ FText UQuestBuilderEdNode::GetTooltipText() const
 void UQuestBuilderEdNode::FindDiffs(UEdGraphNode* OtherNode, FDiffResults& Results)
 {
 	Super::FindDiffs(OtherNode, Results);
+
+	if (UQuestBuilderEdNode* OtherGraphNode = Cast<UQuestBuilderEdNode>(OtherNode))
+	{
+		if (NodeInstance && OtherGraphNode->NodeInstance)
+		{
+			FDiffSingleResult Diff;
+			Diff.Diff = EDiffType::NODE_PROPERTY;
+			Diff.Node1 = this;
+			Diff.Node2 = OtherNode;
+			Diff.ToolTip = LOCTEXT("DIF_NodeInstancePropertyToolTip", "A property of the node instance has changed");
+			Diff.Category = EDiffType::MODIFICATION;
+
+			DiffProperties(NodeInstance->GetClass(), OtherGraphNode->NodeInstance->GetClass(), NodeInstance, OtherGraphNode->NodeInstance, Results, Diff);
+		}
+	}
 	UQuestBuilderEdNode* OtherQuestEdNode = Cast<UQuestBuilderEdNode>(OtherNode);
 	if (OtherQuestEdNode)
 	{
@@ -208,25 +232,28 @@ void UQuestBuilderEdNode::PostPlacedNewNode()
 				NodeInstance = NewObject<UObject>(GraphOwner, NodeClass);
 				NodeInstance->SetFlags(RF_Transactional);
 			}
-			InitializeInstance();
-
 			if (NodeInstance)
 			{
 				if (UQuestBuilderNode_Objective* ObjectiveQuestNode = Cast<UQuestBuilderNode_Objective>(NodeInstance))
 				{
-					ObjectiveQuestNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName("ObjectiveNode");
+					FindUniqueNodeName("ObjectiveNode");
 				}
 				if (UQuestBuilderNode_State* StateQuestNode = Cast<UQuestBuilderNode_State>(NodeInstance))
 				{
-					StateQuestNode->ID = FQuestBuilderEditorUtils::FindUniqueNodeName("StateNode");
+					FindUniqueNodeName("StateNode");
+				}
+				if (UQuestBuilderNode_Checkpoint* CheckpointQuestNode = Cast<UQuestBuilderNode_Checkpoint>(NodeInstance))
+				{
+					FindUniqueNodeName("CheckpointNode");
 				}
 			}
 			UQuestBuilderNode* QuestNode = NodeInstance ?  Cast<UQuestBuilderNode>(NodeInstance) : nullptr;
 			if (QuestNode)
 			{
                 QuestNode->Description = FText::FromString(TEXT("Description..."));
-				QuestEdGraph->AddToNodeIDMap(QuestNode->ID, QuestNode);
 			}
+
+			InitializeInstance();
 		}
 	}
 }
@@ -250,11 +277,10 @@ bool UQuestBuilderEdNode::CanUserDeleteNode() const
 
 void UQuestBuilderEdNode::PrepareForCopying()
 {
-	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
-	if (QuestNode)
+	if (NodeInstance)
 	{
-		QuestNode->Rename(nullptr, this, REN_DontCreateRedirectors | REN_DoNotDirty);
-
+		// Temporarily take ownership of the node instance, so that it is not deleted when cutting
+		NodeInstance->Rename(nullptr, this, REN_DontCreateRedirectors | REN_DoNotDirty);
 	}
 }
 
@@ -271,11 +297,49 @@ void UQuestBuilderEdNode::AutowireNewNode(UEdGraphPin* FromPin)
 }
 
 
+void UQuestBuilderEdNode::UpdateSubnodeDependencies()
+{
+	if (NodeInstance)
+	{
+		UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
+
+		QuestNode->Events.Reset();
+		for (int32 iAux = 0; iAux < Events.Num(); iAux++)
+		{
+			if (UOrionEvent* EventInstance = Cast<UOrionEvent>(Events[iAux]->NodeInstance))
+			{
+				QuestNode->Events.Add(EventInstance);
+			}
+		}
+
+
+		QuestNode->Decorators.Reset();
+		for (int32 iAux = 0; iAux < Decorators.Num(); iAux++)
+		{
+			if (UOrionDecorator* DecoratorInstance = Cast<UOrionDecorator>(Decorators[iAux]->NodeInstance))
+			{
+				QuestNode->Decorators.Add(DecoratorInstance);
+			}
+		}
+
+		if (UQuestBuilderNode_Objective* QuestObjectiveNode = Cast<UQuestBuilderNode_Objective>(NodeInstance))
+		{
+			for (int32 iAux = 0; iAux < Tasks.Num(); iAux++)
+			{
+				if (UQuestTask* TaskInstance = Cast<UQuestTask>(Tasks[iAux]->NodeInstance))
+				{
+					QuestObjectiveNode->Tasks.Add(TaskInstance);
+				}
+			}
+		}
+	}
+}
+
+
 void UQuestBuilderEdNode::AddSubNode(UQuestBuilderEdNode* SubNode, UEdGraph* ParentGraph)
 {
 	const FScopedTransaction Transaction(LOCTEXT("AddNode", "Add Node"));
-	ParentGraph->Modify();
-	Modify();
+	
 
 	SubNode->SetFlags(RF_Transactional);
 
@@ -295,7 +359,12 @@ void UQuestBuilderEdNode::AddSubNode(UQuestBuilderEdNode* SubNode, UEdGraph* Par
 	OnSubNodeAdded(SubNode);
 
 	ParentGraph->NotifyGraphChanged();
-	GetQuestBuilderEdGraph()->UpdateAllSubnodeDependencies();
+	ParentGraph->Modify();
+	Modify();
+	if (GetQuestBuilderEdGraph())
+	{
+		GetQuestBuilderEdGraph()->UpdateAllSubnodeDependencies();
+	}
 }
 
 void UQuestBuilderEdNode::RemoveSubNode(UQuestBuilderEdNode* SubNode)
@@ -516,6 +585,63 @@ FName UQuestBuilderEdNode::GetNameIcon() const
 	return FName("BTEditor.Graph.BTNode.Icon");
 }
 
+void UQuestBuilderEdNode::FindUniqueNodeName(const FString& InBaseName)
+{
+	// Start with the base name
+	FString BaseName = InBaseName;
+	FString UniqueName = InBaseName;// Iterate through the quest graph pages until we find a unique name
+
+	int32 UnderscoreIndex;
+	if (BaseName.FindLastChar(TEXT('_'), UnderscoreIndex))
+	{
+		FString Suffix = BaseName.Mid(UnderscoreIndex + 1);
+		if (Suffix.IsNumeric())
+		{
+			BaseName = BaseName.Left(UnderscoreIndex);
+		}
+	}
+
+	UQuestBuilderNode* QuestNode = NodeInstance ? Cast<UQuestBuilderNode>(NodeInstance) : nullptr;
+	UQuestBuilderEdGraph* QuestEdGraph = GetQuestBuilderEdGraph();
+
+	if (QuestNode && QuestEdGraph)
+	{
+		for (int i = 0;; i++)
+		{
+			bool bIsUnique = true;
+
+
+			for (auto& Node : QuestEdGraph->Nodes)
+			{
+				UQuestBuilderEdNode* NodeEdNode = Cast<UQuestBuilderEdNode>(Node);
+				if (NodeEdNode && NodeEdNode->NodeInstance)
+				{
+					UQuestBuilderNode* OtherQuestNode = Cast<UQuestBuilderNode>(NodeEdNode->NodeInstance);
+					if (OtherQuestNode && OtherQuestNode != QuestNode)
+					{
+						if (FName(UniqueName) == OtherQuestNode->ID)
+						{
+							bIsUnique = false;
+							break;
+						}
+					}
+				}
+			}
+
+
+			// If the current name is unique, return it
+			if (bIsUnique)
+			{
+				QuestNode->ID = FName(UniqueName);
+				return;
+			}
+
+			// If the current name is not unique, append a number to it and try again
+			UniqueName = FString::Printf(TEXT("%s_%d"), *BaseName, i + 1);
+		}
+	}
+}
+
 FText UQuestBuilderEdNode::GetDescription() const
 {
 	
@@ -531,6 +657,7 @@ FText UQuestBuilderEdNode::GetDescription() const
 	StoredClassName.RemoveFromEnd(TEXT("_C"));
 
 	return FText::Format(LOCTEXT("NodeClassError", "Class {0} not found, make sure it's saved!"), FText::FromString(StoredClassName));
+
 }
 
 FText UQuestBuilderEdNode::GetEventsText() const
@@ -669,6 +796,15 @@ void UQuestBuilderEdNode::AddContextMenuActionsTasks(UToolMenu* Menu, const FNam
 }
 
 #if WITH_EDITOR
+void UQuestBuilderEdNode::PostEditImport()
+{
+	ResetNodeOwner();
+
+	if (NodeInstance)
+	{
+		InitializeInstance();
+	}
+}
 void UQuestBuilderEdNode::PostEditUndo()
 {
 	Super::PostEditUndo();

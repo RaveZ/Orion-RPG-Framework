@@ -45,13 +45,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "DialogBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
 	static class UDialog* FindDialogFromNodeID(const UObject* WorldContextObject, FName NodeID);
 
-	/**
-	* Check if the Current Node ID match with the given Node ID
-	*
-	* @return bool.
-	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "DialogBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
-	static bool IsCurrentNodeIDMatch(const UObject* WorldContextObject, FName NodeID);
+	
 
 	/**
 	* Check if the dialog at which state from the given Dialog ID

@@ -35,11 +35,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
 		TArray< TObjectPtr<UQuest>> QuestList;
 
-	/*Map of NodID with its UQuestBuilderNode*/
-	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderGraph")
-		TMap<FName, TObjectPtr<UQuestBuilderNode>> NodeIDMap;
-
-
 	UPROPERTY(BlueprintReadWrite, Category = "QuestBuilderGraph")
 		TObjectPtr<AController> OwningController;
 

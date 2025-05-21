@@ -20,7 +20,6 @@ public:
 
 	static FName FindUniqueQuestGraphName(const FString& InBaseName);
 
-	static FName FindUniqueNodeName(const FString& InBaseName);
 
 	/**
 	 * Creates a new empty graph.

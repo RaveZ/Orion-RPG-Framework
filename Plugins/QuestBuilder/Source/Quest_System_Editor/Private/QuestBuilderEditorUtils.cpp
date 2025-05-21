@@ -101,55 +101,6 @@ FName FQuestBuilderEditorUtils::FindUniqueQuestGraphName(const FString& InBaseNa
 	}
 }
 
-FName FQuestBuilderEditorUtils::FindUniqueNodeName(const FString& InBaseName)
-{
-	// Start with the base name
-	FString BaseName = InBaseName;
-	FString UniqueName = InBaseName;// Iterate through the quest graph pages until we find a unique name
-	
-	int32 UnderscoreIndex;
-	if (BaseName.FindLastChar(TEXT('_'), UnderscoreIndex))
-	{
-		FString Suffix = BaseName.Mid(UnderscoreIndex + 1);
-		if (Suffix.IsNumeric())
-		{
-			BaseName = BaseName.Left(UnderscoreIndex);
-		}
-	}
-
-	for (int i = 0;; i++)
-	{
-		bool bIsUnique = true;
-
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-		TArray<FAssetData> QuestGraphDataArray;
-		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
-
-		for (const FAssetData& AssetData : QuestGraphDataArray)
-		{
-			UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
-			if (QuestGraph)
-			{
-				UQuestBuilderNode* FoundedNode = QuestGraph->NodeIDMap.FindRef(FName(UniqueName));
-				if (FoundedNode)
-				{
-					bIsUnique = false;
-					break;
-				}
-			}
-		}
-
-		// If the current name is unique, return it
-		if (bIsUnique)
-		{
-			return FName(*UniqueName);
-		}
-
-		// If the current name is not unique, append a number to it and try again
-		UniqueName = FString::Printf(TEXT("%s_%d"), *BaseName, i + 1);
-	}
-}
 
 UEdGraph* FQuestBuilderEditorUtils::CreateNewGraph(UObject* ParentScope, const FName& GraphName, TSubclassOf<class UEdGraph> GraphClass, TSubclassOf<class UEdGraphSchema> SchemaClass)
 {

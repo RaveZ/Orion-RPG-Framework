@@ -184,7 +184,7 @@ void SMyQuest::Construct(const FArguments& InArgs, TWeakPtr<FQuestBuilderEditor>
 	}
 
 	TMap<int32, bool> ExpandedSections;
-	ExpandedSections.Add(QuestSectionID::QUESTGRAPH, true);
+	ExpandedSections.Add(QuestSectionID::QUESTLIST, true);
 
 	GraphActionMenu->SetSectionExpansion(ExpandedSections);
 
@@ -322,7 +322,7 @@ void SMyQuest::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 			FGraphDisplayInfo DisplayInfo;
 			Graph->GetSchema()->GetGraphDisplayInformation(*Graph, DisplayInfo);
 
-			TSharedPtr<FAssetSchemaAction_QuestSystemGraph> NeUbergraphAction = MakeShareable(new FAssetSchemaAction_QuestSystemGraph(FText::GetEmpty(), DisplayInfo.PlainName, DisplayInfo.Tooltip, 2, QuestSectionID::QUESTGRAPH));
+			TSharedPtr<FAssetSchemaAction_QuestSystemGraph> NeUbergraphAction = MakeShareable(new FAssetSchemaAction_QuestSystemGraph(FText::GetEmpty(), DisplayInfo.PlainName, DisplayInfo.Tooltip, 2, QuestSectionID::QUESTLIST));
 			NeUbergraphAction->FuncName = Graph->GetFName();
 			NeUbergraphAction->EdGraph = Graph;
 			OutAllActions.AddAction(NeUbergraphAction);
@@ -331,7 +331,7 @@ void SMyQuest::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 }
 void SMyQuest::CollectStaticSections(TArray<int32>& StaticSectionIDs)
 {
-	StaticSectionIDs.Add(QuestSectionID::QUESTGRAPH);
+	StaticSectionIDs.Add(QuestSectionID::QUESTLIST);
 }
 FReply SMyQuest::OnActionDragged(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions, const FPointerEvent& MouseEvent)
 {
@@ -402,7 +402,7 @@ void SMyQuest::ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction)
 
 				TSharedPtr<FQuestBuilderEditor> QuestEditor = QuestEditorPtr.Pin();
 
-				if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(QuestEditor->ViewportWidget->GetCurrentGraph()))
+				if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(QuestEditor->CurrentGraphWidget->GetCurrentGraph()))
 				{
 					QuestEditor->PropertyWidget->SetObject(QuestGraph->Quest);
 				}
@@ -431,7 +431,7 @@ TSharedPtr<SWidget> SMyQuest::OnContextMenuOpening()
 			MenuBuilder.AddMenuEntry(FMyQuestCommands::Get().OpenExternalGraph);
 			MenuBuilder.AddMenuEntry(FMyQuestCommands::Get().FocusNode);
 			MenuBuilder.AddMenuEntry(FMyQuestCommands::Get().FocusNodeInNewTab);
-			MenuBuilder.AddMenuEntry(FGenericCommands::Get().Rename, NAME_None, LOCTEXT("Rename", "Rename"), LOCTEXT("Rename_Tooltip", "Renames this Quest Graph."));
+			MenuBuilder.AddMenuEntry(FGenericCommands::Get().Rename, NAME_None, LOCTEXT("Rename", "Rename"), LOCTEXT("Rename_Tooltip", "Rename Quest"));
 			MenuBuilder.AddMenuEntry(FGenericCommands::Get().Cut);
 			MenuBuilder.AddMenuEntry(FGenericCommands::Get().Copy);
 			MenuBuilder.AddMenuEntry(FGenericCommands::Get().Duplicate);
@@ -528,7 +528,7 @@ FText SMyQuest::OnGetSectionTitle(int32 InSectionID)
 	/* Setup an appropriate name for the section for this node */
 	switch (InSectionID)
 	{
-	case QuestSectionID::QUESTGRAPH:
+	case QuestSectionID::QUESTLIST:
 		SeperatorTitle = NSLOCTEXT("GraphActionNode", "QuestGraphs", "QuestGraphs");
 		break; 
 	default:
@@ -548,7 +548,7 @@ TSharedRef<SWidget> SMyQuest::OnGetSectionWidget(TSharedRef<SWidget> RowWidget, 
 
 	switch (InSectionID)
 	{
-	case QuestSectionID::QUESTGRAPH:
+	case QuestSectionID::QUESTLIST:
 		AddNewText = LOCTEXT("AddNewQuestGraph", "New Quest Graph");
 		MetaDataTag = TEXT("AddNewGraph");
 		break;
@@ -564,7 +564,7 @@ FReply SMyQuest::OnAddButtonClickedOnSection(int32 InSectionID)
 
 	switch (InSectionID)
 	{
-	case QuestSectionID::QUESTGRAPH:
+	case QuestSectionID::QUESTLIST:
 		CommandList->ExecuteAction(FQuestBuilder_EditorCommands::Get().AddNewQuestGraph.ToSharedRef());
 		break;
 	}

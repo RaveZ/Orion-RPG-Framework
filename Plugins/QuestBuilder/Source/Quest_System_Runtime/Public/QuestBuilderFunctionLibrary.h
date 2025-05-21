@@ -38,20 +38,20 @@ public:
 	static class UQuestComponent* GetQuestComponentFromTarget(AActor* Target);
 
 	/**
-	* Find the Quest from the given Node ID
+	* Find the Quest from the given Quest ID
 	*
 	* @return The Quest.
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
-	static class UQuest* FindQuestFromNodeID(const UObject* WorldContextObject, FName NodeID);
+	static class UQuest* FindQuest(const UObject* WorldContextObject, FName QuestID);
 
 	/**
-	* Check if the Current Node ID match with the given Node ID
+	* Check if the current objective valid from QuestID and NodeID.
 	*
-	* @return bool.
+	* @return true if the quest id and node id match.
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
-	static bool IsCurrentNodeIDMatch(const UObject* WorldContextObject, FName NodeID);
+	static bool CanProgressQuestObjective(const UObject* WorldContextObject, FName QuestID, FName NodeID);
 
 	/**
 	* Check if the quest at which state from the given Quest ID
