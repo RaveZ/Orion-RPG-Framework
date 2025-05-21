@@ -3,11 +3,11 @@
 	"Version": 1,
 	"VersionName": "1.0",
 	"FriendlyName": "Quest Builder Plugin",
-	"Description": "The Dialog Builder is a powerful tool using node graph based editor that enables you to craft engaging, immersive, and dynamic dialogs for your players.",
-	"Category": "Dialog And Dialog",
+	"Description": "The Quest Builder is a powerful tool using node graph based editor that enables you to craft engaging, immersive, and dynamic dialogs for your players.",
+	"Category": "Quest And Quest",
 	"CreatedBy": "IC",
 	"CreatedByURL": "",
-	"DocsURL": "https://material-goat-8ea.notion.site/Dialog-Builder-Documentation-41f81136a72a4e02a9d714ac224355af",
+	"DocsURL": "https://material-goat-8ea.notion.site/Quest-Builder-Documentation-41f81136a72a4e02a9d714ac224355af",
 	"MarketplaceURL": "com.epicgames.launcher://ue/marketplace/product/450f6f2ba22f4e8dae1586bd5e886bbf",
 	"SupportURL": "",
 	"EngineVersion": "ANY_VERSION",
@@ -15,33 +15,9 @@
 	"Installed": true,
 	"Modules": [
 		{
-			"Name": "Dialog_System_Runtime",
-			"Type": "Runtime",
-			"LoadingPhase": "Default",
-			"PlatformAllowList": [
-				"Win64",
-				"Android",
-				"Linux",
-				"IOS",
-				"Mac"
-			]
-		},
-		{
 			"Name": "Quest_System_Runtime",
 			"Type": "Runtime",
 			"LoadingPhase": "Default",
-			"PlatformAllowList": [
-				"Win64",
-				"Android",
-				"Linux",
-				"IOS",
-				"Mac"
-			]
-		},
-		{
-			"Name": "Dialog_System_Editor",
-			"Type": "UncookedOnly",
-			"LoadingPhase": "PreDefault",
 			"PlatformAllowList": [
 				"Win64",
 				"Android",
