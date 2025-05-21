@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "1.0",
+	"VersionName": "1.1",
 	"FriendlyName": "Quest Builder Plugin",
 	"Description": "The Quest Builder is a powerful tool using node graph based editor that enables you to craft engaging, immersive, and dynamic dialogs for your players.",
 	"Category": "Quest And Quest",
