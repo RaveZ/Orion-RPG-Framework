@@ -25,7 +25,7 @@ public class Quest_System_Editor : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-                "Quest_System_Runtime",
+                "OrionRPG",
                 "Core",
                 "CoreUObject",
                 "Engine",
