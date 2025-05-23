@@ -1,0 +1,69 @@
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
+#include "DialogBuilderGraph.generated.h"
+
+
+class UDialog;
+class UDialogComponent;
+class UDialogBuilderNode;
+class UDialogBuilderEdge;
+class AController;
+class APawn;
+class UDialogBuilderEdGraph;
+
+UCLASS(Blueprintable, BlueprintType)
+class ORIONRPG_API UDialogBuilderGraph : public UObject
+{
+	GENERATED_BODY()
+public:
+	UDialogBuilderGraph();
+	virtual ~UDialogBuilderGraph();
+
+	/**This data will be displayed on the category for your dialog log*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DialogBuilderGraph")
+		FString CategoryDisplayName;
+
+	/** AssetID */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "DialogBuilderGraph")
+		FName ID;
+
+	/** Set of Dialog linked with Dialog Graph Pages */
+	UPROPERTY(BlueprintReadOnly, Category = "DialogBuilderGraph")
+		TArray< TObjectPtr<UDialog>> DialogList;
+
+	UPROPERTY(BlueprintReadWrite, Category = "DialogBuilderGraph")
+		TObjectPtr<AController> OwningController;
+
+	UPROPERTY(BlueprintReadWrite, Category = "DialogBuilderGraph")
+		TObjectPtr < UDialogComponent> DialogComponent;
+
+	UPROPERTY(BlueprintReadOnly, Category = "DialogBuilderGraph")
+		TObjectPtr<APawn> OwningPawn;
+
+		virtual void Initialize();
+		virtual void Deinitialize();
+
+#if WITH_EDITORONLY_DATA
+	/** Set of dialog-graph pages */
+	UPROPERTY()
+	TArray<TObjectPtr<UEdGraph>> DialogGraphPages;
+
+	/** Set of documents that were being edited in this blueprint, so we can open them right away */
+	UPROPERTY()
+	TArray<struct FEditedDocumentInfo> LastEditedDocuments;
+
+	/** Whether or not this blueprint is newly created, and hasn't been opened in an editor yet */
+	UPROPERTY(/*transient*/ BlueprintReadOnly, Category = "DialogBuilderGraph")
+	bool bIsNewlyCreated = true;
+
+
+	/** Get all graphs in this DialogEditor */
+	void GetAllGraphs(TArray<UEdGraph*>& Graphs) const;
+#endif
+
+};
+
