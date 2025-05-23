@@ -53,6 +53,7 @@ public:
 	virtual bool IsCacheVisualizationOutOfDate(int32 InVisualizationCacheID) const override;
 	virtual int32 GetCurrentVisualizationCacheID() const override;
 	virtual void ForceVisualizationCacheClear() const override;
+	virtual TSharedPtr<FEdGraphSchemaAction> GetCreateCommentAction() const override;
 	//end EdGraphSchema Interface
 
 	virtual void GetGraphNodeContextActions(FGraphContextMenuBuilder& ContextMenuBuilder, int32 SubNodeFlags) const;
@@ -166,4 +167,21 @@ struct QUEST_SYSTEM_EDITOR_API FAssetSchemaAction_QuestSystem_NewSubNode : publi
 	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, TArray<UEdGraphPin*>& FromPins, const FVector2D Location, bool bSelectNewNode = true) override;
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 	//~ End FEdGraphSchemaAction Interface
+};
+
+/** Action to add a comment to the graph */
+USTRUCT()
+struct QUEST_SYSTEM_EDITOR_API FQuestSchemaAction_AddComment : public FEdGraphSchemaAction
+{
+	GENERATED_BODY()
+
+	FQuestSchemaAction_AddComment() : FEdGraphSchemaAction() {}
+	FQuestSchemaAction_AddComment(FText InDescription, FText InToolTip)
+		: FEdGraphSchemaAction(FText(), MoveTemp(InDescription), MoveTemp(InToolTip), 0)
+	{
+	}
+
+	// FEdGraphSchemaAction interface
+	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override final;
+	// End of FEdGraphSchemaAction interface
 };

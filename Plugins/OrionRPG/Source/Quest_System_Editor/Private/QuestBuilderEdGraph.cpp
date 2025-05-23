@@ -398,19 +398,22 @@ void UQuestBuilderEdGraph::RebuildChildOrder(UEdGraphNode* ParentNode)
 {
 	UQuestBuilderEdNode* QuestParentEdNode = Cast<UQuestBuilderEdNode>(ParentNode);
 	UQuestBuilderNode* QuestParentNode = QuestParentEdNode ? Cast<UQuestBuilderNode>(QuestParentEdNode->NodeInstance) : nullptr;
-	QuestParentNode->ChildrenNodes.Sort([&](const UQuestBuilderNode& B, const UQuestBuilderNode& T)
+	if (QuestParentNode)
 	{
-		UQuestBuilderEdNode* EdNode_BNode = NodeMap.FindRef(&B);
-		UQuestBuilderEdNode* EdNode_TNode = NodeMap.FindRef(&T);
-		if (EdNode_BNode && EdNode_TNode)
-		{
-			return EdNode_TNode->NodePosY > EdNode_BNode->NodePosY;
-		}
-		else
-		{
-			return false;
-		}
-	});
+		QuestParentNode->ChildrenNodes.Sort([&](const UQuestBuilderNode& B, const UQuestBuilderNode& T)
+			{
+				UQuestBuilderEdNode* EdNode_BNode = NodeMap.FindRef(&B);
+				UQuestBuilderEdNode* EdNode_TNode = NodeMap.FindRef(&T);
+				if (EdNode_BNode && EdNode_TNode)
+				{
+					return EdNode_TNode->NodePosY > EdNode_BNode->NodePosY;
+				}
+				else
+				{
+					return false;
+				}
+			});
+	}
 }
 
 UQuestBuilderGraph* UQuestBuilderEdGraph::GetQuestBuilderGraph() const

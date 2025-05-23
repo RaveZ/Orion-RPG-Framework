@@ -261,6 +261,7 @@ TArray<UObject*> FDialogBuilderEditorUtils::GetSelectionForPropertyEditor(const 
 			Selection.Add(DialogEdNode->NodeInstance);
 			continue;
 		}
+		Selection.Add(SelectionEntry);
 	}
 
 	return Selection;

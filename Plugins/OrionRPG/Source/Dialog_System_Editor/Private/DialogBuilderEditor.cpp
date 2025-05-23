@@ -370,6 +370,12 @@ void FDialogBuilderEditor::CreateCommandList()
 		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::OnRenameNode),
 		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanRenameNodes)
 	);
+
+	GraphEditorCommands->MapAction(
+		FGraphEditorCommands::Get().CreateComment,
+		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::OnCreateComment),
+		FCanExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CanCreateComment)
+	);
 }
 
 TSharedPtr<SGraphEditor> FDialogBuilderEditor::GetCurrGraphEditor() const
@@ -1546,6 +1552,25 @@ bool FDialogBuilderEditor::CanRenameNodes() const
 	}
 	return false;
 
+}
+
+bool FDialogBuilderEditor::CanCreateComment() const
+{
+	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
+	return CurrentGraphEditor.IsValid();
+}
+
+void FDialogBuilderEditor::OnCreateComment()
+{
+	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
+	if (UEdGraph* EdGraph = CurrentGraphEditor.IsValid() ? CurrentGraphEditor->GetCurrentGraph() : nullptr)
+	{
+		TSharedPtr<FEdGraphSchemaAction> Action = EdGraph->GetSchema()->GetCreateCommentAction();
+		if (Action.IsValid())
+		{
+			Action->PerformAction(EdGraph, nullptr, FVector2D());
+		}
+	}
 }
 
 void FDialogBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& NewSelection)

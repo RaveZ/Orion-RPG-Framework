@@ -382,6 +382,12 @@ void FQuestBuilderEditor::CreateCommandList()
 		FExecuteAction::CreateSP(this, &FQuestBuilderEditor::OnRenameNode),
 		FCanExecuteAction::CreateSP(this, &FQuestBuilderEditor::CanRenameNodes)
 	);
+
+	GraphEditorCommands->MapAction(
+		FGraphEditorCommands::Get().CreateComment,
+		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::OnCreateComment),
+		FCanExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CanCreateComment)
+	);
 }
 
 TSharedPtr<SGraphEditor> FQuestBuilderEditor::GetCurrGraphEditor() const
@@ -1571,6 +1577,25 @@ bool FQuestBuilderEditor::CanRenameNodes() const
 	}
 	return false;
 
+}
+
+bool FQuestBuilderEditor::CanCreateComment() const
+{
+	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
+	return CurrentGraphEditor.IsValid();
+}
+
+void FQuestBuilderEditor::OnCreateComment()
+{
+	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
+	if (UEdGraph* EdGraph = CurrentGraphEditor.IsValid() ? CurrentGraphEditor->GetCurrentGraph() : nullptr)
+	{
+		TSharedPtr<FEdGraphSchemaAction> Action = EdGraph->GetSchema()->GetCreateCommentAction();
+		if (Action.IsValid())
+		{
+			Action->PerformAction(EdGraph, nullptr, FVector2D());
+		}
+	}
 }
 
 void FQuestBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& NewSelection)

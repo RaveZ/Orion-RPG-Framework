@@ -286,6 +286,8 @@ protected:
 	void OnRenameNode();
 	bool CanRenameNodes() const;
 
+	bool CanCreateComment() const;
+	void OnCreateComment();
 
 
 	//////////////////////////////////////////////////////////////////////////

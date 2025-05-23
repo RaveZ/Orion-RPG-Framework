@@ -360,6 +360,15 @@ void UEdGraphSchema_QuestBuilder::GetGraphContextActions(FGraphContextMenuBuilde
 	OpNode->NodeInstance->SetFlags(RF_Transactional);
 
 	ContextMenuBuilder.Append(CheckpointBuilder);
+
+	// Add the ability to create a comment to the context menu too for discoverability
+	{
+		TSharedPtr<FQuestSchemaAction_AddComment> Action = TSharedPtr<FQuestSchemaAction_AddComment>(
+			new FQuestSchemaAction_AddComment(LOCTEXT("AddComment", "Add Comment"), LOCTEXT("AddComment_Tooltip", "Adds a comment node to the graph."))
+		);
+
+		ContextMenuBuilder.AddAction(Action);
+	}
 }
 
 
@@ -706,6 +715,11 @@ void UEdGraphSchema_QuestBuilder::ForceVisualizationCacheClear() const
 	++CurrentCacheRefreshID;
 }
 
+TSharedPtr<FEdGraphSchemaAction> UEdGraphSchema_QuestBuilder::GetCreateCommentAction() const
+{
+	return TSharedPtr<FEdGraphSchemaAction>(static_cast<FEdGraphSchemaAction*>(new FQuestSchemaAction_AddComment));
+}
+
 TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> UEdGraphSchema_QuestBuilder::AddNewNodeAction(FGraphActionListBuilderBase& ContextMenuBuilder, const FText& Category, const FText& MenuDesc, const FText& Tooltip)
 {
 	TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> NewAction = TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode>(new FAssetSchemaAction_QuestSystem_NewNode(Category, MenuDesc, Tooltip, 0));
@@ -740,6 +754,36 @@ void FAssetSchemaAction_QuestSystem_NewSubNode::AddReferencedObjects(FReferenceC
 	// These don't get saved to disk, but we want to make sure the objects don't get GC'd while the action array is around
 	Collector.AddReferencedObject(NodeTemplate);
 	Collector.AddReferencedObject(ParentNode);
+}
+
+UEdGraphNode* FQuestSchemaAction_AddComment::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode)
+{
+	UEdGraphNode_Comment* const CommentTemplate = NewObject<UEdGraphNode_Comment>();
+	CommentTemplate->bCommentBubbleVisible_InDetailsPanel = true;
+
+	FVector2D SpawnLocation = Location;
+	FSlateRect Bounds;
+
+	TSharedPtr<SGraphEditor> GraphEditorPtr = SGraphEditor::FindGraphEditorForGraph(ParentGraph);
+	if (GraphEditorPtr.IsValid())
+	{
+		// If they have a selection, build a bounding box around the selection
+		if (GraphEditorPtr->GetBoundsForSelectedNodes(/*out*/ Bounds, 50.0f))
+		{
+			CommentTemplate->SetBounds(Bounds);
+			SpawnLocation.X = CommentTemplate->NodePosX;
+			SpawnLocation.Y = CommentTemplate->NodePosY;
+		}
+		else
+		{
+			// Otherwise initialize a default comment at the user's cursor location.
+			SpawnLocation = GraphEditorPtr->GetPasteLocation();
+		}
+	}
+
+	UEdGraphNode* const NewNode = FEdGraphSchemaAction_NewNode::SpawnNodeFromTemplate<UEdGraphNode_Comment>(ParentGraph, CommentTemplate, SpawnLocation, bSelectNewNode);
+
+	return NewNode;
 }
 
 #undef LOCTEXT_NAMESPACE

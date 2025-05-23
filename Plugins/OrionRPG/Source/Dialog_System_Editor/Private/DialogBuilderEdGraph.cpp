@@ -380,19 +380,22 @@ void UDialogBuilderEdGraph::RebuildChildOrder(UEdGraphNode* ParentNode)
 {
 	UDialogBuilderEdNode* DialogParentEdNode = Cast<UDialogBuilderEdNode>(ParentNode);
 	UDialogBuilderNode* DialogParentNode = DialogParentEdNode ? Cast<UDialogBuilderNode>(DialogParentEdNode->NodeInstance) : nullptr;
-	DialogParentNode->ChildrenNodes.Sort([&](const UDialogBuilderNode& B, const UDialogBuilderNode& T)
+	if (DialogParentNode)
 	{
-		UDialogBuilderEdNode* EdNode_BNode = NodeMap.FindRef(&B);
-		UDialogBuilderEdNode* EdNode_TNode = NodeMap.FindRef(&T);
-		if (EdNode_BNode && EdNode_TNode)
+		DialogParentNode->ChildrenNodes.Sort([&](const UDialogBuilderNode& B, const UDialogBuilderNode& T)
 		{
-			return EdNode_TNode->NodePosY > EdNode_BNode->NodePosY;
-		}
-		else
-		{
-			return false;
-		}
-	});
+			UDialogBuilderEdNode* EdNode_BNode = NodeMap.FindRef(&B);
+			UDialogBuilderEdNode* EdNode_TNode = NodeMap.FindRef(&T);
+			if (EdNode_BNode && EdNode_TNode)
+			{
+				return EdNode_TNode->NodePosY > EdNode_BNode->NodePosY;
+			}
+			else
+			{
+				return false;
+			}
+		});
+	}
 }
 
 UDialogBuilderGraph* UDialogBuilderEdGraph::GetDialogBuilderGraph() const

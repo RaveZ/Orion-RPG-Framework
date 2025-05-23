@@ -261,6 +261,7 @@ TArray<UObject*> FQuestBuilderEditorUtils::GetSelectionForPropertyEditor(const T
 			Selection.Add(QuestEdNode->NodeInstance);
 			continue;
 		}
+		Selection.Add(SelectionEntry);
 	}
 
 	return Selection;
