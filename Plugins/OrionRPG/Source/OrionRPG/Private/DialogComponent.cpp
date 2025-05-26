@@ -11,7 +11,7 @@
 #include "DialogBuilderNode_State.h"
 #include "DialogBuilderNode_Checkpoint.h"
 #include "DialogBuilderNode_Root.h"
-#include "DialogBuilderNode_Objective.h"
+#include "DialogBuilderNode_Speaker.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Controller.h"
 #include "DialogData.h"

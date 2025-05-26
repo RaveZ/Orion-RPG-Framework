@@ -21,15 +21,15 @@ FText UDialogBuilderEdNode_Root::GetTooltipText() const
 	const UDialogBuilderNode_Root* RootNode = Cast<UDialogBuilderNode_Root>(NodeInstance);
 	if (RootNode)
 	{
-		return FText::Format(FText::FromString(TEXT("Root Node\n\n{0}")),
-			NSLOCTEXT("DialogBuilderEditor", "RootNodeScopeTooltip", "Entry point for your dialog"));
+		return FText::Format(FText::FromString(TEXT("Dialog Start Node\n\n{0}")),
+			NSLOCTEXT("DialogBuilderEditor", "RootNodeScopeTooltip", "Entry point for your dialog!"));
 	}
 	return Super::GetTooltipText();
 }
 
 FText UDialogBuilderEdNode_Root::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	return NSLOCTEXT("BehaviorTreeEditor", "Root", "ROOT");
+	return NSLOCTEXT("DialogEditor", "DialogStart", "Dialog Start");
 	
 }
 

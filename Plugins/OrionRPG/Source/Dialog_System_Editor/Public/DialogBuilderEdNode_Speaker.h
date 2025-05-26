@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "DialogBuilderEdNode.h"
-#include "DialogBuilderEdNode_Objective.generated.h"
+#include "DialogBuilderEdNode_Speaker.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class DIALOG_SYSTEM_EDITOR_API UDialogBuilderEdNode_Objective : public UDialogBuilderEdNode
+class DIALOG_SYSTEM_EDITOR_API UDialogBuilderEdNode_Speaker : public UDialogBuilderEdNode
 {
 	GENERATED_BODY()
 public:

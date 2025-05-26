@@ -1,34 +1,34 @@
 ﻿// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
-#include "DialogBuilderNode_Objective.h"
+#include "DialogBuilderNode_Speaker.h"
 #include "Dialog.h"
 #include "DialogComponent.h"
 
 
-#define LOCTEXT_NAMESPACE "DialogSystemGraphNode_TaskManager"
+#define LOCTEXT_NAMESPACE "DialogSystemGraphNode"
 
-void UDialogBuilderNode_Objective::Initialize()
+void UDialogBuilderNode_Speaker::Initialize()
 {
 }
 
-void UDialogBuilderNode_Objective::Deinitialize()
+void UDialogBuilderNode_Speaker::Deinitialize()
 {
 }
 
 
 #if WITH_EDITOR
-FText UDialogBuilderNode_Objective::GetNodeTitle() const
+FText UDialogBuilderNode_Speaker::GetNodeTitle() const
 {
     return FText::FromName(ID).IsEmpty() ? FText::FromString(UDialogBuilderNode::GetShortTypeName(this)) : FText::FromName(ID);
 }
 
-void UDialogBuilderNode_Objective::SetNodeTitle(const FText& NewTitle)
+void UDialogBuilderNode_Speaker::SetNodeTitle(const FText& NewTitle)
 {
     ID = FName(NewTitle.ToString());
 }
 
-FText UDialogBuilderNode_Objective::GetNodeDescription() const
+FText UDialogBuilderNode_Speaker::GetNodeDescription() const
 {
     /*FString TaskDesc;
 

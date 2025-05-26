@@ -11,7 +11,7 @@
 #include "Settings/EditorStyleSettings.h"
 #include "DialogBuilderEditorUtils.h"
 #include "DialogBuilderEdNode.h"
-#include "DialogBuilderEdNode_Objective.h"
+#include "DialogBuilderEdNode_Speaker.h"
 #include "DialogBuilderEdNode_State.h"
 #include "DialogBuilderEdNode_Checkpoint.h"
 #include "DialogBuilderEdNode_Edge.h"
@@ -24,7 +24,7 @@
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderNode_State.h"
 #include "DialogBuilderNode_Checkpoint.h"
-#include "DialogBuilderNode_Objective.h"
+#include "DialogBuilderNode_Speaker.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 
@@ -285,17 +285,17 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 		const FText NodeTypeName = FText::FromString(FName::NameToDisplayString(NodeClass.ToString(), false));
 
 		TSharedPtr<FAssetSchemaAction_DialogSystem_NewNode> AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(TasksBuilder, NodeClass.GetCategory(), NodeTypeName, FText::GetEmpty());
-		UClass* ObjectiveEdNodeClass = UDialogBuilderEdNode_Objective::StaticClass();
-		UClass* ObjectiveNodeClass = UDialogBuilderNode_Objective::StaticClass();
+		UClass* SpeakerEdNodeClass = UDialogBuilderEdNode_Speaker::StaticClass();
+		UClass* SpeakerNodeClass = UDialogBuilderNode_Speaker::StaticClass();
 
-		UDialogBuilderEdNode* OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, ObjectiveEdNodeClass);
-		FGraphNodeClassData ObjectiveClassData = FGraphNodeClassData(ObjectiveNodeClass, "ObjectiveClassData");
+		UDialogBuilderEdNode* OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, SpeakerEdNodeClass);
+		FGraphNodeClassData ObjectiveClassData = FGraphNodeClassData(SpeakerNodeClass, "ObjectiveClassData");
 		OpNode->ClassData = ObjectiveClassData;
 		AddOpAction->NodeTemplate = OpNode;
-		OpNode->NodeInstance = NewObject<UObject>(DialogGraph, ObjectiveNodeClass);
+		OpNode->NodeInstance = NewObject<UObject>(DialogGraph, SpeakerNodeClass);
 		OpNode->NodeInstance->SetFlags(RF_Transactional);
 
-		if (UDialogBuilderNode_Objective* ObjectiveNode = Cast<UDialogBuilderNode_Objective>(OpNode->NodeInstance))
+		if (UDialogBuilderNode_Speaker* ObjectiveNode = Cast<UDialogBuilderNode_Speaker>(OpNode->NodeInstance))
 		{
 			const FText SubNodeTypeName = FText::FromString(FName::NameToDisplayString(NodeClass.ToString(), false));
 
@@ -309,6 +309,20 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 	}
 	ContextMenuBuilder.Append(TasksBuilder);*/
 
+	FCategorizedGraphActionListBuilder SpeakerBuilder(TEXT("Speaker"));
+	UClass* SpeakerEdNodeClass = UDialogBuilderEdNode_Speaker::StaticClass();
+	UClass* SpeakerNodeClass = UDialogBuilderNode_Speaker::StaticClass();
+
+	TSharedPtr<FAssetSchemaAction_DialogSystem_NewNode> AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(SpeakerBuilder, FText::GetEmpty(), LOCTEXT("DialogSystemGraphNodeAction", "Add Speaker Node..."), LOCTEXT("DialogSystemGraphNodeTooltip", "Create speaker node."));
+	UDialogBuilderEdNode* OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, SpeakerEdNodeClass);
+	FGraphNodeClassData SpeakerClassData = FGraphNodeClassData(SpeakerNodeClass, "SpeakerClassData");
+	OpNode->ClassData = SpeakerClassData;
+	AddOpAction->NodeTemplate = OpNode;
+	OpNode->NodeInstance = NewObject<UObject>(DialogGraph, SpeakerNodeClass);
+	OpNode->NodeInstance->SetFlags(RF_Transactional);
+
+	ContextMenuBuilder.Append(SpeakerBuilder);
+
 
 	FCategorizedGraphActionListBuilder StateBuilder(TEXT("Dialog State"));
 
@@ -316,8 +330,8 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 	UClass* StateEdNodeClass = UDialogBuilderEdNode_State::StaticClass();
 	UClass* StateNodeClass = UDialogBuilderNode_State::StaticClass();
 
-	TSharedPtr<FAssetSchemaAction_DialogSystem_NewNode> AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("DialogSystemGraphNodeAction", "Complete Dialog"), LOCTEXT("DialogSystemGraphNodeTooltip", "Complete The Dialog"));
-	UDialogBuilderEdNode* OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, StateEdNodeClass);
+	AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(StateBuilder, FText::GetEmpty(), LOCTEXT("DialogSystemGraphNodeAction", "Complete Dialog"), LOCTEXT("DialogSystemGraphNodeTooltip", "Complete The Dialog"));
+	OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, StateEdNodeClass);
 	FGraphNodeClassData StateClassData = FGraphNodeClassData(StateNodeClass, "StateClassData");
 	OpNode->ClassData = StateClassData;
 	AddOpAction->NodeTemplate = OpNode;
@@ -538,7 +552,7 @@ const FPinConnectionResponse UEdGraphSchema_DialogBuilder::CanMergeNodes(const U
 
 	const bool bNodeAIsDecorator = NodeA->IsA(UDialogBuilderEdSubNode_Decorator::StaticClass());
 	const bool bNodeAIsEvent = NodeA->IsA(UDialogBuilderEdSubNode_Event::StaticClass());
-	const bool bNodeBIsObjective = NodeB->IsA(UDialogBuilderEdNode_Objective::StaticClass());
+	const bool bNodeBIsObjective = NodeB->IsA(UDialogBuilderEdNode_Speaker::StaticClass());
 	const bool bNodeBIsState = NodeB->IsA(UDialogBuilderEdNode_State::StaticClass());
 	const bool bNodeBIsDecorator = NodeB->IsA(UDialogBuilderEdSubNode_Decorator::StaticClass());
 	const bool bNodeBIsEvent = NodeB->IsA(UDialogBuilderEdSubNode_Event::StaticClass());

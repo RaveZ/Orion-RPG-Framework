@@ -505,30 +505,26 @@ void UQuestComponent::ResetAllQuest()
 void UQuestComponent::EvaluateNextNodeCondition(UQuest* QuestParam)
 {
 	UQuestBuilderNode* NextNode = nullptr;
+	//Quest Node will executes their children from top to bottom, and will stop executing its children when one of their children decorator succeeds.
+	//If none of the children succeeds, this node wiil stop evaluate branching until next quest update.
 	for (auto& Node : QuestParam->CurrentNode->ChildrenNodes)
 	{
-		if (NextNode == nullptr && Node->Decorators.IsEmpty())
+		int SumConditionMet = 0;
+		for (auto& Condition : Node->Decorators)
+		{
+			bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
+			if (bConditionMet)
+			{
+				SumConditionMet++;
+			}
+		}
+		if (SumConditionMet >= Node->Decorators.Num())
 		{
 			NextNode = Node;
+			//break loop to ensure the met condition doesn't get overrided
+			break;
 		}
-		else if (!Node->Decorators.IsEmpty())
-		{
-			int SumConditionMet = 0;
-			for (auto& Condition : Node->Decorators)
-			{
-				bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
-				if (bConditionMet)
-				{
-					SumConditionMet++;
-				}
-			}
-			if (SumConditionMet >= Node->Decorators.Num())
-			{
-				NextNode = Node;
-				//break loop to ensure the met condition doesn't get overrided
-				break;
-			}
-		}
+		
 	}
 
 	if (NextNode)

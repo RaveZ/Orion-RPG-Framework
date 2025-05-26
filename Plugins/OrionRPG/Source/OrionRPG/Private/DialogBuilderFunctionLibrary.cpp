@@ -5,7 +5,7 @@
 #include "OrionRPG.h"
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderNode.h"
-#include "DialogBuilderNode_Objective.h"
+#include "DialogBuilderNode_Speaker.h"
 #include "DialogBuilderNode_Root.h"
 #include "Dialog.h"
 #include "DialogData.h"
@@ -129,7 +129,7 @@ bool UDialogBuilderFunctionLibrary::CanProgressDialogObjective(const UObject* Wo
         UDialog* Dialog = DialogComp->DialogMap.FindRef(DialogID);
         if (Dialog && Dialog->CurrentNode && Dialog->DialogState == EDialogState::E_Active)
         {
-            if (UDialogBuilderNode_Objective* ObjectiveNode = Cast<UDialogBuilderNode_Objective>(Dialog->CurrentNode))
+            if (UDialogBuilderNode_Speaker* ObjectiveNode = Cast<UDialogBuilderNode_Speaker>(Dialog->CurrentNode))
             {
                 return true;
             }

@@ -28,7 +28,7 @@ FText UQuestBuilderEdNode_Checkpoint::GetTooltipText() const
 	if (CheckpointNode)
 	{
 		return FText::Format(FText::FromString(TEXT("Checkpoint Node\n{0}")),
-			NSLOCTEXT("QuestBuilderEditor", "StateNodeScopeTooltip", "This Node serves as the checkpoint for the quest.\nUseful if we want to know that some quest has reached a certain checkpoint.\n**Right click the node to start adding a subnodes."));
+			NSLOCTEXT("QuestBuilderEditor", "StateNodeScopeTooltip", "This Node serves as the checkpoint for the quest.\nUseful if we want to know that some quest has reached a certain checkpoint.\nThis Node will executes their children from top to bottom, and will stop executing its children when one of their children decorator succeeds.\nIf none of the children succeeds, this node will stop branching until next quest update."));
 	}
 
 	return Super::GetTooltipText();

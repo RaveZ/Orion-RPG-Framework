@@ -22,14 +22,14 @@ FText UQuestBuilderEdNode_Root::GetTooltipText() const
 	if (RootNode)
 	{
 		return FText::Format(FText::FromString(TEXT("Root Node\n\n{0}")),
-			NSLOCTEXT("QuestBuilderEditor", "RootNodeScopeTooltip", "Entry point for your quest"));
+			NSLOCTEXT("QuestBuilderEditor", "RootNodeScopeTooltip", "Entry point for your quest!"));
 	}
 	return Super::GetTooltipText();
 }
 
 FText UQuestBuilderEdNode_Root::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	return NSLOCTEXT("BehaviorTreeEditor", "Root", "ROOT");
+	return NSLOCTEXT("QuestEditor", "Root", "ROOT");
 	
 }
 

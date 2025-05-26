@@ -9,7 +9,7 @@
 #include "SGraphEditorActionMenuDialog.h"
 #include "DialogBuilderNode.h"
 #include "DialogBuilderNode_Root.h"
-#include "DialogBuilderNode_Objective.h"
+#include "DialogBuilderNode_Speaker.h"
 #include "DialogBuilderNode_Checkpoint.h"
 #include "DialogBuilderNode_State.h"
 #include "DialogBuilderEditorUtils.h"
@@ -231,9 +231,9 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 			}
 			if (NodeInstance)
 			{
-				if (UDialogBuilderNode_Objective* ObjectiveDialogNode = Cast<UDialogBuilderNode_Objective>(NodeInstance))
+				if (UDialogBuilderNode_Speaker* SpeakerDialogNode = Cast<UDialogBuilderNode_Speaker>(NodeInstance))
 				{
-					FindUniqueNodeName("ObjectiveNode");
+					FindUniqueNodeName("SpeakerNode");
 				}
 				if (UDialogBuilderNode_State* StateDialogNode = Cast<UDialogBuilderNode_State>(NodeInstance))
 				{

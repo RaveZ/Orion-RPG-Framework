@@ -8,7 +8,7 @@
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderEdge.h"
 #include "DialogBuilderNode.h"
-#include "DialogBuilderNode_Objective.h"
+#include "DialogBuilderNode_Speaker.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 

@@ -28,7 +28,7 @@ enum class EQuestState : uint8
 };
 
 
-UCLASS(Blueprintable)
+UCLASS(Blueprintable, BlueprintType)
 class ORIONRPG_API UQuest : public UObject
 {
 	GENERATED_BODY()

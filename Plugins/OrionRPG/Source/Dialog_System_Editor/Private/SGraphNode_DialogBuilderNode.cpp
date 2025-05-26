@@ -21,8 +21,8 @@
 #include "Dialog.h"
 #include "DialogBuilderNode.h"
 #include "DialogBuilderEdNode_Root.h"
-#include "DialogBuilderEdNode_Objective.h"
-#include "DialogBuilderNode_Objective.h"
+#include "DialogBuilderEdNode_Speaker.h"
+#include "DialogBuilderNode_Speaker.h"
 #include "DialogBuilderSetting.h"	
 #include "Fonts/SlateFontInfo.h"
 #include "Decorator/OrionDecorator.h"
@@ -280,12 +280,16 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 		: FMargin(8.0f);
 
 	const float NodeMaxWidth = DialogEdNode && DialogEdNode->IsSubNode()
-		? 525.f
-		: 550.f;
+		? 325.f
+		: 350.f;
 
 	const float NodeMinWidth = DialogEdNode && DialogEdNode->IsSubNode()
 		? 200.f
 		: 125.f;
+
+	const FMargin PinPadding = (Cast<UDialogBuilderEdSubNode_Decorator>(GraphNode) || Cast<UDialogBuilderEdSubNode_Event>(GraphNode))
+		? FMargin(0.f)
+		: FMargin(2.f, 3.f, 2.f, 3.f);
 
 	UWorld* World = GEditor->GetEditorWorldContext().World();
 
@@ -318,6 +322,7 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 
 							// INPUT PIN AREA
 							+ SHorizontalBox::Slot()
+							.Padding(PinPadding)
 							.AutoWidth()
 							[
 								SNew(SBox)
@@ -556,6 +561,7 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 
 							// OUTPUT PIN AREA
 							+ SHorizontalBox::Slot()
+							.Padding(PinPadding)
 							.AutoWidth()
 							[
 								SNew(SBox)

@@ -5,7 +5,7 @@
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderNode.h"
 #include "DialogBuilderEdge.h"
-#include "DialogBuilderNode_Objective.h"
+#include "DialogBuilderNode_Speaker.h"
 #include "DialogBuilderNode_Root.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 

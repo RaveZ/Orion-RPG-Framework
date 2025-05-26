@@ -32,7 +32,7 @@ FText UQuestBuilderEdNode_State::GetTooltipText() const
 	if (StateNode)
 	{
 		return FText::Format(FText::FromString(TEXT("State Node\n{0}")),
-			NSLOCTEXT("QuestBuilderEditor", "StateNodeScopeTooltip", "This Node signifies the conclusion point of a quest, determining its outcome, either Completed or Failed.\nThis node contain series of events, and decorators.\n**Right click the node to start adding a subnodes."));
+			NSLOCTEXT("QuestBuilderEditor", "StateNodeScopeTooltip", "This Node signifies the conclusion point of a quest, determining its outcome, either Completed or Failed.\nThis node may contain series of events, and decorators."));
 	}
 
 	return Super::GetTooltipText();

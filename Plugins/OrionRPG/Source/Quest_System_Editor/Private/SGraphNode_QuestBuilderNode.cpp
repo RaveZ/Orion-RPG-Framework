@@ -312,6 +312,11 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 		? 200.f
 		: 125.f;
 
+	const FMargin PinPadding = (Cast<UQuestBuilderEdSubNode_Decorator>(GraphNode) || Cast<UQuestBuilderEdSubNode_Event>(GraphNode) || Cast<UQuestBuilderEdSubNode_Task>(GraphNode))
+		? FMargin(0.f)
+		: FMargin(2.f, 3.f, 2.f, 3.f);
+
+
 	UWorld* World = GEditor->GetEditorWorldContext().World();
 
 	IndexOverlay = SNew(SQuestNodeIndex)
@@ -344,6 +349,7 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 							// INPUT PIN AREA
 							+ SHorizontalBox::Slot()
 							.AutoWidth()
+							.Padding(PinPadding)
 							[
 								SNew(SBox)
 									.MinDesiredWidth(NodePadding.Left)
@@ -629,6 +635,7 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 							// OUTPUT PIN AREA
 							+ SHorizontalBox::Slot()
 							.AutoWidth()
+							.Padding(PinPadding)
 							[
 								SNew(SBox)
 									.MinDesiredWidth(NodePadding.Right)
@@ -1386,7 +1393,6 @@ EVisibility SGraphNode_QuestBuilderNode::GetIndexVisibility() const
 		UQuestBuilderEdNode* SelectedQuestEdNode = Cast<UQuestBuilderEdNode>(*SelectedNodes.CreateConstIterator());
 		FirstSelectedNode = SelectedQuestEdNode ? Cast<UQuestBuilderNode>(SelectedQuestEdNode->NodeInstance) : nullptr;
 	}
-
 	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance);
 
 	// Visible if ((we are in PIE || if we have siblings) && (SelectedNodes only one && Matching parent with selected nodes))

@@ -4,12 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "DialogBuilderNode.h"
-#include "DialogBuilderNode_Objective.generated.h"
+#include "DialogBuilderNode_Speaker.generated.h"
 
 class UDialogTask;
 
 UCLASS(Blueprintable)
-class ORIONRPG_API UDialogBuilderNode_Objective : public UDialogBuilderNode
+class ORIONRPG_API UDialogBuilderNode_Speaker : public UDialogBuilderNode
 {
 	GENERATED_BODY()
 
