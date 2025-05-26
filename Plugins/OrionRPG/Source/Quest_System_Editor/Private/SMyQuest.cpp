@@ -154,7 +154,7 @@ void SMyQuest::Construct(const FArguments& InArgs, TWeakPtr<FQuestBuilderEditor>
 							ToolbarBuilderWidget.ToSharedRef()
 						]
 
-						+ SVerticalBox::Slot()
+						/*+ SVerticalBox::Slot()
 						.AutoHeight()
 						[
 							SNew(SHorizontalBox)
@@ -165,7 +165,7 @@ void SMyQuest::Construct(const FArguments& InArgs, TWeakPtr<FQuestBuilderEditor>
 							[
 								FilterBox.ToSharedRef()
 							]
-						]
+						]*/
 					]
 			]
 
@@ -529,7 +529,7 @@ FText SMyQuest::OnGetSectionTitle(int32 InSectionID)
 	switch (InSectionID)
 	{
 	case QuestSectionID::QUESTLIST:
-		SeperatorTitle = NSLOCTEXT("GraphActionNode", "QuestGraphs", "QuestGraphs");
+		SeperatorTitle = NSLOCTEXT("GraphActionNode", "Quest List", "Quest List");
 		break; 
 	default:
 	case QuestSectionID::NONE:
@@ -762,6 +762,7 @@ void SMyQuest::OnObjectPropertyChanged(UObject* InObject, FPropertyChangedEvent&
 
 void SMyQuest::OnFilterTextChanged(const FText& InFilterText)
 {
+	GraphActionMenu->GenerateFilteredItems(false);
 }
 FText SMyQuest::GetFilterText() const
 {

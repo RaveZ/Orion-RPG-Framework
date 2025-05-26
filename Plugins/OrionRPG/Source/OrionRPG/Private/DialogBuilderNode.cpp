@@ -242,12 +242,9 @@ void UDialogBuilderNode::Deinitialize()
 	//empty, override in child class
 }
 
-void UDialogBuilderNode::InitializeFromAsset(UDialogBuilderGraph& OwningDialogGraph, UDialog& OwningDialog)
+void UDialogBuilderNode::InitializeFromAsset(UDialogBuilderGraph& OwningDialogGraph)
 {
 	DialogGraph = &OwningDialogGraph;
-	Dialog = &OwningDialog;
-	Dialog->AllNodes.Add(this);
-	Dialog->NodeMap.Emplace(ID, this);
 }
 
 

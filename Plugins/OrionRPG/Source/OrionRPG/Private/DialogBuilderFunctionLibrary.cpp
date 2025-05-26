@@ -27,10 +27,6 @@ TArray<FName> UDialogBuilderFunctionLibrary::GetAllDialogID()
         UDialogBuilderGraph* DialogGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
         if (DialogGraph)
         {
-            for (UDialog* Dialog : DialogGraph->DialogList)
-            {
-                DialogIDs.Add(Dialog->ID);
-            }
         }
     }
 
@@ -50,19 +46,7 @@ TArray<FName> UDialogBuilderFunctionLibrary::GetNodeIDFromCachedDialog()
         UDialogBuilderGraph* DialogGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
         if (DialogGraph)
         {
-            for (UDialog* Dialog : DialogGraph->DialogList)
-            {
-                //TODO : Fix Cached ID BUG
-                //if (Dialog->ID != RuntimeModule.CachedDialogID) continue;
-                for (UDialogBuilderNode* Node : Dialog->AllNodes)
-                {
-                    if (Node)
-                    {
-                        if (UDialogBuilderNode_Root* RootNode = Cast<UDialogBuilderNode_Root>(Node)) continue;
-                        NodeIDs.Emplace(Node->ID);
-                    }
-                }
-            }
+            
 		}
 	}
 	return NodeIDs;

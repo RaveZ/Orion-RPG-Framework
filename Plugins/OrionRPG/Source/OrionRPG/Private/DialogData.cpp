@@ -21,10 +21,7 @@ TArray<FName> UDialogHandle::GetAllDialogID()
 		UDialogBuilderGraph* DialogGraphAsset = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
 		if (DialogGraphAsset)
 		{
-			for (UDialog* DialogObj : DialogGraphAsset->DialogList)
-			{
-				DialogIDs.Add(DialogObj->ID);
-			}
+			
 		}
 	}
 
@@ -44,18 +41,7 @@ TArray<FName> UDialogHandle::GetAllNodeID()
 		UDialogBuilderGraph* DialogGraphAsset = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
 		if (DialogGraphAsset)
 		{
-			for (UDialog* DialogObj : DialogGraphAsset->DialogList)
-			{
-				if (DialogObj->ID != DialogID) continue;
-				for (UDialogBuilderNode* Node : DialogObj->AllNodes)
-				{
-					if (Node)
-					{
-						if (UDialogBuilderNode_Root* RootNode = Cast<UDialogBuilderNode_Root>(Node)) continue;
-						NodeIDs.Emplace(Node->ID);
-					}
-				}
-			}
+			
 		}
 	}
 	

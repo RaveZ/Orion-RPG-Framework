@@ -160,6 +160,8 @@ public:
 	/** Returns true if in editing mode */
 	bool InEditingMode() const;
 
+	bool CanAddNewDialogGraph() const;
+
 	TSharedPtr<SDockTab> OpenDocument(const UObject* DocumentID, FDocumentTracker::EOpenDocumentCause Cause);
 	
 	/** Finds the tab associated with the specified asset, and closes if it is open */

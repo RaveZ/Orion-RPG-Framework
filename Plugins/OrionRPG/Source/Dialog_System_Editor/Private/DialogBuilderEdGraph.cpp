@@ -75,7 +75,7 @@ void UDialogBuilderEdGraph::UpdateAsset(bool bForce)
 			{
 				if (RootNode->NodeInstance)
 				{
-					Dialog->RootNodes.Add(Cast<UDialogBuilderNode>(RootNode->NodeInstance));
+					OwningDialog->RootNodes.Add(Cast<UDialogBuilderNode>(RootNode->NodeInstance));
 				}
 			}
 			UDialogBuilderNode* DialogNode = DialogEdNode ? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance) : nullptr;
@@ -83,11 +83,10 @@ void UDialogBuilderEdGraph::UpdateAsset(bool bForce)
 			{
 				//cache dialog and node dependencies
 				NodeMap.Add(DialogNode, DialogEdNode);
-				Dialog->AllNodes.Add(DialogNode);
-				Dialog->NodeMap.Emplace(DialogNode->ID, DialogNode);
+				OwningDialog->AllNodes.Add(DialogNode);
+				OwningDialog->NodeMap.Emplace(DialogNode->ID, DialogNode);
 
-				DialogNode->DialogGraph = DialogGraph;
-				DialogNode->Dialog = Dialog;
+				DialogNode->DialogGraph = OwningDialog;
 				DialogNode->Rename(nullptr, DialogGraph, REN_DontCreateRedirectors | REN_DoNotDirty);
 
 				//link child and parent nodes
@@ -474,8 +473,7 @@ void UDialogBuilderEdGraph::UpdateVersion_UnifiedSubNodes()
 
 void UDialogBuilderEdGraph::Clear()
 {
-	Dialog->ClearGraph();
-	Dialog->NodeMap.Reset();
+	OwningDialog->ClearGraph();
 	NodeMap.Reset();
 	EdgeMap.Reset();
 

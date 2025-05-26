@@ -1111,7 +1111,6 @@ void SGraphNode_DialogBuilderNode::OnNameTextCommited(const FText& InText, EText
 
 	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
 	UDialogBuilderNode* DialogNode = DialogEdNode ? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance) : nullptr;
-	UDialog* OwningDialog = DialogEdNode ? DialogEdNode->GetDialogBuilderEdGraph()->Dialog : nullptr;
 
 	if (DialogEdNode && DialogNode)
 	{
@@ -1134,37 +1133,7 @@ void SGraphNode_DialogBuilderNode::OnNameTextCommited(const FText& InText, EText
 			UDialogBuilderGraph* DialogGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
 			if (DialogGraph)
 			{
-				for (auto& Dialog : DialogGraph->DialogList)
-				{
-					for (auto& DialogDecorator : Dialog->Decorators)
-					{
-						if (DialogDecorator && DialogDecorator->NodeID == OriginalName && DialogDecorator->QuestID == OwningDialog->ID)
-						{
-							DialogDecorator->NodeID = NewName;
-							DialogDecorator->Modify();
-						}
-					}
-					for (auto& Node : Dialog->AllNodes)
-					{
-						for (auto& NodeDecorator : Node->Decorators)
-						{
-							if (NodeDecorator && NodeDecorator->NodeID == OriginalName && NodeDecorator->QuestID == OwningDialog->ID)
-							{
-								NodeDecorator->NodeID = NewName;
-								NodeDecorator->Modify();
-							}
-						}
-						for (auto& NodeEvent : Node->Events)
-						{
-							if (NodeEvent && NodeEvent->NodeID == OriginalName && NodeEvent->QuestID == OwningDialog->ID)
-							{
-								NodeEvent->NodeID = NewName;
-								NodeEvent->Modify();
-							}
-						}
-					}
-					
-				}
+				
 			}
 		}
 	}

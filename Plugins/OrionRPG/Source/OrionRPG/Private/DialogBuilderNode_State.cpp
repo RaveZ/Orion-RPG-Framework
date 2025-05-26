@@ -19,10 +19,8 @@ void UDialogBuilderNode_State::BeginState()
     switch (DialogState)
     {
     case EDialogState::E_Complete:
-        GetDialogComponent()->OnDialogCompleted.Broadcast(Dialog);
         break;
     case EDialogState::E_Fail:
-        GetDialogComponent()->OnDialogFailed.Broadcast(Dialog);
         break;
     }
 

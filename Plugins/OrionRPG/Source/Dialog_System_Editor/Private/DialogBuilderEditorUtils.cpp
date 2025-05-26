@@ -36,17 +36,7 @@ FName FDialogBuilderEditorUtils::FindUniqueDialogName(const FString& InBaseName)
 			UDialogBuilderGraph* DialogGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
 			if (DialogGraph)
 			{
-				for (auto& Dialog : DialogGraph->DialogList)
-				{
-					FString FullName = Dialog->ID.ToString();
-
-					// If the current name matches a dialog graph page name, it's not unique
-					if (FullName == UniqueName)
-					{
-						bIsUnique = false;
-						break;
-					}
-				}
+				
 			}
 		}
 
@@ -116,16 +106,7 @@ UEdGraph* FDialogBuilderEditorUtils::CreateNewGraph(UObject* ParentScope, const 
 
 	if (UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(NewGraph))
 	{
-		DialogGraph->Dialog = NewObject<UDialog>(ParentScope, UDialog::StaticClass(), NAME_None, RF_Transactional);
-		DialogGraph->Dialog->DialogGraph = DialogGraph->GetDialogBuilderGraph();
-		DialogGraph->Dialog->ID = GraphName;
-		DialogGraph->Dialog->DialogName = FText::FromName(DialogGraph->Dialog->ID);
-
-		if (UDialogBuilderGraph* DialogBuilderGraph = Cast<UDialogBuilderGraph>(DialogGraph->GetDialogBuilderGraph()))
-		{
-			DialogBuilderGraph->DialogList.Add(DialogGraph->Dialog);
-		}
-
+		DialogGraph->OwningDialog = CastChecked<UDialogBuilderGraph>(ParentScope);
 	}
 
 	
@@ -172,10 +153,6 @@ void FDialogBuilderEditorUtils::RemoveGraph(UDialogBuilderGraph* DialogBuilderGr
 		if (TestOuter == DialogBuilderGraph)
 		{
 			DialogBuilderGraph->DialogGraphPages.Remove(GraphToRemove);
-			if (UDialogBuilderEdGraph* DialogGraphToRemove = Cast<UDialogBuilderEdGraph>(GraphToRemove))
-			{
-				DialogBuilderGraph->DialogList.Remove(DialogGraphToRemove->Dialog);
-			}
 
 			// Can't just call Remove, the object is wrapped in a struct
 			for (int EditedDocIdx = 0; EditedDocIdx < DialogBuilderGraph->LastEditedDocuments.Num(); ++EditedDocIdx)

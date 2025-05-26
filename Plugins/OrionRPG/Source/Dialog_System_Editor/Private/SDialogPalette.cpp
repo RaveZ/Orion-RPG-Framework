@@ -155,7 +155,7 @@ FText SDialogPaletteItem::GetDisplayText() const
 		FAssetSchemaAction_DialogSystemGraph* DialogGraphAction = (FAssetSchemaAction_DialogSystemGraph*)GraphAction.Get();
 		if (UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(DialogGraphAction->EdGraph))
 		{
-			MenuDescriptionCache.SetCachedText(FText::FromName(DialogEdGraph->Dialog->ID), DialogSchema);
+			MenuDescriptionCache.SetCachedText(FText::FromString("Dialog Graph"), DialogSchema);
 		}
 	}
 
@@ -169,41 +169,14 @@ bool SDialogPaletteItem::OnNameTextVerifyChanged(const FText& InNewText, FText& 
 	FName OriginalName;
 
 	FAssetSchemaAction_DialogSystemGraph* DialogGraphAction = (FAssetSchemaAction_DialogSystemGraph*)ActionPtr.Pin().Get();
-	if (UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(DialogGraphAction->EdGraph))
-	{
-		OriginalName = DialogEdGraph->Dialog->ID;
-	}
+	
 
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
 	TArray<FAssetData> DialogGraphDataArray;
 	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), DialogGraphDataArray);
 
-	for (const FAssetData& AssetData : DialogGraphDataArray)
-	{
-		UDialogBuilderGraph* DialogGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
-		if (DialogGraph)
-		{
-			for (auto& Dialog : DialogGraph->DialogList)
-			{
-				if (FName(FinalString) == OriginalName)
-				{
-					return true;
-				}
-				if (FName(FinalString).IsNone())
-				{
-					OutErrorMessage = LOCTEXT("RenameFailed_NotValid", "Empty ID is Not Valid.");
-					return false;
-				}
-				if (Dialog->ID == FName(FinalString))
-				{
-					OutErrorMessage = LOCTEXT("RenameFailed_NotValid", "This ID is already used in another Dialog.");
-					return false;
-				}
-			}
-		}
-	}
-
+	
 	UStruct* ValidationScope = nullptr;
 
 	const UEdGraphSchema* Schema = nullptr;
@@ -221,64 +194,7 @@ void SDialogPaletteItem::OnNameTextCommitted(const FText& NewText, ETextCommit::
   FName OriginalName;  
 
   FAssetSchemaAction_DialogSystemGraph* DialogGraphAction = (FAssetSchemaAction_DialogSystemGraph*)ActionPtr.Pin().Get();  
-  if (UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(DialogGraphAction->EdGraph))  
-  {
-      OriginalName = DialogEdGraph->Dialog->ID;  
-      DialogEdGraph->Dialog->ID = NewName;  
-      DialogEdGraph->Rename(*(NewName.ToString()), DialogBuilderGraph, REN_DoNotDirty | REN_ForceNoResetLoaders);  
 
-
-      if (!DialogEdGraph->Dialog->DialogName.IsFromStringTable())
-      {
-          if (DialogEdGraph->Dialog->DialogName.IsEmpty() || DialogEdGraph->Dialog->DialogName.EqualTo(FText::FromName(OriginalName)))
-          {
-              DialogEdGraph->Dialog->DialogName = FText::FromName(NewName);
-          }
-      }
-
-      FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-      TArray<FAssetData> DialogGraphDataArray;
-      AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), DialogGraphDataArray);
-
-      for (const FAssetData& AssetData : DialogGraphDataArray)
-      {
-          UDialogBuilderGraph* DialogGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
-          if (DialogGraph)
-          {
-              for (auto& Dialog : DialogGraph->DialogList)
-              {
-                  for (auto& DialogDecorator : Dialog->Decorators)
-                  {
-                      if (DialogDecorator && DialogDecorator->QuestID == OriginalName)
-                      {
-                          DialogDecorator->QuestID = NewName;
-                          DialogDecorator->Modify();
-                      }
-                  }
-                  for (auto& Node : Dialog->AllNodes)
-                  {
-                      for (auto& NodeDecorator : Node->Decorators)
-                      {
-                          if (NodeDecorator && NodeDecorator->QuestID == OriginalName)
-                          {
-                              NodeDecorator->QuestID = NewName;
-                              NodeDecorator->Modify();
-                          }
-                      }
-                      for (auto& NodeEvent : Node->Events)
-                      {
-                          if (NodeEvent && NodeEvent->QuestID == OriginalName)
-                          {
-                              NodeEvent->QuestID = NewName;
-                              NodeEvent->Modify();
-                          }
-                      }
-                  }
-              }
-          }
-      }
-  }  
   DialogEditorPtr.Pin()->GetMyDialogWidget()->Refresh();  
 
   DialogEditorPtr.Pin()->GetDialogBuilderGraph()->Modify();  

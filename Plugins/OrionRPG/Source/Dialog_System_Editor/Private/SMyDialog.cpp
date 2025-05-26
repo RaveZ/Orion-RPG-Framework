@@ -86,8 +86,8 @@ void SMyDialog::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEdito
 		ToolbarBuilderWidget = SNullWidget::NullWidget;
 
 		CommandList->MapAction(FGenericCommands::Get().Rename,
-			FExecuteAction::CreateSP(this, &SMyDialog::OnRedialogRenameOnActionNode),
-			FCanExecuteAction::CreateSP(this, &SMyDialog::CanRedialogRenameOnActionNode));
+			FExecuteAction::CreateSP(this, &SMyDialog::OnRequestRenameOnActionNode),
+			FCanExecuteAction::CreateSP(this, &SMyDialog::CanRequestRenameOnActionNode));
 
 		CommandList->MapAction(FGenericCommands::Get().Copy,
 			FExecuteAction::CreateSP(this, &SMyDialog::OnCopy),
@@ -127,7 +127,7 @@ void SMyDialog::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEdito
 		.OnActionDoubleClicked(this, &SMyDialog::OnActionDoubleClicked)
 		.OnContextMenuOpening(this, &SMyDialog::OnContextMenuOpening)
 		.OnCategoryTextCommitted(this, &SMyDialog::OnCategoryNameCommitted)
-		.OnCanRenameSelectedAction(this, &SMyDialog::CanRedialogRenameOnActionNode)
+		.OnCanRenameSelectedAction(this, &SMyDialog::CanRequestRenameOnActionNode)
 		.OnGetSectionTitle(this, &SMyDialog::OnGetSectionTitle)
 		.OnGetSectionWidget(this, &SMyDialog::OnGetSectionWidget)
 		.OnActionMatchesName(this, &SMyDialog::HandleActionMatchesName)
@@ -152,19 +152,6 @@ void SMyDialog::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEdito
 						.AutoHeight()
 						[
 							ToolbarBuilderWidget.ToSharedRef()
-						]
-
-						+ SVerticalBox::Slot()
-						.AutoHeight()
-						[
-							SNew(SHorizontalBox)
-
-							+ SHorizontalBox::Slot()
-							.FillWidth(1.0f)
-							.VAlign(VAlign_Center)
-							[
-								FilterBox.ToSharedRef()
-							]
 						]
 					]
 			]
@@ -238,7 +225,7 @@ FAssetSchemaAction_DialogSystemGraph* SMyDialog::SelectionAsGraph() const
 {
 	return SelectionAsType<FAssetSchemaAction_DialogSystemGraph>(GraphActionMenu);
 }
-void SMyDialog::OnRedialogRenameOnActionNode()
+void SMyDialog::OnRequestRenameOnActionNode()
 {
 	// Attempt to rename in both menus, only one of them will have anything selected
 	GraphActionMenu->OnRequestRenameOnActionNode();
@@ -355,7 +342,7 @@ void SMyDialog::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>&
 
 			if (UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(DialogEditor->FocusedEdGraph))
 			{
-				DialogEditor->PropertyWidget->SetObject(DialogGraph->Dialog);
+				DialogEditor->PropertyWidget->SetObject(DialogGraph->OwningDialog);
 			}
 		}
 	}
@@ -404,7 +391,7 @@ void SMyDialog::ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction)
 
 				if (UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(DialogEditor->CurrentGraphWidget->GetCurrentGraph()))
 				{
-					DialogEditor->PropertyWidget->SetObject(DialogGraph->Dialog);
+					DialogEditor->PropertyWidget->SetObject(DialogGraph->OwningDialog);
 				}
 			}
 		}
@@ -517,9 +504,9 @@ void SMyDialog::OnCategoryNameCommitted(const FText& InNewText, ETextCommit::Typ
 		SelectItemByName(FName(*CategoryName.ToString()), ESelectInfo::OnMouseClick, InAction.Pin()->SectionID, true);
 	}
 }
-bool SMyDialog::CanRedialogRenameOnActionNode(TWeakPtr<struct FGraphActionNode> InSelectedNode) const
+bool SMyDialog::CanRequestRenameOnActionNode(TWeakPtr<struct FGraphActionNode> InSelectedNode) const
 {
-	return true;
+	return false;
 }
 
 FText SMyDialog::OnGetSectionTitle(int32 InSectionID)
@@ -529,7 +516,7 @@ FText SMyDialog::OnGetSectionTitle(int32 InSectionID)
 	switch (InSectionID)
 	{
 	case DialogSectionID::DIALOGLIST:
-		SeperatorTitle = NSLOCTEXT("GraphActionNode", "DialogGraphs", "DialogGraphs");
+		SeperatorTitle = NSLOCTEXT("GraphActionNode", "Dialog Graph", "Dialog Graph");
 		break; 
 	default:
 	case DialogSectionID::NONE:
@@ -573,7 +560,9 @@ FReply SMyDialog::OnAddButtonClickedOnSection(int32 InSectionID)
 }
 bool SMyDialog::CanAddNewElementToSection(int32 InSectionID) const
 {
-	return true;
+	return false;
+	// true if we want to add new graph section
+	//return true;
 }
 bool SMyDialog::HandleActionMatchesName(FEdGraphSchemaAction* InAction, const FName& InName) const
 {
@@ -622,20 +611,14 @@ void SMyDialog::OnDeleteEntry()
 
 bool SMyDialog::CanDeleteEntry() const
 {
-	// Cannot delete entries while not in editing mode
-	/*if (!IsEditingMode())
-	{
-		return false;
-	}*/
-
-	if (FAssetSchemaAction_DialogSystemGraph* GraphAction = SelectionAsGraph())
+	/*if (FAssetSchemaAction_DialogSystemGraph* GraphAction = SelectionAsGraph())
 	{
 		return (GraphAction->EdGraph ? GraphAction->EdGraph->bAllowDeletion : false);
-	}
+	}*/
 	return false;
 }
 
-bool SMyDialog::CanRedialogRenameOnActionNode() const
+bool SMyDialog::CanRequestRenameOnActionNode() const
 {
 	TArray<TSharedPtr<FEdGraphSchemaAction> > SelectedActions;
 	GraphActionMenu->GetSelectedActions(SelectedActions);

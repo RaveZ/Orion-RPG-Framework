@@ -58,7 +58,7 @@ public:
 	UDialogBuilderGraph* GetDialogBuilderGraph() const { return DialogBuilderGraph; }
 
 	/** Initiates a rename on the selected action node, if possible */
-	void OnRedialogRenameOnActionNode();
+	void OnRequestRenameOnActionNode();
 
 	/** Callbacks for Paste Commands */
 	void OnPasteGeneric();
@@ -102,7 +102,7 @@ private:
 	TSharedRef<SWidget> CreateAddToSectionButton(int32 InSectionID, TWeakPtr<SWidget> WeakRowWidget, FText AddNewText, FName MetaDataTag);
 
 	void OnCategoryNameCommitted(const FText& InNewText, ETextCommit::Type InTextCommit, TWeakPtr< struct FGraphActionNode > InAction);
-	bool CanRedialogRenameOnActionNode(TWeakPtr<struct FGraphActionNode> InSelectedNode) const;
+	bool CanRequestRenameOnActionNode(TWeakPtr<struct FGraphActionNode> InSelectedNode) const;
 	FText OnGetSectionTitle(int32 InSectionID);
 	TSharedRef<SWidget> OnGetSectionWidget(TSharedRef<SWidget> RowWidget, int32 InSectionID);
 	//EVisibility OnGetSectionTextVisibility(TWeakPtr<SWidget> RowWidget, int32 InSectionID) const;
@@ -124,7 +124,7 @@ private:
 	void OnFocusNodeInNewTab();
 	void OnDeleteEntry();
 	bool CanDeleteEntry() const;
-	bool CanRedialogRenameOnActionNode() const;
+	bool CanRequestRenameOnActionNode() const;
 	bool IsDuplicateActionVisible() const;
 	bool CanDuplicateAction() const;
 	void OnDuplicateAction();

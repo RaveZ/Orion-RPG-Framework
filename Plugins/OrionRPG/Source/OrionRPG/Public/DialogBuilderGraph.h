@@ -31,10 +31,6 @@ public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "DialogBuilderGraph")
 		FName ID;
 
-	/** Set of Dialog linked with Dialog Graph Pages */
-	UPROPERTY(BlueprintReadOnly, Category = "DialogBuilderGraph")
-		TArray< TObjectPtr<UDialog>> DialogList;
-
 	UPROPERTY(BlueprintReadWrite, Category = "DialogBuilderGraph")
 		TObjectPtr<AController> OwningController;
 
@@ -44,8 +40,33 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "DialogBuilderGraph")
 		TObjectPtr<APawn> OwningPawn;
 
-		virtual void Initialize();
-		virtual void Deinitialize();
+	/** List of All Visited Node IDs in Sequence*/
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
+		TArray<FName> VisitedNodeIDs;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
+		TObjectPtr<UDialogBuilderNode> CurrentNode;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
+		TArray< TObjectPtr<UDialogBuilderNode>> RootNodes;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
+		TArray< TObjectPtr<UDialogBuilderNode>> AllNodes;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
+		TMap<FName, TObjectPtr<UDialogBuilderNode>> NodeMap;
+
+public:
+	virtual void Initialize();
+	virtual void Deinitialize();
+
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
+	int GetLevelNum() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
+	void GetNodesByLevel(int Level, TArray<UDialogBuilderNode*>& Nodes);
+
+	void ClearGraph();
 
 #if WITH_EDITORONLY_DATA
 	/** Set of dialog-graph pages */

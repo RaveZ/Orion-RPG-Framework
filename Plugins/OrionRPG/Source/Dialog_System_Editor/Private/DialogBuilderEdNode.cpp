@@ -259,10 +259,9 @@ void UDialogBuilderEdNode::InitializeInstance()
 {
 	UDialogBuilderNode* DialogNode = Cast<UDialogBuilderNode>(NodeInstance);
 	UDialogBuilderGraph* DialogAsset = DialogNode ? Cast<UDialogBuilderGraph>(DialogNode->GetOuter()) : nullptr;
-	UDialog* Dialog = GetDialogBuilderEdGraph() ? GetDialogBuilderEdGraph()->Dialog : nullptr;
-	if (Dialog && DialogNode && DialogAsset)
+	if (DialogNode && DialogAsset)
 	{
-		DialogNode->InitializeFromAsset(*DialogAsset, *Dialog);
+		DialogNode->InitializeFromAsset(*DialogAsset);
 
 	}
 }

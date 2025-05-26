@@ -37,12 +37,6 @@ void UDialogComponent::BeginPlay()
 	//Set Dependency
 	OwningController = GetOwningController();
 
-	OnDialogObjectiveUpdated.AddDynamic(this, &UDialogComponent::DialogObjectiveUpdated);
-	OnStartNavigateDialog.AddDynamic(this, &UDialogComponent::StartNavigatingDialog);
-	OnDialogFailed.AddDynamic(this, &UDialogComponent::DialogFailed);
-	OnDialogCompleted.AddDynamic(this, &UDialogComponent::DialogCompleted);
-	OnDialogAdded.AddDynamic(this, &UDialogComponent::DialogAdded);
-	OnDialogUnlocked.AddDynamic(this, &UDialogComponent::DialogUnlocked);
 
 #if WITH_ORION_COMBAT_FRAMEWORK
 
@@ -75,10 +69,7 @@ bool UDialogComponent::BeginDialog(UDialogBuilderGraph* DialogAsset)
 	{
 		CacheDialogGraphDependencies(NewDialogGraph);
 
-		for (UDialog* Dialog : NewDialogGraph->DialogList)
-		{
-			EvaluateDialogCondition(Dialog);
-		}
+		
 		bSuccess = true;
 	}
 	
@@ -113,10 +104,7 @@ void UDialogComponent::CacheDialogGraphDependencies(UDialogBuilderGraph* DialogG
 		//Add DialogGraph to array
 		DialogGraphs.Add(DialogGraph);
 
-		for (auto& Dialog : DialogGraph->DialogList)
-		{
-			DialogMap.Emplace(Dialog->ID, Dialog);
-		}
+		
 	}
 }
 
@@ -164,7 +152,6 @@ void UDialogComponent::ActivateDialog(FName ID)
 		}
 		else if (Dialog->CurrentNode == nullptr)
 		{
-			OnDialogAdded.Broadcast(Dialog);
 			RestartDialog(Dialog->ID);
 		}
 	}
@@ -175,7 +162,6 @@ void UDialogComponent::UnlockDialog(FName ID)
 	if (UDialog* Dialog = DialogMap.FindRef(ID))
 	{
 		Dialog->DialogState = EDialogState::E_Unlocked;
-		OnDialogUnlocked.Broadcast(Dialog);
 	}
 	else
 	{
@@ -273,7 +259,6 @@ void UDialogComponent::FailDialog(FName ID)
 		if (Dialog->DialogState != EDialogState::E_Fail)
 		{
 			Dialog->DialogState = EDialogState::E_Fail;
-			OnDialogFailed.Broadcast(Dialog);
 		}
 		Dialog->CurrentNode = nullptr;
 
@@ -287,7 +272,6 @@ void UDialogComponent::CompleteDialog(FName ID)
 		if (Dialog->DialogState != EDialogState::E_Complete)
 		{
 			Dialog->DialogState = EDialogState::E_Complete;
-			OnDialogCompleted.Broadcast(Dialog);
 		}
 		Dialog->CurrentNode = nullptr;
 
@@ -300,7 +284,6 @@ void UDialogComponent::StartNavigateDialog(UDialog* InDialog)
 	if (InDialog)
 	{
 		CurrentNavigatedDialog = InDialog;
-		OnStartNavigateDialog.Broadcast(InDialog);
 	}
 }
 
@@ -447,14 +430,7 @@ void UDialogComponent::ResetAllDialog()
 		if (DialogGraphs.IsValidIndex(j))
 		{
 			DialogGraphs[j]->Deinitialize();
-			for (int32 i = DialogGraphs[j]->DialogList.Num() - 1; i >= 0; --i)
-			{
-				if (DialogGraphs[j]->DialogList.IsValidIndex(i))
-				{
-					DialogGraphs[j]->DialogList[i]->Deinitialize();
-					DialogGraphs[j]->DialogList.RemoveAt(i);
-				}
-			}
+			
 			DialogGraphs.RemoveAt(j);
 		}
 		

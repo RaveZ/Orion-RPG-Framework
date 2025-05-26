@@ -167,10 +167,7 @@ void UDialog::EvaluateUniqueID()
 		UDialogBuilderGraph* DialogGraphAsset = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
 		if (DialogGraphAsset)
 		{
-			for (auto& Dialog : DialogGraphAsset->DialogList)
-			{
-				Dialogs.Add(Dialog);
-			}
+			
 		}
 	}
 

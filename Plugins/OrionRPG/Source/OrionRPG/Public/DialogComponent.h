@@ -11,17 +11,7 @@ class USaveGame;
 class APlayerController;
 
 //Dialog Delegate
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDialogObjectiveUpdated);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStartNavigateDialog, UDialog*, Dialog);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogFailed, UDialog*, Dialog);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogCompleted, UDialog*, Dialog);
-	
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogAdded, UDialog*, Dialog);
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FDialogUnlocked, UDialog*, Dialog);
 
 
 UCLASS(meta=(BlueprintSpawnableComponent), Blueprintable, HideDropdown, ClassGroup = "DialogBuilder", DisplayName = "Dialog Component")
@@ -49,23 +39,7 @@ public:
 		TObjectPtr<UDialog> CurrentNavigatedDialog;
 
 public:
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
-		FDialogObjectiveUpdated OnDialogObjectiveUpdated;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
-		FStartNavigateDialog OnStartNavigateDialog;
-
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
-		FDialogFailed OnDialogFailed;
-
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
-		FDialogCompleted OnDialogCompleted;
-
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
-		FDialogAdded OnDialogAdded;
-
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
-		FDialogAdded OnDialogUnlocked;
 
 	UFUNCTION()
 		virtual void DialogObjectiveUpdated();

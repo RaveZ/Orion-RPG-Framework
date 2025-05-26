@@ -42,10 +42,10 @@ public:
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
 
 	class SGraphEditor* SEditorGraph;
-
+	
 	/** Dialog linked with this UEdGraph */
 	UPROPERTY(VisibleAnywhere, Instanced, Category = "DialogBuilderGraph")
-		TObjectPtr<UDialog> Dialog;
+	TObjectPtr<UDialogBuilderGraph> OwningDialog;
 
 	UPROPERTY(Transient)
 		TMap< TObjectPtr<UDialogBuilderNode>, TObjectPtr<UDialogBuilderEdNode>> NodeMap;

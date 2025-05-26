@@ -69,7 +69,7 @@ public:
 	virtual void Deinitialize();
 
 	/** initialize any asset related data */
-	virtual void InitializeFromAsset(UDialogBuilderGraph& OwningDialogGraph, UDialog& OwningDialog);
+	virtual void InitializeFromAsset(UDialogBuilderGraph& OwningDialogGraph);
 
 
 	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")

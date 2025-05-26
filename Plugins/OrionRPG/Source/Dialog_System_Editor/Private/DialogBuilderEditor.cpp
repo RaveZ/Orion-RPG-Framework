@@ -298,7 +298,7 @@ void FDialogBuilderEditor::BindCommands()
 	
 	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().AddNewDialogGraph,
 		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::NewDocument_OnClicked, CGT_NewDialogGraph),
-		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::InEditingMode),
+		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanAddNewDialogGraph),
 		FIsActionChecked(),
 		FIsActionButtonVisible::CreateSP(this, &FDialogBuilderEditor::NewDocument_IsVisibleForType, CGT_NewDialogGraph)
 	);
@@ -318,7 +318,7 @@ void FDialogBuilderEditor::CreateCommandList()
 
 	GraphEditorCommands->MapAction(FDialogBuilder_EditorCommands::Get().AddNewDialogGraph,
 		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::NewDocument_OnClicked, CGT_NewDialogGraph),
-		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::InEditingMode),
+		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanAddNewDialogGraph),
 		FIsActionChecked(),
 		FIsActionButtonVisible::CreateSP(this, &FDialogBuilderEditor::NewDocument_IsVisibleForType, CGT_NewDialogGraph)
 	);
@@ -575,7 +575,7 @@ UDialogBuilderGraph* FDialogBuilderEditor::GetDialogBuilderGraph() const
 
 bool FDialogBuilderEditor::NewDocument_IsVisibleForType(ECreatedDialogDocumentType GraphType) const
 {
-	return true;
+	return false;
 }
 
 void FDialogBuilderEditor::NewDocument_OnClicked(ECreatedDialogDocumentType GraphType)
@@ -586,7 +586,7 @@ void FDialogBuilderEditor::NewDocument_OnClicked(ECreatedDialogDocumentType Grap
 	switch (GraphType)
 	{
 	case CGT_NewDialogGraph:
-		DocumentNameText = LOCTEXT("NewDocDialogName", "Dialog");
+		DocumentNameText = LOCTEXT("NewDocDialogName", "Dialog Graph");
 		bResetMyBlueprintFilter = true;
 		break;
 	
@@ -640,6 +640,11 @@ bool FDialogBuilderEditor::InEditingMode() const
 	return true;
 }
 
+bool FDialogBuilderEditor::CanAddNewDialogGraph() const
+{
+	return false;
+}
+
 TSharedPtr<SDockTab> FDialogBuilderEditor::OpenDocument(const UObject* DocumentID, FDocumentTracker::EOpenDocumentCause Cause)
 {
 	TSharedRef<FTabPayload_UObject> Payload = FTabPayload_UObject::Make(DocumentID);
@@ -659,7 +664,7 @@ void FDialogBuilderEditor::RenameNewlyAddedAction(FName InActionName)
 		// Force a refresh immediately, the item has to be present in the list for the rename redialogs to be successful.
 		MyDialogWidget->Refresh();
 		MyDialogWidget->SelectItemByName(InActionName, ESelectInfo::OnMouseClick);
-		MyDialogWidget->OnRedialogRenameOnActionNode();
+		MyDialogWidget->OnRequestRenameOnActionNode();
 	}
 }
 
@@ -1581,7 +1586,7 @@ void FDialogBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& Ne
 	{
 		if (UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(CurrentGraphWidget->GetCurrentGraph()))
 		{
-			PropertyWidget->SetObject(DialogGraph->Dialog);
+			PropertyWidget->SetObject(DialogGraph->OwningDialog);
 		}
 	}
 	else if (Selection.Num() == 1)
@@ -1590,7 +1595,7 @@ void FDialogBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& Ne
 		{
 			if (UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(CurrentGraphWidget->GetCurrentGraph()))
 			{
-				PropertyWidget->SetObject(DialogGraph->Dialog);
+				PropertyWidget->SetObject(DialogGraph->OwningDialog);
 			}
 		}
 		else
