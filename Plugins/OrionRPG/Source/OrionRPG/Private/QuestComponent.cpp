@@ -188,13 +188,9 @@ void UQuestComponent::UnlockQuest(FName ID)
 	}
 }
 
-void UQuestComponent::LockQuest(UQuest* InQuest, FName ID)
+void UQuestComponent::LockQuest(FName ID)
 {
-	UQuest* Quest = nullptr;
-	if (InQuest)
-		Quest = InQuest;
-	else
-		Quest = QuestMap.FindRef(ID);
+	UQuest* Quest = QuestMap.FindRef(ID);
 
 	if (Quest)
 	{

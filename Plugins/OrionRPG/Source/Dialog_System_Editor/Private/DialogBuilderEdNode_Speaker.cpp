@@ -27,7 +27,7 @@ FText UDialogBuilderEdNode_Speaker::GetNodeTitle(ENodeTitleType::Type TitleType)
 
 FLinearColor UDialogBuilderEdNode_Speaker::GetBackgroundColor() const
 {
-	return GetDefault<UDialogBuilderSetting>()->ObjectiveNodeColor;
+	return GetDefault<UDialogBuilderSetting>()->SpeakerNodeColor;
 }
 
 FText UDialogBuilderEdNode_Speaker::GetTooltipText() const

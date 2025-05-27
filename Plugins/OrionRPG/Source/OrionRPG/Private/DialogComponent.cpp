@@ -8,8 +8,7 @@
 #include "UObject/UObjectIterator.h"
 #include "DialogSaveObject.h"
 #include "DialogBuilderGraph.h"
-#include "DialogBuilderNode_State.h"
-#include "DialogBuilderNode_Checkpoint.h"
+#include "DialogBuilderNode_OptionSelector.h"
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderNode_Speaker.h"
 #include "Kismet/GameplayStatics.h"
@@ -407,13 +406,8 @@ void UDialogComponent::UpdateDialog()
 		{
 			if (Dialog->CurrentNode != nullptr)
 			{
-				
-				if (UDialogBuilderNode_Checkpoint* CheckpointNode = Cast<UDialogBuilderNode_Checkpoint>(Dialog->CurrentNode))
-				{
-					//evaluate next node condition
-					EvaluateNextNodeCondition(Dialog);
-
-				}
+				//evaluate next node condition
+				EvaluateNextNodeCondition(Dialog);
 			}
 			else if (Dialog->CurrentNode == nullptr)
 			{
@@ -479,7 +473,7 @@ void UDialogComponent::EvaluateNextNodeCondition(UDialog* DialogParam)
 		{
 			//if the current node is not the same as the cached current node, it means we are in a state node
 			//and we need to start the events again
-			if (UDialogBuilderNode_State* StateNode = Cast<UDialogBuilderNode_State>(DialogParam->CurrentNode))
+			if (UDialogBuilderNode_OptionSelector* StateNode = Cast<UDialogBuilderNode_OptionSelector>(DialogParam->CurrentNode))
 			{
 				StateNode->BeginEvents(EEventRunType::E_Start);
 			}

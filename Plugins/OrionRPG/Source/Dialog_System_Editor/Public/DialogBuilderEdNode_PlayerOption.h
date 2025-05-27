@@ -1,22 +1,21 @@
-// Copyright 2025 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.UDialogBuilderEdNode_PlayerOption
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "DialogBuilderEdNode.h"
 #include "EdGraph/EdGraphNode.h"
-#include "DialogBuilderEdNode_State.generated.h"
+#include "DialogBuilderEdNode_PlayerOption.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class DIALOG_SYSTEM_EDITOR_API UDialogBuilderEdNode_State : public UDialogBuilderEdNode
+class DIALOG_SYSTEM_EDITOR_API UDialogBuilderEdNode_PlayerOption : public UDialogBuilderEdNode
 {
 	GENERATED_BODY()
 public:
-	UDialogBuilderEdNode_State();
-	virtual void AllocateDefaultPins() override;
+	UDialogBuilderEdNode_PlayerOption();
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	virtual FText GetTooltipText() const override;
 	virtual FLinearColor GetBackgroundColor() const override;

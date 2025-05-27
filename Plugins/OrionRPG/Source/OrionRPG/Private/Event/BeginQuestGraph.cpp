@@ -23,5 +23,12 @@ void UBeginQuestGraph::BeginEvent_Implementation(AController* OwnerController, A
 
 FString UBeginQuestGraph::GetNodeDisplayText_Implementation() const
 {
-	return FString::Printf(TEXT("Begin Quest Graph :  %s"), *QuestAsset->GetName());
+	if (QuestAsset)
+	{
+		return FString::Printf(TEXT("Begin Quest Graph :  %s"), *QuestAsset->GetName());
+	}
+	else
+	{
+		return FString("Begin Quest Graph");
+	}
 }

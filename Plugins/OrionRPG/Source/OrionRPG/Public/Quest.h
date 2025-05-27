@@ -42,6 +42,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, VisibleInstanceOnly, Category = "Quest")
 		FName ID;
 
+
 	/** Your Quest Name*/
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quest", meta = (MultiLine = true))
 		FText QuestName;

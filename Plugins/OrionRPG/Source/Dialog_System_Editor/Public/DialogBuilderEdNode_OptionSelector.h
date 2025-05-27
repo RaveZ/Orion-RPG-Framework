@@ -1,21 +1,21 @@
-// Copyright 2025 Ivan Chandra. All Rights Reserved.
+// Copyright 2025 Ivan Chandra. All Rights Reserved.UDialogBuilderEdNode_OptionSelector
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "DialogBuilderEdNode.h"
 #include "EdGraph/EdGraphNode.h"
-#include "DialogBuilderEdNode_Checkpoint.generated.h"
+#include "DialogBuilderEdNode_OptionSelector.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class DIALOG_SYSTEM_EDITOR_API UDialogBuilderEdNode_Checkpoint : public UDialogBuilderEdNode
+class DIALOG_SYSTEM_EDITOR_API UDialogBuilderEdNode_OptionSelector : public UDialogBuilderEdNode
 {
 	GENERATED_BODY()
 public:
-	UDialogBuilderEdNode_Checkpoint();
+	UDialogBuilderEdNode_OptionSelector();
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	virtual FText GetTooltipText() const override;
 	virtual FLinearColor GetBackgroundColor() const override;

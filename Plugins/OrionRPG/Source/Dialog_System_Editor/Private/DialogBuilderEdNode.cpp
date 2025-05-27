@@ -10,8 +10,8 @@
 #include "DialogBuilderNode.h"
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderNode_Speaker.h"
-#include "DialogBuilderNode_Checkpoint.h"
-#include "DialogBuilderNode_State.h"
+#include "DialogBuilderNode_OptionSelector.h"
+#include "DialogBuilderNode_PlayerOption.h"
 #include "DialogBuilderEditorUtils.h"
 #include "GraphDiffControl.h"
 #include "Decorator/OrionDecorator.h"
@@ -235,13 +235,13 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 				{
 					FindUniqueNodeName("SpeakerNode");
 				}
-				if (UDialogBuilderNode_State* StateDialogNode = Cast<UDialogBuilderNode_State>(NodeInstance))
+				if (UDialogBuilderNode_OptionSelector* StateDialogNode = Cast<UDialogBuilderNode_OptionSelector>(NodeInstance))
 				{
-					FindUniqueNodeName("StateNode");
+					FindUniqueNodeName("SelectorNode");
 				}
-				if (UDialogBuilderNode_Checkpoint* CheckpointDialogNode = Cast<UDialogBuilderNode_Checkpoint>(NodeInstance))
+				if (UDialogBuilderNode_PlayerOption* CheckpointDialogNode = Cast<UDialogBuilderNode_PlayerOption>(NodeInstance))
 				{
-					FindUniqueNodeName("CheckpointNode");
+					FindUniqueNodeName("OptionNode");
 				}
 			}
 			UDialogBuilderNode* DialogNode = NodeInstance ?  Cast<UDialogBuilderNode>(NodeInstance) : nullptr;
@@ -262,7 +262,6 @@ void UDialogBuilderEdNode::InitializeInstance()
 	if (DialogNode && DialogAsset)
 	{
 		DialogNode->InitializeFromAsset(*DialogAsset);
-
 	}
 }
 

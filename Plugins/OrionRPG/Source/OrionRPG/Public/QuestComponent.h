@@ -140,7 +140,7 @@ public:
 		void UnlockQuest(FName ID = NAME_None);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void LockQuest(UQuest* InQuest = nullptr, FName ID = NAME_None);
+		void LockQuest(FName ID = NAME_None);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void RestartQuest(FName ID, FName NodeID = NAME_None, bool bStartFromNodeID = false);

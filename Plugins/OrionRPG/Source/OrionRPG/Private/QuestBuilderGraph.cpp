@@ -30,8 +30,6 @@ void UQuestBuilderGraph::Deinitialize()
 
 void UQuestBuilderGraph::GetAllGraphs(TArray<UEdGraph*>& Graphs) const
 {
-	
-
 	for (int32 i = 0; i < QuestGraphPages.Num(); ++i)
 	{
 		UEdGraph* Graph = QuestGraphPages[i];

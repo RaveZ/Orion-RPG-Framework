@@ -19,10 +19,7 @@ class DIALOG_SYSTEM_EDITOR_API UDialogBuilderSetting : public UObject
 public:
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
-	FLinearColor FailedNodeColor;
-
-	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
-	FLinearColor SuccessNodeColor;
+	FLinearColor SpeakerNodeColor;
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor StateNodeColor;
@@ -31,10 +28,10 @@ public:
 	FLinearColor RootNodeColor;
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
-	FLinearColor ObjectiveNodeColor;
+	FLinearColor OptionSelectorNodeColor;
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
-	FLinearColor CheckpointNodeColor;
+	FLinearColor PlayerOptionNodeColor;
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor SubNodeColor;

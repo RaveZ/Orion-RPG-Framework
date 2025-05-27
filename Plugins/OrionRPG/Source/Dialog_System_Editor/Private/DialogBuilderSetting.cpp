@@ -6,16 +6,16 @@
 
 UDialogBuilderSetting::UDialogBuilderSetting()
 {
-	FailedNodeColor = FLinearColor(.34f, .024f, .024f);
-	SuccessNodeColor = FLinearColor(0.20f, 0.32f, 0.15f);
-	ObjectiveNodeColor = FLinearColor(0.15f, 0.15f, 0.15f);
-	CheckpointNodeColor = FLinearColor(.05f, .05f, .34f);
+	SpeakerNodeColor = FLinearColor(0.15f, 0.15f, 0.15f);
+	OptionSelectorNodeColor = FLinearColor(.063f, .096f, .1875f);
+	PlayerOptionNodeColor = FLinearColor(.123f, .274f, .34f);
 	SubNodeColor = FLinearColor(0.05f, 0.05f, 0.05f, 0.7f);
 	RootNodeColor = FLinearColor(0.5f, 0.5f, 0.5f, 0.2f);
-	bEdgeEnabled = false;
+	bEdgeEnabled = false;            
 	bCanRenameNode = true;
 	bCanBeCyclical = false;
 }
+
 
 UDialogBuilderSetting::~UDialogBuilderSetting()
 {
