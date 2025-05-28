@@ -73,7 +73,8 @@ void SQuestPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActi
 
 	ActionBox.Get().AddSlot()
 		.AutoWidth()
-		.VAlign(VAlign_Center)
+		.Padding(FMargin(0.0f, 5.0f, 0.0f, 0.0f))
+		.VAlign(VAlign_Top)
 		[
 			IconWidget
 		];
@@ -125,19 +126,41 @@ TSharedRef<SWidget> SQuestPaletteItem::CreateTextSlotWidget(FCreateWidgetForActi
 
 	TSharedPtr<SToolTip> ToolTipWidget = ConstructToolTipWidget();
 
+	TSharedPtr<STextBlock> DescriptionText;
 	TSharedPtr<SOverlay> DisplayWidget;
 	TSharedPtr<SInlineEditableTextBlock> EditableTextElement;
 	SAssignNew(DisplayWidget, SOverlay)
 		+ SOverlay::Slot()
 		[
-			SAssignNew(EditableTextElement, SInlineEditableTextBlock)
-				.Text(this, &SQuestPaletteItem::GetDisplayText)
-				.HighlightText(InCreateData->HighlightText)
-				.ToolTip(ToolTipWidget)
-				.OnVerifyTextChanged(OnVerifyTextChanged)
-				.OnTextCommitted(OnTextCommitted)
-				.IsSelected(InCreateData->IsRowSelectedDelegate)
-				.IsReadOnly(false)
+			SNew(SVerticalBox)
+				+ SVerticalBox::Slot()
+				.Padding(FMargin(8.0f, 0.0f, 0.0f, 0.0f))
+				.AutoHeight()
+				[
+					SAssignNew(EditableTextElement, SInlineEditableTextBlock)
+						.Text(this, &SQuestPaletteItem::GetDisplayText)
+						.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
+						.Font(FCoreStyle::GetDefaultFontStyle("Bold", 11.5f))
+						.HighlightText(InCreateData->HighlightText)
+						.ToolTip(ToolTipWidget)
+						.OnVerifyTextChanged(OnVerifyTextChanged)
+						.OnTextCommitted(OnTextCommitted)
+						.IsSelected(InCreateData->IsRowSelectedDelegate)
+						.IsReadOnly(false)
+
+				]
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.Padding(FMargin(15.0f, 0.0f, 0.0f, 0.0f))
+				[
+					// DESCRIPTION MESSAGE
+					SAssignNew(DescriptionText, STextBlock)
+						.Text(this, &SQuestPaletteItem::GetQuestTag)
+						.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Bold"))
+						.AutoWrapText(true)
+						.WrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping)
+				]
+			
 		];
 	InlineRenameWidget = EditableTextElement.ToSharedRef();
 
@@ -155,11 +178,26 @@ FText SQuestPaletteItem::GetDisplayText() const
 		FAssetSchemaAction_QuestSystemGraph* QuestGraphAction = (FAssetSchemaAction_QuestSystemGraph*)GraphAction.Get();
 		if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(QuestGraphAction->EdGraph))
 		{
-			MenuDescriptionCache.SetCachedText(FText::FromName(QuestEdGraph->Quest->ID), QuestSchema);
+			MenuDescriptionCache.SetCachedText(QuestEdGraph->Quest->QuestName, QuestSchema);
 		}
 	}
 
 	return MenuDescriptionCache;
+}
+
+FText SQuestPaletteItem::GetQuestTag() const
+{
+	const UEdGraphSchema_QuestBuilder* QuestSchema = GetDefault<UEdGraphSchema_QuestBuilder>();
+	
+	TSharedPtr< FEdGraphSchemaAction > GraphAction = ActionPtr.Pin();
+	FAssetSchemaAction_QuestSystemGraph* QuestGraphAction = (FAssetSchemaAction_QuestSystemGraph*)GraphAction.Get();
+	if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(QuestGraphAction->EdGraph))
+	{
+		return FText::FromString("Quest Tag: " + QuestEdGraph->Quest->QuestTag.GetTagName().ToString());
+	}
+	
+	return FText::FromString("QuestTag : None");
+
 }
 
 bool SQuestPaletteItem::OnNameTextVerifyChanged(const FText& InNewText, FText& OutErrorMessage)
@@ -168,7 +206,7 @@ bool SQuestPaletteItem::OnNameTextVerifyChanged(const FText& InNewText, FText& O
 
 	FName OriginalName;
 
-	FAssetSchemaAction_QuestSystemGraph* QuestGraphAction = (FAssetSchemaAction_QuestSystemGraph*)ActionPtr.Pin().Get();
+	/*FAssetSchemaAction_QuestSystemGraph* QuestGraphAction = (FAssetSchemaAction_QuestSystemGraph*)ActionPtr.Pin().Get();
 	if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(QuestGraphAction->EdGraph))
 	{
 		OriginalName = QuestEdGraph->Quest->ID;
@@ -202,7 +240,7 @@ bool SQuestPaletteItem::OnNameTextVerifyChanged(const FText& InNewText, FText& O
 				}
 			}
 		}
-	}
+	}*/
 
 	UStruct* ValidationScope = nullptr;
 
@@ -223,61 +261,10 @@ void SQuestPaletteItem::OnNameTextCommitted(const FText& NewText, ETextCommit::T
   FAssetSchemaAction_QuestSystemGraph* QuestGraphAction = (FAssetSchemaAction_QuestSystemGraph*)ActionPtr.Pin().Get();  
   if (UQuestBuilderEdGraph* QuestEdGraph = Cast<UQuestBuilderEdGraph>(QuestGraphAction->EdGraph))  
   {
-      OriginalName = QuestEdGraph->Quest->ID;  
-      QuestEdGraph->Quest->ID = NewName;  
-      QuestEdGraph->Rename(*(NewName.ToString()), QuestBuilderGraph, REN_DoNotDirty | REN_ForceNoResetLoaders);  
+      QuestEdGraph->Quest->QuestName = FText::FromName(NewName);
+      //QuestEdGraph->Rename(*(NewName.ToString()), QuestBuilderGraph, REN_DoNotDirty | REN_ForceNoResetLoaders);  
 
-
-      if (!QuestEdGraph->Quest->QuestName.IsFromStringTable())
-      {
-          if (QuestEdGraph->Quest->QuestName.IsEmpty() || QuestEdGraph->Quest->QuestName.EqualTo(FText::FromName(OriginalName)))
-          {
-              QuestEdGraph->Quest->QuestName = FText::FromName(NewName);
-          }
-      }
-
-      FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-      TArray<FAssetData> QuestGraphDataArray;
-      AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
-
-      for (const FAssetData& AssetData : QuestGraphDataArray)
-      {
-          UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
-          if (QuestGraph)
-          {
-              for (auto& Quest : QuestGraph->QuestList)
-              {
-                  for (auto& QuestDecorator : Quest->Decorators)
-                  {
-                      if (QuestDecorator && QuestDecorator->QuestID == OriginalName)
-                      {
-                          QuestDecorator->QuestID = NewName;
-                          QuestDecorator->Modify();
-                      }
-                  }
-                  for (auto& Node : Quest->AllNodes)
-                  {
-                      for (auto& NodeDecorator : Node->Decorators)
-                      {
-                          if (NodeDecorator && NodeDecorator->QuestID == OriginalName)
-                          {
-                              NodeDecorator->QuestID = NewName;
-                              NodeDecorator->Modify();
-                          }
-                      }
-                      for (auto& NodeEvent : Node->Events)
-                      {
-                          if (NodeEvent && NodeEvent->QuestID == OriginalName)
-                          {
-                              NodeEvent->QuestID = NewName;
-                              NodeEvent->Modify();
-                          }
-                      }
-                  }
-              }
-          }
-      }
+      
   }  
   QuestEditorPtr.Pin()->GetMyQuestWidget()->Refresh();  
 

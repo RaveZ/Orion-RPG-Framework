@@ -14,7 +14,7 @@ class ORIONRPG_API UQuestBuilderNode_Checkpoint : public UQuestBuilderNode
 	GENERATED_BODY()
 public:
 
-    virtual void Initialize() override;
+    virtual void Initialize(bool bLaunchEventOnLoad = false) override;
 
     UFUNCTION(BlueprintCallable, Category = "CheckpointNode")
         void BeginCheckpoint();

@@ -9,19 +9,20 @@
 
 UUnlockQuest::UUnlockQuest()
 {
-	bUseQuestID = true;
+	bUseQuestTag = true;
 }
 
-void UUnlockQuest::BeginEvent_Implementation(AController* OwnerController, APawn* ControlledPawn)
+void UUnlockQuest::BeginEvent(AController* OwnerController, APawn* ControlledPawn)
 {
-	if (!QuestID.IsNone())
+	if (QuestTag.IsValid())
 	{
-		GetQuestComponent()->UnlockQuest(QuestID);
+		GetQuestComponent()->UnlockQuestFromTag(QuestTag);
 	}
+	EndEvent();
 	
 }
 
 FString UUnlockQuest::GetNodeDisplayText_Implementation() const
 {
-	return FString::Printf(TEXT("Unlock Quest :  %s"), *QuestID.ToString());
+	return FString::Printf(TEXT("Unlock Quest :  %s"), *GetShortTag(QuestTag));
 }

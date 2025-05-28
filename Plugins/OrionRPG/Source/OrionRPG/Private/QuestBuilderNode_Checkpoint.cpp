@@ -7,8 +7,9 @@
 #include "Event/OrionEvent.h"
 
 
-void UQuestBuilderNode_Checkpoint::Initialize()
+void UQuestBuilderNode_Checkpoint::Initialize(bool bLaunchEventOnLoad)
 {
+	Super::Initialize(bLaunchEventOnLoad);
     BeginCheckpoint();
 }
 
@@ -21,7 +22,7 @@ void UQuestBuilderNode_Checkpoint::BeginCheckpoint()
 #if WITH_EDITOR
 FText UQuestBuilderNode_Checkpoint::GetNodeTitle() const
 {
-    return FText::FromName(ID).IsEmpty() ? FText::FromString(UQuestBuilderNode::GetShortTypeName(this)) : FText::FromName(ID);
+	return FText::FromString("Checkpoint Node");
 }
 void UQuestBuilderNode_Checkpoint::SetNodeTitle(const FText& NewTitle)
 {

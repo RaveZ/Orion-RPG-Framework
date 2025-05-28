@@ -32,11 +32,20 @@ public:
 	UQuestBuilderNode();
 	virtual ~UQuestBuilderNode();
 
+	/**Asset ID*/
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Detail", meta = (DisplayPriority = 0))
 		FName ID;
 
+	/** Gameplay Tag for this node, each tag should be unique */
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Detail")
+		FGameplayTag NodeTag;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (MultiLine = true))
 		FText Description;
+
+	/** Add this Node Description to Journal? */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", DisplayName = "Add To Journal?")
+		bool bAddToJournal;
 	
 	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Events")
 		TArray<TObjectPtr<UOrionEvent>> Events;
@@ -62,10 +71,17 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
 		virtual UQuestBuilderEdge* GetEdge(UQuestBuilderNode* ChildNode);
 
+	UPROPERTY(BlueprintReadWrite, Category = "Quest")
+		TObjectPtr<AController> OwningController;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Quest")
+		TObjectPtr < UQuestComponent> QuestComponent;
+
+
 	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
 		bool IsLeafNode() const;
 
-	virtual void Initialize();
+	virtual void Initialize(bool bLaunchEventOnLoad = false);
 	virtual void Deinitialize();
 
 	/** initialize any asset related data */
@@ -92,13 +108,16 @@ public:
 
 	virtual FText GetDescription_Implementation() const;
 
-	virtual void BeginEvents(enum EEventRunType EventRunType);
+	virtual void LaunchStartEventQueue();
+	virtual void LaunchEndEventQueue();
 
 	/** returns short name of object's class (BTTaskNode_Wait -> Wait) */
 	static FString GetShortTypeName(const UObject* Ob);
 
+protected:
+	TArray<UOrionEvent*> StartEventQueue;
+	TArray<UOrionEvent*> EndEventQueue;
 
-	virtual void EvaluateUniqueID();
 public:
 	//////////////////////////////////////////////////////////////////////////
 #if WITH_EDITORONLY_DATA
@@ -122,7 +141,6 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "QuestBuilderNode", meta = (ClampMin = "0", EditCondition = "ChildrenLimitType == EDialogNodeLimits::Limited", EditConditionHides))
 		int32 ChildrenLimit;
-
 
 
 #endif

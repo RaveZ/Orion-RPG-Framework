@@ -9,19 +9,20 @@
 
 UFailQuest::UFailQuest()
 {
-	bUseQuestID = true;
+	bUseQuestTag = true;
 }
 
-void UFailQuest::BeginEvent_Implementation(AController* OwnerController, APawn* ControlledPawn)
+void UFailQuest::BeginEvent(AController* OwnerController, APawn* ControlledPawn)
 {
-	if (!QuestID.IsNone())
+	if (QuestTag.IsValid())
 	{
-		GetQuestComponent()->FailQuest(QuestID);
+		GetQuestComponent()->FailQuestFromTag(QuestTag);
 	}
+	EndEvent();
 	
 }
 
 FString UFailQuest::GetNodeDisplayText_Implementation() const
 {
-	return FString::Printf(TEXT("Fail Quest :  %s"), *QuestID.ToString());
+	return FString::Printf(TEXT("Fail Quest :  %s"), *GetShortTag(QuestTag));
 }

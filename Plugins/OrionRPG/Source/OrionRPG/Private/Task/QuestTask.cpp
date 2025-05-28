@@ -7,6 +7,7 @@
 #include "Event/OrionEvent.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode.h"
+#include "QuestBuilderFunctionLibrary.h"
 #include "QuestBuilderNode_Objective.h"
 #include <TimerManager.h>
 
@@ -28,7 +29,6 @@ bool UQuestTask::CompleteTask()
 
     TaskState = ETaskState::E_Complete;
     K2_TaskCompleted(GetOwningController(), GetOwningPawn());
-	GetQuestComponent()->UpdateQuest();
     GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast();
 
 	Deactivate();
@@ -79,26 +79,29 @@ void UQuestTask::TickTask_Implementation()
 
 AController* UQuestTask::GetOwningController() const
 {
-	if (!QuestGraph)
-		return nullptr;
-
-	return QuestGraph->OwningController;
+	if (GetQuestComponent())
+	{
+		return GetQuestComponent()->GetOwningController();
+	}
+	return nullptr;
 }
 
 APawn* UQuestTask::GetOwningPawn() const
 {
-	if (!QuestGraph)
-		return nullptr;
-
-	return QuestGraph->OwningPawn;
+	if (GetQuestComponent())
+	{
+		return GetQuestComponent()->GetOwningPawn();
+	}
+	return nullptr;
 }
 
 UQuestComponent* UQuestTask::GetQuestComponent() const
 {
-	if (!QuestGraph)
-		return nullptr;
-
-	return QuestGraph->QuestComponent;
+	if (GetWorld())
+	{
+		return UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
+	}
+	return nullptr;
 }
 
 UQuestBuilderGraph* UQuestTask::GetOwningQuestGraph() const

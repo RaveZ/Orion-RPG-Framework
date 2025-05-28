@@ -7,25 +7,20 @@
 
 UIsQuestCompleted::UIsQuestCompleted()
 {
-    bUseQuestID = true;
+    bUseQuestTag = true;
 }
 
 bool UIsQuestCompleted::PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const
 {
+    FName QuestID = QuestTag.GetTagName();
     if (UQuest* FoundedQuest = GetQuestComponent()->QuestMap.FindRef(QuestID))
     {
-        switch (FoundedQuest->QuestState)
-        {
-        case EQuestState::E_Complete:
-            return true;
-        default:
-            return false;
-        }
+        return GetQuestComponent()->IsQuestAtState(QuestTag, EQuestState::E_Complete);
     }
     return false;
 }
 
 FString UIsQuestCompleted::GetNodeDisplayText_Implementation() const
 {
-    return FString::Printf(TEXT("Is Quest Completed :  %s"), *QuestID.ToString());
+    return FString::Printf(TEXT("Is Quest Completed :  %s"), *GetShortTag(QuestTag));
 }

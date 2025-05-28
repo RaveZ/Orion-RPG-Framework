@@ -9,13 +9,15 @@
 
 #define LOCTEXT_NAMESPACE "QuestSystemGraphNode_TaskManager"
 
-void UQuestBuilderNode_Objective::Initialize()
+void UQuestBuilderNode_Objective::Initialize(bool bLaunchEventOnLoad)
 {
+    Super::Initialize(bLaunchEventOnLoad);
 	BeginAllTask();
 }
 
 void UQuestBuilderNode_Objective::Deinitialize()
 {
+	Super::Deinitialize();
     for (auto& Task : Tasks)
     {
         if (Task)
@@ -70,7 +72,7 @@ bool UQuestBuilderNode_Objective::IsAllTaskCompleted()
 #if WITH_EDITOR
 FText UQuestBuilderNode_Objective::GetNodeTitle() const
 {
-    return FText::FromName(ID).IsEmpty() ? FText::FromString(UQuestBuilderNode::GetShortTypeName(this)) : FText::FromName(ID);
+    return FText::FromString("Objective Node");
 }
 
 void UQuestBuilderNode_Objective::SetNodeTitle(const FText& NewTitle)

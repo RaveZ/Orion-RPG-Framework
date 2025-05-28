@@ -32,65 +32,12 @@ UQuestComponent* UOrionDecorator::GetQuestComponent() const
 	return nullptr;
 }
 
-
-
-TArray<FName> UOrionDecorator::GetAllQuestID()
+FString UOrionDecorator::GetShortTag(FGameplayTag Tag) const
 {
-	TArray<FName> QuestIDs;
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	FString TagString = Tag.ToString();
+	Tag.ToString().Split(TEXT("."), nullptr, &TagString, ESearchCase::IgnoreCase, ESearchDir::FromEnd);
 
-	TArray<FAssetData> QuestGraphDataArray;
-	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
-
-	for (const FAssetData& AssetData : QuestGraphDataArray)
-	{
-		UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
-		if (QuestGraphAsset)
-		{
-			for (UQuest* QuestObj : QuestGraphAsset->QuestList)
-			{
-				QuestIDs.Add(QuestObj->ID);
-			}
-		}
-	}
-
-	return QuestIDs;
-}
-
-TArray<FName> UOrionDecorator::GetAllNodeID()
-{
-	TArray<FName> NodeIDs;
-	if (bUseQuestID)
-	{
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-		TArray<FAssetData> QuestGraphDataArray;
-		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
-
-		for (const FAssetData& AssetData : QuestGraphDataArray)
-		{
-			UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
-			if (QuestGraphAsset)
-			{
-				for (UQuest* QuestObj : QuestGraphAsset->QuestList)
-				{
-					if (QuestObj->ID != QuestID) continue;
-					for (UQuestBuilderNode* Node : QuestObj->AllNodes)
-					{
-						if (Node)
-						{
-							if (UQuestBuilderNode_Root* RootNode = Cast<UQuestBuilderNode_Root>(Node)) continue;
-							NodeIDs.Emplace(Node->ID);
-						}
-					}
-				}
-			}
-		}
-	}
-	else
-	{
-	}
-	return NodeIDs;
+	return TagString;
 }
 
 FString UOrionDecorator::GetNodeName() 
@@ -164,14 +111,6 @@ UWorld* UOrionDecorator::GetWorld() const
 void UOrionDecorator::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-	if (PropertyChangedEvent.Property)
-	{
-		FName PropertyName = PropertyChangedEvent.Property->GetFName();
-		if (PropertyName == GET_MEMBER_NAME_CHECKED(UOrionDecorator, QuestID))
-		{
-			NodeID = NAME_None;
-		}
-	}
 }
 #endif
 #undef LOCTEXT_NAMESPACE

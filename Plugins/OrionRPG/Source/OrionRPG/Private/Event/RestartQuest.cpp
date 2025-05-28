@@ -11,27 +11,28 @@
 
 URestartQuest::URestartQuest()
 {
-	bUseQuestID = true;
-	bUseNodeID = true;
+	bUseQuestTag = true;
+	bUseNodeTag = true;
 }
 
-void URestartQuest::BeginEvent_Implementation(AController* OwnerController, APawn* ControlledPawn)
+void URestartQuest::BeginEvent(AController* OwnerController, APawn* ControlledPawn)
 {
-	if (!QuestID.IsNone())
+	if (QuestTag.IsValid())
 	{
-		GetQuestComponent()->RestartQuest(QuestID, NodeID, bUseNodeID);
+		GetQuestComponent()->RestartQuestFromTag(QuestTag, NodeTag, true);
 	}
+	EndEvent();
 }
 
 FString URestartQuest::GetNodeDisplayText_Implementation() const
 {
-    if(!(NodeID == NAME_None))
+    if(NodeTag.IsValid())
     {  
-		return FString::Printf(TEXT("Restart Quest :  %s From %s"), *QuestID.ToString(), *NodeID.ToString());
+		return FString::Printf(TEXT("Restart Quest :  %s From %s"), *GetShortTag(QuestTag), *GetShortTag(NodeTag));
 	}
 	else
 	{
-		return FString::Printf(TEXT("Restart Quest :  %s"), *QuestID.ToString());
+		return FString::Printf(TEXT("Restart Quest :  %s"), *GetShortTag(QuestTag));
 	}
 
 }

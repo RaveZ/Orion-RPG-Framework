@@ -63,7 +63,6 @@ void UQuestBuilderEdGraph::UpdateAsset(bool bForce)
 
 	UpdateAllSubnodeDependencies();
 
-
 	for (int i = 0; i < Nodes.Num(); ++i)
 	{
 		if (UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(Nodes[i]))
@@ -85,7 +84,6 @@ void UQuestBuilderEdGraph::UpdateAsset(bool bForce)
 				//cache quest and node dependencies
 				NodeMap.Add(QuestNode, QuestEdNode);
 				Quest->AllNodes.Add(QuestNode);
-				Quest->NodeMap.Emplace(QuestNode->ID, QuestNode);
 
 				QuestNode->QuestGraph = QuestGraph;
 				QuestNode->Quest = Quest;

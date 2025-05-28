@@ -635,11 +635,11 @@ void FQuestBuilderEditor::NewDocument_OnClicked(ECreatedQuestDocumentType GraphT
 	}
 
 	// Now open the new graph
-	if (NewGraph)
+	if (NewGraph)	
 	{
 		OpenDocument(NewGraph, FDocumentTracker::OpenNewDocument);
 
-		RenameNewlyAddedAction(DocumentName);
+		//RenameNewlyAddedAction(DocumentName);
 	}
 	else
 	{

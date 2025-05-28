@@ -35,14 +35,14 @@ FText UDialogBuilderNode::GetDescription_Implementation() const
 	return Description;
 }
 
-void UDialogBuilderNode::BeginEvents(EEventRunType EventRunType)
+void UDialogBuilderNode::BeginEvents(EEventLaunchType EventLaunchType)
 {
-	//End of a Node, Launch Event with the EventRunType param and Both Type
+	//End of a Node, Launch Event with the EventLaunchType param and Both Type
 	for (auto& Event : Events)
 	{
 		if (Event)
 		{
-			if (Event->EventRunType == EEventRunType::E_Both || Event->EventRunType == EventRunType)
+			if (Event->EventLaunchType == EEventLaunchType::E_Both || Event->EventLaunchType == EventLaunchType)
 			{
 				Event->BeginEvent(GetOwningController(), GetOwningPawn());
 			}

@@ -11,12 +11,13 @@ UBeginQuestGraph::UBeginQuestGraph()
 {
 }
 
-void UBeginQuestGraph::BeginEvent_Implementation(AController* OwnerController, APawn* ControlledPawn)
+void UBeginQuestGraph::BeginEvent(AController* OwnerController, APawn* ControlledPawn)
 {
 	if (GetQuestComponent())
 	{
 		GetQuestComponent()->BeginQuest(QuestAsset);
 	}
+	EndEvent();
 	
 	
 }

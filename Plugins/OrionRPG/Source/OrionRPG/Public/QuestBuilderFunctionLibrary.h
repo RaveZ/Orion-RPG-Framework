@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Quest.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "GameplayTagContainer.h"
 #include "QuestBuilderFunctionLibrary.generated.h"
 
 class UQuestComponent;
@@ -14,12 +15,6 @@ class ORIONRPG_API UQuestBuilderFunctionLibrary : public UBlueprintFunctionLibra
 {
 	GENERATED_BODY()
 public:
-	UFUNCTION(CallInEditor, BlueprintCallable)
-	static TArray<FName> GetAllQuestID();
-
-
-	UFUNCTION(CallInEditor, BlueprintCallable)
-	static TArray<FName> GetNodeIDFromCachedQuest();
 
 	/**
 	* Grab the Quest component from the local pawn or player controller, whichever it exists on.
@@ -43,7 +38,7 @@ public:
 	* @return The Quest.
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
-	static class UQuest* FindQuest(const UObject* WorldContextObject, FName QuestID);
+	static class UQuest* FindQuest(const UObject* WorldContextObject, FGameplayTag QuestTag);
 
 	/**
 	* Check if the current objective valid from QuestID and NodeID.
@@ -51,7 +46,7 @@ public:
 	* @return true if the quest id and node id match.
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
-	static bool CanProgressQuestObjective(const UObject* WorldContextObject, FName QuestID, FName NodeID);
+	static bool CanProgressQuestObjective(const UObject* WorldContextObject, FGameplayTag QuestTag, FGameplayTag NodeTag);
 
 	/**
 	* Check if the quest at which state from the given Quest ID
@@ -59,7 +54,7 @@ public:
 	* @return bool.
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
-	static bool IsQuestAtState(const UObject* WorldContextObject, FName ID, EQuestState QuestState);
+	static bool IsQuestAtState(const UObject* WorldContextObject, FGameplayTag QuestTag, EQuestState QuestState);
 
 	/**
 	* Grab the Quest component from the local pawn or player controller, whichever it exists on.

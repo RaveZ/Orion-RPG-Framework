@@ -2,6 +2,7 @@
 
 
 #include "Quest.h"
+#include "QuestComponent.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode.h"
 #include "QuestBuilderEdge.h"
@@ -29,6 +30,28 @@ bool UQuest::Initialize(UQuestComponent* InitializingComp)
 		if (!InitializingComp)
 		{
 			return false;
+		}
+		OwningController = InitializingComp->GetOwningController();
+		QuestComponent = InitializingComp;
+		//ensure id matches with tag
+		if (QuestTag.IsValid())
+		{
+			ID = QuestTag.GetTagName();
+		}
+		NodeMap.Reset();
+		for (auto& Node : AllNodes)
+		{
+			Node->Quest = this;
+			Node->OwningController = InitializingComp->GetOwningController();
+			Node->QuestComponent = InitializingComp;
+			if (Node)
+			{
+				if (Node->NodeTag.IsValid())
+				{
+					Node->ID = Node->NodeTag.GetTagName();
+				}
+				NodeMap.Emplace(Node->ID, Node);
+			}
 		}
 	}
 	return false;
@@ -103,26 +126,21 @@ void UQuest::GetNodesByLevel(int Level, TArray<UQuestBuilderNode*>& Nodes)
 
 AController* UQuest::GetOwningController()
 {
-	if (!QuestGraph)
-		return nullptr;
-
-	return QuestGraph->OwningController;
+	return OwningController;
 }
 
 APawn* UQuest::GetOwningPawn()
 {
-	if (!QuestGraph)
-		return nullptr;
-
-	return QuestGraph->OwningPawn;
+	if (QuestComponent)
+	{
+		return QuestComponent->GetOwningPawn();
+	}
+	return nullptr;
 }
 
 UQuestComponent* UQuest::GetQuestComponent()
 {
-	if (!QuestGraph)
-		return nullptr;
-
-	return QuestGraph->QuestComponent;
+	return QuestComponent;
 }
 
 UQuestBuilderGraph* UQuest::GetOwningQuestGraph() const

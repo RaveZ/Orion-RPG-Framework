@@ -305,8 +305,8 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 		: FMargin(8.0f);
 
 	const float NodeMaxWidth = QuestEdNode && QuestEdNode->IsSubNode()
-		? 525.f
-		: 550.f;
+		? 425.f
+		: 450.f;
 
 	const float NodeMinWidth = QuestEdNode && QuestEdNode->IsSubNode()
 		? 200.f
@@ -435,13 +435,24 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 																]
 																+ SVerticalBox::Slot()
 																.AutoHeight()
+																.Padding(FMargin(2.0f, 3.0f, 2.0f, 4.0f))
+																[
+																	// NodeTag
+																	SAssignNew(DescriptionText, STextBlock)
+																		.Visibility(this, &SGraphNode_QuestBuilderNode::GetNodeTagVisibility)
+																		.Text(this, &SGraphNode_QuestBuilderNode::GetNodeTagDescription)
+																		.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Bold"))
+																		.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+																]
+																+ SVerticalBox::Slot()
+																.AutoHeight()
 																.Padding(FMargin(2.0f, 0.0f, 2.0f, 4.0f))
 																[
 																	// DESCRIPTION MESSAGE
 																	SAssignNew(DescriptionText, STextBlock)
 																		.Visibility(this, &SGraphNode_QuestBuilderNode::GetDescriptionVisibility)
 																		.Text(this, &SGraphNode_QuestBuilderNode::GetDescription)
-																		.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Bold"))
+																		.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Italic"))
 																		.AutoWrapText(true)
 																		.WrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping)
 																]
@@ -460,6 +471,7 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 																	SNew(STextBlock)
 																		.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
 																		.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+																		.Font(FCoreStyle::GetDefaultFontStyle("Bold", 9.5))
 																		.Clipping(EWidgetClipping::ClipToBounds)
 																]
 																+ SVerticalBox::Slot()
@@ -476,7 +488,7 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 																			SAssignNew(DescriptionText, STextBlock)
 																				.Visibility(this, &SGraphNode_QuestBuilderNode::GetDescriptionVisibility)
 																				.Text(this, &SGraphNode_QuestBuilderNode::GetDescription)
-																				.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Bold"))
+																				.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Italic"))
 																				.AutoWrapText(true)
 																				.WrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping)
 																]
@@ -1007,12 +1019,31 @@ FText SGraphNode_QuestBuilderNode::GetDescription() const
 	UQuestBuilderEdNode* QuestEdNode = CastChecked<UQuestBuilderEdNode>(GraphNode);
 	return QuestEdNode ? QuestEdNode->GetDescription() : FText::GetEmpty();
 }
+FText SGraphNode_QuestBuilderNode::GetNodeTagDescription() const
+{
+	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);
+	UQuestBuilderNode* QuestNode = QuestEdNode ? Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance) : nullptr;
+	if (QuestNode)
+	{
+		return FText::FromString("Tag: " + QuestNode->NodeTag.GetTagName().ToString());
+	}
+	return FText::FromString("Tag: None");
+}
 EVisibility SGraphNode_QuestBuilderNode::GetDescriptionVisibility() const
 {
 	// LOD this out once things get too small
 	TSharedPtr<SGraphPanel> MyOwnerPanel = GetOwnerPanel();
 	return (!MyOwnerPanel.IsValid() || MyOwnerPanel->GetCurrentLOD() > EGraphRenderingLOD::LowDetail) ? EVisibility::Visible : EVisibility::Collapsed;
 
+}
+EVisibility SGraphNode_QuestBuilderNode::GetNodeTagVisibility() const
+{
+	UQuestBuilderEdNode_Root* RootQuestEdNode = Cast<UQuestBuilderEdNode_Root>(GraphNode);
+	if (RootQuestEdNode)
+	{
+		return EVisibility::Collapsed;
+	}
+	return EVisibility::Visible;
 }
 EVisibility SGraphNode_QuestBuilderNode::GetTaskVisibility() const
 {
@@ -1214,50 +1245,7 @@ void SGraphNode_QuestBuilderNode::OnNameTextCommited(const FText& InText, ETextC
 		QuestNode->Modify();
 		QuestNode->SetNodeTitle(FText::FromString(NewNameString));
 		UpdateGraphNode();
-
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-		TArray<FAssetData> QuestGraphDataArray;
-		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
-
-		for (const FAssetData& AssetData : QuestGraphDataArray)
-		{
-			UQuestBuilderGraph* QuestGraph = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
-			if (QuestGraph)
-			{
-				for (auto& Quest : QuestGraph->QuestList)
-				{
-					for (auto& QuestDecorator : Quest->Decorators)
-					{
-						if (QuestDecorator && QuestDecorator->NodeID == OriginalName && QuestDecorator->QuestID == OwningQuest->ID)
-						{
-							QuestDecorator->NodeID = NewName;
-							QuestDecorator->Modify();
-						}
-					}
-					for (auto& Node : Quest->AllNodes)
-					{
-						for (auto& NodeDecorator : Node->Decorators)
-						{
-							if (NodeDecorator && NodeDecorator->NodeID == OriginalName && NodeDecorator->QuestID == OwningQuest->ID)
-							{
-								NodeDecorator->NodeID = NewName;
-								NodeDecorator->Modify();
-							}
-						}
-						for (auto& NodeEvent : Node->Events)
-						{
-							if (NodeEvent && NodeEvent->NodeID == OriginalName && NodeEvent->QuestID == OwningQuest->ID)
-							{
-								NodeEvent->NodeID = NewName;
-								NodeEvent->Modify();
-							}
-						}
-					}
-					
-				}
-			}
-		}
+		
 	}
 }
 

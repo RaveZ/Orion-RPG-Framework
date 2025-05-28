@@ -7,25 +7,20 @@
 
 UIsQuestFailed::UIsQuestFailed()
 {
-    bUseQuestID = true;
+    bUseQuestTag = true;
 }
 
 bool UIsQuestFailed::PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const
 {
+    FName QuestID = QuestTag.GetTagName();
     if (UQuest* FoundedQuest = GetQuestComponent()->QuestMap.FindRef(QuestID))
     {
-        switch (FoundedQuest->QuestState)
-        {
-        case EQuestState::E_Fail:
-            return true;
-        default:
-            return false;
-        }
+        return GetQuestComponent()->IsQuestAtState(QuestTag, EQuestState::E_Fail);
     }
     return false;
 }
 
 FString UIsQuestFailed::GetNodeDisplayText_Implementation() const
 {
-    return FString::Printf(TEXT("Is Quest Failed :  %s"), *QuestID.ToString());
+    return FString::Printf(TEXT("Is Quest Failed :  %s"), *GetShortTag(QuestTag));
 }

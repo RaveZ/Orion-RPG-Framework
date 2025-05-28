@@ -466,7 +466,7 @@ void UDialogComponent::EvaluateNextNodeCondition(UDialog* DialogParam)
 	{
 		UDialogBuilderNode* CachedCurrentNode = DialogParam->CurrentNode;
 
-		CachedCurrentNode->BeginEvents(EEventRunType::E_End);
+		CachedCurrentNode->BeginEvents(EEventLaunchType::E_End);
 
 		//Check if the current node has changed after the events. it means we dont need to go to the next node anymore
 		if (CachedCurrentNode != DialogParam->CurrentNode)
@@ -475,17 +475,17 @@ void UDialogComponent::EvaluateNextNodeCondition(UDialog* DialogParam)
 			//and we need to start the events again
 			if (UDialogBuilderNode_OptionSelector* StateNode = Cast<UDialogBuilderNode_OptionSelector>(DialogParam->CurrentNode))
 			{
-				StateNode->BeginEvents(EEventRunType::E_Start);
+				StateNode->BeginEvents(EEventLaunchType::E_Start);
 			}
 		}
 		else if (DialogParam->CurrentNode == CachedCurrentNode)	
 		{
-			DialogParam->CurrentNode->BeginEvents(EEventRunType::E_Start);
+			DialogParam->CurrentNode->BeginEvents(EEventLaunchType::E_Start);
 		}
 		else
 		{
 			GoToNextNode(DialogParam, NextNode);
-			NextNode->BeginEvents(EEventRunType::E_Start);
+			NextNode->BeginEvents(EEventLaunchType::E_Start);
 		}
 	}
 	

@@ -4,22 +4,20 @@
 
 #include "CoreMinimal.h"
 #include "Decorator/OrionDecorator.h"
-#include "HasQuestReachedCheckpoint.generated.h"
+#include "HasQuestEverReachedCheckpoint.generated.h"
 
 /**
  * Is objective completed decorator node.
  * Desc
  */
 UCLASS()
-class ORIONRPG_API UHasQuestReachedCheckpoint : public UOrionDecorator
+class ORIONRPG_API UHasQuestEverReachedCheckpoint : public UOrionDecorator
 {
 	GENERATED_BODY()
 public:
-	UHasQuestReachedCheckpoint();
+	UHasQuestEverReachedCheckpoint();
 
 
 	virtual bool PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const override;
 	virtual FString GetNodeDisplayText_Implementation() const override;
-
-	virtual TArray<FName> GetAllNodeID() override;
 };

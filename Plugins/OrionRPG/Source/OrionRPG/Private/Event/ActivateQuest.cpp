@@ -9,19 +9,20 @@
 
 UActivateQuest::UActivateQuest()
 {
-	bUseQuestID = true;
+	bUseQuestTag = true;
 }
 
-void UActivateQuest::BeginEvent_Implementation(AController* OwnerController, APawn* ControlledPawn)
+void UActivateQuest::BeginEvent(AController* OwnerController, APawn* ControlledPawn)
 {
-	if (!QuestID.IsNone())
+	if (QuestTag.IsValid())
 	{
-		GetQuestComponent()->ActivateQuest(QuestID);
+		GetQuestComponent()->ActivateQuestFromTag(QuestTag);
 	}
+	EndEvent();
 	
 }
 
 FString UActivateQuest::GetNodeDisplayText_Implementation() const
 {
-	return FString::Printf(TEXT("Activate Quest :  %s"), *QuestID.ToString());
+	return FString::Printf(TEXT("Activate Quest :  %s"), *GetShortTag(QuestTag));
 }

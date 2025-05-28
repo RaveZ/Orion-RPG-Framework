@@ -64,48 +64,11 @@ struct FQuestDataHandle
 	GENERATED_BODY()
 
 public:
-	/**Wrapper Data to pick quest id using picker*/
-	UPROPERTY(Instanced, EditAnywhere, BlueprintReadWrite, Category = "Quest Data Handle", meta = (FullyExpand = true, AllowPrivateAccess = true))
-	TObjectPtr<UQuestHandle> QuestDataHandle;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = QuestDataHandle, meta = (AllowPrivateAccess = true))
+	FGameplayTag QuestTag;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = QuestDataHandle, meta = (AllowPrivateAccess = true))
-	FName QuestID;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = QuestDataHandle, meta = (AllowPrivateAccess = true))
-	FName NodeID;
-
-	// Constructor
-	FQuestDataHandle();
-
-	ORIONRPG_API void PostSerialize(const FArchive& Ar);
-};
-
-template<>
-struct TStructOpsTypeTraits< FQuestDataHandle > : public TStructOpsTypeTraitsBase2< FQuestDataHandle >
-{
-	enum
-	{
-		WithPostSerialize = true,
-	};
-};
+	FGameplayTag NodeTag;
 
 
-UCLASS(Blueprintable, EditInlineNew, DefaultToInstanced, AutoExpandCategories = ("Default"))
-class ORIONRPG_API UQuestHandle : public UObject
-{
-	GENERATED_BODY()
-
-	public:
-		UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = QuestDataHandle, meta = (GetOptions = "GetAllQuestID"))
-		FName QuestID;
-
-		UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = QuestDataHandle, meta = (GetOptions = "GetAllNodeID"))
-		FName NodeID;
-
-
-		UFUNCTION(CallInEditor, BlueprintCallable)
-		virtual TArray<FName> GetAllQuestID();
-
-		UFUNCTION(CallInEditor)
-		virtual TArray<FName> GetAllNodeID();
 };

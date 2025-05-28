@@ -15,10 +15,10 @@ class ORIONRPG_API UQuestBuilderNode_Objective : public UQuestBuilderNode
 
 public:
 	/**List of task for your objective*/
-	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Objective", meta = (FullyExpand = true))
+	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Objective", meta = (FullyExpand = true))
 		TArray<TObjectPtr<UQuestTask>> Tasks;
 
-	virtual void Initialize() override;
+	virtual void Initialize(bool bLaunchEventOnLoad = false) override;
 	virtual void Deinitialize() override;
 
 	void BeginAllTask();

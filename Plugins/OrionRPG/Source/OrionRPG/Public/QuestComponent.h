@@ -3,10 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Components/ActorComponent.h"
 #include "QuestComponent.generated.h"
 
 class UQuestSaveObject;
+class UQuest;
 class USaveGame;
 class APlayerController;
 
@@ -134,40 +136,49 @@ public:
 		virtual class UQuestBuilderGraph* MakeQuestGraphInstance(UQuestBuilderGraph* QuestGraphTemplate);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void ActivateQuest(FName ID);
+		void ActivateQuestFromTag(FGameplayTag QuestTag);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void UnlockQuest(FName ID = NAME_None);
+		void UnlockQuestFromTag(FGameplayTag QuestTag);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void LockQuest(FName ID = NAME_None);
+		void LockQuestFromTag(FGameplayTag QuestTag);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void RestartQuest(FName ID, FName NodeID = NAME_None, bool bStartFromNodeID = false);
+		void RestartQuestFromTag(FGameplayTag QuestTag, FGameplayTag NodeTag = FGameplayTag(), bool bStartFromNodeTag = false);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void FailQuest(FName ID);
+		void FailQuestFromTag(FGameplayTag QuestTag);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void CompleteQuest(FName ID);
+		void CompleteQuestFromTag(FGameplayTag QuestTag);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void StartNavigateQuest(UQuest* InQuest);
 
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		void ActivateQuest(UQuest* InQuest);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		UQuest* FindQuestFromNodeID(FName NodeIDParam) const;
+		void UnlockQuest(UQuest* InQuest);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		UQuest* FindQuest(FName QuestIDParam) const;
-
-
+		void LockQuest(UQuest* InQuest);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		bool IsQuestActiveFromNodeID(FName NodeID) const;
+		void RestartQuest(UQuest* InQuest);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		bool IsQuestActiveFromQuestID(FName ID) const;
+		void FailQuest(UQuest* InQuest);
+
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		void CompleteQuest(UQuest* InQuest);
+
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		bool IsQuestAtState(FGameplayTag QuestTag, enum EQuestState QuestState);
+
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		UQuest* FindQuest(FGameplayTag QuestTag) const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void UpdateQuest();
@@ -188,7 +199,7 @@ public:
 		void GoToNextNode(UQuest* QuestParam, UQuestBuilderNode* NodeParam);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void BeginNode(UQuest* QuestParam);
+		void BeginNode(UQuest* QuestParam, bool bLaunchEventOnLoad = false);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintAuthorityOnly, Category = "Saving")
 		void Save(const FString& SaveFileName, int SlotIndex);

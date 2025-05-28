@@ -17,6 +17,6 @@ class ORIONRPG_API UUnlockQuest : public UOrionEvent
 public:
 	UUnlockQuest();
 
-	virtual void BeginEvent_Implementation(AController* OwnerController, APawn* ControlledPawn) override;
+	virtual void BeginEvent(AController* OwnerController, APawn* ControlledPawn) override;
 	virtual FString GetNodeDisplayText_Implementation() const override;
 };

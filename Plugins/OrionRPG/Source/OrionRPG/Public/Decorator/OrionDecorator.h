@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "GameplayTagContainer.h"
 #include "OrionDecorator.generated.h"
 
 class UQuestBuilderGraph;
@@ -21,19 +22,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent")
 		bool InvertCondition = false;
 
-	/**Display quest ID in property panel?*/
+	/**Display quest Tag in property panel?*/
 	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
-		bool bUseQuestID = false;
+		bool bUseQuestTag = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bUseQuestID == true", HideEditConditionToggle, EditConditionHides, GetOptions = "GetAllQuestID"))
-		FName QuestID;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bUseQuestTag == true", HideEditConditionToggle, EditConditionHides))
+		FGameplayTag QuestTag;
 
 	/** Display Node ID in property panel?*/
 	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
-		bool bUseNodeID = false;
+		bool bUseNodeTag = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bUseNodeID == true", HideEditConditionToggle, EditConditionHides, GetOptions = "GetAllNodeID"))
-		FName NodeID;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bUseNodeTag == true", HideEditConditionToggle, EditConditionHides))
+		FGameplayTag NodeTag;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OrionDecorator")
 		bool PerformConditionCheck(AController* OwnerController, APawn* ControlledPawn) const;
@@ -48,15 +49,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OrionDecorator")
 		UQuestComponent* GetQuestComponent() const;
 
-	UFUNCTION(CallInEditor)
-	virtual	TArray<FName> GetAllQuestID();
-
-	UFUNCTION(CallInEditor)
-	virtual TArray<FName> GetAllNodeID();
 
 	/** @return name of node */
 	FString GetNodeName();
 	FString GetShortTypeName(UObject* Ob);
+	FString GetShortTag(FGameplayTag Tag) const;
 
 	// Allows the Object to get a valid UWorld from it's outer.
 	virtual UWorld* GetWorld() const override;

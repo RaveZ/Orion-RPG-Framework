@@ -7,8 +7,9 @@
 #include "Event/OrionEvent.h"
 
 
-void UQuestBuilderNode_State::Initialize()
+void UQuestBuilderNode_State::Initialize(bool bLaunchEventOnLoad)
 {
+    Super::Initialize(bLaunchEventOnLoad);
 	BeginState();
 }
 
@@ -26,9 +27,8 @@ void UQuestBuilderNode_State::BeginState()
         break;
     }
 
-	BeginEvents(EEventRunType::E_End);
-
-    GetQuestComponent()->UpdateQuest();
+    GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast();
+	Deinitialize();
 
     
 }
@@ -36,7 +36,18 @@ void UQuestBuilderNode_State::BeginState()
 #if WITH_EDITOR
 FText UQuestBuilderNode_State::GetNodeTitle() const
 {
-    return FText::FromName(ID).IsEmpty() ? FText::FromString(UQuestBuilderNode::GetShortTypeName(this)) : FText::FromName(ID);
+    switch (QuestState)
+    {
+        case EQuestState::E_Complete:
+            return FText::FromString("Complete Quest");
+            break;
+        case EQuestState::E_Fail:
+            return FText::FromString("Fail Quest");
+            break;
+        default:
+            return FText::FromString("Default");
+            break;
+    }
 }
 void UQuestBuilderNode_State::SetNodeTitle(const FText& NewTitle)
 {
@@ -44,24 +55,7 @@ void UQuestBuilderNode_State::SetNodeTitle(const FText& NewTitle)
 }
 FText UQuestBuilderNode_State::GetNodeDescription() const
 {
-    FString StateDesc;
-
-    switch (QuestState)
-    {
-    case EQuestState::E_Complete:
-        StateDesc = "Complete Quest";
-        break;
-    case EQuestState::E_Fail:
-        StateDesc = "Fail Quest";
-        break;
-    default:
-        StateDesc = "Default State";
-        break;
-    }
-
-	StateDesc += "\n" + Description.ToString();
-
-	return FText::FromString(StateDesc);
+    return Description;
 }
 
 

@@ -4,6 +4,7 @@
 #include "QuestBuilderNode.h"
 #include "QuestBuilderEdge.h"
 #include "Quest.h"
+#include "QuestComponent.h"
 #include "Event/OrionEvent.h"
 #include "Decorator/OrionDecorator.h"
 #include "QuestBuilderGraph.h"
@@ -12,6 +13,7 @@
 
 UQuestBuilderNode::UQuestBuilderNode()
 {
+	bAddToJournal = true;
 #if WITH_EDITORONLY_DATA
 	CompatibleGraphType = UQuestBuilderGraph::StaticClass();
 
@@ -22,6 +24,49 @@ UQuestBuilderNode::UQuestBuilderNode()
 
 UQuestBuilderNode::~UQuestBuilderNode()
 {
+}
+
+void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
+{
+	StartEventQueue.Empty();
+
+	if (bLaunchEventOnLoad)
+	{
+		for (auto& EndEvent : Events)
+		{
+			if (EndEvent && EndEvent->bLaunchEventOnLoad && (EndEvent->EventLaunchType == EEventLaunchType::E_Both || EndEvent->EventLaunchType == EEventLaunchType::E_Start))
+			{
+				StartEventQueue.Add(EndEvent);
+			}
+		}
+	}
+	else
+	{
+		for (auto& EndEvent : Events)
+		{
+			if (EndEvent && (EndEvent->EventLaunchType == EEventLaunchType::E_Both || EndEvent->EventLaunchType == EEventLaunchType::E_Start))
+			{
+				StartEventQueue.Add(EndEvent);
+			}
+		}
+	}
+	
+
+	LaunchStartEventQueue();
+}
+
+void UQuestBuilderNode::Deinitialize()
+{
+	UE_LOG(LogTemp, Warning, TEXT("Node: Deinitialize %s"), *this->GetName());
+	EndEventQueue.Empty();
+	for (auto& EndEvent : Events)
+	{
+		if (EndEvent && (EndEvent->EventLaunchType == EEventLaunchType::E_Both || EndEvent->EventLaunchType == EEventLaunchType::E_End))
+		{
+			EndEventQueue.Add(EndEvent);
+		}
+	}
+	LaunchEndEventQueue();
 }
 
 UQuestBuilderEdge* UQuestBuilderNode::GetEdge(UQuestBuilderNode* ChildNode)
@@ -35,21 +80,39 @@ FText UQuestBuilderNode::GetDescription_Implementation() const
 	return Description;
 }
 
-void UQuestBuilderNode::BeginEvents(EEventRunType EventRunType)
+
+void UQuestBuilderNode::LaunchStartEventQueue()
 {
-	//End of a Node, Launch Event with the EventRunType param and Both Type
-	for (auto& Event : Events)
-	{
-		if (Event)
+	if (StartEventQueue.IsEmpty())
+		return;
+
+	
+	StartEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
+	StartEventQueue[0]->OnEventFinished.AddLambda(
+		[this]()
 		{
-			if (Event->EventRunType == EEventRunType::E_Both || Event->EventRunType == EventRunType)
-			{
-				Event->BeginEvent(GetOwningController(), GetOwningPawn());
-			}
+			StartEventQueue.RemoveAt(0);
+			LaunchStartEventQueue();
 		}
-	}
+	);
+	
 }
 
+void UQuestBuilderNode::LaunchEndEventQueue()
+{
+	if (EndEventQueue.IsEmpty())
+		return;
+
+
+	EndEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
+	EndEventQueue[0]->OnEventFinished.AddLambda(
+		[this]()
+		{
+			EndEventQueue.RemoveAt(0);
+			LaunchEndEventQueue();
+		}
+	);
+}
 
 FString UQuestBuilderNode::GetShortTypeName(const UObject* Ob)
 {
@@ -71,52 +134,6 @@ FString UQuestBuilderNode::GetShortTypeName(const UObject* Ob)
 	}
 
 	return TypeDesc;
-}
-
-void UQuestBuilderNode::EvaluateUniqueID()
-{
-	if (UQuest* OwningQuest = GetOwningQuest())
-	{
-		TArray<UQuestBuilderNode*> QuestNodes = OwningQuest->AllNodes;
-		TArray<FName> NodeIDs;
-
-		for (auto& Node : QuestNodes)
-		{
-			if (Node != this)
-			{
-				NodeIDs.Add(Node->ID);
-			}
-		}
-
-		int32 FinalSuffix = 1;
-		FName NewID = ID;
-		FString BaseName = NewID.ToString();
-		int32 UnderscoreIndex;
-
-		if (BaseName.FindLastChar(TEXT('_'), UnderscoreIndex))
-		{
-			FString Suffix = BaseName.Mid(UnderscoreIndex + 1);
-			if (Suffix.IsNumeric())
-			{
-				BaseName = BaseName.Left(UnderscoreIndex);
-			}
-		}
-
-		if (!NodeIDs.Contains(NewID))
-		{
-			return;
-		}
-
-		// Check if the new ID already exists in the array
-		while (NodeIDs.Contains(NewID))
-		{
-			// If it does, add a numeric suffix and try again
-			NewID = FName(*FString::Printf(TEXT("%s_%d"), *BaseName, FinalSuffix));
-			FinalSuffix++;
-		}
-
-		ID = NewID;
-	}
 }
 
 
@@ -214,14 +231,7 @@ void UQuestBuilderNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyCh
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	if (PropertyChangedEvent.MemberProperty)
-	{
-		//If we changed the ID, make sure it doesn't conflict with any other IDs in the quest
-		if (PropertyChangedEvent.MemberProperty->GetFName() == GET_MEMBER_NAME_CHECKED(UQuestBuilderNode, ID))
-		{
-			EvaluateUniqueID();
-		}
-	}
+	
 }
 
 
@@ -232,15 +242,6 @@ bool UQuestBuilderNode::IsLeafNode() const
 	return ChildrenNodes.Num() == 0;
 }
 
-void UQuestBuilderNode::Initialize()
-{
-	//empty, override in child class
-}
-
-void UQuestBuilderNode::Deinitialize()
-{
-	//empty, override in child class
-}
 
 void UQuestBuilderNode::InitializeFromAsset(UQuestBuilderGraph& OwningQuestGraph, UQuest& OwningQuest)
 {
@@ -267,27 +268,19 @@ UQuest* UQuestBuilderNode::GetOwningQuest() const
 
 AController* UQuestBuilderNode::GetOwningController() const
 {
-	if (!QuestGraph)
-		return nullptr;
-	
-
-	return QuestGraph->OwningController;
+	return OwningController;
 }
 
 APawn* UQuestBuilderNode::GetOwningPawn() const
 {
-	if (!QuestGraph)
-		return nullptr;
-
-	return QuestGraph->OwningPawn;
+	if (QuestComponent)
+		return QuestComponent->GetOwningPawn();
+	return nullptr;
 }
 
 UQuestComponent* UQuestBuilderNode::GetQuestComponent() const
 {
-	if (!QuestGraph)
-		return nullptr;
-
-	return QuestGraph->QuestComponent;
+	return QuestComponent;
 }
 
 #undef LOCTEXT_NAMESPACE

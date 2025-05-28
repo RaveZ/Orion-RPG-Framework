@@ -92,7 +92,7 @@ public:
 
 	virtual FText GetDescription_Implementation() const;
 
-	virtual void BeginEvents(enum EEventRunType EventRunType);
+	virtual void BeginEvents(enum EEventLaunchType EventLaunchType);
 
 	/** returns short name of object's class (BTTaskNode_Wait -> Wait) */
 	static FString GetShortTypeName(const UObject* Ob);

@@ -7,25 +7,20 @@
 
 UIsQuestActive::UIsQuestActive()
 {
-    bUseQuestID = true;
+    bUseQuestTag = true;
 }
 
 bool UIsQuestActive::PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const
 {
+    FName QuestID = QuestTag.GetTagName();
     if (UQuest* FoundedQuest = GetQuestComponent()->QuestMap.FindRef(QuestID))
     {
-        switch (FoundedQuest->QuestState)
-        {
-            case EQuestState::E_Active :
-                return true;
-            default:
-                return false;
-        }
+        return GetQuestComponent()->IsQuestAtState(QuestTag, EQuestState::E_Active);
     }
     return false;
 }
 
 FString UIsQuestActive::GetNodeDisplayText_Implementation() const
 {
-    return FString::Printf(TEXT("Is Quest Active :  %s"), *QuestID.ToString());
+    return FString::Printf(TEXT("Is Quest Active :  %s"), *GetShortTag(QuestTag));
 }

@@ -55,7 +55,9 @@ public:
 	virtual FReply OnMouseButtonDoubleClick(const FGeometry& InMyGeometry, const FPointerEvent& InMouseEvent) override;
 
 	virtual FText GetDescription() const;
+	virtual FText GetNodeTagDescription() const;
 	virtual EVisibility GetDescriptionVisibility() const;
+	virtual EVisibility GetNodeTagVisibility() const;
 	virtual EVisibility GetTaskVisibility() const;
 	virtual EVisibility GetEventsVisibility() const;
 	virtual EVisibility GetDecoratorVisibility() const;

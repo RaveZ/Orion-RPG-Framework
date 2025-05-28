@@ -39,9 +39,12 @@ public:
 	TObjectPtr<UQuestBuilderGraph> QuestGraph;
 
 	/** Quest ID */
-	UPROPERTY(BlueprintReadOnly, VisibleInstanceOnly, Category = "Quest")
-		FName ID;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Quest")
+	FName ID;
 
+	/** Gameplay Tag for this quest, each tag should be unique*/
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quest")
+	FGameplayTag QuestTag;
 
 	/** Your Quest Name*/
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quest", meta = (MultiLine = true))
@@ -90,6 +93,11 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Quest")
 		TMap<FName, TObjectPtr<UQuestBuilderNode>> NodeMap;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Quest")
+		TObjectPtr<AController> OwningController;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Quest")
+		TObjectPtr < UQuestComponent> QuestComponent;
 public:
 
 	virtual bool Initialize(class UQuestComponent* InitializingComp);

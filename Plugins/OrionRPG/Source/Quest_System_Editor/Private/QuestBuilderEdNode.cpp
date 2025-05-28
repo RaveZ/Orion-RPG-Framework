@@ -27,7 +27,7 @@
 UQuestBuilderEdNode::UQuestBuilderEdNode()
 {
 	bIsReadOnly = false;
-	bCanRenameNode = true;
+	bCanRenameNode = false;
 	CopySubNodeIndex = 0;
 }
 

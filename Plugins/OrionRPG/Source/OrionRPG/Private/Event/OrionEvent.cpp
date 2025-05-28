@@ -15,10 +15,18 @@
 
 UOrionEvent::UOrionEvent()
 {
+	bLaunchEventOnLoad = false;
 }
 
-void UOrionEvent::BeginEvent_Implementation(AController* OwnerController, APawn* ControlledPawn)
+void UOrionEvent::BeginEvent(AController* OwnerController, APawn* ControlledPawn)
 {
+	K2_BeginEvent(OwnerController, ControlledPawn);
+}
+
+void UOrionEvent::EndEvent()
+{
+	OnEventFinished.Broadcast();
+	K2_EventFinished();
 }
 
 FString UOrionEvent::GetNodeDisplayText_Implementation() const
@@ -33,67 +41,6 @@ UQuestComponent* UOrionEvent::GetQuestComponent() const
 		return UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
 	}
 	return nullptr;
-}
-
-
-TArray<FName> UOrionEvent::GetAllQuestID()
-{
-	TArray<FName> QuestIDs;
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-	TArray<FAssetData> QuestGraphDataArray;
-	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
-
-	for (const FAssetData& AssetData : QuestGraphDataArray)
-	{
-		UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
-		if (QuestGraphAsset)
-		{
-			for (UQuest* QuestObj : QuestGraphAsset->QuestList)
-			{
-				QuestIDs.Add(QuestObj->ID);
-			}
-		}
-	}
-
-	return QuestIDs;
-}
-
-TArray<FName> UOrionEvent::GetAllNodeID()
-{
-	TArray<FName> NodeIDs;
-	if (bUseQuestID)
-	{
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-		TArray<FAssetData> QuestGraphDataArray;
-		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
-
-		for (const FAssetData& AssetData : QuestGraphDataArray)
-		{
-			UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
-			if (QuestGraphAsset)
-			{
-				for (UQuest* QuestObj : QuestGraphAsset->QuestList)
-				{
-					if (QuestObj->ID != QuestID) continue;
-					for (UQuestBuilderNode* Node : QuestObj->AllNodes)
-					{
-						if (Node)
-						{
-							if (UQuestBuilderNode_Root* RootNode = Cast<UQuestBuilderNode_Root>(Node)) continue;
-							NodeIDs.Emplace(Node->ID);
-						}
-					}
-				}
-			}
-		}
-	}
-	else
-	{
-	}
-	return NodeIDs;
-	
 }
 
 FString UOrionEvent::GetNodeName()
@@ -139,6 +86,14 @@ FString UOrionEvent::GetShortTypeName(UObject* Ob)
 	return Result;
 }
 
+FString UOrionEvent::GetShortTag(FGameplayTag Tag) const
+{
+	FString TagString = Tag.ToString();
+	Tag.ToString().Split(TEXT("."), nullptr, &TagString, ESearchCase::IgnoreCase, ESearchDir::FromEnd);
+
+	return TagString;
+}
+
 UWorld* UOrionEvent::GetWorld() const
 {
 	if (HasAllFlags(RF_ClassDefaultObject))
@@ -168,14 +123,6 @@ UWorld* UOrionEvent::GetWorld() const
 void UOrionEvent::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-	if (PropertyChangedEvent.Property)
-	{
-		FName PropertyName = PropertyChangedEvent.Property->GetFName();
-		if (PropertyName == GET_MEMBER_NAME_CHECKED(UOrionEvent, QuestID))
-		{
-			NodeID = NAME_None;
-		}
-	}
 	
 }
 #endif
