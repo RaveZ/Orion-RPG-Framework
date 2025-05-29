@@ -15,7 +15,7 @@ void UBeginQuestGraph::BeginEvent(AController* OwnerController, APawn* Controlle
 {
 	if (GetQuestComponent())
 	{
-		GetQuestComponent()->BeginQuest(QuestAsset);
+		GetQuestComponent()->BeginQuestGraph(QuestAsset);
 	}
 	EndEvent();
 	

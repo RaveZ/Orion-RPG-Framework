@@ -17,7 +17,7 @@ class ORIONRPG_API UQuestSaveObject : public USaveGame
 	GENERATED_BODY()
 public:
 
-	/** Array of saved QuestGraphIDs*/
+	/** Array of saved QuestIDs*/
 	UPROPERTY(VisibleAnywhere, Category = QuestSaveData)
 	TArray<FName> QuestAssetIDs;
 

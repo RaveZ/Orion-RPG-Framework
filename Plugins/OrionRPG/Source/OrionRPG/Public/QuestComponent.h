@@ -121,19 +121,13 @@ public:
 		virtual void LoadComplete(FString SaveName);
 public:
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		bool BeginQuest(UQuestBuilderGraph* QuestAsset);
+		bool BeginQuestGraph(UQuestBuilderGraph* QuestGraphAsset);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		bool BeginMultipleQuest(TArray<UQuestBuilderGraph*>  QuestAssets);
-
+		bool BeginMultipleQuestGraph(TArray<UQuestBuilderGraph*>  QuestGraphAsset);
+	
 	UFUNCTION()
-		void CacheQuestGraphDependencies(UQuestBuilderGraph* QuestGraph);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestComponent")
-		class UQuestBuilderGraph* GetQuestGraphInstance(class UQuestBuilderGraph* QuestGraph) const;
-
-	UFUNCTION()
-		virtual class UQuestBuilderGraph* MakeQuestGraphInstance(UQuestBuilderGraph* QuestGraphTemplate);
+		virtual class UQuest* MakeQuestInstance(UQuest* QuestTemplate);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void ActivateQuestFromTag(FGameplayTag QuestTag);

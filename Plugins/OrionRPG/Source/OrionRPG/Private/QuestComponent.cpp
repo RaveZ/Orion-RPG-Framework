@@ -66,94 +66,57 @@ void UQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 	// ...
 }
 
-bool UQuestComponent::BeginQuest(UQuestBuilderGraph* QuestAsset)
+bool UQuestComponent::BeginQuestGraph(UQuestBuilderGraph* QuestGraphAsset)
 {
-	if (QuestAsset == nullptr)
+	if (QuestGraphAsset == nullptr)
 	{
 		return false;
 	}
 
-	bool bSuccess = false;
-
-	UQuestBuilderGraph* NewQuestGraph = MakeQuestGraphInstance(QuestAsset);
-	if (NewQuestGraph)
+	for (auto& QuestTemplate : QuestGraphAsset->QuestList)
 	{
-		CacheQuestGraphDependencies(NewQuestGraph);
-
-		for (UQuest* Quest : NewQuestGraph->QuestList)
+		UQuest* NewQuest = MakeQuestInstance(QuestTemplate);
+		if (NewQuest)
 		{
-			EvaluateQuestCondition(Quest);
+			EvaluateQuestCondition(NewQuest);
 		}
-		bSuccess = true;
 	}
+
+	return true;
 	
-	return bSuccess;
 }
 
-bool UQuestComponent::BeginMultipleQuest(TArray<UQuestBuilderGraph*> QuestAssets)
+bool UQuestComponent::BeginMultipleQuestGraph(TArray<UQuestBuilderGraph*> QuestGraphAsset)
 {
-	if (QuestAssets.IsEmpty())
+	if (QuestGraphAsset.IsEmpty())
 	{
 		return false;
 	}
 
 
-	for (UQuestBuilderGraph* QuestAsset : QuestAssets)
+	for (UQuestBuilderGraph* QuestGraph : QuestGraphAsset)
 	{
-		BeginQuest(QuestAsset);
+		BeginQuestGraph(QuestGraph);
 	}
 	bool bSuccess = true;
 	return bSuccess;
 }
 
-void UQuestComponent::CacheQuestGraphDependencies(UQuestBuilderGraph* QuestGraph)
+class UQuest* UQuestComponent::MakeQuestInstance(UQuest* QuestTemplate)
 {
-	if (QuestGraph)
+	if (IsValid(QuestTemplate))
 	{
-		QuestGraph->OwningController = OwningController;
-		QuestGraph->QuestComponent = this;
-		QuestGraph->OwningPawn = GetOwningPawn();
-		
-
-		//Add QuestGraph to array
-		QuestGraphs.Add(QuestGraph);
-
-		for (auto& Quest : QuestGraph->QuestList)
+		//Duplicate the quest template
+		UQuest* NewQuest = Cast<UQuest>(StaticDuplicateObject(QuestTemplate, this, NAME_None, RF_Transactional));
+		NewQuest->Initialize(this);
+		if (QuestMap.FindRef(NewQuest->ID))
 		{
-			Quest->Initialize(this);
-			QuestMap.Emplace(Quest->ID, Quest);
+			UE_LOG(LogTemp, Warning, TEXT("%s Already Registered."), *QuestTemplate->GetName());
+			return nullptr;
 		}
-	}
-}
 
-UQuestBuilderGraph* UQuestComponent::GetQuestGraphInstance(UQuestBuilderGraph* QuestGraph) const
-{
-	if (QuestGraph == nullptr)
-		return nullptr;
-	
-	for (auto& Inst : QuestGraphs)
-	{
-		if (Inst && Inst->ID == QuestGraph->ID)
-		{
-			return Inst;
-		}
-	}
-	return nullptr;
-}
-
-class UQuestBuilderGraph* UQuestComponent::MakeQuestGraphInstance(UQuestBuilderGraph* QuestGraphTemplate)
-{
-	if (IsValid(GetQuestGraphInstance(QuestGraphTemplate)))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("%s Already Registered. Use RestartQuest() instead. "), *QuestGraphTemplate->CategoryDisplayName);
-		return nullptr;
-	}
-
-	if (IsValid(QuestGraphTemplate))
-	{
-		//Duplicate the quest graph
-		UQuestBuilderGraph* NewQuestGraph = Cast<UQuestBuilderGraph>(StaticDuplicateObject(QuestGraphTemplate, this, NAME_None, RF_Transactional));
-		return NewQuestGraph;
+		QuestMap.Emplace(NewQuest->ID, NewQuest);
+		return NewQuest;
 	}
 
 	return nullptr;
@@ -540,22 +503,16 @@ void UQuestComponent::UpdateQuest()
 
 void UQuestComponent::ResetAllQuest()
 {
-	for (int32 j = QuestGraphs.Num() - 1; j >= 0; --j)
+	TArray<FName> QuestKeys;
+	QuestMap.GetKeys(QuestKeys);
+
+	for (int32 j = QuestKeys.Num() - 1; j >= 0; --j)
 	{
-		if (QuestGraphs.IsValidIndex(j))
-		{
-			QuestGraphs[j]->Deinitialize();
-			for (int32 i = QuestGraphs[j]->QuestList.Num() - 1; i >= 0; --i)
-			{
-				if (QuestGraphs[j]->QuestList.IsValidIndex(i))
-				{
-					QuestGraphs[j]->QuestList[i]->Deinitialize();
-					QuestGraphs[j]->QuestList.RemoveAt(i);
-				}
-			}
-			QuestGraphs.RemoveAt(j);
-		}
-		
+		FName Key = QuestKeys[j];
+		UQuest* Quest = QuestMap.FindRef(Key);
+		Quest->Deinitialize();
+		Quest->CurrentNode = nullptr;
+		QuestMap.Remove(Key);
 	}
 	QuestMap.Empty();
 	CurrentNavigatedQuest = nullptr;
@@ -681,15 +638,12 @@ void UQuestComponent::Save_Implementation(const FString& SaveFileName, int SlotI
 	if (UQuestSaveObject* QuestSaveObject = Cast<UQuestSaveObject>(UGameplayStatics::CreateSaveGameObject(UQuestSaveObject::StaticClass())))
 	{
 		//Start Saving Data
-		for (auto& QuestGraphAsset : QuestGraphs)
-		{
-			QuestSaveObject->QuestAssetIDs.Add(QuestGraphAsset->ID);
-		}
 
 		for (const auto& It : QuestMap)
 		{
 			FName Key = It.Key;
 			UQuest* Quest = It.Value;
+			QuestSaveObject->QuestAssetIDs.Add(Quest->ID);
 				TMap<FName, FNodeData> NodeMapData;
 				for (auto& Node : Quest->AllNodes)
 				{
@@ -742,9 +696,7 @@ void UQuestComponent::Load_Implementation(const FString& SaveFileName, int SlotI
 		UE_LOG(LogTemp, Warning, TEXT("Quest Component: Loading Save file failed, %s save file does not exist "), *SaveFileName);
 		return;
 	}
-
-
-	TArray<UQuestBuilderGraph*> LoadedQuestAssets;
+	TArray<UQuest*> LoadedQuestAssets;
 	if (UQuestSaveObject* LoadedData = Cast<UQuestSaveObject>(UGameplayStatics::LoadGameFromSlot(SaveFileName, SlotIndex)))
 	{
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
@@ -759,24 +711,27 @@ void UQuestComponent::Load_Implementation(const FString& SaveFileName, int SlotI
 		for (const FAssetData& AssetData : QuestGraphDataArray)
 		{
 			UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
-			if (QuestGraphAsset && LoadedData->QuestAssetIDs.Contains(QuestGraphAsset->ID))
+			if (QuestGraphAsset)
 			{
-				if (UQuestBuilderGraph* LoadedQuestAsset = MakeQuestGraphInstance(QuestGraphAsset))
+				for (auto& QuestTemplate : QuestGraphAsset->QuestList)
 				{
-					LoadedQuestAssets.Add(LoadedQuestAsset);
+					if (LoadedData->QuestAssetIDs.Contains(QuestTemplate->ID) ||
+						LoadedData->QuestAssetIDs.Contains(QuestTemplate->QuestTag.GetTagName()))
+					{
+						//make quest instance from template found
+						if (UQuest* LoadedQuestAsset = MakeQuestInstance(QuestTemplate))
+						{
+							LoadedQuestAssets.Add(LoadedQuestAsset);
+						}
+					}
 				}
 			}
 		}
 
 		TMap<FName, UQuest*> QuestLoadMap;
-		for (auto& It : LoadedQuestAssets)
+		for (auto& Quest : LoadedQuestAssets)
 		{
-			//cache the dependency first so the id could match
-			CacheQuestGraphDependencies(It);
-			for (auto& Quest : It->QuestList)
-			{
-				QuestLoadMap.Add(Quest->ID, Quest);
-			}
+			QuestLoadMap.Add(Quest->ID, Quest);
 		}
 
 		OnBeginLoad.Broadcast(SaveFileName);
@@ -818,16 +773,13 @@ void UQuestComponent::Load_Implementation(const FString& SaveFileName, int SlotI
 				}
 			}
 		}
-		for (auto& QuestAsset : LoadedQuestAssets)
+		for (auto& LoadedQuestAsset : LoadedQuestAssets)
 		{
-			for (UQuest* Quest : QuestAsset->QuestList)
+			EvaluateQuestCondition(LoadedQuestAsset);
+			if (LoadedQuestAsset->CurrentNode && LoadedQuestAsset->QuestState == EQuestState::E_Active)
 			{
-				EvaluateQuestCondition(Quest);
-				if (Quest->CurrentNode && Quest->QuestState == EQuestState::E_Active)
-				{
-					bool bLaunchEventOnLoad = true;
-					BeginNode(Quest, bLaunchEventOnLoad);
-				}
+				bool bLaunchEventOnLoad = true;
+				BeginNode(LoadedQuestAsset, bLaunchEventOnLoad);
 			}
 		}
 		OnLoadComplete.Broadcast(SaveFileName);

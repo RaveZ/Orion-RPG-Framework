@@ -87,7 +87,7 @@ void UQuestBuilderEdGraph::UpdateAsset(bool bForce)
 
 				QuestNode->QuestGraph = QuestGraph;
 				QuestNode->Quest = Quest;
-				QuestNode->Rename(nullptr, QuestGraph, REN_DontCreateRedirectors | REN_DoNotDirty);
+				QuestNode->Rename(nullptr, Quest, REN_DontCreateRedirectors | REN_DoNotDirty);
 
 				//link child and parent nodes
 				for (int PinIdx = 0; PinIdx < QuestEdNode->Pins.Num(); ++PinIdx)
@@ -138,7 +138,7 @@ void UQuestBuilderEdGraph::UpdateAsset(bool bForce)
 			EdgeMap.Add(Edge, EdgeNode);
 
 			Edge->Graph = QuestGraph;
-			Edge->Rename(nullptr, QuestGraph, REN_DontCreateRedirectors | REN_DoNotDirty);
+			Edge->Rename(nullptr, Quest, REN_DontCreateRedirectors | REN_DoNotDirty);
 			Edge->StartNode = StartNode ? Cast<UQuestBuilderNode>(StartNode->NodeInstance) : nullptr; 
 			Edge->EndNode = EndNode ? Cast<UQuestBuilderNode>(EndNode->NodeInstance) : nullptr;
 			Edge->StartNode->Edges.Add(Edge->EndNode, Edge);
@@ -171,7 +171,7 @@ void UQuestBuilderEdGraph::UpdateAllSubnodeDependencies()
 					if (UOrionEvent* EventInstance = Cast<UOrionEvent>(QuestEdNode->Events[iAux]->NodeInstance))
 					{
 						QuestNode->Events.Add(EventInstance);
-						EventInstance->Rename(nullptr, QuestGraph, REN_DontCreateRedirectors | REN_DoNotDirty);
+						EventInstance->Rename(nullptr, Quest, REN_DontCreateRedirectors | REN_DoNotDirty);
 					}
 				}
 
@@ -183,7 +183,7 @@ void UQuestBuilderEdGraph::UpdateAllSubnodeDependencies()
 					if (UOrionDecorator* DecoratorInstance = Cast<UOrionDecorator>(QuestEdNode->Decorators[iAux]->NodeInstance))
 					{
 						QuestNode->Decorators.Add(DecoratorInstance);
-						DecoratorInstance->Rename(nullptr, QuestGraph, REN_DontCreateRedirectors | REN_DoNotDirty);
+						DecoratorInstance->Rename(nullptr, Quest, REN_DontCreateRedirectors | REN_DoNotDirty);
 					}
 				}
 
@@ -199,7 +199,7 @@ void UQuestBuilderEdGraph::UpdateAllSubnodeDependencies()
 							TaskInstance->ObjectiveNode = QuestObjectiveNode;
 							TaskInstance->QuestGraph = QuestGraph;
 							TaskInstance->Quest = Quest;
-							TaskInstance->Rename(nullptr, QuestGraph, REN_DontCreateRedirectors | REN_DoNotDirty);
+							TaskInstance->Rename(nullptr, Quest, REN_DontCreateRedirectors | REN_DoNotDirty);
 						}
 					}
 				}
