@@ -9,7 +9,7 @@
 
 
 UCLASS(config = Engine, defaultconfig)
-class QUEST_SYSTEM_EDITOR_API UQuestBuilderSetting : public UObject
+class ORIONRPG_API UQuestBuilderSetting : public UObject
 {
 	GENERATED_BODY()
 
@@ -17,15 +17,16 @@ class QUEST_SYSTEM_EDITOR_API UQuestBuilderSetting : public UObject
 	virtual ~UQuestBuilderSetting();
 
 public:
-
+	//Runtime Config
+	UPROPERTY(EditAnywhere, config, Category = "Quest Config", meta=(FullyExpand=true))
+	TArray<FName> QuestCategoryList;
+	
+	//Graph Setting
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor FailedNodeColor;
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor SuccessNodeColor;
-
-	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
-	FLinearColor StateNodeColor;
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor RootNodeColor;
@@ -47,5 +48,6 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, config, Category = "Graph Rule")
 	bool bCanBeCyclical;
+
 };
 

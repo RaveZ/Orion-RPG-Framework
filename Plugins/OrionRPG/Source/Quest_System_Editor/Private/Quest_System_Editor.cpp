@@ -4,6 +4,7 @@
 #include "QuestBuilder_EditorStyle.h"
 #include "QuestBuilder_EditorCommands.h"
 #include "QuestBuilderNode.h"
+#include "QuestBuilderSetting.h"
 #include "Task/QuestTask.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"

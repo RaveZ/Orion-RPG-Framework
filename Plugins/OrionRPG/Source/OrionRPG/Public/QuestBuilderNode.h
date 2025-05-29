@@ -33,7 +33,7 @@ public:
 	virtual ~UQuestBuilderNode();
 
 	/**Asset ID*/
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Detail", meta = (DisplayPriority = 0))
+	UPROPERTY(BlueprintReadOnly, Category = "Detail", meta = (DisplayPriority = 0))
 		FName ID;
 
 	/** Gameplay Tag for this node, each tag should be unique */

@@ -6,6 +6,7 @@
 
 UQuestBuilderSetting::UQuestBuilderSetting()
 {
+	//Graph Setting
 	FailedNodeColor = FLinearColor(.34f, .024f, .024f);
 	SuccessNodeColor = FLinearColor(0.20f, 0.32f, 0.15f);
 	ObjectiveNodeColor = FLinearColor(0.15f, 0.15f, 0.15f);
@@ -15,6 +16,10 @@ UQuestBuilderSetting::UQuestBuilderSetting()
 	bEdgeEnabled = false;
 	bCanRenameNode = true;
 	bCanBeCyclical = false;
+
+	//Runtime Config
+	QuestCategoryList.Add("Main Quest");
+	QuestCategoryList.Add("Secondary Quest");
 }
 
 UQuestBuilderSetting::~UQuestBuilderSetting()

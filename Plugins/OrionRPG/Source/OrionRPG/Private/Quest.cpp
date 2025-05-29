@@ -8,6 +8,7 @@
 #include "QuestBuilderEdge.h"
 #include "QuestBuilderNode_Objective.h"
 #include "QuestBuilderNode_Root.h"
+#include "QuestBuilderSetting.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 
 
@@ -168,6 +169,11 @@ void UQuest::ClearGraph()
 	AllNodes.Empty();
 	RootNodes.Empty();
 	NodeMap.Empty();
+}
+
+TArray<FName> UQuest::GetQuestCategoryList()
+{
+	return GetDefault<UQuestBuilderSetting>()->QuestCategoryList;
 }
 
 void UQuest::EvaluateUniqueID()

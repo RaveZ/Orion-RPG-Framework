@@ -156,6 +156,8 @@ private:
 
 	/** List of UI Commands for this scope */
 	TSharedPtr<FUICommandList> CommandList;
+	
+	TSharedPtr<SVerticalBox> TasksBox;
 
 	/** Graph Action Menu for displaying all our variables and functions */
 	TSharedPtr<class SGraphActionMenu> GraphActionMenu;

@@ -39,9 +39,13 @@ public:
 	TObjectPtr<UQuestBuilderGraph> QuestGraph;
 
 	/** Quest ID */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Quest")
+	UPROPERTY(BlueprintReadOnly, Category = "Quest")
 	FName ID;
 
+	/**Category For this Quest*/
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quest", meta = (GetOptions = "GetQuestCategoryList"))
+	FName QuestCategory;
+	
 	/** Gameplay Tag for this quest, each tag should be unique*/
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quest")
 	FGameplayTag QuestTag;
@@ -122,6 +126,8 @@ public:
 		UQuestBuilderGraph* GetOwningQuestGraph() const;
 	void ClearGraph();
 
+	UFUNCTION(CallInEditor, BlueprintCallable)
+	virtual TArray<FName> GetQuestCategoryList();
 	virtual void EvaluateUniqueID();
 
 #if WITH_EDITOR
