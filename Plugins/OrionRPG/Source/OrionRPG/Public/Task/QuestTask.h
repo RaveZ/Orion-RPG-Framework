@@ -97,6 +97,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Task")
 		virtual void Deactivate();
+	
+	UFUNCTION(BlueprintCallable, Category = "Task")
+		virtual void Reset();
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 		bool IsTaskCompleted();

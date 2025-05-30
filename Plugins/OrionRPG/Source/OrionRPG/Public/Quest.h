@@ -21,10 +21,10 @@ enum class EQuestState : uint8
 	E_Complete		UMETA(DisplayName = "COMPLETE"),
 	/**Quest is Fail*/
 	E_Fail			UMETA(DisplayName = "FAIL"),
-	/**Quest is Locked, Waiting to be Unlocked*/
-	E_Locked		UMETA(DisplayName = "LOCKED"),
 	/**Quest is Unlocked, Waiting to be Activated*/
 	E_Unlocked		UMETA(DisplayName = "UNLOCKED"),
+	/**Quest is Locked, Waiting to be Unlocked*/
+	E_Locked		UMETA(DisplayName = "LOCKED"),
 };
 
 
@@ -58,24 +58,20 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quest", meta = (MultiLine = true))
 		FText Description; 
 
-	/**Make your quest can be aborted*/
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestConditions", meta = (DisplayName = "CanAbortQuest"))
+	/**
+	* Change the Quest State to this value the first time this quest registered
+	*/
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Quest",  meta=(ValidEnumValues="E_Active, E_Unlocked, E_Locked"))
+	EQuestState DesiredQuestState = EQuestState::E_Active;
+	
+	/**Can Abort Quest*/
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quest", meta = (DisplayName = "CanAbortQuest"))
 		bool bCanQuestBeAborted = false;
 
-	/**Make your quest can be aborted*/
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "QuestConditions", meta = (DisplayName = "CanRetakeQuest"))
+	/**Can Retake Quest*/
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quest", meta = (DisplayName = "CanRetakeQuest"))
 		bool bCanRetakeQuest = false;
 
-	/**Decorators to change the QuestState to DesiredQuestState*/
-	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "QuestConditions")
-		TArray<TObjectPtr<UOrionDecorator>> Decorators;
-
-	/**
-	* Change the Quest State to this value after condition met
-	* If there is no condition, immediately change the quest state
-	*/
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "QuestConditions")
-		EQuestState DesiredQuestState = EQuestState::E_Active;
 
 	/** List of All Visited Node IDs in Sequence*/
 	UPROPERTY(BlueprintReadWrite, Category = "Quest")

@@ -84,6 +84,10 @@ public:
 	virtual void Initialize(bool bLaunchEventOnLoad = false);
 	virtual void Deinitialize();
 
+	virtual void Reset();
+	
+	virtual void EvaluateNextNode();
+	
 	/** initialize any asset related data */
 	virtual void InitializeFromAsset(UQuestBuilderGraph& OwningQuestGraph, UQuest& OwningQuest);
 

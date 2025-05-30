@@ -78,7 +78,7 @@ bool UQuestComponent::BeginQuestGraph(UQuestBuilderGraph* QuestGraphAsset)
 		UQuest* NewQuest = MakeQuestInstance(QuestTemplate);
 		if (NewQuest)
 		{
-			EvaluateQuestCondition(NewQuest);
+			EvaluateQuestState(NewQuest);
 		}
 	}
 
@@ -122,12 +122,45 @@ class UQuest* UQuestComponent::MakeQuestInstance(UQuest* QuestTemplate)
 	return nullptr;
 }
 
+class UQuest* UQuestComponent::TryMakeQuestInstanceFromTag(FGameplayTag QuestTag)
+{
+	FName QuestID = QuestTag.GetTagName();
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+	TArray<FAssetData> QuestGraphDataArray;
+	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+		
+	for (const FAssetData& AssetData : QuestGraphDataArray)
+	{
+		if (UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset()))
+		{
+			for (auto& QuestTemplate : QuestGraphAsset->QuestList)
+			{
+				if (QuestID == QuestTemplate->ID ||
+					QuestID == QuestTemplate->QuestTag.GetTagName())
+				{
+					//make quest instance from template found
+					if (UQuest* QuestInstance = MakeQuestInstance(QuestTemplate))
+					{
+						return QuestInstance;
+					}
+				}
+			}
+		}
+	}
+	return nullptr;
+}
+
 void UQuestComponent::ActivateQuestFromTag(FGameplayTag QuestTag)
 {
 	FName QuestID = QuestTag.GetTagName();
 	if (UQuest* Quest = QuestMap.FindRef(QuestID))
 	{		
 		ActivateQuest(Quest);
+	}
+	else
+	{
+		ActivateQuest(TryMakeQuestInstanceFromTag(QuestTag));
 	}
 }
 
@@ -138,6 +171,10 @@ void UQuestComponent::UnlockQuestFromTag(FGameplayTag QuestTag)
 	{
 		UnlockQuest(Quest);
 	}
+	else
+	{
+		UnlockQuest(TryMakeQuestInstanceFromTag(QuestTag));
+	}
 }
 
 void UQuestComponent::LockQuestFromTag(FGameplayTag QuestTag)
@@ -147,97 +184,43 @@ void UQuestComponent::LockQuestFromTag(FGameplayTag QuestTag)
 	{
 		LockQuest(Quest);
 	}
+	else
+	{
+		LockQuest(TryMakeQuestInstanceFromTag(QuestTag));
+	}
 }
 
-void UQuestComponent::RestartQuestFromTag(FGameplayTag QuestTag, FGameplayTag NodeTag, bool bStartFromNodeTag)
+void UQuestComponent::RestartQuestFromTag(FGameplayTag QuestTag, FGameplayTag NodeTag)
 {
 	FName QuestID = QuestTag.GetTagName();
 	FName NodeID = NodeTag.GetTagName();
-	if (UQuest* Quest = QuestMap.FindRef(QuestID))
+	if (UQuest* FoundedQuest = QuestMap.FindRef(QuestID))
 	{
-		Quest->QuestState = EQuestState::E_Active;
-
-
-		bool bNodeFound = false;
+		UQuestBuilderNode* FoundedNode = nullptr;
 		if (!NodeTag.IsValid())
-			bStartFromNodeTag = false;
-
-		if (bStartFromNodeTag)
-		{	
-			if (UQuestBuilderNode* FoundedNode = Quest->NodeMap.FindRef(NodeID))
-			{
-				bNodeFound = true;
-				//reset visited node children where the node started from
-				bool bCanDelete = false;
-				for (int i = 0; i < Quest->VisitedNodeIDs.Num(); i++)
-				{
-					if (Quest->VisitedNodeIDs[i] == NodeID)
-					{
-						bCanDelete = true;
-					}
-					if (bCanDelete)
-					{
-						Quest->VisitedNodeIDs.RemoveAt(i);
-						i--;//ensure the next element not skipped
-					}
-				}
-
-				//reset task data from the founded node
-				TArray<UQuestBuilderNode*> NodeStack;
-				NodeStack.Add(FoundedNode);
-				while (NodeStack.Num() > 0)
-				{
-					UQuestBuilderNode* CurrentNodeStack = NodeStack.Pop();
-					if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(CurrentNodeStack))
-					{
-						for (auto& Task : ObjectiveNode->Tasks)
-						{
-							if (Task)
-							{
-								Task->TaskState = ETaskState::E_Active;
-								Task->CurrentAmount = 0;
-							}
-						}
-					}
-					// Traverse child node
-					for (int i = 0; i < CurrentNodeStack->ChildrenNodes.Num(); i++)
-					{
-						NodeStack.Add(CurrentNodeStack->ChildrenNodes[i]);
-					}
-				}
-
-				Quest->CurrentNode = FoundedNode;
-			}
-		}
-		
-
-		if(!bNodeFound)
 		{
-			//reset all task data
-			for (auto& Node : Quest->AllNodes)
+			FoundedNode = FoundedQuest->NodeMap.FindRef(NodeID);
+			if (FoundedNode)
 			{
-				if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(Node))
+				//Reset all visited node that is not visited by FoundedNode
+				for (int32 i = FoundedQuest->VisitedNodeIDs.Num() - 1; i >= 0; --i)
 				{
-					for (auto& Task : ObjectiveNode->Tasks)
+					FName CachedVisitedNodeID = FoundedQuest->VisitedNodeIDs[i];
+					if (UQuestBuilderNode* VisitedNode = FoundedQuest->NodeMap.FindRef(CachedVisitedNodeID))
 					{
-						if (Task)
-						{
-							Task->TaskState = ETaskState::E_Active;
-							Task->CurrentAmount = 0;
-						}
-						
+						VisitedNode->Reset();
 					}
+					FoundedQuest->VisitedNodeIDs.RemoveAt(i);
+					if (CachedVisitedNodeID == NodeID)
+						break;
 				}
 			}
-			Quest->VisitedNodeIDs.Empty();
-			if (Quest->RootNodes.IsValidIndex(0))
-			{
-				Quest->CurrentNode = Quest->RootNodes[0];
-			}
 		}
-		
-
-		BeginNode(Quest);
+		RestartQuest(FoundedQuest, FoundedNode);
+	}
+	else
+	{
+		RestartQuest(TryMakeQuestInstanceFromTag(QuestTag));
 	}
 }
 
@@ -248,6 +231,10 @@ void UQuestComponent::FailQuestFromTag(FGameplayTag QuestTag)
 	{
 		FailQuest(Quest);
 	}
+	else
+	{
+		FailQuest(TryMakeQuestInstanceFromTag(QuestTag));
+	}
 }
 
 void UQuestComponent::CompleteQuestFromTag(FGameplayTag QuestTag)
@@ -256,6 +243,10 @@ void UQuestComponent::CompleteQuestFromTag(FGameplayTag QuestTag)
 	if (UQuest* Quest = QuestMap.FindRef(QuestID))
 	{
 		CompleteQuest(Quest);
+	}
+	else
+	{
+		CompleteQuest(TryMakeQuestInstanceFromTag(QuestTag));
 	}
 }
 
@@ -266,6 +257,10 @@ void UQuestComponent::StartNavigateQuest(UQuest* InQuest)
 	{
 		CurrentNavigatedQuest = InQuest;
 		OnStartNavigateQuest.Broadcast(InQuest);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("QuestComponent : Failed to Navigate Quest, Quest not found"));
 	}
 }
 
@@ -318,41 +313,39 @@ void UQuestComponent::LockQuest(UQuest* InQuest)
 	}
 }
 
-void UQuestComponent::RestartQuest(UQuest* InQuest)
+void UQuestComponent::RestartQuest(UQuest* InQuest, UQuestBuilderNode* InNode)
 {
 	if (InQuest)
 	{
 		InQuest->QuestState = EQuestState::E_Active;
-		//reset all task data
-		for (auto& Node : InQuest->AllNodes)
+		if (InNode)
 		{
-			if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(Node))
-			{
-				for (auto& Task : ObjectiveNode->Tasks)
-				{
-					if (Task)
-					{
-						Task->TaskState = ETaskState::E_Active;
-						Task->CurrentAmount = 0;
-					}
+			InQuest->CurrentNode = InNode;
+		}
 
-				}
+		if (InQuest->CurrentNode)
+		{
+			BeginNode(InQuest);
+		}
+		else
+		{
+			//reset all Node
+			for (auto& Node : InQuest->AllNodes)
+			{
+				Node->Reset();
+			}
+			InQuest->VisitedNodeIDs.Empty();
+			if (InQuest->RootNodes.IsValidIndex(0))
+			{
+				InQuest->CurrentNode = InQuest->RootNodes[0];
+				BeginNode(InQuest);
 			}
 		}
-		InQuest->VisitedNodeIDs.Empty();
-		if (InQuest->RootNodes.IsValidIndex(0))
-		{
-			InQuest->CurrentNode = InQuest->RootNodes[0];
-		}
-
-		BeginNode(InQuest);
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("QuestComponent : Failed to Restart Quest, Quest not found"));
 	}
-
-
 }
 
 void UQuestComponent::FailQuest(UQuest* InQuest)
@@ -472,8 +465,6 @@ void UQuestComponent::UpdateQuest()
 		FName Key = QuestKeys[i];
 		UQuest* Quest = QuestMap.FindRef(Key);
 
-		EvaluateQuestCondition(Quest);
-
 		if (Quest->QuestState == EQuestState::E_Active)
 		{
 			if (Quest->CurrentNode != nullptr)
@@ -557,31 +548,11 @@ void UQuestComponent::EvaluateNextNodeCondition(UQuest* QuestParam)
 	
 }
 
-void UQuestComponent::EvaluateQuestCondition(UQuest* QuestParam)
+void UQuestComponent::EvaluateQuestState(UQuest* QuestParam)
 {
-	if (QuestParam->QuestState != EQuestState::E_Locked)
+	if (QuestParam->QuestState != EQuestState::E_Locked) // only evaluate if the quest state is locked
 		return;
 
-	int SumConditionMet = 0;
-	for (auto& Condition : QuestParam->Decorators)
-	{
-		bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
-		if (bConditionMet)
-		{
-			SumConditionMet++;
-		}
-	}
-	EvaluateQuestState(QuestParam, SumConditionMet);
-	
-}
-
-void UQuestComponent::EvaluateQuestState(UQuest* QuestParam, int SumConditionMet)
-{
-	if (QuestParam->QuestState == EQuestState::E_Complete || QuestParam->QuestState == EQuestState::E_Fail)
-		return;
-
-	if (SumConditionMet >= QuestParam->Decorators.Num())
-	{
 		switch (QuestParam->DesiredQuestState)
 		{
 			case EQuestState::E_Active:
@@ -598,7 +569,6 @@ void UQuestComponent::EvaluateQuestState(UQuest* QuestParam, int SumConditionMet
 				return;
 		}
 		
-	}
 }
 
 void UQuestComponent::GoToNextNode(UQuest* QuestParam, UQuestBuilderNode* NodeParam)
@@ -775,8 +745,8 @@ void UQuestComponent::Load_Implementation(const FString& SaveFileName, int SlotI
 		}
 		for (auto& LoadedQuestAsset : LoadedQuestAssets)
 		{
-			EvaluateQuestCondition(LoadedQuestAsset);
-			if (LoadedQuestAsset->CurrentNode && LoadedQuestAsset->QuestState == EQuestState::E_Active)
+			EvaluateQuestState(LoadedQuestAsset);
+			if (LoadedQuestAsset->QuestState == EQuestState::E_Active)
 			{
 				bool bLaunchEventOnLoad = true;
 				BeginNode(LoadedQuestAsset, bLaunchEventOnLoad);

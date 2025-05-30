@@ -3,12 +3,12 @@
 
 #include "Quest.h"
 #include "QuestComponent.h"
+#include "QuestBuilderSetting.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode.h"
 #include "QuestBuilderEdge.h"
 #include "QuestBuilderNode_Objective.h"
 #include "QuestBuilderNode_Root.h"
-#include "QuestBuilderSetting.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 
 
@@ -21,6 +21,7 @@ UQuest::UQuest()
 	bCanQuestBeAborted = false;
 	bCanRetakeQuest = false;
 	QuestState = EQuestState::E_Locked;
+	
 }
 
 bool UQuest::Initialize(UQuestComponent* InitializingComp)

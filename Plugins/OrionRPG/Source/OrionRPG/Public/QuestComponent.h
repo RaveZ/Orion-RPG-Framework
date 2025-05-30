@@ -44,10 +44,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "QuestComponent")
 		TObjectPtr<APlayerController> OwningController;
 
-	/** Array of QuestGraph that is Running*/
-	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
-		TArray< TObjectPtr<UQuestBuilderGraph>> QuestGraphs;
-
 	/** Map of Quest ID and attached Quest That is Running*/
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
 		TMap<FName, TObjectPtr<UQuest>> QuestMap;
@@ -128,6 +124,9 @@ public:
 	
 	UFUNCTION()
 		virtual class UQuest* MakeQuestInstance(UQuest* QuestTemplate);
+	
+	UFUNCTION()
+	virtual class UQuest* TryMakeQuestInstanceFromTag(FGameplayTag QuestTag);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void ActivateQuestFromTag(FGameplayTag QuestTag);
@@ -139,7 +138,7 @@ public:
 		void LockQuestFromTag(FGameplayTag QuestTag);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void RestartQuestFromTag(FGameplayTag QuestTag, FGameplayTag NodeTag = FGameplayTag(), bool bStartFromNodeTag = false);
+		void RestartQuestFromTag(FGameplayTag QuestTag, FGameplayTag NodeTag = FGameplayTag());
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void FailQuestFromTag(FGameplayTag QuestTag);
@@ -160,7 +159,7 @@ public:
 		void LockQuest(UQuest* InQuest);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void RestartQuest(UQuest* InQuest);
+		void RestartQuest(UQuest* InQuest, UQuestBuilderNode* InNode = nullptr);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void FailQuest(UQuest* InQuest);
@@ -184,10 +183,7 @@ public:
 		void EvaluateNextNodeCondition(UQuest* QuestParam);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void EvaluateQuestCondition(UQuest* QuestParam);
-
-	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void EvaluateQuestState(UQuest* QuestParam, int SumConditionMet);
+		void EvaluateQuestState(UQuest* QuestParam);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void GoToNextNode(UQuest* QuestParam, UQuestBuilderNode* NodeParam);

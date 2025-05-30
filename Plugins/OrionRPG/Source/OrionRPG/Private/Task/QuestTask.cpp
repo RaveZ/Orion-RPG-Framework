@@ -44,13 +44,21 @@ void UQuestTask::Deactivate()
 	}
 }
 
+void UQuestTask::Reset()
+{
+	Deactivate();
+	TaskState = ETaskState::E_Active;
+	CurrentAmount = 0;
+}
+
 bool UQuestTask::IsTaskCompleted()
 {
 	return TaskState == ETaskState::E_Complete;
 }
 
 void UQuestTask::BeginTask()  
-{  
+{
+	TaskState = ETaskState::E_Active;
    K2_BeginTask(GetOwningController(), GetOwningPawn());
 
    if (GetQuestComponent() && bIsTaskTickable)

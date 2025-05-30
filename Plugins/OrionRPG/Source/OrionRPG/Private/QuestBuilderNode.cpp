@@ -57,7 +57,6 @@ void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 
 void UQuestBuilderNode::Deinitialize()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Node: Deinitialize %s"), *this->GetName());
 	EndEventQueue.Empty();
 	for (auto& EndEvent : Events)
 	{
@@ -67,6 +66,15 @@ void UQuestBuilderNode::Deinitialize()
 		}
 	}
 	LaunchEndEventQueue();
+}
+
+void UQuestBuilderNode::Reset()
+{
+}
+
+void UQuestBuilderNode::EvaluateNextNode()
+{
+	
 }
 
 UQuestBuilderEdge* UQuestBuilderNode::GetEdge(UQuestBuilderNode* ChildNode)

@@ -20,6 +20,7 @@ public:
 
 	virtual void Initialize(bool bLaunchEventOnLoad = false) override;
 	virtual void Deinitialize() override;
+	virtual void Reset() override;
 
 	void BeginAllTask();
 

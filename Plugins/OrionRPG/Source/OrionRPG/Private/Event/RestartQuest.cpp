@@ -19,7 +19,7 @@ void URestartQuest::BeginEvent(AController* OwnerController, APawn* ControlledPa
 {
 	if (QuestTag.IsValid())
 	{
-		GetQuestComponent()->RestartQuestFromTag(QuestTag, NodeTag, true);
+		GetQuestComponent()->RestartQuestFromTag(QuestTag, NodeTag);
 	}
 	EndEvent();
 }

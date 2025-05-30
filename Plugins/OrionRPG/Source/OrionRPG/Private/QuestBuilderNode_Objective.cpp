@@ -27,6 +27,18 @@ void UQuestBuilderNode_Objective::Deinitialize()
     }
 }
 
+void UQuestBuilderNode_Objective::Reset()
+{
+    Super::Reset();
+    for (auto& Task : Tasks)
+    {
+        if (Task)
+        {
+            Task->Reset();
+        }
+    }
+}
+
 void UQuestBuilderNode_Objective::BeginAllTask()
 {
     for (auto& Task : Tasks)
