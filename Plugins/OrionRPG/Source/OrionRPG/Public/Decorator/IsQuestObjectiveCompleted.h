@@ -7,8 +7,7 @@
 #include "IsQuestObjectiveCompleted.generated.h"
 
 /**
- * Is objective completed decorator node.
- * Desc
+ * Evaluate if objective node completed from tag.
  */
 UCLASS()
 class ORIONRPG_API UIsQuestObjectiveCompleted : public UOrionDecorator

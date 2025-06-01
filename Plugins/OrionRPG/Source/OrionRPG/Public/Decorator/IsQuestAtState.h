@@ -9,7 +9,7 @@
 
 
 /**
- * Evaluate if quest is at certain state
+ * Evaluate if quest is at certain state.
  */
 UCLASS()
 class ORIONRPG_API UIsQuestAtState : public UOrionDecorator

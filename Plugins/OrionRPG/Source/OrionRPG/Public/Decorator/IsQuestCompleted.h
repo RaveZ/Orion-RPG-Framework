@@ -9,8 +9,7 @@
 
 class UQuest;
 /**
- * Is quest completed decorator node.
- * Desc
+ * Evaluate if quest completed.
  */
 UCLASS()
 class ORIONRPG_API UIsQuestCompleted : public UOrionDecorator

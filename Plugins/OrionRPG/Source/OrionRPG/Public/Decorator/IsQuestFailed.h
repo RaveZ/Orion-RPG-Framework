@@ -7,8 +7,7 @@
 #include "IsQuestFailed.generated.h"
 
 /**
- * Is quest failed decorator node.
- * Desc
+ * Evaluate if quest failed.
  */
 UCLASS()
 class ORIONRPG_API UIsQuestFailed : public UOrionDecorator
