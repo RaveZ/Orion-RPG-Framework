@@ -37,6 +37,18 @@ bool UQuestTask::CompleteTask()
 	return true;
 }
 
+bool UQuestTask::FailTask()
+{
+	if (Quest == nullptr)
+		return false;
+	TaskState = ETaskState::E_Fail;
+    K2_TaskFailed(GetOwningController(), GetOwningPawn());
+	GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
+	GetQuestComponent()->OnQuestAutoSave.Broadcast();
+	Deactivate();
+	return true;
+}
+
 void UQuestTask::Deactivate()
 {
 	//clear tick timer handle

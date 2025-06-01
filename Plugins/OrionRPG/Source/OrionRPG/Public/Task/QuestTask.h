@@ -20,7 +20,8 @@ UENUM(BlueprintType)
 enum class ETaskState : uint8
 {
 	E_Active		UMETA(DisplayName = "ACTIVE"),
-	E_Complete		UMETA(DisplayName = "COMPLETE"),
+	E_Complete		UMETA(DisplayName = "COMPLETED"),
+	E_Fail		UMETA(DisplayName = "FAILED"),
 };
 UCLASS(Abstract, Blueprintable, EditInlineNew, AutoExpandCategories = ("Default"))
 class ORIONRPG_API UQuestTask : public UObject
@@ -93,12 +94,18 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Task Completed", Category = "Task")
 		void K2_TaskCompleted(AController* OwnerController, APawn* ControlledPawn);
+	
+	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Task Failed", Category = "Task")
+	void K2_TaskFailed(AController* OwnerController, APawn* ControlledPawn);
 
 	UFUNCTION(BlueprintCallable, Category = "Task")
 		virtual void BeginTask();
 
 	UFUNCTION(BlueprintCallable, Category = "Task")
 		virtual bool CompleteTask();
+	
+	UFUNCTION(BlueprintCallable, Category = "Task")
+	virtual bool FailTask();
 
 	UFUNCTION(BlueprintCallable, Category = "Task")
 		virtual void Deactivate();
