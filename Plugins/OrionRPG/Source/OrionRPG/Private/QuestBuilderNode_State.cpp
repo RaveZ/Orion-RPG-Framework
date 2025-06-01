@@ -10,6 +10,11 @@
 void UQuestBuilderNode_State::Initialize(bool bLaunchEventOnLoad)
 {
     Super::Initialize(bLaunchEventOnLoad);
+}
+
+void UQuestBuilderNode_State::BeginNode()
+{
+    Super::BeginNode();
 	BeginState();
 }
 
@@ -26,10 +31,8 @@ void UQuestBuilderNode_State::BeginState()
         GetQuestComponent()->OnQuestFailed.Broadcast(Quest);
         break;
     }
-
-    GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast();
 	Deinitialize();
-
+    GetQuestComponent()->OnQuestAutoSave.Broadcast();
     
 }
 

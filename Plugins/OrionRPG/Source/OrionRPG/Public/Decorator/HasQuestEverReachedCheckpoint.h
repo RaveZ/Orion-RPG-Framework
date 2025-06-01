@@ -7,8 +7,7 @@
 #include "HasQuestEverReachedCheckpoint.generated.h"
 
 /**
- * Is objective completed decorator node.
- * Desc
+ * Evaluate if quest has ever reached a certain checkpoint node.
  */
 UCLASS()
 class ORIONRPG_API UHasQuestEverReachedCheckpoint : public UOrionDecorator

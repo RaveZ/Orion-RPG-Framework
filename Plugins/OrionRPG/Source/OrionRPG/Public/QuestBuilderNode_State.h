@@ -18,6 +18,7 @@ public:
         EQuestState QuestState;
 
     virtual void Initialize(bool bLaunchEventOnLoad = false) override;
+	virtual void BeginNode() override;
 
     UFUNCTION(BlueprintCallable, Category = "State")
         void BeginState();

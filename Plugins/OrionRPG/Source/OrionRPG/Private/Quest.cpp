@@ -70,6 +70,31 @@ void UQuest::Deinitialize()
 	}
 }
 
+void UQuest::BeginNode(UQuestBuilderNode* InNode, bool bLaunchEventOnLoad)
+{
+	if (InNode)
+	{
+		CurrentNode = InNode;
+	}
+	if (CurrentNode == nullptr)  
+	{  
+		UE_LOG(LogTemp, Warning, TEXT("BeginNode: CurrentNode is null for Quest ID: %s"), *ID.ToString());  
+		return;  
+	}  
+
+	//add visited node
+	VisitedNodeIDs.AddUnique(CurrentNode->ID);
+
+	if (UQuestBuilderNode_Root* RootNode = Cast<UQuestBuilderNode_Root>(CurrentNode))
+	{
+		RootNode->EvaluateNextNode();
+		return;
+	}
+
+	//InitializeNode
+	CurrentNode->Initialize(bLaunchEventOnLoad);
+}
+
 int UQuest::GetLevelNum() const
 {
 	int Level = 0;

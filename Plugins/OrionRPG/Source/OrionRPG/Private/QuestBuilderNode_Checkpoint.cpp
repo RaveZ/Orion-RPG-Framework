@@ -10,13 +10,18 @@
 void UQuestBuilderNode_Checkpoint::Initialize(bool bLaunchEventOnLoad)
 {
 	Super::Initialize(bLaunchEventOnLoad);
+}
+
+void UQuestBuilderNode_Checkpoint::BeginNode()
+{
+	Super::BeginNode();
     BeginCheckpoint();
 }
 
 void UQuestBuilderNode_Checkpoint::BeginCheckpoint()
 {
 	//TODO : Add Delegate On Reached Checkpoint for future use
-    GetQuestComponent()->UpdateQuest();
+	EvaluateNextNode();
 }
 
 #if WITH_EDITOR

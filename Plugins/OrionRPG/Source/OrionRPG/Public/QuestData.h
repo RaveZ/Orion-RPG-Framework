@@ -58,16 +58,33 @@ public:
 	TArray<FName> VisitedNodeIDs;
 };
 
+//Store Data of Quest Category
+USTRUCT(BlueprintType)
+struct FQuestCategory
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = QuestCategory)
+	FName Category;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = FQuestCategory)
+	TArray<UQuest*> QuestList;
+
+
+};
+
+//Data Handle for quest object
 USTRUCT(BlueprintType)
 struct FQuestDataHandle
 {
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = QuestDataHandle, meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = QuestDataHandle)
 	FGameplayTag QuestTag;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = QuestDataHandle, meta = (AllowPrivateAccess = true))
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = QuestDataHandle)
 	FGameplayTag NodeTag;
 
 

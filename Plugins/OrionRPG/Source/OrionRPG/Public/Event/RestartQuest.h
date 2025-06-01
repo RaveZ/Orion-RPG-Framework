@@ -6,9 +6,9 @@
 #include "Event/OrionEvent.h"
 #include "RestartQuest.generated.h"
 
+
 /**
- * Restart quest event node.
- * Desc
+ * Restart quest from quest tag.
  */
 
 

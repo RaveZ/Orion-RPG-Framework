@@ -27,6 +27,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 		bool IsAllTaskCompleted();
 
+	virtual void BeginNode() override;
+	virtual void EvaluateNextNode() override;
 
 #if WITH_EDITOR
 	virtual FText GetNodeTitle() const override;

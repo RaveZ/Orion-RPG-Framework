@@ -22,6 +22,7 @@ enum class EQuestNodeLimits : uint8
 };
 
 
+DECLARE_MULTICAST_DELEGATE(FNodeEventFinishedSignature);
 
 UCLASS(Blueprintable, EditInlineNew)
 class ORIONRPG_API UQuestBuilderNode : public UObject
@@ -77,6 +78,11 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Quest")
 		TObjectPtr < UQuestComponent> QuestComponent;
 
+	/**Called when all Start Node events finished*/
+	FNodeEventFinishedSignature OnAllStartEventFinished;
+	
+	/**Called when all End Node events finished*/
+	FNodeEventFinishedSignature OnAllEndEventFinished;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
 		bool IsLeafNode() const;
@@ -86,6 +92,7 @@ public:
 
 	virtual void Reset();
 	
+	virtual void BeginNode();
 	virtual void EvaluateNextNode();
 	
 	/** initialize any asset related data */

@@ -50,9 +50,15 @@ void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 			}
 		}
 	}
-	
-
+	OnAllStartEventFinished.AddLambda(
+		[this]()
+		{
+			BeginNode();
+		}
+	);
 	LaunchStartEventQueue();
+
+	
 }
 
 void UQuestBuilderNode::Deinitialize()
@@ -68,13 +74,61 @@ void UQuestBuilderNode::Deinitialize()
 	LaunchEndEventQueue();
 }
 
+void UQuestBuilderNode::BeginNode()
+{
+	//empty in base 
+}
+
 void UQuestBuilderNode::Reset()
 {
+	//empty in base 
 }
 
 void UQuestBuilderNode::EvaluateNextNode()
 {
+	if (Quest->QuestState != EQuestState::E_Active)
+	 return;
 	
+	UQuestBuilderNode* NextNode = nullptr;
+	//Quest Node will executes their children from top to bottom, and will stop executing its children when one of their children decorator succeeds.
+	//If none of the children succeeds, this node wiil stop evaluate branching until next quest update.
+	for (auto& Node : ChildrenNodes)
+	{
+		int SumConditionMet = 0;
+		for (auto& Condition : Node->Decorators)
+		{
+			bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
+			if (bConditionMet)
+			{
+				SumConditionMet++;
+			}
+		}
+		if (SumConditionMet >= Node->Decorators.Num())
+		{
+			NextNode = Node;
+			//break loop to ensure the met condition doesn't get overrided
+			break;
+		}
+		
+	}
+
+	UQuestBuilderNode* CachedCurrentNode = this;
+	
+	OnAllEndEventFinished.AddLambda(
+		[this, NextNode, CachedCurrentNode]()
+		{
+			if (NextNode)
+			{
+				//Check if the current node still hasn't changed after the events. if it changed, it means we dont need to go to the next node anymore
+				if (CachedCurrentNode == this)
+				{
+					GetOwningQuest()->BeginNode(NextNode);
+				}
+			}
+		}
+	);
+	Deinitialize();
+
 }
 
 UQuestBuilderEdge* UQuestBuilderNode::GetEdge(UQuestBuilderNode* ChildNode)
@@ -92,10 +146,10 @@ FText UQuestBuilderNode::GetDescription_Implementation() const
 void UQuestBuilderNode::LaunchStartEventQueue()
 {
 	if (StartEventQueue.IsEmpty())
+	{
+		OnAllStartEventFinished.Broadcast();
 		return;
-
-	
-	StartEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
+	}
 	StartEventQueue[0]->OnEventFinished.AddLambda(
 		[this]()
 		{
@@ -103,16 +157,16 @@ void UQuestBuilderNode::LaunchStartEventQueue()
 			LaunchStartEventQueue();
 		}
 	);
-	
+	StartEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
 }
 
 void UQuestBuilderNode::LaunchEndEventQueue()
 {
 	if (EndEventQueue.IsEmpty())
+	{
+		OnAllEndEventFinished.Broadcast();
 		return;
-
-
-	EndEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
+	}
 	EndEventQueue[0]->OnEventFinished.AddLambda(
 		[this]()
 		{
@@ -120,6 +174,8 @@ void UQuestBuilderNode::LaunchEndEventQueue()
 			LaunchEndEventQueue();
 		}
 	);
+	EndEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
+	
 }
 
 FString UQuestBuilderNode::GetShortTypeName(const UObject* Ob)

@@ -104,6 +104,9 @@ public:
 	virtual void Deinitialize();
 
 	UFUNCTION(BlueprintCallable, Category = "Quest")
+	void BeginNode(UQuestBuilderNode* InNode = nullptr, bool bLaunchEventOnLoad = false);
+	
+	UFUNCTION(BlueprintCallable, Category = "Quest")
 		int GetLevelNum() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Quest")

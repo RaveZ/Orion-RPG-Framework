@@ -3,21 +3,25 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Quest.h"
 #include "Decorator/OrionDecorator.h"
-#include "IsQuestActive.generated.h"
+#include "IsQuestAtState.generated.h"
+
 
 /**
- * Is quest active decorator node.
- * Desc
+ * Evaluate if quest is at certain state
  */
 UCLASS()
-class ORIONRPG_API UIsQuestActive : public UOrionDecorator
+class ORIONRPG_API UIsQuestAtState : public UOrionDecorator
 {
 	GENERATED_BODY()
 
 public:
-	UIsQuestActive();
+	UIsQuestAtState();
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Quest")
+	EQuestState QuestState = EQuestState::E_Active;
+	
 	virtual bool PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const override;
 	virtual FString GetNodeDisplayText_Implementation() const override;
 };

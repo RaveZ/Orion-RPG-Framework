@@ -29,8 +29,10 @@ bool UQuestTask::CompleteTask()
 
     TaskState = ETaskState::E_Complete;
     K2_TaskCompleted(GetOwningController(), GetOwningPawn());
-    GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast();
-
+    GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
+	GetQuestComponent()->OnQuestAutoSave.Broadcast();
+	ObjectiveNode->EvaluateNextNode();
+	
 	Deactivate();
 	return true;
 }
@@ -58,6 +60,8 @@ bool UQuestTask::IsTaskCompleted()
 
 void UQuestTask::BeginTask()  
 {
+	if (TaskState == ETaskState::E_Complete)
+		return;
 	TaskState = ETaskState::E_Active;
    K2_BeginTask(GetOwningController(), GetOwningPawn());
 
@@ -87,36 +91,23 @@ void UQuestTask::TickTask_Implementation()
 
 AController* UQuestTask::GetOwningController() const
 {
-	if (GetQuestComponent())
-	{
-		return GetQuestComponent()->GetOwningController();
-	}
-	return nullptr;
+	return OwningController;
 }
 
 APawn* UQuestTask::GetOwningPawn() const
 {
-	if (GetQuestComponent())
-	{
-		return GetQuestComponent()->GetOwningPawn();
-	}
+	if (QuestComponent)
+		return QuestComponent->GetOwningPawn();
 	return nullptr;
 }
 
 UQuestComponent* UQuestTask::GetQuestComponent() const
 {
-	if (GetWorld())
-	{
-		return UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
-	}
-	return nullptr;
+	return QuestComponent;
 }
 
 UQuestBuilderGraph* UQuestTask::GetOwningQuestGraph() const
 {
-	if (!QuestGraph)
-		return nullptr;
-
 	return QuestGraph;
 }
 
@@ -125,8 +116,6 @@ UQuest* UQuestTask::GetOwningQuest() const
 	return Quest;
 }
 
-
-
 void UQuestTask::AddAmount(int AmountToAdd)
 {
 	CurrentAmount = FMath::Clamp(CurrentAmount + AmountToAdd, 0, RequiredAmount);
@@ -134,7 +123,6 @@ void UQuestTask::AddAmount(int AmountToAdd)
 	{
 		CompleteTask();
 	}
-	GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast();
 }
 
 FText UQuestTask::GetDescription_Implementation() const

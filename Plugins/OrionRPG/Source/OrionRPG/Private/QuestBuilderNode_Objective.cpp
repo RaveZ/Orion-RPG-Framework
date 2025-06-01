@@ -11,8 +11,21 @@
 
 void UQuestBuilderNode_Objective::Initialize(bool bLaunchEventOnLoad)
 {
-    Super::Initialize(bLaunchEventOnLoad);
+    if (IsAllTaskCompleted())
+    {
+        EvaluateNextNode();
+    }
+    else
+    {
+        Super::Initialize(bLaunchEventOnLoad);
+    }
+}
+
+void UQuestBuilderNode_Objective::BeginNode()
+{
+    Super::BeginNode();
 	BeginAllTask();
+    GetQuestComponent()->OnQuestAutoSave.Broadcast();
 }
 
 void UQuestBuilderNode_Objective::Deinitialize()
@@ -45,6 +58,9 @@ void UQuestBuilderNode_Objective::BeginAllTask()
     {
         if (Task)
         {
+            Task->Quest = GetOwningQuest();
+            Task->OwningController = GetOwningController();
+            Task->QuestComponent = QuestComponent;
             Task->BeginTask();
         }
 
@@ -79,6 +95,13 @@ bool UQuestBuilderNode_Objective::IsAllTaskCompleted()
     
 }
 
+void UQuestBuilderNode_Objective::EvaluateNextNode()
+{
+    if (IsAllTaskCompleted())
+    {
+        Super::EvaluateNextNode();
+    }
+}
 
 
 #if WITH_EDITOR

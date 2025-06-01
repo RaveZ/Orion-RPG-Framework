@@ -7,8 +7,8 @@
 #include "FailQuest.generated.h"
 
 /**
- * Fail quest event node.
- * Desc
+ * Fail quest from quest tag.
+ * Can only fail currently active quests.
  */
 UCLASS()
 class ORIONRPG_API UFailQuest : public UOrionEvent

@@ -66,6 +66,11 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Task")
 		TObjectPtr<UQuest> Quest;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Task")
+		TObjectPtr<AController> OwningController;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Task")
+		TObjectPtr < UQuestComponent> QuestComponent;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Task")
 		TObjectPtr<UQuestBuilderNode_Objective> ObjectiveNode;

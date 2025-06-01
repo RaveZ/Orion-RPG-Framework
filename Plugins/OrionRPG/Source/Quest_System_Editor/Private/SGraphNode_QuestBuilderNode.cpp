@@ -301,7 +301,7 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 		};
 
 	const FMargin NodePadding = (Cast<UQuestBuilderEdSubNode_Decorator>(GraphNode) || Cast<UQuestBuilderEdSubNode_Event>(GraphNode) || Cast<UQuestBuilderEdSubNode_Task>(GraphNode))
-		? FMargin(1.f)
+		? FMargin(5.f, 1.f, 1.f, 1.f)
 		: FMargin(8.0f);
 
 	const float NodeMaxWidth = QuestEdNode && QuestEdNode->IsSubNode()
@@ -315,7 +315,7 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 	const FMargin PinPadding = (Cast<UQuestBuilderEdSubNode_Decorator>(GraphNode) || Cast<UQuestBuilderEdSubNode_Event>(GraphNode) || Cast<UQuestBuilderEdSubNode_Task>(GraphNode))
 		? FMargin(0.f)
 		: FMargin(2.f, 3.f, 2.f, 3.f);
-
+	
 
 	UWorld* World = GEditor->GetEditorWorldContext().World();
 

@@ -7,8 +7,8 @@
 #include "ActivateQuest.generated.h"
 
 /**
- * Activate quest event node.
- * Desc
+ * Actvate quest from quest tag.
+ * Can only activate locked/unlocked quests.
  */
 UCLASS()
 class ORIONRPG_API UActivateQuest : public UOrionEvent

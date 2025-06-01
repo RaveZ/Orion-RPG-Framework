@@ -7,8 +7,8 @@
 #include "UnlockQuest.generated.h"
 
 /**
- * Unlock quest event node.
- * Desc
+ * Unlock quest from quest tag.
+ * Can only unlock locked quests.
  */
 UCLASS()
 class ORIONRPG_API UUnlockQuest : public UOrionEvent
