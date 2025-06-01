@@ -44,7 +44,10 @@ FText UQuestBuilderEdNode_Objective::GetTooltipText() const
 
 void UQuestBuilderEdNode_Objective::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
-	AddContextMenuActionsTasks(Menu, "QuestBuilderEdNode", Context);
+	if (GetDefault<UQuestBuilderSetting>()->bCanUseMultipleTask)
+	{
+		AddContextMenuActionsTasks(Menu, "QuestBuilderEdNode", Context);
+	}
 	AddContextMenuActionsEvents(Menu, "QuestBuilderEdNode", Context);
 	AddContextMenuActionsDecorators(Menu, "QuestBuilderEdNode", Context);
 }

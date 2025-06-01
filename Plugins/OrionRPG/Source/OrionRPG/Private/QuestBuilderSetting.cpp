@@ -16,6 +16,7 @@ UQuestBuilderSetting::UQuestBuilderSetting()
 	bEdgeEnabled = false;
 	bCanRenameNode = true;
 	bCanBeCyclical = false;
+	bCanUseMultipleTask = false;
 
 	//Runtime Config
 	QuestCategoryList.Add("Main Quest");

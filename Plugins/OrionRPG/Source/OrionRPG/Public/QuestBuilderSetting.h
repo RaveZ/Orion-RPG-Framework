@@ -48,6 +48,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, config, Category = "Graph Rule")
 	bool bCanBeCyclical;
+	
+	UPROPERTY(EditAnywhere, config, Category = "Graph Rule")
+	bool bCanUseMultipleTask;
 
 };
 

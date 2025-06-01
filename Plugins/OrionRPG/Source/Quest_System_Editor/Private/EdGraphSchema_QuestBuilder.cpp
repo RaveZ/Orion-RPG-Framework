@@ -556,10 +556,11 @@ const FPinConnectionResponse UEdGraphSchema_QuestBuilder::CanMergeNodes(const UE
 	const bool bNodeBIsDecorator = NodeB->IsA(UQuestBuilderEdSubNode_Decorator::StaticClass());
 	const bool bNodeBIsEvent = NodeB->IsA(UQuestBuilderEdSubNode_Event::StaticClass());
 	const bool bNodeBIsTask = NodeB->IsA(UQuestBuilderEdSubNode_Task::StaticClass());
-
+	const bool bCanUseMultipleTask = GetDefault<UQuestBuilderSetting>()->bCanUseMultipleTask;
+	
 	if ((bNodeAIsDecorator && (bNodeBIsDecorator || bNodeBIsState || bNodeBIsObjective))
 		|| (bNodeAIsEvent && (bNodeBIsEvent || bNodeBIsState || bNodeBIsObjective))
-		|| (bNodeAIsTask) && (bNodeBIsTask || bNodeBIsObjective))
+		|| (bNodeAIsTask && bCanUseMultipleTask) && (bNodeBIsTask || bNodeBIsObjective))
 	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_MAKE, TEXT(""));
 	}
