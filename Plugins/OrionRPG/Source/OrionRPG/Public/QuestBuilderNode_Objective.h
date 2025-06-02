@@ -23,12 +23,19 @@ public:
 	virtual void Reset() override;
 
 	void BeginAllTask();
+	void CompleteObjective();
+	void FailObjective();
+	bool IsActive();
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 		bool IsAllTaskCompleted();
+	
+	UFUNCTION(BlueprintCallable, Category = "Objective")
+		bool IsAllTaskFailed();
 
 	virtual void BeginNode() override;
 	virtual void EvaluateNextNode() override;
+	virtual void EvaluateAllTaskCompleted();
 
 #if WITH_EDITOR
 	virtual FText GetNodeTitle() const override;

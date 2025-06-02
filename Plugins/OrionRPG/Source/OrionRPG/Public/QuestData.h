@@ -44,7 +44,7 @@ struct FQuestData
 	GENERATED_BODY()
 public:
 	UPROPERTY(SaveGame)
-	FName CurrentNodeID;
+	TArray<FName> CurrentNodeIDs;
 
 	UPROPERTY(SaveGame)
 	EQuestState QuestState = EQuestState::E_Locked;

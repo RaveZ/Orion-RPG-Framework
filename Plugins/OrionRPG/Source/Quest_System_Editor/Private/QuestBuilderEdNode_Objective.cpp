@@ -36,7 +36,7 @@ FText UQuestBuilderEdNode_Objective::GetTooltipText() const
 	if (ObjectiveNode)
 	{
 		return FText::Format(FText::FromString(TEXT("Objective Node\n{0}")),
-			NSLOCTEXT("QuestBuilderEditor", "ObjectiveNodeScopeTooltip", "This Node contains series of tasks, events, and decorators that define the player's objectives.\nThis Node will executes their children from top to bottom, and will stop executing its children when one of their children decorator succeeds.\nIf none of the children succeeds, this node will stop branching until next quest update."));
+			NSLOCTEXT("QuestBuilderEditor", "ObjectiveNodeScopeTooltip", "This Node contains series of tasks, events, and decorators that define the player's objectives.\nThis Node will executes their children from top to bottom in sequence\nIf none of the children succeeds, this node will stop branching until next quest update."));
 	}
 
 	return Super::GetTooltipText();

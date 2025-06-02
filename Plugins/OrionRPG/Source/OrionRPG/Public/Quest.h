@@ -82,7 +82,7 @@ public:
 		EQuestState QuestState = EQuestState::E_Locked;
 	
 	UPROPERTY(BlueprintReadWrite, Category = "Quest")
-		TObjectPtr<UQuestBuilderNode> CurrentNode;
+		TArray<TObjectPtr<UQuestBuilderNode>> CurrentNodes;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Quest")
 		TArray< TObjectPtr<UQuestBuilderNode>> RootNodes;
@@ -102,9 +102,21 @@ public:
 
 	virtual bool Initialize(class UQuestComponent* InitializingComp);
 	virtual void Deinitialize();
-
+	
 	UFUNCTION(BlueprintCallable, Category = "Quest")
-	void BeginNode(UQuestBuilderNode* InNode = nullptr, bool bLaunchEventOnLoad = false);
+	void UpdateQuest();
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Quest")
+	TArray<UQuestBuilderNode*> GetVisitedNodes();
+	
+	UFUNCTION(BlueprintCallable, Category = "Quest")
+	void SortVisitedNodes();
+	
+	UFUNCTION(BlueprintCallable, Category = "Quest")
+		void BeginNode(UQuestBuilderNode* InNode, bool bLaunchEventOnLoad = false);
+	
+	UFUNCTION(BlueprintCallable, Category = "Quest")
+		void BeginMultipleNodes(TArray<UQuestBuilderNode*> InNodes, bool bLaunchEventOnLoad = false);
 	
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 		int GetLevelNum() const;

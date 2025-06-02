@@ -15,6 +15,9 @@ class APlayerController;
 
 //Quest Delegate
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FQuestAutoSave);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FQuestUpdated);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestObjectiveUpdated, UQuest*, Quest);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FStartNavigateQuest, UQuest*, Quest);
@@ -59,6 +62,9 @@ public:
 
 public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
+	FQuestUpdated OnQuestUpdated;
+	
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 		FQuestObjectiveUpdated OnQuestObjectiveUpdated;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
@@ -96,6 +102,9 @@ public:
 		FOnLoadComplete OnLoadComplete;
 
 public:
+	UFUNCTION()
+	virtual void QuestUpdated();
+	
 	UFUNCTION()
 		virtual void QuestObjectiveUpdated(UQuest* Quest);
 
@@ -139,6 +148,9 @@ public:
 	UFUNCTION()
 	virtual class UQuest* TryMakeQuestInstanceFromTag(FGameplayTag QuestTag);
 
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		void UpdateAllQuest();
+	
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void ActivateQuestFromTag(FGameplayTag QuestTag);
 

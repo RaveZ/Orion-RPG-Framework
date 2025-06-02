@@ -21,7 +21,8 @@ void UQuestBuilderNode_Checkpoint::BeginNode()
 void UQuestBuilderNode_Checkpoint::BeginCheckpoint()
 {
 	//TODO : Add Delegate On Reached Checkpoint for future use
-	EvaluateNextNode();
+    QuestComponent->OnQuestUpdated.Broadcast();
+    GetQuestComponent()->OnQuestAutoSave.Broadcast();
 }
 
 #if WITH_EDITOR

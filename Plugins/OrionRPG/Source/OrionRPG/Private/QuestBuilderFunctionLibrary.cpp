@@ -64,10 +64,11 @@ bool UQuestBuilderFunctionLibrary::CanProgressQuestObjective(const UObject* Worl
 {
     if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
     {
-        UQuest* Quest = QuestComp->FindQuest(QuestTag);
-        if (Quest && Quest->CurrentNode && Quest->QuestState == EQuestState::E_Active)
+        UQuest* FoundedQuest = QuestComp->FindQuest(QuestTag);
+        UQuestBuilderNode* FoundedNode = FoundedQuest->NodeMap.FindRef(NodeTag.GetTagName());
+        if (FoundedQuest && FoundedQuest->CurrentNodes.Contains(FoundedNode) && FoundedQuest->QuestState == EQuestState::E_Active)
         {
-            if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(Quest->CurrentNode))
+            if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(FoundedNode))
             {
                 return true;
             }
@@ -95,4 +96,35 @@ UQuest* UQuestBuilderFunctionLibrary::GetCurrentNavigatedQuest(const UObject* Wo
 
     UE_LOG(LogTemp, Warning, TEXT("QuestBuilderFunctionLibrary : Current Navigated Quest Is Null!"));
     return nullptr;
+}
+
+bool UQuestBuilderFunctionLibrary::IsCurrentlyNavigatedObjective(const UObject* WorldContextObject, FName QuestID, FName NodeID)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        UQuest* CurrentNavigatedQuest = QuestComp->CurrentNavigatedQuest;
+        UQuest* FoundedQuest =  QuestComp->QuestMap.FindRef(QuestID);
+        UQuestBuilderNode* FoundedNode =  FoundedQuest ? FoundedQuest->NodeMap.FindRef(NodeID) : nullptr;
+
+        if ((CurrentNavigatedQuest && FoundedQuest && CurrentNavigatedQuest == FoundedQuest) &&
+            (FoundedQuest->QuestState == EQuestState::E_Active) && 
+            (FoundedNode && CurrentNavigatedQuest->CurrentNodes.Contains(FoundedNode)))
+        {
+            UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(FoundedNode);
+            if (ObjectiveNode && !ObjectiveNode->IsAllTaskCompleted())
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool UQuestBuilderFunctionLibrary::IsObjectiveCompleted(const UObject* WorldContextObject, UQuestBuilderNode* QuestNode)
+{
+    if ( UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestNode))
+    {
+        return ObjectiveNode->IsAllTaskCompleted();
+    }
+    return false;
 }

@@ -62,37 +62,121 @@ bool UQuest::Initialize(UQuestComponent* InitializingComp)
 void UQuest::Deinitialize()
 {
 	VisitedNodeIDs.Empty();
-	CurrentNode = nullptr;
+	CurrentNodes.Empty();
 	
-	for (auto& node : AllNodes)
+	for (auto& Node : AllNodes)
 	{
-		node->Deinitialize();
+		Node->Deinitialize();
 	}
+}
+
+void UQuest::UpdateQuest()
+{
+	if (QuestState != EQuestState::E_Active)
+		return;
+
+	
+	
+	//Cache Current nodes, because some node may be removed from current nodes after branching, 
+	TArray<UQuestBuilderNode*> CachedCurrentNodes = CurrentNodes;
+	for (int i = 0; i < CachedCurrentNodes.Num(); i++)
+	{
+		if (CachedCurrentNodes.IsValidIndex(i) && CurrentNodes.Contains(CachedCurrentNodes[i]))
+		{
+			CachedCurrentNodes[i]->EvaluateNextNode();
+		}
+	}
+}
+
+TArray<UQuestBuilderNode*> UQuest::GetVisitedNodes()
+{
+	SortVisitedNodes();
+
+	TArray<UQuestBuilderNode*> ReturnNodes;
+	for (auto& VisitedNodeID : VisitedNodeIDs)
+	{
+		UQuestBuilderNode* QuestNode = NodeMap.FindRef(VisitedNodeID);
+		ReturnNodes.AddUnique(QuestNode);
+	}
+	return ReturnNodes;
+}
+
+void UQuest::SortVisitedNodes()
+{
+	//Sort Visited nodes in this order:
+	// Ongoing Objectives > Completed Objectives > Failed Objective
+	TArray<FName> CachedVisitedNodeIDs;
+	for (auto& VisitedNodeID : VisitedNodeIDs)
+	{
+		UQuestBuilderNode* QuestNode = NodeMap.FindRef(VisitedNodeID);
+		if (QuestNode)
+		{
+			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestNode);
+			if (ObjectiveNode && ObjectiveNode->IsAllTaskFailed())
+			{
+				CachedVisitedNodeIDs.Add(QuestNode->ID);
+			}
+		}
+	}
+	for (auto& VisitedNodeID : VisitedNodeIDs)
+	{
+		UQuestBuilderNode* QuestNode = NodeMap.FindRef(VisitedNodeID);
+		if (QuestNode)
+		{
+			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestNode);
+			if (ObjectiveNode && ObjectiveNode->IsAllTaskCompleted())
+			{
+				CachedVisitedNodeIDs.Add(QuestNode->ID);
+			}
+		}
+	}
+	
+	for (auto& VisitedNodeID : VisitedNodeIDs)
+	{
+		UQuestBuilderNode* QuestNode = NodeMap.FindRef(VisitedNodeID);
+		if (QuestNode)
+		{
+			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestNode);
+			if (ObjectiveNode && ObjectiveNode->IsActive())
+			{
+				CachedVisitedNodeIDs.Add(QuestNode->ID);
+			}
+		}
+	}
+	VisitedNodeIDs = CachedVisitedNodeIDs;
 }
 
 void UQuest::BeginNode(UQuestBuilderNode* InNode, bool bLaunchEventOnLoad)
 {
 	if (InNode)
 	{
-		CurrentNode = InNode;
+		CurrentNodes.AddUnique(InNode);
 	}
-	if (CurrentNode == nullptr)  
+	if (InNode == nullptr)  
 	{  
-		UE_LOG(LogTemp, Warning, TEXT("BeginNode: CurrentNode is null for Quest ID: %s"), *ID.ToString());  
+		UE_LOG(LogTemp, Warning, TEXT("BeginNode: Node is null for Quest ID: %s"), *ID.ToString());  
 		return;  
-	}  
-
-	//add visited node
-	VisitedNodeIDs.AddUnique(CurrentNode->ID);
-
-	if (UQuestBuilderNode_Root* RootNode = Cast<UQuestBuilderNode_Root>(CurrentNode))
+	}
+	
+	if (UQuestBuilderNode_Root* RootNode = Cast<UQuestBuilderNode_Root>(InNode))
 	{
 		RootNode->EvaluateNextNode();
 		return;
 	}
-
+	
+	//add visited node
+	VisitedNodeIDs.AddUnique(InNode->ID);
+	
 	//InitializeNode
-	CurrentNode->Initialize(bLaunchEventOnLoad);
+	InNode->Initialize(bLaunchEventOnLoad);
+}
+
+void UQuest::BeginMultipleNodes(TArray<UQuestBuilderNode*> InNodes, bool bLaunchEventOnLoad)
+{
+	for (auto& node : InNodes)
+	{
+		BeginNode(node, bLaunchEventOnLoad);
+	}
 }
 
 int UQuest::GetLevelNum() const

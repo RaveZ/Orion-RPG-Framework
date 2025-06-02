@@ -24,14 +24,14 @@ UQuestTask::UQuestTask()
 
 bool UQuestTask::CompleteTask()
 {	
-	if (Quest == nullptr)
+	if (Quest->QuestState != EQuestState::E_Active)
         return false;
 
     TaskState = ETaskState::E_Complete;
     K2_TaskCompleted(GetOwningController(), GetOwningPawn());
     GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
 	GetQuestComponent()->OnQuestAutoSave.Broadcast();
-	ObjectiveNode->EvaluateNextNode();
+	ObjectiveNode->EvaluateAllTaskCompleted();
 	
 	Deactivate();
 	return true;
@@ -39,7 +39,7 @@ bool UQuestTask::CompleteTask()
 
 bool UQuestTask::FailTask()
 {
-	if (Quest == nullptr)
+	if (Quest->QuestState != EQuestState::E_Active)
 		return false;
 	TaskState = ETaskState::E_Fail;
     K2_TaskFailed(GetOwningController(), GetOwningPawn());
@@ -68,6 +68,11 @@ void UQuestTask::Reset()
 bool UQuestTask::IsTaskCompleted()
 {
 	return TaskState == ETaskState::E_Complete;
+}
+
+bool UQuestTask::IsTaskFailed()
+{
+	return TaskState == ETaskState::E_Fail;
 }
 
 void UQuestTask::BeginTask()  

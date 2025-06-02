@@ -115,6 +115,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 		bool IsTaskCompleted();
+	
+	UFUNCTION(BlueprintCallable, Category = "Objective")
+		bool IsTaskFailed();
 
 	UFUNCTION(BlueprintNativeEvent, DisplayName = "Tick Task", Category = "Task")
 		void TickTask();

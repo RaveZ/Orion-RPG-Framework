@@ -57,10 +57,28 @@ public:
 	static bool IsQuestAtState(const UObject* WorldContextObject, FGameplayTag QuestTag, EQuestState QuestState);
 
 	/**
-	* Grab the Quest component from the local pawn or player controller, whichever it exists on.
+	* Get the currently navigated quest
 	*
-	* @return The Quest component.
+	* @return The Quest.
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
 	static class UQuest* GetCurrentNavigatedQuest(const UObject* WorldContextObject);
+	
+	/**
+	* Evaluate if the current objective ID is being navigated.
+	*
+	* @return bool.
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	static bool IsCurrentlyNavigatedObjective(const UObject* WorldContextObject, FName QuestID, FName NodeID);
+	
+	/**
+	* Evaluate if the node objective has completed.
+	*
+	* @return bool.
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	static bool IsObjectiveCompleted(const UObject* WorldContextObject, UQuestBuilderNode* QuestNode);
 };
+
+

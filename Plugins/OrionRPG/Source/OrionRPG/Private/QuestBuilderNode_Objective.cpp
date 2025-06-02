@@ -63,8 +63,39 @@ void UQuestBuilderNode_Objective::BeginAllTask()
             Task->QuestComponent = QuestComponent;
             Task->BeginTask();
         }
-
     }
+}
+
+void UQuestBuilderNode_Objective::CompleteObjective()
+{
+    for (auto& Task : Tasks)
+    {
+        if (Task)
+        {
+            Task->CompleteTask();
+        }
+    }
+}
+
+void UQuestBuilderNode_Objective::FailObjective()
+{
+    for (auto& Task : Tasks)
+    {
+        if (Task)
+        {
+            Task->FailTask();
+        }
+    }
+}
+
+bool UQuestBuilderNode_Objective::IsActive()
+{
+    for (UQuestTask* Task : Tasks)
+    {
+        if (Task && Task->TaskState == ETaskState::E_Active)
+            return true;
+    }
+    return false;
 }
 
 bool UQuestBuilderNode_Objective::IsAllTaskCompleted()
@@ -95,11 +126,46 @@ bool UQuestBuilderNode_Objective::IsAllTaskCompleted()
     
 }
 
+bool UQuestBuilderNode_Objective::IsAllTaskFailed()
+{
+    int progress = 0;
+    int completeSum = 0;
+    for (UQuestTask* Task : Tasks)
+    {
+        if (Task && !Task->bOptional)
+        {
+            completeSum++;
+        }
+        if (Task && !Task->bOptional && Task->IsTaskFailed())
+        {
+            progress++;
+            
+        }
+    }
+
+    if (progress >= completeSum)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 void UQuestBuilderNode_Objective::EvaluateNextNode()
 {
     if (IsAllTaskCompleted())
     {
         Super::EvaluateNextNode();
+    }
+}
+
+void UQuestBuilderNode_Objective::EvaluateAllTaskCompleted()
+{
+    if (IsAllTaskCompleted())
+    {
+        QuestComponent->OnQuestUpdated.Broadcast();
     }
 }
 

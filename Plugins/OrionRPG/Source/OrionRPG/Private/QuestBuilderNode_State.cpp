@@ -20,19 +20,16 @@ void UQuestBuilderNode_State::BeginNode()
 
 void UQuestBuilderNode_State::BeginState()
 {
-    Quest->QuestState = QuestState;
-
     switch (QuestState)
     {
     case EQuestState::E_Complete:
-        GetQuestComponent()->OnQuestCompleted.Broadcast(Quest);
+        GetQuestComponent()->CompleteQuest(Quest);
         break;
     case EQuestState::E_Fail:
-        GetQuestComponent()->OnQuestFailed.Broadcast(Quest);
+        GetQuestComponent()->FailQuest(Quest);
         break;
     }
 	Deinitialize();
-    GetQuestComponent()->OnQuestAutoSave.Broadcast();
     
 }
 

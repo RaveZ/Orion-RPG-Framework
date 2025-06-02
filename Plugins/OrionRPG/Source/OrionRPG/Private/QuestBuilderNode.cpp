@@ -8,6 +8,7 @@
 #include "Event/OrionEvent.h"
 #include "Decorator/OrionDecorator.h"
 #include "QuestBuilderGraph.h"
+#include "QuestBuilderNode_Objective.h"
 
 #define LOCTEXT_NAMESPACE "QuestBuilderNode"
 
@@ -89,13 +90,15 @@ void UQuestBuilderNode::EvaluateNextNode()
 	if (Quest->QuestState != EQuestState::E_Active)
 	 return;
 	
-	UQuestBuilderNode* NextNode = nullptr;
-	//Quest Node will executes their children from top to bottom, and will stop executing its children when one of their children decorator succeeds.
-	//If none of the children succeeds, this node wiil stop evaluate branching until next quest update.
-	for (auto& Node : ChildrenNodes)
+	TArray<UQuestBuilderNode*> NextNodes;
+	
+	//This Node will executes their children from top to bottom in sequence
+	//f none of the children succeeds, this node will stop branching until next quest update.
+	for (auto& ChildNode : ChildrenNodes)
 	{
+		//Evaluate Decorator
 		int SumConditionMet = 0;
-		for (auto& Condition : Node->Decorators)
+		for (auto& Condition : ChildNode->Decorators)
 		{
 			bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
 			if (bConditionMet)
@@ -103,26 +106,39 @@ void UQuestBuilderNode::EvaluateNextNode()
 				SumConditionMet++;
 			}
 		}
-		if (SumConditionMet >= Node->Decorators.Num())
+
+		//evaluate if all the parent node is objective and all task has completed
+		bool bCanBranch = true;
+		for (auto& ParentNode : ChildNode->ParentNodes)
 		{
-			NextNode = Node;
-			//break loop to ensure the met condition doesn't get overrided
-			break;
+			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(ParentNode);
+			if (ObjectiveNode && !ObjectiveNode->IsAllTaskCompleted())
+			{
+				bCanBranch = false;
+			}
 		}
 		
+		if (bCanBranch && SumConditionMet >= ChildNode->Decorators.Num())
+		{
+			NextNodes.AddUnique(ChildNode);
+		}
 	}
-
-	UQuestBuilderNode* CachedCurrentNode = this;
 	
 	OnAllEndEventFinished.AddLambda(
-		[this, NextNode, CachedCurrentNode]()
+		[this, NextNodes]()
 		{
-			if (NextNode)
+			for (auto& NextNode : NextNodes)
 			{
-				//Check if the current node still hasn't changed after the events. if it changed, it means we dont need to go to the next node anymore
-				if (CachedCurrentNode == this)
+				if (NextNode)
 				{
-					GetOwningQuest()->BeginNode(NextNode);
+					//remove previous nodes from current nodes
+					for (auto& ParentNode : NextNode->ParentNodes)
+					{
+						if (Quest->CurrentNodes.Contains(ParentNode))
+							Quest->CurrentNodes.RemoveSingle(ParentNode);
+					}
+					
+					Quest->BeginNode(NextNode);
 				}
 			}
 		}
