@@ -553,14 +553,14 @@ const FPinConnectionResponse UEdGraphSchema_QuestBuilder::CanMergeNodes(const UE
 	const bool bNodeAIsTask = NodeA->IsA(UQuestBuilderEdSubNode_Task::StaticClass());
 	const bool bNodeBIsObjective = NodeB->IsA(UQuestBuilderEdNode_Objective::StaticClass());
 	const bool bNodeBIsState = NodeB->IsA(UQuestBuilderEdNode_State::StaticClass());
+	const bool bNodeBIsCheckpoint = NodeB->IsA(UQuestBuilderEdNode_Checkpoint::StaticClass());
 	const bool bNodeBIsDecorator = NodeB->IsA(UQuestBuilderEdSubNode_Decorator::StaticClass());
 	const bool bNodeBIsEvent = NodeB->IsA(UQuestBuilderEdSubNode_Event::StaticClass());
 	const bool bNodeBIsTask = NodeB->IsA(UQuestBuilderEdSubNode_Task::StaticClass());
-	const bool bCanUseMultipleTask = GetDefault<UQuestBuilderSetting>()->bCanUseMultipleTask;
 	
-	if ((bNodeAIsDecorator && (bNodeBIsDecorator || bNodeBIsState || bNodeBIsObjective))
-		|| (bNodeAIsEvent && (bNodeBIsEvent || bNodeBIsState || bNodeBIsObjective))
-		|| (bNodeAIsTask && bCanUseMultipleTask) && (bNodeBIsTask || bNodeBIsObjective))
+	if ((bNodeAIsDecorator && (bNodeBIsDecorator || bNodeBIsState || bNodeBIsObjective || bNodeBIsCheckpoint))
+		|| (bNodeAIsEvent && (bNodeBIsEvent || bNodeBIsState || bNodeBIsObjective || bNodeBIsCheckpoint))
+		|| (bNodeAIsTask) && (bNodeBIsTask || bNodeBIsObjective))
 	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_MAKE, TEXT(""));
 	}

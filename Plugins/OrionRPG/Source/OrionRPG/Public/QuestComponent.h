@@ -60,6 +60,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
 		TObjectPtr<UQuest> CurrentNavigatedQuest;
 
+	UPROPERTY(BlueprintReadWrite, EditAnywhere,  Category = "QuestComponent")
+		bool bAutoNavigateQuest;
+
 public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 	FQuestUpdated OnQuestUpdated;
@@ -138,15 +141,15 @@ public:
 public:
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		bool BeginQuestGraph(UQuestBuilderGraph* QuestGraphAsset);
-
-	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		bool BeginMultipleQuestGraph(TArray<UQuestBuilderGraph*>  QuestGraphAsset);
 	
 	UFUNCTION()
 		virtual class UQuest* MakeQuestInstance(UQuest* QuestTemplate);
 	
 	UFUNCTION()
 	virtual class UQuest* TryMakeQuestInstanceFromTag(FGameplayTag QuestTag);
+
+	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
+		void AutoNavigateQuest();
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void UpdateAllQuest();

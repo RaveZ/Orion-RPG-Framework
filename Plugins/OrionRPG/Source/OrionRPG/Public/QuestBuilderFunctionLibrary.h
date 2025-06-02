@@ -79,6 +79,13 @@ public:
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
 	static bool IsObjectiveCompleted(const UObject* WorldContextObject, UQuestBuilderNode* QuestNode);
+
+	/**
+	* Auto Navigate Quest
+	*
+	*/
+	UFUNCTION(BlueprintCallable, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	static void AutoNavigateQuest(const UObject* WorldContextObject);
 };
 
 

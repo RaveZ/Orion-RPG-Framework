@@ -7,7 +7,7 @@
 #include "QuestComponent.h"
 
 
-#define LOCTEXT_NAMESPACE "QuestSystemGraphNode_TaskManager"
+#define LOCTEXT_NAMESPACE "QuestSystemGraphNode_Objective"
 
 void UQuestBuilderNode_Objective::Initialize(bool bLaunchEventOnLoad)
 {

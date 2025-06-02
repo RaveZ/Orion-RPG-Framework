@@ -216,6 +216,30 @@ FString UQuestBuilderNode::GetShortTypeName(const UObject* Ob)
 	return TypeDesc;
 }
 
+UWorld* UQuestBuilderNode::GetWorld() const
+{
+	if (HasAllFlags(RF_ClassDefaultObject))
+	{
+		// If we are a CDO, we must return nullptr instead of calling Outer->GetWorld() to fool UObject::ImplementsGetWorld.
+		return nullptr;
+	}
+
+	UObject* Outer = GetOuter();
+
+	while (Outer)
+	{
+		UWorld* World = Outer->GetWorld();
+		if (World)
+		{
+			return World;
+		}
+
+		Outer = Outer->GetOuter();
+	}
+
+	return nullptr;
+}
+
 
 
 

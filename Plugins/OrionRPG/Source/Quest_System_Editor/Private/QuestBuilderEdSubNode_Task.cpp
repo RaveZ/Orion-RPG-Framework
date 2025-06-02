@@ -27,15 +27,6 @@ FText UQuestBuilderEdSubNode_Task::GetNodeTitle(ENodeTitleType::Type TitleType) 
 	return Super::GetNodeTitle(TitleType);
 }
 
-bool UQuestBuilderEdSubNode_Task::CanDuplicateNode() const
-{
-	return GetDefault<UQuestBuilderSetting>()->bCanUseMultipleTask ? true : false;
-}
-
-bool UQuestBuilderEdSubNode_Task::CanUserDeleteNode() const
-{
-	return GetDefault<UQuestBuilderSetting>()->bCanUseMultipleTask ? true : false;
-}
 
 FName UQuestBuilderEdSubNode_Task::GetNameIcon() const
 {

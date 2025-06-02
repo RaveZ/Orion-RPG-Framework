@@ -128,3 +128,11 @@ bool UQuestBuilderFunctionLibrary::IsObjectiveCompleted(const UObject* WorldCont
     }
     return false;
 }
+
+void UQuestBuilderFunctionLibrary::AutoNavigateQuest(const UObject* WorldContextObject)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        QuestComp->AutoNavigateQuest();
+    }
+}

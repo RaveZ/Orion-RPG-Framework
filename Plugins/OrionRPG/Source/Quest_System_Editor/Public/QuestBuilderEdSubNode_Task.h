@@ -18,8 +18,6 @@ class QUEST_SYSTEM_EDITOR_API UQuestBuilderEdSubNode_Task : public UQuestBuilder
 public:
 	UQuestBuilderEdSubNode_Task();
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
-	virtual bool CanDuplicateNode() const override;
-	virtual bool CanUserDeleteNode() const override;
 	/** gets icon resource name for title bar */
 	virtual FName GetNameIcon() const override;
 

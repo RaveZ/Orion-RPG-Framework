@@ -125,6 +125,8 @@ public:
 	/** returns short name of object's class (BTTaskNode_Wait -> Wait) */
 	static FString GetShortTypeName(const UObject* Ob);
 
+	// Allows the Object to get a valid UWorld from it's outer.
+	virtual UWorld* GetWorld() const override;
 protected:
 	TArray<UOrionEvent*> StartEventQueue;
 	TArray<UOrionEvent*> EndEventQueue;

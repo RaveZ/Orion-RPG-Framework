@@ -34,6 +34,7 @@ UQuestComponent::UQuestComponent()
 void UQuestComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	bAutoNavigateQuest = true;
 	QuestMap.Empty();
 	QuestCategories.Empty();
 	
@@ -78,24 +79,9 @@ bool UQuestComponent::BeginQuestGraph(UQuestBuilderGraph* QuestGraphAsset)
 		}
 	}
 
+	AutoNavigateQuest();
 	return true;
 	
-}
-
-bool UQuestComponent::BeginMultipleQuestGraph(TArray<UQuestBuilderGraph*> QuestGraphAsset)
-{
-	if (QuestGraphAsset.IsEmpty())
-	{
-		return false;
-	}
-
-
-	for (UQuestBuilderGraph* QuestGraph : QuestGraphAsset)
-	{
-		BeginQuestGraph(QuestGraph);
-	}
-	bool bSuccess = true;
-	return bSuccess;
 }
 
 class UQuest* UQuestComponent::MakeQuestInstance(UQuest* QuestTemplate)
@@ -163,6 +149,26 @@ class UQuest* UQuestComponent::TryMakeQuestInstanceFromTag(FGameplayTag QuestTag
 		}
 	}
 	return nullptr;
+}
+
+void UQuestComponent::AutoNavigateQuest()
+{
+	if (CurrentNavigatedQuest && CurrentNavigatedQuest->QuestState == EQuestState::E_Active)
+		return;
+
+	TArray<FName> QuestKeys;
+	QuestMap.GetKeys(QuestKeys);
+
+	for (int32 i = 0; i < QuestKeys.Num(); i++)
+	{
+		FName Key = QuestKeys[i];
+		UQuest* Quest = QuestMap.FindRef(Key);
+		if (Quest && Quest->QuestState == EQuestState::E_Active)
+		{
+			StartNavigateQuest(Quest);
+			return;
+		}
+	}
 }
 
 void UQuestComponent::UpdateAllQuest()
@@ -377,16 +383,20 @@ void UQuestComponent::FailQuest(UQuest* InQuest)
 	if (InQuest && InQuest->QuestState == EQuestState::E_Active)
 	{
 		InQuest->QuestState = EQuestState::E_Fail;
+		//fail all current nodes
+		for (auto& CurrentNode : InQuest->CurrentNodes)
+		{
+			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(CurrentNode);
+			if (ObjectiveNode)
+			{
+				ObjectiveNode->FailObjective();
+			}
+		}
+		InQuest->CurrentNodes.Empty();
+
 		OnQuestFailed.Broadcast(InQuest);
-		
 		OnQuestUpdated.Broadcast();
 		OnQuestAutoSave.Broadcast();
-		
-		InQuest->CurrentNodes.Empty();
-		if (CurrentNavigatedQuest == InQuest)
-		{
-			CurrentNavigatedQuest = nullptr;
-		}
 	}
 	else
 	{
@@ -399,16 +409,20 @@ void UQuestComponent::CompleteQuest(UQuest* InQuest)
 	if (InQuest && InQuest->QuestState == EQuestState::E_Active)
 	{
 		InQuest->QuestState = EQuestState::E_Complete;
+		//fail all current nodes
+		for (auto& CurrentNode : InQuest->CurrentNodes)
+		{
+			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(CurrentNode);
+			if (ObjectiveNode)
+			{
+				ObjectiveNode->FailObjective();
+			}
+		}
+		InQuest->CurrentNodes.Empty();
+
 		OnQuestCompleted.Broadcast(InQuest);
-		
 		OnQuestUpdated.Broadcast();
 		OnQuestAutoSave.Broadcast();
-		
-		InQuest->CurrentNodes.Empty();
-		if (CurrentNavigatedQuest == InQuest)
-		{
-			CurrentNavigatedQuest = nullptr;
-		}
 	}
 	else
 	{
@@ -695,6 +709,7 @@ void UQuestComponent::Load_Implementation(const FString& SaveFileName, int SlotI
 				LoadedQuestAsset->BeginMultipleNodes(LoadedQuestAsset->CurrentNodes, bLaunchEventOnLoad);
 			}
 		}
+		AutoNavigateQuest();
 		OnLoadComplete.Broadcast(SaveFileName);
 	}
 }
@@ -729,6 +744,7 @@ void UQuestComponent::StartNavigatingQuest(UQuest* Quest)
 
 void UQuestComponent::QuestFailed(UQuest* Quest)
 {
+	AutoNavigateQuest();
 	if (Quest)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Quest failed: %s"), *Quest->ID.ToString());
@@ -737,6 +753,7 @@ void UQuestComponent::QuestFailed(UQuest* Quest)
 
 void UQuestComponent::QuestCompleted(UQuest* Quest)
 {
+	AutoNavigateQuest();
 	if (Quest)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Quest Completed: %s"), *Quest->ID.ToString());
