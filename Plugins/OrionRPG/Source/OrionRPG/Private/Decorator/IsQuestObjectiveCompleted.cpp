@@ -23,7 +23,7 @@ bool UIsQuestObjectiveCompleted::PerformConditionCheck_Implementation(AControlle
         UQuestBuilderNode* FoundedNode = FoundedQuest->NodeMap.FindRef(NodeID);
         if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(FoundedNode))
         {
-            return ObjectiveNode->IsAllTaskCompleted();
+            return ObjectiveNode->IsObjectiveCompleted();
         }
     }
     return false;

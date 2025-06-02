@@ -31,7 +31,6 @@ bool UQuestTask::CompleteTask()
     K2_TaskCompleted(GetOwningController(), GetOwningPawn());
     GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
 	GetQuestComponent()->OnQuestAutoSave.Broadcast();
-	ObjectiveNode->EvaluateAllTaskCompleted();
 	
 	Deactivate();
 	return true;

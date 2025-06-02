@@ -9,9 +9,19 @@
 
 #define LOCTEXT_NAMESPACE "QuestSystemGraphNode_Objective"
 
+
+UQuestBuilderNode_Objective::UQuestBuilderNode_Objective()
+{
+    bOptional = false;
+    bHidden = false;
+    bIsObjectiveTickable = false;
+    TickInterval = 0.1f;
+    RequiredAmount = 1;
+}
+
 void UQuestBuilderNode_Objective::Initialize(bool bLaunchEventOnLoad)
 {
-    if (IsAllTaskCompleted())
+    if (IsObjectiveCompleted())
     {
         EvaluateNextNode();
     }
@@ -24,148 +34,123 @@ void UQuestBuilderNode_Objective::Initialize(bool bLaunchEventOnLoad)
 void UQuestBuilderNode_Objective::BeginNode()
 {
     Super::BeginNode();
-	BeginAllTask();
+	BeginObjective();
     GetQuestComponent()->OnQuestAutoSave.Broadcast();
 }
 
 void UQuestBuilderNode_Objective::Deinitialize()
 {
 	Super::Deinitialize();
-    for (auto& Task : Tasks)
-    {
-        if (Task)
-        {
-            Task->Deactivate();
-        }
-    }
 }
 
 void UQuestBuilderNode_Objective::Reset()
 {
     Super::Reset();
-    for (auto& Task : Tasks)
+    ObjectiveState = EObjectiveState::E_Active;
+    CurrentAmount = 0;
+	DeactivateTick();
+}
+
+bool UQuestBuilderNode_Objective::IsObjectiveCompleted()
+{
+	return ObjectiveState == EObjectiveState::E_Completed;
+}
+
+bool UQuestBuilderNode_Objective::IsObjectiveFailed()
+{
+    return ObjectiveState == EObjectiveState::E_Failed;
+}
+
+bool UQuestBuilderNode_Objective::IsObjectiveActive()
+{
+    return ObjectiveState == EObjectiveState::E_Active;
+}
+
+void UQuestBuilderNode_Objective::TickObjective_Implementation()
+{
+}
+
+void UQuestBuilderNode_Objective::AddAmount(int AmountToAdd)
+{
+    CurrentAmount = FMath::Clamp(CurrentAmount + AmountToAdd, 0, RequiredAmount);
+    if (CurrentAmount >= RequiredAmount)
     {
-        if (Task)
-        {
-            Task->Reset();
-        }
+        CompleteObjective();
     }
 }
 
-void UQuestBuilderNode_Objective::BeginAllTask()
+void UQuestBuilderNode_Objective::BeginObjective()
 {
-    for (auto& Task : Tasks)
+    if (ObjectiveState == EObjectiveState::E_Completed)
+        return;
+    ObjectiveState = EObjectiveState::E_Active;
+    K2_BeginObjective(GetOwningController(), GetOwningPawn());
+
+    if (GetQuestComponent() && bIsObjectiveTickable)
     {
-        if (Task)
+        if (TickInterval > 0.f)
         {
-            Task->Quest = GetOwningQuest();
-            Task->OwningController = GetOwningController();
-            Task->QuestComponent = QuestComponent;
-            Task->BeginTask();
+            UWorld* World = GetWorld();
+            if (World)
+            {
+                World->GetTimerManager().SetTimer(TimerHandle_TickObjective, this, &UQuestBuilderNode_Objective::TickObjective, TickInterval, true);
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("BeginTask: Failed to get UWorld instance."));
+            }
         }
+
+        // Fire the first tick off after BeginTask since begin task will usually init things that TickTask may need  
+        TickObjective();
     }
 }
 
-void UQuestBuilderNode_Objective::CompleteObjective()
+bool UQuestBuilderNode_Objective::CompleteObjective()
 {
-    for (auto& Task : Tasks)
-    {
-        if (Task)
-        {
-            Task->CompleteTask();
-        }
-    }
-}
-
-void UQuestBuilderNode_Objective::FailObjective()
-{
-    for (auto& Task : Tasks)
-    {
-        if (Task)
-        {
-            Task->FailTask();
-        }
-    }
-}
-
-bool UQuestBuilderNode_Objective::IsActive()
-{
-    for (UQuestTask* Task : Tasks)
-    {
-        if (Task && Task->TaskState == ETaskState::E_Active)
-            return true;
-    }
-    return false;
-}
-
-bool UQuestBuilderNode_Objective::IsAllTaskCompleted()
-{
-    int progress = 0;
-    int completeSum = 0;
-    for (UQuestTask* Task : Tasks)
-    {
-        if (Task && !Task->bOptional)
-        {
-            completeSum++;
-        }
-        if (Task && !Task->bOptional && Task->IsTaskCompleted())
-        {
-            progress++;
-            
-        }
-    }
-
-    if (progress >= completeSum)
-    {
-        return true;
-    }
-    else
-    {
+    if (Quest->QuestState != EQuestState::E_Active)
         return false;
-    }
-    
+
+    ObjectiveState = EObjectiveState::E_Completed;
+    K2_ObjectiveCompleted(GetOwningController(), GetOwningPawn());
+    GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
+    GetQuestComponent()->OnQuestAutoSave.Broadcast();
+    GetQuestComponent()->OnQuestUpdated.Broadcast();
+
+    Deinitialize();
+    DeactivateTick();
+    return true;
 }
 
-bool UQuestBuilderNode_Objective::IsAllTaskFailed()
+bool UQuestBuilderNode_Objective::FailObjective()
 {
-    int progress = 0;
-    int completeSum = 0;
-    for (UQuestTask* Task : Tasks)
-    {
-        if (Task && !Task->bOptional)
-        {
-            completeSum++;
-        }
-        if (Task && !Task->bOptional && Task->IsTaskFailed())
-        {
-            progress++;
-            
-        }
-    }
-
-    if (progress >= completeSum)
-    {
-        return true;
-    }
-    else
-    {
+    if (Quest->QuestState != EQuestState::E_Active)
         return false;
+    ObjectiveState = EObjectiveState::E_Failed;
+    K2_ObjectiveFailed(GetOwningController(), GetOwningPawn());
+    GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
+    GetQuestComponent()->OnQuestAutoSave.Broadcast();
+    GetQuestComponent()->OnQuestUpdated.Broadcast();
+
+    DeactivateTick();
+    return true;
+}
+
+void UQuestBuilderNode_Objective::DeactivateTick()
+{
+    //clear tick timer handle
+    if (UWorld* World = GetWorld())
+    {
+        World->GetTimerManager().ClearTimer(TimerHandle_TickObjective);
     }
 }
+
 
 void UQuestBuilderNode_Objective::EvaluateNextNode()
 {
-    if (IsAllTaskCompleted())
+    if (IsObjectiveCompleted())
     {
         Super::EvaluateNextNode();
-    }
-}
-
-void UQuestBuilderNode_Objective::EvaluateAllTaskCompleted()
-{
-    if (IsAllTaskCompleted())
-    {
-        QuestComponent->OnQuestUpdated.Broadcast();
     }
 }
 

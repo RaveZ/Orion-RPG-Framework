@@ -74,8 +74,6 @@ void UQuest::UpdateQuest()
 {
 	if (QuestState != EQuestState::E_Active)
 		return;
-
-	
 	
 	//Cache Current nodes, because some node may be removed from current nodes after branching, 
 	TArray<UQuestBuilderNode*> CachedCurrentNodes = CurrentNodes;
@@ -112,7 +110,7 @@ void UQuest::SortVisitedNodes()
 		if (QuestNode)
 		{
 			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestNode);
-			if (ObjectiveNode && ObjectiveNode->IsAllTaskFailed())
+			if (ObjectiveNode && ObjectiveNode->IsObjectiveFailed())
 			{
 				CachedVisitedNodeIDs.Add(QuestNode->ID);
 			}
@@ -124,7 +122,7 @@ void UQuest::SortVisitedNodes()
 		if (QuestNode)
 		{
 			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestNode);
-			if (ObjectiveNode && ObjectiveNode->IsAllTaskCompleted())
+			if (ObjectiveNode && ObjectiveNode->IsObjectiveCompleted())
 			{
 				CachedVisitedNodeIDs.Add(QuestNode->ID);
 			}
@@ -137,7 +135,7 @@ void UQuest::SortVisitedNodes()
 		if (QuestNode)
 		{
 			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestNode);
-			if (ObjectiveNode && ObjectiveNode->IsActive())
+			if (ObjectiveNode && ObjectiveNode->IsObjectiveActive())
 			{
 				CachedVisitedNodeIDs.Add(QuestNode->ID);
 			}
@@ -160,7 +158,7 @@ void UQuest::BeginNode(UQuestBuilderNode* InNode, bool bLaunchEventOnLoad)
 	
 	if (UQuestBuilderNode_Root* RootNode = Cast<UQuestBuilderNode_Root>(InNode))
 	{
-		RootNode->EvaluateNextNode();
+		RootNode->Initialize();
 		return;
 	}
 	

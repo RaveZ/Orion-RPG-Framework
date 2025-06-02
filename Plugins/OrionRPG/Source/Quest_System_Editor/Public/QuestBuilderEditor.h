@@ -268,11 +268,11 @@ protected:
 	void DuplicateNodes();
 	bool CanDuplicateNodes();
 
-	//New Task Functions from toolbar
-	void CreateNewTask();
+	//New Objective Functions from toolbar
+	void CreateNewObjective();
 	void HandleNewNodeClassPicked(UClass* InClass) const;
-	bool CanCreateNewTask() const;
-	bool IsNewTaskButtonVisible() const;
+	bool CanCreateNewObjective() const;
+	bool IsNewObjectiveButtonVisible() const;
 
 	void CreateNewQuestDecorator();
 	bool CanCreateQuestDecorator() const;

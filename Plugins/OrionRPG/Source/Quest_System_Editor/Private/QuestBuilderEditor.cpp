@@ -17,6 +17,7 @@
 #include "QuestBuilder_EditorCommands.h"
 #include "QuestBuilderEdGraph.h"
 #include "QuestBuilderEdNode.h"
+#include "QuestBuilderNode_Objective.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "K2Node.h"
 #include "GraphEditAction.h"
@@ -282,11 +283,11 @@ void FQuestBuilderEditor::PostRedo(bool bSuccess)
 
 void FQuestBuilderEditor::BindCommands()
 {
-	ToolkitCommands->MapAction(FQuestBuilder_EditorCommands::Get().NewTask,
-		FExecuteAction::CreateSP(this, &FQuestBuilderEditor::CreateNewTask),
-		FCanExecuteAction::CreateSP(this, &FQuestBuilderEditor::CanCreateNewTask),
+	ToolkitCommands->MapAction(FQuestBuilder_EditorCommands::Get().NewObjective,
+		FExecuteAction::CreateSP(this, &FQuestBuilderEditor::CreateNewObjective),
+		FCanExecuteAction::CreateSP(this, &FQuestBuilderEditor::CanCreateNewObjective),
 		FIsActionChecked(),
-		FIsActionButtonVisible::CreateSP(this, &FQuestBuilderEditor::IsNewTaskButtonVisible)
+		FIsActionButtonVisible::CreateSP(this, &FQuestBuilderEditor::IsNewObjectiveButtonVisible)
 	);
 
 	ToolkitCommands->MapAction(FQuestBuilder_EditorCommands::Get().NewQuestDecorator,
@@ -331,9 +332,9 @@ void FQuestBuilderEditor::CreateCommandList()
 		FIsActionButtonVisible::CreateSP(this, &FQuestBuilderEditor::NewDocument_IsVisibleForType, CGT_NewQuestGraph)
 	);
 
-	GraphEditorCommands->MapAction(FQuestBuilder_EditorCommands::Get().NewTask,
-		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CreateNewTask),
-		FCanExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CanCreateNewTask));
+	GraphEditorCommands->MapAction(FQuestBuilder_EditorCommands::Get().NewObjective,
+		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CreateNewObjective),
+		FCanExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CanCreateNewObjective));
 
 	GraphEditorCommands->MapAction(FQuestBuilder_EditorCommands::Get().NewQuestDecorator,
 		FExecuteAction::CreateRaw(this, &FQuestBuilderEditor::CreateNewQuestDecorator),
@@ -1464,9 +1465,10 @@ bool FQuestBuilderEditor::CanDuplicateNodes()
 {
 	return CanCopyNodes();
 }
-void FQuestBuilderEditor::CreateNewTask()
+
+void FQuestBuilderEditor::CreateNewObjective()
 {
-	HandleNewNodeClassPicked(UQuestTask::StaticClass());
+	HandleNewNodeClassPicked(UQuestBuilderNode_Objective::StaticClass());
 }
 
 void FQuestBuilderEditor::HandleNewNodeClassPicked(UClass* InClass) const
@@ -1484,7 +1486,14 @@ void FQuestBuilderEditor::HandleNewNodeClassPicked(UClass* InClass) const
 		FSaveAssetDialogConfig SaveAssetDialogConfig;
 		SaveAssetDialogConfig.DialogTitleOverride = LOCTEXT("SaveAssetDialogTitle", "Save Asset As");
 		SaveAssetDialogConfig.DefaultPath = PathName;
-		SaveAssetDialogConfig.DefaultAssetName = ClassName + TEXT("_New");
+		if (InClass == UQuestBuilderNode_Objective::StaticClass())
+		{
+			SaveAssetDialogConfig.DefaultAssetName = TEXT("Objective_New");
+		}
+		else
+		{
+			SaveAssetDialogConfig.DefaultAssetName = ClassName + TEXT("_New");
+		}
 		SaveAssetDialogConfig.ExistingAssetPolicy = ESaveAssetDialogExistingAssetPolicy::Disallow;
 
 		const FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
@@ -1516,11 +1525,11 @@ void FQuestBuilderEditor::HandleNewNodeClassPicked(UClass* InClass) const
 	FSlateApplication::Get().DismissAllMenus();
 }
 
-bool FQuestBuilderEditor::CanCreateNewTask() const
+bool FQuestBuilderEditor::CanCreateNewObjective() const
 {
 	return true;
 }
-bool FQuestBuilderEditor::IsNewTaskButtonVisible() const
+bool FQuestBuilderEditor::IsNewObjectiveButtonVisible() const
 {
 	return true;
 }

@@ -25,7 +25,7 @@ public:
 	TSharedPtr< FUICommandInfo > AddNewQuestGraph;
 	
 	//Toolbar
-	TSharedPtr<FUICommandInfo> NewTask;
+	TSharedPtr<FUICommandInfo> NewObjective;
 	TSharedPtr<FUICommandInfo> NewQuestDecorator;
 	TSharedPtr<FUICommandInfo> NewQuestEvent;
 	TSharedPtr<FUICommandInfo> QuestSetting;

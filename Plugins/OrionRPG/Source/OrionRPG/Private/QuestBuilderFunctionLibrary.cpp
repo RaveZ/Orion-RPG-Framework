@@ -111,7 +111,7 @@ bool UQuestBuilderFunctionLibrary::IsCurrentlyNavigatedObjective(const UObject* 
             (FoundedNode && CurrentNavigatedQuest->CurrentNodes.Contains(FoundedNode)))
         {
             UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(FoundedNode);
-            if (ObjectiveNode && !ObjectiveNode->IsAllTaskCompleted())
+            if (ObjectiveNode && !ObjectiveNode->IsObjectiveCompleted())
             {
                 return true;
             }
@@ -124,7 +124,7 @@ bool UQuestBuilderFunctionLibrary::IsObjectiveCompleted(const UObject* WorldCont
 {
     if ( UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestNode))
     {
-        return ObjectiveNode->IsAllTaskCompleted();
+        return ObjectiveNode->IsObjectiveCompleted();
     }
     return false;
 }

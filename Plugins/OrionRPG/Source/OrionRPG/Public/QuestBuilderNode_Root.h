@@ -15,6 +15,7 @@ class ORIONRPG_API UQuestBuilderNode_Root : public UQuestBuilderNode
 	GENERATED_BODY()
 
 public:
+	virtual void BeginNode() override;
 
 #if WITH_EDITOR
 	virtual FText GetNodeDescription() const override;

@@ -140,17 +140,12 @@ protected:
 	/** creates add event... submenu */
 	void CreateAddEventSubMenu(class UToolMenu* Menu, UEdGraph* Graph) const;
 
-	/** creates add event... submenu */
-	void CreateAddTaskSubMenu(class UToolMenu* Menu, UEdGraph* Graph) const;
-
 	/** add right click menu to create subnodes: Decorators */
 	void AddContextMenuActionsDecorators(class UToolMenu* Menu, const FName SectionName, class UGraphNodeContextMenuContext* Context) const;
 
 	/** add right click menu to create subnodes: Events */
 	void AddContextMenuActionsEvents(class UToolMenu* Menu, const FName SectionName, class UGraphNodeContextMenuContext* Context) const;
 	
-	/** add right click menu to create subnodes: Task */
-	void AddContextMenuActionsTasks(class UToolMenu* Menu, const FName SectionName, class UGraphNodeContextMenuContext* Context) const;
 
 
 

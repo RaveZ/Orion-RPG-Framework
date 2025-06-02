@@ -6,12 +6,12 @@
 #include "EdGraph/EdGraphSchema.h"
 #include "EdGraphSchema_QuestBuilder.generated.h"
 
-namespace EQuestSubNode
+namespace EQuestNode
 {
 	enum Type {
 		Decorator,
 		Event,
-		Task
+		Objective
 	};
 }
 

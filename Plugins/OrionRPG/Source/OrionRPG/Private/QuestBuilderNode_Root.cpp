@@ -2,10 +2,18 @@
 
 
 #include "QuestBuilderNode_Root.h"
+#include "QuestComponent.h"
 #include "QuestBuilderNode.h"
 
 
 #if WITH_EDITOR
+void UQuestBuilderNode_Root::BeginNode()
+{
+	Super::BeginNode();
+	QuestComponent->OnQuestUpdated.Broadcast();
+	Deinitialize();
+}
+
 FText UQuestBuilderNode_Root::GetNodeDescription() const
 {
 	return FText::FromString(TEXT("Root Node"));

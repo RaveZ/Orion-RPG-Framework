@@ -24,16 +24,16 @@ void FQuestBuilderEditorToolbar::FillQuestSystemToolbar(FToolBarBuilder& Toolbar
 
 	ToolbarBuilder.BeginSection("Quest System");
 	{
-		const FText NewTaskLabel = LOCTEXT("NewTask_Label", "New Task");
-		const FText NewTaskTooltip = LOCTEXT("NewTask_ToolTip", "Create a new task node Blueprint from a base class");
-		const FSlateIcon NewTaskIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "BTEditor.Graph.NewTask");
+		const FText NewObjectiveLabel = LOCTEXT("NewTask_Label", "New Objective");
+		const FText NewObjectiveTooltip = LOCTEXT("NewTask_ToolTip", "Create a new objective node Blueprint from a base class");
+		const FSlateIcon NewObjectiveIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "BTEditor.Graph.NewTask");
 
 		
-		ToolbarBuilder.AddToolBarButton(FQuestBuilder_EditorCommands::Get().NewTask,
+		ToolbarBuilder.AddToolBarButton(FQuestBuilder_EditorCommands::Get().NewObjective,
 			NAME_None,
-			NewTaskLabel,
-			NewTaskTooltip,
-			NewTaskIcon
+			NewObjectiveLabel,
+			NewObjectiveTooltip,
+			NewObjectiveIcon
 		);
 	}
 	ToolbarBuilder.EndSection();

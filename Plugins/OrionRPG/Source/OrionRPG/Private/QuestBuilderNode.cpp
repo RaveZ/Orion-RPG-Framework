@@ -51,6 +51,28 @@ void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 			}
 		}
 	}
+
+	OnAllEndEventFinished.AddLambda(
+		[this]()
+		{
+			for (int i = 0; i < NextNodes.Num(); i++)
+			{
+				if (NextNodes.IsValidIndex(i))
+				{
+					//remove previous nodes from current nodes
+					for (auto& ParentNode : NextNodes[i]->ParentNodes)
+					{
+						if (Quest->CurrentNodes.Contains(ParentNode))
+							Quest->CurrentNodes.RemoveSingle(ParentNode);
+					}
+					Quest->BeginNode(NextNodes[i]);
+					NextNodes.RemoveAt(i);
+					i--;
+				}
+			}
+		}
+	);
+
 	OnAllStartEventFinished.AddLambda(
 		[this]()
 		{
@@ -59,6 +81,7 @@ void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 	);
 	LaunchStartEventQueue();
 
+	
 	
 }
 
@@ -90,7 +113,6 @@ void UQuestBuilderNode::EvaluateNextNode()
 	if (Quest->QuestState != EQuestState::E_Active)
 	 return;
 	
-	TArray<UQuestBuilderNode*> NextNodes;
 	
 	//This Node will executes their children from top to bottom in sequence
 	//f none of the children succeeds, this node will stop branching until next quest update.
@@ -112,7 +134,7 @@ void UQuestBuilderNode::EvaluateNextNode()
 		for (auto& ParentNode : ChildNode->ParentNodes)
 		{
 			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(ParentNode);
-			if (ObjectiveNode && !ObjectiveNode->IsAllTaskCompleted())
+			if (ObjectiveNode && !ObjectiveNode->IsObjectiveCompleted())
 			{
 				bCanBranch = false;
 			}
@@ -123,28 +145,8 @@ void UQuestBuilderNode::EvaluateNextNode()
 			NextNodes.AddUnique(ChildNode);
 		}
 	}
-	
-	OnAllEndEventFinished.AddLambda(
-		[this, NextNodes]()
-		{
-			for (auto& NextNode : NextNodes)
-			{
-				if (NextNode)
-				{
-					//remove previous nodes from current nodes
-					for (auto& ParentNode : NextNode->ParentNodes)
-					{
-						if (Quest->CurrentNodes.Contains(ParentNode))
-							Quest->CurrentNodes.RemoveSingle(ParentNode);
-					}
-					
-					Quest->BeginNode(NextNode);
-				}
-			}
-		}
-	);
-	Deinitialize();
 
+	//Going to next node will begin when all End Events are finished
 }
 
 UQuestBuilderEdge* UQuestBuilderNode::GetEdge(UQuestBuilderNode* ChildNode)

@@ -4,6 +4,7 @@
 #include "QuestBuilder_EditorStyle.h"
 #include "QuestBuilder_EditorCommands.h"
 #include "QuestBuilderNode.h"
+#include "QuestBuilderNode_Objective.h"
 #include "QuestBuilderSetting.h"
 #include "Task/QuestTask.h"
 #include "Decorator/OrionDecorator.h"
@@ -82,7 +83,7 @@ void FQuest_System_EditorModule::ShutdownModule()
 		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	}
 
-	TaskClassCache.Reset();
+	ObjectiveClassCache.Reset();
 	DecoratorClassCache.Reset();
 	EventClassCache.Reset();
 }
@@ -90,11 +91,11 @@ void FQuest_System_EditorModule::ShutdownModule()
 
 void FQuest_System_EditorModule::CheckClassCache()
 {
-	if (!TaskClassCache.IsValid())
+	if (!ObjectiveClassCache.IsValid())
 	{
-		TaskClassCache = MakeShareable(new FGraphNodeClassHelper(UQuestTask::StaticClass()));
-		FGraphNodeClassHelper::AddObservedBlueprintClasses(UQuestTask::StaticClass());
-		TaskClassCache->UpdateAvailableBlueprintClasses();
+		ObjectiveClassCache = MakeShareable(new FGraphNodeClassHelper(UQuestBuilderNode_Objective::StaticClass()));
+		FGraphNodeClassHelper::AddObservedBlueprintClasses(UQuestBuilderNode_Objective::StaticClass());
+		ObjectiveClassCache->UpdateAvailableBlueprintClasses();
 	}
 	if (!DecoratorClassCache.IsValid())
 	{

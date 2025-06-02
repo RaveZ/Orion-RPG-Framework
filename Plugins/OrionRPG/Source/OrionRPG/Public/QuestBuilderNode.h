@@ -128,6 +128,7 @@ public:
 	// Allows the Object to get a valid UWorld from it's outer.
 	virtual UWorld* GetWorld() const override;
 protected:
+	TArray<UQuestBuilderNode*> NextNodes;
 	TArray<UOrionEvent*> StartEventQueue;
 	TArray<UOrionEvent*> EndEventQueue;
 

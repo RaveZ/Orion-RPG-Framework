@@ -271,49 +271,33 @@ void UEdGraphSchema_QuestBuilder::GetGraphContextActions(FGraphContextMenuBuilde
 
 
 
-	//Task
-	FGraphNodeClassHelper& ClassCache = GetClassCache(EQuestSubNode::Task);
+	//Objective
+	FGraphNodeClassHelper& ClassCache = GetClassCache(EQuestNode::Objective);
 
-	FCategorizedGraphActionListBuilder TasksBuilder(TEXT("Quest Task"));
+	FCategorizedGraphActionListBuilder ObjectiveBuilder(TEXT("Quest Objective"));
 
 	TArray<FGraphNodeClassData> NodeClasses;
-	ClassCache.GatherClasses(UQuestTask::StaticClass(), NodeClasses);
+	ClassCache.GatherClasses(UQuestBuilderNode_Objective::StaticClass(), NodeClasses);
 	
 
 	for (auto& NodeClass : NodeClasses)
 	{
-		if (NodeClass.GetClass(true) == UQuestTask::StaticClass())
-			continue;
-
 		const FText NodeTypeName = FText::FromString(FName::NameToDisplayString(NodeClass.ToString(), false));
 
-		TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> AddOpAction = UEdGraphSchema_QuestBuilder::AddNewNodeAction(TasksBuilder, NodeClass.GetCategory(), NodeTypeName, FText::GetEmpty());
+		TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> AddOpAction = UEdGraphSchema_QuestBuilder::AddNewNodeAction(ObjectiveBuilder, NodeClass.GetCategory(), NodeTypeName, FText::GetEmpty());
 		UClass* ObjectiveEdNodeClass = UQuestBuilderEdNode_Objective::StaticClass();
 		UClass* ObjectiveNodeClass = UQuestBuilderNode_Objective::StaticClass();
 
 		UQuestBuilderEdNode* OpNode = NewObject<UQuestBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, ObjectiveEdNodeClass);
-		FGraphNodeClassData ObjectiveClassData = FGraphNodeClassData(ObjectiveNodeClass, "ObjectiveClassData");
-		OpNode->ClassData = ObjectiveClassData;
+		OpNode->ClassData = NodeClass;
 		AddOpAction->NodeTemplate = OpNode;
-		OpNode->NodeInstance = NewObject<UObject>(QuestGraph, ObjectiveNodeClass);
+		OpNode->NodeInstance = NewObject<UObject>(QuestGraph, NodeClass.GetClass());
 		OpNode->NodeInstance->SetFlags(RF_Transactional);
-
-		if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(OpNode->NodeInstance))
-		{
-			const FText SubNodeTypeName = FText::FromString(FName::NameToDisplayString(NodeClass.ToString(), false));
-
-			UQuestBuilderEdNode* OpSubNodeTask = NewObject<UQuestBuilderEdNode>(EdGraph, UQuestBuilderEdSubNode_Task::StaticClass());
-			OpSubNodeTask->ClassData = NodeClass;
-
-			OpNode->AddSubNode(OpSubNodeTask, EdGraph);
-
-		}
-		OpNode->UpdateSubnodeDependencies();
 	}
-	ContextMenuBuilder.Append(TasksBuilder);
+	ContextMenuBuilder.Append(ObjectiveBuilder);
 
 
-	FCategorizedGraphActionListBuilder StateBuilder(TEXT("Quest State"));
+	FCategorizedGraphActionListBuilder StateBuilder(TEXT("State"));
 
 	//State : Complete Quest
 	UClass* StateEdNodeClass = UQuestBuilderEdNode_State::StaticClass();
@@ -401,17 +385,17 @@ void UEdGraphSchema_QuestBuilder::GetSubNodeClasses(int32 SubNodeFlags, TArray<F
 {
 	FGraphNodeClassHelper& ClassCache = GetClassCache(SubNodeFlags);
 
-	if (SubNodeFlags == EQuestSubNode::Decorator)
+	if (SubNodeFlags == EQuestNode::Decorator)
 	{
 		ClassCache.GatherClasses(UOrionDecorator::StaticClass(), ClassData);
 		GraphNodeClass = DecoratorClass;
 	}
-	else if (SubNodeFlags == EQuestSubNode::Event)
+	else if (SubNodeFlags == EQuestNode::Event)
 	{
 		ClassCache.GatherClasses(UOrionEvent::StaticClass(), ClassData);
 		GraphNodeClass = EventClass;
 	}
-	else if (SubNodeFlags == EQuestSubNode::Task)
+	else if (SubNodeFlags == EQuestNode::Objective)
 	{
 		ClassCache.GatherClasses(UQuestTask::StaticClass(), ClassData);
 		GraphNodeClass = TaskClass;
@@ -423,17 +407,17 @@ FGraphNodeClassHelper& UEdGraphSchema_QuestBuilder::GetClassCache(int32 SubNodeF
 {
 	FQuest_System_EditorModule& EditorModule = FModuleManager::GetModuleChecked<FQuest_System_EditorModule>(TEXT("Quest_System_Editor"));
 	FGraphNodeClassHelper* ClassHelper = nullptr;
-	if (SubNodeFlags == EQuestSubNode::Decorator)
+	if (SubNodeFlags == EQuestNode::Decorator)
 	{
 		ClassHelper = EditorModule.GetDecoratorClassCache().Get();
 	}
-	else if (SubNodeFlags == EQuestSubNode::Event)
+	else if (SubNodeFlags == EQuestNode::Event)
 	{
 		ClassHelper = EditorModule.GetEventClassCache().Get();
 	}
-	else if (SubNodeFlags == EQuestSubNode::Task)
+	else if (SubNodeFlags == EQuestNode::Objective)
 	{
-		ClassHelper = EditorModule.GetTaskClassCache().Get();
+		ClassHelper = EditorModule.GetObjectiveClassCache().Get();
 	}
 	
 	

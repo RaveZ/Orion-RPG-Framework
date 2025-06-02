@@ -729,7 +729,7 @@ void UQuestBuilderEdNode::CreateAddDecoratorSubMenu(UToolMenu* Menu, UEdGraph* G
 		SNew(SGraphEditorActionMenuQuest)
 		.GraphObj(Graph)
 		.GraphNode((UQuestBuilderEdNode*)this)
-		.SubNodeFlags(EQuestSubNode::Decorator)
+		.SubNodeFlags(EQuestNode::Decorator)
 		.AutoExpandActionMenu(true);
 
 	FToolMenuSection& Section = Menu->FindOrAddSection("Section");
@@ -742,24 +742,11 @@ void UQuestBuilderEdNode::CreateAddEventSubMenu(UToolMenu* Menu, UEdGraph* Graph
 		SNew(SGraphEditorActionMenuQuest)
 		.GraphObj(Graph)
 		.GraphNode((UQuestBuilderEdNode*)this)
-		.SubNodeFlags(EQuestSubNode::Event)
+		.SubNodeFlags(EQuestNode::Event)
 		.AutoExpandActionMenu(true);
 
 	FToolMenuSection& Section = Menu->FindOrAddSection("Section");
 	Section.AddEntry(FToolMenuEntry::InitWidget("EventWidget", Widget, FText(), true));
-}
-
-void UQuestBuilderEdNode::CreateAddTaskSubMenu(UToolMenu* Menu, UEdGraph* Graph) const
-{
-	TSharedRef<SGraphEditorActionMenuQuest> Widget =
-		SNew(SGraphEditorActionMenuQuest)
-		.GraphObj(Graph)
-		.GraphNode((UQuestBuilderEdNode*)this)
-		.SubNodeFlags(EQuestSubNode::Task)
-		.AutoExpandActionMenu(true);
-
-	FToolMenuSection& Section = Menu->FindOrAddSection("Section");
-	Section.AddEntry(FToolMenuEntry::InitWidget("TaskWidget", Widget, FText(), true));
 }
 
 void UQuestBuilderEdNode::AddContextMenuActionsDecorators(UToolMenu* Menu, const FName SectionName, UGraphNodeContextMenuContext* Context) const
@@ -781,17 +768,6 @@ void UQuestBuilderEdNode::AddContextMenuActionsEvents(UToolMenu* Menu, const FNa
 		LOCTEXT("AddEvent", "Add Event..."),
 		LOCTEXT("AddEventTooltip", "Adds new event as a subnode"),
 		FNewToolMenuDelegate::CreateUObject(this, &UQuestBuilderEdNode::CreateAddEventSubMenu, (UEdGraph*)Context->Graph));
-
-}
-
-void UQuestBuilderEdNode::AddContextMenuActionsTasks(UToolMenu* Menu, const FName SectionName, UGraphNodeContextMenuContext* Context) const
-{
-	FToolMenuSection& Section = Menu->FindOrAddSection(SectionName);
-	Section.AddSubMenu(
-		"AddTask",
-		LOCTEXT("AddTask", "Add Task..."),
-		LOCTEXT("AddTaskTooltip", "Adds new task as a subnode"),
-		FNewToolMenuDelegate::CreateUObject(this, &UQuestBuilderEdNode::CreateAddTaskSubMenu, (UEdGraph*)Context->Graph));
 
 }
 
