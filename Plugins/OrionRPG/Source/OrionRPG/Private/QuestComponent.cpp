@@ -5,7 +5,6 @@
 #include "Quest.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
-#include "Task/QuestTask.h"
 #include "UObject/UObjectIterator.h"
 #include "QuestSaveObject.h"
 #include "QuestBuilderGraph.h"
@@ -561,26 +560,15 @@ void UQuestComponent::Save_Implementation(const FString& SaveFileName, int SlotI
 				TMap<FName, FNodeData> NodeMapData;
 				for (auto& Node : Quest->AllNodes)
 				{
-					TArray<FTaskData> TaskDataArray;
-					if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(Node))
-					{
-						for (auto& Task : ObjectiveNode->Tasks)
-						{
-							FTaskData TaskData;
-							if (Task)
-							{
-								TaskData.CurrentAmount = Task->CurrentAmount;
-								TaskData.TaskState = Task->TaskState;
-							}
-							TaskDataArray.Add(TaskData);
-						}
-					}
-
 					FNodeData NodeData;
 					if (Node)
 					{
 						NodeData.NodeID = Node->ID;
-						NodeData.TaskDatas = TaskDataArray;
+						if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(Node))
+						{
+							NodeData.CurrentAmount = ObjectiveNode->CurrentAmount;
+							NodeData.ObjectiveState = ObjectiveNode->ObjectiveState;
+						}
 					}
 					NodeMapData.Emplace(Node->ID, NodeData);
 				}
@@ -686,15 +674,8 @@ void UQuestComponent::Load_Implementation(const FString& SaveFileName, int SlotI
 						//Fill Node Data Here
 						if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(FoundedNode))
 						{
-							for (int i = 0; i < ObjectiveNode->Tasks.Num(); i++)
-							{
-								if (ObjectiveNode->Tasks[i] != nullptr && i < NodeData.TaskDatas.Num())
-								{
-									//fill task data here
-									ObjectiveNode->Tasks[i]->CurrentAmount = NodeData.TaskDatas[i].CurrentAmount;
-									ObjectiveNode->Tasks[i]->TaskState = NodeData.TaskDatas[i].TaskState;
-								}
-							}
+							ObjectiveNode->CurrentAmount = NodeData.CurrentAmount;
+							ObjectiveNode->ObjectiveState = NodeData.ObjectiveState;
 						}
 					}
 				}

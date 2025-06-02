@@ -31,10 +31,6 @@ public:
 	UPROPERTY()
 	TArray<TObjectPtr<UQuestBuilderEdNode>> Events;
 
-	/** only some of quest nodes support tasks */
-	UPROPERTY()
-	TArray<TObjectPtr<UQuestBuilderEdNode>> Tasks;
-
 	/** instance class */
 	UPROPERTY()
 	struct FGraphNodeClassData ClassData;

@@ -84,6 +84,7 @@ void UQuest::UpdateQuest()
 			CachedCurrentNodes[i]->EvaluateNextNode();
 		}
 	}
+
 }
 
 TArray<UQuestBuilderNode*> UQuest::GetVisitedNodes()
@@ -149,6 +150,10 @@ void UQuest::BeginNode(UQuestBuilderNode* InNode, bool bLaunchEventOnLoad)
 	if (InNode)
 	{
 		CurrentNodes.AddUnique(InNode);
+		if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(InNode))
+		{
+			OnQuestObjectiveAdded.Broadcast(ObjectiveNode);
+		}
 	}
 	if (InNode == nullptr)  
 	{  

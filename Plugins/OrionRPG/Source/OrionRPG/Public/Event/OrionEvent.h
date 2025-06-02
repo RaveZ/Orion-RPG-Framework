@@ -33,7 +33,7 @@ class ORIONRPG_API UOrionEvent : public UObject
 public:
 	UOrionEvent();
 
-	/** node name */
+	/** node name override*/
 	UPROPERTY(Category = Description, EditAnywhere)
 	FString NodeName;
 

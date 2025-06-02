@@ -29,7 +29,6 @@
 #include "QuestBuilderFactory.h"
 #include "Kismet2/BlueprintEditorUtils.h"
 #include "SMyQuest.h"
-#include "Task/QuestTask.h"
 #include "Quest_System_Editor.h"
 #include "ContentBrowserModule.h"
 #include "ContentBrowserFrontEndFilterExtension.h"

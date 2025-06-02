@@ -4,18 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "QuestBuilderNode.h"
+#include "QuestData.h"
 #include "QuestBuilderNode_Objective.generated.h"
 
 class UQuestObjective;
 
-
-UENUM(BlueprintType)
-enum class EObjectiveState : uint8
-{
-	E_Active		UMETA(DisplayName = "ACTIVE"),
-	E_Completed		UMETA(DisplayName = "COMPLETED"),
-	E_Failed			UMETA(DisplayName = "FAILED"),
-};
 
 UCLASS(Abstract, Blueprintable, EditInlineNew, AutoExpandCategories = ("Default"))
 class ORIONRPG_API UQuestBuilderNode_Objective : public UQuestBuilderNode
@@ -24,9 +17,6 @@ class ORIONRPG_API UQuestBuilderNode_Objective : public UQuestBuilderNode
 
 public:
 	UQuestBuilderNode_Objective();
-	/**List of objective for your objective*/
-	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Objective", meta = (FullyExpand = true))
-		TArray<TObjectPtr<UQuestTask>> Tasks;
 
 	/**mark the objective as optional and skip this objective if the other non - optional objective has been completed */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objective")

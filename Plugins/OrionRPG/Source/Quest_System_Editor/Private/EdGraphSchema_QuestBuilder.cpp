@@ -18,7 +18,6 @@
 #include "QuestBuilderEdNode_Root.h"
 #include "QuestBuilderEdSubNode_Decorator.h"
 #include "QuestBuilderEdSubNode_Event.h"
-#include "QuestBuilderEdSubNode_Task.h"
 #include "GraphEditorActions.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderEdge.h"
@@ -26,7 +25,6 @@
 #include "QuestBuilderNode_State.h"
 #include "QuestBuilderNode_Checkpoint.h"
 #include "QuestBuilderNode_Objective.h"
-#include "Task/QuestTask.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 
@@ -191,7 +189,6 @@ UEdGraphSchema_QuestBuilder::UEdGraphSchema_QuestBuilder()
 {
 	DecoratorClass = UQuestBuilderEdSubNode_Decorator::StaticClass();
 	EventClass = UQuestBuilderEdSubNode_Event::StaticClass();
-	TaskClass = UQuestBuilderEdSubNode_Task::StaticClass();
 }
 
 void UEdGraphSchema_QuestBuilder::GetBreakLinkToSubMenuActions(UToolMenu* Menu, UEdGraphPin* InGraphPin)
@@ -395,11 +392,6 @@ void UEdGraphSchema_QuestBuilder::GetSubNodeClasses(int32 SubNodeFlags, TArray<F
 		ClassCache.GatherClasses(UOrionEvent::StaticClass(), ClassData);
 		GraphNodeClass = EventClass;
 	}
-	else if (SubNodeFlags == EQuestNode::Objective)
-	{
-		ClassCache.GatherClasses(UQuestTask::StaticClass(), ClassData);
-		GraphNodeClass = TaskClass;
-	}
 }
 
 
@@ -534,17 +526,14 @@ const FPinConnectionResponse UEdGraphSchema_QuestBuilder::CanMergeNodes(const UE
 
 	const bool bNodeAIsDecorator = NodeA->IsA(UQuestBuilderEdSubNode_Decorator::StaticClass());
 	const bool bNodeAIsEvent = NodeA->IsA(UQuestBuilderEdSubNode_Event::StaticClass());
-	const bool bNodeAIsTask = NodeA->IsA(UQuestBuilderEdSubNode_Task::StaticClass());
 	const bool bNodeBIsObjective = NodeB->IsA(UQuestBuilderEdNode_Objective::StaticClass());
 	const bool bNodeBIsState = NodeB->IsA(UQuestBuilderEdNode_State::StaticClass());
 	const bool bNodeBIsCheckpoint = NodeB->IsA(UQuestBuilderEdNode_Checkpoint::StaticClass());
 	const bool bNodeBIsDecorator = NodeB->IsA(UQuestBuilderEdSubNode_Decorator::StaticClass());
 	const bool bNodeBIsEvent = NodeB->IsA(UQuestBuilderEdSubNode_Event::StaticClass());
-	const bool bNodeBIsTask = NodeB->IsA(UQuestBuilderEdSubNode_Task::StaticClass());
 	
 	if ((bNodeAIsDecorator && (bNodeBIsDecorator || bNodeBIsState || bNodeBIsObjective || bNodeBIsCheckpoint))
-		|| (bNodeAIsEvent && (bNodeBIsEvent || bNodeBIsState || bNodeBIsObjective || bNodeBIsCheckpoint))
-		|| (bNodeAIsTask) && (bNodeBIsTask || bNodeBIsObjective))
+		|| (bNodeAIsEvent && (bNodeBIsEvent || bNodeBIsState || bNodeBIsObjective || bNodeBIsCheckpoint)))
 	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_MAKE, TEXT(""));
 	}

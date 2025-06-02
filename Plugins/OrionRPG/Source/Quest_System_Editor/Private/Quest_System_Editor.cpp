@@ -6,7 +6,6 @@
 #include "QuestBuilderNode.h"
 #include "QuestBuilderNode_Objective.h"
 #include "QuestBuilderSetting.h"
-#include "Task/QuestTask.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 #include "IAssetTools.h"

@@ -6,21 +6,17 @@
 #include "GameFramework/SaveGame.h"
 #include "Quest.h"
 #include "UObject/NoExportTypes.h"
-#include "Task/QuestTask.h"
 #include "QuestData.generated.h"
 
-/** Task Data To Be Saved */
-USTRUCT()
-struct FTaskData
-{
-	GENERATED_BODY()
-public:
-	UPROPERTY(SaveGame)
-	int CurrentAmount = 0;
 
-	UPROPERTY(SaveGame)
-	ETaskState TaskState = ETaskState::E_Active;
+UENUM(BlueprintType)
+enum class EObjectiveState : uint8
+{
+	E_Active		UMETA(DisplayName = "ACTIVE"),
+	E_Completed		UMETA(DisplayName = "COMPLETED"),
+	E_Failed		UMETA(DisplayName = "FAILED"),
 };
+
 
 /** Node Data To Be Saved */
 USTRUCT()
@@ -32,7 +28,10 @@ public:
 	FName NodeID;
 
 	UPROPERTY(SaveGame)
-	TArray<FTaskData> TaskDatas;
+	int CurrentAmount = 0;
+
+	UPROPERTY(SaveGame)
+	EObjectiveState ObjectiveState = EObjectiveState::E_Active;
 };
 
 

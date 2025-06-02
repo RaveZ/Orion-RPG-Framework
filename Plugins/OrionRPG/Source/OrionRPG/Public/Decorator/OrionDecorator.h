@@ -15,7 +15,7 @@ class ORIONRPG_API UOrionDecorator : public UObject
 {
 	GENERATED_BODY()
 public:
-	/** node name */
+	/** node name override*/
 	UPROPERTY(Category = Description, EditAnywhere)
 	FString NodeName;
 

@@ -129,14 +129,16 @@ void UQuestBuilderNode::EvaluateNextNode()
 			}
 		}
 
-		//evaluate if all the parent node is objective and all task has completed
+		//evaluate if all the parent node is objective and has completed
 		bool bCanBranch = true;
 		for (auto& ParentNode : ChildNode->ParentNodes)
 		{
-			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(ParentNode);
-			if (ObjectiveNode && !ObjectiveNode->IsObjectiveCompleted())
+			if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(ParentNode))
 			{
-				bCanBranch = false;
+				if (ObjectiveNode->bOptional)
+					continue;
+				if(!ObjectiveNode->IsObjectiveCompleted())
+					bCanBranch = false;
 			}
 		}
 		
@@ -203,19 +205,34 @@ FString UQuestBuilderNode::GetShortTypeName(const UObject* Ob)
 		return TEXT("None");
 	}
 
+	FString TypeDesc = Ob->GetClass()->GetName();
+
 	if (Ob->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint))
 	{
-		return Ob->GetClass()->GetName().LeftChop(2);
+		TypeDesc = Ob->GetClass()->GetName().LeftChop(2);
 	}
 
-	FString TypeDesc = Ob->GetClass()->GetName();
-	const int32 ShortNameIdx = TypeDesc.Find(TEXT("_"), ESearchCase::CaseSensitive);
-	if (ShortNameIdx != INDEX_NONE)
+	// Insert space before each capital letter (except the first character) and remove underscores
+	// Do not add space if the previous character is uppercase (abbreviation)
+	FString Result;
+	for (int32 i = 0; i < TypeDesc.Len(); ++i)
 	{
-		TypeDesc.MidInline(ShortNameIdx + 1, MAX_int32, EAllowShrinking::No);
+		if (TypeDesc[i] != TEXT('_'))
+		{
+			TCHAR Char = TypeDesc[i];
+			if (i > 0 && FChar::IsUpper(Char) && !FChar::IsWhitespace(TypeDesc[i - 1]))
+			{
+				// Only add space if previous character is not uppercase (not abbreviation)
+				if (!FChar::IsUpper(TypeDesc[i - 1]))
+				{
+					Result += TEXT(" ");
+				}
+			}
+			Result += Char;
+		}
 	}
 
-	return TypeDesc;
+	return Result;
 }
 
 UWorld* UQuestBuilderNode::GetWorld() const
@@ -258,7 +275,7 @@ FLinearColor UQuestBuilderNode::GetBackgroundColor() const
 
 FText UQuestBuilderNode::GetNodeTitle() const
 {
-	return FText::FromString(UQuestBuilderNode::GetShortTypeName(this));
+	return NodeName.Len() ? FText::FromString(NodeName) : FText::FromString(GetShortTypeName(this));
 }
 
 FText UQuestBuilderNode::GetNodeDescription() const

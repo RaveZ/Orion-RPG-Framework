@@ -27,6 +27,7 @@ enum class EQuestState : uint8
 	E_Locked		UMETA(DisplayName = "LOCKED"),
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestObjectiveAdded, UQuestBuilderNode_Objective*, Objective);
 
 UCLASS(Blueprintable, BlueprintType)
 class ORIONRPG_API UQuest : public UObject
@@ -98,6 +99,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "Quest")
 		TObjectPtr < UQuestComponent> QuestComponent;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
+		FQuestObjectiveAdded OnQuestObjectiveAdded;
 public:
 
 	virtual bool Initialize(class UQuestComponent* InitializingComp);

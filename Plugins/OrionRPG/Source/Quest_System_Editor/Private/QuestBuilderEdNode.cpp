@@ -3,7 +3,6 @@
 
 #include "QuestBuilderEdNode.h"
 #include "QuestBuilderEdSubNode_Decorator.h"
-#include "QuestBuilderEdSubNode_Task.h"
 #include "QuestBuilderEdSubNode_Event.h"
 #include "QuestBuilderSetting.h"
 #include "EdGraphSchema_QuestBuilder.h"
@@ -15,7 +14,6 @@
 #include "QuestBuilderNode_State.h"
 #include "QuestBuilderEditorUtils.h"
 #include "GraphDiffControl.h"
-#include "Task/QuestTask.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -196,7 +194,6 @@ void UQuestBuilderEdNode::FindDiffs(UEdGraphNode* OtherNode, FDiffResults& Resul
 		};
 		DiffSubNodes(LOCTEXT("DecoratorDiffDisplayName", "Decorator"), Decorators, OtherQuestEdNode->Decorators);
 		DiffSubNodes(LOCTEXT("EventDiffDisplayName", "Event"), Events, OtherQuestEdNode->Events);
-		DiffSubNodes(LOCTEXT("TaskDiffDisplayName", "Task"), Tasks, OtherQuestEdNode->Tasks);
 	}
 }
 
@@ -302,6 +299,8 @@ void UQuestBuilderEdNode::UpdateSubnodeDependencies()
 	if (NodeInstance)
 	{
 		UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(NodeInstance);
+		UQuestBuilderGraph* QuestAsset = QuestNode ? Cast<UQuestBuilderGraph>(QuestNode->GetOuter()) : nullptr;
+		UQuest* Quest = GetQuestBuilderEdGraph() ? GetQuestBuilderEdGraph()->Quest : nullptr;
 
 		QuestNode->Events.Reset();
 		for (int32 iAux = 0; iAux < Events.Num(); iAux++)
@@ -309,6 +308,7 @@ void UQuestBuilderEdNode::UpdateSubnodeDependencies()
 			if (UOrionEvent* EventInstance = Cast<UOrionEvent>(Events[iAux]->NodeInstance))
 			{
 				QuestNode->Events.Add(EventInstance);
+				EventInstance->Rename(nullptr, Quest, REN_DontCreateRedirectors | REN_DoNotDirty);
 			}
 		}
 
@@ -319,17 +319,7 @@ void UQuestBuilderEdNode::UpdateSubnodeDependencies()
 			if (UOrionDecorator* DecoratorInstance = Cast<UOrionDecorator>(Decorators[iAux]->NodeInstance))
 			{
 				QuestNode->Decorators.Add(DecoratorInstance);
-			}
-		}
-
-		if (UQuestBuilderNode_Objective* QuestObjectiveNode = Cast<UQuestBuilderNode_Objective>(NodeInstance))
-		{
-			for (int32 iAux = 0; iAux < Tasks.Num(); iAux++)
-			{
-				if (UQuestTask* TaskInstance = Cast<UQuestTask>(Tasks[iAux]->NodeInstance))
-				{
-					QuestObjectiveNode->Tasks.Add(TaskInstance);
-				}
+				DecoratorInstance->Rename(nullptr, Quest, REN_DontCreateRedirectors | REN_DoNotDirty);
 			}
 		}
 	}
@@ -386,7 +376,6 @@ void UQuestBuilderEdNode::OnSubNodeRemoved(UQuestBuilderEdNode* SubNode)
 {
 	const int32 DecoratorIdx = Decorators.IndexOfByKey(SubNode);
 	const int32 EventIdx = Events.IndexOfByKey(SubNode);
-	const int32 TaskIdx = Tasks.IndexOfByKey(SubNode);
 
 	if (DecoratorIdx >= 0)
 	{
@@ -398,10 +387,6 @@ void UQuestBuilderEdNode::OnSubNodeRemoved(UQuestBuilderEdNode* SubNode)
 		Events.RemoveAt(EventIdx);
 	}
 
-	if (TaskIdx >= 0)
-	{
-		Tasks.RemoveAt(TaskIdx);
-	}
 }
 
 void UQuestBuilderEdNode::OnSubNodeAdded(UQuestBuilderEdNode* NodeTemplate)
@@ -416,10 +401,6 @@ void UQuestBuilderEdNode::OnSubNodeAdded(UQuestBuilderEdNode* NodeTemplate)
 	{
 		Events.Add(NodeTemplate);
 	}
-	else if (Cast<UQuestBuilderEdSubNode_Task>(NodeTemplate))
-	{
-		Tasks.Add(NodeTemplate);
-	}
 }
 
 int32 UQuestBuilderEdNode::FindSubNodeDropIndex(UQuestBuilderEdNode* SubNode) const
@@ -427,9 +408,8 @@ int32 UQuestBuilderEdNode::FindSubNodeDropIndex(UQuestBuilderEdNode* SubNode) co
 	const int32 SubIdx = SubNodes.IndexOfByKey(SubNode) + 1;
 	const int32 DecoratorIdx = Decorators.IndexOfByKey(SubNode) + 1;
 	const int32 ServiceIdx = Events.IndexOfByKey(SubNode) + 1;
-	const int32 TaskIdx = Tasks.IndexOfByKey(SubNode) + 1;
 
-	const int32 CombinedIdx = (SubIdx & 0xff) | ((DecoratorIdx & 0xff) << 8) | ((ServiceIdx & 0xff) << 16) | ((TaskIdx & 0xff) << 24);
+	const int32 CombinedIdx = (SubIdx & 0xff) | ((DecoratorIdx & 0xff) << 8) | ((ServiceIdx & 0xff) << 16);
 	return CombinedIdx;
 }
 
@@ -452,7 +432,6 @@ void UQuestBuilderEdNode::InsertSubNodeAt(UQuestBuilderEdNode* SubNode, int32 Dr
 	UQuestBuilderEdNode* TypedNode = Cast<UQuestBuilderEdNode>(SubNode);
 	const bool bIsDecorator = Cast<UOrionDecorator>(SubNode->NodeInstance) != nullptr;
 	const bool bIsService = Cast<UOrionEvent>(SubNode->NodeInstance) != nullptr;
-	const bool bIsTask = Cast<UQuestTask>(SubNode->NodeInstance) != nullptr;
 
 	if (TypedNode)
 	{
@@ -478,18 +457,6 @@ void UQuestBuilderEdNode::InsertSubNodeAt(UQuestBuilderEdNode* SubNode, int32 Dr
 			else
 			{
 				Events.Add(TypedNode);
-			}
-		}
-
-		if (bIsTask)
-		{
-			if (TaskIdx >= 0)
-			{
-				Tasks.Insert(TypedNode, TaskIdx);
-			}
-			else
-			{
-				Tasks.Add(TypedNode);
 			}
 		}
 	}
@@ -797,7 +764,6 @@ void UQuestBuilderEdNode::PostEditUndo()
 	{
 		const bool bIsDecorator = Cast<UOrionDecorator>(NodeInstance) != nullptr;
 		const bool bIsEvent = Cast<UOrionEvent>(NodeInstance) != nullptr;
-		const bool bIsTask = Cast<UQuestTask>(NodeInstance) != nullptr;
 
 		if (bIsDecorator)
 		{
@@ -806,10 +772,6 @@ void UQuestBuilderEdNode::PostEditUndo()
 		else if (bIsEvent)
 		{
 			MyParentNode->Events.AddUnique(this);
-		}
-		else if (bIsTask)
-		{
-			MyParentNode->Tasks.AddUnique(this);
 		}
 	}
 }

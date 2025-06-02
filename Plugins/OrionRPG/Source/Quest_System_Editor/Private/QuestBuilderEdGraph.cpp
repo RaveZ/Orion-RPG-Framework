@@ -11,7 +11,6 @@
 #include "QuestBuilderNode_Objective.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
-#include "Task/QuestTask.h"
 
 
 UQuestBuilderEdGraph::UQuestBuilderEdGraph()
@@ -187,22 +186,6 @@ void UQuestBuilderEdGraph::UpdateAllSubnodeDependencies()
 					}
 				}
 
-				if (UQuestBuilderNode_Objective* QuestObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestEdNode->NodeInstance))
-				{
-					QuestObjectiveNode->Tasks.Reset();
-					for (int32 iAux = 0; iAux < QuestEdNode->Tasks.Num(); iAux++)
-					{
-						QuestEdNode->Tasks[iAux]->ParentNode = QuestEdNode;
-						if (UQuestTask* TaskInstance = Cast<UQuestTask>(QuestEdNode->Tasks[iAux]->NodeInstance))
-						{
-							QuestObjectiveNode->Tasks.Add(TaskInstance);
-							TaskInstance->ObjectiveNode = QuestObjectiveNode;
-							TaskInstance->QuestGraph = QuestGraph;
-							TaskInstance->Quest = Quest;
-							TaskInstance->Rename(nullptr, Quest, REN_DontCreateRedirectors | REN_DoNotDirty);
-						}
-					}
-				}
 			}
 			
 		}
@@ -346,9 +329,8 @@ void UQuestBuilderEdGraph::RemoveUnknownSubNodes()
 			{
 				const bool bIsDecorator = Node->Decorators.Contains(Node->SubNodes[SubIdx]);
 				const bool bIsService = Node->Events.Contains(Node->SubNodes[SubIdx]);
-				const bool bIsTask = Node->Tasks.Contains(Node->SubNodes[SubIdx]);
 
-				if (!bIsDecorator && !bIsService && !bIsTask)
+				if (!bIsDecorator && !bIsService)
 				{
 					Node->SubNodes.RemoveAt(SubIdx);
 				}
@@ -473,7 +455,7 @@ void UQuestBuilderEdGraph::UpdateVersion_UnifiedSubNodes()
 			continue;
 		}
 
-		MyNode->SubNodes.Reset(MyNode->Decorators.Num() + MyNode->Events.Num() + MyNode->Tasks.Num());
+		MyNode->SubNodes.Reset(MyNode->Decorators.Num() + MyNode->Events.Num());
 
 		for (int32 SubIdx = 0; SubIdx < MyNode->Decorators.Num(); SubIdx++)
 		{
@@ -483,11 +465,6 @@ void UQuestBuilderEdGraph::UpdateVersion_UnifiedSubNodes()
 		for (int32 SubIdx = 0; SubIdx < MyNode->Events.Num(); SubIdx++)
 		{
 			MyNode->SubNodes.Add(MyNode->Events[SubIdx]);
-		}
-
-		for (int32 SubIdx = 0; SubIdx < MyNode->Tasks.Num(); SubIdx++)
-		{
-			MyNode->SubNodes.Add(MyNode->Tasks[SubIdx]);
 		}
 	}
 }

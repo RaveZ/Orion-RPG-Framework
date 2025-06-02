@@ -2,7 +2,6 @@
 
 
 #include "QuestBuilderNode_Objective.h"
-#include "Task/QuestTask.h"
 #include "Quest.h"
 #include "QuestComponent.h"
 
@@ -158,7 +157,7 @@ void UQuestBuilderNode_Objective::EvaluateNextNode()
 #if WITH_EDITOR
 FText UQuestBuilderNode_Objective::GetNodeTitle() const
 {
-    return FText::FromString("Objective Node");
+    return NodeName.Len() ? FText::FromString(NodeName) : FText::FromString(GetShortTypeName(this));
 }
 
 void UQuestBuilderNode_Objective::SetNodeTitle(const FText& NewTitle)
@@ -168,19 +167,6 @@ void UQuestBuilderNode_Objective::SetNodeTitle(const FText& NewTitle)
 
 FText UQuestBuilderNode_Objective::GetNodeDescription() const
 {
-    /*FString TaskDesc;
-
-    for (const UQuestTask* Task : Tasks)
-    {
-        if (Task)
-        {
-            if(!TaskDesc.IsEmpty()) TaskDesc += TEXT("\n");
-            TaskDesc += Task->GetDescription().ToString();
-        }
-        
-    }
-
-    return FText::FromString(TaskDesc);*/
     return Description;
 }
 #endif

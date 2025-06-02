@@ -62,7 +62,6 @@ public:
 
 	TSubclassOf<UQuestBuilderEdSubNode_Decorator> DecoratorClass;
 	TSubclassOf<UQuestBuilderEdSubNode_Event> EventClass;
-	TSubclassOf<UQuestBuilderEdSubNode_Task> TaskClass;
 protected:
 	virtual FGraphNodeClassHelper& GetClassCache(int32 SubNodeFlags) const;
 	static TSharedPtr<FAssetSchemaAction_QuestSystem_NewNode> AddNewNodeAction(FGraphActionListBuilderBase& ContextMenuBuilder, const FText& Category, const FText& MenuDesc, const FText& Tooltip);

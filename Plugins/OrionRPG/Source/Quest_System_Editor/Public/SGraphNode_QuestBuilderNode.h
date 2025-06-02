@@ -58,7 +58,6 @@ public:
 	virtual FText GetNodeTagDescription() const;
 	virtual EVisibility GetDescriptionVisibility() const;
 	virtual EVisibility GetNodeTagVisibility() const;
-	virtual EVisibility GetTaskVisibility() const;
 	virtual EVisibility GetEventsVisibility() const;
 	virtual EVisibility GetDecoratorVisibility() const;
 
@@ -77,8 +76,6 @@ public:
 	/** adds event widget inside current node */
 	void AddEvent(TSharedPtr<SGraphNode> EventWidget);
 
-	/** adds task widget inside current node */
-	void AddTask(TSharedPtr<SGraphNode> TaskWidget);
 
 	/** handle mouse down on the node */
 	FReply OnMouseDown(const FGeometry& SenderGeometry, const FPointerEvent& MouseEvent);
@@ -128,8 +125,6 @@ protected:
 	TArray< TSharedPtr<SGraphNode> > EventsWidgets;
 	TSharedPtr<SVerticalBox> DecoratorsBox;
 	TSharedPtr<SVerticalBox> EventsBox;
-	TArray< TSharedPtr<SGraphNode> > TasksWidgets;
-	TSharedPtr<SVerticalBox> TasksBox;
 	TSharedPtr<SHorizontalBox> OutputPinBox;
 	TSharedPtr<SWidget> QuestNodeWidgetRef;
 

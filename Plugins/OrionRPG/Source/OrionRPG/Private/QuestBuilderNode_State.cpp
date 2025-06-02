@@ -36,6 +36,9 @@ void UQuestBuilderNode_State::BeginState()
 #if WITH_EDITOR
 FText UQuestBuilderNode_State::GetNodeTitle() const
 {
+    if (NodeName.Len())
+        return FText::FromString(NodeName);
+
     switch (QuestState)
     {
         case EQuestState::E_Complete:

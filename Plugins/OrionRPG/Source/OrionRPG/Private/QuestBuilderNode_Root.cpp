@@ -10,7 +10,7 @@
 void UQuestBuilderNode_Root::BeginNode()
 {
 	Super::BeginNode();
-	QuestComponent->OnQuestUpdated.Broadcast();
+	Quest->UpdateQuest();
 	Deinitialize();
 }
 

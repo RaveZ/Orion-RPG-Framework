@@ -34,19 +34,23 @@ public:
 	virtual ~UQuestBuilderNode();
 
 	/**Asset ID*/
-	UPROPERTY(BlueprintReadOnly, Category = "Detail", meta = (DisplayPriority = 0))
+	UPROPERTY(BlueprintReadOnly, Category = "Description", meta = (DisplayPriority = 0))
 		FName ID;
 
 	/** Gameplay Tag for this node, each tag should be unique */
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Detail")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Description")
 		FGameplayTag NodeTag;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (MultiLine = true))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Description", meta = (MultiLine = true))
 		FText Description;
 
 	/** Add this Node Description to Journal? */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", DisplayName = "Add To Journal?")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Description", DisplayName = "Add To Journal?")
 		bool bAddToJournal;
+
+	/** node name override*/
+	UPROPERTY(Category = "Description", EditAnywhere)
+		FString NodeName;
 	
 	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Events")
 		TArray<TObjectPtr<UOrionEvent>> Events;
