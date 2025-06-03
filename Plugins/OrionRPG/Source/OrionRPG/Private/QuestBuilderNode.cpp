@@ -157,9 +157,9 @@ UQuestBuilderEdge* UQuestBuilderNode::GetEdge(UQuestBuilderNode* ChildNode)
 }
 
 
-FText UQuestBuilderNode::GetDescription_Implementation() const
+FText UQuestBuilderNode::GetNodeDisplayName_Implementation() const
 {
-	return Description;
+	return FText();
 }
 
 

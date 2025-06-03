@@ -56,6 +56,10 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Begin Objective", Category = "Objective")
 	void K2_BeginObjective(AController* OwnerController, APawn* ControlledPawn);
 
+	UFUNCTION(BlueprintNativeEvent, DisplayName = "Tick Objective", Category = "Objective")
+	void TickObjective();
+	virtual void TickObjective_Implementation();
+
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Objective Completed", Category = "Objective")
 	void K2_ObjectiveCompleted(AController* OwnerController, APawn* ControlledPawn);
 
@@ -82,10 +86,6 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 	bool IsObjectiveActive();
-
-	UFUNCTION(BlueprintNativeEvent, DisplayName = "Tick Objective", Category = "Objective")
-	void TickObjective();
-	virtual void TickObjective_Implementation();
 
 	/**Add amount and check if the required amount has fulfilled, then complete the objective*/
 	UFUNCTION(BlueprintCallable, Category = "Objective")

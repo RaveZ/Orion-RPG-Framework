@@ -157,7 +157,9 @@ void UQuestBuilderNode_Objective::EvaluateNextNode()
 #if WITH_EDITOR
 FText UQuestBuilderNode_Objective::GetNodeTitle() const
 {
-    return NodeName.Len() ? FText::FromString(NodeName) : FText::FromString(GetShortTypeName(this));
+    return NodeName.Len() ? FText::FromString(NodeName) :
+        GetNodeDisplayName().ToString().Len() ? GetNodeDisplayName() :
+        FText::FromString(GetShortTypeName(this));
 }
 
 void UQuestBuilderNode_Objective::SetNodeTitle(const FText& NewTitle)

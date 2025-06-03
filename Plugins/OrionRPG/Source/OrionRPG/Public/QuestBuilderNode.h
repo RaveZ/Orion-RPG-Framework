@@ -38,7 +38,7 @@ public:
 		FName ID;
 
 	/** Gameplay Tag for this node, each tag should be unique */
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Description")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Description", DisplayName = "Node Tag (Optional)")
 		FGameplayTag NodeTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Description", meta = (MultiLine = true))
@@ -119,9 +119,9 @@ public:
 		UQuest* GetOwningQuest() const;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "QuestBuilderNode")
-		FText GetDescription() const;
+		FText GetNodeDisplayName() const;
 
-	virtual FText GetDescription_Implementation() const;
+	virtual FText GetNodeDisplayName_Implementation() const;
 
 	virtual void LaunchStartEventQueue();
 	virtual void LaunchEndEventQueue();
