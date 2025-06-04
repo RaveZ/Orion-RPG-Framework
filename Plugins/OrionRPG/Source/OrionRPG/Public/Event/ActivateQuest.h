@@ -7,7 +7,7 @@
 #include "ActivateQuest.generated.h"
 
 /**
- * Actvate quest from quest tag.
+ * Activate quest from quest tag.
  * Can only activate locked/unlocked quests.
  */
 UCLASS()

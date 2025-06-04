@@ -45,7 +45,7 @@ public:
 	EObjectiveState ObjectiveState = EObjectiveState::E_Active;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Objective")
-	int CurrentAmount = 0;
+	int CurrentProgress = 0;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Objective")
 	float DistanceToTarget;
@@ -89,7 +89,7 @@ public:
 
 	/**Add amount and check if the required amount has fulfilled, then complete the objective*/
 	UFUNCTION(BlueprintCallable, Category = "Objective")
-	void AddAmount(int AmountToAdd = 1);
+	void AddToProgress(int AmountToAdd = 1);
 
 	virtual void Initialize(bool bLaunchEventOnLoad = false) override;
 	virtual void Deinitialize() override;

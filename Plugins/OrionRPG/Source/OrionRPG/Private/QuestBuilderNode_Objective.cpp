@@ -46,7 +46,7 @@ void UQuestBuilderNode_Objective::Reset()
 {
     Super::Reset();
     ObjectiveState = EObjectiveState::E_Active;
-    CurrentAmount = 0;
+    CurrentProgress = 0;
 	DeactivateTick();
 }
 
@@ -69,10 +69,10 @@ void UQuestBuilderNode_Objective::TickObjective_Implementation()
 {
 }
 
-void UQuestBuilderNode_Objective::AddAmount(int AmountToAdd)
+void UQuestBuilderNode_Objective::AddToProgress(int AmountToAdd)
 {
-    CurrentAmount = FMath::Clamp(CurrentAmount + AmountToAdd, 0, RequiredAmount);
-    if (CurrentAmount >= RequiredAmount)
+    CurrentProgress = FMath::Clamp(CurrentProgress + AmountToAdd, 0, RequiredAmount);
+    if (CurrentProgress >= RequiredAmount)
     {
         CompleteObjective();
     }

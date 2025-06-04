@@ -28,7 +28,7 @@ public:
 	FName NodeID;
 
 	UPROPERTY(SaveGame)
-	int CurrentAmount = 0;
+	int CurrentProgress = 0;
 
 	UPROPERTY(SaveGame)
 	EObjectiveState ObjectiveState = EObjectiveState::E_Active;

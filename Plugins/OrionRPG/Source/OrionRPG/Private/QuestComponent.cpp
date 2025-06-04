@@ -566,7 +566,7 @@ void UQuestComponent::Save_Implementation(const FString& SaveFileName, int SlotI
 						NodeData.NodeID = Node->ID;
 						if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(Node))
 						{
-							NodeData.CurrentAmount = ObjectiveNode->CurrentAmount;
+							NodeData.CurrentProgress = ObjectiveNode->CurrentProgress;
 							NodeData.ObjectiveState = ObjectiveNode->ObjectiveState;
 						}
 					}
@@ -674,7 +674,7 @@ void UQuestComponent::Load_Implementation(const FString& SaveFileName, int SlotI
 						//Fill Node Data Here
 						if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(FoundedNode))
 						{
-							ObjectiveNode->CurrentAmount = NodeData.CurrentAmount;
+							ObjectiveNode->CurrentProgress = NodeData.CurrentProgress;
 							ObjectiveNode->ObjectiveState = NodeData.ObjectiveState;
 						}
 					}
