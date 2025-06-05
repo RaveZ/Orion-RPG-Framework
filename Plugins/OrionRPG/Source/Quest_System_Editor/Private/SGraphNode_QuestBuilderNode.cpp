@@ -279,7 +279,7 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 		};
 
 	const FMargin NodePadding = (Cast<UQuestBuilderEdSubNode_Decorator>(GraphNode) || Cast<UQuestBuilderEdSubNode_Event>(GraphNode))
-		? FMargin(5.f, 1.f, 1.f, 1.f)
+		? FMargin( 1.f)
 		: FMargin(8.0f);
 
 	const float NodeMaxWidth = QuestEdNode && QuestEdNode->IsSubNode()
