@@ -105,10 +105,10 @@ void UQuestBuilderNode_Objective::BeginObjective()
     }
 }
 
-bool UQuestBuilderNode_Objective::CompleteObjective()
+void UQuestBuilderNode_Objective::CompleteObjective()
 {
     if (Quest->QuestState != EQuestState::E_Active)
-        return false;
+        return;
 
     ObjectiveState = EObjectiveState::E_Completed;
     K2_ObjectiveCompleted(GetOwningController(), GetOwningPawn());
@@ -118,13 +118,12 @@ bool UQuestBuilderNode_Objective::CompleteObjective()
 
     Deinitialize();
     DeactivateTick();
-    return true;
 }
 
-bool UQuestBuilderNode_Objective::FailObjective()
+void UQuestBuilderNode_Objective::FailObjective()
 {
     if (Quest->QuestState != EQuestState::E_Active)
-        return false;
+        return;
     ObjectiveState = EObjectiveState::E_Failed;
     K2_ObjectiveFailed(GetOwningController(), GetOwningPawn());
     GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
@@ -132,7 +131,6 @@ bool UQuestBuilderNode_Objective::FailObjective()
     GetQuestComponent()->OnQuestUpdated.Broadcast();
 
     DeactivateTick();
-    return true;
 }
 
 void UQuestBuilderNode_Objective::DeactivateTick()

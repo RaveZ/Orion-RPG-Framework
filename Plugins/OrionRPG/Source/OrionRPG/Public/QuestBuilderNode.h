@@ -38,7 +38,7 @@ public:
 		FName ID;
 
 	/** Gameplay Tag for this node, each tag should be unique */
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Description", DisplayName = "Node Tag (Optional)")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Description", DisplayName = "Node Tag (Optional)", meta = (Categories = "Quest"))
 		FGameplayTag NodeTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Description", meta = (MultiLine = true))
@@ -131,6 +131,9 @@ public:
 
 	// Allows the Object to get a valid UWorld from it's outer.
 	virtual UWorld* GetWorld() const override;
+
+	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
+	FString GetShortTag(FGameplayTag Tag, int32 Level = 1) const;
 protected:
 	TArray<UQuestBuilderNode*> NextNodes;
 	TArray<UOrionEvent*> StartEventQueue;

@@ -48,7 +48,7 @@ public:
 	FName QuestCategory;
 	
 	/** Gameplay Tag for this quest, each tag should be unique*/
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quest")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quest", meta = (Categories = "Quest"))
 	FGameplayTag QuestTag;
 
 	/** Your Quest Name*/

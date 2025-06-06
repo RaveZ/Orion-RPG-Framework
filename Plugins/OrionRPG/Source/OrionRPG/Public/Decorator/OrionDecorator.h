@@ -26,14 +26,14 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
 		bool bUseQuestTag = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bUseQuestTag == true", HideEditConditionToggle, EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bUseQuestTag == true", HideEditConditionToggle, EditConditionHides, Categories = "Quest"))
 		FGameplayTag QuestTag;
 
 	/** Display Node ID in property panel?*/
 	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
 		bool bUseNodeTag = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bUseNodeTag == true", HideEditConditionToggle, EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bUseNodeTag == true", HideEditConditionToggle, EditConditionHides, Categories = "Quest"))
 		FGameplayTag NodeTag;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OrionDecorator")
@@ -49,11 +49,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OrionDecorator")
 		UQuestComponent* GetQuestComponent() const;
 
+	UFUNCTION(BlueprintCallable, Category = "OrionDecorator")
+		FString GetShortTag(FGameplayTag Tag, int32 Level = 1) const;
 
 	/** @return name of node */
 	FString GetNodeName();
 	FString GetShortTypeName(UObject* Ob);
-	FString GetShortTag(FGameplayTag Tag) const;
 
 	// Allows the Object to get a valid UWorld from it's outer.
 	virtual UWorld* GetWorld() const override;

@@ -259,6 +259,30 @@ UWorld* UQuestBuilderNode::GetWorld() const
 	return nullptr;
 }
 
+FString UQuestBuilderNode::GetShortTag(FGameplayTag Tag, int32 Level) const
+{
+	FString TagString = Tag.ToString();
+	TArray<FString> Parts;
+	TagString.ParseIntoArray(Parts, TEXT("."), true);
+
+	if (Level <= 0 || Parts.Num() == 0)
+	{
+		return TagString;
+	}
+
+	int32 StartIndex = FMath::Max(Parts.Num() - Level, 0);
+	FString Result;
+	for (int32 i = StartIndex; i < Parts.Num(); ++i)
+	{
+		if (!Result.IsEmpty())
+		{
+			Result += TEXT(".");
+		}
+		Result += Parts[i];
+	}
+	return Result;
+}
+
 
 
 

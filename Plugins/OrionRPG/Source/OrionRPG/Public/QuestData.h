@@ -4,10 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
+#include "NativeGameplayTags.h"
 #include "Quest.h"
 #include "UObject/NoExportTypes.h"
 #include "QuestData.generated.h"
 
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest);
 
 UENUM(BlueprintType)
 enum class EObjectiveState : uint8
@@ -88,3 +91,5 @@ public:
 
 
 };
+
+

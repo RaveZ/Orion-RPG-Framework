@@ -32,12 +32,28 @@ UQuestComponent* UOrionDecorator::GetQuestComponent() const
 	return nullptr;
 }
 
-FString UOrionDecorator::GetShortTag(FGameplayTag Tag) const
+FString UOrionDecorator::GetShortTag(FGameplayTag Tag, int32 Level) const
 {
 	FString TagString = Tag.ToString();
-	Tag.ToString().Split(TEXT("."), nullptr, &TagString, ESearchCase::IgnoreCase, ESearchDir::FromEnd);
+	TArray<FString> Parts;
+	TagString.ParseIntoArray(Parts, TEXT("."), true);
 
-	return TagString;
+	if (Level <= 0 || Parts.Num() == 0)
+	{
+		return TagString;
+	}
+
+	int32 StartIndex = FMath::Max(Parts.Num() - Level, 0);
+	FString Result;
+	for (int32 i = StartIndex; i < Parts.Num(); ++i)
+	{
+		if (!Result.IsEmpty())
+		{
+			Result += TEXT(".");
+		}
+		Result += Parts[i];
+	}
+	return Result;
 }
 
 FString UOrionDecorator::GetNodeName() 

@@ -70,10 +70,10 @@ public:
 	virtual void BeginObjective();
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
-	virtual bool CompleteObjective();
+	virtual void CompleteObjective();
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
-	virtual bool FailObjective();
+	virtual void FailObjective();
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 	virtual void DeactivateTick();

@@ -98,7 +98,7 @@ FText UQuestBuilderEdNode::GetTooltipText() const
 			}
 		}
 	}
-	if (NodeInstance->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint) && !NodeInstance->GetClass()->GetPackage()->HasAnyPackageFlags(PKG_Cooked))
+	if (NodeInstance && NodeInstance->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint) && !NodeInstance->GetClass()->GetPackage()->HasAnyPackageFlags(PKG_Cooked))
 	{
 		TooltipDesc = FText::FromString(TooltipDesc.ToString() + "\n**Double click node to open blueprint");
 	}
