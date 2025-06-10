@@ -21,7 +21,7 @@
 
 
 #define LOCTEXT_NAMESPACE "QuestComponent"
-// Sets default values for this component's properties
+
 UQuestComponent::UQuestComponent()
 {
 	SetIsReplicatedByDefault(true);
@@ -29,7 +29,6 @@ UQuestComponent::UQuestComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 }
 
-// Called when the game starts
 void UQuestComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -54,18 +53,17 @@ void UQuestComponent::BeginPlay()
 }
 
 
-// Called every frame
 void UQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	// ...
 }
 
 bool UQuestComponent::BeginQuestGraph(UQuestBuilderGraph* QuestGraphAsset)
 {
 	if (QuestGraphAsset == nullptr)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Quest Asset is null"));
 		return false;
 	}
 

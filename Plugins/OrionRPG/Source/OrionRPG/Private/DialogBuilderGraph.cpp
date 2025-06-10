@@ -2,10 +2,10 @@
 
 
 #include "DialogBuilderGraph.h"
-#include "Dialog.h"
 #include "DialogComponent.h"
 #include "DialogBuilderNode.h"
 #include "DialogBuilderEdge.h"
+#include "DialogBuilderNode_Root.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderGraph"
 
@@ -18,12 +18,67 @@ UDialogBuilderGraph::~UDialogBuilderGraph()
 	
 }
 
-void UDialogBuilderGraph::Initialize()
+bool UDialogBuilderGraph::Initialize(UDialogComponent* InitializingComp)
 {
+	if (!HasAnyFlags(RF_ClassDefaultObject))
+	{
+		//We need a valid Quest component to make a quest for 
+		if (!InitializingComp)
+		{
+			return false;
+		}
+		OwningController = InitializingComp->GetOwningController();
+		DialogComponent = InitializingComp;
+		VisitedNodeIDs.Empty();
+		NodeMap.Empty();
+		for (auto& Node : AllNodes)
+		{
+			if (Node)
+			{
+				Node->DialogGraph = this;
+				Node->OwningController = InitializingComp->GetOwningController();
+				Node->DialogComponent = InitializingComp;
+				NodeMap.Emplace(Node->ID, Node);
+			}
+		}
+	}
+	return false;
 }
+
 void UDialogBuilderGraph::Deinitialize()
 {
-	ID = NAME_None;
+	VisitedNodeIDs.Empty();
+	CurrentNode = nullptr;
+	
+	for (auto& Node : AllNodes)
+	{
+		Node->Deinitialize();
+	}
+}
+
+void UDialogBuilderGraph::BeginNode(UDialogBuilderNode* InNode, bool bLaunchEventOnLoad)
+{
+	if (InNode)
+	{
+		CurrentNode = InNode;
+	}
+	if (InNode == nullptr)  
+	{  
+		UE_LOG(LogTemp, Warning, TEXT("BeginNode: Node is null for Dialog ID: %s"), *ID.ToString());  
+		return;  
+	}
+	
+	if (UDialogBuilderNode_Root* RootNode = Cast<UDialogBuilderNode_Root>(InNode))
+	{
+		RootNode->Initialize();
+		return;
+	}
+	
+	//add visited node
+	VisitedNodeIDs.AddUnique(InNode->ID);
+	
+	//InitializeNode
+	InNode->Initialize(bLaunchEventOnLoad);
 }
 
 int UDialogBuilderGraph::GetLevelNum() const
@@ -99,6 +154,25 @@ void UDialogBuilderGraph::ClearGraph()
 	AllNodes.Empty();
 	RootNodes.Empty();
 	NodeMap.Empty();
+}
+
+AController* UDialogBuilderGraph::GetOwningController()
+{
+	return OwningController;
+}
+
+APawn* UDialogBuilderGraph::GetOwningPawn()
+{
+	if (DialogComponent)
+	{
+		return DialogComponent->GetOwningPawn();
+	}
+	return nullptr;
+}
+
+UDialogComponent* UDialogBuilderGraph::GetDialogComponent()
+{
+	return DialogComponent;
 }
 
 #if WITH_EDITORONLY_DATA

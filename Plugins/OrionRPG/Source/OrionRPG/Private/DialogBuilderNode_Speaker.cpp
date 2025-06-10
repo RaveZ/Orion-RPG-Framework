@@ -2,19 +2,11 @@
 
 
 #include "DialogBuilderNode_Speaker.h"
-#include "Dialog.h"
 #include "DialogComponent.h"
 
 
 #define LOCTEXT_NAMESPACE "DialogSystemGraphNode"
 
-void UDialogBuilderNode_Speaker::Initialize()
-{
-}
-
-void UDialogBuilderNode_Speaker::Deinitialize()
-{
-}
 
 
 #if WITH_EDITOR
@@ -30,19 +22,6 @@ void UDialogBuilderNode_Speaker::SetNodeTitle(const FText& NewTitle)
 
 FText UDialogBuilderNode_Speaker::GetNodeDescription() const
 {
-    /*FString TaskDesc;
-
-    for (const UDialogTask* Task : Tasks)
-    {
-        if (Task)
-        {
-            if(!TaskDesc.IsEmpty()) TaskDesc += TEXT("\n");
-            TaskDesc += Task->GetDescription().ToString();
-        }
-        
-    }
-
-    return FText::FromString(TaskDesc);*/
     return Description;
 }
 #endif

@@ -3,16 +3,18 @@
 
 #include "DialogBuilderNode_OptionSelector.h"
 #include "DialogComponent.h"
-#include "Dialog.h"
 #include "Event/OrionEvent.h"
 
 
-void UDialogBuilderNode_OptionSelector::Initialize()
-{
-}
 
 
 #if WITH_EDITOR
+void UDialogBuilderNode_OptionSelector::BeginNode()
+{
+    Super::BeginNode();
+    
+}
+
 FText UDialogBuilderNode_OptionSelector::GetNodeTitle() const
 {
     return FText::FromName(ID).IsEmpty() ? FText::FromString(UDialogBuilderNode::GetShortTypeName(this)) : FText::FromName(ID);
@@ -29,12 +31,4 @@ FText UDialogBuilderNode_OptionSelector::GetNodeDescription() const
     return FText::FromString(PlayerOptionDesc);
 }
 
-
-FLinearColor UDialogBuilderNode_OptionSelector::GetBackgroundColor() const
-{
-    FLinearColor Default(0.05f, 0.05f, 0.05f);
-
-    return Default;
-    
-}
 #endif

@@ -34,7 +34,7 @@ public:
 	UOrionEvent();
 
 	/** node name override*/
-	UPROPERTY(Category = Description, EditAnywhere)
+	UPROPERTY(Category = "Node", EditAnywhere, meta = (EditCondition = "bIsNode == true", HideEditConditionToggle, EditConditionHides))
 	FString NodeName;
 
 	/**Display quest Tag in property panel?*/
@@ -48,14 +48,17 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Event")
 		bool bUseNodeTag = false;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Event")
+	bool bIsNode = false;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event", meta = (EditCondition = "bUseNodeTag == true", HideEditConditionToggle, EditConditionHides, Categories = "Quest"))
 		FGameplayTag NodeTag;
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Event")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Node", meta = (EditCondition = "bIsNode == true", HideEditConditionToggle, EditConditionHides))
 		EEventLaunchType EventLaunchType = EEventLaunchType::E_Start;
 
 	/**Launch this event for the first time quest loaded*/
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Event", DisplayName = "Launch Event On Load")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Node", DisplayName = "Launch Event On Load", meta = (EditCondition = "bIsNode == true", HideEditConditionToggle, EditConditionHides))
 		bool bLaunchEventOnLoad = false;
 		
 	/**Called when event finished*/
@@ -92,6 +95,7 @@ public:
 	// Allows the Object to get a valid UWorld from it's outer.
 	virtual UWorld* GetWorld() const override;
 
+	
 #if WITH_EDITOR
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

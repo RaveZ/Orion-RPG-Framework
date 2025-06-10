@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
-#include "Dialog.h"
 #include "UObject/NoExportTypes.h"
 #include "DialogData.generated.h"
 

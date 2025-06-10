@@ -7,52 +7,11 @@
 #include "DialogBuilderNode.h"
 #include "DialogBuilderNode_Speaker.h"
 #include "DialogBuilderNode_Root.h"
-#include "Dialog.h"
 #include "DialogData.h"
 #include "DialogComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 
-TArray<FName> UDialogBuilderFunctionLibrary::GetAllDialogID()
-{
-    TArray<FName> DialogIDs;
-
-    // Load all UDialogBuilderGraph assets
-    TArray<FAssetData> AssetDataArray;
-    FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-    AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), AssetDataArray);
-
-    for (const FAssetData& AssetData : AssetDataArray)
-    {
-        UDialogBuilderGraph* DialogGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
-        if (DialogGraph)
-        {
-        }
-    }
-
-    return DialogIDs;
-}
-
-TArray<FName> UDialogBuilderFunctionLibrary::GetNodeIDFromCachedDialog()
-{
-	TArray<FName> NodeIDs;
-    // Load all UDialogBuilderGraph assets
-    TArray<FAssetData> AssetDataArray;
-    FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-    AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), AssetDataArray);
-
-    for (const FAssetData& AssetData : AssetDataArray)
-    {
-        UDialogBuilderGraph* DialogGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
-        if (DialogGraph)
-        {
-            
-		}
-	}
-	return NodeIDs;
-
-
-}
 
 UDialogComponent* UDialogBuilderFunctionLibrary::GetDialogComponent(const UObject* WorldContextObject)
 {
@@ -92,59 +51,3 @@ UDialogComponent* UDialogBuilderFunctionLibrary::GetDialogComponentFromTarget(AA
     return nullptr;
 }
 
-UDialog* UDialogBuilderFunctionLibrary::FindDialog(const UObject* WorldContextObject, FName DialogID)
-{   
-    if (UDialogComponent* DialogComp = GetDialogComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
-    {
-        UDialog* Dialog = DialogComp->DialogMap.FindRef(DialogID);
-        
-		if (Dialog)
-		{
-			return Dialog;
-		}
-    }
-    return nullptr;
-}
-
-bool UDialogBuilderFunctionLibrary::CanProgressDialogObjective(const UObject* WorldContextObject, FName DialogID, FName NodeID)
-{
-    if (UDialogComponent* DialogComp = GetDialogComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
-    {
-        UDialog* Dialog = DialogComp->DialogMap.FindRef(DialogID);
-        if (Dialog && Dialog->CurrentNode && Dialog->DialogState == EDialogState::E_Active)
-        {
-            if (UDialogBuilderNode_Speaker* ObjectiveNode = Cast<UDialogBuilderNode_Speaker>(Dialog->CurrentNode))
-            {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-
-bool UDialogBuilderFunctionLibrary::IsDialogAtState(const UObject* WorldContextObject, FName ID, EDialogState DialogState)
-{
-    if (UDialogComponent* DialogComp = GetDialogComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
-    {
-		UDialog* Dialog = DialogComp->FindDialog(ID);
-
-        if (Dialog && Dialog->DialogState == DialogState)
-        {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-UDialog* UDialogBuilderFunctionLibrary::GetCurrentNavigatedDialog(const UObject* WorldContextObject)
-{
-	if (UDialogComponent* DialogComp = GetDialogComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
-	{
-		return DialogComp->CurrentNavigatedDialog;
-	}
-
-    UE_LOG(LogTemp, Warning, TEXT("DialogBuilderFunctionLibrary : Current Navigated Dialog Is Null!"));
-    return nullptr;
-}

@@ -18,7 +18,6 @@
 #include "GraphEditorSettings.h"
 #include "SCommentBubble.h"
 #include "SLevelOfDetailBranchNode.h"
-#include "Dialog.h"
 #include "DialogBuilderNode.h"
 #include "DialogBuilderEdNode_Root.h"
 #include "DialogBuilderEdNode_Speaker.h"
@@ -406,6 +405,17 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 																.AutoHeight()
 																[
 																	NodeTitle.ToSharedRef()
+																]
+																+ SVerticalBox::Slot()
+																.AutoHeight()
+																.Padding(FMargin(2.0f, 3.0f, 2.0f, 4.0f))
+																[
+																	// NodeTag
+																	SAssignNew(DescriptionText, STextBlock)
+																		.Visibility(this, &SGraphNode_DialogBuilderNode::GetNodeIDVisibility)
+																		.Text(this, &SGraphNode_DialogBuilderNode::GetNodeIDText)
+																		.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Bold"))
+																		.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
 																]
 																+ SVerticalBox::Slot()
 																.AutoHeight()
@@ -1174,6 +1184,27 @@ FSlateColor SGraphNode_DialogBuilderNode::GetBorderBackgroundColor() const
 		DialogEdNode && !DialogEdNode->IsSubNode() ? DialogEdNode->GetBackgroundColor() :
 		DialogBuilderColors::NodeBorder::Inactive;
 
+}
+
+FText SGraphNode_DialogBuilderNode::GetNodeIDText() const
+{
+	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+	UDialogBuilderNode* DialogNode = DialogEdNode ? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance) : nullptr;
+	if (DialogNode)
+	{
+		return FText::FromString("ID: " + DialogNode->ID.ToString());
+	}
+	return FText::FromString("ID: None");
+}
+
+EVisibility SGraphNode_DialogBuilderNode::GetNodeIDVisibility() const
+{
+	UDialogBuilderEdNode_Root* RootDialogEdNode = Cast<UDialogBuilderEdNode_Root>(GraphNode);
+	if (RootDialogEdNode)
+	{
+		return EVisibility::Collapsed;
+	}
+	return EVisibility::Visible;
 }
 
 EVisibility SGraphNode_DialogBuilderNode::GetTitleVisibility() const

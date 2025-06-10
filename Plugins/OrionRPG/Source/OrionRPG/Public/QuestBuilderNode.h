@@ -22,7 +22,7 @@ enum class EQuestNodeLimits : uint8
 };
 
 
-DECLARE_MULTICAST_DELEGATE(FNodeEventFinishedSignature);
+DECLARE_MULTICAST_DELEGATE(FQuestNodeEventFinishedSignature);
 
 UCLASS(Blueprintable, EditInlineNew)
 class ORIONRPG_API UQuestBuilderNode : public UObject
@@ -83,26 +83,25 @@ public:
 		TObjectPtr < UQuestComponent> QuestComponent;
 
 	/**Called when all Start Node events finished*/
-	FNodeEventFinishedSignature OnAllStartEventFinished;
+	FQuestNodeEventFinishedSignature OnAllStartEventFinished;
 	
 	/**Called when all End Node events finished*/
-	FNodeEventFinishedSignature OnAllEndEventFinished;
+	FQuestNodeEventFinishedSignature OnAllEndEventFinished;
 
-	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
-		bool IsLeafNode() const;
-
+public:
 	virtual void Initialize(bool bLaunchEventOnLoad = false);
 	virtual void Deinitialize();
 
 	virtual void Reset();
-	
 	virtual void BeginNode();
 	virtual void EvaluateNextNode();
 	
 	/** initialize any asset related data */
 	virtual void InitializeFromAsset(UQuestBuilderGraph& OwningQuestGraph, UQuest& OwningQuest);
 
-
+	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
+	bool IsLeafNode() const;
+	
 	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
 		AController* GetOwningController() const;
 
@@ -135,9 +134,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
 	FString GetShortTag(FGameplayTag Tag, int32 Level = 1) const;
 protected:
-	TArray<UQuestBuilderNode*> NextNodes;
-	TArray<UOrionEvent*> StartEventQueue;
-	TArray<UOrionEvent*> EndEventQueue;
+	TArray<TObjectPtr<UQuestBuilderNode>> NextNodes;
+	TArray<TObjectPtr<UOrionEvent>> StartEventQueue;
+	TArray<TObjectPtr<UOrionEvent>> EndEventQueue;
 
 public:
 	//////////////////////////////////////////////////////////////////////////

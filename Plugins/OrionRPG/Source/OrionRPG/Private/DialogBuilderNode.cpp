@@ -3,15 +3,17 @@
 
 #include "DialogBuilderNode.h"
 #include "DialogBuilderEdge.h"
-#include "Dialog.h"
 #include "Event/OrionEvent.h"
 #include "Decorator/OrionDecorator.h"
 #include "DialogBuilderGraph.h"
+#include "DialogBuilderNode_Root.h"
+#include "DialogComponent.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderNode"
 
 UDialogBuilderNode::UDialogBuilderNode()
 {
+	BackLinkRule = EDialogueBacklinkRule::EndDialogue;
 #if WITH_EDITORONLY_DATA
 	CompatibleGraphType = UDialogBuilderGraph::StaticClass();
 
@@ -73,11 +75,45 @@ FString UDialogBuilderNode::GetShortTypeName(const UObject* Ob)
 	return TypeDesc;
 }
 
+void UDialogBuilderNode::LaunchStartEventQueue()
+{
+	if (StartEventQueue.IsEmpty())
+	{
+		OnAllStartEventFinished.Broadcast();
+		return;
+	}
+	StartEventQueue[0]->OnEventFinished.AddLambda(
+		[this]()
+		{
+			StartEventQueue.RemoveAt(0);
+			LaunchStartEventQueue();
+		}
+	);
+	StartEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
+}
+
+void UDialogBuilderNode::LaunchEndEventQueue()
+{
+	if (EndEventQueue.IsEmpty())
+	{
+		OnAllEndEventFinished.Broadcast();
+		return;
+	}
+	EndEventQueue[0]->OnEventFinished.AddLambda(
+		[this]()
+		{
+			EndEventQueue.RemoveAt(0);
+			LaunchEndEventQueue();
+		}
+	);
+	EndEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
+}
+
 void UDialogBuilderNode::EvaluateUniqueID()
 {
-	if (UDialog* OwningDialog = GetOwningDialog())
+	if (UDialogBuilderGraph* OwningDialogGraph = GetOwningDialogGraph())
 	{
-		TArray<UDialogBuilderNode*> DialogNodes = OwningDialog->AllNodes;
+		TArray<UDialogBuilderNode*> DialogNodes = OwningDialogGraph->AllNodes;
 		TArray<FName> NodeIDs;
 
 		for (auto& Node : DialogNodes)
@@ -119,7 +155,17 @@ void UDialogBuilderNode::EvaluateUniqueID()
 	}
 }
 
-
+TArray<FName> UDialogBuilderNode::GetNodeIDOptions()
+{
+	TArray<FName> NodeIDOptions;
+	for (auto& Node : DialogGraph->AllNodes)
+	{
+		if (UDialogBuilderNode_Root* RootNode = Cast<UDialogBuilderNode_Root>(Node))
+			continue;
+		NodeIDOptions.Add(Node->ID);
+	}
+	return NodeIDOptions;
+}
 
 
 #if WITH_EDITOR
@@ -232,14 +278,98 @@ bool UDialogBuilderNode::IsLeafNode() const
 	return ChildrenNodes.Num() == 0;
 }
 
-void UDialogBuilderNode::Initialize()
+void UDialogBuilderNode::Initialize(bool bLaunchEventOnLoad)
 {
-	//empty, override in child class
+	StartEventQueue.Empty();
+
+	if (bLaunchEventOnLoad)
+	{
+		for (auto& EndEvent : Events)
+		{
+			if (EndEvent && EndEvent->bLaunchEventOnLoad && (EndEvent->EventLaunchType == EEventLaunchType::E_Both || EndEvent->EventLaunchType == EEventLaunchType::E_Start))
+			{
+				StartEventQueue.Add(EndEvent);
+			}
+		}
+	}
+	else
+	{
+		for (auto& EndEvent : Events)
+		{
+			if (EndEvent && (EndEvent->EventLaunchType == EEventLaunchType::E_Both || EndEvent->EventLaunchType == EEventLaunchType::E_Start))
+			{
+				StartEventQueue.Add(EndEvent);
+			}
+		}
+	}
+
+	OnAllEndEventFinished.AddLambda(
+		[this]()
+		{
+			if (NextNode)
+			{
+				DialogGraph->BeginNode(NextNode);
+			}
+		}
+	);
+
+	OnAllStartEventFinished.AddLambda(
+		[this]()
+		{
+			BeginNode();
+		}
+	);
+	LaunchStartEventQueue();
 }
 
 void UDialogBuilderNode::Deinitialize()
 {
-	//empty, override in child class
+	EndEventQueue.Empty();
+	for (auto& EndEvent : Events)
+	{
+		if (EndEvent && (EndEvent->EventLaunchType == EEventLaunchType::E_Both || EndEvent->EventLaunchType == EEventLaunchType::E_End))
+		{
+			EndEventQueue.Add(EndEvent);
+		}
+	}
+	LaunchEndEventQueue();
+}
+
+void UDialogBuilderNode::Reset()
+{
+	//empty in base 
+}
+
+void UDialogBuilderNode::BeginNode()
+{
+	//empty in base 
+}
+
+void UDialogBuilderNode::EvaluateNextNode()
+{
+	//Will execute children from top to bottom, and will stop executing until first child succeeds.
+	//if none of the children succeeds, stop evaluate until the next dialog update
+	for (auto& ChildNode : ChildrenNodes)
+	{
+		//Evaluate Decorator
+		int SumConditionMet = 0;
+		for (auto& Condition : ChildNode->Decorators)
+		{
+			bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
+			if (bConditionMet)
+			{
+				SumConditionMet++;
+			}
+		}
+		
+		if (SumConditionMet >= ChildNode->Decorators.Num())
+		{
+			NextNode = ChildNode;
+			break;
+		}
+	}
+
+	//Going to next node will begin when all End Events are finished
 }
 
 void UDialogBuilderNode::InitializeFromAsset(UDialogBuilderGraph& OwningDialogGraph)
@@ -250,41 +380,24 @@ void UDialogBuilderNode::InitializeFromAsset(UDialogBuilderGraph& OwningDialogGr
 
 UDialogBuilderGraph* UDialogBuilderNode::GetOwningDialogGraph() const
 {
-	if (!DialogGraph)
-		return nullptr;
-
 	return DialogGraph;
 }
 
-UDialog* UDialogBuilderNode::GetOwningDialog() const
-{
-	return Dialog;
-}
-
-
 AController* UDialogBuilderNode::GetOwningController() const
 {
-	if (!DialogGraph)
-		return nullptr;
-	
-
-	return DialogGraph->OwningController;
+	return OwningController;
 }
 
 APawn* UDialogBuilderNode::GetOwningPawn() const
 {
-	if (!DialogGraph)
-		return nullptr;
-
-	return DialogGraph->OwningPawn;
+	if (DialogComponent)
+		return DialogComponent->GetOwningPawn();
+	return nullptr;
 }
 
 UDialogComponent* UDialogBuilderNode::GetDialogComponent() const
 {
-	if (!DialogGraph)
-		return nullptr;
-
-	return DialogGraph->DialogComponent;
+	return DialogComponent;
 }
 
 #undef LOCTEXT_NAMESPACE

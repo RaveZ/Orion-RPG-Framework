@@ -18,14 +18,13 @@
 #include "Event/OrionEvent.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "DialogBuilderGraph.h"
-#include "Dialog.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderEditor"
 
 UDialogBuilderEdNode::UDialogBuilderEdNode()
 {
 	bIsReadOnly = false;
-	bCanRenameNode = true;
+	bCanRenameNode = false;
 	CopySubNodeIndex = 0;
 }
 
@@ -233,15 +232,23 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 			{
 				if (UDialogBuilderNode_Speaker* SpeakerDialogNode = Cast<UDialogBuilderNode_Speaker>(NodeInstance))
 				{
-					FindUniqueNodeName("SpeakerNode");
+					FindUniqueNodeName("Speaker");
 				}
 				if (UDialogBuilderNode_OptionSelector* StateDialogNode = Cast<UDialogBuilderNode_OptionSelector>(NodeInstance))
 				{
-					FindUniqueNodeName("SelectorNode");
+					FindUniqueNodeName("Selector");
 				}
 				if (UDialogBuilderNode_PlayerOption* CheckpointDialogNode = Cast<UDialogBuilderNode_PlayerOption>(NodeInstance))
 				{
-					FindUniqueNodeName("OptionNode");
+					FindUniqueNodeName("PlayerOption");
+				}
+				if (UOrionDecorator* OrionDecorator = Cast<UOrionDecorator>(NodeInstance))
+				{
+					OrionDecorator->bIsNode = true;
+				}
+				if (UOrionEvent* OrionEvent = Cast<UOrionEvent>(NodeInstance))
+				{
+					OrionEvent->bIsNode = true;
 				}
 			}
 			UDialogBuilderNode* DialogNode = NodeInstance ?  Cast<UDialogBuilderNode>(NodeInstance) : nullptr;

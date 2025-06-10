@@ -32,11 +32,11 @@ FLinearColor UDialogBuilderEdNode_Speaker::GetBackgroundColor() const
 
 FText UDialogBuilderEdNode_Speaker::GetTooltipText() const
 {
-	const UDialogBuilderNode_Speaker* ObjectiveNode = Cast<UDialogBuilderNode_Speaker>(NodeInstance);
-	if (ObjectiveNode)
+	const UDialogBuilderNode_Speaker* SpeakerNode = Cast<UDialogBuilderNode_Speaker>(NodeInstance);
+	if (SpeakerNode)
 	{
 		return FText::Format(FText::FromString(TEXT("Objective Node\n{0}")),
-			NSLOCTEXT("DialogBuilderEditor", "ObjectiveNodeScopeTooltip", "This Node serves as the central unit within your dialog graph.\nEncapsulating a series of tasks, events, and decorators that define the player's objectives.\n**Right click the node to start adding a subnodes."));
+			NSLOCTEXT("DialogBuilderEditor", "SpeakerNodeScopeTooltip", "This Node serves as the central unit within your dialog graph.\nEncapsulating a series of tasks, events, and decorators that define the player's objectives.\n**Right click the node to start adding a subnodes."));
 	}
 
 	return Super::GetTooltipText();

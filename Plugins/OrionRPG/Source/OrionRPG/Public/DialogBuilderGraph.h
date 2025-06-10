@@ -6,8 +6,6 @@
 #include "GameplayTagContainer.h"
 #include "DialogBuilderGraph.generated.h"
 
-
-class UDialog;
 class UDialogComponent;
 class UDialogBuilderNode;
 class UDialogBuilderEdge;
@@ -23,10 +21,6 @@ public:
 	UDialogBuilderGraph();
 	virtual ~UDialogBuilderGraph();
 
-	/**This data will be displayed on the category for your dialog log*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "DialogBuilderGraph")
-		FString CategoryDisplayName;
-
 	/** AssetID */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "DialogBuilderGraph")
 		FName ID;
@@ -36,9 +30,6 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "DialogBuilderGraph")
 		TObjectPtr < UDialogComponent> DialogComponent;
-
-	UPROPERTY(BlueprintReadOnly, Category = "DialogBuilderGraph")
-		TObjectPtr<APawn> OwningPawn;
 
 	/** List of All Visited Node IDs in Sequence*/
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
@@ -57,9 +48,12 @@ public:
 		TMap<FName, TObjectPtr<UDialogBuilderNode>> NodeMap;
 
 public:
-	virtual void Initialize();
+	virtual bool Initialize(UDialogComponent* InitializingComp);
 	virtual void Deinitialize();
 
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
+	void BeginNode(UDialogBuilderNode* InNode, bool bLaunchEventOnLoad = false);
+	
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	int GetLevelNum() const;
 
@@ -67,6 +61,15 @@ public:
 	void GetNodesByLevel(int Level, TArray<UDialogBuilderNode*>& Nodes);
 
 	void ClearGraph();
+	
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
+	AController* GetOwningController();
+
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
+	APawn* GetOwningPawn();
+
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
+	UDialogComponent* GetDialogComponent();
 
 #if WITH_EDITORONLY_DATA
 	/** Set of dialog-graph pages */

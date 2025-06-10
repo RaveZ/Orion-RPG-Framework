@@ -16,6 +16,7 @@
 UOrionEvent::UOrionEvent()
 {
 	bLaunchEventOnLoad = false;
+	bIsNode = false;
 }
 
 void UOrionEvent::BeginEvent(AController* OwnerController, APawn* ControlledPawn)

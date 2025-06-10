@@ -973,7 +973,7 @@ void FDialogBuilderEditor::CreateInternalWidgets()
 	FDetailsViewArgs DetailsViewArgs;
 	DetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
 	DetailsViewArgs.NotifyHook = this;
-	DetailsViewArgs.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Hide;
+	DetailsViewArgs.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Hide;	
 
 	PropertyWidget = PropertyModule.CreateDetailView(DetailsViewArgs);
 	PropertyWidget->SetObject( NULL );

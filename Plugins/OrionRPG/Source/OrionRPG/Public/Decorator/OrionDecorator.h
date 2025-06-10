@@ -15,25 +15,30 @@ class ORIONRPG_API UOrionDecorator : public UObject
 {
 	GENERATED_BODY()
 public:
+	UOrionDecorator();
+	
 	/** node name override*/
-	UPROPERTY(Category = Description, EditAnywhere)
+	UPROPERTY(Category = "Node", EditAnywhere, meta = (EditCondition = "bIsNode == true", HideEditConditionToggle, EditConditionHides))
 	FString NodeName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "OrionDecorator")
 		bool InvertCondition = false;
 
 	/**Display quest Tag in property panel?*/
-	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
+	UPROPERTY(BlueprintReadWrite, Category = "OrionDecorator")
 		bool bUseQuestTag = false;
+	
+	UPROPERTY(BlueprintReadWrite, Category = "OrionDecorator")
+	bool bIsNode = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bUseQuestTag == true", HideEditConditionToggle, EditConditionHides, Categories = "Quest"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "OrionDecorator", meta = (EditCondition = "bUseQuestTag == true", HideEditConditionToggle, EditConditionHides, Categories = "Quest"))
 		FGameplayTag QuestTag;
 
 	/** Display Node ID in property panel?*/
-	UPROPERTY(BlueprintReadWrite, Category = "QuestEvent")
+	UPROPERTY(BlueprintReadWrite, Category = "OrionDecorator")
 		bool bUseNodeTag = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent", meta = (EditCondition = "bUseNodeTag == true", HideEditConditionToggle, EditConditionHides, Categories = "Quest"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "OrionDecorator", meta = (EditCondition = "bUseNodeTag == true", HideEditConditionToggle, EditConditionHides, Categories = "Quest"))
 		FGameplayTag NodeTag;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OrionDecorator")
@@ -58,6 +63,7 @@ public:
 
 	// Allows the Object to get a valid UWorld from it's outer.
 	virtual UWorld* GetWorld() const override;
+
 #if WITH_EDITOR
 protected:
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;

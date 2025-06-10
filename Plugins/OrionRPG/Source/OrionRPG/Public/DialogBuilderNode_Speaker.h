@@ -14,13 +14,7 @@ class ORIONRPG_API UDialogBuilderNode_Speaker : public UDialogBuilderNode
 	GENERATED_BODY()
 
 public:
-
-	virtual void Initialize() override;
-	virtual void Deinitialize() override;
-
-
-
-
+	
 #if WITH_EDITOR
 	virtual FText GetNodeTitle() const override;
 	virtual void SetNodeTitle(const FText& NewTitle);

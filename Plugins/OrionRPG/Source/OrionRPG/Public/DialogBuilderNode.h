@@ -8,7 +8,6 @@
 #include "DialogBuilderNode.generated.h"
 
 class UDialogBuilderGraph;
-class UDialog;
 class UOrionDecorator;
 class UOrionEvent;
 class UDialogBuilderEdge;
@@ -21,7 +20,18 @@ enum class EDialogNodeLimits : uint8
 	Limited
 };
 
+/**
+ * Enum to define the backlinking behavior at the end of a dialogue node.
+ */
+UENUM(BlueprintType)
+enum class EDialogueBacklinkRule : uint8
+{
+	EndDialogue UMETA(DisplayName = "End Dialogue"),
+	BackToLastSelector UMETA(DisplayName = "Back to Last Selector"),
+	JumpBackToNode UMETA(DisplayName = "Jump Back to Node")
+};
 
+DECLARE_MULTICAST_DELEGATE(FDialogNodeEventFinishedSignature);
 
 UCLASS(Blueprintable, EditInlineNew)
 class ORIONRPG_API UDialogBuilderNode : public UObject
@@ -37,6 +47,16 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (MultiLine = true))
 		FText Description;
+
+	/**
+	* When a dialogue node concludes without any next nodes,
+	* The system provides the player with an option to revisit previous dialogue nodes.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Back-Linking Rule")
+		EDialogueBacklinkRule BackLinkRule;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Back-Linking Rule", meta = (EditCondition = "BackLinkRule == EDialogueBacklinkRule::JumpBackToNode", HideEditConditionToggle, EditConditionHides, GetOptions = "GetNodeIDOptions" ))
+		FName NodeID;
 	
 	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Events")
 		TArray<TObjectPtr<UOrionEvent>> Events;
@@ -46,9 +66,6 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "DialogBuilderNode")
 		TObjectPtr<UDialogBuilderGraph> DialogGraph;
-
-	UPROPERTY(BlueprintReadOnly, Category = "DialogBuilderNode")
-		TObjectPtr<UDialog> Dialog;
 
 	UPROPERTY(BlueprintReadOnly, Category = "DialogBuilderNode")
 		TArray<TObjectPtr<UDialogBuilderNode>> ParentNodes;
@@ -62,16 +79,32 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")
 		virtual UDialogBuilderEdge* GetEdge(UDialogBuilderNode* ChildNode);
 
-	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")
-		bool IsLeafNode() const;
+	UPROPERTY(BlueprintReadWrite, Category = "DialogBuilderNode")
+	TObjectPtr<AController> OwningController;
 
-	virtual void Initialize();
+	UPROPERTY(BlueprintReadWrite, Category = "DialogBuilderNode")
+	TObjectPtr < UDialogComponent> DialogComponent;
+	
+	/**Called when all Start Node events finished*/
+	FDialogNodeEventFinishedSignature OnAllStartEventFinished;
+	
+	/**Called when all End Node events finished*/
+	FDialogNodeEventFinishedSignature OnAllEndEventFinished;
+
+public:
+	virtual void Initialize(bool bLaunchEventOnLoad = false);
 	virtual void Deinitialize();
 
+	virtual void Reset();
+	virtual void BeginNode();
+	virtual void EvaluateNextNode();
+	
 	/** initialize any asset related data */
 	virtual void InitializeFromAsset(UDialogBuilderGraph& OwningDialogGraph);
 
-
+	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")
+	bool IsLeafNode() const;
+	
 	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")
 		AController* GetOwningController() const;
 
@@ -84,21 +117,29 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")
 		UDialogBuilderGraph* GetOwningDialogGraph() const;
 
-	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")
-		UDialog* GetOwningDialog() const;
-
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "DialogBuilderNode")
 		FText GetDescription() const;
 
 	virtual FText GetDescription_Implementation() const;
-
+	
 	virtual void BeginEvents(enum EEventLaunchType EventLaunchType);
 
 	/** returns short name of object's class (BTTaskNode_Wait -> Wait) */
 	static FString GetShortTypeName(const UObject* Ob);
 
 
+	virtual void LaunchStartEventQueue();
+	virtual void LaunchEndEventQueue();
+	
 	virtual void EvaluateUniqueID();
+protected:
+	UFUNCTION(CallInEditor)
+	TArray<FName> GetNodeIDOptions();	
+protected:
+	TObjectPtr<UDialogBuilderNode> NextNode;
+	TArray<TObjectPtr<UOrionEvent>> StartEventQueue;
+	TArray<TObjectPtr<UOrionEvent>> EndEventQueue;
+
 public:
 	//////////////////////////////////////////////////////////////////////////
 #if WITH_EDITORONLY_DATA

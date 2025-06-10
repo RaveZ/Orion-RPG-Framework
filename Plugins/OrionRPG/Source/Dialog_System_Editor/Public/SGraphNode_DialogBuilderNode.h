@@ -98,6 +98,9 @@ public:
 	virtual FSlateColor GetBackgroundColor() const;
 	virtual FSlateColor GetBorderBackgroundColor() const;
 
+	virtual FText GetNodeIDText() const;
+	
+	virtual EVisibility GetNodeIDVisibility() const;
 	virtual EVisibility GetTitleVisibility() const;
 	virtual EVisibility GetParentNodeVisibility() const;
 	virtual EVisibility GetSubNodeVisibility() const;

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "EdGraph/EdGraph.h"
-#include "Dialog.h"
 #include "DialogBuilderEdGraph.generated.h"
 
 class UDialogBuilderGraph;

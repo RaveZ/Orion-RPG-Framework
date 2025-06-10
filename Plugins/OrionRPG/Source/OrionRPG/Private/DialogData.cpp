@@ -2,7 +2,6 @@
 
 #include "DialogData.h"
 #include "OrionRPG.h"
-#include "Dialog.h"
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderNode.h"
 #include "DialogBuilderNode_Root.h"

@@ -243,6 +243,14 @@ void UQuestBuilderEdNode::PostPlacedNewNode()
 				{
 					FindUniqueNodeName("CheckpointNode");
 				}
+				if (UOrionDecorator* OrionDecorator = Cast<UOrionDecorator>(NodeInstance))
+				{
+					OrionDecorator->bIsNode = true;
+				}
+				if (UOrionEvent* OrionEvent = Cast<UOrionEvent>(NodeInstance))
+				{
+					OrionEvent->bIsNode = true;
+				}
 			}
 			UQuestBuilderNode* QuestNode = NodeInstance ?  Cast<UQuestBuilderNode>(NodeInstance) : nullptr;
 			if (QuestNode)

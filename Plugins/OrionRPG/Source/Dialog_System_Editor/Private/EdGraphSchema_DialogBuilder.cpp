@@ -283,8 +283,7 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 
 		ContextMenuBuilder.Append(SpeakerBuilder);
 	}
-
-
+	
 	//Player Options
 	FCategorizedGraphActionListBuilder PlayerOptionsBuilder(TEXT("Player Options"));
 
@@ -320,8 +319,7 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 	}
 
 	ContextMenuBuilder.Append(PlayerOptionsBuilder);
-
-
+	
 	// Add the ability to create a comment to the context menu too for discoverability
 	{
 		TSharedPtr<FDialogSchemaAction_AddComment> Action = TSharedPtr<FDialogSchemaAction_AddComment>(

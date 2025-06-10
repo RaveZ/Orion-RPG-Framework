@@ -3,13 +3,8 @@
 
 #include "DialogBuilderNode_PlayerOption.h"
 #include "DialogComponent.h"
-#include "Dialog.h"
 #include "Event/OrionEvent.h"
 
-
-void UDialogBuilderNode_PlayerOption::Initialize()
-{
-}
 
 
 #if WITH_EDITOR
@@ -29,12 +24,4 @@ FText UDialogBuilderNode_PlayerOption::GetNodeDescription() const
 	return FText::FromString(PlayerOptionDesc);
 }
 
-
-FLinearColor UDialogBuilderNode_PlayerOption::GetBackgroundColor() const
-{
-    FLinearColor Default(0.05f, 0.05f, 0.05f);
-
-    return Default;
-    
-}
 #endif

@@ -43,11 +43,12 @@ bool UQuest::Initialize(UQuestComponent* InitializingComp)
 		NodeMap.Reset();
 		for (auto& Node : AllNodes)
 		{
-			Node->Quest = this;
-			Node->OwningController = InitializingComp->GetOwningController();
-			Node->QuestComponent = InitializingComp;
 			if (Node)
 			{
+				Node->Quest = this;
+				Node->OwningController = InitializingComp->GetOwningController();
+				Node->QuestComponent = InitializingComp;
+				
 				if (Node->NodeTag.IsValid())
 				{
 					Node->ID = Node->NodeTag.GetTagName();
