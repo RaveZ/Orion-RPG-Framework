@@ -9,7 +9,7 @@
 #include "SGraphEditorActionMenuInventory.h"
 #include "DialogBuilderNode.h"
 #include "DialogBuilderNode_Root.h"
-#include "DialogBuilderNode_Speaker.h"
+#include "DialogBuilderNode_DialogLine.h"
 #include "DialogBuilderNode_OptionSelector.h"
 #include "DialogBuilderNode_PlayerOption.h"
 #include "OrionInventoryEditorUtils.h"
@@ -230,7 +230,7 @@ void UOrionInventoryEdNode::PostPlacedNewNode()
 			}
 			if (NodeInstance)
 			{
-				if (UDialogBuilderNode_Speaker* SpeakerInventoryNode = Cast<UDialogBuilderNode_Speaker>(NodeInstance))
+				if (UDialogBuilderNode_DialogLine* SpeakerInventoryNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance))
 				{
 					FindUniqueNodeName("Speaker");
 				}
@@ -259,6 +259,10 @@ void UOrionInventoryEdNode::PostPlacedNewNode()
 
 			InitializeInstance();
 		}
+	}
+	if (GetOrionInventoryEdGraph())
+	{
+		GetOrionInventoryEdGraph()->UpdateAsset();
 	}
 }
 
@@ -352,10 +356,7 @@ void UOrionInventoryEdNode::AddSubNode(UOrionInventoryEdNode* SubNode, UEdGraph*
 	ParentGraph->NotifyGraphChanged();
 	ParentGraph->Modify();
 	Modify();
-	if (GetOrionInventoryEdGraph())
-	{
-		GetOrionInventoryEdGraph()->UpdateAllSubnodeDependencies();
-	}
+	
 }
 
 void UOrionInventoryEdNode::RemoveSubNode(UOrionInventoryEdNode* SubNode)

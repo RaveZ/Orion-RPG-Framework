@@ -24,7 +24,7 @@
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderNode_OptionSelector.h"
 #include "DialogBuilderNode_PlayerOption.h"
-#include "DialogBuilderNode_Speaker.h"
+#include "DialogBuilderNode_DialogLine.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 
@@ -271,7 +271,7 @@ void UEdGraphSchema_OrionInventory::GetGraphContextActions(FGraphContextMenuBuil
 	{
 		FCategorizedGraphActionListBuilder SpeakerBuilder(TEXT("Speaker"));
 		UClass* SpeakerEdNodeClass = UOrionInventoryEdNode_Speaker::StaticClass();
-		UClass* SpeakerNodeClass = UDialogBuilderNode_Speaker::StaticClass();
+		UClass* SpeakerNodeClass = UDialogBuilderNode_DialogLine::StaticClass();
 
 		TSharedPtr<FAssetSchemaAction_Inventory_NewNode> AddOpAction = UEdGraphSchema_OrionInventory::AddNewNodeAction(SpeakerBuilder, FText::GetEmpty(), LOCTEXT("InventorySystemGraphNodeAction", "Add Speaker Node..."), LOCTEXT("InventorySystemGraphNodeTooltip", "Create speaker node."));
 		UOrionInventoryEdNode* OpNode = NewObject<UOrionInventoryEdNode>(ContextMenuBuilder.OwnerOfTemporaries, SpeakerEdNodeClass);

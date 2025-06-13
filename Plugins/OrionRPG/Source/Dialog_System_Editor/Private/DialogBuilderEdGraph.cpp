@@ -8,7 +8,7 @@
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderEdge.h"
 #include "DialogBuilderNode.h"
-#include "DialogBuilderNode_Speaker.h"
+#include "DialogBuilderNode_DialogLine.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 
@@ -35,7 +35,8 @@ void UDialogBuilderEdGraph::OnPackageMarkedDirty(UPackage* ModifiedPackage, bool
 
 void UDialogBuilderEdGraph::UpdateAsset(bool bForce)
 {
-	if (bLockUpdates)
+	if (bLockUpdates ||
+		!OwningDialog)
 	{
 		return;
 	}
@@ -473,7 +474,10 @@ void UDialogBuilderEdGraph::UpdateVersion_UnifiedSubNodes()
 
 void UDialogBuilderEdGraph::Clear()
 {
-	OwningDialog->ClearGraph();
+	if (OwningDialog)
+	{
+		OwningDialog->ClearGraph();
+	}
 	NodeMap.Reset();
 	EdgeMap.Reset();
 

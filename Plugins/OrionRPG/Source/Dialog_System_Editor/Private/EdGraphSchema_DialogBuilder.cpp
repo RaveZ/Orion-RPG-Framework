@@ -11,7 +11,7 @@
 #include "Settings/EditorStyleSettings.h"
 #include "DialogBuilderEditorUtils.h"
 #include "DialogBuilderEdNode.h"
-#include "DialogBuilderEdNode_Speaker.h"
+#include "DialogBuilderEdNode_DialogLine.h"
 #include "DialogBuilderEdNode_OptionSelector.h"
 #include "DialogBuilderEdNode_PlayerOption.h"
 #include "DialogBuilderEdNode_Edge.h"
@@ -24,7 +24,7 @@
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderNode_OptionSelector.h"
 #include "DialogBuilderNode_PlayerOption.h"
-#include "DialogBuilderNode_Speaker.h"
+#include "DialogBuilderNode_DialogLine.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 
@@ -270,8 +270,8 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 	if (bAllowSpeaker)
 	{
 		FCategorizedGraphActionListBuilder SpeakerBuilder(TEXT("Speaker"));
-		UClass* SpeakerEdNodeClass = UDialogBuilderEdNode_Speaker::StaticClass();
-		UClass* SpeakerNodeClass = UDialogBuilderNode_Speaker::StaticClass();
+		UClass* SpeakerEdNodeClass = UDialogBuilderEdNode_DialogLine::StaticClass();
+		UClass* SpeakerNodeClass = UDialogBuilderNode_DialogLine::StaticClass();
 
 		TSharedPtr<FAssetSchemaAction_DialogSystem_NewNode> AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(SpeakerBuilder, FText::GetEmpty(), LOCTEXT("DialogSystemGraphNodeAction", "Add Speaker Node..."), LOCTEXT("DialogSystemGraphNodeTooltip", "Create speaker node."));
 		UDialogBuilderEdNode* OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, SpeakerEdNodeClass);
@@ -447,11 +447,11 @@ const FPinConnectionResponse UEdGraphSchema_DialogBuilder::CanCreateConnection(c
 	UDialogBuilderEdNode* EdNode_Out = Cast<UDialogBuilderEdNode>(Out->GetOwningNode());
 	UDialogBuilderEdNode* EdNode_In = Cast<UDialogBuilderEdNode>(In->GetOwningNode());
 
-	const bool bNodeAIsSpeaker = Cast<UDialogBuilderEdNode_Speaker>(A->GetOwningNode()) ? true : false;
+	const bool bNodeAIsSpeaker = Cast<UDialogBuilderEdNode_DialogLine>(A->GetOwningNode()) ? true : false;
 	const bool bNodeAIsOptionSelector = Cast<UDialogBuilderEdNode_OptionSelector>(A->GetOwningNode()) ? true : false;
 	const bool bNodeAIsPlayerOption = Cast<UDialogBuilderEdNode_PlayerOption>(A->GetOwningNode()) ? true : false;
 
-	const bool bNodeBIsSpeaker = Cast<UDialogBuilderEdNode_Speaker>(B->GetOwningNode()) ? true : false;
+	const bool bNodeBIsSpeaker = Cast<UDialogBuilderEdNode_DialogLine>(B->GetOwningNode()) ? true : false;
 	const bool bNodeBIsOptionSelector = Cast<UDialogBuilderEdNode_OptionSelector>(B->GetOwningNode()) ? true : false;
 	const bool bNodeBIsPlayerOption = Cast<UDialogBuilderEdNode_PlayerOption>(B->GetOwningNode()) ? true : false;
 
@@ -525,7 +525,7 @@ const FPinConnectionResponse UEdGraphSchema_DialogBuilder::CanMergeNodes(const U
 
 	const bool bNodeAIsDecorator = NodeA->IsA(UDialogBuilderEdSubNode_Decorator::StaticClass());
 	const bool bNodeAIsEvent = NodeA->IsA(UDialogBuilderEdSubNode_Event::StaticClass());
-	const bool bNodeBIsObjective = NodeB->IsA(UDialogBuilderEdNode_Speaker::StaticClass());
+	const bool bNodeBIsObjective = NodeB->IsA(UDialogBuilderEdNode_DialogLine::StaticClass());
 	const bool bNodeBIsState = NodeB->IsA(UDialogBuilderEdNode_OptionSelector::StaticClass());
 	const bool bNodeBIsDecorator = NodeB->IsA(UDialogBuilderEdSubNode_Decorator::StaticClass());
 	const bool bNodeBIsEvent = NodeB->IsA(UDialogBuilderEdSubNode_Event::StaticClass());

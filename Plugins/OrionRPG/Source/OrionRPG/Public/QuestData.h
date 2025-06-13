@@ -9,9 +9,10 @@
 #include "UObject/NoExportTypes.h"
 #include "QuestData.generated.h"
 
-
+//Gameplay Tags
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest);
 
+//Enum
 UENUM(BlueprintType)
 enum class EObjectiveState : uint8
 {

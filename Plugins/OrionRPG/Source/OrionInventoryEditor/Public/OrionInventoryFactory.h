@@ -122,7 +122,7 @@ public:
 
 	virtual TConstArrayView<FAssetCategoryPath> GetAssetCategories() const override
 	{
-		static const FAssetCategoryPath Categories[] = { FText::FromString("Orion RPG") };
+		static const FAssetCategoryPath Categories[] = { FText::FromString("Orion Inventory") };
 		return Categories;
 	}
 

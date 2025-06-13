@@ -18,6 +18,7 @@
 #include "ToolMenus.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "DialogBuilderSetting.h"
+#include "DialogparticipantDetails.h"
 #include "DialogData.h"
 
 
@@ -30,7 +31,8 @@ void FDialog_System_EditorModule::StartupModule()
 {	
 	// Register the PropertyEditors
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-	
+	RegisterObjectCustomizations();
+
 	//Initialize
 	FDialogBuilder_EditorStyle::Initialize();
 	FDialogBuilder_EditorStyle::ReloadTextures();
@@ -52,6 +54,7 @@ void FDialog_System_EditorModule::StartupModule()
 	CustomAssetsEditorSlateStyle->Set("ClassIcon.UAssetDefinition_DialogBuilder", new FSlateImageBrush(FString(ProjectResourceDir / "DialogIcon128.png"), FVector2D(32.0f, 32.0f)));
 
 	FSlateStyleRegistry::RegisterSlateStyle(*CustomAssetsEditorSlateStyle.Get());
+	PropertyModule.NotifyCustomizationModuleChanged();
 }
 
 void FDialog_System_EditorModule::ShutdownModule()
@@ -77,7 +80,16 @@ void FDialog_System_EditorModule::ShutdownModule()
 	//Unregister PropertyEditor
 	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
 	{
-		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+		// Unregister all classes customized by name
+		for (auto It = RegisteredClassNames.CreateConstIterator(); It; ++It)
+		{
+			if (It->IsValid())
+			{
+				PropertyModule.UnregisterCustomClassLayout(*It);
+			}
+		}
 	}
 
 	DecoratorClassCache.Reset();
@@ -114,6 +126,22 @@ void FDialog_System_EditorModule::RegisterSettings()
 		);
 
 	}
+}
+
+void FDialog_System_EditorModule::RegisterObjectCustomizations()
+{
+	RegisterCustomClassLayout("DialogBuilderNode_DialogLine", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogParticipantDetails::MakeInstance));
+}
+
+void FDialog_System_EditorModule::RegisterCustomClassLayout(FName ClassName, FOnGetDetailCustomizationInstance DetailLayoutDelegate)
+{
+	check(ClassName != NAME_None);
+
+	RegisteredClassNames.Add(ClassName);
+
+	static FName PropertyEditor("PropertyEditor");
+	FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>(PropertyEditor);
+	PropertyModule.RegisterCustomClassLayout(ClassName, DetailLayoutDelegate);
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -290,6 +290,7 @@ TArray<FName> UQuest::GetQuestCategoryList()
 	return GetDefault<UQuestBuilderSetting>()->QuestCategoryList;
 }
 
+
 void UQuest::EvaluateUniqueID()
 {
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");

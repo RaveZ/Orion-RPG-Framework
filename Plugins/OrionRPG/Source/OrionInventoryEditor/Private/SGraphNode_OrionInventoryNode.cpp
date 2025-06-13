@@ -21,7 +21,7 @@
 #include "DialogBuilderNode.h"
 #include "OrionInventoryEdNode_Root.h"
 #include "OrionInventoryEdNode_Speaker.h"
-#include "DialogBuilderNode_Speaker.h"
+#include "DialogBuilderNode_DialogLine.h"
 #include "DialogBuilderSetting.h"	
 #include "Fonts/SlateFontInfo.h"
 #include "Decorator/OrionDecorator.h"

@@ -5,7 +5,7 @@
 #include "OrionRPG.h"
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderNode.h"
-#include "DialogBuilderNode_Speaker.h"
+#include "DialogBuilderNode_DialogLine.h"
 #include "DialogBuilderNode_Root.h"
 #include "DialogData.h"
 #include "DialogComponent.h"

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Containers/Map.h"
 #include "DialogBuilderGraph.generated.h"
 
 class UDialogComponent;
@@ -12,6 +13,7 @@ class UDialogBuilderEdge;
 class AController;
 class APawn;
 class UDialogBuilderEdGraph;
+class UDialogBuilderNode_DialogLine;
 
 UCLASS(Blueprintable, BlueprintType)
 class ORIONRPG_API UDialogBuilderGraph : public UObject
@@ -70,6 +72,11 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	UDialogComponent* GetDialogComponent();
+
+public:
+	// Collect all unique shared participant and group them by their name.
+	/*UPROPERTY()
+	TMultiMap<FString, TObjectPtr<UDialogBuilderNode_DialogLine>> SharedParticipants;*/
 
 #if WITH_EDITORONLY_DATA
 	/** Set of dialog-graph pages */

@@ -2,7 +2,7 @@
 
 
 #include "OrionInventoryEdNode_Speaker.h"
-#include "DialogBuilderNode_Speaker.h"
+#include "DialogBuilderNode_DialogLine.h"
 #include "DialogBuilderSetting.h"
 #include "DialogBuilderNode.h"
 
@@ -32,7 +32,7 @@ FLinearColor UOrionInventoryEdNode_Speaker::GetBackgroundColor() const
 
 FText UOrionInventoryEdNode_Speaker::GetTooltipText() const
 {
-	const UDialogBuilderNode_Speaker* SpeakerNode = Cast<UDialogBuilderNode_Speaker>(NodeInstance);
+	const UDialogBuilderNode_DialogLine* SpeakerNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance);
 	if (SpeakerNode)
 	{
 		return FText::Format(FText::FromString(TEXT("Objective Node\n{0}")),

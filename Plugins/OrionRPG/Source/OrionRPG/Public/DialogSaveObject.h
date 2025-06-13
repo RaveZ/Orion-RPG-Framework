@@ -18,8 +18,4 @@ public:
 	/** Array of saved DialogGraphIDs*/
 	UPROPERTY(VisibleAnywhere, Category = DialogSaveData)
 	TArray<FName> DialogAssetIDs;
-
-	/** Map of Dialog ID and it's Dialog Data Struct */
-	UPROPERTY(VisibleAnywhere, Category = DialogSaveData)
-		TMap<FName,FDialogData> DialogMapData;
 };

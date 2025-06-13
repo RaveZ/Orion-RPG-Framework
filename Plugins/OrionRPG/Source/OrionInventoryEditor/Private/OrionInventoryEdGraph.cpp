@@ -9,7 +9,7 @@
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderEdge.h"
 #include "DialogBuilderNode.h"
-#include "DialogBuilderNode_Speaker.h"
+#include "DialogBuilderNode_DialogLine.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 
@@ -36,7 +36,8 @@ void UOrionInventoryEdGraph::OnPackageMarkedDirty(UPackage* ModifiedPackage, boo
 
 void UOrionInventoryEdGraph::UpdateAsset(bool bForce)
 {
-	if (bLockUpdates)
+	if (bLockUpdates ||
+		!OwningInventory)
 	{
 		return;
 	}
@@ -473,7 +474,10 @@ void UOrionInventoryEdGraph::UpdateVersion_UnifiedSubNodes()
 
 void UOrionInventoryEdGraph::Clear()
 {
-	OwningInventory->ClearGraph();
+	if (OwningInventory)
+	{
+		OwningInventory->ClearGraph();
+	}
 	NodeMap.Reset();
 	EdgeMap.Reset();
 

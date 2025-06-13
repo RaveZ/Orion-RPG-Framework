@@ -4,15 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "DialogBuilderEdNode.h"
-#include "DialogBuilderEdNode_Speaker.generated.h"
+#include "DialogBuilderEdNode_DialogLine.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class DIALOG_SYSTEM_EDITOR_API UDialogBuilderEdNode_Speaker : public UDialogBuilderEdNode
+class DIALOG_SYSTEM_EDITOR_API UDialogBuilderEdNode_DialogLine : public UDialogBuilderEdNode
 {
 	GENERATED_BODY()
+public:
+
 public:
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	virtual FLinearColor GetBackgroundColor() const override;

@@ -7,66 +7,6 @@
 #include "DialogBuilderNode_Root.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 
-TArray<FName> UDialogHandle::GetAllDialogID()
-{
-	TArray<FName> DialogIDs;
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-	TArray<FAssetData> DialogGraphDataArray;
-	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), DialogGraphDataArray);
-
-	for (const FAssetData& AssetData : DialogGraphDataArray)
-	{
-		UDialogBuilderGraph* DialogGraphAsset = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
-		if (DialogGraphAsset)
-		{
-			
-		}
-	}
-
-	return DialogIDs;
-}
-
-TArray<FName> UDialogHandle::GetAllNodeID()
-{
-	TArray<FName> NodeIDs;
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-	TArray<FAssetData> DialogGraphDataArray;
-	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), DialogGraphDataArray);
-
-	for (const FAssetData& AssetData : DialogGraphDataArray)
-	{
-		UDialogBuilderGraph* DialogGraphAsset = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
-		if (DialogGraphAsset)
-		{
-			
-		}
-	}
-	
-	return NodeIDs;
-}
-
-FDialogDataHandle::FDialogDataHandle()
-{
-}
-
-void FDialogDataHandle::PostSerialize(const FArchive& Ar)
-{
-	if (DialogDataHandle)
-	{
-		DialogID = DialogDataHandle->DialogID;
-		if (DialogID != NAME_None)
-		{
-			NodeID = DialogDataHandle->NodeID;
-		}
-		else
-		{
-			NodeID = NAME_None;
-		}
-	}
-	else
-	{
-	}
-	
-}
+//Gameplay Tags
+UE_DEFINE_GAMEPLAY_TAG(TAG_Dialog, "Dialog");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Dialog_Participant, "Dialog.Participant");

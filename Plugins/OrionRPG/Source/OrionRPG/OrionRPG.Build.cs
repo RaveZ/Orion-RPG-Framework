@@ -27,6 +27,7 @@ public class OrionRPG : ModuleRules
                 "Core",
                 "CoreUObject",
                 "Engine",
+                "UnrealEd"
             }
             );
 

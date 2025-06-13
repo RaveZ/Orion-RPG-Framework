@@ -9,7 +9,7 @@
 #include "SGraphEditorActionMenuDialog.h"
 #include "DialogBuilderNode.h"
 #include "DialogBuilderNode_Root.h"
-#include "DialogBuilderNode_Speaker.h"
+#include "DialogBuilderNode_DialogLine.h"
 #include "DialogBuilderNode_OptionSelector.h"
 #include "DialogBuilderNode_PlayerOption.h"
 #include "DialogBuilderEditorUtils.h"
@@ -230,7 +230,7 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 			}
 			if (NodeInstance)
 			{
-				if (UDialogBuilderNode_Speaker* SpeakerDialogNode = Cast<UDialogBuilderNode_Speaker>(NodeInstance))
+				if (UDialogBuilderNode_DialogLine* SpeakerDialogNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance))
 				{
 					FindUniqueNodeName("Speaker");
 				}
@@ -259,6 +259,10 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 
 			InitializeInstance();
 		}
+	}
+	if (GetDialogBuilderEdGraph())
+	{
+		GetDialogBuilderEdGraph()->UpdateAsset();
 	}
 }
 
@@ -352,10 +356,7 @@ void UDialogBuilderEdNode::AddSubNode(UDialogBuilderEdNode* SubNode, UEdGraph* P
 	ParentGraph->NotifyGraphChanged();
 	ParentGraph->Modify();
 	Modify();
-	if (GetDialogBuilderEdGraph())
-	{
-		GetDialogBuilderEdGraph()->UpdateAllSubnodeDependencies();
-	}
+	
 }
 
 void UDialogBuilderEdNode::RemoveSubNode(UDialogBuilderEdNode* SubNode)

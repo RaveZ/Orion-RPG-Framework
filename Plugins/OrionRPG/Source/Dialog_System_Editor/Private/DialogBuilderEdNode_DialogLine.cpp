@@ -1,12 +1,14 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
-#include "DialogBuilderEdNode_Speaker.h"
-#include "DialogBuilderNode_Speaker.h"
+#include "DialogBuilderEdNode_DialogLine.h"
+#include "DialogBuilderNode_DialogLine.h"
 #include "DialogBuilderSetting.h"
 #include "DialogBuilderNode.h"
 
-FText UDialogBuilderEdNode_Speaker::GetNodeTitle(ENodeTitleType::Type TitleType) const
+
+
+FText UDialogBuilderEdNode_DialogLine::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
 	const UDialogBuilderNode* DialogNode = Cast<UDialogBuilderNode>(NodeInstance);
 
@@ -25,14 +27,14 @@ FText UDialogBuilderEdNode_Speaker::GetNodeTitle(ENodeTitleType::Type TitleType)
 	return Super::GetNodeTitle(TitleType);
 }
 
-FLinearColor UDialogBuilderEdNode_Speaker::GetBackgroundColor() const
+FLinearColor UDialogBuilderEdNode_DialogLine::GetBackgroundColor() const
 {
 	return GetDefault<UDialogBuilderSetting>()->SpeakerNodeColor;
 }
 
-FText UDialogBuilderEdNode_Speaker::GetTooltipText() const
+FText UDialogBuilderEdNode_DialogLine::GetTooltipText() const
 {
-	const UDialogBuilderNode_Speaker* SpeakerNode = Cast<UDialogBuilderNode_Speaker>(NodeInstance);
+	const UDialogBuilderNode_DialogLine* SpeakerNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance);
 	if (SpeakerNode)
 	{
 		return FText::Format(FText::FromString(TEXT("Objective Node\n{0}")),
@@ -42,7 +44,7 @@ FText UDialogBuilderEdNode_Speaker::GetTooltipText() const
 	return Super::GetTooltipText();
 }
 
-void UDialogBuilderEdNode_Speaker::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
+void UDialogBuilderEdNode_DialogLine::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
 	AddContextMenuActionsEvents(Menu, "DialogBuilderEdNode", Context);
 	AddContextMenuActionsDecorators(Menu, "DialogBuilderEdNode", Context);

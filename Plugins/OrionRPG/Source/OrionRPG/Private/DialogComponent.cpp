@@ -9,7 +9,7 @@
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderNode_OptionSelector.h"
 #include "DialogBuilderNode_Root.h"
-#include "DialogBuilderNode_Speaker.h"
+#include "DialogBuilderNode_DialogLine.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Controller.h"
 #include "DialogData.h"

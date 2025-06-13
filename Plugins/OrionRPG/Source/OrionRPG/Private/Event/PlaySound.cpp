@@ -42,5 +42,17 @@ void UPlaySound::BeginEvent(AController* OwnerController, APawn* ControlledPawn)
 
 FString UPlaySound::GetNodeDisplayText_Implementation() const
 {
-	return FString::Printf(TEXT("Activate Quest :  %s"), *GetShortTag(QuestTag));
+    if (SoundToPlay)
+    {
+        if (SoundType == EPlaySoundType::E_Sound2D)
+        {
+            return FString::Printf(TEXT("Play Sound 2D :  %s"), *SoundToPlay->GetFName().ToString());
+        }
+        else if (SoundType == EPlaySoundType::E_SoundLocation)
+        {
+            return FString::Printf(TEXT("Play Sound at Location :  %s"), *SoundToPlay->GetFName().ToString());
+        }
+    }
+
+    return FString("Play Sound Event");
 }
