@@ -95,18 +95,18 @@ class UQuest* UQuestComponent::MakeQuestInstance(UQuest* QuestTemplate)
 		}
 
 		//Add New Quest into Quest Categories
-		TArray<FName> CategoryNameList;
+		TArray<FText> CategoryTextList;
 		for (auto& QuestCategory : QuestCategories)
 		{
-			CategoryNameList.Add(QuestCategory.Category);
-			if (QuestCategory.Category == NewQuest->QuestCategory)
+			CategoryTextList.Add(QuestCategory.Category);
+			if (QuestCategory.Category.EqualTo(NewQuest->QuestCategory))
 			{
 				QuestCategory.QuestList.AddUnique(NewQuest);			
 			}
 		}
 		
-		if (!CategoryNameList.Contains(NewQuest->QuestCategory))
-		{
+        if (!CategoryTextList.ContainsByPredicate([&](const FText& CategoryText) { return CategoryText.EqualTo(NewQuest->QuestCategory); }))
+        {
 			FQuestCategory QuestCategory;
 			QuestCategory.Category = NewQuest->QuestCategory;
 			QuestCategory.QuestList.AddUnique(NewQuest);	

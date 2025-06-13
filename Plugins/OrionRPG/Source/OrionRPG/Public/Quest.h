@@ -44,8 +44,21 @@ public:
 	FName ID;
 
 	/**Category For this Quest*/
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quest", meta = (GetOptions = "GetQuestCategoryList"))
-	FName QuestCategory;
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quest")
+	FText QuestCategory;
+
+	UPROPERTY()
+	FString SharedCategoryName;
+
+	/** The Category data of this node may be shared */
+	UPROPERTY()
+	bool bSharedCategory;
+
+	UPROPERTY()
+	FGuid SharedCategoryGuid;
+
+	UPROPERTY()
+	int32 SharedCategoryIdx;
 	
 	/** Gameplay Tag for this quest, each tag should be unique*/
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quest", meta = (Categories = "Quest"))
@@ -72,7 +85,6 @@ public:
 	/**Can Retake Quest*/
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quest", meta = (DisplayName = "CanRetakeQuest"))
 		bool bCanRetakeQuest = false;
-
 
 	/** List of All Visited Node IDs in Sequence*/
 	UPROPERTY(BlueprintReadWrite, Category = "Quest")
@@ -141,16 +153,51 @@ public:
 		UQuestBuilderGraph* GetOwningQuestGraph() const;
 	void ClearGraph();
 
-	UFUNCTION(CallInEditor, BlueprintCallable)
-	virtual TArray<FName> GetQuestCategoryList();
 	virtual void EvaluateUniqueID();
 
-#if WITH_EDITOR
-protected:
-	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
-#endif
+public:
+
+	//~ Begin UObject Interface
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostLoad() override;
+	virtual void Serialize(FArchive& Ar) override;
+	//~ End UObject Interface
+
+	//Quest Sharing
+	void MakeQuestSettingShareable(FString ShareName);
+	void UnshareQuestSetting();
+	void UseSharedQuestSetting(const UQuest* Quest);
+
+	void CopyQuestSettings(const UQuest* SrcQuest);
+	void PropagateQuestSettings();
 
 	
 
 };
 
+class ORIONRPG_API IQuestSharedDataHelper
+{
+public:
+	void UpdateSharedData(UQuest* Quest, TSharedPtr<INameValidatorInterface> NameValidator);
+	void MakeSureGuidExists(UQuest* Quest);
+
+protected:
+	virtual bool CheckIfQuestShouldShareData(const UQuest* QuestA, const UQuest* QuestB) = 0;
+	virtual bool CheckIfHasDataToShare(const UQuest* Quest) = 0;
+	virtual void ShareData(UQuest* QuestWhoWantsToShare, const UQuest* ShareFrom) = 0;
+	virtual FString& AccessShareDataName(UQuest* Quest) = 0;
+	virtual FGuid& AccessShareDataGuid(UQuest* Quest) = 0;
+};
+
+//////////////////////////////////////////////////////////////////////////
+// FQuestSharedSettingHelper
+
+class ORIONRPG_API FQuestSharedSettingHelper : public IQuestSharedDataHelper
+{
+protected:
+	virtual bool CheckIfQuestShouldShareData(const UQuest* QuestA, const UQuest* QuestB) override;
+	virtual bool CheckIfHasDataToShare(const UQuest* Quest) override;
+	virtual void ShareData(UQuest* QuestWhoWantsToShare, const UQuest* ShareFrom) override;
+	virtual FString& AccessShareDataName(UQuest* Quest) override;
+	virtual FGuid& AccessShareDataGuid(UQuest* Quest) override;
+};

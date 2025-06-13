@@ -36,7 +36,15 @@ public:
 private:
 
 	void RegisterSettings();
+	void RegisterObjectCustomizations();
 
+	/**
+	 * Registers a custom class
+	 *
+	 * @param ClassName				The class name to register for property customization
+	 * @param DetailLayoutDelegate	The delegate to call to get the custom detail layout instance
+	 */
+	void RegisterCustomClassLayout(FName ClassName, FOnGetDetailCustomizationInstance DetailLayoutDelegate);
 
 
 	class UQuestEditorSettings* SettingsPtr;
@@ -51,4 +59,7 @@ private:
 	TSharedPtr<struct FGraphNodeClassHelper> ObjectiveClassCache;
 	TSharedPtr<struct FGraphNodeClassHelper> DecoratorClassCache;
 	TSharedPtr<struct FGraphNodeClassHelper> EventClassCache;
+
+	/** List of registered class that we must unregister when the module shuts down */
+	TSet< FName > RegisteredClassNames;
 };

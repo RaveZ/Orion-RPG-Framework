@@ -72,6 +72,7 @@ public:
 	virtual void DestroyNode() override;
 	virtual bool CanDuplicateNode() const override;
 	virtual void PostPlacedNewNode() override;
+	virtual void PostPasteNode() override;
 	virtual bool CanUserDeleteNode() const override;
 	virtual void PrepareForCopying() override;
 	virtual void AutowireNewNode(UEdGraphPin* FromPin) override;

@@ -285,12 +285,6 @@ void UQuest::ClearGraph()
 	NodeMap.Empty();
 }
 
-TArray<FName> UQuest::GetQuestCategoryList()
-{
-	return GetDefault<UQuestBuilderSetting>()->QuestCategoryList;
-}
-
-
 void UQuest::EvaluateUniqueID()
 {
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
@@ -341,9 +335,17 @@ void UQuest::EvaluateUniqueID()
 
 }
 
-#if WITH_EDITOR
 void UQuest::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
+	FName PropertyName = (PropertyChangedEvent.Property != NULL) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
+
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuest, QuestCategory) ||
+		PropertyName == GET_MEMBER_NAME_CHECKED(UQuest, bCanRetakeQuest) ||
+		PropertyName == GET_MEMBER_NAME_CHECKED(UQuest, bCanQuestBeAborted))
+	{
+		PropagateQuestSettings();
+	}
+
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
 	if (PropertyChangedEvent.MemberProperty)
@@ -355,6 +357,200 @@ void UQuest::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 		}
 	}
 }
-#endif
+
+void UQuest::PostLoad()
+{
+	Super::PostLoad();
+
+	// make sure we have guid for shared quest setting 
+	if (bSharedCategory && !SharedCategoryGuid.IsValid())
+	{
+		FQuestSharedSettingHelper().MakeSureGuidExists(this);
+	}
+}
+
+void UQuest::Serialize(FArchive& Ar)
+{
+	Super::Serialize(Ar);
+}
+
+void UQuest::MakeQuestSettingShareable(FString ShareName)
+{
+	if (!QuestGraph)
+		return;
+	SharedCategoryIdx = INDEX_NONE;
+	TArray<int32> Remap;
+	for (int32 idx = 0; idx < QuestGraph->QuestList.Num(); idx++)
+	{
+		if (UQuest* OtherQuest = Cast<UQuest>(QuestGraph->QuestList[idx]))
+		{
+			if (OtherQuest->SharedCategoryIdx != INDEX_NONE || OtherQuest == this)
+			{
+				OtherQuest->SharedCategoryIdx = Remap.AddUnique(OtherQuest->SharedCategoryIdx) + 1; // Remaps existing index to lowest index available
+			}
+		}
+	}
+
+	bSharedCategory = true;
+	SharedCategoryName = ShareName;
+	SharedCategoryGuid = FGuid::NewGuid();
+}
+
+void UQuest::UnshareQuestSetting()
+{
+	bSharedCategory = false;
+	SharedCategoryIdx = INDEX_NONE;
+	SharedCategoryName.Empty();
+	SharedCategoryGuid.Invalidate();
+}
+
+void UQuest::UseSharedQuestSetting(const UQuest* Quest)
+{
+	if (Quest == this || Quest == nullptr)
+	{
+		return;
+	}
+
+	FScopedTransaction Transaction(LOCTEXT("UseSharedParticipant", "Use Shared Participant"));
+
+	Modify();
+
+	bSharedCategory = Quest->bSharedCategory;
+	SharedCategoryName = Quest->SharedCategoryName;
+	SharedCategoryGuid = Quest->SharedCategoryGuid;
+	CopyQuestSettings(Quest);
+}
+
+void UQuest::CopyQuestSettings(const UQuest* SrcQuest)
+{
+	QuestCategory = SrcQuest->QuestCategory;
+	bCanQuestBeAborted = SrcQuest->bCanQuestBeAborted;
+	bCanRetakeQuest = SrcQuest->bCanRetakeQuest;
+	SharedCategoryIdx = SrcQuest->SharedCategoryIdx;
+	SharedCategoryName = SrcQuest->SharedCategoryName;
+	SharedCategoryGuid = SrcQuest->SharedCategoryGuid;
+}
+
+void UQuest::PropagateQuestSettings()
+{
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+	TArray<FAssetData> QuestgraphDataArray;
+	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestgraphDataArray);
+
+	for (const FAssetData& AssetData : QuestgraphDataArray)
+	{
+		UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
+		if (QuestGraphAsset)
+		{
+			for (int32 idx = 0; idx < QuestGraphAsset->QuestList.Num(); idx++)
+			{
+				if (UQuest* Quest = QuestGraphAsset->QuestList[idx])
+				{
+					if (Quest->SharedCategoryIdx != INDEX_NONE && Quest->SharedCategoryGuid == SharedCategoryGuid)
+					{
+						Quest->Modify();
+						Quest->CopyQuestSettings(this);
+					}
+				}
+			}
+		}
+	}
+}
+
+void IQuestSharedDataHelper::UpdateSharedData(UQuest* Quest, TSharedPtr<INameValidatorInterface> NameValidator)
+{
+	if (!Quest || !Quest->QuestGraph)
+		return;
+	// get all other quest
+	TArray<UQuest*> QuestList;
+
+	UQuestBuilderGraph* ParentGraph = Quest->QuestGraph;
+	for (auto& OtherQuest : ParentGraph->QuestList)
+	{
+		if (OtherQuest)
+		{
+			QuestList.AddUnique(Quest);
+		}
+	}
+
+	// check if there is other node that can provide us with data
+	for (TArray<UQuest*>::TIterator It(QuestList); It; ++It)
+	{
+		UQuest* OtherQuest = *It;
+		if (OtherQuest != Quest &&
+			CheckIfHasDataToShare(OtherQuest) &&
+			CheckIfQuestShouldShareData(Quest, OtherQuest))
+		{
+			// use shared data of that node (to make sure everything is linked up properly)
+			ShareData(Quest, OtherQuest);
+			break;
+		}
+	}
+
+	// check if our shared rule name is original
+	if (NameValidator->FindValidString(AccessShareDataName(Quest)) != EValidatorResult::Ok)
+	{
+		// rename all shared rules name in nodes that should share same name
+		for (TArray<UQuest*>::TIterator It(QuestList); It; ++It)
+		{
+			UQuest* OtherQuest = *It;
+			if (OtherQuest != Quest &&
+				CheckIfQuestShouldShareData(Quest, OtherQuest))
+			{
+				AccessShareDataName(OtherQuest) = AccessShareDataName(Quest);
+			}
+		}
+	}
+}
+
+void IQuestSharedDataHelper::MakeSureGuidExists(UQuest* Quest)
+{
+	if (!Quest || !Quest->QuestGraph)
+		return;
+
+	UQuestBuilderGraph* CurrentGraph = Quest->QuestGraph;
+	for (int32 idx = 0; idx < CurrentGraph->QuestList.Num(); idx++)
+	{
+		if (UQuest* OtherQuest = CurrentGraph->QuestList[idx])
+		{
+			if (OtherQuest != Quest &&
+				CheckIfQuestShouldShareData(Quest, OtherQuest))
+			{
+				AccessShareDataName(Quest) = AccessShareDataName(OtherQuest);
+			}
+		}
+	}
+
+	if (!AccessShareDataGuid(Quest).IsValid())
+	{
+		AccessShareDataGuid(Quest) = FGuid::NewGuid();
+	}
+}
+
+bool FQuestSharedSettingHelper::CheckIfQuestShouldShareData(const UQuest* QuestA, const UQuest* QuestB)
+{
+	return QuestA->bSharedCategory && QuestB->bSharedCategory && QuestA->SharedCategoryGuid == QuestB->SharedCategoryGuid;
+}
+
+bool FQuestSharedSettingHelper::CheckIfHasDataToShare(const UQuest* Quest)
+{
+	return Quest->SharedCategoryIdx != INDEX_NONE;
+}
+
+void FQuestSharedSettingHelper::ShareData(UQuest* QuestWhoWantsToShare, const UQuest* ShareFrom)
+{
+	QuestWhoWantsToShare->UseSharedQuestSetting(ShareFrom);
+}
+
+FString& FQuestSharedSettingHelper::AccessShareDataName(UQuest* Quest)
+{
+	return Quest->SharedCategoryName;
+}
+
+FGuid& FQuestSharedSettingHelper::AccessShareDataGuid(UQuest* Quest)
+{
+	return Quest->SharedCategoryGuid;
+}
 
 #undef LOCTEXT_NAMESPACE

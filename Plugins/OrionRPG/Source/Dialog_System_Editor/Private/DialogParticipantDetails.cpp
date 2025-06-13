@@ -174,13 +174,13 @@ FReply FDialogParticipantDetails::OnPromoteToSharedClick()
 	return FReply::Handled();
 }
 
-void FDialogParticipantDetails::PromoteToShared(const FText& NewTransitionName, ETextCommit::Type CommitInfo)
+void FDialogParticipantDetails::PromoteToShared(const FText& NewParticipantSettingName, ETextCommit::Type CommitInfo)
 {
 	if (CommitInfo == ETextCommit::OnEnter)
 	{
 		if (DialogLineNode.Get())
 		{
-			DialogLineNode.Get()->MakeParticipantShareable(NewTransitionName.ToString());
+			DialogLineNode.Get()->MakeParticipantShareable(NewParticipantSettingName.ToString());
 		}
 	}
 
@@ -196,6 +196,7 @@ FReply FDialogParticipantDetails::OnUnshareClick()
 
 	return FReply::Handled();
 }
+
 
 TSharedRef<SWidget> FDialogParticipantDetails::OnGetShareableNodesMenu()
 {
@@ -258,13 +259,13 @@ TSharedRef<SWidget> FDialogParticipantDetails::OnGetShareableNodesMenu()
 			FTextBuilder ToolTipBuilder;
 			ToolTipBuilder.AppendLine(LOCTEXT("DialogLineUsedBy", "Used by:"));
 			TArray<FString> UsedInGraph;
-			for (const UDialogBuilderNode_DialogLine* UsedInTransitionNode : UsedIn)
+			for (const UDialogBuilderNode_DialogLine* UsedInDialogGraph : UsedIn)
 			{
-				if(UsedInGraph.Contains(UsedInTransitionNode->GetOwningDialogGraph()->GetName()))
+				if(UsedInGraph.Contains(UsedInDialogGraph->GetOwningDialogGraph()->GetName()))
 					continue;
 
-				ToolTipBuilder.AppendLine(UsedInTransitionNode->GetOwningDialogGraph()->GetName());
-				UsedInGraph.AddUnique(UsedInTransitionNode->GetOwningDialogGraph()->GetName());
+				ToolTipBuilder.AppendLine(UsedInDialogGraph->GetOwningDialogGraph()->GetName());
+				UsedInGraph.AddUnique(UsedInDialogGraph->GetOwningDialogGraph()->GetName());
 			}
 
 			FUIAction Action = FUIAction(FExecuteAction::CreateSP(this, &FDialogParticipantDetails::BecomeSharedWith, UsedIn[0]));

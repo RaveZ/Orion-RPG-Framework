@@ -69,7 +69,7 @@ struct FQuestCategory
 
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = QuestCategory)
-	FName Category;
+	FText Category;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = FQuestCategory)
 	TArray<UQuest*> QuestList;

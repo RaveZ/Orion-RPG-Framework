@@ -112,7 +112,7 @@ void UDialogBuilderNode_DialogLine::PostLoad()
 {
 	Super::PostLoad();
 
-	// make sure we have guid for shared crossfade 
+	// make sure we have guid for shared participant 
 	if (bSharedParticipant && !SharedParticipantGuid.IsValid())
 	{
 		FDialogSharedParticipantNodeHelper().MakeSureGuidExists(this);
@@ -146,7 +146,7 @@ void IDialogNodeSharedDataHelper::UpdateSharedData(UDialogBuilderNode_DialogLine
 {
 	if (!Node || !Node->DialogGraph)
 		return;
-	// get all other transition nodes
+	// get all other dialog line nodes
 	TArray<UDialogBuilderNode_DialogLine*> DialogLineNodes;
 
 	UDialogBuilderGraph* ParentGraph = Node->DialogGraph;

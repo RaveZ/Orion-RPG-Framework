@@ -261,27 +261,27 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 
 	const bool bNoParent = (ContextMenuBuilder.FromPin == NULL);
 	const bool bOnlySelector = ContextMenuBuilder.FromPin && Cast<UDialogBuilderEdNode_OptionSelector>(ContextMenuBuilder.FromPin->GetOwningNode()) ? true : false;
-	const bool bAllowSpeaker = bNoParent || !bOnlySelector;
+	const bool bAllowDialogLine = bNoParent || !bOnlySelector;
 	const bool bAllowSelector = bNoParent || !bOnlySelector;
 	const bool bAllowPlayerOption = bNoParent || bOnlySelector;
 
 
-	//Speaker
-	if (bAllowSpeaker)
+	//DialogLine
+	if (bAllowDialogLine)
 	{
-		FCategorizedGraphActionListBuilder SpeakerBuilder(TEXT("Speaker"));
-		UClass* SpeakerEdNodeClass = UDialogBuilderEdNode_DialogLine::StaticClass();
-		UClass* SpeakerNodeClass = UDialogBuilderNode_DialogLine::StaticClass();
+		FCategorizedGraphActionListBuilder DialogLineBuilder(TEXT("Speaker"));
+		UClass* DialogLineEdNodeClass = UDialogBuilderEdNode_DialogLine::StaticClass();
+		UClass* DialogLineNodeClass = UDialogBuilderNode_DialogLine::StaticClass();
 
-		TSharedPtr<FAssetSchemaAction_DialogSystem_NewNode> AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(SpeakerBuilder, FText::GetEmpty(), LOCTEXT("DialogSystemGraphNodeAction", "Add Speaker Node..."), LOCTEXT("DialogSystemGraphNodeTooltip", "Create speaker node."));
-		UDialogBuilderEdNode* OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, SpeakerEdNodeClass);
-		FGraphNodeClassData SpeakerClassData = FGraphNodeClassData(SpeakerNodeClass, "SpeakerClassData");
-		OpNode->ClassData = SpeakerClassData;
+		TSharedPtr<FAssetSchemaAction_DialogSystem_NewNode> AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(DialogLineBuilder, FText::GetEmpty(), LOCTEXT("DialogSystemGraphNodeAction", "Add Dialog Line..."), LOCTEXT("DialogSystemGraphNodeTooltip", "Create Dialog Line Node."));
+		UDialogBuilderEdNode* OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, DialogLineEdNodeClass);
+		FGraphNodeClassData DialogLineClassData = FGraphNodeClassData(DialogLineNodeClass, "DialogLineClassData");
+		OpNode->ClassData = DialogLineClassData;
 		AddOpAction->NodeTemplate = OpNode;
-		OpNode->NodeInstance = NewObject<UObject>(DialogGraph, SpeakerNodeClass);
+		OpNode->NodeInstance = NewObject<UObject>(DialogGraph, DialogLineNodeClass);
 		OpNode->NodeInstance->SetFlags(RF_Transactional);
 
-		ContextMenuBuilder.Append(SpeakerBuilder);
+		ContextMenuBuilder.Append(DialogLineBuilder);
 	}
 	
 	//Player Options
@@ -293,7 +293,7 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 		UClass* OptionSelectorEdNodeClass = UDialogBuilderEdNode_OptionSelector::StaticClass();
 		UClass* OptionSelectorNodeClass = UDialogBuilderNode_OptionSelector::StaticClass();
 
-		TSharedPtr<FAssetSchemaAction_DialogSystem_NewNode> AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(PlayerOptionsBuilder, FText::GetEmpty(), LOCTEXT("DialogSystemGraphNodeAction", "Add Selector..."), LOCTEXT("DialogSystemGraphNodeTooltip", "Add Selector..."));
+		TSharedPtr<FAssetSchemaAction_DialogSystem_NewNode> AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(PlayerOptionsBuilder, FText::GetEmpty(), LOCTEXT("DialogSystemGraphNodeAction", "Add Selector..."), LOCTEXT("DialogSystemGraphNodeTooltip", "Create Selector Node."));
 		UDialogBuilderEdNode* OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, OptionSelectorEdNodeClass);
 		FGraphNodeClassData OptionSelectorClassData = FGraphNodeClassData(OptionSelectorNodeClass, "OptionSelectorClassData");
 		OpNode->ClassData = OptionSelectorClassData;

@@ -18,8 +18,7 @@ UQuestBuilderSetting::UQuestBuilderSetting()
 	bCanBeCyclical = false;
 
 	//Runtime Config
-	QuestCategoryList.Add("Main Quest");
-	QuestCategoryList.Add("Secondary Quest");
+	DefaultQuestCategory = FText::FromString("Main Quest");
 }
 
 UQuestBuilderSetting::~UQuestBuilderSetting()

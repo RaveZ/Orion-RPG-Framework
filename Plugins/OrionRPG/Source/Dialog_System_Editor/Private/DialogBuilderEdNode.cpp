@@ -266,6 +266,11 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 	}
 }
 
+void UDialogBuilderEdNode::PostPasteNode()
+{
+	Super::PostPasteNode();
+}
+
 void UDialogBuilderEdNode::InitializeInstance()
 {
 	UDialogBuilderNode* DialogNode = Cast<UDialogBuilderNode>(NodeInstance);

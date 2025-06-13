@@ -121,10 +121,8 @@ UEdGraph* FQuestBuilderEditorUtils::CreateNewGraph(UObject* ParentScope, const F
 		QuestGraph->Quest->QuestGraph = QuestGraph->GetQuestBuilderGraph();
 		QuestGraph->Quest->ID = GraphName;
 		QuestGraph->Quest->QuestName = FText::FromName(QuestGraph->Quest->ID);
-		if (GetDefault<UQuestBuilderSetting>()->QuestCategoryList.IsValidIndex(0))
-		{
-			QuestGraph->Quest->QuestCategory = GetDefault<UQuestBuilderSetting>()->QuestCategoryList[0];
-		}
+		QuestGraph->Quest->QuestCategory = GetDefault<UQuestBuilderSetting>()->DefaultQuestCategory;
+		
 		if (UQuestBuilderGraph* QuestBuilderGraph = Cast<UQuestBuilderGraph>(QuestGraph->GetQuestBuilderGraph()))
 		{
 			QuestBuilderGraph->QuestList.Add(QuestGraph->Quest);

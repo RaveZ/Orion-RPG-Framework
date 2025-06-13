@@ -19,6 +19,7 @@
 #include "Widgets/Text/STextBlock.h"
 #include "ToolMenus.h"
 #include "Styling/SlateStyleRegistry.h"
+#include "QuestDetails.h"
 #include "QuestBuilderSetting.h"
 #include "QuestData.h"
 
@@ -32,6 +33,7 @@ void FQuest_System_EditorModule::StartupModule()
 {	
 	// Register the PropertyEditors
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+	RegisterObjectCustomizations();
 	
 	//Initialize
 	FQuestBuilder_EditorStyle::Initialize();
@@ -54,6 +56,7 @@ void FQuest_System_EditorModule::StartupModule()
 	CustomAssetsEditorSlateStyle->Set("ClassIcon.UAssetDefinition_QuestBuilder", new FSlateImageBrush(FString(ProjectResourceDir / "Icon128.png"), FVector2D(32.0f, 32.0f)));
 
 	FSlateStyleRegistry::RegisterSlateStyle(*CustomAssetsEditorSlateStyle.Get());
+	PropertyModule.NotifyCustomizationModuleChanged();
 }
 
 void FQuest_System_EditorModule::ShutdownModule()
@@ -79,7 +82,16 @@ void FQuest_System_EditorModule::ShutdownModule()
 	//Unregister PropertyEditor
 	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
 	{
-		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+		FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+		// Unregister all classes customized by name
+		for (auto It = RegisteredClassNames.CreateConstIterator(); It; ++It)
+		{
+			if (It->IsValid())
+			{
+				PropertyModule.UnregisterCustomClassLayout(*It);
+			}
+		}
 	}
 
 	ObjectiveClassCache.Reset();
@@ -123,6 +135,22 @@ void FQuest_System_EditorModule::RegisterSettings()
 		);
 
 	}
+}
+
+void FQuest_System_EditorModule::RegisterObjectCustomizations()
+{
+	RegisterCustomClassLayout("Quest", FOnGetDetailCustomizationInstance::CreateStatic(&FQuestDetails::MakeInstance));
+}
+
+void FQuest_System_EditorModule::RegisterCustomClassLayout(FName ClassName, FOnGetDetailCustomizationInstance DetailLayoutDelegate)
+{
+	check(ClassName != NAME_None);
+
+	RegisteredClassNames.Add(ClassName);
+
+	static FName PropertyEditor("PropertyEditor");
+	FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>(PropertyEditor);
+	PropertyModule.RegisterCustomClassLayout(ClassName, DetailLayoutDelegate);
 }
 
 #undef LOCTEXT_NAMESPACE

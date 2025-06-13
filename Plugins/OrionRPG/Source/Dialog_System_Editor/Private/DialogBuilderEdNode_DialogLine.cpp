@@ -44,6 +44,11 @@ FText UDialogBuilderEdNode_DialogLine::GetTooltipText() const
 	return Super::GetTooltipText();
 }
 
+void UDialogBuilderEdNode_DialogLine::PostPasteNode()
+{
+	Super::PostPasteNode();
+}
+
 void UDialogBuilderEdNode_DialogLine::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
 	AddContextMenuActionsEvents(Menu, "DialogBuilderEdNode", Context);
