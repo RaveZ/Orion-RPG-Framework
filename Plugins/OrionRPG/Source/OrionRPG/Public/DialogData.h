@@ -7,6 +7,8 @@
 #include "UObject/NoExportTypes.h"
 #include "NativeGameplayTags.h"
 
+class UDialogBuilderNode_DialogLine;
+
 //Gameplay Tags
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Dialog);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Dialog_Participant);

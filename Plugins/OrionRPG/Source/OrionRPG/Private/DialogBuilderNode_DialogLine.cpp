@@ -4,6 +4,7 @@
 #include "DialogBuilderNode_DialogLine.h"
 #include "Kismet2/Kismet2NameValidators.h"
 #include "DialogBuilderGraph.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 #include "DialogComponent.h"
 
 
@@ -69,16 +70,26 @@ void UDialogBuilderNode_DialogLine::CopyParticipantSettings(const UDialogBuilder
 
 void UDialogBuilderNode_DialogLine::PropagateParticipantSettings()
 {
-	if (!DialogGraph)
-		return;
-	for (int32 idx = 0; idx < DialogGraph->AllNodes.Num(); idx++)
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+	TArray<FAssetData> DialogGraphDataArray;
+	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), DialogGraphDataArray);
+
+	for (const FAssetData& AssetData : DialogGraphDataArray)
 	{
-		if (UDialogBuilderNode_DialogLine* Node = Cast<UDialogBuilderNode_DialogLine>(DialogGraph->AllNodes[idx]))
+		UDialogBuilderGraph* DialogGraphAsset = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
+		if (DialogGraphAsset)
 		{
-			if (Node->SharedParticipantIdx != INDEX_NONE && Node->SharedParticipantGuid == SharedParticipantGuid)
+			for (int32 idx = 0; idx < DialogGraphAsset->AllNodes.Num(); idx++)
 			{
-				Node->Modify();
-				Node->CopyParticipantSettings(this);
+				if (UDialogBuilderNode_DialogLine* Node = Cast<UDialogBuilderNode_DialogLine>(DialogGraphAsset->AllNodes[idx]))
+				{
+					if (Node->SharedParticipantIdx != INDEX_NONE && Node->SharedParticipantGuid == SharedParticipantGuid)
+					{
+						Node->Modify();
+						Node->CopyParticipantSettings(this);
+					}
+				}
 			}
 		}
 	}

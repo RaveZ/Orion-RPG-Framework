@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
 #include "Containers/Map.h"
+#include "DialogData.h"
 #include "DialogBuilderGraph.generated.h"
 
 class UDialogComponent;
@@ -73,11 +74,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	UDialogComponent* GetDialogComponent();
 
-public:
-	// Collect all unique shared participant and group them by their name.
-	/*UPROPERTY()
-	TMultiMap<FString, TObjectPtr<UDialogBuilderNode_DialogLine>> SharedParticipants;*/
-
 #if WITH_EDITORONLY_DATA
 	/** Set of dialog-graph pages */
 	UPROPERTY()
@@ -97,4 +93,5 @@ public:
 #endif
 
 };
+
 

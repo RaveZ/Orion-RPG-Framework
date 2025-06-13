@@ -49,6 +49,7 @@
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/SWindow.h"
 #include "Widgets/Text/STextBlock.h"
+#include "AssetRegistry/AssetRegistryModule.h"
 
 #define LOCTEXT_NAMESPACE "DetailsCustomization"
 
@@ -214,18 +215,30 @@ TSharedRef<SWidget> FDialogParticipantDetails::OnGetShareableNodesMenu()
 		// Collect all unique shared participant and group them by their name.
 		TMultiMap<FString, UDialogBuilderNode_DialogLine*> SharedParticipants;
 
-		for (auto& Node : CurrentDialogGraph->AllNodes)
+		
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+		TArray<FAssetData> DialogGraphDataArray;
+		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), DialogGraphDataArray);
+
+		for (const FAssetData& AssetData : DialogGraphDataArray)
 		{
-			UDialogBuilderNode_DialogLine* DialogLineNodeInst = Node ? Cast<UDialogBuilderNode_DialogLine>(Node) : nullptr;
-			if (DialogLineNodeInst)
+			UDialogBuilderGraph* DialogGraphAsset = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
+			if (DialogGraphAsset)
 			{
-				if (!DialogLineNodeInst->SharedParticipantName.IsEmpty())
+				for (auto& Node : DialogGraphAsset->AllNodes)
 				{
-					SharedParticipants.Add(DialogLineNodeInst->SharedParticipantName, DialogLineNodeInst);
+					UDialogBuilderNode_DialogLine* DialogLineNodeInst = Node ? Cast<UDialogBuilderNode_DialogLine>(Node) : nullptr;
+					if (DialogLineNodeInst)
+					{
+						if (!DialogLineNodeInst->SharedParticipantName.IsEmpty())
+						{
+							SharedParticipants.Add(DialogLineNodeInst->SharedParticipantName, DialogLineNodeInst);
+						}
+					}
 				}
 			}
 		}
-		
 
 		// Get the unique shared participant names
 		TSet<FString> SharedParticipantKeys;
@@ -244,9 +257,14 @@ TSharedRef<SWidget> FDialogParticipantDetails::OnGetShareableNodesMenu()
 
 			FTextBuilder ToolTipBuilder;
 			ToolTipBuilder.AppendLine(LOCTEXT("DialogLineUsedBy", "Used by:"));
+			TArray<FString> UsedInGraph;
 			for (const UDialogBuilderNode_DialogLine* UsedInTransitionNode : UsedIn)
 			{
+				if(UsedInGraph.Contains(UsedInTransitionNode->GetOwningDialogGraph()->GetName()))
+					continue;
+
 				ToolTipBuilder.AppendLine(UsedInTransitionNode->GetOwningDialogGraph()->GetName());
+				UsedInGraph.AddUnique(UsedInTransitionNode->GetOwningDialogGraph()->GetName());
 			}
 
 			FUIAction Action = FUIAction(FExecuteAction::CreateSP(this, &FDialogParticipantDetails::BecomeSharedWith, UsedIn[0]));
