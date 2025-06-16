@@ -4,6 +4,7 @@
 
 #include "Quest.h"
 #include "QuestBuilderGraph.h"
+#include "QuestBuilderNode.h"
 #include "Containers/Array.h"
 #include "Containers/EnumAsByte.h"
 #include "Containers/Map.h"
@@ -22,6 +23,7 @@
 #include "HAL/PlatformCrt.h"
 #include "HAL/PlatformMath.h"
 #include "IDetailPropertyRow.h"
+#include "OrionRPG.h"
 #include "Internationalization/Internationalization.h"
 #include "Internationalization/Text.h"
 #include "Kismet2/BlueprintEditorUtils.h"
@@ -32,6 +34,7 @@
 #include "Misc/AssertionMacros.h"
 #include "PropertyEditorModule.h"
 #include "PropertyHandle.h"
+#include "QuestBuilderNode.h"
 #include "SKismetLinearExpression.h"
 #include "SlateOptMacros.h"
 #include "SlotBase.h"
@@ -78,15 +81,21 @@ void FQuestDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 				{
 					Quest = QuestPtr;
 				}
-
+			}
+			if (UQuestBuilderNode* NodePtr = Cast<UQuestBuilderNode>(CurrentObject.Get()))
+			{
+				if (!QuestNode.IsValid())
+				{
+					QuestNode = NodePtr;
+				}
 			}
 		}
 	}
 
 
-	IDetailCategoryBuilder& QuestDetailCategory = DetailBuilder.EditCategory("QuestSettings", LOCTEXT("QuestCategoryTitle", "Quest Settings"));
 	if (Quest != NULL && SelectedObjects.Num() == 1)
 	{
+		IDetailCategoryBuilder& QuestDetailCategory = DetailBuilder.EditCategory("QuestSettings", LOCTEXT("QuestCategoryTitle", "Quest Settings"));
 		UQuest* QuestInstance = Quest.Get();
 		// The sharing option for the crossfade settings
 		QuestDetailCategory.AddCustomRow(LOCTEXT("QuestSettingsSharingLabel", "Quest Sharing"))
@@ -107,12 +116,21 @@ void FQuestDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 					FOnClicked::CreateSP(this, &FQuestDetails::OnUnshareClick),
 					FOnGetContent::CreateSP(this, &FQuestDetails::OnGetShareableNodesMenu))
 			]; 
+		QuestDetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UQuest, QuestCategory)).DisplayName(LOCTEXT("QuestCategoryLabel", "Quest Category"));
+		QuestDetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UQuest, bCanRetakeQuest)).DisplayName(LOCTEXT("QuestRetakeLabel", "Can Retake Quest"));
+		QuestDetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UQuest, bCanQuestBeAborted)).DisplayName(LOCTEXT("QuestAbortLabel", "Can Abort Quest"));
 	}
 
-	QuestDetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UQuest, QuestCategory)).DisplayName(LOCTEXT("QuestCategoryLabel", "Quest Category"));
-	QuestDetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UQuest, bCanRetakeQuest)).DisplayName(LOCTEXT("QuestRetakeLabel", "Can Retake Quest"));
-	QuestDetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UQuest, bCanQuestBeAborted)).DisplayName(LOCTEXT("QuestAbortLabel", "Can Abort Quest"));
+	if (QuestNode != NULL && SelectedObjects.Num() == 1)
+	{
+		IDetailCategoryBuilder& QuestNodeDetailCategory = DetailBuilder.EditCategory("Description", LOCTEXT("DescriptionCategory", "Description"));
+		QuestNodeDetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UQuestBuilderNode, bAddToJournal)).DisplayName(LOCTEXT("AddToJournalLabel", "Add To Journal"));
+		QuestNodeDetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UQuestBuilderNode, NodeTag)).DisplayName(LOCTEXT("NodeTagLabel", "Node Tag"));
+		QuestNodeDetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UQuestBuilderNode, Description)).DisplayName(LOCTEXT("DescriptionLabel", "Objective Description"));
+		QuestNodeDetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UQuestBuilderNode, NodeName)).DisplayName(LOCTEXT("NodeNameLabel", "Node Name"));
+	}
 
+	
 }
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
@@ -144,7 +162,7 @@ TSharedRef<SWidget> FQuestDetails::GetWidgetForInlineShareMenu(const TAttribute<
 				.HAlign(HAlign_Center)
 				.VAlign(VAlign_Center)
 				.OnClicked_Lambda([bInIsCurrentlyShared, DemoteClick, PromoteClick]() { return bInIsCurrentlyShared.Get() ? DemoteClick.Execute() : PromoteClick.Execute(); })
-				.Text_Lambda([bInIsCurrentlyShared]() { return bInIsCurrentlyShared.Get() ? LOCTEXT("UnshareLabel", "Unshare") : LOCTEXT("ShareLabel", "Promote To Shared"); })
+				.Text_Lambda([bInIsCurrentlyShared]() { return bInIsCurrentlyShared.Get() ? LOCTEXT("UnshareLabel", "Unshare") : LOCTEXT("ShareLabel", "New Shared Quest Setting"); })
 				.TextStyle(&FAppStyle::Get(), TEXT("TinyText"))
 		];
 }
@@ -238,6 +256,15 @@ TSharedRef<SWidget> FQuestDetails::OnGetShareableNodesMenu()
 			}
 		}
 
+		FOrionRPGModule& OrionRPGModule = FModuleManager::GetModuleChecked<FOrionRPGModule>(TEXT("OrionRPG"));
+		for (auto& QuestPreset : OrionRPGModule.QuestPresets)
+		{
+			if (QuestPreset && !QuestPreset->SharedCategoryName.IsEmpty())
+			{
+				SharedQuests.Add(QuestPreset->SharedCategoryName, QuestPreset);
+			}
+		}
+		
 		// Get the unique shared Quest names
 		TSet<FString> SharedQuestKeys;
 		SharedQuests.GetKeys(SharedQuestKeys);
@@ -254,11 +281,12 @@ TSharedRef<SWidget> FQuestDetails::OnGetShareableNodesMenu()
 			}
 
 			FTextBuilder ToolTipBuilder;
-			ToolTipBuilder.AppendLine(LOCTEXT("CategortUsedBy", "Used by:"));
+			ToolTipBuilder.AppendLine(LOCTEXT("CategoryUsedBy", "Used by:"));
 			TArray<FString> UsedInGraph;
 			for (const UQuest* UsedInQuestGraph : UsedIn)
 			{
-				if(UsedInGraph.Contains(UsedInQuestGraph->GetOwningQuestGraph()->GetName()))
+				if(!UsedInQuestGraph->GetOwningQuestGraph() ||
+					UsedInGraph.Contains(UsedInQuestGraph->GetOwningQuestGraph()->GetName()))
 					continue;
 
 				ToolTipBuilder.AppendLine(UsedInQuestGraph->GetOwningQuestGraph()->GetName());

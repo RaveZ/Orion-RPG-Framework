@@ -143,7 +143,7 @@ TSharedRef<SWidget> FDialogParticipantDetails::GetWidgetForInlineShareMenu(const
 				.HAlign(HAlign_Center)
 				.VAlign(VAlign_Center)
 				.OnClicked_Lambda([bInIsCurrentlyShared, DemoteClick, PromoteClick]() { return bInIsCurrentlyShared.Get() ? DemoteClick.Execute() : PromoteClick.Execute(); })
-				.Text_Lambda([bInIsCurrentlyShared]() { return bInIsCurrentlyShared.Get() ? LOCTEXT("UnshareLabel", "Unshare") : LOCTEXT("ShareLabel", "Promote To Shared"); })
+				.Text_Lambda([bInIsCurrentlyShared]() { return bInIsCurrentlyShared.Get() ? LOCTEXT("UnshareLabel", "Unshare") : LOCTEXT("ShareLabel", "New Shared Participant"); })
 				.TextStyle(&FAppStyle::Get(), TEXT("TinyText"))
 		];
 }

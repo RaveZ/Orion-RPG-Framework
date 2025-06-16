@@ -32,6 +32,8 @@ protected:
 	virtual FString& AccessShareDataName(UDialogBuilderNode_DialogLine* Node) override;
 	virtual FGuid& AccessShareDataGuid(UDialogBuilderNode_DialogLine* Node) override;
 };
+//Notify Node Changed to match node title in editor
+DECLARE_MULTICAST_DELEGATE(FOnParticipantDataChanged);
 
 UCLASS(Blueprintable)
 class ORIONRPG_API UDialogBuilderNode_DialogLine : public UDialogBuilderNode
@@ -60,6 +62,9 @@ public:
 
 	UPROPERTY()
 		int32 SharedParticipantIdx;
+
+	
+	FOnParticipantDataChanged OnParticipantDataChanged;
 public:
 
 	//~ Begin UObject Interface
@@ -68,6 +73,10 @@ public:
 	virtual void Serialize(FArchive& Ar) override;
 	//~ End UObject Interface
 
+
+public:
+#if WITH_EDITOR
+
 	//Participant Sharing
 	void MakeParticipantShareable(FString ShareName);
 	void UnshareParticipant();
@@ -75,10 +84,6 @@ public:
 
 	void CopyParticipantSettings(const UDialogBuilderNode_DialogLine* SrcNode);
 	void PropagateParticipantSettings();
-
-public:
-#if WITH_EDITOR
-
 	//Node Setting
 	virtual FText GetNodeTitle() const override;
 	virtual void SetNodeTitle(const FText& NewTitle);

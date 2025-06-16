@@ -1,18 +1,33 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #include "OrionRPG.h"
-
+#include "Quest.h"
 
 IMPLEMENT_MODULE(FOrionRPGModule, OrionRPG)
 
 void FOrionRPGModule::StartupModule()
 {
-	// This code will execute after your module is loaded into memory (but after global variables are initialized, of course.)
+	RegisterQuestPresets();
 }
 
 
 void FOrionRPGModule::ShutdownModule()
 {
-	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
-	// we call this function before unloading the module.
+	QuestPresets.Empty();
+}
+
+void FOrionRPGModule::RegisterQuestPresets()
+{
+	//Adding QuestPresets
+	UQuest* MainQuestPreset = NewObject<UQuest>(UQuest::StaticClass(), NAME_None, RF_Transactional);
+	MainQuestPreset->QuestCategory = FText::FromString("Main Quest");
+	QuestPresets.Add(MainQuestPreset);
+
+	UQuest* SecondaryQuestPreset = NewObject<UQuest>(UQuest::StaticClass(), NAME_None, RF_Transactional);
+	SecondaryQuestPreset->QuestCategory = FText::FromString("Secondary Quest");
+	QuestPresets.Add(SecondaryQuestPreset);
+
+	
+	MainQuestPreset->MakeQuestSettingShareable("Main Quest");
+	SecondaryQuestPreset->MakeQuestSettingShareable("Secondary Quest");
 }

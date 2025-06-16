@@ -34,19 +34,19 @@ public:
 	virtual ~UQuestBuilderNode();
 
 	/**Asset ID*/
-	UPROPERTY(BlueprintReadOnly, Category = "Description", meta = (DisplayPriority = 0))
+	UPROPERTY(BlueprintReadOnly, Category = "Description")
 		FName ID;
 
+	/** Add this Node Description to Journal? */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Description", DisplayName = "Add To Journal?")
+	bool bAddToJournal;
+	
 	/** Gameplay Tag for this node, each tag should be unique */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Description", DisplayName = "Node Tag (Optional)", meta = (Categories = "Quest"))
 		FGameplayTag NodeTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Description", meta = (MultiLine = true))
 		FText Description;
-
-	/** Add this Node Description to Journal? */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Description", DisplayName = "Add To Journal?")
-		bool bAddToJournal;
 
 	/** node name override*/
 	UPROPERTY(Category = "Description", EditAnywhere)

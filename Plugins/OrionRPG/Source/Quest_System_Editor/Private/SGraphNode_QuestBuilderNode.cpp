@@ -413,25 +413,26 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 																]
 																+ SVerticalBox::Slot()
 																.AutoHeight()
-																.Padding(FMargin(2.0f, 3.0f, 2.0f, 4.0f))
+																.Padding(FMargin(2.0f, 1.0f, 2.0f, 1.0f))
 																[
 																	// NodeTag
 																	SAssignNew(DescriptionText, STextBlock)
 																		.Visibility(this, &SGraphNode_QuestBuilderNode::GetNodeTagVisibility)
 																		.Text(this, &SGraphNode_QuestBuilderNode::GetNodeTagDescription)
-																		.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Bold"))
-																		.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+																		.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Italic"))
+																		.Font(FCoreStyle::GetDefaultFontStyle("Italic", 9))
 																]
 																+ SVerticalBox::Slot()
 																.AutoHeight()
-																.Padding(FMargin(2.0f, 0.0f, 2.0f, 4.0f))
+																.Padding(FMargin(2.0f, 1.0f, 2.0f, 4.0f))
 																[
 																	// DESCRIPTION MESSAGE
 																	SAssignNew(DescriptionText, STextBlock)
 																		.Visibility(this, &SGraphNode_QuestBuilderNode::GetDescriptionVisibility)
 																		.Text(this, &SGraphNode_QuestBuilderNode::GetDescription)
-																		.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Italic"))
-																		.AutoWrapText(true)
+																		.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Bold"))
+																		.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.5))
+																		.WrapTextAt(NodeMaxWidth)
 																		.WrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping)
 																]
 															]
@@ -458,7 +459,6 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 																	NodeTitle.ToSharedRef()
 																]
 																+ SVerticalBox::Slot()
-																
 																.AutoHeight()
 																	.Padding(FMargin(1.0f, 0.0f, 1.0f, 1.0f))
 																[
@@ -467,7 +467,7 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 																				.Visibility(this, &SGraphNode_QuestBuilderNode::GetDescriptionVisibility)
 																				.Text(this, &SGraphNode_QuestBuilderNode::GetDescription)
 																				.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Italic"))
-																				.AutoWrapText(true)
+																				.WrapTextAt(NodeMaxWidth)
 																				.WrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping)
 																]
 															]

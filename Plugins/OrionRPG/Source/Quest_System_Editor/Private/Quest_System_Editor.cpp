@@ -140,6 +140,7 @@ void FQuest_System_EditorModule::RegisterSettings()
 void FQuest_System_EditorModule::RegisterObjectCustomizations()
 {
 	RegisterCustomClassLayout("Quest", FOnGetDetailCustomizationInstance::CreateStatic(&FQuestDetails::MakeInstance));
+	RegisterCustomClassLayout("QuestBuilderNode", FOnGetDetailCustomizationInstance::CreateStatic(&FQuestDetails::MakeInstance));
 }
 
 void FQuest_System_EditorModule::RegisterCustomClassLayout(FName ClassName, FOnGetDetailCustomizationInstance DetailLayoutDelegate)

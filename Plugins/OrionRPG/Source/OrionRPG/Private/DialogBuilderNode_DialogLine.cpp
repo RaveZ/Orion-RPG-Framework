@@ -10,6 +10,36 @@
 
 #define LOCTEXT_NAMESPACE "DialogSystemGraphNode"
 
+
+void UDialogBuilderNode_DialogLine::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	FName PropertyName = (PropertyChangedEvent.Property != NULL) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
+
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantTag) ||
+		PropertyName == GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantName))
+	{
+		PropagateParticipantSettings();
+	}
+
+
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+}
+void UDialogBuilderNode_DialogLine::PostLoad()
+{
+	Super::PostLoad();
+
+	// make sure we have guid for shared participant 
+	if (bSharedParticipant && !SharedParticipantGuid.IsValid())
+	{
+		FDialogSharedParticipantNodeHelper().MakeSureGuidExists(this);
+	}
+}
+void UDialogBuilderNode_DialogLine::Serialize(FArchive& Ar)
+{
+	Super::Serialize(Ar);
+}
+
+#if WITH_EDITOR
 void UDialogBuilderNode_DialogLine::MakeParticipantShareable(FString ShareName)
 {
 	if (!DialogGraph)
@@ -57,6 +87,7 @@ void UDialogBuilderNode_DialogLine::UseSharedParticipant(const UDialogBuilderNod
 	SharedParticipantName = Node->SharedParticipantName;
 	SharedParticipantGuid = Node->SharedParticipantGuid;
 	CopyParticipantSettings(Node);
+	OnParticipantDataChanged.Broadcast();
 }
 
 void UDialogBuilderNode_DialogLine::CopyParticipantSettings(const UDialogBuilderNode_DialogLine* SrcNode)
@@ -95,39 +126,9 @@ void UDialogBuilderNode_DialogLine::PropagateParticipantSettings()
 	}
 }
 
-void UDialogBuilderNode_DialogLine::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
-{
-	FName PropertyName = (PropertyChangedEvent.Property != NULL) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
-
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantTag) ||
-		PropertyName == GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantName))
-	{
-		PropagateParticipantSettings();
-	}
-
-
-	Super::PostEditChangeProperty(PropertyChangedEvent);
-}
-void UDialogBuilderNode_DialogLine::PostLoad()
-{
-	Super::PostLoad();
-
-	// make sure we have guid for shared participant 
-	if (bSharedParticipant && !SharedParticipantGuid.IsValid())
-	{
-		FDialogSharedParticipantNodeHelper().MakeSureGuidExists(this);
-	}
-}
-void UDialogBuilderNode_DialogLine::Serialize(FArchive& Ar)
-{
-	Super::Serialize(Ar);
-}
-
-#if WITH_EDITOR
-
 FText UDialogBuilderNode_DialogLine::GetNodeTitle() const
 {
-    return FText::FromName(ID).IsEmpty() ? FText::FromString(UDialogBuilderNode::GetShortTypeName(this)) : FText::FromName(ID);
+    return ParticipantName.IsEmpty() ? FText::FromString("Participant None") : ParticipantName;
 }
 
 void UDialogBuilderNode_DialogLine::SetNodeTitle(const FText& NewTitle)

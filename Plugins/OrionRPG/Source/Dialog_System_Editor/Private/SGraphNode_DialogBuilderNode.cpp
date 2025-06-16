@@ -408,25 +408,26 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 																]
 																+ SVerticalBox::Slot()
 																.AutoHeight()
-																.Padding(FMargin(2.0f, 3.0f, 2.0f, 4.0f))
+																.Padding(FMargin(2.0f, 1.0f, 2.0f, 1.0f))
 																[
 																	// NodeTag
 																	SAssignNew(DescriptionText, STextBlock)
 																		.Visibility(this, &SGraphNode_DialogBuilderNode::GetNodeIDVisibility)
 																		.Text(this, &SGraphNode_DialogBuilderNode::GetNodeIDText)
-																		.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Bold"))
-																		.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+																		.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Italic"))
+																		.Font(FCoreStyle::GetDefaultFontStyle("Italic", 9))
 																]
 																+ SVerticalBox::Slot()
 																.AutoHeight()
-																.Padding(FMargin(2.0f, 0.0f, 2.0f, 4.0f))
+																.Padding(FMargin(2.0f, 1.0f, 2.0f, 4.0f))
 																[
 																	// DESCRIPTION MESSAGE
 																	SAssignNew(DescriptionText, STextBlock)
 																		.Visibility(this, &SGraphNode_DialogBuilderNode::GetDescriptionVisibility)
 																		.Text(this, &SGraphNode_DialogBuilderNode::GetDescription)
-																		.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Italic"))
-																		.AutoWrapText(true)
+																		.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Bold"))
+																		.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.5))
+																		.WrapTextAt(NodeMaxWidth)
 																		.WrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping)
 																]
 															]
@@ -462,7 +463,7 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 																				.Visibility(this, &SGraphNode_DialogBuilderNode::GetDescriptionVisibility)
 																				.Text(this, &SGraphNode_DialogBuilderNode::GetDescription)
 																				.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Italic"))
-																				.AutoWrapText(true)
+																				.WrapTextAt(NodeMaxWidth)
 																				.WrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping)
 																]
 															]

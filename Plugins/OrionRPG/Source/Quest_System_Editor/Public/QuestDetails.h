@@ -16,6 +16,7 @@
 #include "QuestBuilder_EditorStyle.h"
 
 
+class UQuestBuilderNode;
 class FText;
 class IDetailCategoryBuilder;
 class IDetailLayoutBuilder;
@@ -47,5 +48,6 @@ protected:
 
 private:
 	TWeakObjectPtr<UQuest> Quest;
+	TWeakObjectPtr<UQuestBuilderNode> QuestNode;
 	TSharedPtr<STextEntryPopup> TextEntryWidget;
 };

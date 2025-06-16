@@ -2,6 +2,8 @@
 
 
 #include "Quest.h"
+
+#include "OrionRPG.h"
 #include "QuestComponent.h"
 #include "QuestBuilderSetting.h"
 #include "QuestBuilderGraph.h"
@@ -15,6 +17,7 @@
 #define LOCTEXT_NAMESPACE "Quest"
 
 
+class FOrionRPGModule;
 
 UQuest::UQuest()
 {
@@ -376,18 +379,35 @@ void UQuest::Serialize(FArchive& Ar)
 
 void UQuest::MakeQuestSettingShareable(FString ShareName)
 {
-	if (!QuestGraph)
-		return;
 	SharedCategoryIdx = INDEX_NONE;
+	
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	TArray<FAssetData> QuestgraphDataArray;
+	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestgraphDataArray);
+
 	TArray<int32> Remap;
-	for (int32 idx = 0; idx < QuestGraph->QuestList.Num(); idx++)
+	
+	for (const FAssetData& AssetData : QuestgraphDataArray)
 	{
-		if (UQuest* OtherQuest = Cast<UQuest>(QuestGraph->QuestList[idx]))
+		UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
+		if (QuestGraphAsset)
 		{
-			if (OtherQuest->SharedCategoryIdx != INDEX_NONE || OtherQuest == this)
+			for (auto& OtherQuest : QuestGraphAsset->QuestList)
 			{
-				OtherQuest->SharedCategoryIdx = Remap.AddUnique(OtherQuest->SharedCategoryIdx) + 1; // Remaps existing index to lowest index available
+				if (OtherQuest->SharedCategoryIdx != INDEX_NONE || OtherQuest == this)
+				{
+					OtherQuest->SharedCategoryIdx = Remap.AddUnique(OtherQuest->SharedCategoryIdx) + 1; // Remaps existing index to lowest index available
+				}
 			}
+		}
+	}
+
+	FOrionRPGModule& OrionRPGModule = FModuleManager::GetModuleChecked<FOrionRPGModule>(TEXT("OrionRPG"));
+	for (auto& QuestPreset : OrionRPGModule.QuestPresets)
+	{
+		if (QuestPreset == this || QuestPreset->SharedCategoryIdx != INDEX_NONE)
+		{
+			QuestPreset->SharedCategoryIdx = Remap.AddUnique(QuestPreset->SharedCategoryIdx) + 1; // Remaps existing index to lowest index available
 		}
 	}
 
@@ -454,6 +474,14 @@ void UQuest::PropagateQuestSettings()
 					}
 				}
 			}
+		}
+	}
+	FOrionRPGModule& OrionRPGModule = FModuleManager::GetModuleChecked<FOrionRPGModule>(TEXT("OrionRPG"));
+	for (auto& QuestPreset : OrionRPGModule.QuestPresets)
+	{
+		if (QuestPreset && QuestPreset->SharedCategoryIdx != INDEX_NONE && QuestPreset->SharedCategoryGuid == SharedCategoryGuid)
+		{
+			QuestPreset->CopyQuestSettings(this);
 		}
 	}
 }

@@ -1551,7 +1551,7 @@ bool FQuestBuilderEditor::CanCreateQuestEvent() const
 }
 void FQuestBuilderEditor::OpenQuestSetting()
 {
-	PropertyWidget->SetObject(GetMutableDefault<UQuestBuilderSetting>());
+	PropertyWidget->SetObject(GetQuestBuilderGraph());
 }
 bool FQuestBuilderEditor::CanOpenQuestSetting() const
 {

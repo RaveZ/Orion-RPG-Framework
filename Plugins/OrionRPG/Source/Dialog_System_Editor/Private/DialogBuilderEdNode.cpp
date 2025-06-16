@@ -230,9 +230,15 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 			}
 			if (NodeInstance)
 			{
-				if (UDialogBuilderNode_DialogLine* SpeakerDialogNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance))
+				if (UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance))
 				{
-					FindUniqueNodeName("Speaker");
+					FindUniqueNodeName("DialogLine");
+					DialogLineNode->OnParticipantDataChanged.AddLambda([this]() {
+						if (GetGraph())
+						{
+							GetGraph()->NotifyNodeChanged(this);
+						}
+					});
 				}
 				if (UDialogBuilderNode_OptionSelector* StateDialogNode = Cast<UDialogBuilderNode_OptionSelector>(NodeInstance))
 				{
@@ -269,6 +275,18 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 void UDialogBuilderEdNode::PostPasteNode()
 {
 	Super::PostPasteNode();
+	if (NodeInstance)
+	{
+		if (UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance))
+		{
+			DialogLineNode->OnParticipantDataChanged.AddLambda([this]() {
+				if (GetGraph())
+				{
+					GetGraph()->NotifyNodeChanged(this);
+				}
+			});
+		}
+	}
 }
 
 void UDialogBuilderEdNode::InitializeInstance()
