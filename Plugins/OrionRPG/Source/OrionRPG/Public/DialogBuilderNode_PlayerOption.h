@@ -7,7 +7,7 @@
 #include "DialogBuilderNode_PlayerOption.generated.h"
 
 
-UCLASS(/*HideCategories = ("Detail")*/)
+UCLASS(BlueprintType)
 class ORIONRPG_API UDialogBuilderNode_PlayerOption : public UDialogBuilderNode
 {
 	GENERATED_BODY()

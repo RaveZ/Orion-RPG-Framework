@@ -35,7 +35,7 @@ protected:
 //Notify Node Changed to match node title in editor
 DECLARE_MULTICAST_DELEGATE(FOnParticipantDataChanged);
 
-UCLASS(Blueprintable)
+UCLASS(Blueprintable, BlueprintType)
 class ORIONRPG_API UDialogBuilderNode_DialogLine : public UDialogBuilderNode
 {
 	GENERATED_BODY()
@@ -66,6 +66,7 @@ public:
 	
 	FOnParticipantDataChanged OnParticipantDataChanged;
 public:
+	virtual void BeginNode() override;
 
 	//~ Begin UObject Interface
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;

@@ -29,4 +29,28 @@ public:
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "DialogBuilderLibrary", meta = (DefaultToSelf = "Target"))
 	static class UDialogComponent* GetDialogComponentFromTarget(AActor* Target);
+
+	/**
+	* Get the currently active dialog.
+	* 
+	* @return The Dialog Graph reference.
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "DialogBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	static class UDialogBuilderGraph* GetCurrentActiveDialog(const UObject* WorldContextObject);
+
+	/**
+	* Get the current dialog node.
+	*
+	* @return The Dialog Node reference.
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "DialogBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	static class UDialogBuilderNode* GetCurrentDialogNode(const UObject* WorldContextObject);
+
+	/**
+	* Get Last Selector Node.
+	*
+	* @return The Selector Dialog Node reference.
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "DialogBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	static class UDialogBuilderNode_OptionSelector* GetLastSelectorNode(const UObject* WorldContextObject);
 };

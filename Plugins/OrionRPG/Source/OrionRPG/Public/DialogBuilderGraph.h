@@ -50,6 +50,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
 		TMap<FName, TObjectPtr<UDialogBuilderNode>> NodeMap;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
+		TObjectPtr<class UDialogBuilderNode_OptionSelector> LastSelector;
+
 public:
 	virtual bool Initialize(UDialogComponent* InitializingComp);
 	virtual void Deinitialize();

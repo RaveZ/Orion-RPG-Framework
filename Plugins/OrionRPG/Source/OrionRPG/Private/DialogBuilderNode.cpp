@@ -26,6 +26,160 @@ UDialogBuilderNode::~UDialogBuilderNode()
 {
 }
 
+void UDialogBuilderNode::Initialize(bool bLaunchEventOnLoad)
+{
+	StartEventQueue.Empty();
+
+	if (bLaunchEventOnLoad)
+	{
+		for (auto& EndEvent : Events)
+		{
+			if (EndEvent && EndEvent->bLaunchEventOnLoad && (EndEvent->EventLaunchType == EEventLaunchType::E_Both || EndEvent->EventLaunchType == EEventLaunchType::E_Start))
+			{
+				StartEventQueue.Add(EndEvent);
+			}
+		}
+	}
+	else
+	{
+		for (auto& EndEvent : Events)
+		{
+			if (EndEvent && (EndEvent->EventLaunchType == EEventLaunchType::E_Both || EndEvent->EventLaunchType == EEventLaunchType::E_Start))
+			{
+				StartEventQueue.Add(EndEvent);
+			}
+		}
+	}
+
+	OnAllEndEventFinished.AddLambda(
+		[this]()
+		{
+			if (NextNode)
+			{
+				DialogGraph->BeginNode(NextNode);
+			}
+		}
+	);
+
+	OnAllStartEventFinished.AddLambda(
+		[this]()
+		{
+			BeginNode();
+		}
+	);
+	LaunchStartEventQueue();
+}
+
+
+void UDialogBuilderNode::Deinitialize()
+{
+	EndEventQueue.Empty();
+	for (auto& EndEvent : Events)
+	{
+		if (EndEvent && (EndEvent->EventLaunchType == EEventLaunchType::E_Both || EndEvent->EventLaunchType == EEventLaunchType::E_End))
+		{
+			EndEventQueue.Add(EndEvent);
+		}
+	}
+	LaunchEndEventQueue();
+}
+
+void UDialogBuilderNode::Reset()
+{
+	//empty in base 
+}
+
+void UDialogBuilderNode::BeginNode()
+{
+	//empty in base 
+}
+
+void UDialogBuilderNode::EvaluateNextNode()
+{
+	NextNode = nullptr;
+	if (ChildrenNodes.IsEmpty())
+	{
+		//TODO : Back - linking node
+		switch (BackLinkRule)
+		{
+		case EDialogueBacklinkRule::EndDialogue:
+			GetDialogComponent()->OnEndDialog.Broadcast(GetOwningDialogGraph());
+			break;
+		case EDialogueBacklinkRule::BackToLastSelector:
+			break;
+		case EDialogueBacklinkRule::JumpBackToNode:
+			break;
+		default:
+			break;
+		}
+		return;
+	}
+
+	//Will execute children from top to bottom, and will stop executing until first child succeeds.
+	//if none of the children succeeds, stop evaluate until the next dialog update
+	for (auto& ChildNode : ChildrenNodes)
+	{
+		//Evaluate Decorator
+		int SumConditionMet = 0;
+		for (auto& Condition : ChildNode->Decorators)
+		{
+			bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
+			if (bConditionMet)
+			{
+				SumConditionMet++;
+			}
+		}
+
+		if (SumConditionMet >= ChildNode->Decorators.Num())
+		{
+			NextNode = ChildNode;
+			break;
+		}
+	}
+
+
+	if (NextNode)
+	{
+		Deinitialize();
+	}
+	else
+	{
+		GetDialogComponent()->OnEndDialog.Broadcast(GetOwningDialogGraph());
+		return;
+	}
+
+
+	//Going to next node will begin when all End Events are finished
+}
+
+void UDialogBuilderNode::InitializeFromAsset(UDialogBuilderGraph& OwningDialogGraph)
+{
+	DialogGraph = &OwningDialogGraph;
+}
+
+
+UDialogBuilderGraph* UDialogBuilderNode::GetOwningDialogGraph() const
+{
+	return DialogGraph;
+}
+
+AController* UDialogBuilderNode::GetOwningController() const
+{
+	return OwningController;
+}
+
+APawn* UDialogBuilderNode::GetOwningPawn() const
+{
+	if (DialogComponent)
+		return DialogComponent->GetOwningPawn();
+	return nullptr;
+}
+
+UDialogComponent* UDialogBuilderNode::GetDialogComponent() const
+{
+	return DialogComponent;
+}
+
 UDialogBuilderEdge* UDialogBuilderNode::GetEdge(UDialogBuilderNode* ChildNode)
 {
 	return Edges.Contains(ChildNode) ? Edges.FindChecked(ChildNode) : nullptr;
@@ -278,127 +432,6 @@ bool UDialogBuilderNode::IsLeafNode() const
 	return ChildrenNodes.Num() == 0;
 }
 
-void UDialogBuilderNode::Initialize(bool bLaunchEventOnLoad)
-{
-	StartEventQueue.Empty();
-
-	if (bLaunchEventOnLoad)
-	{
-		for (auto& EndEvent : Events)
-		{
-			if (EndEvent && EndEvent->bLaunchEventOnLoad && (EndEvent->EventLaunchType == EEventLaunchType::E_Both || EndEvent->EventLaunchType == EEventLaunchType::E_Start))
-			{
-				StartEventQueue.Add(EndEvent);
-			}
-		}
-	}
-	else
-	{
-		for (auto& EndEvent : Events)
-		{
-			if (EndEvent && (EndEvent->EventLaunchType == EEventLaunchType::E_Both || EndEvent->EventLaunchType == EEventLaunchType::E_Start))
-			{
-				StartEventQueue.Add(EndEvent);
-			}
-		}
-	}
-
-	OnAllEndEventFinished.AddLambda(
-		[this]()
-		{
-			if (NextNode)
-			{
-				DialogGraph->BeginNode(NextNode);
-			}
-		}
-	);
-
-	OnAllStartEventFinished.AddLambda(
-		[this]()
-		{
-			BeginNode();
-		}
-	);
-	LaunchStartEventQueue();
-}
-
-void UDialogBuilderNode::Deinitialize()
-{
-	EndEventQueue.Empty();
-	for (auto& EndEvent : Events)
-	{
-		if (EndEvent && (EndEvent->EventLaunchType == EEventLaunchType::E_Both || EndEvent->EventLaunchType == EEventLaunchType::E_End))
-		{
-			EndEventQueue.Add(EndEvent);
-		}
-	}
-	LaunchEndEventQueue();
-}
-
-void UDialogBuilderNode::Reset()
-{
-	//empty in base 
-}
-
-void UDialogBuilderNode::BeginNode()
-{
-	//empty in base 
-}
-
-void UDialogBuilderNode::EvaluateNextNode()
-{
-	//Will execute children from top to bottom, and will stop executing until first child succeeds.
-	//if none of the children succeeds, stop evaluate until the next dialog update
-	for (auto& ChildNode : ChildrenNodes)
-	{
-		//Evaluate Decorator
-		int SumConditionMet = 0;
-		for (auto& Condition : ChildNode->Decorators)
-		{
-			bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
-			if (bConditionMet)
-			{
-				SumConditionMet++;
-			}
-		}
-		
-		if (SumConditionMet >= ChildNode->Decorators.Num())
-		{
-			NextNode = ChildNode;
-			break;
-		}
-	}
-
-	//Going to next node will begin when all End Events are finished
-}
-
-void UDialogBuilderNode::InitializeFromAsset(UDialogBuilderGraph& OwningDialogGraph)
-{
-	DialogGraph = &OwningDialogGraph;
-}
-
-
-UDialogBuilderGraph* UDialogBuilderNode::GetOwningDialogGraph() const
-{
-	return DialogGraph;
-}
-
-AController* UDialogBuilderNode::GetOwningController() const
-{
-	return OwningController;
-}
-
-APawn* UDialogBuilderNode::GetOwningPawn() const
-{
-	if (DialogComponent)
-		return DialogComponent->GetOwningPawn();
-	return nullptr;
-}
-
-UDialogComponent* UDialogBuilderNode::GetDialogComponent() const
-{
-	return DialogComponent;
-}
 
 #undef LOCTEXT_NAMESPACE
 

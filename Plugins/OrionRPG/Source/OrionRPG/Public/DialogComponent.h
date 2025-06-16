@@ -12,7 +12,9 @@ class APlayerController;
 
 //Dialog Delegate
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDialogSignature);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateDialog, class UDialogBuilderNode*, DialogNode);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEnterOptionSelector, const TArray<class UDialogBuilderNode_PlayerOption*>&, PlayerOptions);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPlayerOptionSelected, int32, SelectionIndex);
 
@@ -33,7 +35,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "DialogComponent")
 		TObjectPtr<APlayerController> OwningController;
 
-	/** Array of DialogGraph that is Running*/
+	/** Current Dialog That is Running, only one dialog should active at a time*/
 	UPROPERTY(BlueprintReadWrite, Category = "DialogComponent")
 		TObjectPtr<UDialogBuilderGraph> CurrentActiveDialog;
 
@@ -41,10 +43,10 @@ public:
 		TMap<FName, TObjectPtr<UDialogBuilderGraph>> DialogMap;
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
-		FDialogSignature OnDialogLineUpdated;
+		FUpdateDialog OnDialogUpdated;
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
-		FDialogSignature OnEnterOptionSelector;
+		FEnterOptionSelector OnEnterOptionSelector;
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
 		FPlayerOptionSelected OnPLayerOptionSelected;
@@ -56,10 +58,10 @@ public:
 		FEndDialog OnEndDialog;
 public:
 	UFUNCTION()
-	virtual void DialogLineUpdated();
+	virtual void DialogLineUpdated(class UDialogBuilderNode* DialogNode);
 	
 	UFUNCTION()
-	virtual void EnterOptionSelector();
+	virtual void EnterOptionSelector(const TArray<class UDialogBuilderNode_PlayerOption*>& PlayerOptions);
 	
 	UFUNCTION()
 	virtual void PlayerOptionSelected(int32 SelectionIndex);
@@ -95,8 +97,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "DialogComponent")
 	virtual APlayerController* GetOwningController() const;
-
-
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;

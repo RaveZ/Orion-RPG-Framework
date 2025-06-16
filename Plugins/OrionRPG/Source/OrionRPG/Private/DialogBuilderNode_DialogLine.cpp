@@ -11,6 +11,12 @@
 #define LOCTEXT_NAMESPACE "DialogSystemGraphNode"
 
 
+void UDialogBuilderNode_DialogLine::BeginNode()
+{
+	Super::BeginNode();
+	GetDialogComponent()->OnDialogUpdated.Broadcast(this);
+}
+
 void UDialogBuilderNode_DialogLine::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	FName PropertyName = (PropertyChangedEvent.Property != NULL) ? PropertyChangedEvent.Property->GetFName() : NAME_None;

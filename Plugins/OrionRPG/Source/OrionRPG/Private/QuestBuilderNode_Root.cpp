@@ -5,14 +5,14 @@
 #include "QuestComponent.h"
 #include "QuestBuilderNode.h"
 
-
-#if WITH_EDITOR
 void UQuestBuilderNode_Root::BeginNode()
 {
 	Super::BeginNode();
 	Quest->UpdateQuest();
 	Deinitialize();
 }
+
+#if WITH_EDITOR
 
 FText UQuestBuilderNode_Root::GetNodeDescription() const
 {

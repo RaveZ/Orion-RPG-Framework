@@ -113,6 +113,7 @@ void UQuestBuilderNode::EvaluateNextNode()
 	if (Quest->QuestState != EQuestState::E_Active)
 	 return;
 	
+	NextNodes.Empty();
 	
 	//This Node will executes their children from top to bottom in sequence
 	//f none of the children succeeds, this node will stop branching until next quest update.

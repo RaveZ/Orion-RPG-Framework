@@ -4,14 +4,14 @@
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderNode.h"
 
-
-#if WITH_EDITOR
 void UDialogBuilderNode_Root::BeginNode()
 {
 	Super::BeginNode();
 	EvaluateNextNode();
-	Deinitialize();
 }
+
+
+#if WITH_EDITOR
 
 FText UDialogBuilderNode_Root::GetNodeDescription() const
 {

@@ -94,6 +94,11 @@ void FQuest_System_EditorModule::ShutdownModule()
 		}
 	}
 
+	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
+	{
+		SettingsModule->UnregisterSettings("Project", "Plugins", "Quest Builder - Editor");
+	}
+
 	ObjectiveClassCache.Reset();
 	DecoratorClassCache.Reset();
 	EventClassCache.Reset();

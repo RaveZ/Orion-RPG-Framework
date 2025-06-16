@@ -1,4 +1,5 @@
 #include "Interaction/OrionInteractionTargetComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 
 
@@ -75,6 +76,18 @@ void UOrionInteractionTargetComponent::EndInteraction(bool bCompleted)
 
 		if (OnCompleted.IsBound())
 		{
+			APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+			APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+			for (auto& Event : Events)
+			{
+				if (Event)
+				{
+					if (PC && Pawn)
+					{
+						Event->BeginEvent(PC, Pawn);
+					}
+				}
+			}
 			OnCompleted.Broadcast(CurrentInteractor, this);
 		}
 	}

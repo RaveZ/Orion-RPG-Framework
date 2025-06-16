@@ -6,6 +6,7 @@
 #include "DialogBuilderNode.h"
 #include "DialogBuilderEdge.h"
 #include "DialogBuilderNode_Root.h"
+#include "DialogBuilderNode_OptionSelector.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderGraph"
 
@@ -73,7 +74,13 @@ void UDialogBuilderGraph::BeginNode(UDialogBuilderNode* InNode, bool bLaunchEven
 		RootNode->Initialize();
 		return;
 	}
-	
+
+	if (UDialogBuilderNode_OptionSelector* OptionSelectorNode = Cast<UDialogBuilderNode_OptionSelector>(InNode))
+	{
+		LastSelector = OptionSelectorNode;
+		OptionSelectorNode->BeginNode();
+		return;
+	}
 	//add visited node
 	VisitedNodeIDs.AddUnique(InNode->ID);
 	

@@ -34,7 +34,7 @@ void UDialogComponent::BeginPlay()
 	//Set Dependency
 	OwningController = GetOwningController();
 	
-	OnDialogLineUpdated.AddDynamic(this, &UDialogComponent::DialogLineUpdated);
+	OnDialogUpdated.AddDynamic(this, &UDialogComponent::DialogLineUpdated);
 	OnEnterOptionSelector.AddDynamic(this, &UDialogComponent::EnterOptionSelector);
 	OnPLayerOptionSelected.AddDynamic(this, &UDialogComponent::PlayerOptionSelected);
 	OnBeginDialog.AddDynamic(this, &UDialogComponent::DialogBegin);
@@ -55,7 +55,7 @@ bool UDialogComponent::BeginDialog(UDialogBuilderGraph* DialogAsset)
 		UE_LOG(LogTemp, Warning, TEXT("Dialog Asset is null"));
 		return false;
 	}
-	if (CurrentActiveDialog->ID != DialogAsset->ID)
+	if (CurrentActiveDialog)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Can't begin dialog, make sure current active dialog has finished before starting another dialog"));
 		return false;
@@ -72,6 +72,7 @@ bool UDialogComponent::BeginDialog(UDialogBuilderGraph* DialogAsset)
 		if (NewDialogGraph->RootNodes.IsValidIndex(0))
 		{
 			NewDialogGraph->BeginNode(NewDialogGraph->RootNodes[0]);
+			OnBeginDialog.Broadcast(NewDialogGraph);
 		}
 		bSuccess = true;
 	}
@@ -158,11 +159,11 @@ bool UDialogComponent::DeleteSave(const FString& SaveName, const int32 Slot)
 }
 
 
-void UDialogComponent::DialogLineUpdated()
+void UDialogComponent::DialogLineUpdated(UDialogBuilderNode* DialogNode)
 {
 }
 
-void UDialogComponent::EnterOptionSelector()
+void UDialogComponent::EnterOptionSelector(const TArray<class UDialogBuilderNode_PlayerOption*>& PlayerOptions)
 {
 }
 
@@ -181,6 +182,7 @@ void UDialogComponent::DialogBegin(UDialogBuilderGraph* Dialog)
 
 void UDialogComponent::DialogEnd(UDialogBuilderGraph* Dialog)
 {
+	CurrentActiveDialog = nullptr;
 	if (Dialog)
 	{
 		UE_LOG(LogTemp, Log, TEXT("End Dialog: %s"), *Dialog->ID.ToString());

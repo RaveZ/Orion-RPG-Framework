@@ -6,6 +6,7 @@
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderNode.h"
 #include "DialogBuilderNode_DialogLine.h"
+#include "DialogBuilderNode_OptionSelector.h"
 #include "DialogBuilderNode_Root.h"
 #include "DialogData.h"
 #include "DialogComponent.h"
@@ -48,6 +49,41 @@ UDialogComponent* UDialogBuilderFunctionLibrary::GetDialogComponentFromTarget(AA
     }
 
     UE_LOG(LogTemp, Warning, TEXT("DialogBuilderFunctionLibrary : Current Component Not Found!"));
+    return nullptr;
+}
+
+UDialogBuilderGraph* UDialogBuilderFunctionLibrary::GetCurrentActiveDialog(const UObject* WorldContextObject)
+{
+    if (UDialogComponent* DialogComp = GetDialogComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        return DialogComp->CurrentActiveDialog;
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("DialogBuilderFunctionLibrary : Current Active Dialog Is Null!"));
+    return nullptr;
+}
+
+UDialogBuilderNode* UDialogBuilderFunctionLibrary::GetCurrentDialogNode(const UObject* WorldContextObject)
+{
+    UDialogBuilderGraph* CurrentDialogGraph = GetCurrentActiveDialog(WorldContextObject);
+    if (CurrentDialogGraph && CurrentDialogGraph->CurrentNode)
+    {
+        return CurrentDialogGraph->CurrentNode;
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("DialogBuilderFunctionLibrary : Current Dialog Node Is Null!"));
+    return nullptr;
+}
+
+UDialogBuilderNode_OptionSelector* UDialogBuilderFunctionLibrary::GetLastSelectorNode(const UObject* WorldContextObject)
+{
+    UDialogBuilderGraph* CurrentDialogGraph = GetCurrentActiveDialog(WorldContextObject);
+    if (CurrentDialogGraph && CurrentDialogGraph->LastSelector)
+    {
+        return CurrentDialogGraph->LastSelector;
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("DialogBuilderFunctionLibrary : Current Dialog Node Is Null!"));
     return nullptr;
 }
 

@@ -7,13 +7,14 @@
 #include "DialogBuilderNode_OptionSelector.generated.h"
 
 
-UCLASS(/*HideCategories = ("Detail")*/)
+UCLASS(BlueprintType)
 class ORIONRPG_API UDialogBuilderNode_OptionSelector : public UDialogBuilderNode
 {
 	GENERATED_BODY()
 	
 public:
 	virtual void BeginNode() override;
+	virtual void SelectOption(class UDialogBuilderNode_PlayerOption* Option);
 	
 public:
 #if WITH_EDITOR

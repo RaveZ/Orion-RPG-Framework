@@ -42,7 +42,7 @@ public:
 	UDialogBuilderNode();
 	virtual ~UDialogBuilderNode();
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Detail", meta = (DisplayPriority = 0))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (DisplayPriority = 0))
 		FName ID;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (MultiLine = true))
@@ -97,10 +97,12 @@ public:
 
 	virtual void Reset();
 	virtual void BeginNode();
-	virtual void EvaluateNextNode();
 	
 	/** initialize any asset related data */
 	virtual void InitializeFromAsset(UDialogBuilderGraph& OwningDialogGraph);
+
+	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")
+	virtual void EvaluateNextNode();
 
 	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")
 	bool IsLeafNode() const;
