@@ -1,6 +1,6 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
-#include "DialogParticipantDetails.h"
+#include "DialogNodeDetails.h"
 
 #include "DialogBuilderEdNode_DialogLine.h"
 #include "DialogBuilderNode_DialogLine.h"
@@ -55,15 +55,15 @@
 
 /////////////////////////////////////////////////////////////////////////
 
-TSharedRef<IDetailCustomization> FDialogParticipantDetails::MakeInstance()
+TSharedRef<IDetailCustomization> FDialogNodeDetails::MakeInstance()
 {
-	return MakeShareable(new FDialogParticipantDetails);
+	return MakeShareable(new FDialogNodeDetails);
 }
 
 
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
-void FDialogParticipantDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
+void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
 	// Get a handle to the node we're viewing
 	const TArray< TWeakObjectPtr<UObject> >& SelectedObjects = DetailBuilder.GetSelectedObjects();
@@ -103,19 +103,21 @@ void FDialogParticipantDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBui
 				GetWidgetForInlineShareMenu(
 					TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateLambda([DialogLineNodeInstance]() { return FText::FromString(DialogLineNodeInstance->SharedParticipantName); })),
 					TAttribute<bool>::Create(TAttribute<bool>::FGetter::CreateLambda([DialogLineNodeInstance]() { return DialogLineNodeInstance->bSharedParticipant; })),
-					FOnClicked::CreateSP(this, &FDialogParticipantDetails::OnPromoteToSharedClick),
-					FOnClicked::CreateSP(this, &FDialogParticipantDetails::OnUnshareClick),
-					FOnGetContent::CreateSP(this, &FDialogParticipantDetails::OnGetShareableNodesMenu))
+					FOnClicked::CreateSP(this, &FDialogNodeDetails::OnPromoteToSharedClick),
+					FOnClicked::CreateSP(this, &FDialogNodeDetails::OnUnshareClick),
+					FOnGetContent::CreateSP(this, &FDialogNodeDetails::OnGetShareableNodesMenu))
 			]; 
 	}
 
 	DialogParticipantCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantName)).DisplayName(LOCTEXT("ParticipantNameLabel", "Participant Name"));
 	DialogParticipantCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantTag)).DisplayName(LOCTEXT("ParticipantTagLabel", "Participant Tag"));
 
+	IDetailCategoryBuilder& DialogNodeDetail = DetailBuilder.EditCategory("Detail", LOCTEXT("DetailTitle", "Detail"));
+	DialogNodeDetail.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ID)).DisplayName(LOCTEXT("IDLabel", "ID"));
 }
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
-TSharedRef<SWidget> FDialogParticipantDetails::GetWidgetForInlineShareMenu(const TAttribute<FText>& InSharedNameText, const TAttribute<bool>& bInIsCurrentlyShared, FOnClicked PromoteClick, FOnClicked DemoteClick, FOnGetContent GetContentMenu)
+TSharedRef<SWidget> FDialogNodeDetails::GetWidgetForInlineShareMenu(const TAttribute<FText>& InSharedNameText, const TAttribute<bool>& bInIsCurrentlyShared, FOnClicked PromoteClick, FOnClicked DemoteClick, FOnGetContent GetContentMenu)
 {
 	return
 		SNew(SHorizontalBox)
@@ -149,7 +151,7 @@ TSharedRef<SWidget> FDialogParticipantDetails::GetWidgetForInlineShareMenu(const
 }
 
 /** RuleShare = true if we are sharing the rules of this participant (else we are implied to be sharing the participant settings) */
-FReply FDialogParticipantDetails::OnPromoteToSharedClick()
+FReply FDialogNodeDetails::OnPromoteToSharedClick()
 {
 	TSharedPtr< SWindow > Parent = FSlateApplication::Get().GetActiveTopLevelWindow();
 	if (Parent.IsValid())
@@ -158,7 +160,7 @@ FReply FDialogParticipantDetails::OnPromoteToSharedClick()
 		TSharedRef<STextEntryPopup> TextEntry =
 			SNew(STextEntryPopup)
 			.Label(LOCTEXT("PromoteDialogLineNodeToSharedLabel", "Shared Participant Name"))
-			.OnTextCommitted(this, &FDialogParticipantDetails::PromoteToShared);
+			.OnTextCommitted(this, &FDialogNodeDetails::PromoteToShared);
 
 		// Show dialog to enter new event name
 		FSlateApplication::Get().PushMenu(
@@ -174,7 +176,7 @@ FReply FDialogParticipantDetails::OnPromoteToSharedClick()
 	return FReply::Handled();
 }
 
-void FDialogParticipantDetails::PromoteToShared(const FText& NewParticipantSettingName, ETextCommit::Type CommitInfo)
+void FDialogNodeDetails::PromoteToShared(const FText& NewParticipantSettingName, ETextCommit::Type CommitInfo)
 {
 	if (CommitInfo == ETextCommit::OnEnter)
 	{
@@ -187,7 +189,7 @@ void FDialogParticipantDetails::PromoteToShared(const FText& NewParticipantSetti
 	FSlateApplication::Get().DismissAllMenus();
 }
 
-FReply FDialogParticipantDetails::OnUnshareClick()
+FReply FDialogNodeDetails::OnUnshareClick()
 {
 	if (DialogLineNode.Get())
 	{
@@ -198,7 +200,7 @@ FReply FDialogParticipantDetails::OnUnshareClick()
 }
 
 
-TSharedRef<SWidget> FDialogParticipantDetails::OnGetShareableNodesMenu()
+TSharedRef<SWidget> FDialogNodeDetails::OnGetShareableNodesMenu()
 {
 	FMenuBuilder MenuBuilder(true, NULL);
 
@@ -268,7 +270,7 @@ TSharedRef<SWidget> FDialogParticipantDetails::OnGetShareableNodesMenu()
 				UsedInGraph.AddUnique(UsedInDialogGraph->GetOwningDialogGraph()->GetName());
 			}
 
-			FUIAction Action = FUIAction(FExecuteAction::CreateSP(this, &FDialogParticipantDetails::BecomeSharedWith, UsedIn[0]));
+			FUIAction Action = FUIAction(FExecuteAction::CreateSP(this, &FDialogNodeDetails::BecomeSharedWith, UsedIn[0]));
 			MenuBuilder.AddMenuEntry(FText::FromString(Key), ToolTipBuilder.ToText(), FSlateIcon(), Action);
 		}
 	}
@@ -277,7 +279,7 @@ TSharedRef<SWidget> FDialogParticipantDetails::OnGetShareableNodesMenu()
 	return MenuBuilder.MakeWidget();
 }
 
-void FDialogParticipantDetails::BecomeSharedWith(UDialogBuilderNode_DialogLine* NewNode)
+void FDialogNodeDetails::BecomeSharedWith(UDialogBuilderNode_DialogLine* NewNode)
 {
 	if (DialogLineNode.Get())
 	{

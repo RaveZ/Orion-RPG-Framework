@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "DialogBuilderNode.h"
+#include "DialogData.h"
 #include "DialogBuilderNode_DialogLine.generated.h"
 
 class ORIONRPG_API IDialogNodeSharedDataHelper
@@ -41,6 +42,7 @@ class ORIONRPG_API UDialogBuilderNode_DialogLine : public UDialogBuilderNode
 	GENERATED_BODY()
 
 public:
+	UDialogBuilderNode_DialogLine();
 
 	/**Participant Tag*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog", meta = (Categories = "Dialog.Participant"))
@@ -53,6 +55,9 @@ public:
 	UPROPERTY()
 		FString SharedParticipantName;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail", meta = (ShowOnlyInnerProperties, EditCondition = "bUseDialogSequenceData == true", HideEditConditionToggle, EditConditionHides))
+		FDialogSequenceData DialogSequenceData;
+
 	/** The participant data of this node may be shared */
 	UPROPERTY()
 		bool bSharedParticipant;
@@ -63,7 +68,7 @@ public:
 	UPROPERTY()
 		int32 SharedParticipantIdx;
 
-	
+
 	FOnParticipantDataChanged OnParticipantDataChanged;
 public:
 	virtual void BeginNode() override;

@@ -43,12 +43,16 @@ public:
 	virtual void OnDragLeave(const FDragDropEvent& DragDropEvent) override;
 	virtual FReply OnMouseMove(const FGeometry& SenderGeometry, const FPointerEvent& MouseEvent) override;
 	virtual TSharedRef<SGraphNode> GetNodeUnderMouse(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) override;
-	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
 	virtual void SetOwner(const TSharedRef<SGraphPanel>& OwnerPanel) override;
 	virtual bool IsNameReadOnly() const override;
 	virtual void CreatePinWidgets() override;
 	virtual TSharedPtr<SToolTip> GetComplexTooltip() override;
 	virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+	virtual void MoveTo(const FVector2f& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
+#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
+	virtual void MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
+#endif
 	//~ End SGraphNode Interface
 
 	/** handle double click */

@@ -794,10 +794,16 @@ TSharedRef<SGraphNode> SGraphNode_QuestBuilderNode::GetNodeUnderMouse(const FGeo
 	return SubNode.IsValid() ? SubNode.ToSharedRef() : StaticCastSharedRef<SGraphNode>(AsShared());
 }
 
-void SGraphNode_QuestBuilderNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
+
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+void SGraphNode_QuestBuilderNode::MoveTo(const FVector2f& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
 {
 	SGraphNode::MoveTo(NewPosition, NodeFilter, bMarkDirty);
-
+#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
+void SGraphNode_QuestBuilderNode::MoveTo(const FVector2D & NewPosition, FNodeSet & NodeFilter, bool bMarkDirty)
+{
+	SGraphNode::MoveTo(NewPosition, NodeFilter, bMarkDirty);
+#endif
 	// keep node order (defined by linked pins) up to date with actual positions
 	// this function will keep spamming on every mouse move update
 	UQuestBuilderEdNode* QuestEdNode = Cast<UQuestBuilderEdNode>(GraphNode);

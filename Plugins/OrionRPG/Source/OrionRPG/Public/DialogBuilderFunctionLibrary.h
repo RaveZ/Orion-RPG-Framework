@@ -52,5 +52,5 @@ public:
 	* @return The Selector Dialog Node reference.
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "DialogBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
-	static class UDialogBuilderNode_OptionSelector* GetLastSelectorNode(const UObject* WorldContextObject);
+	static class UDialogBuilderNode_RerouteNode* GetLastSelectorNode(const UObject* WorldContextObject);
 };

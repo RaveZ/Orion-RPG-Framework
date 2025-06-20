@@ -31,10 +31,10 @@ public:
 	 * @param  InInventoryEditor	A pointer to the Inventory editor that the palette belongs to.
 	 */
 	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, TWeakPtr<FOrionInventoryEditor> InInventoryEditor);
-	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UDialogBuilderGraph* InInventorySystemGraph);
+	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UOrionInventoryGraph* InInventorySystemGraph);
 
 private:
-	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UDialogBuilderGraph* InInventorySystemGraph, TWeakPtr<FOrionInventoryEditor> InInventoryEditor);
+	void Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UOrionInventoryGraph* InInventorySystemGraph, TWeakPtr<FOrionInventoryEditor> InInventoryEditor);
 
 	// SWidget Interface
 	virtual void OnDragEnter(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent) override;
@@ -61,7 +61,7 @@ private:
 	/** True if the class should be displayed in the tooltip */
 	bool bShowClassInTooltip;
 
-	UDialogBuilderGraph* OrionInventoryGraph;
+	UOrionInventoryGraph* OrionInventoryGraph;
 
 	/** Pointer back to the Inventory editor that owns this */
 	TWeakPtr<FOrionInventoryEditor> InventoryEditorPtr;

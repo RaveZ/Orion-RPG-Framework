@@ -6,7 +6,7 @@
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderNode.h"
 #include "DialogBuilderNode_DialogLine.h"
-#include "DialogBuilderNode_OptionSelector.h"
+#include "DialogBuilderNode_RerouteNode.h"
 #include "DialogBuilderNode_Root.h"
 #include "DialogData.h"
 #include "DialogComponent.h"
@@ -75,7 +75,7 @@ UDialogBuilderNode* UDialogBuilderFunctionLibrary::GetCurrentDialogNode(const UO
     return nullptr;
 }
 
-UDialogBuilderNode_OptionSelector* UDialogBuilderFunctionLibrary::GetLastSelectorNode(const UObject* WorldContextObject)
+UDialogBuilderNode_RerouteNode* UDialogBuilderFunctionLibrary::GetLastSelectorNode(const UObject* WorldContextObject)
 {
     UDialogBuilderGraph* CurrentDialogGraph = GetCurrentActiveDialog(WorldContextObject);
     if (CurrentDialogGraph && CurrentDialogGraph->LastSelector)

@@ -18,7 +18,7 @@
 #include "ToolMenus.h"
 #include "Styling/SlateStyleRegistry.h"
 #include "DialogBuilderSetting.h"
-#include "DialogparticipantDetails.h"
+#include "DialogNodeDetails.h"
 #include "DialogData.h"
 
 
@@ -130,7 +130,7 @@ void FDialog_System_EditorModule::RegisterSettings()
 
 void FDialog_System_EditorModule::RegisterObjectCustomizations()
 {
-	RegisterCustomClassLayout("DialogBuilderNode_DialogLine", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogParticipantDetails::MakeInstance));
+	RegisterCustomClassLayout("DialogBuilderNode_DialogLine", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogNodeDetails::MakeInstance));
 }
 
 void FDialog_System_EditorModule::RegisterCustomClassLayout(FName ClassName, FOnGetDetailCustomizationInstance DetailLayoutDelegate)

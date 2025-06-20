@@ -445,7 +445,6 @@ void UEdGraphSchema_QuestBuilder::GetContextMenuActions(UToolMenu* Menu, UGraphN
 	{
 		{
 			FToolMenuSection& Section = Menu->AddSection("QuestBuilderAssetGraphSchemaNodeActions", LOCTEXT("ClassActionsMenuHeader", "Node Actions"));
-			Section.AddMenuEntry(FGenericCommands::Get().Rename);
 			Section.AddMenuEntry(FGenericCommands::Get().Delete);
 			Section.AddMenuEntry(FGenericCommands::Get().Cut);
 			Section.AddMenuEntry(FGenericCommands::Get().Copy);
@@ -710,6 +709,18 @@ TSharedPtr<FAssetSchemaAction_QuestSystem_NewSubNode> UEdGraphSchema_QuestBuilde
 }
 
 
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+UEdGraphNode* FAssetSchemaAction_QuestSystem_NewSubNode::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2f& Location, bool bSelectNewNode)
+{
+	ParentNode->AddSubNode(NodeTemplate, ParentGraph);
+	return NULL;
+}
+
+UEdGraphNode* FAssetSchemaAction_QuestSystem_NewSubNode::PerformAction(UEdGraph* ParentGraph, TArray<UEdGraphPin*>& FromPins, const FVector2f& Location, bool bSelectNewNode)
+{
+	return PerformAction(ParentGraph, NULL, Location, bSelectNewNode);
+}
+#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 UEdGraphNode* FAssetSchemaAction_QuestSystem_NewSubNode::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode)
 {
 	ParentNode->AddSubNode(NodeTemplate, ParentGraph);
@@ -720,7 +731,7 @@ UEdGraphNode* FAssetSchemaAction_QuestSystem_NewSubNode::PerformAction(UEdGraph*
 {
 	return PerformAction(ParentGraph, NULL, Location, bSelectNewNode);
 }
-
+#endif
 void FAssetSchemaAction_QuestSystem_NewSubNode::AddReferencedObjects(FReferenceCollector& Collector)
 {
 	FEdGraphSchemaAction::AddReferencedObjects(Collector);
@@ -730,6 +741,38 @@ void FAssetSchemaAction_QuestSystem_NewSubNode::AddReferencedObjects(FReferenceC
 	Collector.AddReferencedObject(ParentNode);
 }
 
+
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+UEdGraphNode* FQuestSchemaAction_AddComment::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2f& Location, bool bSelectNewNode)
+{
+	UEdGraphNode_Comment* const CommentTemplate = NewObject<UEdGraphNode_Comment>();
+	CommentTemplate->bCommentBubbleVisible_InDetailsPanel = true;
+
+	FVector2f SpawnLocation = Location;
+	FSlateRect Bounds;
+
+	TSharedPtr<SGraphEditor> GraphEditorPtr = SGraphEditor::FindGraphEditorForGraph(ParentGraph);
+	if (GraphEditorPtr.IsValid())
+	{
+		// If they have a selection, build a bounding box around the selection
+		if (GraphEditorPtr->GetBoundsForSelectedNodes(/*out*/ Bounds, 50.0f))
+		{
+			CommentTemplate->SetBounds(Bounds);
+			SpawnLocation.X = CommentTemplate->NodePosX;
+			SpawnLocation.Y = CommentTemplate->NodePosY;
+		}
+		else
+		{
+			// Otherwise initialize a default comment at the user's cursor location.
+			SpawnLocation = GraphEditorPtr->GetPasteLocation2f();
+		}
+	}
+
+	UEdGraphNode* const NewNode = FEdGraphSchemaAction_NewNode::SpawnNodeFromTemplate<UEdGraphNode_Comment>(ParentGraph, CommentTemplate, SpawnLocation, bSelectNewNode);
+
+	return NewNode;
+}
+#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 UEdGraphNode* FQuestSchemaAction_AddComment::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode)
 {
 	UEdGraphNode_Comment* const CommentTemplate = NewObject<UEdGraphNode_Comment>();
@@ -759,5 +802,7 @@ UEdGraphNode* FQuestSchemaAction_AddComment::PerformAction(UEdGraph* ParentGraph
 
 	return NewNode;
 }
+
+#endif
 
 #undef LOCTEXT_NAMESPACE

@@ -6,12 +6,9 @@
 #include "EdGraph/EdGraph.h"
 #include "OrionInventoryEdGraph.generated.h"
 
-class UDialogBuilderGraph;
-class UDialogBuilderNode;
-class UDialogBuilderEdge;
+class UOrionInventoryGraph;
+class UOrionInventoryNode;
 class UOrionInventoryEdNode;
-class UOrionInventoryEdNode_Edge;
-class UOrionInventoryEdNode_Edge;
 
 UCLASS()
 class ORIONINVENTORYEDITOR_API UOrionInventoryEdGraph : public UEdGraph
@@ -36,7 +33,7 @@ public:
 	void LockUpdates();
 	void UnlockUpdates();
 
-	UDialogBuilderGraph* GetOrionInventoryGraph() const;
+	UOrionInventoryGraph* GetOrionInventoryGraph() const;
 
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;
 
@@ -44,13 +41,10 @@ public:
 	
 	/** Inventory linked with this UEdGraph */
 	UPROPERTY(VisibleAnywhere, Instanced, Category = "OrionInventoryGraph")
-	TObjectPtr<UDialogBuilderGraph> OwningInventory;
+	TObjectPtr<UOrionInventoryGraph> OwningInventory;
 
 	UPROPERTY(Transient)
-		TMap< TObjectPtr<UDialogBuilderNode>, TObjectPtr<UOrionInventoryEdNode>> NodeMap;
-
-	UPROPERTY(Transient)
-		TMap< TObjectPtr<UDialogBuilderEdge>, TObjectPtr<UOrionInventoryEdNode_Edge>> EdgeMap;
+		TMap< TObjectPtr<UOrionInventoryNode>, TObjectPtr<UOrionInventoryEdNode>> NodeMap;
 
 	void Clear();
 
@@ -61,7 +55,6 @@ protected:
 	 */
 	uint32 bLockUpdates : 1;
 
-	void SortNodes(UDialogBuilderNode* RootNode);
 	double LastRebuildTime = 0.f;
 	double LastSortTime = 0.f;
 

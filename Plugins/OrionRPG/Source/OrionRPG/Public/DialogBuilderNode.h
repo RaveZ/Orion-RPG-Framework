@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
 #include "Event/OrionEvent.h"	
+#include "DialogData.h"	
 #include "DialogBuilderNode.generated.h"
 
 class UDialogBuilderGraph;
@@ -20,17 +21,6 @@ enum class EDialogNodeLimits : uint8
 	Limited
 };
 
-/**
- * Enum to define the backlinking behavior at the end of a dialogue node.
- */
-UENUM(BlueprintType)
-enum class EDialogueBacklinkRule : uint8
-{
-	EndDialogue UMETA(DisplayName = "End Dialogue"),
-	BackToLastSelector UMETA(DisplayName = "Back to Last Selector"),
-	JumpBackToNode UMETA(DisplayName = "Jump Back to Node")
-};
-
 DECLARE_MULTICAST_DELEGATE(FDialogNodeEventFinishedSignature);
 
 UCLASS(Blueprintable, EditInlineNew)
@@ -42,21 +32,8 @@ public:
 	UDialogBuilderNode();
 	virtual ~UDialogBuilderNode();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (DisplayPriority = 0))
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Detail", meta = (DisplayPriority = 0))
 		FName ID;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (MultiLine = true))
-		FText Description;
-
-	/**
-	* When a dialogue node concludes without any next nodes,
-	* The system provides the player with an option to revisit previous dialogue nodes.
-	*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Back-Linking Rule")
-		EDialogueBacklinkRule BackLinkRule;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Back-Linking Rule", meta = (EditCondition = "BackLinkRule == EDialogueBacklinkRule::JumpBackToNode", HideEditConditionToggle, EditConditionHides, GetOptions = "GetNodeIDOptions" ))
-		FName NodeID;
 	
 	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Events")
 		TArray<TObjectPtr<UOrionEvent>> Events;
@@ -191,5 +168,6 @@ public:
 	virtual bool CanCreateConnectionFrom(UDialogBuilderNode* Other, int32 NumberOfParentNodes, FText& ErrorMessage);
 
 	virtual void PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PreEditChange(FProperty* PropertyAboutToChange) override;
 #endif
 };

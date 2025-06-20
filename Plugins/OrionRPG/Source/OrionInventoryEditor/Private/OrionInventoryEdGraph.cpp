@@ -2,14 +2,10 @@
 
 
 #include "OrionInventoryEdGraph.h"
-#include "OrionInventoryEdNode_Edge.h"
 #include "OrionInventoryEdNode_Root.h"
 #include "OrionInventoryEdNode.h"
-#include "OrionInventoryEdNode.h"
-#include "DialogBuilderGraph.h"
-#include "DialogBuilderEdge.h"
-#include "DialogBuilderNode.h"
-#include "DialogBuilderNode_DialogLine.h"
+#include "Inventory/OrionInventoryGraph.h"
+#include "Inventory/OrionInventoryNode.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 
@@ -58,7 +54,7 @@ void UOrionInventoryEdGraph::UpdateAsset(bool bForce)
 	UE_LOG(LogTemp, Log, TEXT("UpdateAsset started."));
 
 
-	UDialogBuilderGraph* InventoryGraph = GetOrionInventoryGraph();
+	UOrionInventoryGraph* InventoryGraph = GetOrionInventoryGraph();
 
 	Clear();
 
@@ -77,10 +73,10 @@ void UOrionInventoryEdGraph::UpdateAsset(bool bForce)
 			{
 				if (RootNode->NodeInstance)
 				{
-					OwningInventory->RootNodes.Add(Cast<UDialogBuilderNode>(RootNode->NodeInstance));
+					OwningInventory->RootNodes.Add(Cast<UOrionInventoryNode>(RootNode->NodeInstance));
 				}
 			}
-			UDialogBuilderNode* InventoryNode = InventoryEdNode ? Cast<UDialogBuilderNode>(InventoryEdNode->NodeInstance) : nullptr;
+			UOrionInventoryNode* InventoryNode = InventoryEdNode ? Cast<UOrionInventoryNode>(InventoryEdNode->NodeInstance) : nullptr;
 			if (InventoryNode)
 			{
 				//cache inventory and node dependencies
@@ -88,61 +84,12 @@ void UOrionInventoryEdGraph::UpdateAsset(bool bForce)
 				OwningInventory->AllNodes.Add(InventoryNode);
 				OwningInventory->NodeMap.Emplace(InventoryNode->ID, InventoryNode);
 
-				InventoryNode->DialogGraph = OwningInventory;
+				InventoryNode->OrionInventoryGraph = OwningInventory;
 				InventoryNode->Rename(nullptr, InventoryGraph, REN_DontCreateRedirectors | REN_DoNotDirty);
 
-				//link child and parent nodes
-				for (int PinIdx = 0; PinIdx < InventoryEdNode->Pins.Num(); ++PinIdx)
-				{
-					UEdGraphPin* Pin = InventoryEdNode->Pins[PinIdx];
-
-					if (Pin->Direction != EEdGraphPinDirection::EGPD_Output)
-						continue;
-
-					for (int LinkToIdx = 0; LinkToIdx < Pin->LinkedTo.Num(); ++LinkToIdx)
-					{
-						UDialogBuilderNode* ChildNode = nullptr;
-						if (UOrionInventoryEdNode* EdNode_Child = Cast<UOrionInventoryEdNode>(Pin->LinkedTo[LinkToIdx]->GetOwningNode()))
-						{
-							ChildNode = EdNode_Child ? Cast<UDialogBuilderNode>(EdNode_Child->NodeInstance) : nullptr;
-						}
-						else if (UOrionInventoryEdNode_Edge* EdNode_Edge = Cast<UOrionInventoryEdNode_Edge>(Pin->LinkedTo[LinkToIdx]->GetOwningNode()))
-						{
-							UOrionInventoryEdNode* Child = EdNode_Edge->GetEndNode();
-							if (Child != nullptr)
-							{
-								ChildNode = Child ? Cast<UDialogBuilderNode>(Child->NodeInstance) : nullptr;
-							}
-						}
-
-						if (ChildNode != nullptr)
-						{
-							InventoryNode->ChildrenNodes.Add(ChildNode);
-
-							ChildNode->ParentNodes.Add(InventoryNode);
-						}
-					}
-				}
+				
 			}
 			
-		}
-		else if (UOrionInventoryEdNode_Edge* EdgeNode = Cast<UOrionInventoryEdNode_Edge>(Nodes[i]))
-		{
-			UOrionInventoryEdNode* StartNode = EdgeNode->GetStartNode();
-			UOrionInventoryEdNode* EndNode = EdgeNode->GetEndNode();
-			UDialogBuilderEdge* Edge = EdgeNode->InventorySystemGraphEdge;
-
-			if (StartNode == nullptr || EndNode == nullptr || Edge == nullptr)
-			{
-				continue;
-			}
-			EdgeMap.Add(Edge, EdgeNode);
-
-			Edge->Graph = InventoryGraph;
-			Edge->Rename(nullptr, InventoryGraph, REN_DontCreateRedirectors | REN_DoNotDirty);
-			Edge->StartNode = StartNode ? Cast<UDialogBuilderNode>(StartNode->NodeInstance) : nullptr; 
-			Edge->EndNode = EndNode ? Cast<UDialogBuilderNode>(EndNode->NodeInstance) : nullptr;
-			Edge->StartNode->Edges.Add(Edge->EndNode, Edge);
 		}
 	}
 
@@ -151,14 +98,14 @@ void UOrionInventoryEdGraph::UpdateAsset(bool bForce)
 
 void UOrionInventoryEdGraph::UpdateAllSubnodeDependencies()
 {
-	UDialogBuilderGraph* InventoryGraph = GetOrionInventoryGraph();
+	UOrionInventoryGraph* InventoryGraph = GetOrionInventoryGraph();
 	for (int i = 0; i < Nodes.Num(); ++i)
 	{
 		if (UOrionInventoryEdNode* InventoryEdNode = Cast<UOrionInventoryEdNode>(Nodes[i]))
 		{
 			if (InventoryEdNode->NodeInstance == nullptr)
 				continue;
-			UDialogBuilderNode* InventoryNode = InventoryEdNode ? Cast<UDialogBuilderNode>(InventoryEdNode->NodeInstance) : nullptr;
+			UOrionInventoryNode* InventoryNode = InventoryEdNode ? Cast<UOrionInventoryNode>(InventoryEdNode->NodeInstance) : nullptr;
 
 			if (InventoryNode)
 			{
@@ -379,28 +326,17 @@ void UOrionInventoryEdGraph::SortAllChildrenNodes(bool bForce)
 void UOrionInventoryEdGraph::RebuildChildOrder(UEdGraphNode* ParentNode)
 {
 	UOrionInventoryEdNode* InventoryParentEdNode = Cast<UOrionInventoryEdNode>(ParentNode);
-	UDialogBuilderNode* InventoryParentNode = InventoryParentEdNode ? Cast<UDialogBuilderNode>(InventoryParentEdNode->NodeInstance) : nullptr;
+	UOrionInventoryNode* InventoryParentNode = InventoryParentEdNode ? Cast<UOrionInventoryNode>(InventoryParentEdNode->NodeInstance) : nullptr;
 	if (InventoryParentNode)
 	{
-		InventoryParentNode->ChildrenNodes.Sort([&](const UDialogBuilderNode& B, const UDialogBuilderNode& T)
-		{
-			UOrionInventoryEdNode* EdNode_BNode = NodeMap.FindRef(&B);
-			UOrionInventoryEdNode* EdNode_TNode = NodeMap.FindRef(&T);
-			if (EdNode_BNode && EdNode_TNode)
-			{
-				return EdNode_TNode->NodePosY > EdNode_BNode->NodePosY;
-			}
-			else
-			{
-				return false;
-			}
-		});
+		//TODO:
+		//Build Order based on the PosX of all Nodes in the graph
 	}
 }
 
-UDialogBuilderGraph* UOrionInventoryEdGraph::GetOrionInventoryGraph() const
+UOrionInventoryGraph* UOrionInventoryEdGraph::GetOrionInventoryGraph() const
 {
-	return CastChecked<UDialogBuilderGraph>(GetOuter());
+	return CastChecked<UOrionInventoryGraph>(GetOuter());
 }
 
 bool UOrionInventoryEdGraph::Modify(bool bAlwaysMarkDirty)
@@ -479,58 +415,5 @@ void UOrionInventoryEdGraph::Clear()
 		OwningInventory->ClearGraph();
 	}
 	NodeMap.Reset();
-	EdgeMap.Reset();
 
-	for (int i = 0; i < Nodes.Num(); ++i)
-	{
-		if (UOrionInventoryEdNode* InventoryEdNode = Cast<UOrionInventoryEdNode>(Nodes[i]))
-		{
-			UDialogBuilderNode* InventoryNode = InventoryEdNode ? Cast<UDialogBuilderNode>(InventoryEdNode->NodeInstance) : nullptr;
-			if (InventoryNode)
-			{
-				InventoryNode->ParentNodes.Reset();
-				InventoryNode->ChildrenNodes.Reset();
-				InventoryNode->Edges.Reset();
-			}
-		}
-	}
-}
-
-void UOrionInventoryEdGraph::SortNodes(UDialogBuilderNode* RootNode)
-{
-	int Level = 0;
-	TArray<UDialogBuilderNode*> CurrLevelNodes = { RootNode };
-	TArray<UDialogBuilderNode*> NextLevelNodes;
-	TSet<UDialogBuilderNode*> Visited;
-
-	while (CurrLevelNodes.Num() != 0)
-	{
-		int32 LevelWidth = 0;
-		for (int i = 0; i < CurrLevelNodes.Num(); ++i)
-		{
-			UDialogBuilderNode* Node = CurrLevelNodes[i];
-			Visited.Add(Node);
-
-			auto Comp = [&](const UDialogBuilderNode& L, const UDialogBuilderNode& R)
-			{
-				UOrionInventoryEdNode* EdNode_LNode = NodeMap[&L];
-				UOrionInventoryEdNode* EdNode_RNode = NodeMap[&R];
-				return EdNode_LNode->NodePosX < EdNode_RNode->NodePosX;
-			};
-
-			Node->ChildrenNodes.Sort(Comp);
-			Node->ParentNodes.Sort(Comp);
-
-			for (int j = 0; j < Node->ChildrenNodes.Num(); ++j)
-			{
-				UDialogBuilderNode* ChildNode = Node->ChildrenNodes[j];
-				if (!Visited.Contains(ChildNode))
-					NextLevelNodes.Add(Node->ChildrenNodes[j]);
-			}
-		}
-
-		CurrLevelNodes = NextLevelNodes;
-		NextLevelNodes.Reset();
-		++Level;
-	}
 }

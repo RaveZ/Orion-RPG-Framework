@@ -35,6 +35,7 @@ public:
 	virtual void RegisterCommands() override;
 };
 
+class UOrionInventoryGraph;
 
 class ORIONINVENTORYEDITOR_API SMyInventory : public SCompoundWidget
 {
@@ -44,7 +45,7 @@ public:
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */
-	void Construct(const FArguments& InArgs, TWeakPtr<FOrionInventoryEditor> InInventoryEditor, const UDialogBuilderGraph* InInventorySystemGraph = nullptr);
+	void Construct(const FArguments& InArgs, TWeakPtr<FOrionInventoryEditor> InInventoryEditor, const UOrionInventoryGraph* InInventorySystemGraph = nullptr);
 	~SMyInventory();
 
 	/* SWidget interface */
@@ -55,7 +56,7 @@ public:
 	FAssetSchemaAction_InventoryGraph* SelectionAsGraph() const;
 
 	/** Accessor the blueprint object from the main editor */
-	UDialogBuilderGraph* GetOrionInventoryGraph() const { return OrionInventoryGraph; }
+	UOrionInventoryGraph* GetOrionInventoryGraph() const { return OrionInventoryGraph; }
 
 	/** Initiates a rename on the selected action node, if possible */
 	void OnRequestRenameOnActionNode();
@@ -164,7 +165,7 @@ private:
 	TWeakPtr<FOrionInventoryEditor> InventoryEditorPtr;
 
 	/** The Inventory graph being displayed: */
-	UDialogBuilderGraph* OrionInventoryGraph;
+	UOrionInventoryGraph* OrionInventoryGraph;
 
 	/** The Ed Graph being displayed: */
 	UEdGraph* EdGraph;

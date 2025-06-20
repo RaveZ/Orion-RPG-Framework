@@ -13,7 +13,6 @@
 
 UDialogBuilderNode::UDialogBuilderNode()
 {
-	BackLinkRule = EDialogueBacklinkRule::EndDialogue;
 #if WITH_EDITORONLY_DATA
 	CompatibleGraphType = UDialogBuilderGraph::StaticClass();
 
@@ -97,23 +96,6 @@ void UDialogBuilderNode::BeginNode()
 void UDialogBuilderNode::EvaluateNextNode()
 {
 	NextNode = nullptr;
-	if (ChildrenNodes.IsEmpty())
-	{
-		//TODO : Back - linking node
-		switch (BackLinkRule)
-		{
-		case EDialogueBacklinkRule::EndDialogue:
-			GetDialogComponent()->OnEndDialog.Broadcast(GetOwningDialogGraph());
-			break;
-		case EDialogueBacklinkRule::BackToLastSelector:
-			break;
-		case EDialogueBacklinkRule::JumpBackToNode:
-			break;
-		default:
-			break;
-		}
-		return;
-	}
 
 	//Will execute children from top to bottom, and will stop executing until first child succeeds.
 	//if none of the children succeeds, stop evaluate until the next dialog update
@@ -188,7 +170,7 @@ UDialogBuilderEdge* UDialogBuilderNode::GetEdge(UDialogBuilderNode* ChildNode)
 
 FText UDialogBuilderNode::GetDescription_Implementation() const
 {
-	return Description;
+	return FText();
 }
 
 void UDialogBuilderNode::BeginEvents(EEventLaunchType EventLaunchType)
@@ -422,6 +404,11 @@ void UDialogBuilderNode::PostEditChangeProperty(FPropertyChangedEvent& PropertyC
 			EvaluateUniqueID();
 		}
 	}
+}
+
+void UDialogBuilderNode::PreEditChange(FProperty* PropertyAboutToChange)
+{
+	Super::PreEditChange(PropertyAboutToChange);
 }
 
 

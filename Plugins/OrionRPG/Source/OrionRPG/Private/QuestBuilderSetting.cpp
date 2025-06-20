@@ -17,8 +17,6 @@ UQuestBuilderSetting::UQuestBuilderSetting()
 	bCanRenameNode = true;
 	bCanBeCyclical = false;
 
-	//Runtime Config
-	DefaultQuestCategory = FText::FromString("Main Quest");
 }
 
 UQuestBuilderSetting::~UQuestBuilderSetting()

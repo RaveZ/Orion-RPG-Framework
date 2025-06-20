@@ -10,8 +10,7 @@
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 #include "EdGraphSchema_OrionInventory.h"
 #include "OrionInventoryEdGraph.h"
-#include "DialogBuilderGraph.h"
-#include "DialogBuilderNode.h"
+#include "Inventory/OrionInventoryGraph.h"
 #include "Decorator/OrionDecorator.h"
 #include "DialogBuilderFunctionLibrary.h"
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -28,12 +27,12 @@ void SInventoryPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetFor
 
 }
 
-void SInventoryPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UDialogBuilderGraph* InInventorySystemGraph)
+void SInventoryPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UOrionInventoryGraph* InInventorySystemGraph)
 {
 	Construct(InArgs, InCreateData, InInventorySystemGraph, TWeakPtr<FOrionInventoryEditor>());
 }
 
-void SInventoryPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UDialogBuilderGraph* InInventorySystemGraph, TWeakPtr<FOrionInventoryEditor> InInventoryEditor)
+void SInventoryPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActionData* const InCreateData, UOrionInventoryGraph* InInventorySystemGraph, TWeakPtr<FOrionInventoryEditor> InInventoryEditor)
 {
 	check(InCreateData->Action.IsValid());
 	check(InInventorySystemGraph);
@@ -175,7 +174,7 @@ bool SInventoryPaletteItem::OnNameTextVerifyChanged(const FText& InNewText, FTex
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
 	TArray<FAssetData> InventoryGraphDataArray;
-	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), InventoryGraphDataArray);
+	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UOrionInventoryGraph::StaticClass()), InventoryGraphDataArray);
 
 	
 	UStruct* ValidationScope = nullptr;

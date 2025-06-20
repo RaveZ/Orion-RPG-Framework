@@ -18,11 +18,10 @@
 #include "GraphEditorSettings.h"
 #include "SCommentBubble.h"
 #include "SLevelOfDetailBranchNode.h"
-#include "DialogBuilderNode.h"
+#include "Inventory/OrionInventoryNode.h"
+#include "Inventory/OrionInventoryGraph.h"
+#include "Inventory/OrionInventorySetting.h"	
 #include "OrionInventoryEdNode_Root.h"
-#include "OrionInventoryEdNode_Speaker.h"
-#include "DialogBuilderNode_DialogLine.h"
-#include "DialogBuilderSetting.h"	
 #include "Fonts/SlateFontInfo.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
@@ -222,7 +221,7 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 	OutputPinBox.Reset();
 
 	UOrionInventoryEdNode* InventoryEdNode = Cast<UOrionInventoryEdNode>(GraphNode);
-	UDialogBuilderNode* InventoryNode = InventoryEdNode ? Cast<UDialogBuilderNode>(InventoryEdNode->NodeInstance) : nullptr;
+	UOrionInventoryNode* InventoryNode = InventoryEdNode ? Cast<UOrionInventoryNode>(InventoryEdNode->NodeInstance) : nullptr;
 
 	if (InventoryEdNode)
 	{
@@ -789,10 +788,15 @@ TSharedRef<SGraphNode> SGraphNode_OrionInventoryNode::GetNodeUnderMouse(const FG
 	return SubNode.IsValid() ? SubNode.ToSharedRef() : StaticCastSharedRef<SGraphNode>(AsShared());
 }
 
-void SGraphNode_OrionInventoryNode::MoveTo(const FVector2D& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+void SGraphNode_OrionInventoryNode::MoveTo(const FVector2f& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
 {
 	SGraphNode::MoveTo(NewPosition, NodeFilter, bMarkDirty);
-
+#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
+void SGraphNode_OrionInventoryNode::MoveTo(const FVector2D & NewPosition, FNodeSet & NodeFilter, bool bMarkDirty)
+{
+	SGraphNode::MoveTo(NewPosition, NodeFilter, bMarkDirty);
+#endif
 	// keep node order (defined by linked pins) up to date with actual positions
 	// this function will keep spamming on every mouse move update
 	UOrionInventoryEdNode* InventoryEdNode = Cast<UOrionInventoryEdNode>(GraphNode);
@@ -918,12 +922,12 @@ void SGraphNode_OrionInventoryNode::SetOwner(const TSharedRef<SGraphPanel>& Owne
 bool SGraphNode_OrionInventoryNode::IsNameReadOnly() const
 {
 	UOrionInventoryEdNode* InventoryEdNode = Cast<UOrionInventoryEdNode>(GraphNode);
-	UDialogBuilderNode* InventoryNode = InventoryEdNode ? Cast<UDialogBuilderNode>(InventoryEdNode->NodeInstance) : nullptr;
+	UOrionInventoryNode* InventoryNode = InventoryEdNode ? Cast<UOrionInventoryNode>(InventoryEdNode->NodeInstance) : nullptr;
 
-	UDialogBuilderGraph* InventoryGraph = InventoryNode ? Cast<UDialogBuilderGraph>(InventoryNode->GetOwningDialogGraph()) : nullptr;
+	UOrionInventoryGraph* InventoryGraph = InventoryNode ? Cast<UOrionInventoryGraph>(InventoryNode->GetOwningOrionInventoryGraph()) : nullptr;
 
 	return (InventoryEdNode && InventoryNode && InventoryGraph) &&
-		(!GetDefault<UDialogBuilderSetting>()->bCanRenameNode || !InventoryNode->IsNameEditable()) || SGraphNode::IsNameReadOnly();
+		(!GetDefault<UOrionInventorySetting>()->bCanRenameNode || !InventoryNode->IsNameEditable()) || SGraphNode::IsNameReadOnly();
 }
 FReply SGraphNode_OrionInventoryNode::OnMouseDown(const FGeometry& SenderGeometry, const FPointerEvent& MouseEvent)
 {
@@ -1048,7 +1052,7 @@ bool SGraphNode_OrionInventoryNode::OnVerifyNameTextChanged(const FText& InText,
 	}
 
 	UOrionInventoryEdNode* InventoryEdNode = Cast<UOrionInventoryEdNode>(GraphNode);
-	UDialogBuilderNode* InventoryNode = InventoryEdNode ? Cast<UDialogBuilderNode>(InventoryEdNode->NodeInstance) : nullptr;
+	UOrionInventoryNode* InventoryNode = InventoryEdNode ? Cast<UOrionInventoryNode>(InventoryEdNode->NodeInstance) : nullptr;
 	UOrionInventoryEdGraph* InventoryEdGraph = InventoryEdNode ? InventoryEdNode->GetOrionInventoryEdGraph() : nullptr;
 
 	if (InventoryNode && InventoryEdGraph)
@@ -1059,7 +1063,7 @@ bool SGraphNode_OrionInventoryNode::OnVerifyNameTextChanged(const FText& InText,
 			UOrionInventoryEdNode* NodeEdNode = Cast<UOrionInventoryEdNode>(Node);
 			if (NodeEdNode && NodeEdNode->NodeInstance)
 			{
-				UDialogBuilderNode* NodeInstance = Cast<UDialogBuilderNode>(NodeEdNode->NodeInstance);
+				UOrionInventoryNode* NodeInstance = Cast<UOrionInventoryNode>(NodeEdNode->NodeInstance);
 				if (NodeInstance && NodeInstance != InventoryNode)
 				{
 					if (FName(FinalString) == OriginalName)
@@ -1121,7 +1125,7 @@ void SGraphNode_OrionInventoryNode::OnNameTextCommited(const FText& InText, ETex
 	FName OriginalName;
 
 	UOrionInventoryEdNode* InventoryEdNode = Cast<UOrionInventoryEdNode>(GraphNode);
-	UDialogBuilderNode* InventoryNode = InventoryEdNode ? Cast<UDialogBuilderNode>(InventoryEdNode->NodeInstance) : nullptr;
+	UOrionInventoryNode* InventoryNode = InventoryEdNode ? Cast<UOrionInventoryNode>(InventoryEdNode->NodeInstance) : nullptr;
 
 	if (InventoryEdNode && InventoryNode)
 	{
@@ -1137,11 +1141,11 @@ void SGraphNode_OrionInventoryNode::OnNameTextCommited(const FText& InText, ETex
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
 		TArray<FAssetData> InventoryGraphDataArray;
-		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), InventoryGraphDataArray);
+		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UOrionInventoryGraph::StaticClass()), InventoryGraphDataArray);
 
 		for (const FAssetData& AssetData : InventoryGraphDataArray)
 		{
-			UDialogBuilderGraph* InventoryGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
+			UOrionInventoryGraph* InventoryGraph = Cast<UOrionInventoryGraph>(AssetData.GetAsset());
 			if (InventoryGraph)
 			{
 				
@@ -1178,7 +1182,7 @@ FSlateColor SGraphNode_OrionInventoryNode::GetBorderBackgroundColor() const
 	const bool bSelectedSubNode = InventoryParentNode && GetOwnerPanel()->SelectionManager.SelectedNodes.Contains(GraphNode);
 
 
-	UDialogBuilderNode* InventoryNode = InventoryEdNode ? Cast<UDialogBuilderNode>(InventoryEdNode->NodeInstance) : nullptr;
+	UOrionInventoryNode* InventoryNode = InventoryEdNode ? Cast<UOrionInventoryNode>(InventoryEdNode->NodeInstance) : nullptr;
 
 	return bSelectedSubNode ? OrionInventoryColors::NodeBorder::Selected :
 		InventoryEdNode && !InventoryEdNode->IsSubNode() ? InventoryEdNode->GetBackgroundColor() :
@@ -1189,7 +1193,7 @@ FSlateColor SGraphNode_OrionInventoryNode::GetBorderBackgroundColor() const
 FText SGraphNode_OrionInventoryNode::GetNodeIDText() const
 {
 	UOrionInventoryEdNode* InventoryEdNode = Cast<UOrionInventoryEdNode>(GraphNode);
-	UDialogBuilderNode* InventoryNode = InventoryEdNode ? Cast<UDialogBuilderNode>(InventoryEdNode->NodeInstance) : nullptr;
+	UOrionInventoryNode* InventoryNode = InventoryEdNode ? Cast<UOrionInventoryNode>(InventoryEdNode->NodeInstance) : nullptr;
 	if (InventoryNode)
 	{
 		return FText::FromString("ID: " + InventoryNode->ID.ToString());
@@ -1296,18 +1300,18 @@ EVisibility SGraphNode_OrionInventoryNode::GetIndexVisibility() const
 		SelectedNodes = InventoryEdGraph->SEditorGraph->GetSelectedNodes();
 	}
 
-	UDialogBuilderNode* FirstSelectedNode = nullptr;
+	UOrionInventoryNode* FirstSelectedNode = nullptr;
 	if (SelectedNodes.Num() > 0)
 	{
 		// Get the first element of the SelectedNodes set
 		UOrionInventoryEdNode* SelectedInventoryEdNode = Cast<UOrionInventoryEdNode>(*SelectedNodes.CreateConstIterator());
-		FirstSelectedNode = SelectedInventoryEdNode ? Cast<UDialogBuilderNode>(SelectedInventoryEdNode->NodeInstance) : nullptr;
+		FirstSelectedNode = SelectedInventoryEdNode ? Cast<UOrionInventoryNode>(SelectedInventoryEdNode->NodeInstance) : nullptr;
 	}
 
-	UDialogBuilderNode* InventoryNode = Cast<UDialogBuilderNode>(InventoryEdNode->NodeInstance);
+	UOrionInventoryNode* InventoryNode = Cast<UOrionInventoryNode>(InventoryEdNode->NodeInstance);
 
 	// Visible if ((we are in PIE || if we have siblings) && (SelectedNodes only one && Matching parent with selected nodes))
-	const bool bCanShowIndex = (ShouldShowExecutionIndex() || (MyParentOutputPin && MyParentOutputPin->LinkedTo.Num() > 1)) && (SelectedNodes.Num() == 1 && (FirstSelectedNode && InventoryNode) && (InventoryNode->ParentNodes.Contains(FirstSelectedNode)));
+	const bool bCanShowIndex = (ShouldShowExecutionIndex() || (MyParentOutputPin && MyParentOutputPin->LinkedTo.Num() > 1)) && (SelectedNodes.Num() == 1 && (FirstSelectedNode && InventoryNode));
 
 	return (bCanShowIndex && (!MyOwnerPanel.IsValid() || MyOwnerPanel->GetCurrentLOD() > EGraphRenderingLOD::LowDetail)) ? EVisibility::Visible : EVisibility::Collapsed;
 }
@@ -1332,28 +1336,16 @@ FText SGraphNode_OrionInventoryNode::GetIndexText() const
 		SelectedNodes = InventoryEdGraph->SEditorGraph->GetSelectedNodes();
 	}
 
-	UDialogBuilderNode* FirstSelectedNode = nullptr;
+	UOrionInventoryNode* FirstSelectedNode = nullptr;
 	if (SelectedNodes.Num() > 0)
 	{
 		// Get the first element of the SelectedNodes set
 		UOrionInventoryEdNode* SelectedInventoryEdNode = Cast<UOrionInventoryEdNode>(*SelectedNodes.CreateConstIterator());
-		FirstSelectedNode = SelectedInventoryEdNode ? Cast<UDialogBuilderNode>(SelectedInventoryEdNode->NodeInstance) : nullptr;
+		FirstSelectedNode = SelectedInventoryEdNode ? Cast<UOrionInventoryNode>(SelectedInventoryEdNode->NodeInstance) : nullptr;
 	}
 
-	UDialogBuilderNode* InventoryNode = Cast<UDialogBuilderNode>(InventoryEdNode->NodeInstance);
+	UOrionInventoryNode* InventoryNode = Cast<UOrionInventoryNode>(InventoryEdNode->NodeInstance);
 
-	if (InventoryNode->ParentNodes.Contains(FirstSelectedNode))
-	{
-		for (int i = 0; i < FirstSelectedNode->ChildrenNodes.Num(); i++)
-		{
-			//Select this index if node matches with the selected node childrens
-			if (FirstSelectedNode->ChildrenNodes[i] == InventoryNode)
-			{
-				Index = i + 1;//Index start from 1
-				break;
-			}
-		}
-	}
 	
 	
 	return FText::AsNumber(Index);

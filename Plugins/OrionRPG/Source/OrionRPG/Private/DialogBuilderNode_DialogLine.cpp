@@ -11,6 +11,10 @@
 #define LOCTEXT_NAMESPACE "DialogSystemGraphNode"
 
 
+UDialogBuilderNode_DialogLine::UDialogBuilderNode_DialogLine()
+{
+}
+
 void UDialogBuilderNode_DialogLine::BeginNode()
 {
 	Super::BeginNode();
@@ -144,7 +148,7 @@ void UDialogBuilderNode_DialogLine::SetNodeTitle(const FText& NewTitle)
 
 FText UDialogBuilderNode_DialogLine::GetNodeDescription() const
 {
-    return Description;
+	return DialogSequenceData.Line;
 }
 #endif
 

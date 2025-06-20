@@ -112,7 +112,11 @@ void FQuestGraphEditorSummoner::SaveState(TSharedPtr<SDockTab> Tab, TSharedPtr<F
 {
 	TSharedRef<SGraphEditor> GraphEditor = StaticCastSharedRef<SGraphEditor>(Tab->GetContent());
 
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+	FVector2f ViewLocation;
+#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 	FVector2D ViewLocation;
+#endif
 	float ZoomAmount;
 	GraphEditor->GetViewLocation(ViewLocation, ZoomAmount);
 

@@ -1,7 +1,7 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #include "OrionInventoryFactory.h"
-#include "DialogBuilderGraph.h"
+#include "Inventory/OrionInventoryGraph.h"
 #include "OrionInventoryEditor.h"
 #include "ClassViewerModule.h"
 #include "ClassViewerFilter.h"
@@ -28,7 +28,7 @@ public:
 	bool bDisallowBlueprintBase;
 
 	virtual bool IsClassAllowed(const FClassViewerInitializationOptions& InInitOptions, const UClass* InClass, TSharedRef< FClassViewerFilterFuncs > InFilterFuncs) override
-	{
+	{ 
 		bool bAllowed = !InClass->HasAnyClassFlags(DisallowedClassFlags)
 			&& InFilterFuncs->IfInChildOfClassesSet(AllowedChildrenOfClasses, InClass) != EFilterReturn::Failed;
 
@@ -57,8 +57,8 @@ public:
 
 UOrionInventoryFactory::UOrionInventoryFactory(const FObjectInitializer& ObjectInitializer) : Super(ObjectInitializer)
 {
-	SupportedClass = UDialogBuilderGraph::StaticClass();
-	InventorySystemGraphClass = UDialogBuilderGraph::StaticClass();
+	SupportedClass = UOrionInventoryGraph::StaticClass();
+	InventorySystemGraphClass = UOrionInventoryGraph::StaticClass();
 	bCreateNew = true;
 	bEditAfterNew = true;
 }
@@ -71,11 +71,11 @@ bool UOrionInventoryFactory::ConfigureProperties()
 
 UObject* UOrionInventoryFactory::FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn)
 {
-	check(Class->IsChildOf(UDialogBuilderGraph::StaticClass()));
-	UDialogBuilderGraph* InventoryGraph = nullptr;
+	check(Class->IsChildOf(UOrionInventoryGraph::StaticClass()));
+	UOrionInventoryGraph* InventoryGraph = nullptr;
 	if (InventorySystemGraphClass)
 	{
-		InventoryGraph =  NewObject<UDialogBuilderGraph>(InParent, InventorySystemGraphClass, Name, Flags | RF_Transactional);
+		InventoryGraph =  NewObject<UOrionInventoryGraph>(InParent, InventorySystemGraphClass, Name, Flags | RF_Transactional);
 		InventoryGraph->ID = FOrionInventoryEditorUtils::FindUniqueInventoryGraphName("OrionInventoryAsset");
 		
 	}
@@ -111,7 +111,11 @@ void FInventoryGraphEditorSummoner::SaveState(TSharedPtr<SDockTab> Tab, TSharedP
 {
 	TSharedRef<SGraphEditor> GraphEditor = StaticCastSharedRef<SGraphEditor>(Tab->GetContent());
 
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+	FVector2f ViewLocation;
+#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 	FVector2D ViewLocation;
+#endif
 	float ZoomAmount;
 	GraphEditor->GetViewLocation(ViewLocation, ZoomAmount);
 
@@ -139,7 +143,7 @@ const FSlateBrush* FInventoryGraphEditorSummoner::GetTabIconForObject(const FWor
 EAssetCommandResult UAssetDefinition_InventoryEditor::OpenAssets(const FAssetOpenArgs& OpenArgs) const
 {
 	const EToolkitMode::Type Mode = OpenArgs.ToolkitHost.IsValid() ? EToolkitMode::WorldCentric : EToolkitMode::Standalone;
-	for (UDialogBuilderGraph* InventoryGraph : OpenArgs.LoadObjects<UDialogBuilderGraph>())
+	for (UOrionInventoryGraph* InventoryGraph : OpenArgs.LoadObjects<UOrionInventoryGraph>())
 	{
 		FOrionInventoryEditorModule& InventorySystemEditorModule = FModuleManager::GetModuleChecked<FOrionInventoryEditorModule>("OrionInventoryEditor");
 		InventorySystemEditorModule.CheckClassCache();

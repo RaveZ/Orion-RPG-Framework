@@ -29,7 +29,7 @@ void FMyInventoryCommands::RegisterCommands()
 }
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
-void SMyInventory::Construct(const FArguments& InArgs, TWeakPtr<FOrionInventoryEditor> InInventoryEditor, const UDialogBuilderGraph* InInventorySystemGraph)
+void SMyInventory::Construct(const FArguments& InArgs, TWeakPtr<FOrionInventoryEditor> InInventoryEditor, const UOrionInventoryGraph* InInventorySystemGraph)
 {
 	bNeedsRefresh = false;
 	bShowReplicatedVariablesOnly = false;
@@ -106,7 +106,7 @@ void SMyInventory::Construct(const FArguments& InArgs, TWeakPtr<FOrionInventoryE
 	else
 	{
 		// we're in read only mode when there's no inventory editor:
-		OrionInventoryGraph = const_cast<UDialogBuilderGraph*>(InInventorySystemGraph);
+		OrionInventoryGraph = const_cast<UOrionInventoryGraph*>(InInventorySystemGraph);
 		check(OrionInventoryGraph);
 		ToolbarBuilderWidget = SNew(SBox);
 	}
@@ -291,7 +291,7 @@ TSharedRef<SWidget> SMyInventory::OnCreateWidgetForAction(FCreateWidgetForAction
 
 void SMyInventory::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 {
-	UDialogBuilderGraph* InventorySystemObj = GetOrionInventoryGraph();
+	UOrionInventoryGraph* InventorySystemObj = GetOrionInventoryGraph();
 	check(InventorySystemObj);
 
 	TSharedPtr<FOrionInventoryEditor> InventorySystemEditor = InventoryEditorPtr.Pin();
@@ -301,9 +301,9 @@ void SMyInventory::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 	if (InventorySystemEditor.IsValid())
 	{
 		// Grab ubergraph pages
-		for (int32 i = 0; i < InventorySystemObj->DialogGraphPages.Num(); i++)
+		for (int32 i = 0; i < InventorySystemObj->InventoryGraphPages.Num(); i++)
 		{
-			UEdGraph* Graph = InventorySystemObj->DialogGraphPages[i];
+			UEdGraph* Graph = InventorySystemObj->InventoryGraphPages[i];
 			check(Graph);
 
 			FGraphDisplayInfo DisplayInfo;
@@ -375,7 +375,7 @@ void SMyInventory::ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction)
 	const bool bIsShiftPressed = FSlateApplication::Get().GetModifierKeys().IsShiftDown();
 	FDocumentTracker::EOpenDocumentCause OpenMode = bIsShiftPressed ? FDocumentTracker::ForceOpenNewDocument : FDocumentTracker::OpenNewDocument;
 
-	UDialogBuilderGraph* InventorySystemObj = InventoryEditorPtr.Pin()->GetOrionInventoryGraph();
+	UOrionInventoryGraph* InventorySystemObj = InventoryEditorPtr.Pin()->GetOrionInventoryGraph();
 	if (InAction.IsValid())
 	{
 		if (InAction->GetTypeId() == FAssetSchemaAction_InventoryGraph::StaticGetTypeId())
@@ -463,7 +463,7 @@ void SMyInventory::BuildAddNewMenu(FMenuBuilder& MenuBuilder)
 {
 	MenuBuilder.BeginSection("AddNewItem", LOCTEXT("AddOperations", "Add New"));
 
-	if (UDialogBuilderGraph* CurrentBlueprint = GetOrionInventoryGraph())
+	if (UOrionInventoryGraph* CurrentBlueprint = GetOrionInventoryGraph())
 	{
 		MenuBuilder.AddMenuEntry(FOrionInventory_EditorCommands::Get().AddNewInventoryGraph);
 		

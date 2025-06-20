@@ -19,7 +19,6 @@ namespace EInventorySubNode
 class UOrionInventoryEdNode;
 class UOrionInventoryEdSubNode_Event;
 class UOrionInventoryEdSubNode_Decorator;
-class UOrionInventoryEdNode_Edge;
 
 struct FGraphNodeClassHelper;
 struct FGraphNodeClassData;
@@ -37,17 +36,7 @@ public:
 	virtual EGraphType GetGraphType(const UEdGraph* TestEdGraph) const override;
 	virtual void GetGraphContextActions(FGraphContextMenuBuilder& ContextMenuBuilder) const override;
 	virtual void GetContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const override;
-	virtual const FPinConnectionResponse CanCreateConnection(const UEdGraphPin* A, const UEdGraphPin* B) const override;
 	virtual const FPinConnectionResponse CanMergeNodes(const UEdGraphNode* A, const UEdGraphNode* B) const override;
-	virtual bool TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const override;
-	virtual bool CreateAutomaticConversionNodeAndConnections(UEdGraphPin* A, UEdGraphPin* B) const override;
-	virtual class FConnectionDrawingPolicy* CreateConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float InZoomFactor, const FSlateRect& InClippingRect, class FSlateWindowElementList& InDrawElements, class UEdGraph* InGraphObj) const override;
-	virtual FLinearColor GetPinTypeColor(const FEdGraphPinType& PinType) const override;
-	virtual void BreakNodeLinks(UEdGraphNode& TargetNode) const override;
-	virtual void BreakPinLinks(UEdGraphPin& TargetPin, bool bSendsNodeNotifcation) const override;
-	virtual void BreakSinglePinLink(UEdGraphPin* SourcePin, UEdGraphPin* TargetPin) const override;
-	virtual UEdGraphPin* DropPinOnNode(UEdGraphNode* InTargetNode, const FName& InSourcePinName, const FEdGraphPinType& InSourcePinType, EEdGraphPinDirection InSourcePinDirection) const override;
-	virtual bool SupportsDropPinOnNode(UEdGraphNode* InTargetNode, const FEdGraphPinType& InSourcePinType, EEdGraphPinDirection InSourcePinDirection, FText& OutErrorMessage) const override;
 	virtual bool IsCacheVisualizationOutOfDate(int32 InVisualizationCacheID) const override;
 	virtual int32 GetCurrentVisualizationCacheID() const override;
 	virtual void ForceVisualizationCacheClear() const override;
@@ -67,6 +56,9 @@ protected:
 
 private:
 	static int32 CurrentCacheRefreshID;
+	
+	/** creates add inventory item... submenu */
+	void CreateAddInventoryItemSubMenu(class UToolMenu* Menu, UEdGraph* Graph) const;
 };
 
 /** Action to add a node to the graph */
@@ -85,23 +77,6 @@ public:
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 
 	TObjectPtr<UOrionInventoryEdNode> NodeTemplate;
-};
-
-USTRUCT()
-struct ORIONINVENTORYEDITOR_API FAssetSchemaAction_Inventory_NewEdge : public FEdGraphSchemaAction
-{
-	GENERATED_USTRUCT_BODY();
-
-public:
-	FAssetSchemaAction_Inventory_NewEdge() : NodeTemplate(nullptr) {}
-
-	FAssetSchemaAction_Inventory_NewEdge(const FText& InNodeCategory, const FText& InMenuDesc, const FText& InToolTip, const int32 InGrouping)
-		: FEdGraphSchemaAction(InNodeCategory, InMenuDesc, InToolTip, InGrouping), NodeTemplate(nullptr) {}
-
-	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
-	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
-
-	TObjectPtr <UOrionInventoryEdNode_Edge> NodeTemplate;
 };
 
 /** Reference to a  event graph (only used in 'docked' palette) */
@@ -160,8 +135,13 @@ struct ORIONINVENTORYEDITOR_API FAssetSchemaAction_Inventory_NewSubNode : public
 	}
 
 	//~ Begin FEdGraphSchemaAction Interface
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2f& Location, bool bSelectNewNode = true) override;
+	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, TArray<UEdGraphPin*>& FromPins, const FVector2f& Location, bool bSelectNewNode = true) override;
+#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override;
 	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, TArray<UEdGraphPin*>& FromPins, const FVector2D Location, bool bSelectNewNode = true) override;
+#endif
 	virtual void AddReferencedObjects(FReferenceCollector& Collector) override;
 	//~ End FEdGraphSchemaAction Interface
 };
@@ -180,6 +160,10 @@ struct ORIONINVENTORYEDITOR_API FInventorySchemaAction_AddComment : public FEdGr
 	}
 
 	// FEdGraphSchemaAction interface
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2f& Location, bool bSelectNewNode = true) override final;
+#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 	virtual UEdGraphNode* PerformAction(class UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode = true) override final;
+#endif
 	// End of FEdGraphSchemaAction interface
 };

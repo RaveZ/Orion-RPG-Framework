@@ -4,7 +4,7 @@
 #include "OrionInventoryEdNode_OptionSelector.h"
 #include "DialogBuilderSetting.h"
 #include "DialogBuilderNode.h"
-#include "DialogBuilderNode_OptionSelector.h"
+#include "DialogBuilderNode_RerouteNode.h"
 
 UOrionInventoryEdNode_OptionSelector::UOrionInventoryEdNode_OptionSelector()
 {
@@ -23,7 +23,7 @@ FText UOrionInventoryEdNode_OptionSelector::GetNodeTitle(ENodeTitleType::Type Ti
 
 FText UOrionInventoryEdNode_OptionSelector::GetTooltipText() const
 {
-	const UDialogBuilderNode_OptionSelector* OptionSelectorNode = Cast<UDialogBuilderNode_OptionSelector>(NodeInstance);
+	const UDialogBuilderNode_RerouteNode* OptionSelectorNode = Cast<UDialogBuilderNode_RerouteNode>(NodeInstance);
 	if (OptionSelectorNode)
 	{
 		return FText::Format(FText::FromString(TEXT("Option Selector Node\n{0}")),
@@ -35,7 +35,7 @@ FText UOrionInventoryEdNode_OptionSelector::GetTooltipText() const
 
 FLinearColor UOrionInventoryEdNode_OptionSelector::GetBackgroundColor() const
 {
-	return GetDefault<UDialogBuilderSetting>()->OptionSelectorNodeColor;
+	return GetDefault<UDialogBuilderSetting>()->PlayerOptionNodeColor;
 }
 
 void UOrionInventoryEdNode_OptionSelector::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const

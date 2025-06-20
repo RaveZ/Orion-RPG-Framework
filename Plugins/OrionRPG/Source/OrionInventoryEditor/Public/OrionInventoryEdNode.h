@@ -8,7 +8,6 @@
 #include "UObject/ObjectMacros.h"
 #include "UObject/NoExportTypes.h"
 #include "OrionInventoryEdGraph.h"
-#include "DialogBuilderGraph.h"
 #include "OrionInventoryEdNode.generated.h"
 
 class UEdNode_InventorySystemEdge;
@@ -66,7 +65,6 @@ public:
 	FString ErrorMessage;
 
 	//UedGraphnode interface
-	virtual void AllocateDefaultPins() override;
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	virtual FText GetTooltipText() const override;
 	virtual void DestroyNode() override;

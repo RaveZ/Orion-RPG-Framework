@@ -10,7 +10,7 @@
 #include "DialogBuilderNode.h"
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderNode_DialogLine.h"
-#include "DialogBuilderNode_OptionSelector.h"
+#include "DialogBuilderNode_RerouteNode.h"
 #include "DialogBuilderNode_PlayerOption.h"
 #include "DialogBuilderEditorUtils.h"
 #include "GraphDiffControl.h"
@@ -240,9 +240,9 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 						}
 					});
 				}
-				if (UDialogBuilderNode_OptionSelector* StateDialogNode = Cast<UDialogBuilderNode_OptionSelector>(NodeInstance))
+				if (UDialogBuilderNode_RerouteNode* StateDialogNode = Cast<UDialogBuilderNode_RerouteNode>(NodeInstance))
 				{
-					FindUniqueNodeName("Selector");
+					FindUniqueNodeName("Reroute");
 				}
 				if (UDialogBuilderNode_PlayerOption* CheckpointDialogNode = Cast<UDialogBuilderNode_PlayerOption>(NodeInstance))
 				{
@@ -256,11 +256,6 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 				{
 					OrionEvent->bIsNode = true;
 				}
-			}
-			UDialogBuilderNode* DialogNode = NodeInstance ?  Cast<UDialogBuilderNode>(NodeInstance) : nullptr;
-			if (DialogNode)
-			{
-                DialogNode->Description = FText::FromString(TEXT("Description..."));
 			}
 
 			InitializeInstance();

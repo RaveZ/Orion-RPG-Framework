@@ -4,11 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "DialogBuilderNode.h"
-#include "DialogBuilderNode_OptionSelector.generated.h"
+#include "DialogBuilderNode_RerouteNode.generated.h"
 
 
 UCLASS(BlueprintType)
-class ORIONRPG_API UDialogBuilderNode_OptionSelector : public UDialogBuilderNode
+class ORIONRPG_API UDialogBuilderNode_RerouteNode : public UDialogBuilderNode
 {
 	GENERATED_BODY()
 	

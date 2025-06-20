@@ -1,14 +1,14 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
-#include "DialogBuilderNode_OptionSelector.h"
+#include "DialogBuilderNode_RerouteNode.h"
 #include "DialogBuilderNode_PlayerOption.h"
 #include "DialogComponent.h"
 #include "Event/OrionEvent.h"
 
 
 
-void UDialogBuilderNode_OptionSelector::BeginNode()
+void UDialogBuilderNode_RerouteNode::BeginNode()
 {
 	Super::BeginNode();
 	TArray<UDialogBuilderNode_PlayerOption*> OptionsArray;
@@ -23,21 +23,21 @@ void UDialogBuilderNode_OptionSelector::BeginNode()
 	GetDialogComponent()->OnEnterOptionSelector.Broadcast(OptionsArray);
 }
 
-void UDialogBuilderNode_OptionSelector::SelectOption(UDialogBuilderNode_PlayerOption* Option)
+void UDialogBuilderNode_RerouteNode::SelectOption(UDialogBuilderNode_PlayerOption* Option)
 {
 
 }
 
 #if WITH_EDITOR
-FText UDialogBuilderNode_OptionSelector::GetNodeTitle() const
+FText UDialogBuilderNode_RerouteNode::GetNodeTitle() const
 {
     return FText::FromName(ID).IsEmpty() ? FText::FromString(UDialogBuilderNode::GetShortTypeName(this)) : FText::FromName(ID);
 }
-void UDialogBuilderNode_OptionSelector::SetNodeTitle(const FText& NewTitle)
+void UDialogBuilderNode_RerouteNode::SetNodeTitle(const FText& NewTitle)
 {
     ID = FName(NewTitle.ToString());
 }
-FText UDialogBuilderNode_OptionSelector::GetNodeDescription() const
+FText UDialogBuilderNode_RerouteNode::GetNodeDescription() const
 {
     FString PlayerOptionDesc;
 

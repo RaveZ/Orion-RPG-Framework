@@ -7,7 +7,7 @@
 #include "UObject/UObjectIterator.h"
 #include "DialogSaveObject.h"
 #include "DialogBuilderGraph.h"
-#include "DialogBuilderNode_OptionSelector.h"
+#include "DialogBuilderNode_RerouteNode.h"
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderNode_DialogLine.h"
 #include "Kismet/GameplayStatics.h"

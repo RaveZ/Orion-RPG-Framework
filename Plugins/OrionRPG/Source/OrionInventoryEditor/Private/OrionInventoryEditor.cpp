@@ -3,7 +3,6 @@
 
 #include "OrionInventoryEditor.h"
 #include "OrionInventoryEditorModule.h"
-#include "DialogBuilderNode_Root.h"
 #include "Decorator/OrionDecorator.h"
 #include "EngineGlobals.h"
 #include "Editor/EditorEngine.h"
@@ -18,10 +17,10 @@
 #include "OrionInventory_EditorCommands.h"
 #include "OrionInventoryEdGraph.h"
 #include "OrionInventoryEdNode.h"
+#include "Inventory/OrionInventoryNode.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "K2Node.h"
 #include "GraphEditAction.h"
-#include "OrionInventoryEdNode_Edge.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "HAL/PlatformApplicationMisc.h"
 #include "EdGraphSchema_OrionInventory.h"
@@ -70,7 +69,7 @@ FOrionInventoryEditor::~FOrionInventoryEditor()
 
 void FOrionInventoryEditor::Initialize(const EToolkitMode::Type Mode, const TSharedPtr<IToolkitHost>& InitToolkitHost, UObject* InObject)
 {
-	UDialogBuilderGraph* InventoryGraphToEdit = Cast<UDialogBuilderGraph>(InObject);
+	UOrionInventoryGraph* InventoryGraphToEdit = Cast<UOrionInventoryGraph>(InObject);
 
 	if (InventoryGraphToEdit != nullptr)
 	{
@@ -181,12 +180,12 @@ void FOrionInventoryEditor::Initialize(const EToolkitMode::Type Mode, const TSha
 		}
 		else
 		{
-			if (GetOrionInventoryGraph()->DialogGraphPages.Num() > 0)
+			if (GetOrionInventoryGraph()->InventoryGraphPages.Num() > 0)
 			{
-				OpenDocument(GetOrionInventoryGraph()->DialogGraphPages[0], FDocumentTracker::OpenNewDocument);
+				OpenDocument(GetOrionInventoryGraph()->InventoryGraphPages[0], FDocumentTracker::OpenNewDocument);
 				
 				//bind on graph changes
-				for (UEdGraph* EdGraph : EditingInventoryGraph->DialogGraphPages)
+				for (UEdGraph* EdGraph : EditingInventoryGraph->InventoryGraphPages)
 				{
 					if (EdGraph)
 					{
@@ -281,16 +280,11 @@ void FOrionInventoryEditor::PostRedo(bool bSuccess)
 
 void FOrionInventoryEditor::BindCommands()
 {
-	ToolkitCommands->MapAction(FOrionInventory_EditorCommands::Get().NewInventoryDecorator,
-		FExecuteAction::CreateSP(this, &FOrionInventoryEditor::CreateNewInventoryDecorator),
-		FCanExecuteAction::CreateSP(this, &FOrionInventoryEditor::CanCreateInventoryDecorator)
+	ToolkitCommands->MapAction(FOrionInventory_EditorCommands::Get().AddInventoryItem,
+		FExecuteAction::CreateSP(this, &FOrionInventoryEditor::CreateNewInventoryItem),
+		FCanExecuteAction::CreateSP(this, &FOrionInventoryEditor::CanCreateInventoryItem)
 	);
 
-	ToolkitCommands->MapAction(FOrionInventory_EditorCommands::Get().NewInventoryEvent,
-		FExecuteAction::CreateSP(this, &FOrionInventoryEditor::CreateNewInventoryEvent),
-		FCanExecuteAction::CreateSP(this, &FOrionInventoryEditor::CanCreateInventoryEvent)
-	); 
-	
 	ToolkitCommands->MapAction(FOrionInventory_EditorCommands::Get().InventorySetting,
 		FExecuteAction::CreateSP(this, &FOrionInventoryEditor::OpenInventorySetting),
 		FCanExecuteAction::CreateSP(this, &FOrionInventoryEditor::CanOpenInventorySetting)
@@ -323,14 +317,10 @@ void FOrionInventoryEditor::CreateCommandList()
 		FIsActionButtonVisible::CreateSP(this, &FOrionInventoryEditor::NewDocument_IsVisibleForType, CGT_NewInventoryGraph)
 	);
 
-	GraphEditorCommands->MapAction(FOrionInventory_EditorCommands::Get().NewInventoryDecorator,
-		FExecuteAction::CreateRaw(this, &FOrionInventoryEditor::CreateNewInventoryDecorator),
-		FCanExecuteAction::CreateRaw(this, &FOrionInventoryEditor::CanCreateInventoryDecorator));
+	GraphEditorCommands->MapAction(FOrionInventory_EditorCommands::Get().AddInventoryItem,
+		FExecuteAction::CreateRaw(this, &FOrionInventoryEditor::CreateNewInventoryItem),
+		FCanExecuteAction::CreateRaw(this, &FOrionInventoryEditor::CanCreateInventoryItem));
 	
-	GraphEditorCommands->MapAction(FOrionInventory_EditorCommands::Get().NewInventoryEvent,
-		FExecuteAction::CreateRaw(this, &FOrionInventoryEditor::CreateNewInventoryEvent),
-		FCanExecuteAction::CreateRaw(this, &FOrionInventoryEditor::CanCreateInventoryEvent));
-
 	GraphEditorCommands->MapAction(FOrionInventory_EditorCommands::Get().InventorySetting,
 		FExecuteAction::CreateRaw(this, &FOrionInventoryEditor::OpenInventorySetting),
 		FCanExecuteAction::CreateRaw(this, &FOrionInventoryEditor::CanOpenInventorySetting));
@@ -568,7 +558,7 @@ FString FOrionInventoryEditor::GetReferencerName() const
 	return FString();
 }
 
-UDialogBuilderGraph* FOrionInventoryEditor::GetOrionInventoryGraph() const
+UOrionInventoryGraph* FOrionInventoryEditor::GetOrionInventoryGraph() const
 {
 	return EditingInventoryGraph;
 }
@@ -739,7 +729,7 @@ void FOrionInventoryEditor::InitializeDocumentTab()
 {
 	check(IsEditingSingleInventoryGraph());
 
-	UDialogBuilderGraph* OrionInventoryGraph = GetOrionInventoryGraph();
+	UOrionInventoryGraph* OrionInventoryGraph = GetOrionInventoryGraph();
 	if (OrionInventoryGraph->LastEditedDocuments.Num() == 0)
 	{
 			OrionInventoryGraph->LastEditedDocuments.Add(FOrionInventoryEditorUtils::FindInventoryGraph(OrionInventoryGraph));
@@ -759,7 +749,7 @@ void FOrionInventoryEditor::InitializeDocumentTab()
 
 						for (UObject* OuterObject = InGraph->GetOuter(); OuterObject; OuterObject = OuterObject->GetOuter())
 						{
-							if (OuterObject->IsA<UDialogBuilderGraph>())
+							if (OuterObject->IsA<UOrionInventoryGraph>())
 							{
 								// reached up to the OrionInventoryGraph for the graph, we are done climbing the tree
 								OpenCause = FDocumentTracker::RestorePreviousDocument;
@@ -857,7 +847,7 @@ bool FOrionInventoryEditor::IsGraphInCurrentInventoryGraph(const UEdGraph* InGra
 {
 	bool bEditable = true;
 
-	UDialogBuilderGraph* EditingBP = GetOrionInventoryGraph();
+	UOrionInventoryGraph* EditingBP = GetOrionInventoryGraph();
 	if (EditingBP)
 	{
 		TArray<UEdGraph*> Graphs;
@@ -875,7 +865,7 @@ FGraphAppearanceInfo FOrionInventoryEditor::GetGraphAppearance() const
 
 	if (FOrionInventoryEditor::IsPIESimulating())
 	{
-		if (GetOrionInventoryGraph()->DialogComponent)
+		if (GetOrionInventoryGraph()->OrionInventoryComponent)
 		{
 			AppearanceInfo.PIENotifyText = LOCTEXT("ActiveLabel", "ACTIVE");
 		}
@@ -1015,7 +1005,7 @@ void FOrionInventoryEditor::RebuildOrionInventoryGraphPages()
 		return;
 	}
 
-	for (UEdGraph* EdGraph : EditingInventoryGraph->DialogGraphPages)
+	for (UEdGraph* EdGraph : EditingInventoryGraph->InventoryGraphPages)
 	{
 		if (EdGraph)
 		{
@@ -1171,17 +1161,6 @@ void FOrionInventoryEditor::CopySelectedNodes()
 			continue;
 		}
 
-		if (UOrionInventoryEdNode_Edge* EdNode_Edge = Cast<UOrionInventoryEdNode_Edge>(*SelectedIter))
-		{
-			UOrionInventoryEdNode* StartNode = EdNode_Edge->GetStartNode();
-			UOrionInventoryEdNode* EndNode = EdNode_Edge->GetEndNode();
-
-			if (!SelectedNodes.Contains(StartNode) || !SelectedNodes.Contains(EndNode))
-			{
-				SelectedIter.RemoveCurrent();
-				continue;
-			}
-		}
 
 		Node->PrepareForCopying();
 
@@ -1321,7 +1300,7 @@ void FOrionInventoryEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVe
 			
 			if (ShouldGetNewID && InventoryEdNode && !InventoryEdNode->IsSubNode())
 			{
-				UDialogBuilderNode* InventoryNode = InventoryEdNode ? Cast<UDialogBuilderNode>(InventoryEdNode->NodeInstance) : nullptr;
+				UOrionInventoryNode* InventoryNode = InventoryEdNode ? Cast<UOrionInventoryNode>(InventoryEdNode->NodeInstance) : nullptr;
 				if (InventoryNode)
 				{
 					InventoryEdNode->FindUniqueNodeName(InventoryNode->ID.ToString());
@@ -1505,11 +1484,11 @@ void FOrionInventoryEditor::HandleNewNodeClassPicked(UClass* InClass) const
 	FSlateApplication::Get().DismissAllMenus();
 }
 
-void FOrionInventoryEditor::CreateNewInventoryDecorator()
+void FOrionInventoryEditor::CreateNewInventoryItem()
 {
-	HandleNewNodeClassPicked(UOrionDecorator::StaticClass());
+	UE_LOG(LogTemp, Log, TEXT("CreateNewInventoryItem called"));
 }
-bool FOrionInventoryEditor::CanCreateInventoryDecorator() const
+bool FOrionInventoryEditor::CanCreateInventoryItem() const
 {
 	return true;
 }
@@ -1591,17 +1570,8 @@ void FOrionInventoryEditor::OnSelectedNodesChanged(const TSet<class UObject*>& N
 	}
 	else if (Selection.Num() == 1)
 	{
-		if (UDialogBuilderNode_Root* RootNode = Cast<UDialogBuilderNode_Root>(Selection[0]))
-		{
-			if (UOrionInventoryEdGraph* InventoryGraph = Cast<UOrionInventoryEdGraph>(CurrentGraphWidget->GetCurrentGraph()))
-			{
-				PropertyWidget->SetObject(InventoryGraph->OwningInventory);
-			}
-		}
-		else
-		{
-			PropertyWidget->SetObjects(Selection);
-		}
+		PropertyWidget->SetObjects(Selection);
+		
 	}
 	else
 	{
@@ -1632,7 +1602,7 @@ void FOrionInventoryEditor::OnFinishedChangingProperties(const FPropertyChangedE
 	if (EditingInventoryGraph == nullptr)
 		return;
 
-	for (UEdGraph* EdGraph : EditingInventoryGraph->DialogGraphPages)
+	for (UEdGraph* EdGraph : EditingInventoryGraph->InventoryGraphPages)
 	{
 		EdGraph->GetSchema()->ForceVisualizationCacheClear();
 	}

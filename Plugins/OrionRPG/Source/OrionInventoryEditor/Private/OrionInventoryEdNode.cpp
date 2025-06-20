@@ -4,20 +4,16 @@
 #include "OrionInventoryEdNode.h"
 #include "OrionInventoryEdSubNode_Decorator.h"
 #include "OrionInventoryEdSubNode_Event.h"
-#include "DialogBuilderSetting.h"
 #include "EdGraphSchema_OrionInventory.h"
 #include "SGraphEditorActionMenuInventory.h"
-#include "DialogBuilderNode.h"
-#include "DialogBuilderNode_Root.h"
-#include "DialogBuilderNode_DialogLine.h"
-#include "DialogBuilderNode_OptionSelector.h"
-#include "DialogBuilderNode_PlayerOption.h"
+#include "Inventory/OrionInventoryGraph.h"
+#include "Inventory/OrionInventoryNode.h"
+#include "Inventory/OrionInventoryNode_ItemCategory.h"
 #include "OrionInventoryEditorUtils.h"
 #include "GraphDiffControl.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "DialogBuilderGraph.h"
 
 #define LOCTEXT_NAMESPACE "OrionInventoryEditor"
 
@@ -38,14 +34,6 @@ UOrionInventoryEdGraph* UOrionInventoryEdNode::GetOrionInventoryEdGraph()
 	return Cast<UOrionInventoryEdGraph>(GetGraph());
 }
 
-
-
-void UOrionInventoryEdNode::AllocateDefaultPins()
-{
-	CreatePin(EGPD_Input, "MultipleNodes", FName(), TEXT("In"));
-	CreatePin(EGPD_Output, "MultipleNodes", FName(), TEXT("Out"));
-}
-
 FText UOrionInventoryEdNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
 	if (NodeInstance == nullptr)
@@ -54,7 +42,7 @@ FText UOrionInventoryEdNode::GetNodeTitle(ENodeTitleType::Type TitleType) const
 	}
 	else
 	{
-		const UDialogBuilderNode* InventoryNode = Cast<UDialogBuilderNode>(NodeInstance);
+		const UOrionInventoryNode* InventoryNode = Cast<UOrionInventoryNode>(NodeInstance);
 		return InventoryNode->GetNodeTitle();
 	}
 }
@@ -230,17 +218,9 @@ void UOrionInventoryEdNode::PostPlacedNewNode()
 			}
 			if (NodeInstance)
 			{
-				if (UDialogBuilderNode_DialogLine* SpeakerInventoryNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance))
+				if (UOrionInventoryNode_ItemCategory* ItemCategoryNode = Cast<UOrionInventoryNode_ItemCategory>(NodeInstance))
 				{
-					FindUniqueNodeName("Speaker");
-				}
-				if (UDialogBuilderNode_OptionSelector* StateInventoryNode = Cast<UDialogBuilderNode_OptionSelector>(NodeInstance))
-				{
-					FindUniqueNodeName("Selector");
-				}
-				if (UDialogBuilderNode_PlayerOption* CheckpointInventoryNode = Cast<UDialogBuilderNode_PlayerOption>(NodeInstance))
-				{
-					FindUniqueNodeName("PlayerOption");
+					FindUniqueNodeName("Category");
 				}
 				if (UOrionDecorator* OrionDecorator = Cast<UOrionDecorator>(NodeInstance))
 				{
@@ -251,11 +231,7 @@ void UOrionInventoryEdNode::PostPlacedNewNode()
 					OrionEvent->bIsNode = true;
 				}
 			}
-			UDialogBuilderNode* InventoryNode = NodeInstance ?  Cast<UDialogBuilderNode>(NodeInstance) : nullptr;
-			if (InventoryNode)
-			{
-                InventoryNode->Description = FText::FromString(TEXT("Description..."));
-			}
+			
 
 			InitializeInstance();
 		}
@@ -268,8 +244,8 @@ void UOrionInventoryEdNode::PostPlacedNewNode()
 
 void UOrionInventoryEdNode::InitializeInstance()
 {
-	UDialogBuilderNode* InventoryNode = Cast<UDialogBuilderNode>(NodeInstance);
-	UDialogBuilderGraph* InventoryAsset = InventoryNode ? Cast<UDialogBuilderGraph>(InventoryNode->GetOuter()) : nullptr;
+	UOrionInventoryNode* InventoryNode = Cast<UOrionInventoryNode>(NodeInstance);
+	UOrionInventoryGraph* InventoryAsset = InventoryNode ? Cast<UOrionInventoryGraph>(InventoryNode->GetOuter()) : nullptr;
 	if (InventoryNode && InventoryAsset)
 	{
 		InventoryNode->InitializeFromAsset(*InventoryAsset);
@@ -307,7 +283,7 @@ void UOrionInventoryEdNode::UpdateSubnodeDependencies()
 {
 	if (NodeInstance)
 	{
-		UDialogBuilderNode* InventoryNode = Cast<UDialogBuilderNode>(NodeInstance);
+		UOrionInventoryNode* InventoryNode = Cast<UOrionInventoryNode>(NodeInstance);
 
 		InventoryNode->Events.Reset();
 		for (int32 iAux = 0; iAux < Events.Num(); iAux++)
@@ -568,7 +544,7 @@ void UOrionInventoryEdNode::FindUniqueNodeName(const FString& InBaseName)
 		}
 	}
 
-	UDialogBuilderNode* InventoryNode = NodeInstance ? Cast<UDialogBuilderNode>(NodeInstance) : nullptr;
+	UOrionInventoryNode* InventoryNode = NodeInstance ? Cast<UOrionInventoryNode>(NodeInstance) : nullptr;
 	UOrionInventoryEdGraph* InventoryEdGraph = GetOrionInventoryEdGraph();
 
 	if (InventoryNode && InventoryEdGraph)
@@ -583,7 +559,7 @@ void UOrionInventoryEdNode::FindUniqueNodeName(const FString& InBaseName)
 				UOrionInventoryEdNode* NodeEdNode = Cast<UOrionInventoryEdNode>(Node);
 				if (NodeEdNode && NodeEdNode->NodeInstance)
 				{
-					UDialogBuilderNode* OtherInventoryNode = Cast<UDialogBuilderNode>(NodeEdNode->NodeInstance);
+					UOrionInventoryNode* OtherInventoryNode = Cast<UOrionInventoryNode>(NodeEdNode->NodeInstance);
 					if (OtherInventoryNode && OtherInventoryNode != InventoryNode)
 					{
 						if (FName(UniqueName) == OtherInventoryNode->ID)
@@ -612,7 +588,7 @@ void UOrionInventoryEdNode::FindUniqueNodeName(const FString& InBaseName)
 FText UOrionInventoryEdNode::GetDescription() const
 {
 	
-	UDialogBuilderNode* InventoryNode = Cast<UDialogBuilderNode>(NodeInstance);
+	UOrionInventoryNode* InventoryNode = Cast<UOrionInventoryNode>(NodeInstance);
 	if (InventoryNode)
 	{
 		return InventoryNode->GetNodeDescription();
@@ -629,7 +605,7 @@ FText UOrionInventoryEdNode::GetDescription() const
 
 FText UOrionInventoryEdNode::GetEventsText() const
 {
-	UDialogBuilderNode* InventoryNode = Cast<UDialogBuilderNode>(NodeInstance);
+	UOrionInventoryNode* InventoryNode = Cast<UOrionInventoryNode>(NodeInstance);
 	if (InventoryNode)
 	{
 		return InventoryNode->GetEventsText();
@@ -639,7 +615,7 @@ FText UOrionInventoryEdNode::GetEventsText() const
 
 FText UOrionInventoryEdNode::GetConditionsText() const
 {
-	UDialogBuilderNode* InventoryNode = Cast<UDialogBuilderNode>(NodeInstance);
+	UOrionInventoryNode* InventoryNode = Cast<UOrionInventoryNode>(NodeInstance);
 	if (InventoryNode)
 	{
 		return InventoryNode->GetConditionsText();
@@ -649,7 +625,7 @@ FText UOrionInventoryEdNode::GetConditionsText() const
 
 FLinearColor UOrionInventoryEdNode::GetBackgroundColor() const
 {
-	return GetDefault<UDialogBuilderSetting>()->RootNodeColor;
+	return FLinearColor(0.15f, 0.15f, 0.15f);
 }
 
 UEdGraphPin* UOrionInventoryEdNode::GetInputPin() const

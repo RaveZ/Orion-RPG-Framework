@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Inventory/OrionInventoryGraph.h"
 #include "OrionInventoryEdNode.h"
-#include "DialogBuilderGraph.h"
 
 /**
  * 
@@ -35,7 +35,7 @@ public:
 
 	/** Returns all nodes in all graphs of the specified class */
 	template< class T >
-	static inline void GetAllNodesOfClass(const UDialogBuilderGraph* OrionInventoryGraph, TArray<T*>& OutNodes)
+	static inline void GetAllNodesOfClass(const UOrionInventoryGraph* OrionInventoryGraph, TArray<T*>& OutNodes)
 	{
 		TArray<UEdGraph*> AllGraphs;
 		OrionInventoryGraph->GetAllGraphs(AllGraphs);
@@ -54,7 +54,7 @@ public:
 	 * @param Node				The node to remove.
 	 * @param bDontRecompile	If true, the UDialogBuilderGraph will not be marked as modified, and will not be recompiled.  Useful for if you are removing several node at once, and don't want to recompile each time
 	 */
-	static void RemoveNode(UDialogBuilderGraph* OrionInventoryGraph, UOrionInventoryEdNode* Node, bool bDontRecompile = false);
+	static void RemoveNode(UOrionInventoryGraph* OrionInventoryGraph, UOrionInventoryEdNode* Node, bool bDontRecompile = false);
 
 	/**
 	 * Removes the supplied graph from the UDialogBuilderGraph.
@@ -62,14 +62,14 @@ public:
 	 * @param UDialogBuilderGraph	The UDialogBuilderGraph containing the graph
 	 * @param GraphToRemove		The graph to remove.
 	 */
-	static void RemoveGraph(UDialogBuilderGraph* OrionInventoryGraph, class UEdGraph* GraphToRemove);
+	static void RemoveGraph(UOrionInventoryGraph* OrionInventoryGraph, class UEdGraph* GraphToRemove);
 
 
 	/** Adds an inventorygraph page to this Inventory Editor */
-	static void AddInventoryGraphPage(UDialogBuilderGraph* InInventorySystemGraph, class UEdGraph* Graph);
+	static void AddInventoryGraphPage(UOrionInventoryGraph* InInventorySystemGraph, class UEdGraph* Graph);
 
 	/** Returns the event graph, if any */
-	static UEdGraph* FindInventoryGraph(const UDialogBuilderGraph* OrionInventoryGraph);
+	static UEdGraph* FindInventoryGraph(const class UOrionInventoryGraph* OrionInventoryGraph);
 
 	/** Given a selection of nodes, return the instances that should be selected be selected for editing in the property panel */
 	static TArray<UObject*> GetSelectionForPropertyEditor(const TSet<UObject*>& InSelection);

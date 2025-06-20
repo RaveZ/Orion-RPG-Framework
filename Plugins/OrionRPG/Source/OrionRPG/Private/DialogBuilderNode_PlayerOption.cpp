@@ -6,8 +6,17 @@
 #include "Event/OrionEvent.h"
 
 
+UDialogBuilderNode_PlayerOption::UDialogBuilderNode_PlayerOption()
+{
+}
+
+void UDialogBuilderNode_PlayerOption::BeginNode()
+{
+	Super::BeginNode();
+}
 
 #if WITH_EDITOR
+
 FText UDialogBuilderNode_PlayerOption::GetNodeTitle() const
 {
     return FText::FromName(ID).IsEmpty() ? FText::FromString(UDialogBuilderNode::GetShortTypeName(this)) : FText::FromName(ID);
@@ -18,10 +27,7 @@ void UDialogBuilderNode_PlayerOption::SetNodeTitle(const FText& NewTitle)
 }
 FText UDialogBuilderNode_PlayerOption::GetNodeDescription() const
 {
-    FString PlayerOptionDesc;
-
-
-	return FText::FromString(PlayerOptionDesc);
+	return DialogSequenceData.Line;
 }
 
 #endif

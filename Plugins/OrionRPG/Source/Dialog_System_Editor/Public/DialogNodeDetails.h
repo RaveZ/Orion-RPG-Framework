@@ -26,7 +26,7 @@ class UDialogBuilderNode_DialogLine;
 class UBlendProfile;
 class UEdGraph;
 
-class FDialogParticipantDetails : public IDetailCustomization
+class FDialogNodeDetails : public IDetailCustomization
 {
 public:
 	/** Makes a new instance of this detail layout class for a specific detail view requesting it */

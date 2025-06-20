@@ -1,21 +1,22 @@
-// Copyright 2025 Ivan Chandra. All Rights Reserved.UDialogBuilderEdNode_OptionSelector
+// Copyright 2025 Ivan Chandra. All Rights Reserved.UDialogBuilderEdNode_RerouteNode
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "DialogBuilderEdNode.h"
 #include "EdGraph/EdGraphNode.h"
-#include "DialogBuilderEdNode_OptionSelector.generated.h"
+#include "DialogBuilderEdNode_RerouteNode.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class DIALOG_SYSTEM_EDITOR_API UDialogBuilderEdNode_OptionSelector : public UDialogBuilderEdNode
+class DIALOG_SYSTEM_EDITOR_API UDialogBuilderEdNode_RerouteNode : public UDialogBuilderEdNode
 {
 	GENERATED_BODY()
 public:
-	UDialogBuilderEdNode_OptionSelector();
+	UDialogBuilderEdNode_RerouteNode();
+	virtual void AllocateDefaultPins() override;
 	virtual FText GetNodeTitle(ENodeTitleType::Type TitleType) const override;
 	virtual FText GetTooltipText() const override;
 	virtual FLinearColor GetBackgroundColor() const override;

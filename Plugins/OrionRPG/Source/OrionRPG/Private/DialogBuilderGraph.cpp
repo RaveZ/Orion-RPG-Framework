@@ -6,7 +6,7 @@
 #include "DialogBuilderNode.h"
 #include "DialogBuilderEdge.h"
 #include "DialogBuilderNode_Root.h"
-#include "DialogBuilderNode_OptionSelector.h"
+#include "DialogBuilderNode_RerouteNode.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderGraph"
 
@@ -75,7 +75,7 @@ void UDialogBuilderGraph::BeginNode(UDialogBuilderNode* InNode, bool bLaunchEven
 		return;
 	}
 
-	if (UDialogBuilderNode_OptionSelector* OptionSelectorNode = Cast<UDialogBuilderNode_OptionSelector>(InNode))
+	if (UDialogBuilderNode_RerouteNode* OptionSelectorNode = Cast<UDialogBuilderNode_RerouteNode>(InNode))
 	{
 		LastSelector = OptionSelectorNode;
 		OptionSelectorNode->BeginNode();

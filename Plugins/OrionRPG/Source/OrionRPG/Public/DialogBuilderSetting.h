@@ -31,7 +31,7 @@ public:
 	FLinearColor EndDialogNodeColor;
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
-	FLinearColor OptionSelectorNodeColor;
+	FLinearColor RerouteNodeColor;
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor PlayerOptionNodeColor;
@@ -47,5 +47,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, config, Category = "Graph Rule")
 	bool bCanBeCyclical;
+	
+
+
+
 };
 

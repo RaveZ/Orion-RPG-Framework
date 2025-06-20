@@ -51,7 +51,7 @@ public:
 		TMap<FName, TObjectPtr<UDialogBuilderNode>> NodeMap;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
-		TObjectPtr<class UDialogBuilderNode_OptionSelector> LastSelector;
+		TObjectPtr<class UDialogBuilderNode_RerouteNode> LastSelector;
 
 public:
 	virtual bool Initialize(UDialogComponent* InitializingComp);

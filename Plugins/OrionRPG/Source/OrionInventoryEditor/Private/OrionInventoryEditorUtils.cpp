@@ -1,9 +1,8 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #include "OrionInventoryEditorUtils.h"
-#include "DialogBuilderNode.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "DialogBuilderGraph.h"
+#include "Inventory/OrionInventoryGraph.h"
 
 
 #define LOCTEXT_NAMESPACE "OrionInventoryEditorUtils"
@@ -29,11 +28,11 @@ FName FOrionInventoryEditorUtils::FindUniqueInventoryName(const FString& InBaseN
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
 		TArray<FAssetData> InventoryGraphDataArray;
-		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), InventoryGraphDataArray);
+		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UOrionInventoryGraph::StaticClass()), InventoryGraphDataArray);
 
 		for (const FAssetData& AssetData : InventoryGraphDataArray)
 		{
-			UDialogBuilderGraph* InventoryGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
+			UOrionInventoryGraph* InventoryGraph = Cast<UOrionInventoryGraph>(AssetData.GetAsset());
 			if (InventoryGraph)
 			{
 				
@@ -64,11 +63,11 @@ FName FOrionInventoryEditorUtils::FindUniqueInventoryGraphName(const FString& In
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
 		TArray<FAssetData> InventoryGraphDataArray;
-		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), InventoryGraphDataArray);
+		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UOrionInventoryGraph::StaticClass()), InventoryGraphDataArray);
 
 		for (const FAssetData& AssetData : InventoryGraphDataArray)
 		{
-			UDialogBuilderGraph* InventoryGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
+			UOrionInventoryGraph* InventoryGraph = Cast<UOrionInventoryGraph>(AssetData.GetAsset());
 			if (InventoryGraph)
 			{
 				FString FullName = InventoryGraph->ID.ToString();
@@ -106,7 +105,7 @@ UEdGraph* FOrionInventoryEditorUtils::CreateNewGraph(UObject* ParentScope, const
 
 	if (UOrionInventoryEdGraph* InventoryGraph = Cast<UOrionInventoryEdGraph>(NewGraph))
 	{
-		InventoryGraph->OwningInventory = CastChecked<UDialogBuilderGraph>(ParentScope);
+		InventoryGraph->OwningInventory = CastChecked<UOrionInventoryGraph>(ParentScope);
 	}
 
 	
@@ -115,7 +114,7 @@ UEdGraph* FOrionInventoryEditorUtils::CreateNewGraph(UObject* ParentScope, const
 
 
 
-void FOrionInventoryEditorUtils::RemoveNode(UDialogBuilderGraph* OrionInventoryGraph, UOrionInventoryEdNode* Node, bool bDontRecompile)
+void FOrionInventoryEditorUtils::RemoveNode(UOrionInventoryGraph* OrionInventoryGraph, UOrionInventoryEdNode* Node, bool bDontRecompile)
 {
 	check(Node);
 
@@ -144,7 +143,7 @@ void FOrionInventoryEditorUtils::RemoveNode(UDialogBuilderGraph* OrionInventoryG
 	}*/
 }
 
-void FOrionInventoryEditorUtils::RemoveGraph(UDialogBuilderGraph* OrionInventoryGraph, UEdGraph* GraphToRemove)
+void FOrionInventoryEditorUtils::RemoveGraph(UOrionInventoryGraph* OrionInventoryGraph, UEdGraph* GraphToRemove)
 {
 	GraphToRemove->Modify();
 
@@ -152,7 +151,7 @@ void FOrionInventoryEditorUtils::RemoveGraph(UDialogBuilderGraph* OrionInventory
 	{
 		if (TestOuter == OrionInventoryGraph)
 		{
-			OrionInventoryGraph->DialogGraphPages.Remove(GraphToRemove);
+			OrionInventoryGraph->InventoryGraphPages.Remove(GraphToRemove);
 
 			// Can't just call Remove, the object is wrapped in a struct
 			for (int EditedDocIdx = 0; EditedDocIdx < OrionInventoryGraph->LastEditedDocuments.Num(); ++EditedDocIdx)
@@ -202,19 +201,19 @@ void FOrionInventoryEditorUtils::RemoveGraph(UDialogBuilderGraph* OrionInventory
 	
 }
 
-void FOrionInventoryEditorUtils::AddInventoryGraphPage(UDialogBuilderGraph* OrionInventoryGraph, UEdGraph* Graph)
+void FOrionInventoryEditorUtils::AddInventoryGraphPage(UOrionInventoryGraph* OrionInventoryGraph, UEdGraph* Graph)
 {
 #if WITH_EDITORONLY_DATA
-	OrionInventoryGraph->DialogGraphPages.Add(Graph);
+	OrionInventoryGraph->InventoryGraphPages.Add(Graph);
 	Graph->MarkPackageDirty();
 #endif	//#if WITH_EDITORONLY_DATA
 }
 
 
-UEdGraph* FOrionInventoryEditorUtils::FindInventoryGraph(const UDialogBuilderGraph* OrionInventoryGraph)
+UEdGraph* FOrionInventoryEditorUtils::FindInventoryGraph(const UOrionInventoryGraph* OrionInventoryGraph)
 {
 
-	for (UEdGraph* CurrentGraph : OrionInventoryGraph->DialogGraphPages)
+	for (UEdGraph* CurrentGraph : OrionInventoryGraph->InventoryGraphPages)
 	{
 		if (CurrentGraph->GetFName().ToString().Contains(TEXT("InventoryGraph")))
 		{

@@ -3,10 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "DialogBuilderSetting.h"
 #include "SSubobjectEditor.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
-#include "DialogBuilderGraph.h"
+#include "Inventory/OrionInventoryGraph.h"
 
 class SMyInventory;
 
@@ -135,7 +134,7 @@ public:
 	// End of FSerializableObject interface
 
 	/** Returns a pointer to the Inventory graph object we are currently editing, as long as we are editing exactly one */
-	virtual UDialogBuilderGraph* GetOrionInventoryGraph() const;
+	virtual UOrionInventoryGraph* GetOrionInventoryGraph() const;
 
 	// Type of new document/graph being created by a menu item
 	enum ECreatedInventoryDocumentType
@@ -272,8 +271,8 @@ protected:
 	//New Task Functions from toolbar
 	void HandleNewNodeClassPicked(UClass* InClass) const;
 
-	void CreateNewInventoryDecorator();
-	bool CanCreateInventoryDecorator() const;
+	void CreateNewInventoryItem();
+	bool CanCreateInventoryItem() const;
 
 	void CreateNewInventoryEvent();
 	bool CanCreateInventoryEvent() const;
@@ -326,7 +325,7 @@ protected:
 	TWeakPtr<FDocumentTabFactory> InventoryEditorTabFactoryPtr;
 
 
-	UDialogBuilderGraph* EditingInventoryGraph;
+	UOrionInventoryGraph* EditingInventoryGraph;
 
 
 	//Toolbar
