@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "OrionInventoryEdNode.h"
-#include "OrionInventoryEdNode_ItemCategory.generated.h"
+#include "OrionInventoryEdSubNode.h"
+#include "OrionInventoryEdSubNode_Item.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ORIONINVENTORYEDITOR_API UOrionInventoryEdNode_ItemCategory : public UOrionInventoryEdNode
+class ORIONINVENTORYEDITOR_API UOrionInventoryEdSubNode_Item : public UOrionInventoryEdSubNode
 {
 	GENERATED_BODY()
 public:

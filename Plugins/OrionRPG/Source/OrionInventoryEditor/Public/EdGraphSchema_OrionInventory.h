@@ -9,16 +9,14 @@
 namespace EInventorySubNode
 {
 	enum Type {
-		Decorator,
-		Event
+		Item
 	};
 }
 
 /** Action to add a node to the graph */
 
 class UOrionInventoryEdNode;
-class UOrionInventoryEdSubNode_Event;
-class UOrionInventoryEdSubNode_Decorator;
+class UOrionInventoryEdSubNode_Item;
 
 struct FGraphNodeClassHelper;
 struct FGraphNodeClassData;
@@ -47,8 +45,7 @@ public:
 	virtual void GetSubNodeClasses(int32 SubNodeFlags, TArray<FGraphNodeClassData>& ClassData, UClass*& GraphNodeClass) const;
 
 
-	TSubclassOf<UOrionInventoryEdSubNode_Decorator> DecoratorClass;
-	TSubclassOf<UOrionInventoryEdSubNode_Event> EventClass;
+	TSubclassOf<UOrionInventoryEdSubNode_Item> InventoryItemClass;
 protected:
 	virtual FGraphNodeClassHelper& GetClassCache(int32 SubNodeFlags) const;
 	static TSharedPtr<FAssetSchemaAction_Inventory_NewNode> AddNewNodeAction(FGraphActionListBuilderBase& ContextMenuBuilder, const FText& Category, const FText& MenuDesc, const FText& Tooltip);

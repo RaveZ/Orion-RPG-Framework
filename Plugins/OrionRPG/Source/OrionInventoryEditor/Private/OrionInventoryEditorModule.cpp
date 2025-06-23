@@ -3,9 +3,8 @@
 #include "OrionInventoryEditorModule.h"
 #include "OrionInventory_EditorStyle.h"
 #include "OrionInventory_EditorCommands.h"
-#include "DialogBuilderNode.h"
-#include "Decorator/OrionDecorator.h"
-#include "Event/OrionEvent.h"
+#include "Inventory/OrionInventoryNode_Item.h"
+#include "Inventory/OrionInventorySetting.h"
 #include "IAssetTools.h"
 #include "ISettingsModule.h"
 #include "ISettingsSection.h"
@@ -17,8 +16,6 @@
 #include "Widgets/Text/STextBlock.h"
 #include "ToolMenus.h"
 #include "Styling/SlateStyleRegistry.h"
-#include "DialogBuilderSetting.h"
-#include "DialogData.h"
 
 
 #define LOCTEXT_NAMESPACE "FOrionInventoryEditorModule"
@@ -80,24 +77,17 @@ void FOrionInventoryEditorModule::ShutdownModule()
 		FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	}
 
-	DecoratorClassCache.Reset();
-	EventClassCache.Reset();
+	InventoryItemClassCache.Reset();
 }
 
 
 void FOrionInventoryEditorModule::CheckClassCache()
 {
-	if (!DecoratorClassCache.IsValid())
+	if (!InventoryItemClassCache.IsValid())
 	{
-		DecoratorClassCache = MakeShareable(new FGraphNodeClassHelper(UOrionDecorator::StaticClass()));
-		FGraphNodeClassHelper::AddObservedBlueprintClasses(UOrionDecorator::StaticClass());
-		DecoratorClassCache->UpdateAvailableBlueprintClasses();
-	}
-	if (!EventClassCache.IsValid())
-	{
-		EventClassCache = MakeShareable(new FGraphNodeClassHelper(UOrionEvent::StaticClass()));
-		FGraphNodeClassHelper::AddObservedBlueprintClasses(UOrionEvent::StaticClass());
-		EventClassCache->UpdateAvailableBlueprintClasses();
+		InventoryItemClassCache = MakeShareable(new FGraphNodeClassHelper(UOrionInventoryNode_Item::StaticClass()));
+		FGraphNodeClassHelper::AddObservedBlueprintClasses(UOrionInventoryNode_Item::StaticClass());
+		InventoryItemClassCache->UpdateAvailableBlueprintClasses();
 	}
 
 }
@@ -110,7 +100,7 @@ void FOrionInventoryEditorModule::RegisterSettings()
 		SettingsModule->RegisterSettings("Project", "Plugins", "Inventory Builder - Editor",
 			LOCTEXT("OrionInventorySettingsName", "Inventory Builder - Editor"),
 			LOCTEXT("OrionInventorySettingsDescription", "Configuration Settings for the Inventory Builder Editor"),
-			GetMutableDefault<UDialogBuilderSetting>()
+			GetMutableDefault<UOrionInventorySetting>()
 		);
 
 	}

@@ -30,12 +30,6 @@ public:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Detail", meta = (DisplayPriority = 0))
 		FName ID;
-	
-	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Events")
-		TArray<TObjectPtr<UOrionEvent>> Events;
-
-	UPROPERTY(Instanced, BlueprintReadOnly, Category = Decorators, meta = (DisplayName = "Decorators"))
-		TArray<TObjectPtr<UOrionDecorator>> Decorators;
 
 	UPROPERTY(BlueprintReadOnly, Category = "OrionInventoryNode")
 		TObjectPtr<UOrionInventoryGraph> OrionInventoryGraph;
@@ -117,10 +111,6 @@ public:
 	virtual FText GetNodeTitle() const;
 
 	virtual FText GetNodeDescription() const;
-
-	virtual FText GetEventsText() const;
-
-	virtual FText GetConditionsText() const;
 
 	virtual void SetNodeTitle(const FText& NewTitle);
 

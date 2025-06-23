@@ -1,12 +1,12 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
-#include "OrionInventoryEdNode_ItemCategory.h"
+#include "OrionInventoryEdSubNode_Item.h"
 #include "Inventory/OrionInventoryNode.h"
 #include "Inventory/OrionInventorySetting.h"
 #include "DialogBuilderNode.h"
 
-FText UOrionInventoryEdNode_ItemCategory::GetNodeTitle(ENodeTitleType::Type TitleType) const
+FText UOrionInventoryEdSubNode_Item::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
 	const UOrionInventoryNode* InventoryNode = Cast<UOrionInventoryNode>(NodeInstance);
 
@@ -25,16 +25,16 @@ FText UOrionInventoryEdNode_ItemCategory::GetNodeTitle(ENodeTitleType::Type Titl
 	return Super::GetNodeTitle(TitleType);
 }
 
-FLinearColor UOrionInventoryEdNode_ItemCategory::GetBackgroundColor() const
+FLinearColor UOrionInventoryEdSubNode_Item::GetBackgroundColor() const
 {
-	return GetDefault<UOrionInventorySetting>()->ItemCategoryColor;
+	return GetDefault<UOrionInventorySetting>()->ItemContainerColor;
 }
 
-FText UOrionInventoryEdNode_ItemCategory::GetTooltipText() const
+FText UOrionInventoryEdSubNode_Item::GetTooltipText() const
 {
 	return Super::GetTooltipText();
 }
 
-void UOrionInventoryEdNode_ItemCategory::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
+void UOrionInventoryEdSubNode_Item::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
 }

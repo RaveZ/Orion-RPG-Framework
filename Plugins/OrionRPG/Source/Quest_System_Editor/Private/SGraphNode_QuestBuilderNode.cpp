@@ -231,7 +231,7 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 	{
 		for (int32 i = 0; i < QuestEdNode->Decorators.Num(); i++)
 		{
-			if (QuestEdNode->Decorators[i])
+			if (QuestEdNode->Decorators.IsValidIndex(i))
 			{
 				TSharedPtr<SGraphNode> NewNode = FNodeFactory::CreateNodeWidget(QuestEdNode->Decorators[i]);
 				if (OwnerGraphPanelPtr.IsValid())
@@ -245,7 +245,7 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 		}
 		for (int32 i = 0; i < QuestEdNode->Events.Num(); i++)
 		{
-			if (QuestEdNode->Events[i])
+			if (QuestEdNode->Events.IsValidIndex(i))
 			{
 				TSharedPtr<SGraphNode> NewNode = FNodeFactory::CreateNodeWidget(QuestEdNode->Events[i]);
 				if (OwnerGraphPanelPtr.IsValid())

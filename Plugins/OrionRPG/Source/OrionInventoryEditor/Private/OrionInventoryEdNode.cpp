@@ -2,17 +2,15 @@
 
 
 #include "OrionInventoryEdNode.h"
-#include "OrionInventoryEdSubNode_Decorator.h"
-#include "OrionInventoryEdSubNode_Event.h"
 #include "EdGraphSchema_OrionInventory.h"
 #include "SGraphEditorActionMenuInventory.h"
 #include "Inventory/OrionInventoryGraph.h"
 #include "Inventory/OrionInventoryNode.h"
-#include "Inventory/OrionInventoryNode_ItemCategory.h"
+#include "Inventory/OrionInventoryNode_Item.h"
+#include "Inventory/OrionInventoryNode_ItemContainer.h"
+#include "OrionInventoryEdSubNode_Item.h"
 #include "OrionInventoryEditorUtils.h"
 #include "GraphDiffControl.h"
-#include "Decorator/OrionDecorator.h"
-#include "Event/OrionEvent.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 
 #define LOCTEXT_NAMESPACE "OrionInventoryEditor"
@@ -179,8 +177,7 @@ void UOrionInventoryEdNode::FindDiffs(UEdGraphNode* OtherNode, FDiffResults& Res
 				NodeMatch.Diff(SubtractiveDiffContext, Results);
 			}
 		};
-		DiffSubNodes(LOCTEXT("DecoratorDiffDisplayName", "Decorator"), Decorators, OtherInventoryEdNode->Decorators);
-		DiffSubNodes(LOCTEXT("EventDiffDisplayName", "Event"), Events, OtherInventoryEdNode->Events);
+		DiffSubNodes(LOCTEXT("InventoryItemDiffDisplayName", "InventoryItem"), InventoryItems, OtherInventoryEdNode->InventoryItems);
 	}
 }
 
@@ -218,17 +215,13 @@ void UOrionInventoryEdNode::PostPlacedNewNode()
 			}
 			if (NodeInstance)
 			{
-				if (UOrionInventoryNode_ItemCategory* ItemCategoryNode = Cast<UOrionInventoryNode_ItemCategory>(NodeInstance))
+				if (UOrionInventoryNode_ItemContainer* ItemContainerNode = Cast<UOrionInventoryNode_ItemContainer>(NodeInstance))
 				{
-					FindUniqueNodeName("Category");
+					FindUniqueNodeName("ItemContainer");
 				}
-				if (UOrionDecorator* OrionDecorator = Cast<UOrionDecorator>(NodeInstance))
+				if (UOrionInventoryNode_Item* ItemNode = Cast<UOrionInventoryNode_Item>(NodeInstance))
 				{
-					OrionDecorator->bIsNode = true;
-				}
-				if (UOrionEvent* OrionEvent = Cast<UOrionEvent>(NodeInstance))
-				{
-					OrionEvent->bIsNode = true;
+					FindUniqueNodeName("Item");
 				}
 			}
 			
@@ -281,29 +274,6 @@ void UOrionInventoryEdNode::AutowireNewNode(UEdGraphPin* FromPin)
 
 void UOrionInventoryEdNode::UpdateSubnodeDependencies()
 {
-	if (NodeInstance)
-	{
-		UOrionInventoryNode* InventoryNode = Cast<UOrionInventoryNode>(NodeInstance);
-
-		InventoryNode->Events.Reset();
-		for (int32 iAux = 0; iAux < Events.Num(); iAux++)
-		{
-			if (UOrionEvent* EventInstance = Cast<UOrionEvent>(Events[iAux]->NodeInstance))
-			{
-				InventoryNode->Events.Add(EventInstance);
-			}
-		}
-
-
-		InventoryNode->Decorators.Reset();
-		for (int32 iAux = 0; iAux < Decorators.Num(); iAux++)
-		{
-			if (UOrionDecorator* DecoratorInstance = Cast<UOrionDecorator>(Decorators[iAux]->NodeInstance))
-			{
-				InventoryNode->Decorators.Add(DecoratorInstance);
-			}
-		}
-	}
 }
 
 
@@ -352,49 +322,37 @@ void UOrionInventoryEdNode::RemoveAllSubNodes()
 
 void UOrionInventoryEdNode::OnSubNodeRemoved(UOrionInventoryEdNode* SubNode)
 {
-	const int32 DecoratorIdx = Decorators.IndexOfByKey(SubNode);
-	const int32 EventIdx = Events.IndexOfByKey(SubNode);
+	const int32 InventoryItemIdx = InventoryItems.IndexOfByKey(SubNode);
 
-	if (DecoratorIdx >= 0)
+	if (InventoryItemIdx >= 0)
 	{
-		Decorators.RemoveAt(DecoratorIdx);
+		InventoryItems.RemoveAt(InventoryItemIdx);
 	}
 
-	if (EventIdx >= 0)
-	{
-		Events.RemoveAt(EventIdx);
-	}
 }
 
 void UOrionInventoryEdNode::OnSubNodeAdded(UOrionInventoryEdNode* NodeTemplate)
 {
 	UOrionInventoryEdNode* InventoryEdNode = Cast<UOrionInventoryEdNode>(NodeTemplate);
 
-	if (Cast<UOrionInventoryEdSubNode_Decorator>(NodeTemplate))
+	if (Cast<UOrionInventoryEdSubNode_Item>(NodeTemplate))
 	{
-		Decorators.Add(NodeTemplate);
-	}
-	else if(Cast<UOrionInventoryEdSubNode_Event>(NodeTemplate))
-	{
-		Events.Add(NodeTemplate);
+		InventoryItems.Add(NodeTemplate);
 	}
 }
 
 int32 UOrionInventoryEdNode::FindSubNodeDropIndex(UOrionInventoryEdNode* SubNode) const
 {
 	const int32 SubIdx = SubNodes.IndexOfByKey(SubNode) + 1;
-	const int32 DecoratorIdx = Decorators.IndexOfByKey(SubNode) + 1;
-	const int32 ServiceIdx = Events.IndexOfByKey(SubNode) + 1;
-
-	const int32 CombinedIdx = (SubIdx & 0xff) | ((DecoratorIdx & 0xff) << 8) | ((ServiceIdx & 0xff) << 16);
+	const int32 InventoryItemIdx = InventoryItems.IndexOfByKey(SubNode) + 1;
+	const int32 CombinedIdx = (SubIdx & 0xff) | ((InventoryItemIdx & 0xff) << 8);
 	return CombinedIdx;
 }
 
 void UOrionInventoryEdNode::InsertSubNodeAt(UOrionInventoryEdNode* SubNode, int32 DropIndex)
 {
 	const int32 SubIdx = (DropIndex & 0xff) - 1;
-	const int32 DecoratorIdx = ((DropIndex >> 8) & 0xff) - 1;
-	const int32 EventIdx = ((DropIndex >> 16) & 0xff) - 1;
+	const int32 InventoryItemIdx = ((DropIndex >> 8) & 0xff) - 1;
 
 	if (SubIdx >= 0)
 	{
@@ -406,35 +364,23 @@ void UOrionInventoryEdNode::InsertSubNodeAt(UOrionInventoryEdNode* SubNode, int3
 	}
 
 	UOrionInventoryEdNode* TypedNode = Cast<UOrionInventoryEdNode>(SubNode);
-	const bool bIsDecorator = Cast<UOrionDecorator>(SubNode->NodeInstance) != nullptr;
-	const bool bIsService = Cast<UOrionEvent>(SubNode->NodeInstance) != nullptr;
+	const bool bIsInventoryItem = Cast<UOrionInventoryNode_Item>(SubNode->NodeInstance) != nullptr;
 
 	if (TypedNode)
 	{
-		if (bIsDecorator)
+		if (bIsInventoryItem)
 		{
-			if (DecoratorIdx >= 0)
+			if (InventoryItemIdx >= 0)
 			{
-				Decorators.Insert(TypedNode, DecoratorIdx);
+				InventoryItems.Insert(TypedNode, InventoryItemIdx);
 			}
 			else
 			{
-				Decorators.Add(TypedNode);
+				InventoryItems.Add(TypedNode);
 			}
 
 		}
 
-		if (bIsService)
-		{
-			if (EventIdx >= 0)
-			{
-				Events.Insert(TypedNode, EventIdx);
-			}
-			else
-			{
-				Events.Add(TypedNode);
-			}
-		}
 	}
 	GetGraph()->Modify();
 }
@@ -603,26 +549,6 @@ FText UOrionInventoryEdNode::GetDescription() const
 
 }
 
-FText UOrionInventoryEdNode::GetEventsText() const
-{
-	UOrionInventoryNode* InventoryNode = Cast<UOrionInventoryNode>(NodeInstance);
-	if (InventoryNode)
-	{
-		return InventoryNode->GetEventsText();
-	}
-	return FText::GetEmpty();
-}
-
-FText UOrionInventoryEdNode::GetConditionsText() const
-{
-	UOrionInventoryNode* InventoryNode = Cast<UOrionInventoryNode>(NodeInstance);
-	if (InventoryNode)
-	{
-		return InventoryNode->GetConditionsText();
-	}
-	return FText::GetEmpty();
-}
-
 FLinearColor UOrionInventoryEdNode::GetBackgroundColor() const
 {
 	return FLinearColor(0.15f, 0.15f, 0.15f);
@@ -666,52 +592,28 @@ bool UOrionInventoryEdNode::UsesBlueprint() const
 	return false;
 }
 
-void UOrionInventoryEdNode::CreateAddDecoratorSubMenu(UToolMenu* Menu, UEdGraph* Graph) const
+void UOrionInventoryEdNode::CreateAddInventoryItemSubMenu(UToolMenu* Menu, UEdGraph* Graph) const
 {
 	TSharedRef<SGraphEditorActionMenuInventory> Widget =
 		SNew(SGraphEditorActionMenuInventory)
 		.GraphObj(Graph)
 		.GraphNode((UOrionInventoryEdNode*)this)
-		.SubNodeFlags(EInventorySubNode::Decorator)
+		.SubNodeFlags(EInventorySubNode::Item)
 		.AutoExpandActionMenu(true);
 
 	FToolMenuSection& Section = Menu->FindOrAddSection("Section");
-	Section.AddEntry(FToolMenuEntry::InitWidget("DecoratorWidget", Widget, FText(), true));
-}
-
-void UOrionInventoryEdNode::CreateAddEventSubMenu(UToolMenu* Menu, UEdGraph* Graph) const
-{
-	TSharedRef<SGraphEditorActionMenuInventory> Widget =
-		SNew(SGraphEditorActionMenuInventory)
-		.GraphObj(Graph)
-		.GraphNode((UOrionInventoryEdNode*)this)
-		.SubNodeFlags(EInventorySubNode::Event)
-		.AutoExpandActionMenu(true);
-
-	FToolMenuSection& Section = Menu->FindOrAddSection("Section");
-	Section.AddEntry(FToolMenuEntry::InitWidget("EventWidget", Widget, FText(), true));
+	Section.AddEntry(FToolMenuEntry::InitWidget("InventoryItemWidget", Widget, FText(), true));
 }
 
 
-void UOrionInventoryEdNode::AddContextMenuActionsDecorators(UToolMenu* Menu, const FName SectionName, UGraphNodeContextMenuContext* Context) const
+void UOrionInventoryEdNode::AddContextMenuActionsInventoryItems(UToolMenu* Menu, const FName SectionName, UGraphNodeContextMenuContext* Context) const
 {
 	FToolMenuSection& Section = Menu->FindOrAddSection(SectionName);
 	Section.AddSubMenu(
-		"AddDecorator",
-		LOCTEXT("AddDecorator", "Add Decorator..."),
-		LOCTEXT("AddDecoratorTooltip", "Adds new decorator as a subnode"),
-		FNewToolMenuDelegate::CreateUObject(this, &UOrionInventoryEdNode::CreateAddDecoratorSubMenu, (UEdGraph*)Context->Graph));
-
-}
-
-void UOrionInventoryEdNode::AddContextMenuActionsEvents(UToolMenu* Menu, const FName SectionName, UGraphNodeContextMenuContext* Context) const
-{
-	FToolMenuSection& Section = Menu->FindOrAddSection(SectionName);
-	Section.AddSubMenu(
-		"AddEvent",
-		LOCTEXT("AddEvent", "Add Event..."),
-		LOCTEXT("AddEventTooltip", "Adds new event as a subnode"),
-		FNewToolMenuDelegate::CreateUObject(this, &UOrionInventoryEdNode::CreateAddEventSubMenu, (UEdGraph*)Context->Graph));
+		"AddInventoryItem",
+		LOCTEXT("AddInventoryItem", "Add InventoryItem..."),
+		LOCTEXT("AddInventoryItemTooltip", "Adds new InventoryItem as a subnode"),
+		FNewToolMenuDelegate::CreateUObject(this, &UOrionInventoryEdNode::CreateAddInventoryItemSubMenu, (UEdGraph*)Context->Graph));
 
 }
 
@@ -740,16 +642,11 @@ void UOrionInventoryEdNode::PostEditUndo()
 	UOrionInventoryEdNode* MyParentNode = Cast<UOrionInventoryEdNode>(ParentNode);
 	if (MyParentNode)
 	{
-		const bool bIsDecorator = Cast<UOrionDecorator>(NodeInstance) != nullptr;
-		const bool bIsEvent = Cast<UOrionEvent>(NodeInstance) != nullptr;
+		const bool bIsInventoryItem = Cast<UOrionInventoryNode_Item>(NodeInstance) != nullptr;
 
-		if (bIsDecorator)
+		if (bIsInventoryItem)
 		{
-			MyParentNode->Decorators.AddUnique(this);
-		}
-		else if (bIsEvent)
-		{
-			MyParentNode->Events.AddUnique(this);
+			MyParentNode->InventoryItems.AddUnique(this);
 		}
 	}
 }

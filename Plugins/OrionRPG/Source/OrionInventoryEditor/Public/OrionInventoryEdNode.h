@@ -22,13 +22,8 @@ public:
 	UOrionInventoryEdNode();
 	virtual ~UOrionInventoryEdNode();
 
-	/** only some of inventory nodes support decorators */
 	UPROPERTY()
-	TArray<TObjectPtr<UOrionInventoryEdNode>> Decorators;
-
-	/** only some of inventory nodes support events */
-	UPROPERTY()
-	TArray<TObjectPtr<UOrionInventoryEdNode>> Events;
+	TArray<TObjectPtr<UOrionInventoryEdNode>> InventoryItems;
 
 
 	/** instance class */
@@ -101,8 +96,6 @@ public:
 	virtual void FindUniqueNodeName(const FString& InBaseName);
 
 	virtual FText GetDescription() const;
-	virtual FText GetEventsText() const;
-	virtual FText GetConditionsText() const;
 
 	virtual FLinearColor GetBackgroundColor() const;
 	virtual UEdGraphPin* GetInputPin() const;
@@ -129,17 +122,12 @@ public:
 
 	virtual void ResetNodeOwner();
 protected:
-	/** creates add decorator... submenu */
-	void CreateAddDecoratorSubMenu(class UToolMenu* Menu, UEdGraph* Graph) const;
+	/** creates add InventoryItem... submenu */
+	void CreateAddInventoryItemSubMenu(class UToolMenu* Menu, UEdGraph* Graph) const;
 
-	/** creates add event... submenu */
-	void CreateAddEventSubMenu(class UToolMenu* Menu, UEdGraph* Graph) const;
+	/** add right click menu to create subnodes: InventoryItems */
+	void AddContextMenuActionsInventoryItems(class UToolMenu* Menu, const FName SectionName, class UGraphNodeContextMenuContext* Context) const;
 
-	/** add right click menu to create subnodes: Decorators */
-	void AddContextMenuActionsDecorators(class UToolMenu* Menu, const FName SectionName, class UGraphNodeContextMenuContext* Context) const;
-
-	/** add right click menu to create subnodes: Events */
-	void AddContextMenuActionsEvents(class UToolMenu* Menu, const FName SectionName, class UGraphNodeContextMenuContext* Context) const;
 	
 
 

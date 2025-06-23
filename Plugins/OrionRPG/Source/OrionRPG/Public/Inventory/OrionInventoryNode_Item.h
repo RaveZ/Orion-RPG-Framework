@@ -4,15 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "OrionInventoryNode.h"
-#include "OrionInventoryNode_ItemCategory.generated.h"
+#include "OrionInventoryNode_Item.generated.h"
 
 UCLASS(Blueprintable, BlueprintType)
-class ORIONRPG_API UOrionInventoryNode_ItemCategory : public UOrionInventoryNode
+class ORIONRPG_API UOrionInventoryNode_Item : public UOrionInventoryNode
 {
 	GENERATED_BODY()
 
 public:
-	UOrionInventoryNode_ItemCategory();
+	UOrionInventoryNode_Item();
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
+	FText DisplayName;
 
 public:
 

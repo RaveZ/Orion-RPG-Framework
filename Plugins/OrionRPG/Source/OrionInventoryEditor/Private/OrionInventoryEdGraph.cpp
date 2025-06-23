@@ -6,8 +6,7 @@
 #include "OrionInventoryEdNode.h"
 #include "Inventory/OrionInventoryGraph.h"
 #include "Inventory/OrionInventoryNode.h"
-#include "Decorator/OrionDecorator.h"
-#include "Event/OrionEvent.h"
+#include "Inventory/OrionInventoryNode_Item.h"
 
 
 UOrionInventoryEdGraph::UOrionInventoryEdGraph()
@@ -112,26 +111,12 @@ void UOrionInventoryEdGraph::UpdateAllSubnodeDependencies()
 				// parent chain
 				InventoryEdNode->ParentNode = NULL;
 
-				InventoryNode->Events.Reset();
-				for (int32 iAux = 0; iAux < InventoryEdNode->Events.Num(); iAux++)
+				for (int32 iAux = 0; iAux < InventoryEdNode->InventoryItems.Num(); iAux++)
 				{
-					InventoryEdNode->Events[iAux]->ParentNode = InventoryEdNode;
-					if (UOrionEvent* EventInstance = Cast<UOrionEvent>(InventoryEdNode->Events[iAux]->NodeInstance))
+					InventoryEdNode->InventoryItems[iAux]->ParentNode = InventoryEdNode;
+					if (UOrionInventoryNode_Item* ItemInstance = Cast<UOrionInventoryNode_Item>(InventoryEdNode->InventoryItems[iAux]->NodeInstance))
 					{
-						InventoryNode->Events.Add(EventInstance);
-						EventInstance->Rename(nullptr, InventoryGraph, REN_DontCreateRedirectors | REN_DoNotDirty);
-					}
-				}
-
-
-				InventoryNode->Decorators.Reset();
-				for (int32 iAux = 0; iAux < InventoryEdNode->Decorators.Num(); iAux++)
-				{
-					InventoryEdNode->Decorators[iAux]->ParentNode = InventoryEdNode;
-					if (UOrionDecorator* DecoratorInstance = Cast<UOrionDecorator>(InventoryEdNode->Decorators[iAux]->NodeInstance))
-					{
-						InventoryNode->Decorators.Add(DecoratorInstance);
-						DecoratorInstance->Rename(nullptr, InventoryGraph, REN_DontCreateRedirectors | REN_DoNotDirty);
+						ItemInstance->Rename(nullptr, InventoryGraph, REN_DontCreateRedirectors | REN_DoNotDirty);
 					}
 				}
 
@@ -276,10 +261,9 @@ void UOrionInventoryEdGraph::RemoveUnknownSubNodes()
 		{
 			for (int32 SubIdx = Node->SubNodes.Num() - 1; SubIdx >= 0; SubIdx--)
 			{
-				const bool bIsDecorator = Node->Decorators.Contains(Node->SubNodes[SubIdx]);
-				const bool bIsService = Node->Events.Contains(Node->SubNodes[SubIdx]);
+				const bool bIsInventoryItem = Node->InventoryItems.Contains(Node->SubNodes[SubIdx]);
 
-				if (!bIsDecorator && !bIsService)
+				if (!bIsInventoryItem)
 				{
 					Node->SubNodes.RemoveAt(SubIdx);
 				}
@@ -393,16 +377,11 @@ void UOrionInventoryEdGraph::UpdateVersion_UnifiedSubNodes()
 			continue;
 		}
 
-		MyNode->SubNodes.Reset(MyNode->Decorators.Num() + MyNode->Events.Num());
+		MyNode->SubNodes.Reset(MyNode->InventoryItems.Num());
 
-		for (int32 SubIdx = 0; SubIdx < MyNode->Decorators.Num(); SubIdx++)
+		for (int32 SubIdx = 0; SubIdx < MyNode->InventoryItems.Num(); SubIdx++)
 		{
-			MyNode->SubNodes.Add(MyNode->Decorators[SubIdx]);
-		}
-
-		for (int32 SubIdx = 0; SubIdx < MyNode->Events.Num(); SubIdx++)
-		{
-			MyNode->SubNodes.Add(MyNode->Events[SubIdx]);
+			MyNode->SubNodes.Add(MyNode->InventoryItems[SubIdx]);
 		}
 	}
 }

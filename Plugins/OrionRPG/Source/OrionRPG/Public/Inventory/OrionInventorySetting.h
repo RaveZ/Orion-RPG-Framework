@@ -18,7 +18,7 @@ class ORIONRPG_API UOrionInventorySetting : public UObject
 
 public:
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
-	FLinearColor ItemCategoryColor;
+	FLinearColor ItemContainerColor;
 
 	UPROPERTY(BlueprintReadOnly, config, Category = "Graph Rule")
 	bool bCanRenameNode;

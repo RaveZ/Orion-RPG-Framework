@@ -12,6 +12,7 @@
 #include "NodeFactory.h"
 #include "Components/VerticalBox.h"
 #include "SGraphPreviewer.h"
+#include "Widgets/Layout/SGridPanel.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 #include "SGraphPin.h"
 #include "Colors_OrionInventory.h"
@@ -21,13 +22,13 @@
 #include "Inventory/OrionInventoryNode.h"
 #include "Inventory/OrionInventoryGraph.h"
 #include "Inventory/OrionInventorySetting.h"	
+#include "Inventory/OrionInventoryNode_Item.h"
+#include "Inventory/OrionInventoryNode_ItemContainer.h"
+#include "OrionInventoryEdSubNode_Item.h"
+#include "OrionInventoryEdNode_ItemContainer.h"
 #include "OrionInventoryEdNode_Root.h"
 #include "Fonts/SlateFontInfo.h"
-#include "Decorator/OrionDecorator.h"
-#include "Event/OrionEvent.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "OrionInventoryEdSubNode_Decorator.h"
-#include "OrionInventoryEdSubNode_Event.h"
 #include "IDocumentation.h"
 
 #define LOCTEXT_NAMESPACE "EdNode_OrionInventory"
@@ -194,63 +195,47 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 	InputPins.Empty();
 	OutputPins.Empty();
 
-	if (DecoratorsBox.IsValid())
+	if (InventoryItemGridPanel.IsValid())
 	{
-		DecoratorsBox->ClearChildren();
+		InventoryItemGridPanel->ClearChildren();
 	}
 	else
 	{
-		SAssignNew(DecoratorsBox, SVerticalBox);
-	}
-
-	if (EventsBox.IsValid())
-	{
-		EventsBox->ClearChildren();
-	}
-	else
-	{
-		SAssignNew(EventsBox, SVerticalBox);
+		SAssignNew(InventoryItemGridPanel, SGridPanel);
 	}
 
 	// Reset variables that are going to be exposed, in case we are refreshing an already setup node.
 	RightNodeBox.Reset();
 	LeftNodeBox.Reset(); 
-	DecoratorWidgets.Reset();
-	EventsWidgets.Reset();
+	InventoryItemWidgets.Reset();
 	SubNodes.Reset();
 	OutputPinBox.Reset();
 
 	UOrionInventoryEdNode* InventoryEdNode = Cast<UOrionInventoryEdNode>(GraphNode);
-	UOrionInventoryNode* InventoryNode = InventoryEdNode ? Cast<UOrionInventoryNode>(InventoryEdNode->NodeInstance) : nullptr;
+	UOrionInventoryNode_ItemContainer* ItemContainerNode = InventoryEdNode ? Cast<UOrionInventoryNode_ItemContainer>(InventoryEdNode->NodeInstance) : nullptr;
 
-	if (InventoryEdNode)
+	int32 Column = 0;
+	int32 Row = 0;
+	if (InventoryEdNode && ItemContainerNode)
 	{
-		for (int32 i = 0; i < InventoryEdNode->Decorators.Num(); i++)
+		for (int32 i = 0; i < InventoryEdNode->InventoryItems.Num(); i++)
 		{
-			if (InventoryEdNode->Decorators[i])
+			if (InventoryEdNode->InventoryItems.IsValidIndex(i))
 			{
-				TSharedPtr<SGraphNode> NewNode = FNodeFactory::CreateNodeWidget(InventoryEdNode->Decorators[i]);
+				TSharedPtr<SGraphNode> NewNode = FNodeFactory::CreateNodeWidget(InventoryEdNode->InventoryItems[i]);
 				if (OwnerGraphPanelPtr.IsValid())
 				{
 					NewNode->SetOwner(OwnerGraphPanelPtr.Pin().ToSharedRef());
 					OwnerGraphPanelPtr.Pin()->AttachGraphEvents(NewNode);
 				}
-				AddDecorator(NewNode);
+
+				AddInventoryItem(NewNode, Column, Row);
 				NewNode->UpdateGraphNode();
-			}
-		}
-		for (int32 i = 0; i < InventoryEdNode->Events.Num(); i++)
-		{
-			if (InventoryEdNode->Events[i])
-			{
-				TSharedPtr<SGraphNode> NewNode = FNodeFactory::CreateNodeWidget(InventoryEdNode->Events[i]);
-				if (OwnerGraphPanelPtr.IsValid())
+				Column = (Column + 1) % ItemContainerNode->GridCountX;
+				if (Column == 0)
 				{
-					NewNode->SetOwner(OwnerGraphPanelPtr.Pin().ToSharedRef());
-					OwnerGraphPanelPtr.Pin()->AttachGraphEvents(NewNode);
+					Row++;
 				}
-				AddEvent(NewNode);
-				NewNode->UpdateGraphNode();
 			}
 		}
 	}
@@ -273,19 +258,31 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 			return FMath::Max(22.0f, DesiredHeight);
 		};
 
-	const FMargin NodePadding = (Cast<UOrionInventoryEdSubNode_Decorator>(GraphNode) || Cast<UOrionInventoryEdSubNode_Event>(GraphNode))
+	const FMargin NodePadding = (Cast<UOrionInventoryEdSubNode_Item>(GraphNode))
 		? FMargin(1.f)
 		: FMargin(8.0f);
 
 	const float NodeMaxWidth = InventoryEdNode && InventoryEdNode->IsSubNode()
-		? 325.f
+		? 75.f
 		: 350.f;
 
 	const float NodeMinWidth = InventoryEdNode && InventoryEdNode->IsSubNode()
-		? 200.f
-		: 125.f;
+		? 75.f		
+		: 400.f;
 
-	const FMargin PinPadding = (Cast<UOrionInventoryEdSubNode_Decorator>(GraphNode) || Cast<UOrionInventoryEdSubNode_Event>(GraphNode))
+	const float NodeMinHeight = InventoryEdNode && InventoryEdNode->IsSubNode()
+		? 75.f
+		: 400.f;
+	
+	const float NodeMaxHeight = InventoryEdNode && InventoryEdNode->IsSubNode()
+		? 75.f
+		: 400.f;
+
+	const EHorizontalAlignment NodeHAlign = InventoryEdNode && InventoryEdNode->IsSubNode()
+		? HAlign_Left
+		: HAlign_Fill;
+
+	const FMargin PinPadding = (Cast<UOrionInventoryEdSubNode_Item>(GraphNode))
 		? FMargin(0.f)
 		: FMargin(2.f, 3.f, 2.f, 3.f);
 
@@ -301,8 +298,8 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 
 	this->ContentScale.Bind(this, &SGraphNode::GetContentScale);
 	this->GetOrAddSlot(ENodeZone::Center)
-		.HAlign(HAlign_Fill)
-		.VAlign(VAlign_Center)
+		.HAlign(NodeHAlign)
+		.VAlign(VAlign_Fill)
 		[
 			SNew(SBorder)
 			.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
@@ -317,19 +314,6 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 					.VAlign(VAlign_Fill)
 					[
 						SNew(SHorizontalBox)
-
-							// INPUT PIN AREA
-							+ SHorizontalBox::Slot()
-							.Padding(PinPadding)
-							.AutoWidth()
-							[
-								SNew(SBox)
-									.MinDesiredWidth(NodePadding.Left)
-									[
-										SAssignNew(LeftNodeBox, SVerticalBox)
-									]
-							]
-
 							// STATE NAME AREA
 							+ SHorizontalBox::Slot()
 							.Padding(FMargin(NodePadding))
@@ -342,18 +326,18 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 										.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
 										.BorderBackgroundColor(this, &SGraphNode_OrionInventoryNode::GetBackgroundColor)
 										.HAlign(HAlign_Fill)
-										.VAlign(VAlign_Center)
+										.VAlign(VAlign_Top)
 										.Visibility(EVisibility::SelfHitTestInvisible)
 										[
 											SNew(SOverlay)
 											+ SOverlay::Slot()
 											.HAlign(HAlign_Fill)
-											.VAlign(VAlign_Fill)
+											.VAlign(VAlign_Top)
 											[
 												SNew(SVerticalBox)
 												+ SVerticalBox::Slot()
 												.HAlign(HAlign_Fill)
-												.VAlign(VAlign_Center)
+												.VAlign(VAlign_Top)
 												.AutoHeight()
 												[
 													SNew(SHorizontalBox)
@@ -405,29 +389,6 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 																[
 																	NodeTitle.ToSharedRef()
 																]
-																+ SVerticalBox::Slot()
-																.AutoHeight()
-																.Padding(FMargin(2.0f, 3.0f, 2.0f, 4.0f))
-																[
-																	// NodeTag
-																	SAssignNew(DescriptionText, STextBlock)
-																		.Visibility(this, &SGraphNode_OrionInventoryNode::GetNodeIDVisibility)
-																		.Text(this, &SGraphNode_OrionInventoryNode::GetNodeIDText)
-																		.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Bold"))
-																		.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
-																]
-																+ SVerticalBox::Slot()
-																.AutoHeight()
-																.Padding(FMargin(2.0f, 0.0f, 2.0f, 4.0f))
-																[
-																	// DESCRIPTION MESSAGE
-																	SAssignNew(DescriptionText, STextBlock)
-																		.Visibility(this, &SGraphNode_OrionInventoryNode::GetDescriptionVisibility)
-																		.Text(this, &SGraphNode_OrionInventoryNode::GetDescription)
-																		.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Italic"))
-																		.AutoWrapText(true)
-																		.WrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping)
-																]
 															]
 																//if subnode
 															+ SHorizontalBox::Slot()
@@ -438,6 +399,10 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 																SNew(SVerticalBox)
 																.Visibility(this, &SGraphNode_OrionInventoryNode::GetSubNodeVisibility)
 																+ SVerticalBox::Slot()
+																.HAlign(HAlign_Fill)
+																.VAlign(VAlign_Top)
+																.MinHeight(NodeMinHeight)
+																.MaxHeight(NodeMaxHeight)
 																.AutoHeight()
 																[
 																	SNew(STextBlock)
@@ -477,114 +442,28 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 									[
 										SAssignNew(NodeBody, SBorder)
 											.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
-											.BorderBackgroundColor(OrionInventoryColors::NodeBorder::SubNodeBorder)
+											.BorderBackgroundColor(OrionInventoryColors::NodeBorder::InventoryNodeBorder)
 											.HAlign(HAlign_Fill)
 											.VAlign(VAlign_Center)
-											.Visibility(this, &SGraphNode_OrionInventoryNode::GetEventsVisibility)
+											.Visibility(this, &SGraphNode_OrionInventoryNode::GetInventoryItemVisibility)
 											[
 												SNew(SOverlay)
 													+ SOverlay::Slot()
 													.HAlign(HAlign_Fill)
 													.VAlign(VAlign_Fill)
 													[
-														SNew(SVerticalBox)
-															+ SVerticalBox::Slot()
-															.HAlign(HAlign_Fill)
-															.VAlign(VAlign_Center)
-															.AutoHeight()
-															[
-																SNew(SHorizontalBox)
-																	/*+ SHorizontalBox::Slot()
-																	.AutoWidth()
-																	.VAlign(VAlign_Center)
-																	[
-																		SNew(SImage)
-																			.Image(FAppStyle::GetBrush(TEXT("GraphEditor.CustomEvent_16x")))
-																	]*/
-																	+ SHorizontalBox::Slot()
-																	.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
-																	[
-																		SNew(STextBlock)
-																			.Text(LOCTEXT("EventLabel", "Events"))
-																			.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
-																			.Clipping(EWidgetClipping::Inherit)
-																	]
-															]
-															+ SVerticalBox::Slot()
-															.Padding(FMargin(8.0f, 0, 0, 0))
-															.AutoHeight()
-															[
-																EventsBox.ToSharedRef()
-															]
-													]
-											]
-									]
-									+ SVerticalBox::Slot()
-									.AutoHeight()
-									[
-										SAssignNew(NodeBody, SBorder)
-											.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
-											.BorderBackgroundColor(OrionInventoryColors::NodeBorder::SubNodeBorder)
-											.HAlign(HAlign_Fill)
-											.VAlign(VAlign_Center)
-											.Visibility(this, &SGraphNode_OrionInventoryNode::GetDecoratorVisibility)
-											[
-												SNew(SOverlay)
-													+ SOverlay::Slot()
-													.HAlign(HAlign_Fill)
-													.VAlign(VAlign_Fill)
-													[
-														SNew(SVerticalBox)
-															+ SVerticalBox::Slot()
-															.HAlign(HAlign_Fill)
-															.VAlign(VAlign_Center)
-															.AutoHeight()
-															[
-																SNew(SHorizontalBox)
-																	/*+ SHorizontalBox::Slot()
-																	.AutoWidth()
-																	.VAlign(VAlign_Center)
-																	[
-																		SNew(SImage)
-																			.Image(FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Decorator.Conditional.Icon")))
-																	]*/
-																	+ SHorizontalBox::Slot()
-																	.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
-																	[
-																		SNew(STextBlock)
-																			.Text(LOCTEXT("DecoratorLabel", "Decorators"))
-																			.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
-																			.Clipping(EWidgetClipping::Inherit)
-																	]
-															]
-															+ SVerticalBox::Slot()
-															.Padding(FMargin(8.0f, 0, 0, 0))
-															.AutoHeight()
-															[
-																DecoratorsBox.ToSharedRef()
-															]
+
+														InventoryItemGridPanel.ToSharedRef()
 													]
 											]
 									]
 
-							]
-
-							// OUTPUT PIN AREA
-							+ SHorizontalBox::Slot()
-							.Padding(PinPadding)
-							.AutoWidth()
-							[
-								SNew(SBox)
-									.MinDesiredWidth(NodePadding.Right)
-									[
-										SAssignNew(RightNodeBox, SVerticalBox)
-									]
 							]
 					]
 					// Drag marker overlay
 					+ SOverlay::Slot()
-					.HAlign(HAlign_Fill)
-					.VAlign(VAlign_Top)
+					.HAlign(HAlign_Left)
+					.VAlign(VAlign_Fill)
 					[
 						SNew(SBorder)
 							.BorderBackgroundColor(OrionInventoryColors::Action::DragMarker)
@@ -593,7 +472,7 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 							.Visibility(this, &SGraphNode_OrionInventoryNode::GetDragOverMarkerVisibility)
 							[
 								SNew(SBox)
-									.HeightOverride(4.f)
+									.WidthOverride(2.f)
 							]
 					]
 
@@ -957,19 +836,11 @@ EVisibility SGraphNode_OrionInventoryNode::GetDescriptionVisibility() const
 
 }
 
-EVisibility SGraphNode_OrionInventoryNode::GetEventsVisibility() const
+
+EVisibility SGraphNode_OrionInventoryNode::GetInventoryItemVisibility() const
 {
 	UOrionInventoryEdNode* InventoryEdNode = Cast<UOrionInventoryEdNode>(GraphNode);
-	if (InventoryEdNode && InventoryEdNode->Events.Num())
-	{
-		return EVisibility::Visible;
-	}
-	return EVisibility::Collapsed;
-}
-EVisibility SGraphNode_OrionInventoryNode::GetDecoratorVisibility() const
-{
-	UOrionInventoryEdNode* InventoryEdNode = Cast<UOrionInventoryEdNode>(GraphNode);
-	if (InventoryEdNode && InventoryEdNode->Decorators.Num())
+	if (InventoryEdNode && InventoryEdNode->InventoryItems.Num())
 	{
 		return EVisibility::Visible;
 	}
@@ -981,27 +852,17 @@ void SGraphNode_OrionInventoryNode::Tick(const FGeometry& AllottedGeometry, cons
 	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 }
 
-void SGraphNode_OrionInventoryNode::AddDecorator(TSharedPtr<SGraphNode> DecoratorWidget)
+void SGraphNode_OrionInventoryNode::AddInventoryItem(TSharedPtr<SGraphNode> InventoryItemWidget, int32 Column, int32 Row)
 {
-	DecoratorsBox->AddSlot()
-		.AutoHeight()
+	InventoryItemGridPanel->AddSlot(Column, Row)
 		[
-			DecoratorWidget.ToSharedRef()
+			InventoryItemWidget.ToSharedRef()
 		];
 
-	DecoratorWidgets.Add(DecoratorWidget);
-	AddSubNode(DecoratorWidget);
+	InventoryItemWidgets.Add(InventoryItemWidget);
+	AddSubNode(InventoryItemWidget);
 }
 
-void SGraphNode_OrionInventoryNode::AddEvent(TSharedPtr<SGraphNode> EventWidget)
-{
-	EventsBox->AddSlot().AutoHeight()
-		[
-			EventWidget.ToSharedRef()
-		];
-	EventsWidgets.Add(EventWidget);
-	AddSubNode(EventWidget);
-}
 
 void SGraphNode_OrionInventoryNode::AddSubNode(TSharedPtr<SGraphNode> SubNodeWidget)
 {
@@ -1186,7 +1047,7 @@ FSlateColor SGraphNode_OrionInventoryNode::GetBorderBackgroundColor() const
 
 	return bSelectedSubNode ? OrionInventoryColors::NodeBorder::Selected :
 		InventoryEdNode && !InventoryEdNode->IsSubNode() ? InventoryEdNode->GetBackgroundColor() :
-		OrionInventoryColors::NodeBorder::Inactive;
+		OrionInventoryColors::NodeBorder::InventoryNodeBorder;
 
 }
 

@@ -17,6 +17,8 @@
 #include "OrionInventory_EditorCommands.h"
 #include "OrionInventoryEdGraph.h"
 #include "OrionInventoryEdNode.h"
+#include "OrionInventoryEdSubNode_Item.h"
+#include "Inventory/OrionInventoryNode_Item.h"
 #include "Inventory/OrionInventoryNode.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "K2Node.h"
@@ -1486,8 +1488,52 @@ void FOrionInventoryEditor::HandleNewNodeClassPicked(UClass* InClass) const
 
 void FOrionInventoryEditor::CreateNewInventoryItem()
 {
-	UE_LOG(LogTemp, Log, TEXT("CreateNewInventoryItem called"));
+    TSharedPtr<SGraphEditor> GraphEditor = GetCurrGraphEditor();
+    if (!GraphEditor.IsValid())
+        return;
+
+    UEdGraph* Graph = GraphEditor->GetCurrentGraph();
+    if (!Graph)
+        return;
+
+
+	UOrionInventoryGraph* InventoryGraph = CastChecked<UOrionInventoryGraph>(Graph->GetOuter());
+	if (!InventoryGraph)
+		return;
+
+    const UEdGraphSchema* Schema = Graph->GetSchema();
+    if (!Schema)
+        return;
+
+    // Assume only one node is selected
+    const FGraphPanelSelectionSet SelectedNodes = GraphEditor->GetSelectedNodes();
+    if (SelectedNodes.Num() != 1)
+        return;
+
+    UOrionInventoryEdNode* SelectedNode = Cast<UOrionInventoryEdNode>(*SelectedNodes.CreateConstIterator());
+    if (!SelectedNode)
+        return;
+
+	if (SelectedNode->ParentNode)
+		SelectedNode = SelectedNode->ParentNode;
+
+	UClass* ItemEdNodeClass = UOrionInventoryEdSubNode_Item::StaticClass();
+	UClass* ItemNodeClass = UOrionInventoryNode_Item::StaticClass();
+
+    // Create a new subnode (replace with your subnode class if different)
+    UOrionInventoryEdNode* SubNode = NewObject<UOrionInventoryEdNode>(Graph, ItemEdNodeClass);
+	FGraphNodeClassData ItemClassData = FGraphNodeClassData(ItemNodeClass, "ItemClassData");
+	SubNode->ClassData = ItemClassData;
+	SubNode->NodeInstance = NewObject<UObject>(InventoryGraph, ItemNodeClass);
+	SubNode->NodeInstance->SetFlags(RF_Transactional);
+
+    // Add to parent node's subnodes array
+	SelectedNode->AddSubNode(SubNode, Graph);
+
+    // Notify the graph/schema of the change
+    Graph->NotifyGraphChanged();
 }
+
 bool FOrionInventoryEditor::CanCreateInventoryItem() const
 {
 	return true;

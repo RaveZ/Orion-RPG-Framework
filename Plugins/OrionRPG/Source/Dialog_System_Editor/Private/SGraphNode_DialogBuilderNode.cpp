@@ -228,7 +228,7 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 	{
 		for (int32 i = 0; i < DialogEdNode->Decorators.Num(); i++)
 		{
-			if (DialogEdNode->Decorators[i])
+			if (DialogEdNode->Decorators.IsValidIndex(i))
 			{
 				TSharedPtr<SGraphNode> NewNode = FNodeFactory::CreateNodeWidget(DialogEdNode->Decorators[i]);
 				if (OwnerGraphPanelPtr.IsValid())
@@ -242,7 +242,7 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 		}
 		for (int32 i = 0; i < DialogEdNode->Events.Num(); i++)
 		{
-			if (DialogEdNode->Events[i])
+			if (DialogEdNode->Events.IsValidIndex(i))
 			{
 				TSharedPtr<SGraphNode> NewNode = FNodeFactory::CreateNodeWidget(DialogEdNode->Events[i]);
 				if (OwnerGraphPanelPtr.IsValid())

@@ -25,8 +25,7 @@ public:
 	virtual void ShutdownModule() override;
 	
 	
-	TSharedPtr<struct FGraphNodeClassHelper> GetDecoratorClassCache() { return DecoratorClassCache; }
-	TSharedPtr<struct FGraphNodeClassHelper> GetEventClassCache() { return EventClassCache; }
+	TSharedPtr<struct FGraphNodeClassHelper> GetInventoryItemClassCache() { return InventoryItemClassCache; }
 	
 	void CheckClassCache();
 
@@ -47,6 +46,5 @@ private:
 	EAssetTypeCategories::Type InventoryEditorAssetCategoryBit;
 	TArray< TSharedPtr<IAssetTypeActions> > CreatedAssetTypeActions;
 
-	TSharedPtr<struct FGraphNodeClassHelper> DecoratorClassCache;
-	TSharedPtr<struct FGraphNodeClassHelper> EventClassCache;
+	TSharedPtr<struct FGraphNodeClassHelper> InventoryItemClassCache;
 };

@@ -10,11 +10,10 @@
 #include "Framework/Commands/GenericCommands.h"
 #include "Settings/EditorStyleSettings.h"
 #include "OrionInventoryEditorUtils.h"
-#include "Inventory/OrionInventoryNode_ItemCategory.h"
+#include "Inventory/OrionInventoryNode_ItemContainer.h"
+#include "OrionInventoryEdNode_ItemContainer.h"
+#include "OrionInventoryEdSubNode_Item.h"
 #include "OrionInventoryEdNode.h"
-#include "OrionInventoryEdNode_ItemCategory.h"
-#include "OrionInventoryEdSubNode_Decorator.h"
-#include "OrionInventoryEdSubNode_Event.h"
 #include "GraphEditorActions.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
@@ -93,8 +92,7 @@ void FAssetSchemaAction_Inventory_NewNode::AddReferencedObjects(FReferenceCollec
 
 UEdGraphSchema_OrionInventory::UEdGraphSchema_OrionInventory()
 {
-	DecoratorClass = UOrionInventoryEdSubNode_Decorator::StaticClass();
-	EventClass = UOrionInventoryEdSubNode_Event::StaticClass();
+	InventoryItemClass = UOrionInventoryEdSubNode_Item::StaticClass();
 }
 
 void UEdGraphSchema_OrionInventory::GetBreakLinkToSubMenuActions(UToolMenu* Menu, UEdGraphPin* InGraphPin)
@@ -166,19 +164,19 @@ void UEdGraphSchema_OrionInventory::GetGraphContextActions(FGraphContextMenuBuil
 	UEdGraph* EdGraph = (UEdGraph*)ContextMenuBuilder.CurrentGraph;
 
 	
-	FCategorizedGraphActionListBuilder ItemCategoryBuilder(TEXT("ItemCategory"));
-	UClass* ItemCategoryEdNodeClass = UOrionInventoryEdNode_ItemCategory::StaticClass();
-	UClass* ItemCategoryNodeClass = UOrionInventoryNode_ItemCategory::StaticClass();
+	FCategorizedGraphActionListBuilder ItemContainerBuilder(TEXT("ItemContainer"));
+	UClass* ItemContainerEdNodeClass = UOrionInventoryEdNode_ItemContainer::StaticClass();
+	UClass* ItemContainerNodeClass = UOrionInventoryNode_ItemContainer::StaticClass();
 
-	TSharedPtr<FAssetSchemaAction_Inventory_NewNode> AddOpAction = UEdGraphSchema_OrionInventory::AddNewNodeAction(ItemCategoryBuilder, FText::GetEmpty(), LOCTEXT("InventorySystemGraphNodeAction", "Add Item Container."), LOCTEXT("InventorySystemGraphNodeTooltip", "Create Item Container."));
-	UOrionInventoryEdNode* OpNode = NewObject<UOrionInventoryEdNode>(ContextMenuBuilder.OwnerOfTemporaries, ItemCategoryEdNodeClass);
-	FGraphNodeClassData ItemCategoryClassData = FGraphNodeClassData(ItemCategoryNodeClass, "ItemCategoryClassData");
-	OpNode->ClassData = ItemCategoryClassData;
+	TSharedPtr<FAssetSchemaAction_Inventory_NewNode> AddOpAction = UEdGraphSchema_OrionInventory::AddNewNodeAction(ItemContainerBuilder, FText::GetEmpty(), LOCTEXT("InventorySystemGraphNodeAction", "Add Item Container."), LOCTEXT("InventorySystemGraphNodeTooltip", "Create Item Container."));
+	UOrionInventoryEdNode* OpNode = NewObject<UOrionInventoryEdNode>(ContextMenuBuilder.OwnerOfTemporaries, ItemContainerEdNodeClass);
+	FGraphNodeClassData ItemContainerClassData = FGraphNodeClassData(ItemContainerNodeClass, "ItemContainerClassData");
+	OpNode->ClassData = ItemContainerClassData;
 	AddOpAction->NodeTemplate = OpNode;
-	OpNode->NodeInstance = NewObject<UObject>(InventoryGraph, ItemCategoryNodeClass);
+	OpNode->NodeInstance = NewObject<UObject>(InventoryGraph, ItemContainerNodeClass);
 	OpNode->NodeInstance->SetFlags(RF_Transactional);
 
-	ContextMenuBuilder.Append(ItemCategoryBuilder);
+	ContextMenuBuilder.Append(ItemContainerBuilder);
 	
 	
 	// Add the ability to create a comment to the context menu too for discoverability
@@ -221,15 +219,10 @@ void UEdGraphSchema_OrionInventory::GetSubNodeClasses(int32 SubNodeFlags, TArray
 {
 	FGraphNodeClassHelper& ClassCache = GetClassCache(SubNodeFlags);
 
-	if (SubNodeFlags == EInventorySubNode::Decorator)
+	if (SubNodeFlags == EInventorySubNode::Item)
 	{
 		ClassCache.GatherClasses(UOrionDecorator::StaticClass(), ClassData);
-		GraphNodeClass = DecoratorClass;
-	}
-	else if (SubNodeFlags == EInventorySubNode::Event)
-	{
-		ClassCache.GatherClasses(UOrionEvent::StaticClass(), ClassData);
-		GraphNodeClass = EventClass;
+		GraphNodeClass = InventoryItemClass;
 	}
 }
 
@@ -238,13 +231,9 @@ FGraphNodeClassHelper& UEdGraphSchema_OrionInventory::GetClassCache(int32 SubNod
 {
 	FOrionInventoryEditorModule& EditorModule = FModuleManager::GetModuleChecked<FOrionInventoryEditorModule>(TEXT("OrionInventoryEditor"));
 	FGraphNodeClassHelper* ClassHelper = nullptr;
-	if (SubNodeFlags == EInventorySubNode::Decorator)
+	if (SubNodeFlags == EInventorySubNode::Item)
 	{
-		ClassHelper = EditorModule.GetDecoratorClassCache().Get();
-	}
-	else if (SubNodeFlags == EInventorySubNode::Event)
-	{
-		ClassHelper = EditorModule.GetEventClassCache().Get();
+		ClassHelper = EditorModule.GetInventoryItemClassCache().Get();
 	}
 	
 	
@@ -301,7 +290,7 @@ void UEdGraphSchema_OrionInventory::CreateAddInventoryItemSubMenu(UToolMenu* Men
 const FPinConnectionResponse UEdGraphSchema_OrionInventory::CanMergeNodes(const UEdGraphNode* NodeA, const UEdGraphNode* NodeB) const
 {
 	// Make sure the nodes are not the same 
-	/*if (NodeA == NodeB)
+	if (NodeA == NodeB)
 	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, TEXT("Both are the same node"));
 	}
@@ -309,18 +298,15 @@ const FPinConnectionResponse UEdGraphSchema_OrionInventory::CanMergeNodes(const 
 	const UOrionInventoryEdNode* InventoryEdNodeA = Cast<UOrionInventoryEdNode>(NodeA);
 	const UOrionInventoryEdNode* InventoryEdNodeB = Cast<UOrionInventoryEdNode>(NodeB);
 
-	const bool bNodeAIsDecorator = NodeA->IsA(UOrionInventoryEdSubNode_Decorator::StaticClass());
-	const bool bNodeAIsEvent = NodeA->IsA(UOrionInventoryEdSubNode_Event::StaticClass());
-	const bool bNodeBIsObjective = NodeB->IsA(UOrionInventoryEdNode_ItemCategory::StaticClass());
-	const bool bNodeBIsState = NodeB->IsA(UOrionInventoryEdNode_OptionSelector::StaticClass());
-	const bool bNodeBIsDecorator = NodeB->IsA(UOrionInventoryEdSubNode_Decorator::StaticClass());
-	const bool bNodeBIsEvent = NodeB->IsA(UOrionInventoryEdSubNode_Event::StaticClass());
+	const bool bNodeAIsItemContainer = NodeA->IsA(UOrionInventoryEdNode_ItemContainer::StaticClass());
+	const bool bNodeAIsItem = NodeA->IsA(UOrionInventoryEdSubNode_Item::StaticClass());
+	const bool bNodeBIsItemContainer = NodeB->IsA(UOrionInventoryEdNode_ItemContainer::StaticClass());
+	const bool bNodeBIsItem = NodeB->IsA(UOrionInventoryEdSubNode_Item::StaticClass());
 
-	if ((bNodeAIsDecorator && (bNodeBIsDecorator || bNodeBIsState || bNodeBIsObjective))
-		|| (bNodeAIsEvent && (bNodeBIsEvent || bNodeBIsState || bNodeBIsObjective)))
+	if ((bNodeAIsItem && (bNodeBIsItem || bNodeBIsItemContainer)))
 	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_MAKE, TEXT(""));
-	}*/
+	}
 	return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, TEXT(""));
 }
 

@@ -6,7 +6,7 @@
 
 UOrionInventorySetting::UOrionInventorySetting()
 {
-	ItemCategoryColor = FLinearColor(0.15f, 0.15f, 0.15f);
+	ItemContainerColor = FLinearColor(0.07f, 0.07f, 0.07f);
 	bCanRenameNode = true;
 }
 

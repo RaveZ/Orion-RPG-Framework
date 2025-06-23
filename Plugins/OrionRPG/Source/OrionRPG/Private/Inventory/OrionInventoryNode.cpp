@@ -1,8 +1,6 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #include "Inventory/OrionInventoryNode.h"
-#include "Event/OrionEvent.h"
-#include "Decorator/OrionDecorator.h"
 #include "Inventory/OrionInventoryGraph.h"
 #include "Inventory/OrionInventoryComponent.h"
 
@@ -119,41 +117,6 @@ FText UOrionInventoryNode::GetNodeTitle() const
 FText UOrionInventoryNode::GetNodeDescription() const
 {
 	return FText::FromString(TEXT("This is NodeBase"));
-}
-
-FText UOrionInventoryNode::GetEventsText() const
-{
-	FString EventListText;
-
-	for (const UOrionEvent* Event : Events)
-	{
-		if (Event)
-		{
-			if(!EventListText.IsEmpty()) EventListText += TEXT("\n");
-			EventListText += Event->GetNodeDisplayText();
-		}
-
-	}
-
-	return FText::FromString(EventListText);
-}
-
-FText UOrionInventoryNode::GetConditionsText() const
-{
-	FString ConditionListText;
-
-	for (const UOrionDecorator* Condition : Decorators)
-	{
-		if (Condition)
-		{
-			if(!ConditionListText.IsEmpty()) ConditionListText += TEXT("\n");
-
-			ConditionListText += Condition->GetNodeDisplayText();
-		}
-
-	}
-
-	return FText::FromString(ConditionListText);
 }
 
 void UOrionInventoryNode::SetNodeTitle(const FText& NewTitle)

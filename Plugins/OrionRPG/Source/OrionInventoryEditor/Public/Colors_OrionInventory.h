@@ -15,6 +15,7 @@ namespace OrionInventoryColors
 
 	namespace NodeBorder
 	{
+		const FLinearColor InventoryNodeBorder(0.01f, 0.01f, 0.01f, 0.6f);
 		const FLinearColor SubNodeBorder(0.3f, 0.3f, 0.3f, 0.2f);
 		const FLinearColor Inactive(0.08f, 0.08f, 0.08f);
 		const FLinearColor Root(0.2f, 0.2f, 0.2f, 0.2f);
@@ -45,7 +46,7 @@ namespace OrionInventoryColors
 
 	namespace Action
 	{
-		const FLinearColor DragMarker(1.0f, 1.0f, 0.2f);
+		const FLinearColor DragMarker(1.0f, 1.0f, 0.2f, 0.5f);
 	}
 	
 	namespace Debugger

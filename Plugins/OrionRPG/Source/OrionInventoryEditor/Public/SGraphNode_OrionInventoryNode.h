@@ -60,8 +60,7 @@ public:
 
 	virtual FText GetDescription() const;
 	virtual EVisibility GetDescriptionVisibility() const;
-	virtual EVisibility GetEventsVisibility() const;
-	virtual EVisibility GetDecoratorVisibility() const;
+	virtual EVisibility GetInventoryItemVisibility() const;
 
 	/**
 	 * Ticks this widget.  Override in derived classes, but always call the parent implementation.
@@ -73,10 +72,8 @@ public:
 	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
 
 	/** adds decorator widget inside current node */
-	void AddDecorator(TSharedPtr<SGraphNode> DecoratorWidget);
+	void AddInventoryItem(TSharedPtr<SGraphNode> DecoratorWidget, int32 Column, int32 Row);
 
-	/** adds event widget inside current node */
-	void AddEvent(TSharedPtr<SGraphNode> EventWidget);
 
 
 	/** handle mouse down on the node */
@@ -126,10 +123,8 @@ protected:
 	uint32 bDragMarkerVisible : 1;
 
 
-	TArray< TSharedPtr<SGraphNode> > DecoratorWidgets;
-	TArray< TSharedPtr<SGraphNode> > EventsWidgets;
-	TSharedPtr<SVerticalBox> DecoratorsBox;
-	TSharedPtr<SVerticalBox> EventsBox;
+	TArray< TSharedPtr<SGraphNode> > InventoryItemWidgets;
+	TSharedPtr<SGridPanel> InventoryItemGridPanel;
 	TSharedPtr<SHorizontalBox> OutputPinBox;
 	TSharedPtr<SWidget> InventoryNodeWidgetRef;
 
