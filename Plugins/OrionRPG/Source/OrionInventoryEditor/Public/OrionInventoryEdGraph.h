@@ -33,6 +33,7 @@ public:
 	void LockUpdates();
 	void UnlockUpdates();
 
+	void CreateNewInventoryItemOnNode(class UOrionInventoryEdNode* InNode);
 	UOrionInventoryGraph* GetOrionInventoryGraph() const;
 
 	virtual bool Modify(bool bAlwaysMarkDirty = true) override;

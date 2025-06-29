@@ -1486,6 +1486,7 @@ void FOrionInventoryEditor::HandleNewNodeClassPicked(UClass* InClass) const
 	FSlateApplication::Get().DismissAllMenus();
 }
 
+
 void FOrionInventoryEditor::CreateNewInventoryItem()
 {
     TSharedPtr<SGraphEditor> GraphEditor = GetCurrGraphEditor();

@@ -238,6 +238,8 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 				}
 			}
 		}
+		CreateAddInventoryItemButton(Column, Row);
+		
 	}
 
 	TSharedPtr<SErrorText> ErrorText;
@@ -262,20 +264,23 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 		? FMargin(1.f)
 		: FMargin(8.0f);
 
+	const float SubNodeHeight = 75.f;
+	const float SubNodeWidth = 75.f;
+	
 	const float NodeMaxWidth = InventoryEdNode && InventoryEdNode->IsSubNode()
-		? 75.f
+		? SubNodeWidth
 		: 350.f;
 
 	const float NodeMinWidth = InventoryEdNode && InventoryEdNode->IsSubNode()
-		? 75.f		
+		? SubNodeWidth		
 		: 400.f;
 
 	const float NodeMinHeight = InventoryEdNode && InventoryEdNode->IsSubNode()
-		? 75.f
+		? SubNodeHeight
 		: 400.f;
 	
 	const float NodeMaxHeight = InventoryEdNode && InventoryEdNode->IsSubNode()
-		? 75.f
+		? SubNodeHeight
 		: 400.f;
 
 	const EHorizontalAlignment NodeHAlign = InventoryEdNode && InventoryEdNode->IsSubNode()
@@ -367,12 +372,12 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 															+ SHorizontalBox::Slot()
 															.MinWidth(NodeMinWidth)
 															.MaxWidth(NodeMaxWidth)
-															.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 															[
 																SNew(SVerticalBox)
 																.Visibility(this, &SGraphNode_OrionInventoryNode::GetParentNodeVisibility)
 																+ SVerticalBox::Slot()
 																.AutoHeight()
+																.Padding(FMargin(4.0f, 5.0f, 4.0f, 0.0f))
 																[
 																	SAssignNew(InlineEditableText, SInlineEditableTextBlock)
 																		.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
@@ -394,7 +399,6 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 															+ SHorizontalBox::Slot()
 															.MinWidth(NodeMinWidth)
 															.MaxWidth(NodeMaxWidth)
-															.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 															[
 																SNew(SVerticalBox)
 																.Visibility(this, &SGraphNode_OrionInventoryNode::GetSubNodeVisibility)
@@ -415,19 +419,6 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 																.AutoHeight()
 																[
 																	NodeTitle.ToSharedRef()
-																]
-																+ SVerticalBox::Slot()
-																
-																.AutoHeight()
-																	.Padding(FMargin(1.0f, 0.0f, 1.0f, 1.0f))
-																[
-																			// DESCRIPTION MESSAGE
-																			SAssignNew(DescriptionText, STextBlock)
-																				.Visibility(this, &SGraphNode_OrionInventoryNode::GetDescriptionVisibility)
-																				.Text(this, &SGraphNode_OrionInventoryNode::GetDescription)
-																				.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Italic"))
-																				.AutoWrapText(true)
-																				.WrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping)
 																]
 															]
 														
@@ -452,7 +443,6 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 													.HAlign(HAlign_Fill)
 													.VAlign(VAlign_Fill)
 													[
-
 														InventoryItemGridPanel.ToSharedRef()
 													]
 											]
@@ -490,34 +480,11 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 			
 				
 		];
-		// Create comment bubble
-		TSharedPtr<SCommentBubble> CommentBubble;
-		const FSlateColor CommentColor = GetDefault<UGraphEditorSettings>()->DefaultCommentNodeTitleColor;
-
-		SAssignNew(CommentBubble, SCommentBubble)
-			.GraphNode(GraphNode)
-			.Text(this, &SGraphNode::GetNodeComment)
-			.OnTextCommitted(this, &SGraphNode::OnCommentTextCommitted)
-			.ColorAndOpacity(CommentColor)
-			.AllowPinning(true)
-			.EnableTitleBarBubble(true)
-			.EnableBubbleCtrls(true)
-			.GraphLOD(this, &SGraphNode::GetCurrentLOD)
-			.IsGraphNodeHovered(this, &SGraphNode::IsHovered);
-
-		GetOrAddSlot(ENodeZone::TopCenter)
-			.SlotOffset(TAttribute<FVector2D>(CommentBubble.Get(), &SCommentBubble::GetOffset))
-			.SlotSize(TAttribute<FVector2D>(CommentBubble.Get(), &SCommentBubble::GetSize))
-			.AllowScaling(TAttribute<bool>(CommentBubble.Get(), &SCommentBubble::IsScalingAllowed))
-			.VAlign(VAlign_Top)
-			[
-				CommentBubble.ToSharedRef()
-			];
+		
 
 		ErrorReporting = ErrorText;
 		ErrorReporting->SetError(ErrorMsg);
 	
-	CreatePinWidgets();
 }
 
 void SGraphNode_OrionInventoryNode::OnDragEnter(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent)
@@ -839,12 +806,7 @@ EVisibility SGraphNode_OrionInventoryNode::GetDescriptionVisibility() const
 
 EVisibility SGraphNode_OrionInventoryNode::GetInventoryItemVisibility() const
 {
-	UOrionInventoryEdNode* InventoryEdNode = Cast<UOrionInventoryEdNode>(GraphNode);
-	if (InventoryEdNode && InventoryEdNode->InventoryItems.Num())
-	{
-		return EVisibility::Visible;
-	}
-	return EVisibility::Collapsed;
+	return EVisibility::Visible;
 }
 
 void SGraphNode_OrionInventoryNode::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
@@ -861,6 +823,64 @@ void SGraphNode_OrionInventoryNode::AddInventoryItem(TSharedPtr<SGraphNode> Inve
 
 	InventoryItemWidgets.Add(InventoryItemWidget);
 	AddSubNode(InventoryItemWidget);
+}
+
+void SGraphNode_OrionInventoryNode::CreateAddInventoryItemButton(int32 Column, int32 Row)
+{
+
+	const float SubNodeHeight = 75.f;
+	const float SubNodeWidth = 85.f;
+	
+	InventoryItemGridPanel->AddSlot(Column, Row)
+    [
+    	SNew(SBox)
+		.MinDesiredHeight(SubNodeHeight)
+	    .MaxDesiredHeight(SubNodeHeight)
+	    .MinDesiredWidth(SubNodeWidth)
+	    .MaxDesiredWidth(SubNodeWidth)
+	    [
+			  	SNew(SOverlay)
+				 // Pins and node details
+				 + SOverlay::Slot()
+					 .HAlign(HAlign_Fill)
+					 .VAlign(VAlign_Fill)
+					 [
+					 	SAssignNew(NodeBody, SBorder)
+						 .BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+						 .BorderBackgroundColor(this, &SGraphNode_OrionInventoryNode::GetBackgroundColor)
+						 .HAlign(HAlign_Fill)
+						 .VAlign(VAlign_Fill)
+						 .Visibility(EVisibility::Visible)
+						 [
+							SNew(SButton)
+								.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+								.OnClicked(this, &SGraphNode_OrionInventoryNode::OnAddItemClicked)
+							 	.HAlign(HAlign_Center)
+								.VAlign(VAlign_Center)
+								.ToolTipText(FText::FromString(TEXT("Add New Item")))
+								[
+									SNew(SImage)
+									.Image(FAppStyle::GetBrush("DataTableEditor.Add"))
+									.DesiredSizeOverride(FVector2d(40.f, 40.f))
+								]
+							 
+						]
+					 ]
+			  ]
+	    
+    ];
+}
+
+FReply SGraphNode_OrionInventoryNode::OnAddItemClicked()
+{
+	UOrionInventoryEdNode* InventoryEdNode = Cast<UOrionInventoryEdNode>(GraphNode);
+	UOrionInventoryEdGraph* InventoryEdGraph = InventoryEdNode ? InventoryEdNode->GetOrionInventoryEdGraph() : nullptr;
+
+	if (InventoryEdNode && InventoryEdGraph)
+	{
+		InventoryEdGraph->CreateNewInventoryItemOnNode(InventoryEdNode);
+	}
+	return FReply::Handled();
 }
 
 

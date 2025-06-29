@@ -72,8 +72,12 @@ public:
 	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime) override;
 
 	/** adds decorator widget inside current node */
-	void AddInventoryItem(TSharedPtr<SGraphNode> DecoratorWidget, int32 Column, int32 Row);
+	void AddInventoryItem(TSharedPtr<SGraphNode> InventoryItemWidget, int32 Column, int32 Row);
 
+	/** adds plus item widget inside current node */
+	void CreateAddInventoryItemButton(int32 Column, int32 Row);
+	
+	FReply OnAddItemClicked();
 
 
 	/** handle mouse down on the node */

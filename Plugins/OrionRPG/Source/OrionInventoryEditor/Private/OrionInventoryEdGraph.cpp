@@ -4,6 +4,7 @@
 #include "OrionInventoryEdGraph.h"
 #include "OrionInventoryEdNode_Root.h"
 #include "OrionInventoryEdNode.h"
+#include "OrionInventoryEdSubNode_Item.h"
 #include "Inventory/OrionInventoryGraph.h"
 #include "Inventory/OrionInventoryNode.h"
 #include "Inventory/OrionInventoryNode_Item.h"
@@ -143,6 +144,37 @@ void UOrionInventoryEdGraph::UnlockUpdates()
 }
 
 
+void UOrionInventoryEdGraph::CreateNewInventoryItemOnNode(UOrionInventoryEdNode* InNode)
+{
+	UOrionInventoryGraph* InventoryGraph = GetOrionInventoryGraph();
+	if (!InventoryGraph)
+		return;
+
+	if (!Schema)
+		return;
+	
+	if (!InNode)
+		return;
+
+	if (InNode->ParentNode)
+		InNode = InNode->ParentNode;
+
+	UClass* ItemEdNodeClass = UOrionInventoryEdSubNode_Item::StaticClass();
+	UClass* ItemNodeClass = UOrionInventoryNode_Item::StaticClass();
+
+	// Create a new subnode (replace with your subnode class if different)
+	UOrionInventoryEdNode* SubNode = NewObject<UOrionInventoryEdNode>(this, ItemEdNodeClass);
+	FGraphNodeClassData ItemClassData = FGraphNodeClassData(ItemNodeClass, "ItemClassData");
+	SubNode->ClassData = ItemClassData;
+	SubNode->NodeInstance = NewObject<UObject>(InventoryGraph, ItemNodeClass);
+	SubNode->NodeInstance->SetFlags(RF_Transactional);
+
+	// Add to parent node's subnodes array
+	InNode->AddSubNode(SubNode, this);
+
+	// Notify the graph/schema of the change
+	NotifyGraphChanged();
+}
 
 void UOrionInventoryEdGraph::OnSubNodeDropped()
 {
