@@ -13,8 +13,7 @@
 
 UOrionInventoryNode_ItemContainer::UOrionInventoryNode_ItemContainer()
 {
-    GridCountX = 8;
-    GridCountY = 10;
+    GridCountX = 7;
 }
 
 FText UOrionInventoryNode_ItemContainer::GetNodeTitle() const

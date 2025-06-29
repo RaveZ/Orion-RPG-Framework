@@ -15,12 +15,11 @@ public:
 	UOrionInventoryNode_ItemContainer();
 
 public:
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (ClampMin = "5", ClampMax = "10", UIMin = "5", UIMax = "10"))
-    int32 GridCountX;
-    
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
+	FText Category;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
-    int32 GridCountY;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (ClampMin = "4", ClampMax = "10", UIMin = "5", UIMax = "10"))
+    int32 GridCountX;
 
 public:
 #if WITH_EDITOR

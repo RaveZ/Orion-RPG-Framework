@@ -264,8 +264,8 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 		? FMargin(1.f)
 		: FMargin(8.0f);
 
-	const float SubNodeHeight = 75.f;
-	const float SubNodeWidth = 75.f;
+	const float SubNodeHeight = 115.f;
+	const float SubNodeWidth = 105.f;
 	
 	const float NodeMaxWidth = InventoryEdNode && InventoryEdNode->IsSubNode()
 		? SubNodeWidth
@@ -287,9 +287,6 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 		? HAlign_Left
 		: HAlign_Fill;
 
-	const FMargin PinPadding = (Cast<UOrionInventoryEdSubNode_Item>(GraphNode))
-		? FMargin(0.f)
-		: FMargin(2.f, 3.f, 2.f, 3.f);
 
 	UWorld* World = GEditor->GetEditorWorldContext().World();
 
@@ -308,7 +305,7 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 		[
 			SNew(SBorder)
 			.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
-			.Padding(0.0f)
+			.Padding(0.5f, 0.5f, 0.5f, 0.0f)
 			.BorderBackgroundColor(this, &SGraphNode_OrionInventoryNode::GetBorderBackgroundColor)
 			.OnMouseButtonDown(this, &SGraphNode_OrionInventoryNode::OnMouseDown)
 			[
@@ -331,7 +328,7 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 										.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
 										.BorderBackgroundColor(this, &SGraphNode_OrionInventoryNode::GetBackgroundColor)
 										.HAlign(HAlign_Fill)
-										.VAlign(VAlign_Top)
+										.VAlign(VAlign_Fill)
 										.Visibility(EVisibility::SelfHitTestInvisible)
 										[
 											SNew(SOverlay)
@@ -828,8 +825,8 @@ void SGraphNode_OrionInventoryNode::AddInventoryItem(TSharedPtr<SGraphNode> Inve
 void SGraphNode_OrionInventoryNode::CreateAddInventoryItemButton(int32 Column, int32 Row)
 {
 
-	const float SubNodeHeight = 75.f;
-	const float SubNodeWidth = 85.f;
+	const float SubNodeHeight = 115.f;
+	const float SubNodeWidth = 105.f;
 	
 	InventoryItemGridPanel->AddSlot(Column, Row)
     [

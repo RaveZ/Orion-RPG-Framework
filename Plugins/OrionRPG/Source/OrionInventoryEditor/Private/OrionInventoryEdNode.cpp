@@ -491,6 +491,7 @@ void UOrionInventoryEdNode::FindUniqueNodeName(const FString& InBaseName)
 	}
 
 	UOrionInventoryNode* InventoryNode = NodeInstance ? Cast<UOrionInventoryNode>(NodeInstance) : nullptr;
+	UOrionInventoryNode_Item* InventoryItemNode = NodeInstance ? Cast<UOrionInventoryNode_Item>(NodeInstance) : nullptr;
 	UOrionInventoryEdGraph* InventoryEdGraph = GetOrionInventoryEdGraph();
 
 	if (InventoryNode && InventoryEdGraph)
@@ -498,8 +499,7 @@ void UOrionInventoryEdNode::FindUniqueNodeName(const FString& InBaseName)
 		for (int i = 0;; i++)
 		{
 			bool bIsUnique = true;
-
-
+			
 			for (auto& Node : InventoryEdGraph->Nodes)
 			{
 				UOrionInventoryEdNode* NodeEdNode = Cast<UOrionInventoryEdNode>(Node);

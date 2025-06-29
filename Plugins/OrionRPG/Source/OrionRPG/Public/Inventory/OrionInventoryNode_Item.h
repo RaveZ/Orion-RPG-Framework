@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "OrionInventoryNode.h"
+#include "NativeGameplayTags.h"
 #include "OrionInventoryNode_Item.generated.h"
 
 UCLASS(Blueprintable, BlueprintType)
@@ -15,6 +16,9 @@ public:
 	UOrionInventoryNode_Item();
 
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (Categories = "Item"))
+	FGameplayTag Tag;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
 	FText DisplayName;
 

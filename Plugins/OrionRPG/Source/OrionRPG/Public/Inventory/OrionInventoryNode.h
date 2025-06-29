@@ -28,7 +28,7 @@ public:
 	UOrionInventoryNode();
 	virtual ~UOrionInventoryNode();
 
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Detail", meta = (DisplayPriority = 0))
+	UPROPERTY(BlueprintReadOnly, Category = "Detail", meta = (DisplayPriority = 0))
 		FName ID;
 
 	UPROPERTY(BlueprintReadOnly, Category = "OrionInventoryNode")
