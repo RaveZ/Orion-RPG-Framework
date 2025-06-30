@@ -21,4 +21,5 @@ public:
 	/** Gets a list of actions that can be done to this particular node */
 	virtual void GetNodeContextMenuActions(class UToolMenu* Menu, class UGraphNodeContextMenuContext* Context) const override;
 
+	const FSlateBrush* GetItemImage() const;
 };

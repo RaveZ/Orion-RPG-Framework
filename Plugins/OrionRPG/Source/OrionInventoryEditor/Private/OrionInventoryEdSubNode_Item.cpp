@@ -5,6 +5,7 @@
 #include "Inventory/OrionInventoryNode.h"
 #include "Inventory/OrionInventorySetting.h"
 #include "DialogBuilderNode.h"
+#include "Inventory/OrionInventoryNode_Item.h"
 
 FText UOrionInventoryEdSubNode_Item::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
@@ -37,4 +38,10 @@ FText UOrionInventoryEdSubNode_Item::GetTooltipText() const
 
 void UOrionInventoryEdSubNode_Item::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
+}
+
+const FSlateBrush* UOrionInventoryEdSubNode_Item::GetItemImage() const
+{
+	return FAppStyle::GetBrush(TEXT("Sequencer.SetKeyAll"));
+	
 }

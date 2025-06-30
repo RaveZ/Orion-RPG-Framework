@@ -30,6 +30,8 @@
 #include "Fonts/SlateFontInfo.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "IDocumentation.h"
+#include "Engine/AssetManager.h"
+#include "Engine/StreamableManager.h"
 
 #define LOCTEXT_NAMESPACE "EdNode_OrionInventory"
 
@@ -191,6 +193,9 @@ void SGraphNode_OrionInventoryNode::Construct(const FArguments& InArgs, UOrionIn
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 {
+	SubNodeHeight = 115.f;
+	SubNodeWidth = 105.f;
+	
 	bDragMarkerVisible = false;
 	InputPins.Empty();
 	OutputPins.Empty();
@@ -213,7 +218,46 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 
 	UOrionInventoryEdNode* InventoryEdNode = Cast<UOrionInventoryEdNode>(GraphNode);
 	UOrionInventoryNode_ItemContainer* ItemContainerNode = InventoryEdNode ? Cast<UOrionInventoryNode_ItemContainer>(InventoryEdNode->NodeInstance) : nullptr;
+	UOrionInventoryEdSubNode_Item* InventoryEdNode_Item = Cast<UOrionInventoryEdSubNode_Item>(GraphNode);
+	const UOrionInventoryNode_Item* InventoryItemNode = InventoryEdNode_Item ? Cast<UOrionInventoryNode_Item>(InventoryEdNode_Item->NodeInstance) : nullptr;
 
+	
+	FSlateBrush* ItemBrush = new FSlateBrush();
+	if (InventoryItemNode && InventoryItemNode->DisplayImage.IsValid())
+	{
+		FSoftObjectPath AssetPathName = InventoryItemNode->DisplayImage.ToSoftObjectPath();
+		UTexture2D* Texture = nullptr;
+
+		// Load Asset Registry
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+		IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
+
+		// Use FARFilter to search for the asset
+		FARFilter Filter;
+		Filter.PackagePaths.Add(FName(*AssetPathName.GetLongPackageFName()));
+		Filter.ClassPaths.Add(UTexture2D::StaticClass()->GetClassPathName()); // safer than AssetClass
+		Filter.bRecursivePaths = true;
+		TArray<FAssetData> AssetDataList;
+		AssetRegistry.GetAssets(Filter, AssetDataList);
+
+		// Find the exact asset
+		for (const FAssetData& AssetData : AssetDataList)
+		{
+			if (AssetData.GetSoftObjectPath() == AssetPathName)
+			{
+				UObject* LoadedObject = AssetData.GetAsset(); // Editor-safe loading
+				Texture = Cast<UTexture2D>(LoadedObject);
+				break;
+			}
+		}
+
+		
+		
+		ItemBrush->SetResourceObject(Texture);
+		ItemBrush->DrawAs = ESlateBrushDrawType::Image;
+	}
+
+	
 	int32 Column = 0;
 	int32 Row = 0;
 	if (InventoryEdNode && ItemContainerNode)
@@ -263,9 +307,6 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 	const FMargin NodePadding = (Cast<UOrionInventoryEdSubNode_Item>(GraphNode))
 		? FMargin(1.f)
 		: FMargin(8.0f);
-
-	const float SubNodeHeight = 115.f;
-	const float SubNodeWidth = 105.f;
 	
 	const float NodeMaxWidth = InventoryEdNode && InventoryEdNode->IsSubNode()
 		? SubNodeWidth
@@ -337,91 +378,106 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 											.VAlign(VAlign_Top)
 											[
 												SNew(SVerticalBox)
+												.Visibility(this, &SGraphNode_OrionInventoryNode::GetParentNodeVisibility)
 												+ SVerticalBox::Slot()
 												.HAlign(HAlign_Fill)
 												.VAlign(VAlign_Top)
 												.AutoHeight()
 												[
 													SNew(SHorizontalBox)
-													.Visibility(this, &SGraphNode_OrionInventoryNode::GetTitleVisibility)
 													+ SHorizontalBox::Slot()
 													.AutoWidth()
 													[
-														// POPUP ERROR MESSAGE
-														SAssignNew(ErrorText, SErrorText)
-															.BackgroundColor(this, &SGraphNode_OrionInventoryNode::GetErrorColor)
-															.ToolTipText(this, &SGraphNode_OrionInventoryNode::GetErrorMsgToolTip)
+														SNew(SHorizontalBox)
+														+ SHorizontalBox::Slot()
+														.AutoWidth()
+														.VAlign(VAlign_Top)
+														.Padding(FMargin(0.0f, 5.0f, 0.0f, 0.0f))
+														[
+															SNew(SImage)
+																.Image(this, &SGraphNode_OrionInventoryNode::GetNameIcon)
+														]
+															//if parent node
+														+ SHorizontalBox::Slot()
+														.MinWidth(NodeMinWidth)
+														.MaxWidth(NodeMaxWidth)
+														[
+															SNew(SVerticalBox)
+															+ SVerticalBox::Slot()
+															.AutoHeight()
+															.Padding(FMargin(4.0f, 5.0f, 4.0f, 0.0f))
+															[
+																SAssignNew(InlineEditableText, SInlineEditableTextBlock)
+																	.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
+																	.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
+																	.OnVerifyTextChanged(this, &SGraphNode_OrionInventoryNode::OnVerifyNameTextChanged)
+																	.OnTextCommitted(this, &SGraphNode_OrionInventoryNode::OnNameTextCommited)
+																	.IsReadOnly(this, &SGraphNode_OrionInventoryNode::IsNameReadOnly)
+																	.IsSelected(this, &SGraphNode_OrionInventoryNode::IsSelectedExclusively)
+																	.AutoWrapMultilineEditText(true)
+																				
+															]
+															+ SVerticalBox::Slot()
+															.AutoHeight()
+															[
+																NodeTitle.ToSharedRef()
+															]
+														]
 													]
-													+ SHorizontalBox::Slot()
-													.AutoWidth()
+												]
+														
+											]
+											+ SOverlay::Slot()
+											.HAlign(HAlign_Fill)
+											.VAlign(VAlign_Fill)
+											[
+												//if subnode
+												SNew(SBox)
+												.Visibility(this, &SGraphNode_OrionInventoryNode::GetSubNodeVisibility)
+												.MinDesiredHeight(SubNodeHeight)
+												.MaxDesiredHeight(SubNodeHeight)
+												.MinDesiredWidth(SubNodeWidth)
+												.MaxDesiredWidth(SubNodeWidth)
+												[
+													SNew(SOverlay)
+													+ SOverlay::Slot()
+													.HAlign(HAlign_Center)
+													.VAlign(VAlign_Center)
+													.Padding(4.0f, 4.0f, 4.0f, 12.0f)
 													[
-															SNew(SHorizontalBox)
-															+ SHorizontalBox::Slot()
-															.AutoWidth()
-															.VAlign(VAlign_Top)
-															.Padding(FMargin(0.0f, 5.0f, 0.0f, 0.0f))
-															[
-																SNew(SImage)
-																	.Image(this, &SGraphNode_OrionInventoryNode::GetNameIcon)
-																	//.Visibility(this, &SGraphNode_OrionInventoryNode::GetParentNodeVisibility)
-															]
-																//if parent node
-															+ SHorizontalBox::Slot()
-															.MinWidth(NodeMinWidth)
-															.MaxWidth(NodeMaxWidth)
-															[
-																SNew(SVerticalBox)
-																.Visibility(this, &SGraphNode_OrionInventoryNode::GetParentNodeVisibility)
-																+ SVerticalBox::Slot()
-																.AutoHeight()
-																.Padding(FMargin(4.0f, 5.0f, 4.0f, 0.0f))
-																[
-																	SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-																		.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
-																		.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
-																		.OnVerifyTextChanged(this, &SGraphNode_OrionInventoryNode::OnVerifyNameTextChanged)
-																		.OnTextCommitted(this, &SGraphNode_OrionInventoryNode::OnNameTextCommited)
-																		.IsReadOnly(this, &SGraphNode_OrionInventoryNode::IsNameReadOnly)
-																		.IsSelected(this, &SGraphNode_OrionInventoryNode::IsSelectedExclusively)
-																		.AutoWrapMultilineEditText(true)
-																					
-																]
-																+ SVerticalBox::Slot()
-																.AutoHeight()
-																[
-																	NodeTitle.ToSharedRef()
-																]
-															]
-																//if subnode
-															+ SHorizontalBox::Slot()
-															.MinWidth(NodeMinWidth)
-															.MaxWidth(NodeMaxWidth)
-															[
-																SNew(SVerticalBox)
-																.Visibility(this, &SGraphNode_OrionInventoryNode::GetSubNodeVisibility)
-																+ SVerticalBox::Slot()
-																.HAlign(HAlign_Fill)
-																.VAlign(VAlign_Top)
-																.MinHeight(NodeMinHeight)
-																.MaxHeight(NodeMaxHeight)
-																.AutoHeight()
-																[
-																	SNew(STextBlock)
-																		.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
-																		.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
-																		.Font(FCoreStyle::GetDefaultFontStyle("Bold", 9.5))
-																		.Clipping(EWidgetClipping::ClipToBounds)
-																]
-																+ SVerticalBox::Slot()
-																.AutoHeight()
-																[
-																	NodeTitle.ToSharedRef()
-																]
-															]
-														
+														SNew(SImage)
+														.Image(ItemBrush)
+														.DesiredSizeOverride(FVector2d(60.f, 60.f))
 													]
-												]	
-														
+													+ SOverlay::Slot()
+													.HAlign(HAlign_Center)
+													.VAlign(VAlign_Bottom)
+													.Padding(4.0f, 3.0f)
+													[
+														SNew(SHorizontalBox)
+													+ SHorizontalBox::Slot()
+													[
+														SNew(SVerticalBox)
+														+ SVerticalBox::Slot()
+														.HAlign(HAlign_Fill)
+														.VAlign(VAlign_Fill)
+														.AutoHeight()
+														[
+															SNew(STextBlock)
+																.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
+																.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+																.Font(FCoreStyle::GetDefaultFontStyle("Bold", 9.5))
+																.Clipping(EWidgetClipping::ClipToBounds)
+														]
+														+ SVerticalBox::Slot()
+														.AutoHeight()
+														[
+															NodeTitle.ToSharedRef()
+														]
+													]
+												]
+													
+											]
 											]
 										]
 									]
@@ -477,10 +533,6 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 			
 				
 		];
-		
-
-		ErrorReporting = ErrorText;
-		ErrorReporting->SetError(ErrorMsg);
 	
 }
 
@@ -824,9 +876,6 @@ void SGraphNode_OrionInventoryNode::AddInventoryItem(TSharedPtr<SGraphNode> Inve
 
 void SGraphNode_OrionInventoryNode::CreateAddInventoryItemButton(int32 Column, int32 Row)
 {
-
-	const float SubNodeHeight = 115.f;
-	const float SubNodeWidth = 105.f;
 	
 	InventoryItemGridPanel->AddSlot(Column, Row)
     [
@@ -1056,13 +1105,15 @@ FSlateColor SGraphNode_OrionInventoryNode::GetBackgroundColor() const
 FSlateColor SGraphNode_OrionInventoryNode::GetBorderBackgroundColor() const
 {
 	UOrionInventoryEdNode* InventoryEdNode = Cast<UOrionInventoryEdNode>(GraphNode);
+	UOrionInventoryEdNode_ItemContainer* ItemContainerEdNode = Cast<UOrionInventoryEdNode_ItemContainer>(GraphNode);
 	UOrionInventoryEdNode* InventoryParentNode = InventoryEdNode ? Cast<UOrionInventoryEdNode>(InventoryEdNode->ParentNode) : nullptr;
 	const bool bSelectedSubNode = InventoryParentNode && GetOwnerPanel()->SelectionManager.SelectedNodes.Contains(GraphNode);
-
-
+	const bool bIsHovered = IsHovered();
+	
 	UOrionInventoryNode* InventoryNode = InventoryEdNode ? Cast<UOrionInventoryNode>(InventoryEdNode->NodeInstance) : nullptr;
 
-	return bSelectedSubNode ? OrionInventoryColors::NodeBorder::Selected :
+	return (bIsHovered && !bSelectedSubNode && !ItemContainerEdNode) ? OrionInventoryColors::NodeBorder::Hovered:
+		bSelectedSubNode ? OrionInventoryColors::NodeBorder::Selected :
 		InventoryEdNode && !InventoryEdNode->IsSubNode() ? InventoryEdNode->GetBackgroundColor() :
 		OrionInventoryColors::NodeBorder::InventoryNodeBorder;
 
@@ -1132,6 +1183,12 @@ const FSlateBrush* SGraphNode_OrionInventoryNode::GetNameIcon() const
 		return FAppStyle::GetBrush(InventoryEdNode->GetNameIcon());
 	}
 	return FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Icon"));
+}
+
+const FSlateBrush* SGraphNode_OrionInventoryNode::GetItemImage() const
+{
+	
+	return FAppStyle::GetBrush(TEXT("Sequencer.SetKeyAll"));
 }
 
 void SGraphNode_OrionInventoryNode::SetDragMarker(bool bEnabled)

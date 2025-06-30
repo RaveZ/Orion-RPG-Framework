@@ -115,6 +115,7 @@ public:
 	EVisibility GetDebuggerSearchFailedMarkerVisibility() const;
 
 	virtual const FSlateBrush* GetNameIcon() const;
+	virtual const FSlateBrush* GetItemImage() const;
 
 	/** sets drag marker visible or collapsed on this node */
 	void SetDragMarker(bool bEnabled);
@@ -125,7 +126,9 @@ protected:
 	TArray< TSharedPtr<SGraphNode> > SubNodes;
 
 	uint32 bDragMarkerVisible : 1;
-
+	
+	float SubNodeHeight;
+	float SubNodeWidth;
 
 	TArray< TSharedPtr<SGraphNode> > InventoryItemWidgets;
 	TSharedPtr<SGridPanel> InventoryItemGridPanel;

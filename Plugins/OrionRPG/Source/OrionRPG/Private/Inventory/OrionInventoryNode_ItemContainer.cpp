@@ -18,7 +18,7 @@ UOrionInventoryNode_ItemContainer::UOrionInventoryNode_ItemContainer()
 
 FText UOrionInventoryNode_ItemContainer::GetNodeTitle() const
 {
-    return FText::FromString("Item Container");
+    return Category.ToString().Len() ? Category : FText::FromString("Item Container");
 }
 
 void UOrionInventoryNode_ItemContainer::SetNodeTitle(const FText& NewTitle)

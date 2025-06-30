@@ -19,8 +19,17 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (Categories = "Item"))
 	FGameplayTag Tag;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail")
+	TSoftObjectPtr<UTexture2D> DisplayImage;
+
+	
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
 	FText DisplayName;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
+	FText Description;
+	
 
 public:
 
