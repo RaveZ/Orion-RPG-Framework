@@ -1,0 +1,76 @@
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
+
+
+#pragma once
+
+#include "CommonActivatableWidget.h"
+#include <Delegates/DelegateCombinations.h>
+#include "OrionActivatableWidget.generated.h"
+
+struct FUIInputConfig;
+
+UENUM(BlueprintType)
+enum class EOrionWidgetInputMode : uint8
+{
+	Default,
+	GameAndMenu,
+	Game,
+	Menu
+};
+
+USTRUCT(BlueprintType)
+struct FInputActionBindingHandle
+{
+	GENERATED_BODY()
+
+public:
+	struct FUIActionBindingHandle Handle;
+};
+
+DECLARE_DYNAMIC_DELEGATE_OneParam(FInputActionExecutedDelegate, FName, ActionName);
+
+// An activatable widget that automatically drives the desired input config when activated
+UCLASS(Abstract, Blueprintable, meta = (DisableNativeTick))
+class UOrionActivatableWidget : public UCommonActivatableWidget
+{
+	GENERATED_BODY()
+
+public:
+	UOrionActivatableWidget(const FObjectInitializer& ObjectInitializer);
+
+public:
+
+	//~UCommonActivatableWidget interface
+	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
+	//~End of UCommonActivatableWidget interface
+
+#if WITH_EDITOR
+	virtual void ValidateCompiledWidgetTree(const UWidgetTree& BlueprintWidgetTree, class IWidgetCompilerLog& CompileLog) const override;
+#endif
+
+protected:
+	virtual void NativeDestruct() override;
+
+	UFUNCTION(BlueprintCallable, Category = "Narrative Activatable Widget")
+	void RegisterBinding(FDataTableRowHandle InputAction, const FInputActionExecutedDelegate& Callback, FInputActionBindingHandle& BindingHandle, FText OverrideDisplayName, const bool bShouldDisplayInActionBar = true);
+
+	UFUNCTION(BlueprintCallable, Category = "Narrative Activatable Widget")
+	void UnregisterBinding(FInputActionBindingHandle BindingHandle);
+
+	UFUNCTION(BlueprintCallable, Category = "Narrative Activatable Widget")
+	void UnregisterAllBindings();
+
+	UFUNCTION(BlueprintCallable, Category = "Narrative Activatable Widget")
+	void SetBindingDisplayName(FInputActionBindingHandle BindingHandle, FText NewDisplayName);
+protected:
+	/** The desired input mode to use while this UI is activated, for example do you want key presses to still reach the game/player controller? */
+	UPROPERTY(EditDefaultsOnly, Category = Input)
+	EOrionWidgetInputMode InputConfig = EOrionWidgetInputMode::Default;
+
+	/** The desired mouse behavior when the game gets input. */
+	UPROPERTY(EditDefaultsOnly, Category = Input)
+	EMouseCaptureMode GameMouseCaptureMode = EMouseCaptureMode::CapturePermanently;
+
+private:
+	TArray<struct FUIActionBindingHandle> BindingHandles;
+};

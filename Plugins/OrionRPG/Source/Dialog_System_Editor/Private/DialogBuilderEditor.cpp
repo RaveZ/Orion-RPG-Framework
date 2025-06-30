@@ -1240,7 +1240,12 @@ void FDialogBuilderEditor::PasteNodes()
 	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
 	if (CurrentGraphEditor.IsValid())
 	{
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+		FVector2D PasteLocation2D = FVector2D(CurrentGraphEditor->GetPasteLocation2f().X, CurrentGraphEditor->GetPasteLocation2f().Y);
+		PasteNodesHere(CurrentGraphEditor->GetCurrentGraph(), PasteLocation2D);
+#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 		PasteNodesHere(CurrentGraphEditor->GetCurrentGraph(), CurrentGraphEditor->GetPasteLocation());
+#endif
 	}
 }
 void FDialogBuilderEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVector2D& Location)
@@ -1573,7 +1578,11 @@ void FDialogBuilderEditor::OnCreateComment()
 		TSharedPtr<FEdGraphSchemaAction> Action = EdGraph->GetSchema()->GetCreateCommentAction();
 		if (Action.IsValid())
 		{
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+			Action->PerformAction(EdGraph, nullptr, FVector2f());
+#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 			Action->PerformAction(EdGraph, nullptr, FVector2D());
+#endif
 		}
 	}
 }

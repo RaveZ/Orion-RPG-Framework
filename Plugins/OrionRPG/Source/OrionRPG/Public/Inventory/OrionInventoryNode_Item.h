@@ -20,7 +20,7 @@ public:
 	FGameplayTag Tag;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail")
-	TSoftObjectPtr<UTexture2D> DisplayImage;
+	TObjectPtr<UTexture2D> DisplayImage;
 
 	
 	

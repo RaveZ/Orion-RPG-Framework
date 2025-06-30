@@ -8,7 +8,7 @@ public class OrionRPG : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         bLegacyPublicIncludePaths = false;
-        ShadowVariableWarningLevel = WarningLevel.Error;
+        CppCompileWarningSettings.ShadowVariableWarningLevel = WarningLevel.Error;
 
         PublicIncludePaths.AddRange(
             new string[] {
@@ -27,7 +27,9 @@ public class OrionRPG : ModuleRules
                 "Core",
                 "CoreUObject",
                 "Engine",
-                "UnrealEd"
+                "UnrealEd",
+                "CommonUI",
+                "UMG"
             }
             );
 

@@ -220,41 +220,17 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 	UOrionInventoryNode_ItemContainer* ItemContainerNode = InventoryEdNode ? Cast<UOrionInventoryNode_ItemContainer>(InventoryEdNode->NodeInstance) : nullptr;
 	UOrionInventoryEdSubNode_Item* InventoryEdNode_Item = Cast<UOrionInventoryEdSubNode_Item>(GraphNode);
 	const UOrionInventoryNode_Item* InventoryItemNode = InventoryEdNode_Item ? Cast<UOrionInventoryNode_Item>(InventoryEdNode_Item->NodeInstance) : nullptr;
-
 	
 	FSlateBrush* ItemBrush = new FSlateBrush();
-	if (InventoryItemNode && InventoryItemNode->DisplayImage.IsValid())
+	UTexture2D* LoadedTexture = nullptr;
+	if (InventoryItemNode && InventoryItemNode->DisplayImage)
 	{
-		FSoftObjectPath AssetPathName = InventoryItemNode->DisplayImage.ToSoftObjectPath();
-		UTexture2D* Texture = nullptr;
-
-		// Load Asset Registry
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-		IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
-
-		// Use FARFilter to search for the asset
-		FARFilter Filter;
-		Filter.PackagePaths.Add(FName(*AssetPathName.GetLongPackageFName()));
-		Filter.ClassPaths.Add(UTexture2D::StaticClass()->GetClassPathName()); // safer than AssetClass
-		Filter.bRecursivePaths = true;
-		TArray<FAssetData> AssetDataList;
-		AssetRegistry.GetAssets(Filter, AssetDataList);
-
-		// Find the exact asset
-		for (const FAssetData& AssetData : AssetDataList)
+		LoadedTexture = InventoryItemNode->DisplayImage;
+		if (LoadedTexture)
 		{
-			if (AssetData.GetSoftObjectPath() == AssetPathName)
-			{
-				UObject* LoadedObject = AssetData.GetAsset(); // Editor-safe loading
-				Texture = Cast<UTexture2D>(LoadedObject);
-				break;
-			}
+			ItemBrush->SetResourceObject(LoadedTexture);
+			ItemBrush->DrawAs = ESlateBrushDrawType::Image;
 		}
-
-		
-		
-		ItemBrush->SetResourceObject(Texture);
-		ItemBrush->DrawAs = ESlateBrushDrawType::Image;
 	}
 
 	
