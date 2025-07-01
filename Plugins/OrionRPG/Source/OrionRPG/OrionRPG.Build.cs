@@ -29,7 +29,11 @@ public class OrionRPG : ModuleRules
                 "Engine",
                 "UnrealEd",
                 "CommonUI",
-                "UMG"
+                "UMG",
+                "CommonInput",
+                "EnhancedInput",
+                "DeveloperSettings",
+
             }
             );
 
