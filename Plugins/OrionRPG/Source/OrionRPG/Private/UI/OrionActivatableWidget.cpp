@@ -64,7 +64,7 @@ void UOrionActivatableWidget::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-void UOrionActivatableWidget::RegisterBinding(FDataTableRowHandle InputAction, const FInputActionExecutedDelegate& Callback, FInputActionBindingHandle& BindingHandle, FText OverrideDisplayName, const bool bShouldDisplayInActionBar)
+void UOrionActivatableWidget::RegisterBinding(FDataTableRowHandle InputAction, const FInputActionExecutedDelegate& Callback, FOrionInputActionBindingHandle& BindingHandle, FText OverrideDisplayName, const bool bShouldDisplayInActionBar)
 {
 	FBindUIActionArgs BindArgs(InputAction, FSimpleDelegate::CreateLambda([InputAction, Callback]()
 		{
@@ -77,7 +77,7 @@ void UOrionActivatableWidget::RegisterBinding(FDataTableRowHandle InputAction, c
 	BindingHandles.Add(BindingHandle.Handle);
 }
 
-void UOrionActivatableWidget::UnregisterBinding(FInputActionBindingHandle BindingHandle)
+void UOrionActivatableWidget::UnregisterBinding(FOrionInputActionBindingHandle BindingHandle)
 {
 	RemoveActionBinding(BindingHandle.Handle);
 
@@ -97,7 +97,7 @@ void UOrionActivatableWidget::UnregisterAllBindings()
 	BindingHandles.Empty();
 }
 
-void UOrionActivatableWidget::SetBindingDisplayName(FInputActionBindingHandle BindingHandle, FText NewDisplayName)
+void UOrionActivatableWidget::SetBindingDisplayName(FOrionInputActionBindingHandle BindingHandle, FText NewDisplayName)
 {
 	if (BindingHandle.Handle.IsValid())
 	{

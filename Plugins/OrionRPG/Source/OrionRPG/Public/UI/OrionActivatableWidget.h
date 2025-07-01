@@ -19,7 +19,7 @@ enum class EOrionWidgetInputMode : uint8
 };
 
 USTRUCT(BlueprintType)
-struct FInputActionBindingHandle
+struct FOrionInputActionBindingHandle
 {
 	GENERATED_BODY()
 
@@ -52,16 +52,16 @@ protected:
 	virtual void NativeDestruct() override;
 
 	UFUNCTION(BlueprintCallable, Category = "Narrative Activatable Widget")
-	void RegisterBinding(FDataTableRowHandle InputAction, const FInputActionExecutedDelegate& Callback, FInputActionBindingHandle& BindingHandle, FText OverrideDisplayName, const bool bShouldDisplayInActionBar = true);
+	void RegisterBinding(FDataTableRowHandle InputAction, const FInputActionExecutedDelegate& Callback, FOrionInputActionBindingHandle& BindingHandle, FText OverrideDisplayName, const bool bShouldDisplayInActionBar = true);
 
 	UFUNCTION(BlueprintCallable, Category = "Narrative Activatable Widget")
-	void UnregisterBinding(FInputActionBindingHandle BindingHandle);
+	void UnregisterBinding(FOrionInputActionBindingHandle BindingHandle);
 
 	UFUNCTION(BlueprintCallable, Category = "Narrative Activatable Widget")
 	void UnregisterAllBindings();
 
 	UFUNCTION(BlueprintCallable, Category = "Narrative Activatable Widget")
-	void SetBindingDisplayName(FInputActionBindingHandle BindingHandle, FText NewDisplayName);
+	void SetBindingDisplayName(FOrionInputActionBindingHandle BindingHandle, FText NewDisplayName);
 protected:
 	/** The desired input mode to use while this UI is activated, for example do you want key presses to still reach the game/player controller? */
 	UPROPERTY(EditDefaultsOnly, Category = Input)
