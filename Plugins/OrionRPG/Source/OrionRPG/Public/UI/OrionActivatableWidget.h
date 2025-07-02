@@ -40,10 +40,6 @@ public:
 
 public:
 
-	//~UCommonActivatableWidget interface
-	virtual TOptional<FUIInputConfig> GetDesiredInputConfig() const override;
-	//~End of UCommonActivatableWidget interface
-
 #if WITH_EDITOR
 	virtual void ValidateCompiledWidgetTree(const UWidgetTree& BlueprintWidgetTree, class IWidgetCompilerLog& CompileLog) const override;
 #endif
