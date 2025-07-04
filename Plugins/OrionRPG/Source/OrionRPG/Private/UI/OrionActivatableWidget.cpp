@@ -3,6 +3,7 @@
 #include "UI/OrionActivatableWidget.h"
 #include "Input/CommonUIInputTypes.h"
 #include "Editor/WidgetCompilerLog.h"
+#include "ICommonInputModule.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(OrionActivatableWidget)
 
@@ -38,14 +39,23 @@ void UOrionActivatableWidget::NativeDestruct()
 	Super::NativeDestruct();
 }
 
-void UOrionActivatableWidget::RegisterBinding(FDataTableRowHandle InputAction, const FInputActionExecutedDelegate& Callback, FOrionInputActionBindingHandle& BindingHandle, FText OverrideDisplayName, const bool bShouldDisplayInActionBar)
+void UOrionActivatableWidget::RegisterBinding(FDataTableRowHandle InputAction, const FInputActionExecutedDelegate& Callback, FOrionInputActionBindingHandle& BindingHandle, FText OverrideDisplayName, const bool bShouldDisplayInActionBar, const bool bConsumeInput)
 {
+	/*
+	* Check if we should override default click input.
+	* Useful if you only want to display only the bound action bar without overriding the default click action
+	*/
+	/*if (InputAction == ICommonInputModule::GetSettings().GetDefaultClickAction())
+	{
+		return;
+	}*/
 	FBindUIActionArgs BindArgs(InputAction, FSimpleDelegate::CreateLambda([InputAction, Callback]()
 		{
 			Callback.ExecuteIfBound(InputAction.RowName);
 		}));
 	BindArgs.bDisplayInActionBar = bShouldDisplayInActionBar;
 	BindArgs.OverrideDisplayName = OverrideDisplayName;
+	BindArgs.bConsumeInput = bConsumeInput;
 
 	BindingHandle.Handle = RegisterUIActionBinding(BindArgs);
 	BindingHandles.Add(BindingHandle.Handle);

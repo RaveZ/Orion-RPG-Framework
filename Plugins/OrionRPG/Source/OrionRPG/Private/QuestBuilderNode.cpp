@@ -147,6 +147,41 @@ void UQuestBuilderNode::EvaluateNextNode()
 		{
 			NextNodes.AddUnique(ChildNode);
 		}
+
+
+		if (NextNodes.IsEmpty())
+		{
+            for (int32 i = GetOwningQuest()->CurrentNodes.Num() - 1; i >= 0; --i)
+            {
+                UQuestBuilderNode* CurrNode = GetOwningQuest()->CurrentNodes[i];
+                if (CurrNode == GetOwningQuest()->CurrentNavigatedObjective && !GetOwningQuest()->CurrentNavigatedObjective->IsObjectiveActive())
+                    continue;
+                if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(CurrNode))
+                {
+                    if (GetOwningQuest())
+                    {
+                        GetOwningQuest()->CurrentNavigatedObjective = ObjectiveNode;
+                        break;
+                    }
+                }
+            }
+		}
+		else
+		{
+			//shift the next navigated objective when any of the objective has completed
+            for (int32 i = NextNodes.Num() - 1; i >= 0; --i)
+            {
+                if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(NextNodes[i]))
+                {
+                    if (GetOwningQuest())
+                    {
+                        GetOwningQuest()->CurrentNavigatedObjective = ObjectiveNode;
+                        break;
+                    }
+                }
+            }
+		}
+
 	}
 
 	//Going to next node will begin when all End Events are finished

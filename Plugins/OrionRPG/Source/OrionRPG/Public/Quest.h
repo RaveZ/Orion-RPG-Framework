@@ -9,6 +9,7 @@
 
 class UOrionDecorator;
 class UQuestBuilderNode;
+class UQuestBuilderNode_Objective;
 class UQuestBuilderEdge;
 class UQuestBuilderNode_Root;
 
@@ -86,6 +87,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Quest", meta = (DisplayName = "CanRetakeQuest"))
 		bool bCanRetakeQuest = false;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Quest")
+		TObjectPtr<UQuestBuilderNode_Objective> CurrentNavigatedObjective;
+
 	/** List of All Visited Node IDs in Sequence*/
 	UPROPERTY(BlueprintReadWrite, Category = "Quest")
 		TArray<FName> VisitedNodeIDs;
@@ -127,6 +131,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	void SortVisitedNodes();
+
+	UFUNCTION(BlueprintCallable, Category = "Quest")
+	UQuestBuilderNode_Objective* GetNavigatedObjective();
 	
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 		void BeginNode(UQuestBuilderNode* InNode, bool bLaunchEventOnLoad = false);

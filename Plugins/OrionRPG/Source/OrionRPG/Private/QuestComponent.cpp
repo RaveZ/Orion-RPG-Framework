@@ -223,7 +223,7 @@ void UQuestComponent::LockQuestFromTag(FGameplayTag QuestTag)
 	}
 }
 
-void UQuestComponent::RestartQuestFromTag(FGameplayTag QuestTag, FGameplayTag NodeTag)
+void UQuestComponent::RestartQuestFromTag(FGameplayTag QuestTag, FGameplayTag NodeTag, const bool bNotifyQuestAdded)
 {
 	FName QuestID = QuestTag.GetTagName();
 	FName NodeID = NodeTag.GetTagName();
@@ -249,11 +249,11 @@ void UQuestComponent::RestartQuestFromTag(FGameplayTag QuestTag, FGameplayTag No
 				}
 			}
 		}
-		RestartQuest(FoundedQuest, FoundedNode);
+		RestartQuest(FoundedQuest, FoundedNode, bNotifyQuestAdded);
 	}
 	else
 	{
-		RestartQuest(TryMakeQuestInstanceFromTag(QuestTag));
+		RestartQuest(TryMakeQuestInstanceFromTag(QuestTag), nullptr, bNotifyQuestAdded);
 	}
 }
 
@@ -284,16 +284,27 @@ void UQuestComponent::CompleteQuestFromTag(FGameplayTag QuestTag)
 }
 
 
-void UQuestComponent::StartNavigateQuest(UQuest* InQuest)
+
+
+void UQuestComponent::StartNavigateQuest(UQuest* InQuest, UQuestBuilderNode_Objective* InObjective)
 {
 	if (InQuest && InQuest->QuestState == EQuestState::E_Active)
 	{
 		CurrentNavigatedQuest = InQuest;
+		if (InObjective)
+		{
+			InQuest->CurrentNavigatedObjective = InObjective;
+		}
+		else
+		{
+			InQuest->GetNavigatedObjective();
+		}
+
 		OnStartNavigateQuest.Broadcast(InQuest);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("QuestComponent : Failed to Navigate Quest, Quest not found"));
+		UE_LOG(LogTemp, Warning, TEXT("QuestComponent : Failed to Navigate Quest. Quest not found or has Completed/Failed"));
 	}
 }
 
@@ -346,11 +357,15 @@ void UQuestComponent::LockQuest(UQuest* InQuest)
 	}
 }
 
-void UQuestComponent::RestartQuest(UQuest* InQuest, UQuestBuilderNode* InNode)
+void UQuestComponent::RestartQuest(UQuest* InQuest, UQuestBuilderNode* InNode, const bool bNotifyQuestAdded)
 {
 	if (InQuest)
 	{
 		InQuest->QuestState = EQuestState::E_Active;
+		if(bNotifyQuestAdded)
+		{
+			OnQuestAdded.Broadcast(InQuest);
+		}
 		if (InNode)
 		{
 			InQuest->BeginNode(InNode);
@@ -586,6 +601,15 @@ void UQuestComponent::Save_Implementation(const FString& SaveFileName, int SlotI
 			
 		}
 
+		if (CurrentNavigatedQuest)
+		{
+			QuestSaveObject->NavigatedQuestID = CurrentNavigatedQuest->ID;
+			if (CurrentNavigatedQuest->CurrentNavigatedObjective)
+			{
+				QuestSaveObject->NavigatedObjectiveID = CurrentNavigatedQuest->CurrentNavigatedObjective->ID;
+			}
+		}
+
 		if (UGameplayStatics::SaveGameToSlot(QuestSaveObject, SaveFileName, SlotIndex))
 		{
 			OnSaveComplete.Broadcast(SaveFileName);
@@ -688,7 +712,18 @@ void UQuestComponent::Load_Implementation(const FString& SaveFileName, int SlotI
 				LoadedQuestAsset->BeginMultipleNodes(LoadedQuestAsset->CurrentNodes, bLaunchEventOnLoad);
 			}
 		}
-		AutoNavigateQuest();
+
+		UQuest* FoundedQuest = QuestMap.FindRef(LoadedData->NavigatedQuestID);
+		UQuestBuilderNode_Objective* FoundedObjective = FoundedQuest ? Cast<UQuestBuilderNode_Objective>(FoundedQuest->NodeMap.FindRef(LoadedData->NavigatedObjectiveID)) : nullptr;
+
+		if (FoundedQuest)
+		{
+			StartNavigateQuest(FoundedQuest, FoundedObjective);
+		}
+		else
+		{
+			AutoNavigateQuest();
+		}
 		OnLoadComplete.Broadcast(SaveFileName);
 	}
 }

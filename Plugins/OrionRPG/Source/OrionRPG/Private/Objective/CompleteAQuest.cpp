@@ -32,7 +32,7 @@ void UCompleteAQuest::CompleteObjective()
 }
 void UCompleteAQuest::EvaluateQuestCompleted(UQuest* InQuest)
 {
-	if (InQuest && InQuest->QuestState == EQuestState::E_Complete)
+	if (InQuest && InQuest->QuestState == EQuestState::E_Complete && QuestTag.GetTagName() == InQuest->ID)
 	{
 		CompleteObjective();
 	}

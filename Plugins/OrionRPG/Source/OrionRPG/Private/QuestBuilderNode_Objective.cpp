@@ -116,6 +116,7 @@ void UQuestBuilderNode_Objective::CompleteObjective()
     GetQuestComponent()->OnQuestAutoSave.Broadcast();
     GetQuestComponent()->OnQuestUpdated.Broadcast();
 
+
     Deinitialize();
     DeactivateTick();
 }

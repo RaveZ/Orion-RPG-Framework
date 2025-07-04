@@ -47,16 +47,16 @@ public:
 protected:
 	virtual void NativeDestruct() override;
 
-	UFUNCTION(BlueprintCallable, Category = "Narrative Activatable Widget")
-	void RegisterBinding(FDataTableRowHandle InputAction, const FInputActionExecutedDelegate& Callback, FOrionInputActionBindingHandle& BindingHandle, FText OverrideDisplayName, const bool bShouldDisplayInActionBar = true);
+	UFUNCTION(BlueprintCallable, Category = "Orion Activatable Widget")
+	void RegisterBinding(FDataTableRowHandle InputAction, const FInputActionExecutedDelegate& Callback, FOrionInputActionBindingHandle& BindingHandle, FText OverrideDisplayName, const bool bShouldDisplayInActionBar = true, const bool bConsumeInput = true);
 
-	UFUNCTION(BlueprintCallable, Category = "Narrative Activatable Widget")
+	UFUNCTION(BlueprintCallable, Category = "Orion Activatable Widget")
 	void UnregisterBinding(FOrionInputActionBindingHandle BindingHandle);
 
-	UFUNCTION(BlueprintCallable, Category = "Narrative Activatable Widget")
+	UFUNCTION(BlueprintCallable, Category = "Orion Activatable Widget")
 	void UnregisterAllBindings();
 
-	UFUNCTION(BlueprintCallable, Category = "Narrative Activatable Widget")
+	UFUNCTION(BlueprintCallable, Category = "Orion Activatable Widget")
 	void SetBindingDisplayName(FOrionInputActionBindingHandle BindingHandle, FText NewDisplayName);
 protected:
 	/** The desired input mode to use while this UI is activated, for example do you want key presses to still reach the game/player controller? */

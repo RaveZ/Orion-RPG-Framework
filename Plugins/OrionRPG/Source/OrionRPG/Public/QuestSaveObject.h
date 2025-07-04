@@ -20,6 +20,12 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = QuestSaveData)
 	TArray<FName> QuestAssetIDs;
 
+	UPROPERTY(VisibleAnywhere, Category = QuestSaveData)
+	FName NavigatedQuestID;
+
+	UPROPERTY(VisibleAnywhere, Category = QuestSaveData)
+	FName NavigatedObjectiveID;
+
 	/** Map of Quest ID and it's Quest Data Struct */
 	UPROPERTY(VisibleAnywhere, Category = QuestSaveData)
 		TMap<FName,FQuestData> QuestMapData;

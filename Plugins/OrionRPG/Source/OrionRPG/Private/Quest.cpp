@@ -67,7 +67,7 @@ void UQuest::Deinitialize()
 {
 	VisitedNodeIDs.Empty();
 	CurrentNodes.Empty();
-	
+	CurrentNavigatedObjective = nullptr;
 	for (auto& Node : AllNodes)
 	{
 		Node->Deinitialize();
@@ -147,6 +147,23 @@ void UQuest::SortVisitedNodes()
 		}
 	}
 	VisitedNodeIDs = CachedVisitedNodeIDs;
+}
+
+UQuestBuilderNode_Objective* UQuest::GetNavigatedObjective()
+{
+	if (!CurrentNavigatedObjective)
+	{
+        for (int32 i = CurrentNodes.Num() - 1; i >= 0; --i)
+        {
+			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(CurrentNodes[i]);
+			if (ObjectiveNode && !ObjectiveNode->IsObjectiveCompleted())
+			{
+				CurrentNavigatedObjective = ObjectiveNode;
+				break;
+			}
+        }
+	}
+	return CurrentNavigatedObjective;
 }
 
 void UQuest::BeginNode(UQuestBuilderNode* InNode, bool bLaunchEventOnLoad)

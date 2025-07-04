@@ -164,7 +164,7 @@ public:
 		void LockQuestFromTag(FGameplayTag QuestTag);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void RestartQuestFromTag(FGameplayTag QuestTag, FGameplayTag NodeTag = FGameplayTag());
+		void RestartQuestFromTag(FGameplayTag QuestTag, FGameplayTag NodeTag = FGameplayTag(), const bool bNotifyQuestAdded = false);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void FailQuestFromTag(FGameplayTag QuestTag);
@@ -172,8 +172,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void CompleteQuestFromTag(FGameplayTag QuestTag);
 
+	/**
+	* Start navigate the selected quest. (Objective input is optional)
+	* if the objective is none, auto navigate the first objective found.
+	*/
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void StartNavigateQuest(UQuest* InQuest);
+		void StartNavigateQuest(UQuest* InQuest, class UQuestBuilderNode_Objective* InObjective = nullptr);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void ActivateQuest(UQuest* InQuest);
@@ -185,7 +189,7 @@ public:
 		void LockQuest(UQuest* InQuest);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void RestartQuest(UQuest* InQuest, UQuestBuilderNode* InNode = nullptr);
+		void RestartQuest(UQuest* InQuest, UQuestBuilderNode* InNode = nullptr, const bool bNotifyQuestAdded = false);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void FailQuest(UQuest* InQuest);
