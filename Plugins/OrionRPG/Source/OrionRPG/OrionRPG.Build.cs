@@ -32,6 +32,7 @@ public class OrionRPG : ModuleRules
                 "UMG",
                 "CommonInput",
                 "EnhancedInput",
+                "InputCore",
                 "DeveloperSettings",
 
             }
