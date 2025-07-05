@@ -26,6 +26,11 @@ public:
 		KeyEventRules.Emplace(EKeys::Gamepad_DPad_Right, EUINavigation::Right);
 		KeyEventRules.Emplace(EKeys::Gamepad_DPad_Up, EUINavigation::Up);
 		KeyEventRules.Emplace(EKeys::Gamepad_DPad_Down, EUINavigation::Down);
+
+		KeyEventRules.Emplace(EKeys::Gamepad_LeftShoulder, EUINavigation::Previous);
+		KeyEventRules.Emplace(EKeys::Gamepad_RightShoulder, EUINavigation::Next);
+		KeyEventRules.Emplace(EKeys::X, EUINavigation::Previous);
+		KeyEventRules.Emplace(EKeys::C, EUINavigation::Next);
 	}
 };
 /**
