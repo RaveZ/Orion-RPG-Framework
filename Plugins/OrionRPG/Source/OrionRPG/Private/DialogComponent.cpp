@@ -35,7 +35,7 @@ void UDialogComponent::BeginPlay()
 	OwningController = GetOwningController();
 	
 	OnDialogUpdated.AddDynamic(this, &UDialogComponent::DialogLineUpdated);
-	OnEnterOptionSelector.AddDynamic(this, &UDialogComponent::EnterOptionSelector);
+	OnEnterOptionSelection.AddDynamic(this, &UDialogComponent::EnterOptionSelection);
 	OnPLayerOptionSelected.AddDynamic(this, &UDialogComponent::PlayerOptionSelected);
 	OnBeginDialog.AddDynamic(this, &UDialogComponent::DialogBegin);
 	OnEndDialog.AddDynamic(this, &UDialogComponent::DialogEnd);
@@ -163,7 +163,7 @@ void UDialogComponent::DialogLineUpdated(UDialogBuilderNode* DialogNode)
 {
 }
 
-void UDialogComponent::EnterOptionSelector(const TArray<class UDialogBuilderNode_PlayerOption*>& PlayerOptions)
+void UDialogComponent::EnterOptionSelection(const TArray<class UDialogBuilderNode_PlayerOption*>& PlayerOptions)
 {
 }
 

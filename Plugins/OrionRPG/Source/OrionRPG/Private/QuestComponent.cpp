@@ -394,7 +394,6 @@ void UQuestComponent::FailQuest(UQuest* InQuest)
 {
 	if (InQuest && InQuest->QuestState == EQuestState::E_Active)
 	{
-		InQuest->QuestState = EQuestState::E_Fail;
 		//fail all current nodes
 		for (auto& CurrentNode : InQuest->CurrentNodes)
 		{
@@ -404,6 +403,7 @@ void UQuestComponent::FailQuest(UQuest* InQuest)
 				ObjectiveNode->FailObjective();
 			}
 		}
+		InQuest->QuestState = EQuestState::E_Fail;
 		InQuest->CurrentNodes.Empty();
 
 		OnQuestFailed.Broadcast(InQuest);
@@ -420,7 +420,6 @@ void UQuestComponent::CompleteQuest(UQuest* InQuest)
 {
 	if (InQuest && InQuest->QuestState == EQuestState::E_Active)
 	{
-		InQuest->QuestState = EQuestState::E_Complete;
 		//fail all current nodes
 		for (auto& CurrentNode : InQuest->CurrentNodes)
 		{
@@ -430,6 +429,8 @@ void UQuestComponent::CompleteQuest(UQuest* InQuest)
 				ObjectiveNode->FailObjective();
 			}
 		}
+		InQuest->QuestState = EQuestState::E_Complete;
+		
 		InQuest->CurrentNodes.Empty();
 
 		OnQuestCompleted.Broadcast(InQuest);

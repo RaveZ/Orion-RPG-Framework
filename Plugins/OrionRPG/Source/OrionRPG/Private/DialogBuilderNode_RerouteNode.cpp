@@ -11,16 +11,16 @@
 void UDialogBuilderNode_RerouteNode::BeginNode()
 {
 	Super::BeginNode();
-	TArray<UDialogBuilderNode_PlayerOption*> OptionsArray;
+	TArray<UDialogBuilderNode_PlayerOption*> PlayerOptions;
 	for (auto& Node : ChildrenNodes)
 	{
 		if (UDialogBuilderNode_PlayerOption* OptionNode = Cast<UDialogBuilderNode_PlayerOption>(Node))
 		{
-			OptionsArray.Add(OptionNode);
+			PlayerOptions.Add(OptionNode);
 		}
 	}
 
-	GetDialogComponent()->OnEnterOptionSelector.Broadcast(OptionsArray);
+	GetDialogComponent()->OnEnterOptionSelection.Broadcast(PlayerOptions);
 }
 
 void UDialogBuilderNode_RerouteNode::SelectOption(UDialogBuilderNode_PlayerOption* Option)

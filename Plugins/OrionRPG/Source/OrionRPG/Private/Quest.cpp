@@ -112,7 +112,7 @@ void UQuest::SortVisitedNodes()
 	for (auto& VisitedNodeID : VisitedNodeIDs)
 	{
 		UQuestBuilderNode* QuestNode = NodeMap.FindRef(VisitedNodeID);
-		if (QuestNode)
+		if (QuestNode && !QuestNode->bHidden)
 		{
 			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestNode);
 			if (ObjectiveNode && ObjectiveNode->IsObjectiveFailed())
@@ -124,7 +124,7 @@ void UQuest::SortVisitedNodes()
 	for (auto& VisitedNodeID : VisitedNodeIDs)
 	{
 		UQuestBuilderNode* QuestNode = NodeMap.FindRef(VisitedNodeID);
-		if (QuestNode)
+		if (QuestNode && !QuestNode->bHidden)
 		{
 			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestNode);
 			if (ObjectiveNode && ObjectiveNode->IsObjectiveCompleted())
@@ -137,10 +137,16 @@ void UQuest::SortVisitedNodes()
 	for (auto& VisitedNodeID : VisitedNodeIDs)
 	{
 		UQuestBuilderNode* QuestNode = NodeMap.FindRef(VisitedNodeID);
-		if (QuestNode)
+		if (QuestNode && !QuestNode->bHidden)
 		{
-			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestNode);
-			if (ObjectiveNode && ObjectiveNode->IsObjectiveActive())
+			if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(QuestNode))
+			{
+				if (ObjectiveNode->IsObjectiveActive())
+				{
+					CachedVisitedNodeIDs.Add(QuestNode->ID);
+				}
+			}
+			else
 			{
 				CachedVisitedNodeIDs.Add(QuestNode->ID);
 			}

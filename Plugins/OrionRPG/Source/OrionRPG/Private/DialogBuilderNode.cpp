@@ -7,6 +7,7 @@
 #include "Decorator/OrionDecorator.h"
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderNode_Root.h"
+#include "DialogBuilderNode_PlayerOption.h"
 #include "DialogComponent.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderNode"
@@ -96,6 +97,20 @@ void UDialogBuilderNode::BeginNode()
 void UDialogBuilderNode::EvaluateNextNode()
 {
 	NextNode = nullptr;
+
+	//Check for any playeroption
+	if (ChildrenNodes.IsValidIndex(0) && ChildrenNodes[0].IsA(UDialogBuilderNode_PlayerOption::StaticClass()))
+	{
+		TArray<UDialogBuilderNode_PlayerOption*> PlayerOptions;
+		for (auto& ChildNode : ChildrenNodes)
+		{
+			if (UDialogBuilderNode_PlayerOption* PlayerOption = Cast<UDialogBuilderNode_PlayerOption>(ChildNode))
+			{
+				PlayerOptions.AddUnique(PlayerOption);
+			}
+		}
+		GetDialogComponent()->OnEnterOptionSelection.Broadcast(PlayerOptions);
+	}
 
 	//Will execute children from top to bottom, and will stop executing until first child succeeds.
 	//if none of the children succeeds, stop evaluate until the next dialog update

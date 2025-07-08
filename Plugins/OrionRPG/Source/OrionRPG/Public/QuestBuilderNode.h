@@ -37,10 +37,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Description")
 		FName ID;
 
-	/** Add this Node Description to Journal? */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Description", DisplayName = "Add To Journal?")
-	bool bAddToJournal;
-	
+	/**Hide this node information from widget*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Description")
+		bool bHidden;
+
 	/** Gameplay Tag for this node, each tag should be unique */
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Description", DisplayName = "Node Tag (Optional)", meta = (Categories = "Quest"))
 		FGameplayTag NodeTag;

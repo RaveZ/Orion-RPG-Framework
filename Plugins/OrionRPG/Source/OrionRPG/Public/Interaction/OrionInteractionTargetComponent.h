@@ -6,7 +6,7 @@
 
 
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOrionInteractionSignature, AActor*, Interactor, UOrionInteractionTargetComponent*, Component);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOrionInteractionTargetSignature, AActor*, Interactor, UOrionInteractionTargetComponent*, Component);
 
 
 
@@ -30,19 +30,19 @@ class UOrionInteractionTargetComponent : public UActorComponent
 	
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Interactable")
-	FOrionInteractionSignature OnFocused;
+	FOrionInteractionTargetSignature OnFocused;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interactable")
-	FOrionInteractionSignature OnStarted;
+	FOrionInteractionTargetSignature OnStarted;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interactable")
-	FOrionInteractionSignature OnProcessed;
+	FOrionInteractionTargetSignature OnProcessed;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interactable")
-	FOrionInteractionSignature OnCanceled;
+	FOrionInteractionTargetSignature OnCanceled;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interactable")
-	FOrionInteractionSignature OnCompleted;
+	FOrionInteractionTargetSignature OnCompleted;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable")
 	EOrionInteractionMode Mode;

@@ -124,9 +124,8 @@ void FQuestDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 	if (QuestNode != NULL && SelectedObjects.Num() == 1)
 	{
 		IDetailCategoryBuilder& QuestNodeDetailCategory = DetailBuilder.EditCategory("Description", LOCTEXT("DescriptionCategory", "Description"));
-		QuestNodeDetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UQuestBuilderNode, bAddToJournal)).DisplayName(LOCTEXT("AddToJournalLabel", "Add To Journal"));
 		QuestNodeDetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UQuestBuilderNode, NodeTag)).DisplayName(LOCTEXT("NodeTagLabel", "Node Tag"));
-		QuestNodeDetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UQuestBuilderNode, Description)).DisplayName(LOCTEXT("DescriptionLabel", "Objective Description"));
+		QuestNodeDetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UQuestBuilderNode, Description)).DisplayName(LOCTEXT("DescriptionLabel", "Description"));
 		QuestNodeDetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UQuestBuilderNode, NodeName)).DisplayName(LOCTEXT("NodeNameLabel", "Node Name"));
 	}
 

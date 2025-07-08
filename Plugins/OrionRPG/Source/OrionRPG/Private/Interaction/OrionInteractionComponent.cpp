@@ -221,6 +221,7 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 			break;
 		}
 	}
+	OnInteractionUpdated.Broadcast(CurrentInteractionTarget);
 	// If we have previous interactable and we lose focus from it, cancel interaction
 	if (PrevInteractable && PrevInteractable->Mode == EOrionInteractionMode::Hold && PrevInteractable->IsInteractionInProgress() && CurrentInteractionTarget == nullptr)
 	{
@@ -236,6 +237,11 @@ void UOrionInteractionComponent::StartInteraction()
 		CurrentInteractionTarget->CanInteract())
 	{
 		CurrentInteractionTarget->StartInteraction(GetOwningPawn());
+
+		if (OnInteractionStarted.IsBound())
+		{
+			OnInteractionStarted.Broadcast(CurrentInteractionTarget);
+		}
 	}
 }
 
@@ -246,5 +252,19 @@ void UOrionInteractionComponent::CancelInteraction()
 		CurrentInteractionTarget->IsInteractionInProgress())
 	{
 		CurrentInteractionTarget->EndInteraction(false);
+		if (OnInteractionCanceled.IsBound())
+		{
+			OnInteractionCanceled.Broadcast(CurrentInteractionTarget);
+		}
+	}
+}
+
+void UOrionInteractionComponent::InteractionEnded(UOrionInteractionTargetComponent* Component, bool bCompleted)
+{
+	check(Component);
+
+	if (bCompleted && OnInteractionCompleted.IsBound())
+	{
+		OnInteractionCompleted.Broadcast(Component);
 	}
 }

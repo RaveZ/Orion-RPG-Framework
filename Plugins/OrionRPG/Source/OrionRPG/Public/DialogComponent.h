@@ -14,7 +14,7 @@ class APlayerController;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateDialog, class UDialogBuilderNode*, DialogNode);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEnterOptionSelector, const TArray<class UDialogBuilderNode_PlayerOption*>&, PlayerOptions);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEnterOptionSelection, const TArray<class UDialogBuilderNode_PlayerOption*>&, PlayerOptions);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPlayerOptionSelected, int32, SelectionIndex);
 
@@ -46,7 +46,7 @@ public:
 		FUpdateDialog OnDialogUpdated;
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
-		FEnterOptionSelector OnEnterOptionSelector;
+		FEnterOptionSelection OnEnterOptionSelection;
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
 		FPlayerOptionSelected OnPLayerOptionSelected;
@@ -61,7 +61,7 @@ public:
 	virtual void DialogLineUpdated(class UDialogBuilderNode* DialogNode);
 	
 	UFUNCTION()
-	virtual void EnterOptionSelector(const TArray<class UDialogBuilderNode_PlayerOption*>& PlayerOptions);
+	virtual void EnterOptionSelection(const TArray<class UDialogBuilderNode_PlayerOption*>& PlayerOptions);
 	
 	UFUNCTION()
 	virtual void PlayerOptionSelected(int32 SelectionIndex);

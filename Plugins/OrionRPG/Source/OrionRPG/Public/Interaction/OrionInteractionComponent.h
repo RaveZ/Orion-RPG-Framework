@@ -13,6 +13,10 @@ enum class EOrionInteractionType : uint8
 	E_InteractionPawn		UMETA(DisplayName = "Pawn"),
 };
 
+class UOrionInteractionTargetComponent;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOrionInteractionSignature, UOrionInteractionTargetComponent*, InteractionTarget);
+
 /**
  * Interaction component
  */
@@ -67,24 +71,38 @@ public:
 
 	FTimerHandle TimerHandle_UpdateInteractionTrace;
 
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FOrionInteractionSignature OnInteractionStarted;
+
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FOrionInteractionSignature OnInteractionCanceled;
+
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FOrionInteractionSignature OnInteractionCompleted;
+
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FOrionInteractionSignature OnInteractionUpdated;
 public:
-	UFUNCTION(BlueprintPure, Category = "DialogComponent")
+	UFUNCTION(BlueprintPure, Category = "Interaction")
 	virtual APawn* GetOwningPawn() const;
 
-	UFUNCTION(BlueprintPure, Category = "DialogComponent")
+	UFUNCTION(BlueprintPure, Category = "Interaction")
 	virtual APlayerController* GetOwningController() const;
 
 	UFUNCTION()
 	virtual void OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn);
 public:
-	UFUNCTION(BlueprintCallable, Category = "DialogComponent")
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	void SetInteractionEnabled(bool bEnabled);
 
-	UFUNCTION(BlueprintCallable, Category = "DialogComponent")
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	void StartInteraction();
 
-	UFUNCTION(BlueprintCallable, Category = "DialogComponent")
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	void CancelInteraction();
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	void InteractionEnded(UOrionInteractionTargetComponent* Component, bool bCompleted);
 private:
 	void UpdateInteractionTrace();
 };

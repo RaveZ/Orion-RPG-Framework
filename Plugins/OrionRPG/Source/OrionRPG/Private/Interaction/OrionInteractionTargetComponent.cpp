@@ -1,4 +1,6 @@
 #include "Interaction/OrionInteractionTargetComponent.h"
+#include "Interaction/OrionInteractionFunctionLibrary.h"
+#include "Interaction/OrionInteractionComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -99,6 +101,11 @@ void UOrionInteractionTargetComponent::EndInteraction(bool bCompleted)
 		{
 			OnCanceled.Broadcast(CurrentInteractor, this);
 		}
+	}
+
+	if (UOrionInteractionComponent* InteractionComp = UOrionInteractionFunctionLibrary::GetOrionInteractionComponent(GetWorld()))
+	{
+		InteractionComp->InteractionEnded(this, bCompleted);
 	}
 
 	CurrentInteractor = nullptr;

@@ -14,7 +14,6 @@
 
 UQuestBuilderNode::UQuestBuilderNode()
 {
-	bAddToJournal = true;
 #if WITH_EDITORONLY_DATA
 	CompatibleGraphType = UQuestBuilderGraph::StaticClass();
 

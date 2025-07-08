@@ -22,10 +22,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objective")
 	bool bOptional;
 
-	/**Hide the objective from widget*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objective")
-	bool bHidden;
-
 	/**This objective use amount required to complete objective?*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective", meta = (DisplayName = "UseAmount"))
 	bool bUseAmount;
