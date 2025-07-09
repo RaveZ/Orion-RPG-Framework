@@ -13,6 +13,7 @@ UDialogBuilderNode_PlayerOption::UDialogBuilderNode_PlayerOption()
 void UDialogBuilderNode_PlayerOption::BeginNode()
 {
 	Super::BeginNode();
+	EvaluateNextNode();
 }
 
 #if WITH_EDITOR
@@ -27,7 +28,9 @@ void UDialogBuilderNode_PlayerOption::SetNodeTitle(const FText& NewTitle)
 }
 FText UDialogBuilderNode_PlayerOption::GetNodeDescription() const
 {
-	return DialogSequenceData.Line;
+
+
+	return OptionText.IsEmpty() ? FText::FromString("Option Text") : OptionText;
 }
 
 #endif

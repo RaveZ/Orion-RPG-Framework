@@ -3,6 +3,7 @@
 
 #include "Decorator/IsQuestAtState.h"
 #include "QuestComponent.h"
+#include "QuestBuilderFunctionLibrary.h"
 #include "Quest.h"
 
 UIsQuestAtState::UIsQuestAtState()
@@ -13,9 +14,15 @@ UIsQuestAtState::UIsQuestAtState()
 bool UIsQuestAtState::PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const
 {
     FName QuestID = QuestTag.GetTagName();
-    if (UQuest* FoundedQuest = GetQuestComponent()->QuestMap.FindRef(QuestID))
+    if (GetWorld())
     {
-        return GetQuestComponent()->IsQuestAtState(QuestTag, QuestState);
+        if (UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld()))
+        {
+            if (UQuest* FoundedQuest = QuestComp->QuestMap.FindRef(QuestID))
+            {
+                return QuestComp->IsQuestAtState(QuestTag, QuestState);
+            }
+        }
     }
     return false;
 }

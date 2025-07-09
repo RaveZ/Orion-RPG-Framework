@@ -4,6 +4,7 @@
 #include "Event/ActivateQuest.h"
 #include "Quest.h"
 #include "QuestComponent.h"
+#include "QuestBuilderFunctionLibrary.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode.h"
 
@@ -16,7 +17,14 @@ void UActivateQuest::BeginEvent(AController* OwnerController, APawn* ControlledP
 {
 	if (QuestTag.IsValid())
 	{
-		GetQuestComponent()->ActivateQuestFromTag(QuestTag);
+		if (GetWorld())
+		{
+			UQuestComponent* QuestComp =  UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
+			if (QuestComp)
+			{
+				QuestComp->ActivateQuestFromTag(QuestTag);
+			}
+		}
 	}
 	EndEvent();
 	

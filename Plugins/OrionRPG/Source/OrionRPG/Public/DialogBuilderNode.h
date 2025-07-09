@@ -56,6 +56,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")
 		virtual UDialogBuilderEdge* GetEdge(UDialogBuilderNode* ChildNode);
 
+	UFUNCTION()
+	bool EvaluateAnyPlayerOptions();
+
 	UPROPERTY(BlueprintReadWrite, Category = "DialogBuilderNode")
 	TObjectPtr<AController> OwningController;
 

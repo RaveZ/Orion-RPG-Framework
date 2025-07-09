@@ -3,6 +3,7 @@
 
 #include "Decorator/IsQuestFailed.h"
 #include "QuestComponent.h"
+#include "QuestBuilderFunctionLibrary.h"
 #include "Quest.h"
 
 UIsQuestFailed::UIsQuestFailed()
@@ -13,10 +14,17 @@ UIsQuestFailed::UIsQuestFailed()
 bool UIsQuestFailed::PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const
 {
     FName QuestID = QuestTag.GetTagName();
-    if (UQuest* FoundedQuest = GetQuestComponent()->QuestMap.FindRef(QuestID))
+    if (GetWorld())
     {
-        return GetQuestComponent()->IsQuestAtState(QuestTag, EQuestState::E_Fail);
+        if (UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld()))
+        {
+            if (UQuest* FoundedQuest = QuestComp->QuestMap.FindRef(QuestID))
+            {
+                return QuestComp->IsQuestAtState(QuestTag, EQuestState::E_Fail);
+            }
+        }
     }
+    
     return false;
 }
 

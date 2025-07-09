@@ -10,6 +10,7 @@
 #include "DialogBuilderNode_RerouteNode.h"
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderNode_DialogLine.h"
+#include "DialogBuilderNode_PlayerOption.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Controller.h"
 #include "DialogData.h"
@@ -78,6 +79,16 @@ bool UDialogComponent::BeginDialog(UDialogBuilderGraph* DialogAsset)
 	}
 	
 	return bSuccess;
+}
+
+void UDialogComponent::SelectDialogOption(UDialogBuilderNode_PlayerOption* InOption)
+{
+	if (CurrentActiveDialog && InOption)
+	{
+		CurrentActiveDialog->bOptionSelectionActive = false;
+		CurrentActiveDialog->BeginNode((UDialogBuilderNode*)InOption);
+		OnPLayerOptionSelected.Broadcast(InOption);
+	}
 }
 
 class UDialogBuilderGraph* UDialogComponent::MakeDialogGraphInstance(UDialogBuilderGraph* DialogGraphTemplate)
@@ -167,9 +178,9 @@ void UDialogComponent::EnterOptionSelection(const TArray<class UDialogBuilderNod
 {
 }
 
-void UDialogComponent::PlayerOptionSelected(int32 SelectionIndex)
+void UDialogComponent::PlayerOptionSelected(UDialogBuilderNode_PlayerOption* PlayerOption)
 {
-    UE_LOG(LogTemp, Log, TEXT("Dialog Option Selected: %d"), SelectionIndex);
+    UE_LOG(LogTemp, Log, TEXT("Dialog Option Selected: %s"), *PlayerOption->OptionText.ToString());
 }
 
 void UDialogComponent::DialogBegin(UDialogBuilderGraph* Dialog)

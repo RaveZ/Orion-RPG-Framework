@@ -3,6 +3,7 @@
 
 #include "Event/UnlockQuest.h"
 #include "Quest.h"
+#include "QuestBuilderFunctionLibrary.h"
 #include "QuestComponent.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode.h"
@@ -16,7 +17,14 @@ void UUnlockQuest::BeginEvent(AController* OwnerController, APawn* ControlledPaw
 {
 	if (QuestTag.IsValid())
 	{
-		GetQuestComponent()->UnlockQuestFromTag(QuestTag);
+		if (GetWorld())
+		{
+			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
+			if (QuestComp)
+			{
+				QuestComp->UnlockQuestFromTag(QuestTag);
+			}
+		}
 	}
 	EndEvent();
 	

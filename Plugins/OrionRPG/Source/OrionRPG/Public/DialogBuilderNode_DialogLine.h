@@ -52,8 +52,16 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog")
 		FText ParticipantName;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog")
+		TSubclassOf<class AActor> DefaultSpeakerAvatarClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog")
+		FTransform DefaultSpeakerAvatarTransform;
 	UPROPERTY()
 		FString SharedParticipantName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog")
+		FLinearColor NodeColor;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail", meta = (ShowOnlyInnerProperties, EditCondition = "bUseDialogSequenceData == true", HideEditConditionToggle, EditConditionHides))
 		FDialogSequenceData DialogSequenceData;

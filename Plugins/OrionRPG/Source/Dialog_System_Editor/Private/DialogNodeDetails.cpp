@@ -111,6 +111,9 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 
 	DialogParticipantCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantName)).DisplayName(LOCTEXT("ParticipantNameLabel", "Participant Name"));
 	DialogParticipantCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantTag)).DisplayName(LOCTEXT("ParticipantTagLabel", "Participant Tag"));
+	DialogParticipantCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, DefaultSpeakerAvatarClass)).DisplayName(LOCTEXT("DefaultSpeakerAvatarClassLabel", "Default Speaker Avatar Class"));
+	DialogParticipantCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, DefaultSpeakerAvatarTransform)).DisplayName(LOCTEXT("DefaultSpeakerAvatarTransformLabel", "Default Speaker Avatar Transform"));
+	DialogParticipantCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, NodeColor)).DisplayName(LOCTEXT("NodeColorLabel", "Node Color"));
 
 	IDetailCategoryBuilder& DialogNodeDetail = DetailBuilder.EditCategory("Detail", LOCTEXT("DetailTitle", "Detail"));
 	DialogNodeDetail.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ID)).DisplayName(LOCTEXT("IDLabel", "ID"));

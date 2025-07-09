@@ -75,10 +75,9 @@ void UDialogBuilderGraph::BeginNode(UDialogBuilderNode* InNode, bool bLaunchEven
 		return;
 	}
 
-	if (UDialogBuilderNode_RerouteNode* OptionSelectorNode = Cast<UDialogBuilderNode_RerouteNode>(InNode))
+	if (UDialogBuilderNode_RerouteNode* RerouteNode = Cast<UDialogBuilderNode_RerouteNode>(InNode))
 	{
-		LastSelector = OptionSelectorNode;
-		OptionSelectorNode->BeginNode();
+		RerouteNode->BeginNode();
 		return;
 	}
 	//add visited node

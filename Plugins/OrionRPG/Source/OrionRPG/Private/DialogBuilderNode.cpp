@@ -97,20 +97,16 @@ void UDialogBuilderNode::BeginNode()
 void UDialogBuilderNode::EvaluateNextNode()
 {
 	NextNode = nullptr;
-
-	//Check for any playeroption
-	if (ChildrenNodes.IsValidIndex(0) && ChildrenNodes[0].IsA(UDialogBuilderNode_PlayerOption::StaticClass()))
+	if (GetOwningDialogGraph()->bOptionSelectionActive)
 	{
-		TArray<UDialogBuilderNode_PlayerOption*> PlayerOptions;
-		for (auto& ChildNode : ChildrenNodes)
-		{
-			if (UDialogBuilderNode_PlayerOption* PlayerOption = Cast<UDialogBuilderNode_PlayerOption>(ChildNode))
-			{
-				PlayerOptions.AddUnique(PlayerOption);
-			}
-		}
-		GetDialogComponent()->OnEnterOptionSelection.Broadcast(PlayerOptions);
+		UE_LOG(LogTemp, Log, TEXT("Player in dialog selection mode"));
+		return;
 	}
+
+	//Check if there is any player options 
+	//If found pany player options, halt evaluation node until option has been selected.
+	if (EvaluateAnyPlayerOptions())
+		return;
 
 	//Will execute children from top to bottom, and will stop executing until first child succeeds.
 	//if none of the children succeeds, stop evaluate until the next dialog update
@@ -149,6 +145,28 @@ void UDialogBuilderNode::EvaluateNextNode()
 	//Going to next node will begin when all End Events are finished
 }
 
+bool UDialogBuilderNode::EvaluateAnyPlayerOptions()
+{
+	//Check for any player options
+	if (ChildrenNodes.IsValidIndex(0) && ChildrenNodes[0].IsA(UDialogBuilderNode_PlayerOption::StaticClass()))
+	{
+		TArray<UDialogBuilderNode_PlayerOption*> PlayerOptions;
+		for (auto& ChildNode : ChildrenNodes)
+		{
+			if (UDialogBuilderNode_PlayerOption* PlayerOption = Cast<UDialogBuilderNode_PlayerOption>(ChildNode))
+			{
+				PlayerOptions.AddUnique(PlayerOption);
+			}
+		}
+		GetOwningDialogGraph()->LatestRootSelectionNode = this;
+		GetOwningDialogGraph()->bOptionSelectionActive = true;
+		GetDialogComponent()->OnEnterOptionSelection.Broadcast(PlayerOptions);
+		return true;
+	}
+	return false;
+}
+
+
 void UDialogBuilderNode::InitializeFromAsset(UDialogBuilderGraph& OwningDialogGraph)
 {
 	DialogGraph = &OwningDialogGraph;
@@ -181,6 +199,7 @@ UDialogBuilderEdge* UDialogBuilderNode::GetEdge(UDialogBuilderNode* ChildNode)
 {
 	return Edges.Contains(ChildNode) ? Edges.FindChecked(ChildNode) : nullptr;
 }
+
 
 
 FText UDialogBuilderNode::GetDescription_Implementation() const

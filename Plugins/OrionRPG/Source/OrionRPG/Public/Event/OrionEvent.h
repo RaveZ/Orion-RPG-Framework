@@ -81,8 +81,6 @@ public:
 	FString GetNodeDisplayText() const;
 	virtual FString GetNodeDisplayText_Implementation() const;
 
-	UFUNCTION(BlueprintCallable, Category = "Event")
-		UQuestComponent* GetQuestComponent() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Event")
 		FString GetShortTag(FGameplayTag Tag, int32 Level = 1) const;

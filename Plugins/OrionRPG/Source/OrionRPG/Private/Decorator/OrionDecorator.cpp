@@ -28,14 +28,6 @@ FString UOrionDecorator::GetNodeDisplayText_Implementation() const
 	return GetName();
 }
 
-UQuestComponent* UOrionDecorator::GetQuestComponent() const
-{
-	if (GetWorld())
-	{
-		return UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
-	}
-	return nullptr;
-}
 
 FString UOrionDecorator::GetShortTag(FGameplayTag Tag, int32 Level) const
 {

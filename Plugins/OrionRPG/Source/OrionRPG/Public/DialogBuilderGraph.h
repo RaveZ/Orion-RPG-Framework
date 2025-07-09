@@ -50,8 +50,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
 		TMap<FName, TObjectPtr<UDialogBuilderNode>> NodeMap;
 
+	/**Latest node before entering selection node*/
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
-		TObjectPtr<class UDialogBuilderNode_RerouteNode> LastSelector;
+		TObjectPtr<UDialogBuilderNode> LatestRootSelectionNode;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
+		bool bOptionSelectionActive;
 
 public:
 	virtual bool Initialize(UDialogComponent* InitializingComp);

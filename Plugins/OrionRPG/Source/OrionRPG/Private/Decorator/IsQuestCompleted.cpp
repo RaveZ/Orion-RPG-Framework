@@ -3,6 +3,7 @@
 
 #include "Decorator/IsQuestCompleted.h"
 #include "QuestComponent.h"
+#include "QuestBuilderFunctionLibrary.h"
 #include "Quest.h"
 
 UIsQuestCompleted::UIsQuestCompleted()
@@ -13,10 +14,17 @@ UIsQuestCompleted::UIsQuestCompleted()
 bool UIsQuestCompleted::PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const
 {
     FName QuestID = QuestTag.GetTagName();
-    if (UQuest* FoundedQuest = GetQuestComponent()->QuestMap.FindRef(QuestID))
+    if (GetWorld())
     {
-        return GetQuestComponent()->IsQuestAtState(QuestTag, EQuestState::E_Complete);
+        if (UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld()))
+        {
+            if (UQuest* FoundedQuest = QuestComp->QuestMap.FindRef(QuestID))
+            {
+                return QuestComp->IsQuestAtState(QuestTag, EQuestState::E_Complete);
+            }
+        }
     }
+    
     return false;
 }
 

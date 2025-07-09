@@ -4,6 +4,7 @@
 #include "Decorator/IsQuestObjectiveCompleted.h"
 #include "QuestBuilderNode_Objective.h"
 #include "QuestComponent.h"
+#include "QuestBuilderFunctionLibrary.h"
 #include "Quest.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "QuestBuilderGraph.h"
@@ -18,14 +19,21 @@ bool UIsQuestObjectiveCompleted::PerformConditionCheck_Implementation(AControlle
 {
     FName QuestID = QuestTag.GetTagName();
     FName NodeID = NodeTag.GetTagName();
-    if (UQuest* FoundedQuest = GetQuestComponent()->QuestMap.FindRef(QuestID))
+    if (GetWorld())
     {
-        UQuestBuilderNode* FoundedNode = FoundedQuest->NodeMap.FindRef(NodeID);
-        if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(FoundedNode))
+        if (UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld()))
         {
-            return ObjectiveNode->IsObjectiveCompleted();
+            if (UQuest* FoundedQuest = QuestComp->QuestMap.FindRef(QuestID))
+            {
+                UQuestBuilderNode* FoundedNode = FoundedQuest->NodeMap.FindRef(NodeID);
+                if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(FoundedNode))
+                {
+                    return ObjectiveNode->IsObjectiveCompleted();
+                }
+            }
         }
     }
+    
     return false;
 }
 

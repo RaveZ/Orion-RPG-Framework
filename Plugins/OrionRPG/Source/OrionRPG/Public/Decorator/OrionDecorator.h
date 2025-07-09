@@ -52,9 +52,6 @@ public:
 	virtual FString GetNodeDisplayText_Implementation() const;
 
 	UFUNCTION(BlueprintCallable, Category = "OrionDecorator")
-		UQuestComponent* GetQuestComponent() const;
-
-	UFUNCTION(BlueprintCallable, Category = "OrionDecorator")
 		FString GetShortTag(FGameplayTag Tag, int32 Level = 1) const;
 
 	/** @return name of node */

@@ -5,6 +5,7 @@
 #include "QuestBuilderNode.h"
 #include "QuestBuilderNode_Objective.h"
 #include "QuestBuilderNode_Checkpoint.h"
+#include "QuestBuilderFunctionLibrary.h"
 #include "QuestComponent.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Quest.h"
@@ -20,31 +21,34 @@ bool UIsQuestAtCheckpoint::PerformConditionCheck_Implementation(AController* Own
 {
     FName QuestID = QuestTag.GetTagName();
     FName NodeID = NodeTag.GetTagName();
-    if (GetQuestComponent())
+    if (GetWorld())
     {
-        //find the first found checkpoint and break
-		if (UQuest* FoundedQuest = GetQuestComponent()->QuestMap.FindRef(QuestID))
-		{
-            for (int32 i = FoundedQuest->VisitedNodeIDs.Num() - 1; i >= 0; --i)
+        if (UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld()))
+        {
+            //find the first found checkpoint and break
+            if (UQuest* FoundedQuest = QuestComp->QuestMap.FindRef(QuestID))
             {
-                const FName& id = FoundedQuest->VisitedNodeIDs[i];
-                UQuestBuilderNode* FoundedNode = FoundedQuest->NodeMap.FindRef(id);
-                if (FoundedNode)
+                for (int32 i = FoundedQuest->VisitedNodeIDs.Num() - 1; i >= 0; --i)
                 {
-                    if (UQuestBuilderNode_Checkpoint* CheckpointNode = Cast<UQuestBuilderNode_Checkpoint>(FoundedNode))
+                    const FName& id = FoundedQuest->VisitedNodeIDs[i];
+                    UQuestBuilderNode* FoundedNode = FoundedQuest->NodeMap.FindRef(id);
+                    if (FoundedNode)
                     {
-                        if (CheckpointNode->ID == NodeID)
+                        if (UQuestBuilderNode_Checkpoint* CheckpointNode = Cast<UQuestBuilderNode_Checkpoint>(FoundedNode))
                         {
-                            return true;
-                        }
-                        else
-                        {
-                            return false;
+                            if (CheckpointNode->ID == NodeID)
+                            {
+                                return true;
+                            }
+                            else
+                            {
+                                return false;
+                            }
                         }
                     }
                 }
             }
-		}
+        }
     }
     return false;
 }

@@ -4,6 +4,7 @@
 #include "Event/RestartQuest.h"
 #include "Quest.h"
 #include "QuestComponent.h"
+#include "QuestBuilderFunctionLibrary.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode.h"
 #include "QuestBuilderNode_Objective.h"
@@ -19,7 +20,14 @@ void URestartQuest::BeginEvent(AController* OwnerController, APawn* ControlledPa
 {
 	if (QuestTag.IsValid())
 	{
-		GetQuestComponent()->RestartQuestFromTag(QuestTag, NodeTag);
+		if (GetWorld())
+		{
+			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
+			if (QuestComp)
+			{
+				QuestComp->RestartQuestFromTag(QuestTag, NodeTag);
+			}
+		}
 	}
 	EndEvent();
 }

@@ -3,6 +3,7 @@
 
 #include "Event/BeginQuestGraph.h"
 #include "Quest.h"
+#include "QuestBuilderFunctionLibrary.h"
 #include "QuestComponent.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode.h"
@@ -13,9 +14,13 @@ UBeginQuestGraph::UBeginQuestGraph()
 
 void UBeginQuestGraph::BeginEvent(AController* OwnerController, APawn* ControlledPawn)
 {
-	if (GetQuestComponent())
+	if (GetWorld())
 	{
-		GetQuestComponent()->BeginQuestGraph(QuestAsset);
+		UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
+		if (QuestComp)
+		{
+			QuestComp->BeginQuestGraph(QuestAsset);
+		}
 	}
 	EndEvent();
 	

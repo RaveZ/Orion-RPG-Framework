@@ -10,17 +10,17 @@
 UCLASS(BlueprintType)
 class ORIONRPG_API UDialogBuilderNode_PlayerOption : public UDialogBuilderNode
 {
-	GENERATED_BODY()
+	GENERATED_BODY()            
 public:
     UDialogBuilderNode_PlayerOption();
     virtual void BeginNode() override;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail", meta = (ShowOnlyInnerProperties, EditCondition = "bUseDialogSequenceData == true", HideEditConditionToggle, EditConditionHides))
-    FDialogSequenceData DialogSequenceData;
+    UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Detail")
+    FText OptionText;
 #if WITH_EDITOR
     virtual FText GetNodeTitle() const override;
     virtual void SetNodeTitle(const FText& NewTitle);
     virtual FText GetNodeDescription() const override;
-
+    
 #endif
 };

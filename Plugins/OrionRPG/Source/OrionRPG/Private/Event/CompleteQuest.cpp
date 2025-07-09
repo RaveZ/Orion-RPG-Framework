@@ -3,6 +3,7 @@
 
 #include "Event/CompleteQuest.h"
 #include "Quest.h"
+#include "QuestBuilderFunctionLibrary.h"
 #include "QuestComponent.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode.h"
@@ -16,7 +17,14 @@ void UCompleteQuest::BeginEvent(AController* OwnerController, APawn* ControlledP
 {
 	if (QuestTag.IsValid())
 	{
-		GetQuestComponent()->CompleteQuestFromTag(QuestTag);
+		if (GetWorld())
+		{
+			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
+			if (QuestComp)
+			{
+				QuestComp->CompleteQuestFromTag(QuestTag);
+			}
+		}
 	}
 	EndEvent();
 	

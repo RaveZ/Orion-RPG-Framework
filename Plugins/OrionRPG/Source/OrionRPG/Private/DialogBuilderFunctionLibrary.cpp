@@ -75,15 +75,20 @@ UDialogBuilderNode* UDialogBuilderFunctionLibrary::GetCurrentDialogNode(const UO
     return nullptr;
 }
 
-UDialogBuilderNode_RerouteNode* UDialogBuilderFunctionLibrary::GetLastSelectorNode(const UObject* WorldContextObject)
+void UDialogBuilderFunctionLibrary::AdvanceDialogLine(const UObject* WorldContextObject)
 {
-    UDialogBuilderGraph* CurrentDialogGraph = GetCurrentActiveDialog(WorldContextObject);
-    if (CurrentDialogGraph && CurrentDialogGraph->LastSelector)
+    UDialogBuilderNode* CurrentDialogLine = GetCurrentDialogNode(WorldContextObject);
+    if (CurrentDialogLine)
     {
-        return CurrentDialogGraph->LastSelector;
+        CurrentDialogLine->EvaluateNextNode();
     }
-
-    UE_LOG(LogTemp, Warning, TEXT("DialogBuilderFunctionLibrary : Current Dialog Node Is Null!"));
-    return nullptr;
 }
 
+void UDialogBuilderFunctionLibrary::SelectDialogOption(const UObject* WorldContextObject, UDialogBuilderNode_PlayerOption* InOption)
+{
+    if (UDialogComponent* DialogComp = GetDialogComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        DialogComp->SelectDialogOption(InOption);
+    }
+
+}

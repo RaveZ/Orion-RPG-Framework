@@ -16,7 +16,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateDialog, class UDialogBuilderN
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEnterOptionSelection, const TArray<class UDialogBuilderNode_PlayerOption*>&, PlayerOptions);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPlayerOptionSelected, int32, SelectionIndex);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPlayerOptionSelected, UDialogBuilderNode_PlayerOption*, PlayerOption);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FBeginDialog, UDialogBuilderGraph*, Dialog);
 
@@ -64,7 +64,7 @@ public:
 	virtual void EnterOptionSelection(const TArray<class UDialogBuilderNode_PlayerOption*>& PlayerOptions);
 	
 	UFUNCTION()
-	virtual void PlayerOptionSelected(int32 SelectionIndex);
+	virtual void PlayerOptionSelected(class UDialogBuilderNode_PlayerOption* PlayerOption);
 	
 	UFUNCTION()
 	virtual void DialogBegin(UDialogBuilderGraph* Dialog);
@@ -74,6 +74,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "DialogComponent")
 		bool BeginDialog(UDialogBuilderGraph* DialogAsset);
+
+	UFUNCTION(BlueprintCallable, Category = "DialogComponent")
+		void SelectDialogOption(class UDialogBuilderNode_PlayerOption* InOption);
 
 	UFUNCTION()
 		virtual class UDialogBuilderGraph* MakeDialogGraphInstance(UDialogBuilderGraph* DialogGraphTemplate);

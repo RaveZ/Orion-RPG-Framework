@@ -104,6 +104,9 @@ void UDialogBuilderNode_DialogLine::CopyParticipantSettings(const UDialogBuilder
 {
 	ParticipantTag = SrcNode->ParticipantTag;
 	ParticipantName = SrcNode->ParticipantName;
+	DefaultSpeakerAvatarClass = SrcNode->DefaultSpeakerAvatarClass;
+	DefaultSpeakerAvatarTransform = SrcNode->DefaultSpeakerAvatarTransform;
+	NodeColor = SrcNode->NodeColor;
 	SharedParticipantIdx = SrcNode->SharedParticipantIdx;
 	SharedParticipantName = SrcNode->SharedParticipantName;
 	SharedParticipantGuid = SrcNode->SharedParticipantGuid;

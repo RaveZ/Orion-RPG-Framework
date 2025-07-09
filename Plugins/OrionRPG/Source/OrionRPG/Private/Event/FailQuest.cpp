@@ -3,6 +3,7 @@
 
 #include "Event/FailQuest.h"
 #include "Quest.h"
+#include "QuestBuilderFunctionLibrary.h"
 #include "QuestComponent.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode.h"
@@ -16,7 +17,14 @@ void UFailQuest::BeginEvent(AController* OwnerController, APawn* ControlledPawn)
 {
 	if (QuestTag.IsValid())
 	{
-		GetQuestComponent()->FailQuestFromTag(QuestTag);
+		if (GetWorld())
+		{
+			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
+			if (QuestComp)
+			{
+				QuestComp->FailQuestFromTag(QuestTag);
+			}
+		}
 	}
 	EndEvent();
 	

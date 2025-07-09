@@ -47,10 +47,16 @@ public:
 	static class UDialogBuilderNode* GetCurrentDialogNode(const UObject* WorldContextObject);
 
 	/**
-	* Get Last Selector Node.
+	* Advance the dialog line
 	*
-	* @return The Selector Dialog Node reference.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "DialogBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
-	static class UDialogBuilderNode_RerouteNode* GetLastSelectorNode(const UObject* WorldContextObject);
+	UFUNCTION(BlueprintCallable, Category = "DialogBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	static void AdvanceDialogLine(const UObject* WorldContextObject);
+
+	/**
+	* Select Dialog Option
+	*
+	*/
+	UFUNCTION(BlueprintCallable, Category = "DialogBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	static void SelectDialogOption(const UObject* WorldContextObject, class UDialogBuilderNode_PlayerOption* InOption);
 };

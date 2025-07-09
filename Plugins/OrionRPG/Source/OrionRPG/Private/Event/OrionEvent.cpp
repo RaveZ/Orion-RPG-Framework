@@ -35,14 +35,6 @@ FString UOrionEvent::GetNodeDisplayText_Implementation() const
 	return "Node Description";
 }
 
-UQuestComponent* UOrionEvent::GetQuestComponent() const
-{
-	if (GetWorld())
-	{
-		return UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
-	}
-	return nullptr;
-}
 
 FString UOrionEvent::GetNodeName()
 {
