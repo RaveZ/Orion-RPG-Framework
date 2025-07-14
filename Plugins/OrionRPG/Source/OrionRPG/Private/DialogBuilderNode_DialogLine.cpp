@@ -74,7 +74,6 @@ void UDialogBuilderNode_DialogLine::MakeParticipantShareable(FString ShareName)
 	bSharedParticipant = true;
 	SharedParticipantName = ShareName;
 	SharedParticipantGuid = FGuid::NewGuid();
-
 }
 
 void UDialogBuilderNode_DialogLine::UnshareParticipant()
@@ -101,6 +100,7 @@ void UDialogBuilderNode_DialogLine::UseSharedParticipant(const UDialogBuilderNod
 	SharedParticipantName = Node->SharedParticipantName;
 	SharedParticipantGuid = Node->SharedParticipantGuid;
 	CopyParticipantSettings(Node);
+	OnSharedParticipantChanged.Broadcast();
 }
 
 void UDialogBuilderNode_DialogLine::CopyParticipantSettings(const UDialogBuilderNode_DialogLine* SrcNode)

@@ -9,6 +9,11 @@
 
 
 
+UDialogBuilderEdNode_DialogLine::UDialogBuilderEdNode_DialogLine()
+{
+	GetOutermost()->PackageMarkedDirtyEvent.AddUObject(this, &UDialogBuilderEdNode_DialogLine::OnPackageMarkedDirty);
+}
+
 FText UDialogBuilderEdNode_DialogLine::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
 	const UDialogBuilderNode* DialogNode = Cast<UDialogBuilderNode>(NodeInstance);
@@ -48,6 +53,25 @@ FText UDialogBuilderEdNode_DialogLine::GetTooltipText() const
 void UDialogBuilderEdNode_DialogLine::PostPasteNode()
 {
 	Super::PostPasteNode();
+	UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance);
+	if (DialogLineNode)
+	{
+		DialogLineNode->OnSharedParticipantChanged.Clear();
+		DialogLineNode->OnSharedParticipantChanged.AddDynamic(this, &UDialogBuilderEdNode_DialogLine::OnSharedParticipantChanged);
+	}
+	GetGraph()->NotifyGraphChanged();
+}
+
+void UDialogBuilderEdNode_DialogLine::PostPlacedNewNode()
+{
+	Super::PostPlacedNewNode();
+	UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance);
+	if (DialogLineNode )
+	{
+		DialogLineNode->OnSharedParticipantChanged.Clear();
+		DialogLineNode->OnSharedParticipantChanged.AddDynamic(this, &UDialogBuilderEdNode_DialogLine::OnSharedParticipantChanged);
+	}
+	GetGraph()->NotifyGraphChanged();
 }
 
 void UDialogBuilderEdNode_DialogLine::NodeConnectionListChanged()
@@ -83,4 +107,19 @@ void UDialogBuilderEdNode_DialogLine::GetNodeContextMenuActions(UToolMenu* Menu,
 {
 	AddContextMenuActionsEvents(Menu, "DialogBuilderEdNode", Context);
 	AddContextMenuActionsDecorators(Menu, "DialogBuilderEdNode", Context);
+}
+
+void UDialogBuilderEdNode_DialogLine::OnSharedParticipantChanged()
+{
+	GetGraph()->NotifyGraphChanged();
+}
+
+void UDialogBuilderEdNode_DialogLine::OnPackageMarkedDirty(UPackage* ModifiedPackage, bool bWasDirty)
+{
+	UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance);
+	if (DialogLineNode)
+	{
+		DialogLineNode->OnSharedParticipantChanged.Clear();
+		DialogLineNode->OnSharedParticipantChanged.AddDynamic(this, &UDialogBuilderEdNode_DialogLine::OnSharedParticipantChanged);
+	}
 }

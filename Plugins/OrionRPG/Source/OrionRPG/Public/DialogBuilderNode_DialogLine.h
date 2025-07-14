@@ -37,6 +37,7 @@ protected:
 	virtual FGuid& AccessShareDataGuid(UDialogBuilderNode_DialogLine* Node) override;
 };
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSharedParticipantSignature);
 
 UCLASS(Blueprintable, BlueprintType)
 class ORIONRPG_API UDialogBuilderNode_DialogLine : public UDialogBuilderNode
@@ -93,7 +94,8 @@ public:
 
 	UPROPERTY()
 		int32 SharedParticipantIdx;
-
+	UPROPERTY()
+	FSharedParticipantSignature OnSharedParticipantChanged;
 
 public:
 	virtual void BeginNode() override;

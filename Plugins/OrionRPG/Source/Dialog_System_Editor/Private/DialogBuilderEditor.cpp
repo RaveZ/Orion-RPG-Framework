@@ -1652,10 +1652,6 @@ void FDialogBuilderEditor::OnFinishedChangingProperties(const FPropertyChangedEv
 
 void FDialogBuilderEditor::OnPackageMarkedDirty(UPackage* ModifiedPackage, bool bWasDirty)
 {   
-	if (GetFocusedGraph())
-	{
-		GetFocusedGraph()->NotifyGraphChanged();
-	}
 }
 //Called when saving our file graph
 #if ENGINE_MAJOR_VERSION < 5

@@ -6,6 +6,7 @@
 #include "DialogBuilderEdNode_Root.h"
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderEdNode_PlayerOption.h"
+#include "DialogBuilderEdNode_DialogLine.h"
 #include "DialogBuilderEdge.h"
 #include "DialogBuilderNode.h"
 #include "DialogBuilderNode_DialogLine.h"
@@ -79,6 +80,11 @@ void UDialogBuilderEdGraph::UpdateAsset(bool bForce)
 					OwningDialog->RootNodes.Add(Cast<UDialogBuilderNode>(RootNode->NodeInstance));
 				}
 			}
+			if (UDialogBuilderEdNode_DialogLine* DialogLineEdNode = Cast<UDialogBuilderEdNode_DialogLine>(Nodes[i]))
+			{
+				GetOutermost()->PackageMarkedDirtyEvent.AddUObject(DialogLineEdNode, &UDialogBuilderEdNode_DialogLine::OnPackageMarkedDirty);
+			}
+			
 			UDialogBuilderNode* DialogNode = DialogEdNode ? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance) : nullptr;
 			if (DialogNode)
 			{
