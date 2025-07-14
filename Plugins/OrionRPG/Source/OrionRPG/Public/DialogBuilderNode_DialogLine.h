@@ -5,6 +5,9 @@
 #include "CoreMinimal.h"
 #include "DialogBuilderNode.h"
 #include "DialogData.h"
+#include <MovieSceneSequencePlayer.h>
+#include <CineCameraSettings.h>
+#include "LevelSequencePlayer.h"
 #include "DialogBuilderNode_DialogLine.generated.h"
 
 class ORIONRPG_API IDialogNodeSharedDataHelper
@@ -33,8 +36,7 @@ protected:
 	virtual FString& AccessShareDataName(UDialogBuilderNode_DialogLine* Node) override;
 	virtual FGuid& AccessShareDataGuid(UDialogBuilderNode_DialogLine* Node) override;
 };
-//Notify Node Changed to match node title in editor
-DECLARE_MULTICAST_DELEGATE(FOnParticipantDataChanged);
+
 
 UCLASS(Blueprintable, BlueprintType)
 class ORIONRPG_API UDialogBuilderNode_DialogLine : public UDialogBuilderNode
@@ -44,27 +46,43 @@ class ORIONRPG_API UDialogBuilderNode_DialogLine : public UDialogBuilderNode
 public:
 	UDialogBuilderNode_DialogLine();
 
-	/**Participant Tag*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog", meta = (Categories = "Dialog.Participant"))
-		FGameplayTag ParticipantTag;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog")
+		FParticipantInfo ParticipantInfo;
 
-	/** Your Participant Name*/
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog")
-		FText ParticipantName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog")
-		TSubclassOf<class AActor> DefaultSpeakerAvatarClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog")
-		FTransform DefaultSpeakerAvatarTransform;
 	UPROPERTY()
 		FString SharedParticipantName;
+	
+	UPROPERTY()
+		bool bIsSelector = false;
+
+	/**
+	* Entering selection mode will have it's time limit setting.
+	* Selection will have no time limit by default
+	**/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Option Selection", meta = (EditCondition = "bIsSelector == true", HideEditConditionToggle, EditConditionHides))
+		ESelectionTimeLimit SelectionTimeLimit;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Option Selection", meta = (EditCondition = "bIsSelector == true && SelectionTimeLimit == ESelectionTimeLimit::E_HasTimeLimit", HideEditConditionToggle, EditConditionHides))
+		float TimeLimit;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail", meta = (ShowOnlyInnerProperties))
+		FDialogSequenceData DialogSequenceData;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail")
+		FMovieSceneSequencePlaybackSettings PlaybackSettings;
+
+	/** Controls the crop settings. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Settings")
+	struct FPlateCropSettings CropSettings;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
+		TObjectPtr<class ULevelSequence> SequenceAsset;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog")
-		FLinearColor NodeColor;
+		FTransform ParticipantTransformOverride;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail", meta = (ShowOnlyInnerProperties, EditCondition = "bUseDialogSequenceData == true", HideEditConditionToggle, EditConditionHides))
-		FDialogSequenceData DialogSequenceData;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
+		bool bCanSkipDialogLine;
 
 	/** The participant data of this node may be shared */
 	UPROPERTY()
@@ -77,7 +95,6 @@ public:
 		int32 SharedParticipantIdx;
 
 
-	FOnParticipantDataChanged OnParticipantDataChanged;
 public:
 	virtual void BeginNode() override;
 

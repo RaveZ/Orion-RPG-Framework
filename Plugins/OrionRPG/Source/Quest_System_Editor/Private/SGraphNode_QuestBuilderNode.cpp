@@ -42,7 +42,7 @@ bool ShouldShowExecutionIndex()
 	return true;
 #else
 	return GEditor && (GEditor->bIsSimulatingInEditor || GEditor->PlayWorld != NULL);
-#endif // ALWAYS_SHOW_BT_EXECUTION_INDEX
+#endif // ALWAYS_SHOW_QUEST_EXECUTION_INDEX
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -605,7 +605,8 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 
 					// Blueprint indicator overlay
 					+SOverlay::Slot()
-					.HAlign(HAlign_Right)
+					.Padding(FMargin(10.f, 0.f))
+					.HAlign(HAlign_Left)
 					.VAlign(VAlign_Top)
 					[
 						SNew(SImage)
@@ -643,8 +644,7 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 
 		ErrorReporting = ErrorText;
 		ErrorReporting->SetError(ErrorMsg);
-	
-	CreatePinWidgets();
+		CreatePinWidgets();
 }
 
 void SGraphNode_QuestBuilderNode::OnDragEnter(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent)
@@ -841,7 +841,6 @@ TArray<FOverlayWidgetInfo> SGraphNode_QuestBuilderNode::GetOverlayWidgets(bool b
 	FOverlayWidgetInfo Overlay(IndexOverlay);
 	Overlay.OverlayOffset = FVector2D(WidgetSize.X - (IndexOverlay->GetDesiredSize().X * 0.5f), Origin.Y);
 	Widgets.Add(Overlay);
-
 	
 
 	return Widgets;

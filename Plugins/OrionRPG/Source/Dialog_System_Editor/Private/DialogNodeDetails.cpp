@@ -109,11 +109,19 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 			]; 
 	}
 
-	DialogParticipantCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantName)).DisplayName(LOCTEXT("ParticipantNameLabel", "Participant Name"));
-	DialogParticipantCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantTag)).DisplayName(LOCTEXT("ParticipantTagLabel", "Participant Tag"));
-	DialogParticipantCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, DefaultSpeakerAvatarClass)).DisplayName(LOCTEXT("DefaultSpeakerAvatarClassLabel", "Default Speaker Avatar Class"));
-	DialogParticipantCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, DefaultSpeakerAvatarTransform)).DisplayName(LOCTEXT("DefaultSpeakerAvatarTransformLabel", "Default Speaker Avatar Transform"));
-	DialogParticipantCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, NodeColor)).DisplayName(LOCTEXT("NodeColorLabel", "Node Color"));
+	TSharedRef<IPropertyHandle> ParticipantInfoHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantInfo));
+	ParticipantInfoHandle->MarkHiddenByCustomization(); // Hide the root property row
+
+	uint32 NumChildren = 0;
+	ParticipantInfoHandle->GetNumChildren(NumChildren);
+	for (uint32 ChildIndex = 0; ChildIndex < NumChildren; ++ChildIndex)
+	{
+		TSharedPtr<IPropertyHandle> ChildHandle = ParticipantInfoHandle->GetChildHandle(ChildIndex);
+		if (ChildHandle.IsValid())
+		{
+			DialogParticipantCategory.AddProperty(ChildHandle.ToSharedRef());
+		}
+	}
 
 	IDetailCategoryBuilder& DialogNodeDetail = DetailBuilder.EditCategory("Detail", LOCTEXT("DetailTitle", "Detail"));
 	DialogNodeDetail.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ID)).DisplayName(LOCTEXT("IDLabel", "ID"));
@@ -290,21 +298,6 @@ void FDialogNodeDetails::BecomeSharedWith(UDialogBuilderNode_DialogLine* NewNode
 		
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

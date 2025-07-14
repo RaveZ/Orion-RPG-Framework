@@ -101,12 +101,14 @@ public:
 
 	virtual FSlateColor GetBackgroundColor() const;
 	virtual FSlateColor GetBorderBackgroundColor() const;
+	virtual FSlateColor GetSelectorColor() const;
 
 	virtual FText GetNodeIDText() const;
 	
 	virtual EVisibility GetNodeIDVisibility() const;
 	virtual EVisibility GetTitleVisibility() const;
 	virtual EVisibility GetParentNodeVisibility() const;
+	virtual EVisibility GetSelectorVisibility() const;
 	virtual EVisibility GetSubNodeVisibility() const;
 	virtual EVisibility GetDragOverMarkerVisibility() const;
 

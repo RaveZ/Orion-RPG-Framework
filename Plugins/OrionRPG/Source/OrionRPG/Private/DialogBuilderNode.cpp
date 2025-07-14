@@ -137,7 +137,7 @@ void UDialogBuilderNode::EvaluateNextNode()
 	}
 	else
 	{
-		GetDialogComponent()->OnEndDialog.Broadcast(GetOwningDialogGraph());
+		GetOwningDialogGraph()->EndDialog();
 		return;
 	}
 

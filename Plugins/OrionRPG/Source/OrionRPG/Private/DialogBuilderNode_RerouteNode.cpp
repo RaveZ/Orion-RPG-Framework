@@ -31,9 +31,10 @@ void UDialogBuilderNode_RerouteNode::BeginNode()
 					GetOwningDialogGraph()->BeginNode(LatestRootSelectionNode);
 					return;
 				}
-				if (LatestRootSelectionNode->EvaluateAnyPlayerOptions())
+				else
 				{
-					bSuccess = true;
+					GetOwningDialogGraph()->CurrentNode = LatestRootSelectionNode;
+					bSuccess = LatestRootSelectionNode->EvaluateAnyPlayerOptions();
 				}
 			}
 			if (!bSuccess)

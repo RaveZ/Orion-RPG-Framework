@@ -30,3 +30,31 @@ public:
 	{
 	}
 };
+
+
+USTRUCT(BlueprintType)
+struct FParticipantInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog", meta = (Categories = "Dialog.Participant"))
+	FGameplayTag ParticipantTag;
+
+	/** Your Participant Name*/
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog")
+	FText ParticipantName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog", meta = (FullyExpand = true))
+	TSubclassOf<class AActor> ParticipantClassOverride;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog")
+	FLinearColor NodeColor;
+};
+
+
+UENUM(BlueprintType)
+enum class ESelectionTimeLimit : uint8
+{
+	E_NoTimeLimit		UMETA(DisplayName = "No Time Limit"),
+	E_HasTimeLimit		UMETA(DisplayName = "Has Time Limit")
+};

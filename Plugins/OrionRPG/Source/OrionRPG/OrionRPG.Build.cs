@@ -34,6 +34,9 @@ public class OrionRPG : ModuleRules
                 "EnhancedInput",
                 "InputCore",
                 "DeveloperSettings",
+                "LevelSequence",
+                "MovieScene",
+                "CinematicCamera",
 
             }
             );

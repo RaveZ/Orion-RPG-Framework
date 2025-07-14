@@ -20,7 +20,7 @@ void UDialogBuilderNode_PlayerOption::BeginNode()
 
 FText UDialogBuilderNode_PlayerOption::GetNodeTitle() const
 {
-    return FText::FromName(ID).IsEmpty() ? FText::FromString(UDialogBuilderNode::GetShortTypeName(this)) : FText::FromName(ID);
+	return OptionText;
 }
 void UDialogBuilderNode_PlayerOption::SetNodeTitle(const FText& NewTitle)
 {

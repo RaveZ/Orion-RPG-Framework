@@ -6,12 +6,26 @@
 #include "DialogBuilderNode.h"
 #include "DialogBuilderEdge.h"
 #include "DialogBuilderNode_Root.h"
+#include "LevelSequencePlayer.h"
+#include "LevelSequenceActor.h"
 #include "DialogBuilderNode_RerouteNode.h"
+#include "DialogBuilderNode_DialogLine.h"
+#include "EngineUtils.h"
+#include "GameFramework/Character.h"
+#include <CineCameraActor.h>
+#include <DefaultLevelSequenceInstanceData.h>
+#include <CineCameraComponent.h>
+#include "Kismet/GameplayStatics.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderGraph"
 
+
+static const FName NAME_CinecamTag("Cinecam");
+static const FName NAME_BodyTag("Body");
+
 UDialogBuilderGraph::UDialogBuilderGraph()
 {
+	DefaultHeadBoneName = FName("head");
 }
 
 UDialogBuilderGraph::~UDialogBuilderGraph()
@@ -31,6 +45,7 @@ bool UDialogBuilderGraph::Initialize(UDialogComponent* InitializingComp)
 		OwningController = InitializingComp->GetOwningController();
 		DialogComponent = InitializingComp;
 		VisitedNodeIDs.Empty();
+		CachedParticipants.Empty();
 		NodeMap.Empty();
 		for (auto& Node : AllNodes)
 		{
@@ -42,6 +57,24 @@ bool UDialogBuilderGraph::Initialize(UDialogComponent* InitializingComp)
 				NodeMap.Emplace(Node->ID, Node);
 			}
 		}
+
+		TArray<FParticipantInfo> ParticipantList;
+		ParticipantInfoMap.GenerateValueArray(ParticipantList);
+		for (auto& Participant : ParticipantList)
+		{
+			if(AActor* ParticipantActor = RetrieveParticipant(Participant))
+			{
+				CachedParticipants.Emplace(Participant.ParticipantTag, ParticipantActor);
+
+				// Log the cached participant
+				UE_LOG(LogTemp, Log, TEXT("Cached participant: %s -> %s"), *Participant.ParticipantName.ToString(), *GetNameSafe(ParticipantActor));
+			}
+			else
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Failed to retrieve participant: %s for Dialog : %s"), *Participant.ParticipantName.ToString(), *ID.ToString());
+			}
+		}
+
 	}
 	return false;
 }
@@ -85,6 +118,78 @@ void UDialogBuilderGraph::BeginNode(UDialogBuilderNode* InNode, bool bLaunchEven
 	
 	//InitializeNode
 	InNode->Initialize(bLaunchEventOnLoad);
+}
+
+void UDialogBuilderGraph::PlayDialogueSequence(UDialogBuilderNode_DialogLine* InDialogLine)
+{
+		
+	if (!DialogSequencer)
+	{
+		ALevelSequenceActor* OutActor = nullptr;
+		ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), InDialogLine->SequenceAsset, InDialogLine->PlaybackSettings, OutActor);
+		DialogSequencer = OutActor;
+		//passing CreateLevelSequencePlayer null asset makes it fail so we need to set it afterwards
+		if (DialogSequencer)
+		{
+			DialogSequencer->SetSequence(nullptr);
+		}
+	}
+
+	if (DialogSequencer)
+	{
+		if (ULevelSequencePlayer* SP = DialogSequencer->GetSequencePlayer())
+		{
+			SP->OnFinished.RemoveAll(this);
+			if (SP->IsPlaying())
+			{
+				SP->Stop();
+			}
+			if (InDialogLine->SequenceAsset)
+			{
+				DialogSequencer->PlaybackSettings = InDialogLine->PlaybackSettings;
+				DialogSequencer->SetSequence(InDialogLine->SequenceAsset);
+			}
+			SP->Play();
+			
+			SP->OnFinished.AddDynamic(this, &ThisClass::AdvanceDialogLine);
+
+			//Determine the LookAtActor
+			LookAtActor = CachedParticipants.FindRef(InDialogLine->ParticipantInfo.ParticipantTag);
+			
+
+			//Go in, and tell the cinecam to focus/track the speaker 
+			for (auto& BoundObject : SP->GetBoundObjects(DialogSequencer->FindNamedBinding(NAME_CinecamTag)))
+			{
+				Cinecam = Cast<ACineCameraActor>(BoundObject);
+
+				if (Cinecam.IsValid())
+				{
+					if (UCineCameraComponent* CinecamComp = Cinecam->GetCineCameraComponent())
+					{
+						CinecamComp->CropSettings = InDialogLine->CropSettings;
+
+						if (LookAtActor.IsValid())
+						{
+							const FVector Offset = LookAtActor->GetActorTransform().InverseTransformPosition(GetSpeakerHeadLocation(LookAtActor.Get()));
+							//Focus the cinecam on the speaker 
+							Cinecam->LookatTrackingSettings.bEnableLookAtTracking = true;
+							Cinecam->LookatTrackingSettings.ActorToTrack = LookAtActor.Get();
+							Cinecam->LookatTrackingSettings.RelativeOffset = Offset + FVector(10.f, 0.f, 0.f);// LookAtTrackingSettings.TrackBoneNudge;
+
+							//Tracked shots should still offset themselves if using 180d rule
+							/*if (bUse180DegreeRule)
+							{
+								Cinecam->LookatTrackingSettings.RelativeOffset += FVector(0.f, (Speaker.Get() == Dialogue->GetPlayerAvatar() ? UnitsY180DegreeRule : -UnitsY180DegreeRule), 0.f);
+							}*/
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+	
 }
 
 int UDialogBuilderGraph::GetLevelNum() const
@@ -156,6 +261,7 @@ void UDialogBuilderGraph::ClearGraph()
 		}
 	}
 
+	ParticipantInfoMap.Empty();
 	VisitedNodeIDs.Empty();
 	AllNodes.Empty();
 	RootNodes.Empty();
@@ -179,6 +285,131 @@ APawn* UDialogBuilderGraph::GetOwningPawn()
 UDialogComponent* UDialogBuilderGraph::GetDialogComponent()
 {
 	return DialogComponent;
+}
+
+void UDialogBuilderGraph::AdvanceDialogLine()
+{
+	if (CurrentNode)
+	{
+		CurrentNode->EvaluateNextNode();
+	}
+}
+
+void UDialogBuilderGraph::EndDialog()
+{
+	GetDialogComponent()->OnEndDialog.Broadcast(this);
+
+	if (DialogSequencer)
+	{
+		if (ULevelSequencePlayer* SP = DialogSequencer->GetSequencePlayer())
+		{
+			SP->Stop();
+		}
+
+		DialogSequencer->Destroy();
+	}
+}
+
+FVector UDialogBuilderGraph::GetSpeakerHeadLocation(AActor* Actor) const
+{
+	if (!Actor)
+	{
+		return FVector::ZeroVector;
+	}
+
+	FVector EyesLoc;
+	FRotator EyesRot;
+	Actor->GetActorEyesViewPoint(EyesLoc, EyesRot);
+
+	const bool bIsChar = Actor->IsA<ACharacter>();
+
+	for (auto& ActorSkelMesh : Actor->GetComponents())
+	{
+		if (USkeletalMeshComponent* SkelMesh = Cast<USkeletalMeshComponent>(ActorSkelMesh))
+		{
+			//Dont use face mesh, body meshes seem more consistent in testing
+			if (SkelMesh->ComponentHasTag(NAME_BodyTag))
+			{
+				EyesLoc = SkelMesh->GetBoneLocation(DefaultHeadBoneName);
+				//EyesLoc.Z = SkelMesh->GetBoneLocation(DefaultHeadBoneName).Z;
+				break;
+			}
+		}
+	}
+
+	return EyesLoc;
+}
+
+AActor* UDialogBuilderGraph::RetrieveParticipant(const FParticipantInfo& Info)
+{
+	if(!Info.ParticipantTag.GetTagName().IsNone())
+	{
+		if (!CachedParticipants.Contains(Info.ParticipantTag) && IsValid(Info.ParticipantClassOverride))
+		{
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.bNoFail = true;
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			SpawnParams.Owner = OwningController;
+
+			FTransform SpawnTransform;
+
+			// If we have a valid player pawn, spawn in front of it within a cone
+			APawn* PlayerPawn = GetOwningPawn();
+			if (PlayerPawn)
+			{
+				const FVector PawnLocation = PlayerPawn->GetActorLocation();
+				const FRotator PawnRotation = PlayerPawn->GetActorRotation();
+				const FVector ForwardVector = PawnRotation.Vector();
+
+				// Parameters for cone
+				const float Distance = 200.f; // Distance in front of pawn
+				const float ConeHalfAngleDegrees = 30.f; // Half angle of cone
+				const float RandomAngle = FMath::FRandRange(-ConeHalfAngleDegrees, ConeHalfAngleDegrees);
+
+				// Calculate random direction within cone
+				const FRotator OffsetRot = FRotator(0.f, RandomAngle, 0.f);
+				const FVector ConeDirection = OffsetRot.RotateVector(ForwardVector);
+
+				const FVector SpawnLocation = PawnLocation + ConeDirection * Distance;
+				const FRotator SpawnRotation = PawnRotation;
+
+				SpawnTransform.SetLocation(SpawnLocation);
+				SpawnTransform.SetRotation(SpawnRotation.Quaternion());
+			}
+
+			if (UWorld* World = GetWorld())
+			{
+				return World->SpawnActor(Info.ParticipantClassOverride, &SpawnTransform, SpawnParams);
+			}
+		}
+		else
+		{
+			TArray<AActor*> FoundActors;
+
+			for (FActorIterator It(GetWorld()); It; ++It)
+			{
+				AActor* Actor = *It;
+
+				if (Actor && Actor->ActorHasTag(Info.ParticipantTag.GetTagName()))
+				{
+					FoundActors.Add(Actor);
+				}
+			}
+
+			if (FoundActors.Num() > 1 && GetOwningPawn())
+			{
+				float Dist;
+
+				return UGameplayStatics::FindNearestActor(GetOwningPawn()->GetActorLocation(), FoundActors, Dist);
+			}
+			else if (FoundActors.IsValidIndex(0))
+			{
+				return FoundActors[0];
+			}
+		}
+	}
+	
+	return nullptr;
 }
 
 #if WITH_EDITORONLY_DATA

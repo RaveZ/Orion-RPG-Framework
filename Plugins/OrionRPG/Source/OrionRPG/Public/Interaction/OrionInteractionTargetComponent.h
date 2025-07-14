@@ -43,7 +43,14 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Interactable")
 	FOrionInteractionTargetSignature OnCompleted;
-	
+
+	/**
+	* Tag for this component.
+	* Also Add this tag to the owning actor tag.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable")
+	FGameplayTag Tag;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable")
 	EOrionInteractionMode Mode;
 
@@ -64,6 +71,8 @@ private:
 
 public:
 	UOrionInteractionTargetComponent();
+
+	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintPure, Category = "Interactable")
 	bool CanInteract() const;

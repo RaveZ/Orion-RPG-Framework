@@ -233,20 +233,17 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 				if (UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance))
 				{
 					FindUniqueNodeName("DialogLine");
-					DialogLineNode->OnParticipantDataChanged.AddLambda([this]() {
-						if (GetGraph())
-						{
-							GetGraph()->NotifyNodeChanged(this);
-						}
-					});
+					
 				}
-				if (UDialogBuilderNode_RerouteNode* StateDialogNode = Cast<UDialogBuilderNode_RerouteNode>(NodeInstance))
+				if (UDialogBuilderNode_RerouteNode* RerouteNode = Cast<UDialogBuilderNode_RerouteNode>(NodeInstance))
 				{
 					FindUniqueNodeName("Reroute");
 				}
-				if (UDialogBuilderNode_PlayerOption* CheckpointDialogNode = Cast<UDialogBuilderNode_PlayerOption>(NodeInstance))
+				if (UDialogBuilderNode_PlayerOption* PlayerOptionNode = Cast<UDialogBuilderNode_PlayerOption>(NodeInstance))
 				{
 					FindUniqueNodeName("PlayerOption");
+					PlayerOptionNode->OptionText = FText::FromString("Option");
+
 				}
 				if (UOrionDecorator* OrionDecorator = Cast<UOrionDecorator>(NodeInstance))
 				{
@@ -270,18 +267,7 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 void UDialogBuilderEdNode::PostPasteNode()
 {
 	Super::PostPasteNode();
-	if (NodeInstance)
-	{
-		if (UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance))
-		{
-			DialogLineNode->OnParticipantDataChanged.AddLambda([this]() {
-				if (GetGraph())
-				{
-					GetGraph()->NotifyNodeChanged(this);
-				}
-			});
-		}
-	}
+	
 }
 
 void UDialogBuilderEdNode::InitializeInstance()

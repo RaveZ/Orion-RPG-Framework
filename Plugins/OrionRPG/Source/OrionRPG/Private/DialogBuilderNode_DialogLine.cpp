@@ -13,24 +13,28 @@
 
 UDialogBuilderNode_DialogLine::UDialogBuilderNode_DialogLine()
 {
+	bCanSkipDialogLine = true;
+	SelectionTimeLimit = ESelectionTimeLimit::E_NoTimeLimit;
+	TimeLimit = 5.0f;
+
 }
 
 void UDialogBuilderNode_DialogLine::BeginNode()
 {
 	Super::BeginNode();
+	GetOwningDialogGraph()->PlayDialogueSequence(this);
 	GetDialogComponent()->OnDialogUpdated.Broadcast(this);
 }
 
 void UDialogBuilderNode_DialogLine::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	FName PropertyName = (PropertyChangedEvent.Property != NULL) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
+	FName ParticipantInfoProperty = FName("ParticipantInfo");
 
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantTag) ||
-		PropertyName == GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantName))
+	if (ParticipantInfoProperty == GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantInfo))
 	{
 		PropagateParticipantSettings();
 	}
-
 
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
@@ -97,16 +101,11 @@ void UDialogBuilderNode_DialogLine::UseSharedParticipant(const UDialogBuilderNod
 	SharedParticipantName = Node->SharedParticipantName;
 	SharedParticipantGuid = Node->SharedParticipantGuid;
 	CopyParticipantSettings(Node);
-	OnParticipantDataChanged.Broadcast();
 }
 
 void UDialogBuilderNode_DialogLine::CopyParticipantSettings(const UDialogBuilderNode_DialogLine* SrcNode)
 {
-	ParticipantTag = SrcNode->ParticipantTag;
-	ParticipantName = SrcNode->ParticipantName;
-	DefaultSpeakerAvatarClass = SrcNode->DefaultSpeakerAvatarClass;
-	DefaultSpeakerAvatarTransform = SrcNode->DefaultSpeakerAvatarTransform;
-	NodeColor = SrcNode->NodeColor;
+	ParticipantInfo = SrcNode->ParticipantInfo;
 	SharedParticipantIdx = SrcNode->SharedParticipantIdx;
 	SharedParticipantName = SrcNode->SharedParticipantName;
 	SharedParticipantGuid = SrcNode->SharedParticipantGuid;
@@ -137,11 +136,12 @@ void UDialogBuilderNode_DialogLine::PropagateParticipantSettings()
 			}
 		}
 	}
+
 }
 
 FText UDialogBuilderNode_DialogLine::GetNodeTitle() const
 {
-    return ParticipantName.IsEmpty() ? FText::FromString("Participant None") : ParticipantName;
+    return ParticipantInfo.ParticipantName.IsEmpty() ? FText::FromString("Participant None") : ParticipantInfo.ParticipantName;
 }
 
 void UDialogBuilderNode_DialogLine::SetNodeTitle(const FText& NewTitle)

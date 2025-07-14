@@ -2,6 +2,7 @@
 
 
 #include "DialogBuilderEdNode_DialogLine.h"
+#include "DialogBuilderEdNode_PlayerOption.h"
 #include "DialogBuilderNode_DialogLine.h"
 #include "DialogBuilderSetting.h"
 #include "DialogBuilderNode.h"
@@ -34,8 +35,8 @@ FLinearColor UDialogBuilderEdNode_DialogLine::GetBackgroundColor() const
 
 FText UDialogBuilderEdNode_DialogLine::GetTooltipText() const
 {
-	const UDialogBuilderNode_DialogLine* SpeakerNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance);
-	if (SpeakerNode)
+	const UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance);
+	if (DialogLineNode)
 	{
 		return FText::Format(FText::FromString(TEXT("Objective Node\n{0}")),
 			NSLOCTEXT("DialogBuilderEditor", "SpeakerNodeScopeTooltip", "This Node serves as the central unit within your dialog graph.\nEncapsulating a series of tasks, events, and decorators that define the player's objectives.\n**Right click the node to start adding a subnodes."));
@@ -47,6 +48,35 @@ FText UDialogBuilderEdNode_DialogLine::GetTooltipText() const
 void UDialogBuilderEdNode_DialogLine::PostPasteNode()
 {
 	Super::PostPasteNode();
+}
+
+void UDialogBuilderEdNode_DialogLine::NodeConnectionListChanged()
+{
+	UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance);
+
+	if (!DialogLineNode)
+		return;
+
+	for (int PinIdx = 0; PinIdx < Pins.Num(); ++PinIdx)
+	{
+		UEdGraphPin* Pin = Pins[PinIdx];
+
+		if (Pin->Direction != EEdGraphPinDirection::EGPD_Output)
+			continue;
+
+		if(Pin->LinkedTo.IsValidIndex(0))
+		{
+			UDialogBuilderNode* ChildNode = nullptr;
+			if (UDialogBuilderEdNode_PlayerOption* PlayerOptionEdNode_Child = Cast<UDialogBuilderEdNode_PlayerOption>(Pin->LinkedTo[0]->GetOwningNode()))
+			{
+				DialogLineNode->bIsSelector = true;
+				return;
+			}
+
+		}
+	}
+
+	DialogLineNode->bIsSelector = false;
 }
 
 void UDialogBuilderEdNode_DialogLine::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const

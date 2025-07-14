@@ -22,6 +22,7 @@
 #include "DialogBuilderEdNode_Root.h"
 #include "DialogBuilderEdNode_DialogLine.h"
 #include "DialogBuilderNode_DialogLine.h"
+#include "DialogBuilderNode_PlayerOption.h"
 #include "DialogBuilderSetting.h"	
 #include "Fonts/SlateFontInfo.h"
 #include "Decorator/OrionDecorator.h"
@@ -305,311 +306,346 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 		.HAlign(HAlign_Fill)
 		.VAlign(VAlign_Center)
 		[
-			SNew(SBorder)
-			.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
-			.Padding(0.0f)
-			.BorderBackgroundColor(this, &SGraphNode_DialogBuilderNode::GetBorderBackgroundColor)
-			.OnMouseButtonDown(this, &SGraphNode_DialogBuilderNode::OnMouseDown)
+			SNew(SVerticalBox)
+			+ SVerticalBox::Slot()
+			.AutoHeight()
 			[
-				SNew(SOverlay)
-				// Pins and node details
-				+ SOverlay::Slot()
-					.HAlign(HAlign_Fill)
-					.VAlign(VAlign_Fill)
+				SNew(SBorder)
+					.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
+					.BorderBackgroundColor(this, &SGraphNode_DialogBuilderNode::GetSelectorColor)
+					.Visibility(this, &SGraphNode_DialogBuilderNode::GetSelectorVisibility)
 					[
-						SNew(SHorizontalBox)
-
-							// INPUT PIN AREA
-							+ SHorizontalBox::Slot()
-							.Padding(PinPadding)
-							.AutoWidth()
+						SNew(SOverlay)
+							// Pins and node details
+							+ SOverlay::Slot()
+							.HAlign(HAlign_Fill)
+							.VAlign(VAlign_Fill)
 							[
-								SNew(SBox)
-									.MinDesiredWidth(NodePadding.Left)
+								SNew(SHorizontalBox)
+									// Selector Desc
+									+ SHorizontalBox::Slot()
+									.Padding(FMargin(3.f,0.5f))
+									.AutoWidth()
 									[
-										SAssignNew(LeftNodeBox, SVerticalBox)
+										SNew(STextBlock)
+											.Text(FText::FromString("SELECTOR"))
+											.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+											.Font(FCoreStyle::GetDefaultFontStyle("Bold", 9.5))
+											.Clipping(EWidgetClipping::ClipToBounds)
 									]
 							]
+					]
+			]
+			+ SVerticalBox::Slot()
+				.AutoHeight()
+				[
+					SNew(SBorder)
+						.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
+						.Padding(0.0f)
+						.BorderBackgroundColor(this, &SGraphNode_DialogBuilderNode::GetBorderBackgroundColor)
+						.OnMouseButtonDown(this, &SGraphNode_DialogBuilderNode::OnMouseDown)
+						[
+							SNew(SOverlay)
+								// Pins and node details
+								+ SOverlay::Slot()
+								.HAlign(HAlign_Fill)
+								.VAlign(VAlign_Fill)
+								[
+									SNew(SHorizontalBox)
 
-							// STATE NAME AREA
-							+ SHorizontalBox::Slot()
-							.Padding(FMargin(NodePadding))
-							[
-								SNew(SVerticalBox)
-									+ SVerticalBox::Slot()
-									.AutoHeight()
-									[
-										SAssignNew(NodeBody, SBorder)
-										.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
-										.BorderBackgroundColor(this, &SGraphNode_DialogBuilderNode::GetBackgroundColor)
-										.HAlign(HAlign_Fill)
-										.VAlign(VAlign_Center)
-										.Visibility(EVisibility::SelfHitTestInvisible)
+										// INPUT PIN AREA
+										+ SHorizontalBox::Slot()
+										.Padding(PinPadding)
+										.AutoWidth()
 										[
-											SNew(SOverlay)
-											+ SOverlay::Slot()
-											.HAlign(HAlign_Fill)
-											.VAlign(VAlign_Fill)
-											[
-												SNew(SVerticalBox)
+											SNew(SBox)
+												.MinDesiredWidth(NodePadding.Left)
+												[
+													SAssignNew(LeftNodeBox, SVerticalBox)
+												]
+										]
+
+									// STATE NAME AREA
+									+ SHorizontalBox::Slot()
+										.Padding(FMargin(NodePadding))
+										[
+											SNew(SVerticalBox)
 												+ SVerticalBox::Slot()
-												.HAlign(HAlign_Fill)
-												.VAlign(VAlign_Center)
 												.AutoHeight()
 												[
-													SNew(SHorizontalBox)
-													.Visibility(this, &SGraphNode_DialogBuilderNode::GetTitleVisibility)
-													+ SHorizontalBox::Slot()
-													.AutoWidth()
-													[
-														// POPUP ERROR MESSAGE
-														SAssignNew(ErrorText, SErrorText)
-															.BackgroundColor(this, &SGraphNode_DialogBuilderNode::GetErrorColor)
-															.ToolTipText(this, &SGraphNode_DialogBuilderNode::GetErrorMsgToolTip)
-													]
-													+ SHorizontalBox::Slot()
-													.AutoWidth()
-													[
-															SNew(SHorizontalBox)
-															+ SHorizontalBox::Slot()
-															.AutoWidth()
-															.VAlign(VAlign_Top)
-															.Padding(FMargin(0.0f, 5.0f, 0.0f, 0.0f))
-															[
-																SNew(SImage)
-																	.Image(this, &SGraphNode_DialogBuilderNode::GetNameIcon)
-																	//.Visibility(this, &SGraphNode_DialogBuilderNode::GetParentNodeVisibility)
-															]
-																//if parent node
-															+ SHorizontalBox::Slot()
-															.MinWidth(NodeMinWidth)
-															.MaxWidth(NodeMaxWidth)
-															.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
-															[
-																SNew(SVerticalBox)
-																.Visibility(this, &SGraphNode_DialogBuilderNode::GetParentNodeVisibility)
-																+ SVerticalBox::Slot()
-																.AutoHeight()
+													SAssignNew(NodeBody, SBorder)
+														.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+														.BorderBackgroundColor(this, &SGraphNode_DialogBuilderNode::GetBackgroundColor)
+														.HAlign(HAlign_Fill)
+														.VAlign(VAlign_Center)
+														.Visibility(EVisibility::SelfHitTestInvisible)
+														[
+															SNew(SOverlay)
+																+ SOverlay::Slot()
+																.HAlign(HAlign_Fill)
+																.VAlign(VAlign_Fill)
 																[
-																	SAssignNew(InlineEditableText, SInlineEditableTextBlock)
-																		.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
-																		.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
-																		.OnVerifyTextChanged(this, &SGraphNode_DialogBuilderNode::OnVerifyNameTextChanged)
-																		.OnTextCommitted(this, &SGraphNode_DialogBuilderNode::OnNameTextCommited)
-																		.IsReadOnly(this, &SGraphNode_DialogBuilderNode::IsNameReadOnly)
-																		.IsSelected(this, &SGraphNode_DialogBuilderNode::IsSelectedExclusively)
-																		.AutoWrapMultilineEditText(true)
-																					
+																	SNew(SVerticalBox)
+																		+ SVerticalBox::Slot()
+																		.HAlign(HAlign_Fill)
+																		.VAlign(VAlign_Center)
+																		.AutoHeight()
+																		[
+																			SNew(SHorizontalBox)
+																				.Visibility(this, &SGraphNode_DialogBuilderNode::GetTitleVisibility)
+																				+ SHorizontalBox::Slot()
+																				.AutoWidth()
+																				[
+																					// POPUP ERROR MESSAGE
+																					SAssignNew(ErrorText, SErrorText)
+																						.BackgroundColor(this, &SGraphNode_DialogBuilderNode::GetErrorColor)
+																						.ToolTipText(this, &SGraphNode_DialogBuilderNode::GetErrorMsgToolTip)
+																				]
+																				+ SHorizontalBox::Slot()
+																				.AutoWidth()
+																				[
+																					SNew(SHorizontalBox)
+																						+ SHorizontalBox::Slot()
+																						.AutoWidth()
+																						.VAlign(VAlign_Top)
+																						.Padding(FMargin(0.0f, 5.0f, 0.0f, 0.0f))
+																						[
+																							SNew(SImage)
+																								.Image(this, &SGraphNode_DialogBuilderNode::GetNameIcon)
+																								//.Visibility(this, &SGraphNode_DialogBuilderNode::GetParentNodeVisibility)
+																						]
+																						//if parent node
+																						+ SHorizontalBox::Slot()
+																						.MinWidth(NodeMinWidth)
+																						.MaxWidth(NodeMaxWidth)
+																						.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+																						[
+																							SNew(SVerticalBox)
+																								.Visibility(this, &SGraphNode_DialogBuilderNode::GetParentNodeVisibility)
+																								+ SVerticalBox::Slot()
+																								.AutoHeight()
+																								[
+																									SAssignNew(InlineEditableText, SInlineEditableTextBlock)
+																										.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
+																										.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
+																										.OnVerifyTextChanged(this, &SGraphNode_DialogBuilderNode::OnVerifyNameTextChanged)
+																										.OnTextCommitted(this, &SGraphNode_DialogBuilderNode::OnNameTextCommited)
+																										.IsReadOnly(this, &SGraphNode_DialogBuilderNode::IsNameReadOnly)
+																										.IsSelected(this, &SGraphNode_DialogBuilderNode::IsSelectedExclusively)
+																										.AutoWrapMultilineEditText(true)
+
+																								]
+																							+ SVerticalBox::Slot()
+																								.AutoHeight()
+																								[
+																									NodeTitle.ToSharedRef()
+																								]
+																								+ SVerticalBox::Slot()
+																								.AutoHeight()
+																								.Padding(FMargin(2.0f, 1.0f, 2.0f, 1.0f))
+																								[
+																									// NodeTag
+																									SAssignNew(DescriptionText, STextBlock)
+																										.Visibility(this, &SGraphNode_DialogBuilderNode::GetNodeIDVisibility)
+																										.Text(this, &SGraphNode_DialogBuilderNode::GetNodeIDText)
+																										.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Italic"))
+																										.Font(FCoreStyle::GetDefaultFontStyle("Italic", 9))
+																								]
+																							+ SVerticalBox::Slot()
+																								.AutoHeight()
+																								.Padding(FMargin(2.0f, 1.0f, 2.0f, 4.0f))
+																								[
+																									// DESCRIPTION MESSAGE
+																									SAssignNew(DescriptionText, STextBlock)
+																										.Visibility(this, &SGraphNode_DialogBuilderNode::GetDescriptionVisibility)
+																										.Text(this, &SGraphNode_DialogBuilderNode::GetDescription)
+																										.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+																										.Font(FCoreStyle::GetDefaultFontStyle("Bold", 9.5))
+																										.WrapTextAt(NodeMaxWidth)
+																										.WrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping)
+																								]
+																						]
+																					//if subnode
+																					+ SHorizontalBox::Slot()
+																						.MinWidth(NodeMinWidth)
+																						.MaxWidth(NodeMaxWidth)
+																						.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+																						[
+																							SNew(SVerticalBox)
+																								.Visibility(this, &SGraphNode_DialogBuilderNode::GetSubNodeVisibility)
+																								+ SVerticalBox::Slot()
+																								.AutoHeight()
+																								[
+																									SNew(STextBlock)
+																										.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
+																										.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+																										.Font(FCoreStyle::GetDefaultFontStyle("Bold", 9.5))
+																										.Clipping(EWidgetClipping::ClipToBounds)
+																								]
+																							+ SVerticalBox::Slot()
+																								.AutoHeight()
+																								[
+																									NodeTitle.ToSharedRef()
+																								]
+																								+ SVerticalBox::Slot()
+
+																								.AutoHeight()
+																								.Padding(FMargin(1.0f, 0.0f, 1.0f, 1.0f))
+																								[
+																									// DESCRIPTION MESSAGE
+																									SAssignNew(DescriptionText, STextBlock)
+																										.Visibility(this, &SGraphNode_DialogBuilderNode::GetDescriptionVisibility)
+																										.Text(this, &SGraphNode_DialogBuilderNode::GetDescription)
+																										.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Italic"))
+																										.WrapTextAt(NodeMaxWidth)
+																										.WrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping)
+																								]
+																						]
+
+																				]
+																		]
+
 																]
-																+ SVerticalBox::Slot()
-																.AutoHeight()
+														]
+												]
+											+ SVerticalBox::Slot()
+												.AutoHeight()
+												[
+													SAssignNew(NodeBody, SBorder)
+														.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+														.BorderBackgroundColor(DialogBuilderColors::NodeBorder::SubNodeBorder)
+														.HAlign(HAlign_Fill)
+														.VAlign(VAlign_Center)
+														.Visibility(this, &SGraphNode_DialogBuilderNode::GetEventsVisibility)
+														[
+															SNew(SOverlay)
+																+ SOverlay::Slot()
+																.HAlign(HAlign_Fill)
+																.VAlign(VAlign_Fill)
 																[
-																	NodeTitle.ToSharedRef()
+																	SNew(SVerticalBox)
+																		+ SVerticalBox::Slot()
+																		.HAlign(HAlign_Fill)
+																		.VAlign(VAlign_Center)
+																		.AutoHeight()
+																		[
+																			SNew(SHorizontalBox)
+																				/*+ SHorizontalBox::Slot()
+																				.AutoWidth()
+																				.VAlign(VAlign_Center)
+																				[
+																					SNew(SImage)
+																						.Image(FAppStyle::GetBrush(TEXT("GraphEditor.CustomEvent_16x")))
+																				]*/
+																				+SHorizontalBox::Slot()
+																				.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+																				[
+																					SNew(STextBlock)
+																						.Text(LOCTEXT("EventLabel", "Events"))
+																						.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+																						.Clipping(EWidgetClipping::Inherit)
+																				]
+																		]
+																	+ SVerticalBox::Slot()
+																		.Padding(FMargin(8.0f, 0, 0, 0))
+																		.AutoHeight()
+																		[
+																			EventsBox.ToSharedRef()
+																		]
 																]
-																+ SVerticalBox::Slot()
-																.AutoHeight()
-																.Padding(FMargin(2.0f, 1.0f, 2.0f, 1.0f))
+														]
+												]
+											+ SVerticalBox::Slot()
+												.AutoHeight()
+												[
+													SAssignNew(NodeBody, SBorder)
+														.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+														.BorderBackgroundColor(DialogBuilderColors::NodeBorder::SubNodeBorder)
+														.HAlign(HAlign_Fill)
+														.VAlign(VAlign_Center)
+														.Visibility(this, &SGraphNode_DialogBuilderNode::GetDecoratorVisibility)
+														[
+															SNew(SOverlay)
+																+ SOverlay::Slot()
+																.HAlign(HAlign_Fill)
+																.VAlign(VAlign_Fill)
 																[
-																	// NodeTag
-																	SAssignNew(DescriptionText, STextBlock)
-																		.Visibility(this, &SGraphNode_DialogBuilderNode::GetNodeIDVisibility)
-																		.Text(this, &SGraphNode_DialogBuilderNode::GetNodeIDText)
-																		.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Italic"))
-																		.Font(FCoreStyle::GetDefaultFontStyle("Italic", 9))
+																	SNew(SVerticalBox)
+																		+ SVerticalBox::Slot()
+																		.HAlign(HAlign_Fill)
+																		.VAlign(VAlign_Center)
+																		.AutoHeight()
+																		[
+																			SNew(SHorizontalBox)
+																				/*+ SHorizontalBox::Slot()
+																				.AutoWidth()
+																				.VAlign(VAlign_Center)
+																				[
+																					SNew(SImage)
+																						.Image(FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Decorator.Conditional.Icon")))
+																				]*/
+																				+SHorizontalBox::Slot()
+																				.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+																				[
+																					SNew(STextBlock)
+																						.Text(LOCTEXT("DecoratorLabel", "Decorators"))
+																						.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+																						.Clipping(EWidgetClipping::Inherit)
+																				]
+																		]
+																	+ SVerticalBox::Slot()
+																		.Padding(FMargin(8.0f, 0, 0, 0))
+																		.AutoHeight()
+																		[
+																			DecoratorsBox.ToSharedRef()
+																		]
 																]
-																+ SVerticalBox::Slot()
-																.AutoHeight()
-																.Padding(FMargin(2.0f, 1.0f, 2.0f, 4.0f))
-																[
-																	// DESCRIPTION MESSAGE
-																	SAssignNew(DescriptionText, STextBlock)
-																		.Visibility(this, &SGraphNode_DialogBuilderNode::GetDescriptionVisibility)
-																		.Text(this, &SGraphNode_DialogBuilderNode::GetDescription)
-																		.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
-																		.Font(FCoreStyle::GetDefaultFontStyle("Bold", 9.5))
-																		.WrapTextAt(NodeMaxWidth)
-																		.WrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping)
-																]
-															]
-																//if subnode
-															+ SHorizontalBox::Slot()
-															.MinWidth(NodeMinWidth)
-															.MaxWidth(NodeMaxWidth)
-															.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
-															[
-																SNew(SVerticalBox)
-																.Visibility(this, &SGraphNode_DialogBuilderNode::GetSubNodeVisibility)
-																+ SVerticalBox::Slot()
-																.AutoHeight()
-																[
-																	SNew(STextBlock)
-																		.Text(NodeTitle.Get(), &SNodeTitle::GetHeadTitle)
-																		.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
-																		.Font(FCoreStyle::GetDefaultFontStyle("Bold", 9.5))
-																		.Clipping(EWidgetClipping::ClipToBounds)
-																]
-																+ SVerticalBox::Slot()
-																.AutoHeight()
-																[
-																	NodeTitle.ToSharedRef()
-																]
-																+ SVerticalBox::Slot()
-																
-																.AutoHeight()
-																	.Padding(FMargin(1.0f, 0.0f, 1.0f, 1.0f))
-																[
-																			// DESCRIPTION MESSAGE
-																			SAssignNew(DescriptionText, STextBlock)
-																				.Visibility(this, &SGraphNode_DialogBuilderNode::GetDescriptionVisibility)
-																				.Text(this, &SGraphNode_DialogBuilderNode::GetDescription)
-																				.TextStyle(FAppStyle::Get(), TEXT("RichTextBlock.Italic"))
-																				.WrapTextAt(NodeMaxWidth)
-																				.WrappingPolicy(ETextWrappingPolicy::AllowPerCharacterWrapping)
-																]
-															]
-														
-													]
-												]	
-														
-											]
+														]
+												]
+
 										]
-									]
-									+ SVerticalBox::Slot()
-									.AutoHeight()
-									[
-										SAssignNew(NodeBody, SBorder)
-											.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
-											.BorderBackgroundColor(DialogBuilderColors::NodeBorder::SubNodeBorder)
-											.HAlign(HAlign_Fill)
-											.VAlign(VAlign_Center)
-											.Visibility(this, &SGraphNode_DialogBuilderNode::GetEventsVisibility)
-											[
-												SNew(SOverlay)
-													+ SOverlay::Slot()
-													.HAlign(HAlign_Fill)
-													.VAlign(VAlign_Fill)
-													[
-														SNew(SVerticalBox)
-															+ SVerticalBox::Slot()
-															.HAlign(HAlign_Fill)
-															.VAlign(VAlign_Center)
-															.AutoHeight()
-															[
-																SNew(SHorizontalBox)
-																	/*+ SHorizontalBox::Slot()
-																	.AutoWidth()
-																	.VAlign(VAlign_Center)
-																	[
-																		SNew(SImage)
-																			.Image(FAppStyle::GetBrush(TEXT("GraphEditor.CustomEvent_16x")))
-																	]*/
-																	+ SHorizontalBox::Slot()
-																	.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
-																	[
-																		SNew(STextBlock)
-																			.Text(LOCTEXT("EventLabel", "Events"))
-																			.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
-																			.Clipping(EWidgetClipping::Inherit)
-																	]
-															]
-															+ SVerticalBox::Slot()
-															.Padding(FMargin(8.0f, 0, 0, 0))
-															.AutoHeight()
-															[
-																EventsBox.ToSharedRef()
-															]
-													]
-											]
-									]
-									+ SVerticalBox::Slot()
-									.AutoHeight()
-									[
-										SAssignNew(NodeBody, SBorder)
-											.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
-											.BorderBackgroundColor(DialogBuilderColors::NodeBorder::SubNodeBorder)
-											.HAlign(HAlign_Fill)
-											.VAlign(VAlign_Center)
-											.Visibility(this, &SGraphNode_DialogBuilderNode::GetDecoratorVisibility)
-											[
-												SNew(SOverlay)
-													+ SOverlay::Slot()
-													.HAlign(HAlign_Fill)
-													.VAlign(VAlign_Fill)
-													[
-														SNew(SVerticalBox)
-															+ SVerticalBox::Slot()
-															.HAlign(HAlign_Fill)
-															.VAlign(VAlign_Center)
-															.AutoHeight()
-															[
-																SNew(SHorizontalBox)
-																	/*+ SHorizontalBox::Slot()
-																	.AutoWidth()
-																	.VAlign(VAlign_Center)
-																	[
-																		SNew(SImage)
-																			.Image(FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Decorator.Conditional.Icon")))
-																	]*/
-																	+ SHorizontalBox::Slot()
-																	.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
-																	[
-																		SNew(STextBlock)
-																			.Text(LOCTEXT("DecoratorLabel", "Decorators"))
-																			.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
-																			.Clipping(EWidgetClipping::Inherit)
-																	]
-															]
-															+ SVerticalBox::Slot()
-															.Padding(FMargin(8.0f, 0, 0, 0))
-															.AutoHeight()
-															[
-																DecoratorsBox.ToSharedRef()
-															]
-													]
-											]
-									]
 
-							]
+									// OUTPUT PIN AREA
+									+ SHorizontalBox::Slot()
+										.Padding(PinPadding)
+										.AutoWidth()
+										[
+											SNew(SBox)
+												.MinDesiredWidth(NodePadding.Right)
+												[
+													SAssignNew(RightNodeBox, SVerticalBox)
+												]
+										]
+								]
+							// Drag marker overlay
+							+ SOverlay::Slot()
+								.HAlign(HAlign_Fill)
+								.VAlign(VAlign_Top)
+								[
+									SNew(SBorder)
+										.BorderBackgroundColor(DialogBuilderColors::Action::DragMarker)
+										.ColorAndOpacity(DialogBuilderColors::Action::DragMarker)
+										.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+										.Visibility(this, &SGraphNode_DialogBuilderNode::GetDragOverMarkerVisibility)
+										[
+											SNew(SBox)
+												.HeightOverride(4.f)
+										]
+								]
 
-							// OUTPUT PIN AREA
-							+ SHorizontalBox::Slot()
-							.Padding(PinPadding)
-							.AutoWidth()
-							[
-								SNew(SBox)
-									.MinDesiredWidth(NodePadding.Right)
-									[
-										SAssignNew(RightNodeBox, SVerticalBox)
-									]
-							]
-					]
-					// Drag marker overlay
-					+ SOverlay::Slot()
-					.HAlign(HAlign_Fill)
-					.VAlign(VAlign_Top)
-					[
-						SNew(SBorder)
-							.BorderBackgroundColor(DialogBuilderColors::Action::DragMarker)
-							.ColorAndOpacity(DialogBuilderColors::Action::DragMarker)
-							.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
-							.Visibility(this, &SGraphNode_DialogBuilderNode::GetDragOverMarkerVisibility)
-							[
-								SNew(SBox)
-									.HeightOverride(4.f)
-							]
-					]
+							// Blueprint indicator overlay
+							+ SOverlay::Slot()
+								.HAlign(HAlign_Right)
+								.VAlign(VAlign_Top)
+								[
+									SNew(SImage)
+										.Image(FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Blueprint")))
+										.Visibility(this, &SGraphNode_DialogBuilderNode::GetBlueprintIconVisibility)
+								]
 
-					// Blueprint indicator overlay
-					+SOverlay::Slot()
-					.HAlign(HAlign_Right)
-					.VAlign(VAlign_Top)
-					[
-						SNew(SImage)
-							.Image(FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Blueprint")))
-							.Visibility(this, &SGraphNode_DialogBuilderNode::GetBlueprintIconVisibility)
-					]
-						
-			]
+						]
+				]
+				
 			
 				
 		];
@@ -953,6 +989,11 @@ FText SGraphNode_DialogBuilderNode::GetDescription() const
 }
 EVisibility SGraphNode_DialogBuilderNode::GetDescriptionVisibility() const
 {
+	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+	UDialogBuilderNode* DialogNode = DialogEdNode ? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance) : nullptr;
+	UDialogBuilderNode_PlayerOption* PlayerOptionNode = DialogEdNode ? Cast<UDialogBuilderNode_PlayerOption>(DialogEdNode->NodeInstance) : nullptr;
+	if (PlayerOptionNode)
+		return EVisibility::Collapsed;
 	// LOD this out once things get too small
 	TSharedPtr<SGraphPanel> MyOwnerPanel = GetOwnerPanel();
 	return (!MyOwnerPanel.IsValid() || MyOwnerPanel->GetCurrentLOD() > EGraphRenderingLOD::LowDetail) ? EVisibility::Visible : EVisibility::Collapsed;
@@ -1192,6 +1233,11 @@ FSlateColor SGraphNode_DialogBuilderNode::GetBorderBackgroundColor() const
 
 }
 
+FSlateColor SGraphNode_DialogBuilderNode::GetSelectorColor() const
+{
+	return DialogBuilderColors::NodeBorder::Selector;
+}
+
 FText SGraphNode_DialogBuilderNode::GetNodeIDText() const
 {
 	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
@@ -1226,6 +1272,19 @@ EVisibility SGraphNode_DialogBuilderNode::GetParentNodeVisibility() const
 		return EVisibility::Collapsed;
 	}
 	return EVisibility::Visible;
+}
+
+EVisibility SGraphNode_DialogBuilderNode::GetSelectorVisibility() const
+{
+	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+	UDialogBuilderNode_DialogLine* DialogLineNode = DialogEdNode ? Cast<UDialogBuilderNode_DialogLine>(DialogEdNode->NodeInstance) : nullptr;
+
+	if (DialogLineNode && DialogLineNode->bIsSelector)
+	{
+		return EVisibility::Visible;
+	}
+
+	return EVisibility::Collapsed;
 }
 
 EVisibility SGraphNode_DialogBuilderNode::GetSubNodeVisibility() const

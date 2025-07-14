@@ -14,6 +14,17 @@ UOrionInteractionTargetComponent::UOrionInteractionTargetComponent()
 	CurrentProgress = 0.0f;
 }
 
+void UOrionInteractionTargetComponent::BeginPlay()
+{
+	Super::BeginPlay();
+
+	AActor* Owner = GetOwner();
+	if (Owner)
+	{
+		Owner->Tags.AddUnique(Tag.GetTagName());
+	}
+}
+
 
 
 bool UOrionInteractionTargetComponent::CanInteract() const
@@ -76,20 +87,20 @@ void UOrionInteractionTargetComponent::EndInteraction(bool bCompleted)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Interaction COMPLETED! (Actor: %s, Interactor: %s)"), *GetName(), *CurrentInteractor->GetName());
 
-		if (OnCompleted.IsBound())
+		APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+		APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+		for (auto& Event : Events)
 		{
-			APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-			APawn* Pawn = PC ? PC->GetPawn() : nullptr;
-			for (auto& Event : Events)
+			if (Event)
 			{
-				if (Event)
+				if (PC && Pawn)
 				{
-					if (PC && Pawn)
-					{
-						Event->BeginEvent(PC, Pawn);
-					}
+					Event->BeginEvent(PC, Pawn);
 				}
 			}
+		}
+		if (OnCompleted.IsBound())
+		{
 			OnCompleted.Broadcast(CurrentInteractor, this);
 		}
 	}

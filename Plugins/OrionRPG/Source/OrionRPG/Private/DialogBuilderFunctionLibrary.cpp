@@ -77,10 +77,10 @@ UDialogBuilderNode* UDialogBuilderFunctionLibrary::GetCurrentDialogNode(const UO
 
 void UDialogBuilderFunctionLibrary::AdvanceDialogLine(const UObject* WorldContextObject)
 {
-    UDialogBuilderNode* CurrentDialogLine = GetCurrentDialogNode(WorldContextObject);
-    if (CurrentDialogLine)
+    UDialogBuilderGraph* CurrentDialog = GetCurrentActiveDialog(WorldContextObject);
+    if (CurrentDialog)
     {
-        CurrentDialogLine->EvaluateNextNode();
+        CurrentDialog->AdvanceDialogLine();
     }
 }
 
