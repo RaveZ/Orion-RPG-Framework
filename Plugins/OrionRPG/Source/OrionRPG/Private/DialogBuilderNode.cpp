@@ -8,6 +8,7 @@
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderNode_PlayerOption.h"
+#include "DialogBuilderNode_DialogLine.h"
 #include "DialogComponent.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderNode"
@@ -160,6 +161,7 @@ bool UDialogBuilderNode::EvaluateAnyPlayerOptions()
 		}
 		GetOwningDialogGraph()->LatestRootSelectionNode = this;
 		GetOwningDialogGraph()->bOptionSelectionActive = true;
+		GetOwningDialogGraph()->BeginSelectionShot(Cast<UDialogBuilderNode_DialogLine>(this));
 		GetDialogComponent()->OnEnterOptionSelection.Broadcast(PlayerOptions);
 		return true;
 	}

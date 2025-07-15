@@ -27,9 +27,23 @@ public:
 	virtual ~UDialogBuilderGraph();
 
 	/** AssetID */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "DialogBuilderGraph")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Detail")
 		FName ID;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog", meta = (FullyExpand = true))
+		TSubclassOf<class AActor> PlayerClassOverride;
+
+	UPROPERTY(EditAnywhere, meta = (InlineEditConditionToggle))
+		bool bOverrideTransform;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog", meta = (EditCondition = "bOverrideTransform"))
+		FTransform PlayerTransformOverride;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Configuration")
+		TObjectPtr<class UDialogCameraShot> DefaultPlayerShot;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Configuration")
+		TObjectPtr<class UDialogCameraShot> DefaultSelectingOptionShot;
 
 	/*
 	* By default dialog camera will aim at the bone named "head" - this is the name of the UE4/5 skeletons head bone so will work with most games.
@@ -89,12 +103,22 @@ public:
 public:
 	virtual bool Initialize(UDialogComponent* InitializingComp);
 	virtual void Deinitialize();
+	virtual UWorld* GetWorld() const override;
 
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void BeginNode(UDialogBuilderNode* InNode, bool bLaunchEventOnLoad = false);
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
-	virtual void PlayDialogueSequence(class UDialogBuilderNode_DialogLine* InDialogLine);
+	virtual void BeginDialogShot(class UDialogBuilderNode_DialogLine* InDialogLine);
+
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	virtual void BeginSelectionShot(class UDialogBuilderNode_DialogLine* InDialogLine);
+
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	virtual void PlayDialogShot(class UDialogCameraShot* InDialogShot);
+
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	virtual void PlayDialogSequence(const FDialogLineData& InDialogLineData);
 	
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	int GetLevelNum() const;

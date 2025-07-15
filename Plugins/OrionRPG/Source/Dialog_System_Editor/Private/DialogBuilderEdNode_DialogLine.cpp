@@ -35,7 +35,13 @@ FText UDialogBuilderEdNode_DialogLine::GetNodeTitle(ENodeTitleType::Type TitleTy
 
 FLinearColor UDialogBuilderEdNode_DialogLine::GetBackgroundColor() const
 {
-	return GetDefault<UDialogBuilderSetting>()->SpeakerNodeColor;
+
+	const UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance);
+	if (DialogLineNode)
+	{
+		return DialogLineNode->ParticipantInfo.NodeColor;
+	}
+	return GetDefault<UDialogBuilderSetting>()->DialogLineNodeColor;
 }
 
 FText UDialogBuilderEdNode_DialogLine::GetTooltipText() const

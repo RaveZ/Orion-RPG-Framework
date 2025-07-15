@@ -4,6 +4,7 @@
 #include "DialogBuilderNode_DialogLine.h"
 #include "Kismet2/Kismet2NameValidators.h"
 #include "DialogBuilderGraph.h"
+#include "DialogBuilderSetting.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "DialogComponent.h"
 
@@ -17,12 +18,13 @@ UDialogBuilderNode_DialogLine::UDialogBuilderNode_DialogLine()
 	SelectionTimeLimit = ESelectionTimeLimit::E_NoTimeLimit;
 	TimeLimit = 5.0f;
 
+	ParticipantInfo.NodeColor = GetDefault<UDialogBuilderSetting>()->DialogLineNodeColor;
 }
 
 void UDialogBuilderNode_DialogLine::BeginNode()
 {
 	Super::BeginNode();
-	GetOwningDialogGraph()->PlayDialogueSequence(this);
+	GetOwningDialogGraph()->BeginDialogShot(this);
 	GetDialogComponent()->OnDialogUpdated.Broadcast(this);
 }
 
@@ -151,7 +153,7 @@ void UDialogBuilderNode_DialogLine::SetNodeTitle(const FText& NewTitle)
 
 FText UDialogBuilderNode_DialogLine::GetNodeDescription() const
 {
-	return DialogSequenceData.Line;
+	return DialogLineData.Line;
 }
 #endif
 

@@ -233,7 +233,12 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 				if (UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance))
 				{
 					FindUniqueNodeName("DialogLine");
-					
+					// Randomize color
+					float R = FMath::RandRange(0.0f, 0.2f);
+					float G = FMath::RandRange(0.0f, 0.2f);
+					float B = FMath::RandRange(0.0f, 0.2f);
+					float A = 1.0f;
+					DialogLineNode->ParticipantInfo.NodeColor = FLinearColor(R, G, B, A);
 				}
 				if (UDialogBuilderNode_RerouteNode* RerouteNode = Cast<UDialogBuilderNode_RerouteNode>(NodeInstance))
 				{

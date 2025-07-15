@@ -5,6 +5,7 @@
 #include "DialogComponent.h"
 #include "DialogBuilderNode.h"
 #include "DialogBuilderEdge.h"
+#include "DialogCameraShot.h"
 #include "DialogBuilderNode_Root.h"
 #include "LevelSequencePlayer.h"
 #include "LevelSequenceActor.h"
@@ -90,6 +91,16 @@ void UDialogBuilderGraph::Deinitialize()
 	}
 }
 
+UWorld* UDialogBuilderGraph::GetWorld() const
+{
+	if (DialogComponent)
+	{
+		return DialogComponent->GetWorld();
+	}
+
+	return nullptr;
+}
+
 void UDialogBuilderGraph::BeginNode(UDialogBuilderNode* InNode, bool bLaunchEventOnLoad)
 {
 	if (InNode)
@@ -120,15 +131,132 @@ void UDialogBuilderGraph::BeginNode(UDialogBuilderNode* InNode, bool bLaunchEven
 	InNode->Initialize(bLaunchEventOnLoad);
 }
 
-void UDialogBuilderGraph::PlayDialogueSequence(UDialogBuilderNode_DialogLine* InDialogLine)
+void UDialogBuilderGraph::BeginDialogShot(UDialogBuilderNode_DialogLine* InDialogLine)
 {
-		
+	if (InDialogLine == nullptr)
+		return;
+
+	UDialogCameraShot* DialogShot = nullptr;
+	switch (InDialogLine->DialogLineData.DialogCameraMode)
+	{
+		case EDialogCameraMode::E_GeneratedCameraShot:
+			DialogShot = InDialogLine->ParticipantInfo.DefaultShot;
+			if (!DialogShot || InDialogLine->DialogLineData.ShotOverride)
+			{
+				//if default shot not valid, try use override shot data instead
+				DialogShot = InDialogLine->DialogLineData.ShotOverride;
+			}
+			LookAtActor = CachedParticipants.FindRef(InDialogLine->ParticipantInfo.ParticipantTag);
+
+			PlayDialogShot(DialogShot);
+			break;
+		case EDialogCameraMode::E_Sequence:
+			PlayDialogSequence(InDialogLine->DialogLineData);
+			break;
+	} 
+
+	
+}
+
+void UDialogBuilderGraph::BeginSelectionShot(UDialogBuilderNode_DialogLine* InDialogLine)
+{
+	if (InDialogLine == nullptr)
+		return;
+
+	UDialogCameraShot* ShotData = DefaultSelectingOptionShot;
+	if (!ShotData || InDialogLine->SelectingOptionShotOverride)
+	{
+		//if default shot not valid, try use override shot data instead
+		ShotData = InDialogLine->SelectingOptionShotOverride;
+	}
+	LookAtActor = GetOwningPawn();
+
+	PlayDialogShot(ShotData);
+}
+
+void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot)
+{
+	if (InDialogShot == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayDialogShot: Can't start Cinecam, DialogShot is null"));
+		return;
+	}
+
+	// Spawn a CineCameraActor if not already present
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayDialogShot: World is null"));
+		return;
+	}
+
+	// Destroy previous cinecam if it exists
+	if (Cinecam.IsValid())
+	{
+		Cinecam->Destroy();
+		Cinecam = nullptr;
+	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	ACineCameraActor* NewCinecam = World->SpawnActor<ACineCameraActor>(ACineCameraActor::StaticClass(), SpawnParams);
+
+	if (!NewCinecam)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayDialogShot: Failed to spawn CineCameraActor"));
+		return;
+	}
+
+	Cinecam = NewCinecam;
+
+	// Optionally set transform, FOV, etc. from InDialogShot
+	if (UCineCameraComponent* CinecamComp = Cinecam->GetCineCameraComponent())
+	{
+		CinecamComp->CropSettings = InDialogShot->CropSettings;
+	}
+
+	// Set the current view target to the cinecam
+	APlayerController* PC = World->GetFirstPlayerController();
+	if (PC)
+	{
+		PC->SetViewTarget(Cinecam.Get());
+	}
+
+	// Optionally, focus/track the speaker if LookAtActor is valid
+	if (Cinecam.IsValid() && LookAtActor.IsValid())
+	{
+		const FVector ActorLocation = LookAtActor->GetActorLocation();
+		const FRotator ActorRotation = LookAtActor->GetActorRotation();
+		const FVector ForwardVector = ActorRotation.Vector();
+
+		// Parameters for cone
+		const float Distance = 200.f; // Distance in front of pawn
+		const float ConeHalfAngleDegrees = 30.f; // Half angle of cone
+		const float RandomAngle = FMath::FRandRange(-ConeHalfAngleDegrees, ConeHalfAngleDegrees);
+
+		// Calculate random direction within cone
+		const FRotator OffsetRot = FRotator(0.f, RandomAngle, 0.f);
+		const FVector ConeDirection = OffsetRot.RotateVector(ForwardVector);
+
+		const FVector LocationOverride = ActorLocation + ConeDirection * Distance;
+		const FRotator RotationOverride = ActorRotation;
+
+
+		const FVector Offset = LookAtActor->GetActorTransform().InverseTransformPosition(GetSpeakerHeadLocation(LookAtActor.Get()));
+		Cinecam->SetActorLocation(LocationOverride + GetSpeakerHeadLocation(LookAtActor.Get()));
+		Cinecam->LookatTrackingSettings.bEnableLookAtTracking = true;
+		Cinecam->LookatTrackingSettings.ActorToTrack = LookAtActor.Get();
+		Cinecam->LookatTrackingSettings.RelativeOffset = Offset + FVector(10.f, 0.f, 0.f);
+	}
+
+	/*if (InDialogShot == nullptr)
+		return;
+
 	if (!DialogSequencer)
 	{
 		ALevelSequenceActor* OutActor = nullptr;
-		ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), InDialogLine->SequenceAsset, InDialogLine->PlaybackSettings, OutActor);
+		ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), InDialogShot->SequenceAsset, InDialogShot->PlaybackSettings, OutActor);
 		DialogSequencer = OutActor;
-		//passing CreateLevelSequencePlayer null asset makes it fail so we need to set it afterwards
 		if (DialogSequencer)
 		{
 			DialogSequencer->SetSequence(nullptr);
@@ -144,18 +272,16 @@ void UDialogBuilderGraph::PlayDialogueSequence(UDialogBuilderNode_DialogLine* In
 			{
 				SP->Stop();
 			}
-			if (InDialogLine->SequenceAsset)
+			if (InDialogShot->SequenceAsset)
 			{
-				DialogSequencer->PlaybackSettings = InDialogLine->PlaybackSettings;
-				DialogSequencer->SetSequence(InDialogLine->SequenceAsset);
+				DialogSequencer->PlaybackSettings = InDialogShot->PlaybackSettings;
+				DialogSequencer->SetSequence(InDialogShot->SequenceAsset);
 			}
 			SP->Play();
-			
+
 			SP->OnFinished.AddDynamic(this, &ThisClass::AdvanceDialogLine);
 
-			//Determine the LookAtActor
-			LookAtActor = CachedParticipants.FindRef(InDialogLine->ParticipantInfo.ParticipantTag);
-			
+
 
 			//Go in, and tell the cinecam to focus/track the speaker 
 			for (auto& BoundObject : SP->GetBoundObjects(DialogSequencer->FindNamedBinding(NAME_CinecamTag)))
@@ -166,7 +292,7 @@ void UDialogBuilderGraph::PlayDialogueSequence(UDialogBuilderNode_DialogLine* In
 				{
 					if (UCineCameraComponent* CinecamComp = Cinecam->GetCineCameraComponent())
 					{
-						CinecamComp->CropSettings = InDialogLine->CropSettings;
+						CinecamComp->CropSettings = InDialogShot->CropSettings;
 
 						if (LookAtActor.IsValid())
 						{
@@ -176,20 +302,48 @@ void UDialogBuilderGraph::PlayDialogueSequence(UDialogBuilderNode_DialogLine* In
 							Cinecam->LookatTrackingSettings.ActorToTrack = LookAtActor.Get();
 							Cinecam->LookatTrackingSettings.RelativeOffset = Offset + FVector(10.f, 0.f, 0.f);// LookAtTrackingSettings.TrackBoneNudge;
 
-							//Tracked shots should still offset themselves if using 180d rule
-							/*if (bUse180DegreeRule)
-							{
-								Cinecam->LookatTrackingSettings.RelativeOffset += FVector(0.f, (Speaker.Get() == Dialogue->GetPlayerAvatar() ? UnitsY180DegreeRule : -UnitsY180DegreeRule), 0.f);
-							}*/
+							
 						}
 					}
 				}
 			}
 		}
+	}*/
+}
+
+void UDialogBuilderGraph::PlayDialogSequence(const FDialogLineData& InDialogLineData)
+{
+	if (!DialogSequencer)
+	{
+		ALevelSequenceActor* OutActor = nullptr;
+		ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), InDialogLineData.SequenceToPlay, InDialogLineData.PlaybackSettings, OutActor);
+		DialogSequencer = OutActor;
+		if (DialogSequencer)
+		{
+			DialogSequencer->SetSequence(nullptr);
+		}
 	}
 
+	if (DialogSequencer)
+	{
+		if (ULevelSequencePlayer* SP = DialogSequencer->GetSequencePlayer())
+		{
+			SP->OnFinished.RemoveAll(this);
+			if (SP->IsPlaying())
+			{
+				SP->Stop();
+			}
+			if (InDialogLineData.SequenceToPlay)
+			{
+				DialogSequencer->PlaybackSettings = InDialogLineData.PlaybackSettings;
+				DialogSequencer->SetSequence(InDialogLineData.SequenceToPlay);
+			}
+			SP->Play();
 
-	
+			SP->OnFinished.AddDynamic(this, &ThisClass::AdvanceDialogLine);
+
+		}
+	}
 }
 
 int UDialogBuilderGraph::GetLevelNum() const
@@ -308,6 +462,13 @@ void UDialogBuilderGraph::EndDialog()
 
 		DialogSequencer->Destroy();
 	}
+
+	if (Cinecam.IsValid())
+	{
+		Cinecam->Destroy();
+		Cinecam = nullptr;
+	}
+
 }
 
 FVector UDialogBuilderGraph::GetSpeakerHeadLocation(AActor* Actor) const

@@ -49,6 +49,7 @@ public:
 public:
 	virtual bool Initialize(UOrionInventoryComponent* InitializingComp);
 	virtual void Deinitialize();
+	virtual UWorld* GetWorld() const override;
 
 	UFUNCTION(BlueprintCallable, Category = "OrionInventory")
 	void BeginNode(UOrionInventoryNode* InNode, bool bLaunchEventOnLoad = false); 

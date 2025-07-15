@@ -19,7 +19,7 @@ class ORIONRPG_API UDialogBuilderSetting : public UObject
 public:
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
-	FLinearColor SpeakerNodeColor;
+	FLinearColor DialogLineNodeColor;
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor StateNodeColor;

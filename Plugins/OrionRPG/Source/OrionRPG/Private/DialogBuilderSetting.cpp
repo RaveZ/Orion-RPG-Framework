@@ -2,11 +2,12 @@
 
 
 #include "DialogBuilderSetting.h"
+#include "DialogData.h"
 #include "UObject/ConstructorHelpers.h"
 
 UDialogBuilderSetting::UDialogBuilderSetting()
 {
-	SpeakerNodeColor = FLinearColor(0.15f, 0.15f, 0.15f);
+	DialogLineNodeColor = FLinearColor(0.15f, 0.15f, 0.15f);
 	RerouteNodeColor = FLinearColor(.063f, .096f, .1875f);
 	EndDialogNodeColor = FLinearColor(.34f, .024f, .024f);
 	PlayerOptionNodeColor = FLinearColor(.123f, .274f, .34f);
@@ -16,7 +17,7 @@ UDialogBuilderSetting::UDialogBuilderSetting()
 	bCanRenameNode = true;
 	bCanBeCyclical = false;
 }
-
+ 
 
 UDialogBuilderSetting::~UDialogBuilderSetting()
 {

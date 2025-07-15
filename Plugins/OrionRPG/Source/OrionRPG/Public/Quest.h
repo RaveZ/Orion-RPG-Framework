@@ -122,6 +122,7 @@ public:
 
 	virtual bool Initialize(class UQuestComponent* InitializingComp);
 	virtual void Deinitialize();
+	virtual UWorld* GetWorld() const override;
 	
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	void UpdateQuest();

@@ -54,6 +54,16 @@ void UOrionInventoryGraph::Deinitialize()
 	}
 }
 
+UWorld* UOrionInventoryGraph::GetWorld() const
+{
+	if (OrionInventoryComponent)
+	{
+		return OrionInventoryComponent->GetWorld();
+	}
+
+	return nullptr;
+}
+
 void UOrionInventoryGraph::BeginNode(UOrionInventoryNode* InNode, bool bLaunchEventOnLoad)
 {
 }

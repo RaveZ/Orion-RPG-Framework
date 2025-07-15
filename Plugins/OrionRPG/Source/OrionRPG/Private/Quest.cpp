@@ -74,6 +74,16 @@ void UQuest::Deinitialize()
 	}
 }
 
+UWorld* UQuest::GetWorld() const
+{
+	if (QuestComponent)
+	{
+		return QuestComponent->GetWorld();
+	}
+
+	return nullptr;
+}
+
 void UQuest::UpdateQuest()
 {
 	if (QuestState != EQuestState::E_Active)

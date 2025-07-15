@@ -56,6 +56,9 @@ public:
 	UPROPERTY()
 		bool bIsSelector = false;
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (EditCondition = "bIsSelector == true", HideEditConditionToggle, EditConditionHides))
+	TObjectPtr<UDialogCameraShot> SelectingOptionShotOverride;
 	/**
 	* Entering selection mode will have it's time limit setting.
 	* Selection will have no time limit by default
@@ -67,20 +70,7 @@ public:
 		float TimeLimit;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail", meta = (ShowOnlyInnerProperties))
-		FDialogSequenceData DialogSequenceData;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail")
-		FMovieSceneSequencePlaybackSettings PlaybackSettings;
-
-	/** Controls the crop settings. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Settings")
-	struct FPlateCropSettings CropSettings;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
-		TObjectPtr<class ULevelSequence> SequenceAsset;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog")
-		FTransform ParticipantTransformOverride;
+		FDialogLineData DialogLineData;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
 		bool bCanSkipDialogLine;
@@ -96,7 +86,7 @@ public:
 		int32 SharedParticipantIdx;
 	UPROPERTY()
 	FSharedParticipantSignature OnSharedParticipantChanged;
-
+	
 public:
 	virtual void BeginNode() override;
 
