@@ -3,6 +3,7 @@
 
 #include "DialogBuilderNode_RerouteNode.h"
 #include "DialogBuilderNode_PlayerOption.h"
+#include "DialogBuilderNode_DialogLine.h"
 #include "DialogBuilderNode_Root.h"
 #include "DialogComponent.h"
 #include "DialogBuilderGraph.h"
@@ -24,7 +25,7 @@ void UDialogBuilderNode_RerouteNode::BeginNode()
 		case EDialogRerouteRule::E_BackToLastSelection:
 		{
 			bool bSuccess = false;
-			if (UDialogBuilderNode* LatestRootSelectionNode = GetOwningDialogGraph()->LatestRootSelectionNode)
+			if (UDialogBuilderNode_DialogLine* LatestRootSelectionNode = Cast<UDialogBuilderNode_DialogLine>(GetOwningDialogGraph()->LatestRootSelectionNode))
 			{
 				if (bPlayDialogLine)
 				{
@@ -56,6 +57,8 @@ void UDialogBuilderNode_RerouteNode::BeginNode()
 			break;
 		}
 	}
+
+	Deinitialize();
 }
 
 TArray<FName> UDialogBuilderNode_RerouteNode::GetNodeListToReroute()

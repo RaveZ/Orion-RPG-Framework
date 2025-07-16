@@ -51,33 +51,40 @@ void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 		}
 	}
 
-	OnAllEndEventFinished.AddLambda(
-		[this]()
-		{
-			for (int i = 0; i < NextNodes.Num(); i++)
+	if (!OnAllEndEventFinished.IsBound())
+	{
+		OnAllEndEventFinished.AddLambda(
+			[this]()
 			{
-				if (NextNodes.IsValidIndex(i))
+				for (int i = 0; i < NextNodes.Num(); i++)
 				{
-					//remove previous nodes from current nodes
-					for (auto& ParentNode : NextNodes[i]->ParentNodes)
+					if (NextNodes.IsValidIndex(i))
 					{
-						if (Quest->CurrentNodes.Contains(ParentNode))
-							Quest->CurrentNodes.RemoveSingle(ParentNode);
+						//remove previous nodes from current nodes
+						for (auto& ParentNode : NextNodes[i]->ParentNodes)
+						{
+							if (Quest->CurrentNodes.Contains(ParentNode))
+								Quest->CurrentNodes.RemoveSingle(ParentNode);
+						}
+						Quest->BeginNode(NextNodes[i]);
+						NextNodes.RemoveAt(i);
+						i--;
 					}
-					Quest->BeginNode(NextNodes[i]);
-					NextNodes.RemoveAt(i);
-					i--;
 				}
 			}
-		}
-	);
+		);
+	}
 
-	OnAllStartEventFinished.AddLambda(
-		[this]()
-		{
-			BeginNode();
-		}
-	);
+	if (!OnAllStartEventFinished.IsBound())
+	{
+		OnAllStartEventFinished.AddLambda(
+			[this]()
+			{
+				BeginNode();
+			}
+		);
+	}
+
 	LaunchStartEventQueue();
 
 	
@@ -95,6 +102,8 @@ void UQuestBuilderNode::Deinitialize()
 		}
 	}
 	LaunchEndEventQueue();
+	OnAllStartEventFinished.RemoveAll(this);
+	OnAllEndEventFinished.RemoveAll(this);
 }
 
 void UQuestBuilderNode::BeginNode()
@@ -448,7 +457,7 @@ UQuest* UQuestBuilderNode::GetOwningQuest() const
 }
 
 
-AController* UQuestBuilderNode::GetOwningController() const
+APlayerController* UQuestBuilderNode::GetOwningController() const
 {
 	return OwningController;
 }

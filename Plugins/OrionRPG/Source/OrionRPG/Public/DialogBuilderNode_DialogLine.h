@@ -39,7 +39,7 @@ protected:
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSharedParticipantSignature);
 
-UCLASS(Blueprintable, BlueprintType)
+UCLASS(Blueprintable, BlueprintType, AutoExpandCategories = "Detail|Shot Override")
 class ORIONRPG_API UDialogBuilderNode_DialogLine : public UDialogBuilderNode
 {
 	GENERATED_BODY()
@@ -95,8 +95,11 @@ public:
 	virtual void PostLoad() override;
 	virtual void Serialize(FArchive& Ar) override;
 	//~ End UObject Interface
+	virtual void EvaluateNextNode() override;
 
-
+	UFUNCTION()
+	bool EvaluateAnyPlayerOptions();
+	
 public:
 #if WITH_EDITOR
 

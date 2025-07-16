@@ -56,11 +56,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")
 		virtual UDialogBuilderEdge* GetEdge(UDialogBuilderNode* ChildNode);
 
-	UFUNCTION()
-	bool EvaluateAnyPlayerOptions();
 
 	UPROPERTY(BlueprintReadWrite, Category = "DialogBuilderNode")
-	TObjectPtr<AController> OwningController;
+	TObjectPtr<APlayerController> OwningController;
 
 	UPROPERTY(BlueprintReadWrite, Category = "DialogBuilderNode")
 	TObjectPtr < UDialogComponent> DialogComponent;
@@ -88,7 +86,7 @@ public:
 	bool IsLeafNode() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")
-		AController* GetOwningController() const;
+		APlayerController* GetOwningController() const;
 
 	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")
 		APawn* GetOwningPawn() const;

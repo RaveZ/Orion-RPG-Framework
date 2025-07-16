@@ -38,19 +38,23 @@ struct FDialogLineData
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (MultiLine = true, NoResetToDefault))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail",  meta = (MultiLine = true, NoResetToDefault))
 	FText Line;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	/**
+	* Select ypur shot method to override. 
+	* instead of generated shot, you play sequence instead. 
+	**/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail|Shot Override")
 	EDialogCameraMode DialogCameraMode = EDialogCameraMode::E_GeneratedCameraShot;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_Sequence", HideEditConditionToggle, EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail|Shot Override", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_Sequence", HideEditConditionToggle, EditConditionHides))
 	TObjectPtr<class ULevelSequence> SequenceToPlay;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_Sequence", HideEditConditionToggle, EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail|Shot Override", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_Sequence", HideEditConditionToggle, EditConditionHides))
 	FMovieSceneSequencePlaybackSettings PlaybackSettings;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_GeneratedCameraShot", HideEditConditionToggle, EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Detail|Shot Override", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_GeneratedCameraShot", HideEditConditionToggle, EditConditionHides))
 	TObjectPtr<UDialogCameraShot> ShotOverride;
 
 	FDialogLineData()

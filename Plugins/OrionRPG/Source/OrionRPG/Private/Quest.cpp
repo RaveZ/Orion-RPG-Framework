@@ -275,7 +275,7 @@ void UQuest::GetNodesByLevel(int Level, TArray<UQuestBuilderNode*>& Nodes)
 	}
 }
 
-AController* UQuest::GetOwningController()
+APlayerController* UQuest::GetOwningController()
 {
 	return OwningController;
 }

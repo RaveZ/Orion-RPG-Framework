@@ -2,6 +2,7 @@
 
 
 #include "DialogBuilderNode_DialogLine.h"
+#include "DialogBuilderNode_PlayerOption.h"
 #include "Kismet2/Kismet2NameValidators.h"
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderSetting.h"
@@ -53,6 +54,45 @@ void UDialogBuilderNode_DialogLine::PostLoad()
 void UDialogBuilderNode_DialogLine::Serialize(FArchive& Ar)
 {
 	Super::Serialize(Ar);
+}
+
+void UDialogBuilderNode_DialogLine::EvaluateNextNode()
+{
+	if (GetOwningDialogGraph()->bOptionSelectionActive)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Player in dialog selection mode"));
+		return;
+	}
+
+	//Check if there is any player options 
+	//If found pany player options, halt evaluation node until option has been selected.
+	if (EvaluateAnyPlayerOptions())
+		return;
+
+
+	Super::EvaluateNextNode();
+}
+
+bool UDialogBuilderNode_DialogLine::EvaluateAnyPlayerOptions()
+{
+	//Check for any player options
+	if (ChildrenNodes.IsValidIndex(0) && ChildrenNodes[0].IsA(UDialogBuilderNode_PlayerOption::StaticClass()))
+	{
+		TArray<UDialogBuilderNode_PlayerOption*> PlayerOptions;
+		for (auto& ChildNode : ChildrenNodes)
+		{
+			if (UDialogBuilderNode_PlayerOption* PlayerOption = Cast<UDialogBuilderNode_PlayerOption>(ChildNode))
+			{
+				PlayerOptions.AddUnique(PlayerOption);
+			}
+		}
+		GetOwningDialogGraph()->LatestRootSelectionNode = this;
+		GetOwningDialogGraph()->bOptionSelectionActive = true;
+		GetOwningDialogGraph()->BeginSelectionShot(this);
+		GetDialogComponent()->OnEnterOptionSelection.Broadcast(PlayerOptions);
+		return true;
+	}
+	return false;
 }
 
 #if WITH_EDITOR

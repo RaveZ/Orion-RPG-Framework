@@ -45,16 +45,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Configuration")
 		TObjectPtr<class UDialogCameraShot> DefaultSelectingOptionShot;
 
+
+	/**Camera*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+		TSubclassOf<class UCameraShakeBase> DialogCameraShake;
 	/*
-	* By default dialog camera will aim at the bone named "head" - this is the name of the UE4/5 skeletons head bone so will work with most games.
-	* If your head bone has a different name, you can input it here - if you need anything more complex simply override the GetSpeakerHeadLocation function
-	* and return the location of your avatars head.
+	* By default dialog camera will aim at the bone set  in this variable
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration")
-		FName DefaultHeadBoneName;
+		FName DefaultBoneToTrack;
 
 	UPROPERTY(BlueprintReadWrite, Category = "DialogBuilderGraph")
-		TObjectPtr<AController> OwningController;
+		TObjectPtr<APlayerController> OwningController;
 
 	UPROPERTY(BlueprintReadWrite, Category = "DialogBuilderGraph")
 		TObjectPtr < UDialogComponent> DialogComponent;
@@ -99,6 +101,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Sequence")
 		TWeakObjectPtr<class AActor> LookAtActor;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Sequence")
+		TWeakObjectPtr<class AActor> CachedLastSpeaker;
+
 
 public:
 	virtual bool Initialize(UDialogComponent* InitializingComp);
@@ -115,7 +120,7 @@ public:
 	virtual void BeginSelectionShot(class UDialogBuilderNode_DialogLine* InDialogLine);
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
-	virtual void PlayDialogShot(class UDialogCameraShot* InDialogShot);
+	virtual void PlayDialogShot(class UDialogCameraShot* InDialogShot, AActor* InSpeaker, TArray<AActor*> InListeners, const bool bOverrideShot = false);
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 	virtual void PlayDialogSequence(const FDialogLineData& InDialogLineData);
@@ -129,7 +134,7 @@ public:
 	void ClearGraph();
 	
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
-	AController* GetOwningController();
+	APlayerController* GetOwningController();
 
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	APawn* GetOwningPawn();

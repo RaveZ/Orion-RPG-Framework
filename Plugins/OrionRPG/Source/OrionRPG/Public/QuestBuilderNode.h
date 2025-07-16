@@ -77,7 +77,7 @@ public:
 		virtual UQuestBuilderEdge* GetEdge(UQuestBuilderNode* ChildNode);
 
 	UPROPERTY(BlueprintReadWrite, Category = "Quest")
-		TObjectPtr<AController> OwningController;
+		TObjectPtr<APlayerController> OwningController;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Quest")
 		TObjectPtr < UQuestComponent> QuestComponent;
@@ -103,7 +103,7 @@ public:
 	bool IsLeafNode() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
-		AController* GetOwningController() const;
+		APlayerController* GetOwningController() const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
 		APawn* GetOwningPawn() const;

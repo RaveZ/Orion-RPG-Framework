@@ -111,7 +111,7 @@ public:
 		TMap<FName, TObjectPtr<UQuestBuilderNode>> NodeMap;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Quest")
-		TObjectPtr<AController> OwningController;
+		TObjectPtr<APlayerController> OwningController;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Quest")
 		TObjectPtr < UQuestComponent> QuestComponent;
@@ -149,7 +149,7 @@ public:
 		void GetNodesByLevel(int Level, TArray<UQuestBuilderNode*>& Nodes);
 
 	UFUNCTION(BlueprintCallable, Category = "Quest")
-		AController* GetOwningController();
+		APlayerController* GetOwningController();
 
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 		APawn* GetOwningPawn();
