@@ -7,7 +7,7 @@
 #include "Decorator/OrionDecorator.h"
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderNode_Root.h"
-#include "DialogBuilderNode_PlayerOption.h"
+#include "DialogBuilderNode_PlayerChoice.h"
 #include "DialogBuilderNode_DialogLine.h"
 #include "DialogComponent.h"
 

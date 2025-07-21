@@ -84,11 +84,11 @@ void UDialogBuilderFunctionLibrary::AdvanceDialogLine(const UObject* WorldContex
     }
 }
 
-void UDialogBuilderFunctionLibrary::SelectDialogOption(const UObject* WorldContextObject, UDialogBuilderNode_PlayerOption* InOption)
+void UDialogBuilderFunctionLibrary::SelectDialogChoice(const UObject* WorldContextObject, UDialogBuilderNode_PlayerChoice* InOption)
 {
     if (UDialogComponent* DialogComp = GetDialogComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
     {
-        DialogComp->SelectDialogOption(InOption);
+        DialogComp->SelectDialogChoice(InOption);
     }
 
 }

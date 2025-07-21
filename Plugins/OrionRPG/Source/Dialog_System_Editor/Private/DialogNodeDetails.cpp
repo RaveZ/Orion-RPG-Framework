@@ -4,6 +4,8 @@
 
 #include "DialogBuilderEdNode_DialogLine.h"
 #include "DialogBuilderNode_DialogLine.h"
+#include "DialogBuilderEdNode_PlayerLine.h"
+#include "DialogBuilderNode_PlayerLine.h"
 #include "Containers/Array.h"
 #include "Containers/EnumAsByte.h"
 #include "Containers/Map.h"
@@ -80,6 +82,14 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 				}
 
 			}
+			if (UDialogBuilderNode_PlayerLine* PlayerLineNodePtr = Cast<UDialogBuilderNode_PlayerLine>(CurrentObject.Get()))
+			{
+				if (!PlayerLineNode.IsValid())
+				{
+					PlayerLineNode = PlayerLineNodePtr;
+				}
+
+			}
 		}
 	}
 	IDetailCategoryBuilder& OptionSelectionCategory = DetailBuilder.EditCategory("Selection Rule", LOCTEXT("OptionSelectionCategoryLabel", "Selection Rule"));
@@ -90,7 +100,7 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 	
 
 	IDetailCategoryBuilder& DialogParticipantCategory = DetailBuilder.EditCategory("Participant", LOCTEXT("ParticipantCategoryTitle", "Participant Settings"));
-	if (DialogLineNode != NULL && SelectedObjects.Num() == 1)
+	if (PlayerLineNode == NULL && DialogLineNode != NULL && SelectedObjects.Num() == 1)
 	{
 		UDialogBuilderNode_DialogLine* DialogLineNodeInstance = DialogLineNode.Get();
 		// The sharing option for the crossfade settings
@@ -112,21 +122,23 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 					FOnClicked::CreateSP(this, &FDialogNodeDetails::OnUnshareClick),
 					FOnGetContent::CreateSP(this, &FDialogNodeDetails::OnGetShareableNodesMenu))
 			]; 
-	}
 
-	TSharedRef<IPropertyHandle> ParticipantInfoHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantInfo));
-	ParticipantInfoHandle->MarkHiddenByCustomization(); // Hide the root property row
-
-	uint32 NumChildren = 0;
-	ParticipantInfoHandle->GetNumChildren(NumChildren);
-	for (uint32 ChildIndex = 0; ChildIndex < NumChildren; ++ChildIndex)
-	{
-		TSharedPtr<IPropertyHandle> ChildHandle = ParticipantInfoHandle->GetChildHandle(ChildIndex);
-		if (ChildHandle.IsValid())
+		TSharedRef<IPropertyHandle> ParticipantInfoHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantInfo));
+		ParticipantInfoHandle->MarkHiddenByCustomization(); // Hide the root property row
+		uint32 NumChildren = 0;
+		ParticipantInfoHandle->GetNumChildren(NumChildren);
+		for (uint32 ChildIndex = 0; ChildIndex < NumChildren; ++ChildIndex)
 		{
-			DialogParticipantCategory.AddProperty(ChildHandle.ToSharedRef());
+			TSharedPtr<IPropertyHandle> ChildHandle = ParticipantInfoHandle->GetChildHandle(ChildIndex);
+			if (ChildHandle.IsValid())
+			{
+				DialogParticipantCategory.AddProperty(ChildHandle.ToSharedRef());
+			}
 		}
 	}
+
+
+	
 
 	IDetailCategoryBuilder& DialogNodeDetail = DetailBuilder.EditCategory("Detail", LOCTEXT("DetailTitle", "Detail"));
 	DialogNodeDetail.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ID)).DisplayName(LOCTEXT("IDLabel", "ID"));

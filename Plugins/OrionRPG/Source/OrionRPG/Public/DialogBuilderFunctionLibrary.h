@@ -58,5 +58,5 @@ public:
 	*
 	*/
 	UFUNCTION(BlueprintCallable, Category = "DialogBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
-	static void SelectDialogOption(const UObject* WorldContextObject, class UDialogBuilderNode_PlayerOption* InOption);
+	static void SelectDialogChoice(const UObject* WorldContextObject, class UDialogBuilderNode_PlayerChoice* InOption);
 };

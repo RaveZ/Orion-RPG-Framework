@@ -22,7 +22,7 @@
 #include "DialogBuilderEdNode_Root.h"
 #include "DialogBuilderEdNode_DialogLine.h"
 #include "DialogBuilderNode_DialogLine.h"
-#include "DialogBuilderNode_PlayerOption.h"
+#include "DialogBuilderNode_PlayerChoice.h"
 #include "DialogBuilderSetting.h"	
 #include "Fonts/SlateFontInfo.h"
 #include "Decorator/OrionDecorator.h"
@@ -991,7 +991,7 @@ EVisibility SGraphNode_DialogBuilderNode::GetDescriptionVisibility() const
 {
 	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
 	UDialogBuilderNode* DialogNode = DialogEdNode ? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance) : nullptr;
-	UDialogBuilderNode_PlayerOption* PlayerOptionNode = DialogEdNode ? Cast<UDialogBuilderNode_PlayerOption>(DialogEdNode->NodeInstance) : nullptr;
+	UDialogBuilderNode_PlayerChoice* PlayerOptionNode = DialogEdNode ? Cast<UDialogBuilderNode_PlayerChoice>(DialogEdNode->NodeInstance) : nullptr;
 	if (PlayerOptionNode)
 		return EVisibility::Collapsed;
 	// LOD this out once things get too small

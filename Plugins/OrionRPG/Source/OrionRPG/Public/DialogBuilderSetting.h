@@ -22,6 +22,9 @@ public:
 	FLinearColor DialogLineNodeColor;
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
+	FLinearColor PlayerLineNodeColor;
+
+	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor StateNodeColor;
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")

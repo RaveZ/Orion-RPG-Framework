@@ -39,7 +39,7 @@ protected:
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSharedParticipantSignature);
 
-UCLASS(Blueprintable, BlueprintType, AutoExpandCategories = "Detail|Shot Override")
+UCLASS(Blueprintable, BlueprintType, AutoExpandCategories = "Shot Override")
 class ORIONRPG_API UDialogBuilderNode_DialogLine : public UDialogBuilderNode
 {
 	GENERATED_BODY()
@@ -47,7 +47,10 @@ class ORIONRPG_API UDialogBuilderNode_DialogLine : public UDialogBuilderNode
 public:
 	UDialogBuilderNode_DialogLine();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog")
+	UPROPERTY()
+		bool bIsPlayerLine = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog", meta = (EditCondition = "bIsPlayerLine == false", HideEditConditionToggle, EditConditionHides))
 		FParticipantInfo ParticipantInfo;
 
 	UPROPERTY()
@@ -57,7 +60,7 @@ public:
 		bool bIsSelector = false;
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (EditCondition = "bIsSelector == true", HideEditConditionToggle, EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Detail", meta = (EditCondition = "bIsSelector == true", HideEditConditionToggle, EditConditionHides))
 	TObjectPtr<UDialogCameraShot> SelectingOptionShotOverride;
 	/**
 	* Entering selection mode will have it's time limit setting.

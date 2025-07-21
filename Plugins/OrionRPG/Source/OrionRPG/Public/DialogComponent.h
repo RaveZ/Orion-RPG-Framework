@@ -14,9 +14,9 @@ class APlayerController;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateDialog, class UDialogBuilderNode*, DialogNode);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEnterOptionSelection, const TArray<class UDialogBuilderNode_PlayerOption*>&, PlayerOptions);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEnterChoiceSelection, const TArray<class UDialogBuilderNode_PlayerChoice*>&, PlayerChoices);
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPlayerOptionSelected, UDialogBuilderNode_PlayerOption*, PlayerOption);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FPlayerChoiceSelected, UDialogBuilderNode_PlayerChoice*, PlayerChoice);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FBeginDialog, UDialogBuilderGraph*, Dialog);
 
@@ -46,10 +46,10 @@ public:
 		FUpdateDialog OnDialogUpdated;
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
-		FEnterOptionSelection OnEnterOptionSelection;
+		FEnterChoiceSelection OnEnterChoiceSelection;
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
-		FPlayerOptionSelected OnPLayerOptionSelected;
+		FPlayerChoiceSelected OnPLayerChoiceSelected;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
 		FBeginDialog OnBeginDialog;
@@ -61,10 +61,10 @@ public:
 	virtual void DialogLineUpdated(class UDialogBuilderNode* DialogNode);
 	
 	UFUNCTION()
-	virtual void EnterOptionSelection(const TArray<class UDialogBuilderNode_PlayerOption*>& PlayerOptions);
+	virtual void EnterChoiceSelection(const TArray<class UDialogBuilderNode_PlayerChoice*>& PlayerOptions);
 	
 	UFUNCTION()
-	virtual void PlayerOptionSelected(class UDialogBuilderNode_PlayerOption* PlayerOption);
+	virtual void PlayerChoiceSelected(class UDialogBuilderNode_PlayerChoice* PlayerOption);
 	
 	UFUNCTION()
 	virtual void DialogBegin(UDialogBuilderGraph* Dialog);
@@ -76,7 +76,7 @@ public:
 		bool BeginDialog(UDialogBuilderGraph* DialogAsset);
 
 	UFUNCTION(BlueprintCallable, Category = "DialogComponent")
-		void SelectDialogOption(class UDialogBuilderNode_PlayerOption* InOption);
+		void SelectDialogChoice(class UDialogBuilderNode_PlayerChoice* InOption);
 
 	UFUNCTION()
 		virtual class UDialogBuilderGraph* MakeDialogGraphInstance(UDialogBuilderGraph* DialogGraphTemplate);

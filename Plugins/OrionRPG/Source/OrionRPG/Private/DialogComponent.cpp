@@ -10,7 +10,7 @@
 #include "DialogBuilderNode_RerouteNode.h"
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderNode_DialogLine.h"
-#include "DialogBuilderNode_PlayerOption.h"
+#include "DialogBuilderNode_PlayerChoice.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Controller.h"
 #include "DialogData.h"
@@ -36,8 +36,8 @@ void UDialogComponent::BeginPlay()
 	OwningController = GetOwningController();
 	
 	OnDialogUpdated.AddDynamic(this, &UDialogComponent::DialogLineUpdated);
-	OnEnterOptionSelection.AddDynamic(this, &UDialogComponent::EnterOptionSelection);
-	OnPLayerOptionSelected.AddDynamic(this, &UDialogComponent::PlayerOptionSelected);
+	OnEnterChoiceSelection.AddDynamic(this, &UDialogComponent::EnterChoiceSelection);
+	OnPLayerChoiceSelected.AddDynamic(this, &UDialogComponent::PlayerChoiceSelected);
 	OnBeginDialog.AddDynamic(this, &UDialogComponent::DialogBegin);
 	OnEndDialog.AddDynamic(this, &UDialogComponent::DialogEnd);
 }
@@ -81,13 +81,13 @@ bool UDialogComponent::BeginDialog(UDialogBuilderGraph* DialogAsset)
 	return bSuccess;
 }
 
-void UDialogComponent::SelectDialogOption(UDialogBuilderNode_PlayerOption* InOption)
+void UDialogComponent::SelectDialogChoice(UDialogBuilderNode_PlayerChoice* InOption)
 {
 	if (CurrentActiveDialog && InOption)
 	{
 		CurrentActiveDialog->bOptionSelectionActive = false;
 		CurrentActiveDialog->BeginNode((UDialogBuilderNode*)InOption);
-		OnPLayerOptionSelected.Broadcast(InOption);
+		OnPLayerChoiceSelected.Broadcast(InOption);
 	}
 }
 
@@ -174,13 +174,13 @@ void UDialogComponent::DialogLineUpdated(UDialogBuilderNode* DialogNode)
 {
 }
 
-void UDialogComponent::EnterOptionSelection(const TArray<class UDialogBuilderNode_PlayerOption*>& PlayerOptions)
+void UDialogComponent::EnterChoiceSelection(const TArray<class UDialogBuilderNode_PlayerChoice*>& PlayerOptions)
 {
 }
 
-void UDialogComponent::PlayerOptionSelected(UDialogBuilderNode_PlayerOption* PlayerOption)
+void UDialogComponent::PlayerChoiceSelected(UDialogBuilderNode_PlayerChoice* PlayerOption)
 {
-    UE_LOG(LogTemp, Log, TEXT("Dialog Option Selected: %s"), *PlayerOption->OptionText.ToString());
+    UE_LOG(LogTemp, Log, TEXT("Dialog Option Selected: %s"), *PlayerOption->ChoiceText.ToString());
 }
 
 void UDialogComponent::DialogBegin(UDialogBuilderGraph* Dialog)

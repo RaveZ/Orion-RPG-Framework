@@ -5,11 +5,12 @@
 #include "DialogBuilderEdNode_Edge.h"
 #include "DialogBuilderEdNode_Root.h"
 #include "DialogBuilderEdNode.h"
-#include "DialogBuilderEdNode_PlayerOption.h"
+#include "DialogBuilderEdNode_PlayerChoice.h"
 #include "DialogBuilderEdNode_DialogLine.h"
 #include "DialogBuilderEdge.h"
 #include "DialogBuilderNode.h"
 #include "DialogBuilderNode_DialogLine.h"
+#include "DialogBuilderNode_PlayerLine.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 
@@ -96,10 +97,18 @@ void UDialogBuilderEdGraph::UpdateAsset(bool bForce)
 				DialogNode->DialogGraph = OwningDialog;
 				DialogNode->Rename(nullptr, DialogGraph, REN_DontCreateRedirectors | REN_DoNotDirty);
 
+				if (UDialogBuilderNode_PlayerLine* PlayerLineNode = Cast<UDialogBuilderNode_PlayerLine>(DialogNode))
+				{
+					PlayerLineNode->ParticipantInfo.DefaultShot = OwningDialog->DefaultPlayerShot;
+					PlayerLineNode->ParticipantInfo.ParticipantName = OwningDialog->PlayerName;
+					PlayerLineNode->ParticipantInfo.ParticipantClassOverride = OwningDialog->PlayerClassOverride;
+					OwningDialog->ParticipantInfoMap.Emplace(PlayerLineNode->ParticipantInfo.ParticipantTag, PlayerLineNode->ParticipantInfo);
+				}
 				if(UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(DialogNode))
 				{
 					OwningDialog->ParticipantInfoMap.Emplace(DialogLineNode->ParticipantInfo.ParticipantTag, DialogLineNode->ParticipantInfo);
 				}
+				
 
 				//link child and parent nodes
 				for (int PinIdx = 0; PinIdx < DialogEdNode->Pins.Num(); ++PinIdx)

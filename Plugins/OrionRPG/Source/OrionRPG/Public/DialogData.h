@@ -17,6 +17,7 @@ class UDialogCameraShot;
 //Gameplay Tags
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Dialog);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Dialog_Participant);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Dialog_Participant_Player);
 
 UENUM(BlueprintType)
 enum class ESelectionTimeLimit : uint8
@@ -38,23 +39,23 @@ struct FDialogLineData
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail",  meta = (MultiLine = true, NoResetToDefault))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (MultiLine = true, NoResetToDefault, DisplayPriority = -1))
 	FText Line;
 
 	/**
-	* Select ypur shot method to override. 
-	* instead of generated shot, you play sequence instead. 
+	* Select ypur shot method to override.
+	* instead of generated shot, you can play sequence instead.
 	**/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail|Shot Override")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shot Override")
 	EDialogCameraMode DialogCameraMode = EDialogCameraMode::E_GeneratedCameraShot;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail|Shot Override", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_Sequence", HideEditConditionToggle, EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shot Override", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_Sequence", HideEditConditionToggle, EditConditionHides))
 	TObjectPtr<class ULevelSequence> SequenceToPlay;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail|Shot Override", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_Sequence", HideEditConditionToggle, EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shot Override", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_Sequence", HideEditConditionToggle, EditConditionHides))
 	FMovieSceneSequencePlaybackSettings PlaybackSettings;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Detail|Shot Override", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_GeneratedCameraShot", HideEditConditionToggle, EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Shot Override", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_GeneratedCameraShot", HideEditConditionToggle, EditConditionHides))
 	TObjectPtr<UDialogCameraShot> ShotOverride;
 
 	FDialogLineData()
@@ -70,7 +71,6 @@ public:
 		PlaybackSettings.bDisableCameraCuts = false;
 	}
 };
-
 
 USTRUCT(BlueprintType)
 struct FParticipantInfo
@@ -93,7 +93,7 @@ struct FParticipantInfo
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog", meta = (EditCondition = "bOverrideTransform"))
 	FTransform ParticipantTransformOverride;
 
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Detail")
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Detail", meta = (NoResetToDefault))
 	TObjectPtr<UDialogCameraShot> DefaultShot;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog", meta = (NoResetToDefault))

@@ -11,7 +11,8 @@
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderNode_DialogLine.h"
 #include "DialogBuilderNode_RerouteNode.h"
-#include "DialogBuilderNode_PlayerOption.h"
+#include "DialogBuilderNode_PlayerChoice.h"
+#include "DialogBuilderNode_PlayerLine.h"
 #include "DialogBuilderEditorUtils.h"
 #include "GraphDiffControl.h"
 #include "Decorator/OrionDecorator.h"
@@ -97,7 +98,7 @@ FText UDialogBuilderEdNode::GetTooltipText() const
 			}
 		}
 	}
-	if (NodeInstance->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint) && !NodeInstance->GetClass()->GetPackage()->HasAnyPackageFlags(PKG_Cooked))
+	if (NodeInstance && NodeInstance->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint) && !NodeInstance->GetClass()->GetPackage()->HasAnyPackageFlags(PKG_Cooked))
 	{
 		TooltipDesc = FText::FromString(TooltipDesc.ToString() + "\n**Double click node to open blueprint");
 	}
@@ -230,7 +231,11 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 			}
 			if (NodeInstance)
 			{
-				if (UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance))
+				if (UDialogBuilderNode_PlayerLine* PlayerLineNode = Cast<UDialogBuilderNode_PlayerLine>(NodeInstance))
+				{
+					FindUniqueNodeName("PlayerLine");
+				}
+				else if (UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance))
 				{
 					FindUniqueNodeName("DialogLine");
 					// Randomize color
@@ -244,10 +249,10 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 				{
 					FindUniqueNodeName("Reroute");
 				}
-				if (UDialogBuilderNode_PlayerOption* PlayerOptionNode = Cast<UDialogBuilderNode_PlayerOption>(NodeInstance))
+				if (UDialogBuilderNode_PlayerChoice* PlayerOptionNode = Cast<UDialogBuilderNode_PlayerChoice>(NodeInstance))
 				{
-					FindUniqueNodeName("PlayerOption");
-					PlayerOptionNode->OptionText = FText::FromString("Option");
+					FindUniqueNodeName("PlayerChoice");
+					PlayerOptionNode->ChoiceText = FText::FromString("Choice");
 
 				}
 				if (UOrionDecorator* OrionDecorator = Cast<UOrionDecorator>(NodeInstance))

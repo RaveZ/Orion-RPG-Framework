@@ -73,6 +73,7 @@ bool UDialogBuilderGraph::Initialize(UDialogComponent* InitializingComp)
 			}
 		}
 
+
 		if (OwningController && OwningController->IsLocalPlayerController())
 		{
 			if (DialogCameraShake)
@@ -131,54 +132,63 @@ void UDialogBuilderGraph::BeginNode(UDialogBuilderNode* InNode, bool bLaunchEven
 	InNode->Initialize(bLaunchEventOnLoad);
 }
 
-void UDialogBuilderGraph::BeginDialogShot(UDialogBuilderNode_DialogLine* InDialogLine)
+void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialogLine)
 {
 	if (InDialogLine == nullptr)
 		return;
 
 	UDialogCameraShot* DialogShot = nullptr;
+	AActor* Speaker = nullptr;
 	TArray<AActor*> Listeners;
+
 	switch (InDialogLine->DialogLineData.DialogCameraMode)
 	{
 		case EDialogCameraMode::E_GeneratedCameraShot:
-			LookAtActor = CachedParticipants.FindRef(InDialogLine->ParticipantInfo.ParticipantTag);
+			Speaker = CachedParticipants.FindRef(InDialogLine->ParticipantInfo.ParticipantTag);
 			DialogShot = InDialogLine->ParticipantInfo.DefaultShot;
 			if (!DialogShot || InDialogLine->DialogLineData.ShotOverride)
 			{
 				//if default shot not valid, try use override shot data instead
 				DialogShot = InDialogLine->DialogLineData.ShotOverride;
-				PlayDialogShot(DialogShot, LookAtActor.Get(), Listeners, true);
-				break;
 			}
 
-			PlayDialogShot(DialogShot, LookAtActor.Get(), Listeners);
+			if (DialogShot)
+			{
+				PlayDialogShot(DialogShot, Speaker, Listeners);
+			}
 			break;
 		case EDialogCameraMode::E_Sequence:
+			
 			PlayDialogSequence(InDialogLine->DialogLineData);
 			break;
-	} 
-
+	}
+	CachedLastSpeaker = Speaker;
+	CachedLastShot = DialogShot;
 	
 }
 
-void UDialogBuilderGraph::BeginSelectionShot(UDialogBuilderNode_DialogLine* InDialogLine)
+void UDialogBuilderGraph::BeginChoiceSelection(UDialogBuilderNode_DialogLine* InDialogLine)
 {
 	if (InDialogLine == nullptr)
 		return;
 
-	UDialogCameraShot* ShotData = DefaultSelectingOptionShot;
+	UDialogCameraShot* DialogShot = DefaultSelectingOptionShot;
+	AActor* Speaker = CachedParticipants.FindRef(TAG_Dialog_Participant_Player);
+	Speaker = Speaker ? Speaker : GetOwningPawn();
 	TArray<AActor*> Listeners;
-	if (!ShotData || InDialogLine->SelectingOptionShotOverride)
+	if (!DialogShot || InDialogLine->SelectingOptionShotOverride)
 	{
 		//if default shot not valid, try use override shot data instead
-		ShotData = InDialogLine->SelectingOptionShotOverride;
+		DialogShot = InDialogLine->SelectingOptionShotOverride;
 	}
-	LookAtActor = GetOwningPawn();
 
-	PlayDialogShot(ShotData, LookAtActor.Get(), Listeners);
+	PlayDialogShot(DialogShot, Speaker, Listeners);
+
+	CachedLastSpeaker = Speaker;
+	CachedLastShot = DialogShot;
 }
 
-void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot, AActor* InSpeaker, TArray<AActor*> InListeners, const bool bOverrideShot)
+void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot, AActor* InSpeaker, TArray<AActor*> InListeners)
 {
 	//Shot method changed, make sure sequencer is destroyed
 	if (DialogSequencer)
@@ -187,22 +197,7 @@ void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot, AActor
 		{
 			SP->Stop();
 		}
-
 		DialogSequencer->Destroy();
-	}
-
-	if (InDialogShot == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayDialogShot: Can't start Cinecam, DialogShot is null"));
-		return;
-	}
-
-	// Spawn a CineCameraActor if not already present
-	UWorld* World = GetWorld();
-	if (!World)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayDialogShot: World is null"));
-		return;
 	}
 
 	// Spawn cinecam if it does not exist
@@ -210,117 +205,11 @@ void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot, AActor
 	{
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		ACineCameraActor* NewCinecam = World->SpawnActor<ACineCameraActor>(ACineCameraActor::StaticClass(), SpawnParams);
+		ACineCameraActor* NewCinecam = GetWorld()->SpawnActor<ACineCameraActor>(ACineCameraActor::StaticClass(), SpawnParams);
 		Cinecam = NewCinecam;
 	}
-	
-	//Set camera setting
-	if (UCineCameraComponent* CinecamComp = Cinecam->GetCineCameraComponent())
-	{
-		CinecamComp->CropSettings = InDialogShot->CropSettings;
-		CinecamComp->SetCurrentFocalLength(InDialogShot->FocalLengthOverride);
-		CinecamComp->SetCurrentAperture(InDialogShot->ApertureOverride);
-		CinecamComp->SetFilmback(InDialogShot->Filmback);
-		CinecamComp->SetLensSettings(InDialogShot->LensSettings);
-		if (InDialogShot->bUsePostProcess)
-		{
-			CinecamComp->PostProcessSettings = InDialogShot->PostProcessSettings;
-		}
 
-	}
-
-	// Set the current view target to the cinecam
-	APlayerController* PC = World->GetFirstPlayerController();
-	if (PC)
-	{
-		PC->SetViewTarget(Cinecam.Get());
-	}
-
-	// Optionally, focus/track the speaker if LookAtActor is valid
-	if (Cinecam.IsValid() && LookAtActor.IsValid())
-	{
-        // Replace this block in UDialogBuilderGraph::PlayDialogShot
-        const FVector Offset = LookAtActor->GetActorTransform().InverseTransformPosition(GetSpeakerHeadLocation(LookAtActor.Get()));
-        const FVector ActorLocation = LookAtActor->GetActorLocation() + Offset;
-        const FRotator ActorRotation = LookAtActor->GetActorRotation();
-        const FVector ForwardVector = ActorRotation.Vector();
-
-        // Parameters for cone
-        float Distance = InDialogShot->CameraDistance; // Distance in front of pawn
-        float ConeHalfAngleDegrees = 30.f; // Half angle of cone
-        float RandomAngle = FMath::FRandRange(-ConeHalfAngleDegrees, ConeHalfAngleDegrees);
-
-        // Calculate random direction within cone
-        FRotator OffsetRot = FRotator(0.f, RandomAngle, 0.f);
-        FVector ConeDirection = OffsetRot.RotateVector(ForwardVector);
-
-        FVector LocationOverride = ActorLocation + ConeDirection * Distance;
-        FRotator RotationOverride = ActorRotation;
-
-        // --- Blockage check and recalc ---
-        bool bBlocked = false;
-        if (World && LookAtActor.IsValid())
-        {
-            FHitResult HitResult;
-            FCollisionQueryParams Params;
-            Params.AddIgnoredActor(Cinecam.Get());
-            Params.AddIgnoredActor(LookAtActor.Get());
-            // Ignore all participants
-            for (const auto& Pair : CachedParticipants)
-            {
-                if (Pair.Value && Pair.Value != LookAtActor.Get())
-                {
-                    Params.AddIgnoredActor(Pair.Value);
-                }
-            }
-            FVector TraceStart = LocationOverride;
-            FVector TraceEnd = GetSpeakerHeadLocation(LookAtActor.Get());
-            // Add this after the FVector TraceStart/TraceEnd lines in PlayDialogShot
-
-            if (World->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, ECC_Camera, Params))
-            {
-                // If hit actor is not the LookAtActor, it's blocked
-                if (HitResult.GetActor() && HitResult.GetActor() != LookAtActor.Get())
-                {
-                    bBlocked = true;
-                }
-            }
-            // If blocked, try to move the camera up and back until unblocked (simple approach)
-            if (bBlocked)
-            {
-                const int MaxAttempts = 5;
-                for (int i = 0; i < MaxAttempts; ++i)
-                {
-					RandomAngle = FMath::FRandRange(-ConeHalfAngleDegrees, ConeHalfAngleDegrees);
-
-					// Calculate random direction within cone
-					OffsetRot = FRotator(0.f, RandomAngle, 0.f);
-					ConeDirection = OffsetRot.RotateVector(ForwardVector);
-
-					LocationOverride = ActorLocation + ConeDirection * Distance;
-					RotationOverride = ActorRotation;
-
-                    if (!World->LineTraceSingleByChannel(HitResult, LocationOverride, TraceEnd, ECC_Visibility, Params) ||
-                        (HitResult.GetActor() == LookAtActor.Get()))
-                    {
-                        bBlocked = false;
-                        break;
-                    }
-                }
-            }
-        }
-
-		//make sure to generate camera only if shot get overidden or the last speaker is different
-		if (bOverrideShot || InSpeaker != CachedLastSpeaker)
-		{
-			Cinecam->SetActorLocation(LocationOverride);
-			Cinecam->LookatTrackingSettings.bEnableLookAtTracking = true;
-			Cinecam->LookatTrackingSettings.ActorToTrack = LookAtActor.Get();
-			Cinecam->LookatTrackingSettings.RelativeOffset = Offset + FVector(10.f, 0.f, 0.f);
-		}
-
-	}
-	CachedLastSpeaker = InSpeaker;
+	InDialogShot->Play(this, InSpeaker, InListeners);
 }
 
 void UDialogBuilderGraph::PlayDialogSequence(const FDialogLineData& InDialogLineData)
@@ -342,7 +231,6 @@ void UDialogBuilderGraph::PlayDialogSequence(const FDialogLineData& InDialogLine
 			DialogSequencer->SetSequence(nullptr);
 		}
 	}
-
 	if (DialogSequencer)
 	{
 		if (ULevelSequencePlayer* SP = DialogSequencer->GetSequencePlayer())
@@ -495,7 +383,7 @@ void UDialogBuilderGraph::EndDialog()
 
 }
 
-FVector UDialogBuilderGraph::GetSpeakerHeadLocation(AActor* Actor) const
+FVector UDialogBuilderGraph::GetSpeakerBoneLocation(AActor* Actor) const
 {
 	if (!Actor)
 	{
@@ -526,6 +414,15 @@ FVector UDialogBuilderGraph::GetSpeakerHeadLocation(AActor* Actor) const
 
 AActor* UDialogBuilderGraph::RetrieveParticipant(const FParticipantInfo& Info)
 {
+	APawn* PlayerPawn = GetOwningPawn();
+	
+	//retrieve player
+	if (Info.ParticipantTag == TAG_Dialog_Participant_Player)
+	{
+		return PlayerPawn;
+	}
+
+	//Retrieve other participant
 	if(!Info.ParticipantTag.GetTagName().IsNone())
 	{
 		if (!CachedParticipants.Contains(Info.ParticipantTag) && IsValid(Info.ParticipantClassOverride))
@@ -538,7 +435,7 @@ AActor* UDialogBuilderGraph::RetrieveParticipant(const FParticipantInfo& Info)
 			FTransform SpawnTransform;
 
 			// If we have a valid player pawn, spawn in front of it within a cone
-			APawn* PlayerPawn = GetOwningPawn();
+			
 			if (PlayerPawn)
 			{
 				const FVector PawnLocation = PlayerPawn->GetActorLocation();
@@ -593,6 +490,8 @@ AActor* UDialogBuilderGraph::RetrieveParticipant(const FParticipantInfo& Info)
 		}
 	}
 	
+
+
 	return nullptr;
 }
 

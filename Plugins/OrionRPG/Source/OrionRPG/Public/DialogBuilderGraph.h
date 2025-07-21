@@ -27,22 +27,26 @@ public:
 	virtual ~UDialogBuilderGraph();
 
 	/** AssetID */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Detail")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Dialog")
 		FName ID;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog", meta = (FullyExpand = true))
+	/** Your Player Name*/
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Configuration")
+		FText PlayerName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration", meta = (FullyExpand = true))
 		TSubclassOf<class AActor> PlayerClassOverride;
 
 	UPROPERTY(EditAnywhere, meta = (InlineEditConditionToggle))
 		bool bOverrideTransform;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog", meta = (EditCondition = "bOverrideTransform"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration", meta = (EditCondition = "bOverrideTransform"))
 		FTransform PlayerTransformOverride;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Configuration")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Configuration", meta = (NoResetToDefault))
 		TObjectPtr<class UDialogCameraShot> DefaultPlayerShot;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Configuration")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Configuration", meta = (NoResetToDefault))
 		TObjectPtr<class UDialogCameraShot> DefaultSelectingOptionShot;
 
 
@@ -95,14 +99,15 @@ public:
 		bool bOptionSelectionActive;
 
 	//The cinecam spawned in by the sequence 
-	UPROPERTY(BlueprintReadOnly, Category = "Sequence")
+	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
 		TWeakObjectPtr<class ACineCameraActor> Cinecam;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Sequence")
-		TWeakObjectPtr<class AActor> LookAtActor;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Sequence")
+	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
 		TWeakObjectPtr<class AActor> CachedLastSpeaker;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
+		TWeakObjectPtr<class UDialogCameraShot> CachedLastShot;
+		
 
 
 public:
@@ -114,13 +119,13 @@ public:
 	void BeginNode(UDialogBuilderNode* InNode, bool bLaunchEventOnLoad = false);
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
-	virtual void BeginDialogShot(class UDialogBuilderNode_DialogLine* InDialogLine);
+	virtual void BeginDialogLine(class UDialogBuilderNode_DialogLine* InDialogLine);
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
-	virtual void BeginSelectionShot(class UDialogBuilderNode_DialogLine* InDialogLine);
+	virtual void BeginChoiceSelection(class UDialogBuilderNode_DialogLine* InDialogLine);
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
-	virtual void PlayDialogShot(class UDialogCameraShot* InDialogShot, AActor* InSpeaker, TArray<AActor*> InListeners, const bool bOverrideShot = false);
+	virtual void PlayDialogShot(class UDialogCameraShot* InDialogShot, AActor* InSpeaker, TArray<AActor*> InListeners);
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 	virtual void PlayDialogSequence(const FDialogLineData& InDialogLineData);
@@ -149,7 +154,7 @@ public:
 		virtual void EndDialog();
 
 	UFUNCTION()
-	virtual FVector GetSpeakerHeadLocation(class AActor* Actor) const;
+	virtual FVector GetSpeakerBoneLocation(class AActor* Actor) const;
 
 protected:
 	virtual AActor* RetrieveParticipant(const FParticipantInfo& Info);

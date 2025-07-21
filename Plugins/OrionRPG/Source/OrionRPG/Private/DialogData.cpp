@@ -10,3 +10,4 @@
 //Gameplay Tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Dialog, "Dialog");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Dialog_Participant, "Dialog.Participant");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Dialog_Participant_Player, "Dialog.Participant.Player");

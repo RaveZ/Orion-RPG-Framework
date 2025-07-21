@@ -23,6 +23,7 @@ class IPropertyHandle;
 class STextEntryPopup;
 class SWidget;
 class UDialogBuilderNode_DialogLine;
+class UDialogBuilderNode_PlayerLine;
 class UBlendProfile;
 class UEdGraph;
 
@@ -47,5 +48,6 @@ protected:
 
 private:
 	TWeakObjectPtr<UDialogBuilderNode_DialogLine> DialogLineNode;
+	TWeakObjectPtr<UDialogBuilderNode_DialogLine> PlayerLineNode;
 	TSharedPtr<STextEntryPopup> TextEntryWidget;
 };

@@ -8,6 +8,7 @@
 UDialogBuilderSetting::UDialogBuilderSetting()
 {
 	DialogLineNodeColor = FLinearColor(0.15f, 0.15f, 0.15f);
+	PlayerLineNodeColor = FLinearColor(.06f, .135f, .175f);
 	RerouteNodeColor = FLinearColor(.063f, .096f, .1875f);
 	EndDialogNodeColor = FLinearColor(.34f, .024f, .024f);
 	PlayerOptionNodeColor = FLinearColor(.123f, .274f, .34f);

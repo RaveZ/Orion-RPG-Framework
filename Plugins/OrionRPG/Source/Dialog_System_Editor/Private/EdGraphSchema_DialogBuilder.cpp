@@ -12,8 +12,9 @@
 #include "DialogBuilderEditorUtils.h"
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderEdNode_DialogLine.h"
+#include "DialogBuilderEdNode_PlayerLine.h"
 #include "DialogBuilderEdNode_RerouteNode.h"
-#include "DialogBuilderEdNode_PlayerOption.h"
+#include "DialogBuilderEdNode_PlayerChoice.h"
 #include "DialogBuilderEdNode_Edge.h"
 #include "DialogBuilderEdNode_Root.h"
 #include "DialogBuilderEdSubNode_Decorator.h"
@@ -23,8 +24,9 @@
 #include "DialogBuilderEdge.h"
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderNode_RerouteNode.h"
-#include "DialogBuilderNode_PlayerOption.h"
+#include "DialogBuilderNode_PlayerChoice.h"
 #include "DialogBuilderNode_DialogLine.h"
+#include "DialogBuilderNode_PlayerLine.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 
@@ -261,17 +263,19 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 
 	const bool bNoParent = (ContextMenuBuilder.FromPin == NULL);
 	const bool bNoChild = ContextMenuBuilder.FromPin && ContextMenuBuilder.FromPin->LinkedTo.IsEmpty();
-	const bool bChildIsDialogLine = ContextMenuBuilder.FromPin && ContextMenuBuilder.FromPin->LinkedTo.IsValidIndex(0) && Cast<UDialogBuilderEdNode_DialogLine>(ContextMenuBuilder.FromPin->LinkedTo[0]->GetOwningNode());
-	const bool bChildIsPlayerOption = ContextMenuBuilder.FromPin && ContextMenuBuilder.FromPin->LinkedTo.IsValidIndex(0) && Cast<UDialogBuilderEdNode_PlayerOption>(ContextMenuBuilder.FromPin->LinkedTo[0]->GetOwningNode());
-	const bool bAllowDialogLine = bNoParent || bNoChild || bChildIsDialogLine;
+	const bool bChildIsRerouteNode = ContextMenuBuilder.FromPin && ContextMenuBuilder.FromPin->LinkedTo.IsValidIndex(0) && Cast<UDialogBuilderEdNode_RerouteNode>(ContextMenuBuilder.FromPin->LinkedTo[0]->GetOwningNode());
+	const bool bChildIsDialogLine = ContextMenuBuilder.FromPin && ContextMenuBuilder.FromPin->LinkedTo.IsValidIndex(0) && (Cast<UDialogBuilderEdNode_DialogLine>(ContextMenuBuilder.FromPin->LinkedTo[0]->GetOwningNode()) || Cast<UDialogBuilderEdNode_PlayerLine>(ContextMenuBuilder.FromPin->LinkedTo[0]->GetOwningNode()));
+	const bool bChildIsPlayerChoice = ContextMenuBuilder.FromPin && ContextMenuBuilder.FromPin->LinkedTo.IsValidIndex(0) && Cast<UDialogBuilderEdNode_PlayerChoice>(ContextMenuBuilder.FromPin->LinkedTo[0]->GetOwningNode());
+	const bool bAllowDialogLine = bNoParent || bNoChild || bChildIsDialogLine || bChildIsRerouteNode;
 	const bool bAllowRerouteNode = bNoParent || bNoChild;
-	const bool bAllowPlayerOption = bNoParent || bNoChild || bChildIsPlayerOption;
+	const bool bAllowPlayerChoice = bNoParent || bNoChild || bChildIsPlayerChoice;
 
 
 	//DialogLine
 	if (bAllowDialogLine)
 	{
-		FCategorizedGraphActionListBuilder DialogLineBuilder(TEXT("Speaker"));
+		FCategorizedGraphActionListBuilder DialogLineBuilder(TEXT("Dialog Line"));
+
 		UClass* DialogLineEdNodeClass = UDialogBuilderEdNode_DialogLine::StaticClass();
 		UClass* DialogLineNodeClass = UDialogBuilderNode_DialogLine::StaticClass();
 
@@ -283,9 +287,22 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 		OpNode->NodeInstance = NewObject<UObject>(DialogGraph, DialogLineNodeClass);
 		OpNode->NodeInstance->SetFlags(RF_Transactional);
 
+
+		UClass* PlayerLineEdNodeClass = UDialogBuilderEdNode_PlayerLine::StaticClass();
+		UClass* PlayerLineNodeClass = UDialogBuilderNode_PlayerLine::StaticClass();
+
+		AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(DialogLineBuilder, FText::GetEmpty(), LOCTEXT("DialogSystemGraphNodeAction", "Add Player Line..."), LOCTEXT("DialogSystemGraphNodeTooltip", "Create Player Line Node."));
+		OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, PlayerLineEdNodeClass);
+		FGraphNodeClassData PlayerLineClassData = FGraphNodeClassData(PlayerLineNodeClass, "PlayerLineClassData");
+		OpNode->ClassData = PlayerLineClassData;
+		AddOpAction->NodeTemplate = OpNode;
+		OpNode->NodeInstance = NewObject<UObject>(DialogGraph, PlayerLineNodeClass);
+		OpNode->NodeInstance->SetFlags(RF_Transactional);
+
 		ContextMenuBuilder.Append(DialogLineBuilder);
 	}
 	
+
 
 	FCategorizedGraphActionListBuilder RerouteNodeBuilder(TEXT("Reroute Node"));
 	if (bAllowRerouteNode)
@@ -304,22 +321,22 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 	}
 	
 
-	//Player Options
-	FCategorizedGraphActionListBuilder PlayerOptionsBuilder(TEXT("Player Options"));
-	if (bAllowPlayerOption)
+	//Player Choice
+	FCategorizedGraphActionListBuilder PlayerChoiceBuilder(TEXT("Player Choice"));
+	if (bAllowPlayerChoice)
 	{
-		//Player Option
-		UClass* PlayerOptionEdNodeClass = UDialogBuilderEdNode_PlayerOption::StaticClass();
-		UClass* PlayerOptionNodeClass = UDialogBuilderNode_PlayerOption::StaticClass();
+		//Player Choice
+		UClass* PlayerChoiceEdNodeClass = UDialogBuilderEdNode_PlayerChoice::StaticClass();
+		UClass* PlayerChoiceNodeClass = UDialogBuilderNode_PlayerChoice::StaticClass();
 
-		TSharedPtr<FAssetSchemaAction_DialogSystem_NewNode> AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(PlayerOptionsBuilder, FText::GetEmpty(), LOCTEXT("DialogSystemGraphNodeAction", "Add Player Option..."), LOCTEXT("DialogSystemGraphNodeTooltip", "Add Player Option..."));
-		UDialogBuilderEdNode* OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, PlayerOptionEdNodeClass);
-		FGraphNodeClassData PlayerOptionClassData = FGraphNodeClassData(PlayerOptionNodeClass, "PlayerOptionClassData");
-		OpNode->ClassData = PlayerOptionClassData;
+		TSharedPtr<FAssetSchemaAction_DialogSystem_NewNode> AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(PlayerChoiceBuilder, FText::GetEmpty(), LOCTEXT("DialogSystemGraphNodeAction", "Add Player Choice..."), LOCTEXT("DialogSystemGraphNodeTooltip", "Add Player Choice..."));
+		UDialogBuilderEdNode* OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, PlayerChoiceEdNodeClass);
+		FGraphNodeClassData PlayerChoiceClassData = FGraphNodeClassData(PlayerChoiceNodeClass, "PlayerChoiceClassData");
+		OpNode->ClassData = PlayerChoiceClassData;
 		AddOpAction->NodeTemplate = OpNode;
-		OpNode->NodeInstance = NewObject<UObject>(DialogGraph, PlayerOptionNodeClass);
+		OpNode->NodeInstance = NewObject<UObject>(DialogGraph, PlayerChoiceNodeClass);
 		OpNode->NodeInstance->SetFlags(RF_Transactional);
-		ContextMenuBuilder.Append(PlayerOptionsBuilder);
+		ContextMenuBuilder.Append(PlayerChoiceBuilder);
 	}
 
 	
@@ -450,16 +467,16 @@ const FPinConnectionResponse UEdGraphSchema_DialogBuilder::CanCreateConnection(c
 	UDialogBuilderEdNode* EdNode_In = Cast<UDialogBuilderEdNode>(In->GetOwningNode());
 
 	const bool bNodeAHasNoChild = A && A->LinkedTo.IsEmpty();
-	const bool bNodeAIsDialogLine = Cast<UDialogBuilderEdNode_DialogLine>(A->GetOwningNode()) ? true : false;
+	const bool bNodeAIsDialogLine = Cast<UDialogBuilderEdNode_DialogLine>(A->GetOwningNode()) || Cast<UDialogBuilderEdNode_PlayerLine>(A->GetOwningNode()) ? true : false;
 	const bool bNodeAIsRerouteNode = Cast<UDialogBuilderEdNode_RerouteNode>(A->GetOwningNode()) ? true : false;
-	const bool bNodeAIsPlayerOption = Cast<UDialogBuilderEdNode_PlayerOption>(A->GetOwningNode()) ? true : false;
+	const bool bNodeAIsPlayerOption = Cast<UDialogBuilderEdNode_PlayerChoice>(A->GetOwningNode()) ? true : false;
 	const bool bNodeAChildrenHasDialogLine = A && A->LinkedTo.IsValidIndex(0) && Cast<UDialogBuilderEdNode_DialogLine>(A->LinkedTo[0]->GetOwningNode());
-	const bool bNodeAChildrenHasPlayerOption = A && A->LinkedTo.IsValidIndex(0) && Cast<UDialogBuilderEdNode_PlayerOption>(A->LinkedTo[0]->GetOwningNode());
+	const bool bNodeAChildrenHasPlayerOption = A && A->LinkedTo.IsValidIndex(0) && Cast<UDialogBuilderEdNode_PlayerChoice>(A->LinkedTo[0]->GetOwningNode());
 
 	const bool bNodeBHasNoChild = B && B->LinkedTo.IsEmpty();
-	const bool bNodeBIsDialogLine = Cast<UDialogBuilderEdNode_DialogLine>(B->GetOwningNode()) ? true : false;
+	const bool bNodeBIsDialogLine = Cast<UDialogBuilderEdNode_DialogLine>(B->GetOwningNode()) || Cast<UDialogBuilderEdNode_PlayerLine>(B->GetOwningNode()) ? true : false;
 	const bool bNodeBIsRerouteNode = Cast<UDialogBuilderEdNode_RerouteNode>(B->GetOwningNode()) ? true : false;
-	const bool bNodeBIsPlayerOption = Cast<UDialogBuilderEdNode_PlayerOption>(B->GetOwningNode()) ? true : false;
+	const bool bNodeBIsPlayerOption = Cast<UDialogBuilderEdNode_PlayerChoice>(B->GetOwningNode()) ? true : false;
 
 
 	if (EdNode_Out == nullptr || EdNode_In == nullptr)
@@ -538,7 +555,7 @@ const FPinConnectionResponse UEdGraphSchema_DialogBuilder::CanMergeNodes(const U
 	const bool bNodeAIsDecorator = NodeA->IsA(UDialogBuilderEdSubNode_Decorator::StaticClass());
 	const bool bNodeAIsEvent = NodeA->IsA(UDialogBuilderEdSubNode_Event::StaticClass());
 	const bool bNodeBIsDialogLine = NodeB->IsA(UDialogBuilderEdNode_DialogLine::StaticClass());
-	const bool bNodeBIsPlayerOption = NodeB->IsA(UDialogBuilderEdNode_PlayerOption::StaticClass());
+	const bool bNodeBIsPlayerOption = NodeB->IsA(UDialogBuilderEdNode_PlayerChoice::StaticClass());
 	const bool bNodeBIsDecorator = NodeB->IsA(UDialogBuilderEdSubNode_Decorator::StaticClass());
 	const bool bNodeBIsEvent = NodeB->IsA(UDialogBuilderEdSubNode_Event::StaticClass());
 

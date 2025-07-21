@@ -2,7 +2,7 @@
 
 
 #include "DialogBuilderNode_DialogLine.h"
-#include "DialogBuilderNode_PlayerOption.h"
+#include "DialogBuilderNode_PlayerChoice.h"
 #include "Kismet2/Kismet2NameValidators.h"
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderSetting.h"
@@ -25,7 +25,7 @@ UDialogBuilderNode_DialogLine::UDialogBuilderNode_DialogLine()
 void UDialogBuilderNode_DialogLine::BeginNode()
 {
 	Super::BeginNode();
-	GetOwningDialogGraph()->BeginDialogShot(this);
+	GetOwningDialogGraph()->BeginDialogLine(this);
 	GetDialogComponent()->OnDialogUpdated.Broadcast(this);
 }
 
@@ -76,20 +76,20 @@ void UDialogBuilderNode_DialogLine::EvaluateNextNode()
 bool UDialogBuilderNode_DialogLine::EvaluateAnyPlayerOptions()
 {
 	//Check for any player options
-	if (ChildrenNodes.IsValidIndex(0) && ChildrenNodes[0].IsA(UDialogBuilderNode_PlayerOption::StaticClass()))
+	if (ChildrenNodes.IsValidIndex(0) && ChildrenNodes[0].IsA(UDialogBuilderNode_PlayerChoice::StaticClass()))
 	{
-		TArray<UDialogBuilderNode_PlayerOption*> PlayerOptions;
+		TArray<UDialogBuilderNode_PlayerChoice*> PlayerOptions;
 		for (auto& ChildNode : ChildrenNodes)
 		{
-			if (UDialogBuilderNode_PlayerOption* PlayerOption = Cast<UDialogBuilderNode_PlayerOption>(ChildNode))
+			if (UDialogBuilderNode_PlayerChoice* PlayerOption = Cast<UDialogBuilderNode_PlayerChoice>(ChildNode))
 			{
 				PlayerOptions.AddUnique(PlayerOption);
 			}
 		}
 		GetOwningDialogGraph()->LatestRootSelectionNode = this;
 		GetOwningDialogGraph()->bOptionSelectionActive = true;
-		GetOwningDialogGraph()->BeginSelectionShot(this);
-		GetDialogComponent()->OnEnterOptionSelection.Broadcast(PlayerOptions);
+		GetOwningDialogGraph()->BeginChoiceSelection(this);
+		GetDialogComponent()->OnEnterChoiceSelection.Broadcast(PlayerOptions);
 		return true;
 	}
 	return false;

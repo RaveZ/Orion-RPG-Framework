@@ -2,7 +2,7 @@
 
 
 #include "DialogBuilderEdNode_DialogLine.h"
-#include "DialogBuilderEdNode_PlayerOption.h"
+#include "DialogBuilderEdNode_PlayerChoice.h"
 #include "DialogBuilderNode_DialogLine.h"
 #include "DialogBuilderSetting.h"
 #include "DialogBuilderNode.h"
@@ -97,7 +97,7 @@ void UDialogBuilderEdNode_DialogLine::NodeConnectionListChanged()
 		if(Pin->LinkedTo.IsValidIndex(0))
 		{
 			UDialogBuilderNode* ChildNode = nullptr;
-			if (UDialogBuilderEdNode_PlayerOption* PlayerOptionEdNode_Child = Cast<UDialogBuilderEdNode_PlayerOption>(Pin->LinkedTo[0]->GetOwningNode()))
+			if (UDialogBuilderEdNode_PlayerChoice* PlayerOptionEdNode_Child = Cast<UDialogBuilderEdNode_PlayerChoice>(Pin->LinkedTo[0]->GetOwningNode()))
 			{
 				DialogLineNode->bIsSelector = true;
 				return;
