@@ -19,6 +19,8 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Dialog);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Dialog_Participant);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Dialog_Participant_Player);
 
+
+
 UENUM(BlueprintType)
 enum class ESelectionTimeLimit : uint8
 {
@@ -42,6 +44,13 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (MultiLine = true, NoResetToDefault, DisplayPriority = -1))
 	FText Line;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	class USoundBase* DialogSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Animation"))
+	class UAnimMontage* DialogMontage;
+
+
 	/**
 	* Select ypur shot method to override.
 	* instead of generated shot, you can play sequence instead.
@@ -57,6 +66,7 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Shot Override", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_GeneratedCameraShot", HideEditConditionToggle, EditConditionHides))
 	TObjectPtr<UDialogCameraShot> ShotOverride;
+
 
 	FDialogLineData()
 		: Line(FText::FromString("None"))

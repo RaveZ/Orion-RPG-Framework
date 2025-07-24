@@ -32,6 +32,9 @@ public:
 	FName NodeID;
 
 	UPROPERTY(SaveGame)
+	bool bNodeActive = false;
+
+	UPROPERTY(SaveGame)
 	int CurrentProgress = 0;
 
 	UPROPERTY(SaveGame)

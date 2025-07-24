@@ -114,18 +114,7 @@ void UDialogBuilderNode::EvaluateNextNode()
 	//if none of the children succeeds, stop evaluate until the next dialog update
 	for (auto& ChildNode : ChildrenNodes)
 	{
-		//Evaluate Decorator
-		int SumConditionMet = 0;
-		for (auto& Condition : ChildNode->Decorators)
-		{
-			bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
-			if (bConditionMet)
-			{
-				SumConditionMet++;
-			}
-		}
-
-		if (SumConditionMet >= ChildNode->Decorators.Num())
+		if (ChildNode->DecoratorConditionMet())
 		{
 			NextNode = ChildNode;
 			break;
@@ -148,7 +137,20 @@ void UDialogBuilderNode::EvaluateNextNode()
 	//Going to next node will begin when all End Events are finished
 }
 
-
+bool UDialogBuilderNode::DecoratorConditionMet()
+{
+	int SumConditionMet = 0;
+	//Evaluate Decorator
+	for (auto& Condition : Decorators)
+	{
+		bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
+		if (bConditionMet)
+		{
+			SumConditionMet++;
+		}
+	}
+	return SumConditionMet >= Decorators.Num();
+}
 
 
 void UDialogBuilderNode::InitializeFromAsset(UDialogBuilderGraph& OwningDialogGraph)

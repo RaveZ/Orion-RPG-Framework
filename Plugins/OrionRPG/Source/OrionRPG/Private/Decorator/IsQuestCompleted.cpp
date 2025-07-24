@@ -18,10 +18,7 @@ bool UIsQuestCompleted::PerformConditionCheck_Implementation(AController* OwnerC
     {
         if (UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld()))
         {
-            if (UQuest* FoundedQuest = QuestComp->QuestMap.FindRef(QuestID))
-            {
-                return QuestComp->IsQuestAtState(QuestTag, EQuestState::E_Complete);
-            }
+            return QuestComp->IsQuestAtState(QuestTag, EQuestState::E_Complete);
         }
     }
     

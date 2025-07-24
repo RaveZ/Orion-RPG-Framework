@@ -18,6 +18,14 @@ class ORIONRPG_API UDialogBuilderSetting : public UObject
 
 public:
 
+	/**Determine how long the line should be displayed*/
+
+	UPROPERTY(EditAnywhere, config, Category = "Dialog Setting")
+		float MinDialogLineDuration;
+
+	UPROPERTY(EditAnywhere, config, Category = "Dialog Setting")
+		float DialogLineWordsPerSecond;
+
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor DialogLineNodeColor;
 

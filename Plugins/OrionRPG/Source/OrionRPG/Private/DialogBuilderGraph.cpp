@@ -7,6 +7,7 @@
 #include "DialogBuilderEdge.h"
 #include "DialogCameraShot.h"
 #include "DialogBuilderNode_Root.h"
+#include "DialogBuilderSetting.h"
 #include "LevelSequencePlayer.h"
 #include "LevelSequenceActor.h"
 #include "DialogBuilderNode_RerouteNode.h"
@@ -16,6 +17,8 @@
 #include <CineCameraActor.h>
 #include <DefaultLevelSequenceInstanceData.h>
 #include <CineCameraComponent.h>
+#include "Sound/SoundBase.h"
+#include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderGraph"
@@ -23,7 +26,9 @@
 
 UDialogBuilderGraph::UDialogBuilderGraph()
 {
+	bAutoRotateParticipant = false;
 	DefaultBoneToTrack = FName("head");
+	bAutoAdvanceDialogLine = true;
 }
 
 UDialogBuilderGraph::~UDialogBuilderGraph()
@@ -137,14 +142,28 @@ void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialo
 	if (InDialogLine == nullptr)
 		return;
 
-	UDialogCameraShot* DialogShot = nullptr;
-	AActor* Speaker = nullptr;
-	TArray<AActor*> Listeners;
+	if (GetWorld() && bAutoAdvanceDialogLine)
+	{
+		FString LineString = InDialogLine->DialogLineData.Line.ToString();
 
+		// Split the string into words (splits on whitespace)
+		TArray<FString> Words;
+		LineString.ParseIntoArrayWS(Words);
+		float DialogLineDuration = Words.Num() / GetDefault<UDialogBuilderSetting>()->DialogLineWordsPerSecond;
+		DialogLineDuration = FMath::Max(GetDefault<UDialogBuilderSetting>()->MinDialogLineDuration, DialogLineDuration);
+		GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, this, &ThisClass::AdvanceDialogLine, DialogLineDuration, false);
+	}
+
+	UDialogCameraShot* DialogShot = nullptr;
+	AActor* Speaker = CachedParticipants.FindRef(InDialogLine->ParticipantInfo.ParticipantTag);
+	AActor* Listener = CachedParticipants.FindRef(InDialogLine->ListenerTag);
+
+	ApplyRotationSetting(InDialogLine, Speaker, Listener);
+
+	//Determine the shot
 	switch (InDialogLine->DialogLineData.DialogCameraMode)
 	{
 		case EDialogCameraMode::E_GeneratedCameraShot:
-			Speaker = CachedParticipants.FindRef(InDialogLine->ParticipantInfo.ParticipantTag);
 			DialogShot = InDialogLine->ParticipantInfo.DefaultShot;
 			if (!DialogShot || InDialogLine->DialogLineData.ShotOverride)
 			{
@@ -152,19 +171,90 @@ void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialo
 				DialogShot = InDialogLine->DialogLineData.ShotOverride;
 			}
 
-			if (DialogShot)
-			{
-				PlayDialogShot(DialogShot, Speaker, Listeners);
-			}
+			PlayDialogShot(DialogShot, Speaker);
+			
 			break;
 		case EDialogCameraMode::E_Sequence:
 			
 			PlayDialogSequence(InDialogLine->DialogLineData);
 			break;
 	}
+
+	//Dialog Animation 
+	if (Speaker && InDialogLine->DialogLineData.DialogMontage)
+	{
+		UActorComponent* Mesh = Speaker->GetComponentByClass(USkeletalMeshComponent::StaticClass());
+		if (USkeletalMeshComponent* BodyMesh = Cast<USkeletalMeshComponent>(Mesh))
+		{
+			if (BodyMesh->GetAnimInstance())
+			{
+				BodyMesh->GetAnimInstance()->Montage_Play(InDialogLine->DialogLineData.DialogMontage);
+			}
+		}
+	}
+
+	//Dialog Sound
+	if (InDialogLine->DialogLineData.DialogSound)
+	{
+		if (Speaker)
+		{
+			DialogAudio = UGameplayStatics::SpawnSoundAttached(InDialogLine->DialogLineData.DialogSound, Speaker->GetRootComponent(), NAME_None, FVector::ZeroVector, EAttachLocation::SnapToTarget, false, 1.f, 1.f, 0.f, DialogSoundAttenuation);
+		}
+		else 
+		{
+			DialogAudio = UGameplayStatics::SpawnSound2D(DialogComponent, InDialogLine->DialogLineData.DialogSound);
+		}
+
+		
+	}
+
+	
 	CachedLastSpeaker = Speaker;
 	CachedLastShot = DialogShot;
 	
+}
+
+void UDialogBuilderGraph::ApplyRotationSetting(UDialogBuilderNode_DialogLine* InDialogLine, AActor* Speaker, AActor* Listener)
+{
+	//Rotation Setting
+	if (Speaker && bAutoRotateParticipant)
+	{
+		for (auto& Participant : CachedParticipants)
+		{
+			if (Participant.Value && Participant.Value->IsValidLowLevel())
+			{
+				if (Participant.Value == Speaker)
+					continue;
+				FVector ToSpeaker = Speaker->GetActorLocation() - Participant.Value->GetActorLocation();
+				ToSpeaker.Z = 0; // Ignore pitch for yaw-only rotation
+				if (!ToSpeaker.IsNearlyZero())
+				{
+					FRotator LookAtRotation = ToSpeaker.Rotation();
+					Participant.Value->SetActorRotation(LookAtRotation);
+				}
+			}
+		}
+	}
+
+	if (Speaker && Listener && InDialogLine->bRotateToListener)
+	{
+		FVector ToListener = Listener->GetActorLocation() - Speaker->GetActorLocation();
+		ToListener.Z = 0; // Ignore pitch for yaw-only rotation
+		if (!ToListener.IsNearlyZero())
+		{
+			FRotator LookAtRotation = ToListener.Rotation();
+			Speaker->SetActorRotation(LookAtRotation);
+		}
+
+		FVector ToSpeaker = Speaker->GetActorLocation() - Listener->GetActorLocation();
+		ToSpeaker.Z = 0; // Ignore pitch for yaw-only rotation
+		if (!ToSpeaker.IsNearlyZero())
+		{
+			FRotator LookAtRotation = ToSpeaker.Rotation();
+			Listener->SetActorRotation(LookAtRotation);
+		}
+
+	}
 }
 
 void UDialogBuilderGraph::BeginChoiceSelection(UDialogBuilderNode_DialogLine* InDialogLine)
@@ -172,24 +262,28 @@ void UDialogBuilderGraph::BeginChoiceSelection(UDialogBuilderNode_DialogLine* In
 	if (InDialogLine == nullptr)
 		return;
 
-	UDialogCameraShot* DialogShot = DefaultSelectingOptionShot;
+	UDialogCameraShot* DialogShot = DefaultSelectingChoiceShot;
 	AActor* Speaker = CachedParticipants.FindRef(TAG_Dialog_Participant_Player);
 	Speaker = Speaker ? Speaker : GetOwningPawn();
-	TArray<AActor*> Listeners;
-	if (!DialogShot || InDialogLine->SelectingOptionShotOverride)
+	if (!DialogShot || InDialogLine->SelectingChoiceShotOverride)
 	{
 		//if default shot not valid, try use override shot data instead
-		DialogShot = InDialogLine->SelectingOptionShotOverride;
+		DialogShot = InDialogLine->SelectingChoiceShotOverride;
 	}
 
-	PlayDialogShot(DialogShot, Speaker, Listeners);
+	PlayDialogShot(DialogShot, Speaker);
 
 	CachedLastSpeaker = Speaker;
 	CachedLastShot = DialogShot;
 }
 
-void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot, AActor* InSpeaker, TArray<AActor*> InListeners)
+void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot, AActor* InSpeaker)
 {
+	if(!InDialogShot)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PlayDialogShot: Invalid shot or speaker for Dialog ID: %s"), *ID.ToString());
+		return;
+	}
 	//Shot method changed, make sure sequencer is destroyed
 	if (DialogSequencer)
 	{
@@ -209,7 +303,7 @@ void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot, AActor
 		Cinecam = NewCinecam;
 	}
 
-	InDialogShot->Play(this, InSpeaker, InListeners);
+	InDialogShot->Play(this, InSpeaker);
 }
 
 void UDialogBuilderGraph::PlayDialogSequence(const FDialogLineData& InDialogLineData)
@@ -247,7 +341,6 @@ void UDialogBuilderGraph::PlayDialogSequence(const FDialogLineData& InDialogLine
 			}
 			SP->Play();
 
-			SP->OnFinished.AddDynamic(this, &ThisClass::AdvanceDialogLine);
 
 		}
 	}
@@ -350,9 +443,40 @@ UDialogComponent* UDialogBuilderGraph::GetDialogComponent()
 
 void UDialogBuilderGraph::AdvanceDialogLine()
 {
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(DialogLineTimer);
+	}
+	StopCurrentDialogLine();
 	if (CurrentNode)
 	{
 		CurrentNode->EvaluateNextNode();
+	}
+}
+
+void UDialogBuilderGraph::StopCurrentDialogLine()
+{
+	if (DialogAudio)
+	{
+		//Remove any previously added bindings
+		DialogAudio->OnAudioFinished.RemoveAll(this);
+		DialogAudio->Stop();
+		DialogAudio->DestroyComponent();
+	}
+
+	UDialogBuilderNode_DialogLine* CurrentDialogLine = Cast<UDialogBuilderNode_DialogLine>(CurrentNode);
+	if (CurrentDialogLine && CurrentDialogLine->DialogLineData.DialogMontage && CachedLastSpeaker.IsValid())
+	{
+		UActorComponent* Mesh = CachedLastSpeaker->GetComponentByClass(USkeletalMeshComponent::StaticClass());
+		if (USkeletalMeshComponent* BodyMesh = Cast<USkeletalMeshComponent>(Mesh))
+		{
+			if (BodyMesh->GetAnimInstance())
+			{
+				const float BlendOutTime = CurrentDialogLine->DialogLineData.DialogMontage->BlendOut.GetBlendTime();
+				BodyMesh->GetAnimInstance()->Montage_Stop(BlendOutTime, CurrentDialogLine->DialogLineData.DialogMontage);
+			}
+		}
+
 	}
 }
 

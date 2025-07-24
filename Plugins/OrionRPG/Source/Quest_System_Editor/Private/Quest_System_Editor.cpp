@@ -133,7 +133,7 @@ void FQuest_System_EditorModule::RegisterSettings()
 	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
 		// Register the settings
-		SettingsModule->RegisterSettings("Project", "Plugins", "Quest Builder - Editor",
+		SettingsModule->RegisterSettings("Project", "Plugins", "OrionRPG - Quest",
 			LOCTEXT("QuestBuilderSettingsName", "Quest Builder - Editor"),
 			LOCTEXT("QuestBuilderSettingsDescription", "Configuration Settings for the Quest Builder Editor"),
 			GetMutableDefault<UQuestBuilderSetting>()

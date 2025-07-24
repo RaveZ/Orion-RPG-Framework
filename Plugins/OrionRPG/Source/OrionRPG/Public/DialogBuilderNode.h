@@ -83,6 +83,9 @@ public:
 	virtual void EvaluateNextNode();
 
 	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")
+	bool DecoratorConditionMet();
+
+	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")
 	bool IsLeafNode() const;
 	
 	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")

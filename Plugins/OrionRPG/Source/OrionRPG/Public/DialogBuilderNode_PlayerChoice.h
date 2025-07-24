@@ -15,6 +15,7 @@ public:
     UDialogBuilderNode_PlayerChoice();
     virtual void BeginNode() override;
 
+
     UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Detail")
     FText ChoiceText;
 #if WITH_EDITOR

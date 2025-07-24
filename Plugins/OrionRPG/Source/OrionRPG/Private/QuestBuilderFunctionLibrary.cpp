@@ -11,6 +11,9 @@
 #include "QuestData.h"
 #include "QuestComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
+#include "Kismet/KismetMathLibrary.h"
+#include "Math/Vector.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 
 UQuestComponent* UQuestBuilderFunctionLibrary::GetQuestComponent(const UObject* WorldContextObject)
@@ -136,3 +139,4 @@ void UQuestBuilderFunctionLibrary::AutoNavigateQuest(const UObject* WorldContext
         QuestComp->AutoNavigateQuest();
     }
 }
+

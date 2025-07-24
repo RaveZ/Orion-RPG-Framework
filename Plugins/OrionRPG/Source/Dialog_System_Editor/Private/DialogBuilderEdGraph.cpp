@@ -2,6 +2,8 @@
 
 
 #include "DialogBuilderEdGraph.h"
+#include "NativeGameplayTags.h"
+#include "DialogData.h"
 #include "DialogBuilderEdNode_Edge.h"
 #include "DialogBuilderEdNode_Root.h"
 #include "DialogBuilderEdNode.h"

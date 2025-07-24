@@ -47,17 +47,32 @@ public:
 		TObjectPtr<class UDialogCameraShot> DefaultPlayerShot;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Configuration", meta = (NoResetToDefault))
-		TObjectPtr<class UDialogCameraShot> DefaultSelectingOptionShot;
+		TObjectPtr<class UDialogCameraShot> DefaultSelectingChoiceShot;
 
+	/*
+	* Rotate all participant to whoever is currently speaking
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration")
+		bool bAutoRotateParticipant;
 
-	/**Camera*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
-		TSubclassOf<class UCameraShakeBase> DialogCameraShake;
+	/**Auto advance dialog automatically when current dialog line has finished*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration")
+		bool bAutoAdvanceDialogLine;
+
 	/*
 	* By default dialog camera will aim at the bone set  in this variable
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration")
 		FName DefaultBoneToTrack;
+
+	/**Camera*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+		TSubclassOf<class UCameraShakeBase> DialogCameraShake;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
+	class USoundAttenuation* DialogSoundAttenuation;
+	
+
 
 	UPROPERTY(BlueprintReadWrite, Category = "DialogBuilderGraph")
 		TObjectPtr<APlayerController> OwningController;
@@ -108,8 +123,11 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
 		TWeakObjectPtr<class UDialogCameraShot> CachedLastShot;
 		
+	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
+		class UAudioComponent* DialogAudio;
 
-
+	protected:
+		FTimerHandle DialogLineTimer;
 public:
 	virtual bool Initialize(UDialogComponent* InitializingComp);
 	virtual void Deinitialize();
@@ -122,10 +140,13 @@ public:
 	virtual void BeginDialogLine(class UDialogBuilderNode_DialogLine* InDialogLine);
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	virtual void ApplyRotationSetting(class UDialogBuilderNode_DialogLine* InDialogLine, AActor* Speaker, AActor* Listener);
+
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 	virtual void BeginChoiceSelection(class UDialogBuilderNode_DialogLine* InDialogLine);
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
-	virtual void PlayDialogShot(class UDialogCameraShot* InDialogShot, AActor* InSpeaker, TArray<AActor*> InListeners);
+	virtual void PlayDialogShot(class UDialogCameraShot* InDialogShot, AActor* InSpeaker);
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 	virtual void PlayDialogSequence(const FDialogLineData& InDialogLineData);
@@ -149,6 +170,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 		virtual void AdvanceDialogLine();
+
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+		virtual void StopCurrentDialogLine();
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 		virtual void EndDialog();

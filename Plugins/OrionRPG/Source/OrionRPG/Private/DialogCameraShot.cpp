@@ -10,8 +10,10 @@ UDialogCameraShot::UDialogCameraShot()
 	bUsePostProcess = false;
 	CameraDistance = 100.f;
 	FocalLengthOverride = 35.0f;
-	ApertureOverride = 2.8f;
+	ApertureOverride =  2.8f;
 	ConeAngle = FVector2f(30.f, 3.f);
+	bOverride_CustomNearClippingPlane = true;
+	CustomNearClippingPlane = 15.f;
 
 	CropSettings.AspectRatio = 2.39f;
 
@@ -27,25 +29,51 @@ UDialogCameraShot::UDialogCameraShot()
 	LensSettings.DiaphragmBladeCount = 7;
 }
 
-void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker, TArray<AActor*> InListeners)
+void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker)
 {
 	if (!GetWorld() ||
         !InDialog)
 		return;
 
+	K2_PreCameraSetup();
+
 	ACineCameraActor* Cinecam = InDialog->Cinecam.Get();
 
+	//Define Track & Focus rules
+	bool bTrackEnabled = CameraTrackingRule == EDialogCameraTrackingRule::E_Disabled ? false : true;
+	LookAtActor = CameraTrackingRule == EDialogCameraTrackingRule::E_OtherParticipant ? InDialog->CachedParticipants.FindRef(ParticipantToTrack).Get()
+        : InSpeaker;
+	
+	FocusActor = CameraFocusRule == EDialogCameraFocusRule::E_TrackedActor ? LookAtActor
+		: CameraFocusRule == EDialogCameraFocusRule::E_Speaker ? InSpeaker 
+		: CameraFocusRule == EDialogCameraFocusRule::E_OtherParticipant ? InDialog->CachedParticipants.FindRef(ParticipantToFocus).Get()
+		: nullptr;
+
 	//Set camera setting
-	if (UCineCameraComponent* CinecamComp = InDialog->Cinecam->GetCineCameraComponent())
+	if (UCineCameraComponent* CinecamComp = Cinecam->GetCineCameraComponent())
 	{
 		CinecamComp->CropSettings = CropSettings;
 		CinecamComp->SetCurrentFocalLength(FocalLengthOverride);
 		CinecamComp->SetCurrentAperture(ApertureOverride);
 		CinecamComp->SetFilmback(Filmback);
 		CinecamComp->SetLensSettings(LensSettings);
+		CinecamComp->bOverride_CustomNearClippingPlane = bOverride_CustomNearClippingPlane;
+		CinecamComp->CustomNearClippingPlane = CustomNearClippingPlane;
 		if (bUsePostProcess)
 		{
 			CinecamComp->PostProcessSettings = PostProcessSettings;
+		}
+
+
+		if (FocusActor.IsValid())
+		{
+			CinecamComp->FocusSettings.FocusMethod = ECameraFocusMethod::Tracking;
+			CinecamComp->FocusSettings.TrackingFocusSettings.RelativeOffset = FocusRelativeOffset;
+			CinecamComp->FocusSettings.TrackingFocusSettings.ActorToTrack = FocusActor.Get();
+		}
+		else
+		{
+			CinecamComp->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
 		}
 	}
 
@@ -56,20 +84,18 @@ void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker, T
 		PC->SetViewTarget(const_cast<ACineCameraActor*>(Cinecam));
 	}
 
-    //TODO : Determine lookatactor, meanwhile only speaker is the lookat actor
-    LookAtActor = InSpeaker;
 
     // Optionally, focus/track the speaker if LookAtActor is valid
     if (Cinecam && LookAtActor.IsValid())
     {
         // Replace this block in UDialogBuilderGraph::PlayDialogShot
-        const FVector Offset = LookAtActor->GetActorTransform().InverseTransformPosition(InDialog->GetSpeakerBoneLocation(LookAtActor.Get()));
-        const FVector ActorLocation = LookAtActor->GetActorLocation() + Offset;
+        const FVector RelativeOffset = LookAtActor->GetActorTransform().InverseTransformPosition(InDialog->GetSpeakerBoneLocation(LookAtActor.Get()));
+        const FVector ActorLocation = LookAtActor->GetActorLocation() + RelativeOffset;
         const FRotator ActorRotation = LookAtActor->GetActorRotation();
         const FVector ForwardVector = ActorRotation.Vector();
 
 		FVector LocationOverride;
-		FRotator RotationOverride;
+		FRotator RotationOverride = FRotator();
 		float RandomAngleX;
 		float RandomAngleY;
 
@@ -78,7 +104,6 @@ void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker, T
 		switch (CameraAngleRule)
 		{
 			case(EDialogCameraAngleRule::E_RandomCone):
-				// Parameters for cone
 				RandomAngleX = FMath::FRandRange(-ConeAngle.X, ConeAngle.X);
 				RandomAngleY = FMath::FRandRange(-ConeAngle.Y, ConeAngle.Y);
 
@@ -87,12 +112,9 @@ void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker, T
 				FVector ConeDirection = OffsetRot.Vector();
 
 				LocationOverride = ActorLocation + ConeDirection * CameraDistance;
-				RotationOverride = ActorRotation;
+				RotationOverride = (ActorLocation - LocationOverride).Rotation();
 				break;
             case(EDialogCameraAngleRule::E_Custom):
-				// Third-person camera style: position camera behind and slightly above the actor, matching CameraAngle
-				
-
 				// Calculate direction based on angle
 				FRotator CameraRot = FRotator(CameraAngle.Y, ActorRotation.Yaw + CameraAngle.X, 0.f);
 				FVector Direction = CameraRot.Vector();
@@ -106,9 +128,15 @@ void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker, T
         if (InDialog->CachedLastShot != this)
         {
             Cinecam->SetActorLocation(LocationOverride);
+			Cinecam->SetActorRotation(RotationOverride);
             Cinecam->LookatTrackingSettings.bEnableLookAtTracking = true;
             Cinecam->LookatTrackingSettings.ActorToTrack = LookAtActor.Get();
-            Cinecam->LookatTrackingSettings.RelativeOffset = Offset + FVector(10.f, 0.f, 0.f);
+            Cinecam->LookatTrackingSettings.RelativeOffset = RelativeOffset + CameraOffset;
+
+			if(!bTrackEnabled)
+				Cinecam->LookatTrackingSettings.bEnableLookAtTracking = false;
+
+			
         }
 
     }

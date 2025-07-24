@@ -18,7 +18,7 @@ class ORIONRPG_API UQuestBuilderSetting : public UObject
 
 public:
 	//Runtime Config
-	
+
 	//Graph Setting
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor FailedNodeColor;

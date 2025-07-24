@@ -40,4 +40,5 @@ FLinearColor UDialogBuilderEdNode_PlayerChoice::GetBackgroundColor() const
 
 void UDialogBuilderEdNode_PlayerChoice::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
 {
+	AddContextMenuActionsDecorators(Menu, "DialogBuilderEdNode", Context);
 }

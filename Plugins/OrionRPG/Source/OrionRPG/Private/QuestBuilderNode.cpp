@@ -14,6 +14,7 @@
 
 UQuestBuilderNode::UQuestBuilderNode()
 {
+	bNodeActive = false;
 #if WITH_EDITORONLY_DATA
 	CompatibleGraphType = UQuestBuilderGraph::StaticClass();
 
@@ -28,6 +29,7 @@ UQuestBuilderNode::~UQuestBuilderNode()
 
 void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 {
+	bNodeActive = true;
 	StartEventQueue.Empty();
 
 	if (bLaunchEventOnLoad)
@@ -53,6 +55,7 @@ void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 
 	if (!OnAllEndEventFinished.IsBound())
 	{
+		//when all end event is finished, begin going to next node
 		OnAllEndEventFinished.AddLambda(
 			[this]()
 			{
@@ -93,6 +96,7 @@ void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 
 void UQuestBuilderNode::Deinitialize()
 {
+	bNodeActive = false;
 	EndEventQueue.Empty();
 	for (auto& EndEvent : Events)
 	{
@@ -113,7 +117,7 @@ void UQuestBuilderNode::BeginNode()
 
 void UQuestBuilderNode::Reset()
 {
-	//empty in base 
+	bNodeActive = false;
 }
 
 void UQuestBuilderNode::EvaluateNextNode()
@@ -127,17 +131,6 @@ void UQuestBuilderNode::EvaluateNextNode()
 	//f none of the children succeeds, this node will stop branching until next quest update.
 	for (auto& ChildNode : ChildrenNodes)
 	{
-		//Evaluate Decorator
-		int SumConditionMet = 0;
-		for (auto& Condition : ChildNode->Decorators)
-		{
-			bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
-			if (bConditionMet)
-			{
-				SumConditionMet++;
-			}
-		}
-
 		//evaluate if all the parent node is objective and has completed
 		bool bCanBranch = true;
 		for (auto& ParentNode : ChildNode->ParentNodes)
@@ -151,7 +144,7 @@ void UQuestBuilderNode::EvaluateNextNode()
 			}
 		}
 		
-		if (bCanBranch && SumConditionMet >= ChildNode->Decorators.Num())
+		if (bCanBranch && ChildNode->DecoratorConditionMet())
 		{
 			NextNodes.AddUnique(ChildNode);
 		}
@@ -189,10 +182,32 @@ void UQuestBuilderNode::EvaluateNextNode()
                 }
             }
 		}
-
 	}
 
-	//Going to next node will begin when all End Events are finished
+	/**
+	* Going to next node will begin when all End Events are finished.
+	* If node already deinitialized, immediately broadcast OnAllEndEventFinished
+	*/
+	if (!bNodeActive)
+	{
+		OnAllEndEventFinished.Broadcast();
+	}
+
+}
+
+bool UQuestBuilderNode::DecoratorConditionMet()
+{
+	int SumConditionMet = 0;
+	//Evaluate Decorator
+	for (auto& Condition : Decorators)
+	{
+		bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(OwningController, GetOwningPawn()) : Condition->PerformConditionCheck(OwningController, GetOwningPawn());
+		if (bConditionMet)
+		{
+			SumConditionMet++;
+		}
+	}
+	return SumConditionMet >= Decorators.Num();
 }
 
 UQuestBuilderEdge* UQuestBuilderNode::GetEdge(UQuestBuilderNode* ChildNode)

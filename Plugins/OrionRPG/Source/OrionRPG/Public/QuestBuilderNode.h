@@ -82,6 +82,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Quest")
 		TObjectPtr < UQuestComponent> QuestComponent;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Quest")
+		bool bNodeActive;
+
 	/**Called when all Start Node events finished*/
 	FQuestNodeEventFinishedSignature OnAllStartEventFinished;
 	
@@ -95,6 +98,9 @@ public:
 	virtual void Reset();
 	virtual void BeginNode();
 	virtual void EvaluateNextNode();
+
+	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
+	bool DecoratorConditionMet();
 	
 	/** initialize any asset related data */
 	virtual void InitializeFromAsset(UQuestBuilderGraph& OwningQuestGraph, UQuest& OwningQuest);
@@ -133,7 +139,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
 	FString GetShortTag(FGameplayTag Tag, int32 Level = 1) const;
+
 protected:
+
 	TArray<TObjectPtr<UQuestBuilderNode>> NextNodes;
 	TArray<TObjectPtr<UOrionEvent>> StartEventQueue;
 	TArray<TObjectPtr<UOrionEvent>> EndEventQueue;
