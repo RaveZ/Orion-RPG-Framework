@@ -9,6 +9,7 @@
 
 struct FQuestCategory;
 class UQuestSaveObject;
+class UQuestBuilderNode_Objective;
 class UQuest;
 class USaveGame;
 class APlayerController;
@@ -17,6 +18,8 @@ class APlayerController;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FQuestAutoSave);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FQuestUpdated);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestObjectiveBegin, UQuestBuilderNode_Objective*, Objective);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestObjectiveUpdated, UQuest*, Quest);
 
@@ -68,6 +71,9 @@ public:
 	FQuestUpdated OnQuestUpdated;
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
+		FQuestObjectiveBegin OnQuestObjectiveBegin;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 		FQuestObjectiveUpdated OnQuestObjectiveUpdated;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
@@ -108,6 +114,9 @@ public:
 	UFUNCTION()
 	virtual void QuestUpdated();
 	
+	UFUNCTION()
+		virtual void QuestObjectiveBegin(class UQuestBuilderNode_Objective* InObjective);
+
 	UFUNCTION()
 		virtual void QuestObjectiveUpdated(UQuest* Quest);
 

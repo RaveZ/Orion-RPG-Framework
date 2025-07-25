@@ -40,6 +40,7 @@ void UQuestComponent::BeginPlay()
 	OwningController = GetOwningController();
 
 	OnQuestUpdated.AddDynamic(this, &UQuestComponent::QuestUpdated);
+	OnQuestObjectiveBegin.AddDynamic(this, &UQuestComponent::QuestObjectiveBegin);
 	OnQuestObjectiveUpdated.AddDynamic(this, &UQuestComponent::QuestObjectiveUpdated);
 	OnStartNavigateQuest.AddDynamic(this, &UQuestComponent::StartNavigatingQuest);
 	OnQuestFailed.AddDynamic(this, &UQuestComponent::QuestFailed);
@@ -746,6 +747,11 @@ void UQuestComponent::QuestUpdated()
 {
 	UpdateAllQuest();
 }
+
+void UQuestComponent::QuestObjectiveBegin(UQuestBuilderNode_Objective* InObjective)
+{
+}
+
 
 void UQuestComponent::QuestObjectiveUpdated(UQuest* Quest)
 {

@@ -22,6 +22,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objective")
 	bool bOptional;
 
+	/**Quest Indicator that will be shown in the world to indicate the location for the next objective*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, DisplayName = "Use Quest Indicator?", Category = "Objective")
+	bool bUseQuestIndicator;
+
 	/**This objective use amount required to complete objective?*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective", meta = (DisplayName = "UseAmount"))
 	bool bUseAmount;
@@ -61,6 +65,14 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Objective Failed", Category = "Objective")
 	void K2_ObjectiveFailed(AController* OwnerController, APawn* ControlledPawn);
+	
+	/**
+	 * Implement to provide the quest with the location of your objective, Useful if you wanted to use quest indicator.
+	 * Primitive component is optional, but will help in some case where the quest indicator need to keep tracking the actor location.
+	 * If there is no input on the component, will use ObjectiveLocation Instead.
+	 */
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Objective", meta = (DisplayName = "Get Objective Location"))
+	UPrimitiveComponent* K2_GetObjectiveLocation(FVector& ObjectiveLocation) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 	virtual void BeginObjective();

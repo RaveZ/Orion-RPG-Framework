@@ -134,7 +134,7 @@ void FQuest_System_EditorModule::RegisterSettings()
 	{
 		// Register the settings
 		SettingsModule->RegisterSettings("Project", "Plugins", "OrionRPG - Quest",
-			LOCTEXT("QuestBuilderSettingsName", "Quest Builder - Editor"),
+			LOCTEXT("QuestBuilderSettingsName", "OrionRPG - Quest"),
 			LOCTEXT("QuestBuilderSettingsDescription", "Configuration Settings for the Quest Builder Editor"),
 			GetMutableDefault<UQuestBuilderSetting>()
 		);

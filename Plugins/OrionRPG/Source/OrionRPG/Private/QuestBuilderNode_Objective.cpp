@@ -3,6 +3,7 @@
 
 #include "QuestBuilderNode_Objective.h"
 #include "Quest.h"
+#include "QuestBuilderSetting.h"
 #include "QuestComponent.h"
 
 
@@ -14,6 +15,7 @@ UQuestBuilderNode_Objective::UQuestBuilderNode_Objective()
     bOptional = false;
     bHidden = false;
     bIsObjectiveTickable = false;
+    bUseQuestIndicator = false;
     TickInterval = 0.1f;
     RequiredAmount = 1;
 }
@@ -85,6 +87,7 @@ void UQuestBuilderNode_Objective::BeginObjective()
     ObjectiveState = EObjectiveState::E_Active;
     K2_BeginObjective(GetOwningController(), GetOwningPawn());
 
+    GetQuestComponent()->OnQuestObjectiveBegin.Broadcast(this);
     if (GetQuestComponent() && bIsObjectiveTickable)
     {
         if (TickInterval > 0.f)

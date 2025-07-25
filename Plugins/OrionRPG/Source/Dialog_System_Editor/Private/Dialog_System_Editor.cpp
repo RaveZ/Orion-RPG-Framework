@@ -120,7 +120,7 @@ void FDialog_System_EditorModule::RegisterSettings()
 	{
 		// Register the settings
 		SettingsModule->RegisterSettings("Project", "Plugins", "OrionRPG - Dialog",
-			LOCTEXT("DialogBuilderSettingsName", "Dialog Builder - Editor"),
+			LOCTEXT("DialogBuilderSettingsName", "OrionRPG - Dialog"),
 			LOCTEXT("DialogBuilderSettingsDescription", "Configuration Settings for the Dialog Builder Editor"),
 			GetMutableDefault<UDialogBuilderSetting>()
 		);

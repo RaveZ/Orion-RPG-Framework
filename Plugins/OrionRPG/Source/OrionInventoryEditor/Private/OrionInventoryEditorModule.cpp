@@ -98,7 +98,7 @@ void FOrionInventoryEditorModule::RegisterSettings()
 	{
 		// Register the settings
 		SettingsModule->RegisterSettings("Project", "Plugins", "OrionRPG - Inventory",
-			LOCTEXT("OrionInventorySettingsName", "Inventory Builder - Editor"),
+			LOCTEXT("OrionInventorySettingsName", "OrionRPG - Inventory"),
 			LOCTEXT("OrionInventorySettingsDescription", "Configuration Settings for the Inventory Builder Editor"),
 			GetMutableDefault<UOrionInventorySetting>()
 		);
