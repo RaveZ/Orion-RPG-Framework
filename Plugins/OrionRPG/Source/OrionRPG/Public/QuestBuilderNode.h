@@ -99,6 +99,10 @@ public:
 	virtual void BeginNode();
 	virtual void EvaluateNextNode();
 
+	/**Check if the child node still has active objectives*/
+	UFUNCTION(Category = "QuestBuilderNode")
+	bool AllChildrenHasBeenVisited();
+
 	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")
 	bool DecoratorConditionMet();
 	

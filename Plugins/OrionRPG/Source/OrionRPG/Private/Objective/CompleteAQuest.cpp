@@ -13,20 +13,22 @@ UCompleteAQuest::UCompleteAQuest()
 
 void UCompleteAQuest::BeginObjective()
 {
-	if (QuestComponent)
-	{
-		QuestComponent->OnQuestCompleted.AddDynamic(this, &UCompleteAQuest::EvaluateQuestCompleted);
-		UQuest* FoundedQuest = QuestComponent->QuestMap.FindRef(QuestTag.GetTagName());
-		if (FoundedQuest)
-			EvaluateQuestCompleted(FoundedQuest);
-	}
+    if (QuestComponent && !QuestComponent->OnQuestCompleted.IsAlreadyBound(this, &ThisClass::EvaluateQuestCompleted))
+    {
+		QuestComponent->OnQuestCompleted.AddDynamic(this, &ThisClass::EvaluateQuestCompleted);
+    }
+
+	UQuest* FoundedQuest = QuestComponent->QuestMap.FindRef(QuestTag.GetTagName());
+	if (FoundedQuest)
+		EvaluateQuestCompleted(FoundedQuest);
+	
 	Super::BeginObjective();
 }
 void UCompleteAQuest::CompleteObjective()
 {
 	if (QuestComponent)
 	{
-		QuestComponent->OnQuestCompleted.RemoveDynamic(this, &UCompleteAQuest::EvaluateQuestCompleted);
+		QuestComponent->OnQuestCompleted.RemoveDynamic(this, &ThisClass::EvaluateQuestCompleted);
 	}
 	Super::CompleteObjective();
 }

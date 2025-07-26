@@ -12,6 +12,7 @@
 
 UQuestBuilderNode_Objective::UQuestBuilderNode_Objective()
 {
+    ObjectiveState = EObjectiveState::E_Active;
     bOptional = false;
     bHidden = false;
     bIsObjectiveTickable = false;

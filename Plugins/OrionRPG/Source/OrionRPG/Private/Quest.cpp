@@ -114,6 +114,20 @@ TArray<UQuestBuilderNode*> UQuest::GetVisitedNodes()
 	return ReturnNodes;
 }
 
+TArray<UQuestBuilderNode_Objective*> UQuest::GetCurrentObjectives()
+{
+	TArray<UQuestBuilderNode_Objective*> ReturnNodes;
+	for (auto& CurrNode : CurrentNodes)
+	{
+		UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(CurrNode);
+		if (ObjectiveNode && ObjectiveNode->IsObjectiveActive())
+		{
+			ReturnNodes.AddUnique(ObjectiveNode);
+		}
+	}
+	return ReturnNodes;
+}
+
 void UQuest::SortVisitedNodes()
 {
 	//Sort Visited nodes in this order:

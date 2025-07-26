@@ -396,12 +396,14 @@ void UQuestComponent::FailQuest(UQuest* InQuest)
 	if (InQuest && InQuest->QuestState == EQuestState::E_Active)
 	{
 		//fail all current nodes
-		for (auto& CurrentNode : InQuest->CurrentNodes)
+		for (int32 i = 0; i < InQuest->CurrentNodes.Num(); i++)
 		{
-			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(CurrentNode);
-			if (ObjectiveNode)
+			if (InQuest->CurrentNodes.IsValidIndex(i))
 			{
-				ObjectiveNode->FailObjective();
+				if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(InQuest->CurrentNodes[i]))
+				{
+					ObjectiveNode->FailObjective();
+				}
 			}
 		}
 		InQuest->QuestState = EQuestState::E_Fail;
@@ -422,12 +424,14 @@ void UQuestComponent::CompleteQuest(UQuest* InQuest)
 	if (InQuest && InQuest->QuestState == EQuestState::E_Active)
 	{
 		//fail all current nodes
-		for (auto& CurrentNode : InQuest->CurrentNodes)
+		for (int32 i = 0; i < InQuest->CurrentNodes.Num(); i++)
 		{
-			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(CurrentNode);
-			if (ObjectiveNode)
+			if (InQuest->CurrentNodes.IsValidIndex(i))
 			{
-				ObjectiveNode->FailObjective();
+				if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(InQuest->CurrentNodes[i]))
+				{
+					ObjectiveNode->FailObjective();
+				}
 			}
 		}
 		InQuest->QuestState = EQuestState::E_Complete;

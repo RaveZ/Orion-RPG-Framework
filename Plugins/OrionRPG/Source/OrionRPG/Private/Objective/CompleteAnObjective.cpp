@@ -14,9 +14,9 @@ UCompleteAnObjective::UCompleteAnObjective()
 
 void UCompleteAnObjective::BeginObjective()
 {
-	if (QuestComponent)
+	if (QuestComponent && !QuestComponent->OnQuestObjectiveUpdated.IsAlreadyBound(this, &ThisClass::EvaluateObjectiveCompleted))
 	{
-		QuestComponent->OnQuestObjectiveUpdated.AddDynamic(this, &UCompleteAnObjective::EvaluateObjectiveCompleted);
+		QuestComponent->OnQuestObjectiveUpdated.AddDynamic(this, &ThisClass::EvaluateObjectiveCompleted);
 		EvaluateObjectiveCompleted(nullptr);
 	}
 	Super::BeginObjective();
@@ -26,7 +26,7 @@ void UCompleteAnObjective::CompleteObjective()
 {
 	if (QuestComponent)
 	{
-		QuestComponent->OnQuestObjectiveUpdated.RemoveDynamic(this, &UCompleteAnObjective::EvaluateObjectiveCompleted);
+		QuestComponent->OnQuestObjectiveUpdated.RemoveDynamic(this, &ThisClass::EvaluateObjectiveCompleted);
 	}
 	Super::CompleteObjective();
 }

@@ -42,7 +42,7 @@ public:
 	float TickInterval;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Objective")
-	EObjectiveState ObjectiveState = EObjectiveState::E_Active;
+	EObjectiveState ObjectiveState;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Objective")
 	int CurrentProgress = 0;
@@ -86,13 +86,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 	virtual void DeactivateTick();
 
-	UFUNCTION(BlueprintCallable, Category = "Objective")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Objective")
 	bool IsObjectiveCompleted();
 
-	UFUNCTION(BlueprintCallable, Category = "Objective")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Objective")
 	bool IsObjectiveFailed();
 
-	UFUNCTION(BlueprintCallable, Category = "Objective")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Objective")
 	bool IsObjectiveActive();
 
 	/**Add amount and check if the required amount has fulfilled, then complete the objective*/

@@ -129,6 +129,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Quest")
 	TArray<UQuestBuilderNode*> GetVisitedNodes();
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Quest")
+	TArray<UQuestBuilderNode_Objective*> GetCurrentObjectives();
 	
 	UFUNCTION(BlueprintCallable, Category = "Quest")
 	void SortVisitedNodes();

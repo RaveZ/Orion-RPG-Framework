@@ -29,6 +29,8 @@ UQuestBuilderNode::~UQuestBuilderNode()
 
 void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 {
+	OnAllStartEventFinished.RemoveAll(this);
+	OnAllEndEventFinished.RemoveAll(this);
 	bNodeActive = true;
 	StartEventQueue.Empty();
 
@@ -66,14 +68,16 @@ void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 						//remove previous nodes from current nodes
 						for (auto& ParentNode : NextNodes[i]->ParentNodes)
 						{
-							if (Quest->CurrentNodes.Contains(ParentNode))
+							//also check if all children nodes has been visited before removing from current node
+							if (ParentNode && Quest->CurrentNodes.Contains(ParentNode) && ParentNode->AllChildrenHasBeenVisited())
+							{
 								Quest->CurrentNodes.RemoveSingle(ParentNode);
+							}
 						}
 						Quest->BeginNode(NextNodes[i]);
-						NextNodes.RemoveAt(i);
-						i--;
 					}
 				}
+				NextNodes.Empty();
 			}
 		);
 	}
@@ -193,6 +197,21 @@ void UQuestBuilderNode::EvaluateNextNode()
 		OnAllEndEventFinished.Broadcast();
 	}
 
+}
+
+bool UQuestBuilderNode::AllChildrenHasBeenVisited()
+{
+	/**Check if all of this node's children has been visited*/
+	bool bAllVisited = true;
+	for(auto& ChildNode : ChildrenNodes)
+	{
+		if (ChildNode && GetOwningQuest() && !GetOwningQuest()->VisitedNodeIDs.Contains(ChildNode->ID))
+		{
+			bAllVisited =  false;
+			break;
+		}
+	}
+	return bAllVisited;
 }
 
 bool UQuestBuilderNode::DecoratorConditionMet()
