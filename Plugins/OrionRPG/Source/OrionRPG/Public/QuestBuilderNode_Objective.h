@@ -72,7 +72,7 @@ public:
 	 * If there is no input on the component, will use ObjectiveLocation Instead.
 	 */
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Objective", meta = (DisplayName = "Get Objective Location"))
-	UPrimitiveComponent* K2_GetObjectiveLocation(FVector& ObjectiveLocation) const;
+	TArray<UPrimitiveComponent*> K2_GetObjectiveLocation(TArray<FVector>& ObjectiveLocation) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 	virtual void BeginObjective();

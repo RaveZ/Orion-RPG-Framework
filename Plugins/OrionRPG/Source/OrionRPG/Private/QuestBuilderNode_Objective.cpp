@@ -74,11 +74,19 @@ void UQuestBuilderNode_Objective::TickObjective_Implementation()
 
 void UQuestBuilderNode_Objective::AddToProgress(int AmountToAdd)
 {
-    CurrentProgress = FMath::Clamp(CurrentProgress + AmountToAdd, 0, RequiredAmount);
-    if (CurrentProgress >= RequiredAmount)
+    if (bUseAmount)
+    {
+        CurrentProgress = FMath::Clamp(CurrentProgress + AmountToAdd, 0, RequiredAmount);
+        if (CurrentProgress >= RequiredAmount)
+        {
+            CompleteObjective();
+        }
+    }
+    else
     {
         CompleteObjective();
     }
+    
 }
 
 void UQuestBuilderNode_Objective::BeginObjective()
@@ -107,6 +115,8 @@ void UQuestBuilderNode_Objective::BeginObjective()
         // Fire the first tick off after BeginTask since begin task will usually init things that TickTask may need  
         TickObjective();
     }
+
+    GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
 }
 
 void UQuestBuilderNode_Objective::CompleteObjective()

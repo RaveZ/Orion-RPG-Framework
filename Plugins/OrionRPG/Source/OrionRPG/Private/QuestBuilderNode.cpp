@@ -156,20 +156,15 @@ void UQuestBuilderNode::EvaluateNextNode()
 
 		if (NextNodes.IsEmpty())
 		{
-            for (int32 i = GetOwningQuest()->CurrentNodes.Num() - 1; i >= 0; --i)
-            {
-                UQuestBuilderNode* CurrNode = GetOwningQuest()->CurrentNodes[i];
-                if (CurrNode == GetOwningQuest()->CurrentNavigatedObjective && !GetOwningQuest()->CurrentNavigatedObjective->IsObjectiveActive())
-                    continue;
-                if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(CurrNode))
-                {
-                    if (GetOwningQuest())
-                    {
-                        GetOwningQuest()->CurrentNavigatedObjective = ObjectiveNode;
-                        break;
-                    }
-                }
-            }
+			if (GetOwningQuest()->CurrentNavigatedObjective && !GetOwningQuest()->CurrentNavigatedObjective->IsObjectiveActive())
+			{
+				GetOwningQuest()->CurrentNavigatedObjective = nullptr;
+				GetOwningQuest()->GetNavigatedObjective();
+			}
+			else if (GetOwningQuest()->CurrentNavigatedObjective == nullptr)
+			{
+				GetOwningQuest()->GetNavigatedObjective();
+			}
 		}
 		else
 		{

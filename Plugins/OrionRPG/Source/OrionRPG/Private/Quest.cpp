@@ -186,7 +186,7 @@ UQuestBuilderNode_Objective* UQuest::GetNavigatedObjective()
         for (int32 i = CurrentNodes.Num() - 1; i >= 0; --i)
         {
 			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(CurrentNodes[i]);
-			if (ObjectiveNode && !ObjectiveNode->IsObjectiveCompleted())
+			if (ObjectiveNode && ObjectiveNode->IsObjectiveActive())
 			{
 				CurrentNavigatedObjective = ObjectiveNode;
 				break;
