@@ -111,7 +111,7 @@ bool UQuestBuilderFunctionLibrary::IsCurrentlyNavigatedObjective(const UObject* 
 
         if ((CurrentNavigatedQuest && FoundedQuest && CurrentNavigatedQuest == FoundedQuest) &&
             (FoundedQuest->QuestState == EQuestState::E_Active) && 
-            (FoundedNode && CurrentNavigatedQuest->CurrentNodes.Contains(FoundedNode)))
+            (FoundedNode && CurrentNavigatedQuest->CurrentNavigatedObjective == FoundedNode))
         {
             UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(FoundedNode);
             if (ObjectiveNode && !ObjectiveNode->IsObjectiveCompleted())

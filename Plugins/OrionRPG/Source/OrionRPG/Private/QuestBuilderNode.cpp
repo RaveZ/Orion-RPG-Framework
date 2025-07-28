@@ -183,6 +183,7 @@ void UQuestBuilderNode::EvaluateNextNode()
 		}
 	}
 
+	GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
 	/**
 	* Going to next node will begin when all End Events are finished.
 	* If node already deinitialized, immediately broadcast OnAllEndEventFinished
