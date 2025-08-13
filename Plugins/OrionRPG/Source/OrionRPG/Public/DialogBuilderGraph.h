@@ -18,7 +18,7 @@ class UDialogBuilderNode_DialogLine;
 
 
 
-UCLASS(Blueprintable, BlueprintType)
+UCLASS(Blueprintable, BlueprintType, AutoExpandCategories = "Configuration|Player", AutoExpandCategories = "Configuration|Dialog")
 class ORIONRPG_API UDialogBuilderGraph : public UObject
 {
 	GENERATED_BODY()
@@ -31,38 +31,41 @@ public:
 		FName ID;
 
 	/** Your Player Name*/
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Configuration")
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Configuration|Player")
 		FText PlayerName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration", meta = (FullyExpand = true))
-		TSubclassOf<class AActor> PlayerClassOverride;
-
-	UPROPERTY(EditAnywhere, meta = (InlineEditConditionToggle))
+	UPROPERTY(EditAnywhere, Category = "Configuration|Player", meta = (InlineEditConditionToggle))
 		bool bOverrideTransform;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration", meta = (EditCondition = "bOverrideTransform"))
-		FTransform PlayerTransformOverride;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration|Player", meta = (EditCondition = "bOverrideTransform"))
+		FTransform PlayerTransform;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Configuration", meta = (NoResetToDefault))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Configuration|Player", meta = (NoResetToDefault))
 		TObjectPtr<class UDialogCameraShot> DefaultPlayerShot;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Configuration", meta = (NoResetToDefault))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Configuration|Player", meta = (NoResetToDefault))
 		TObjectPtr<class UDialogCameraShot> DefaultSelectingChoiceShot;
 
 	/*
 	* Rotate all participant to whoever is currently speaking
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration|Dialog")
 		bool bAutoRotateParticipant;
 
 	/**Auto advance dialog automatically when current dialog line has finished*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration|Dialog")
 		bool bAutoAdvanceDialogLine;
+
+	/**Lock player movement when dialog in progress.
+	* If set to false, auto advance dialog and won't show mouse cursor.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration|Dialog")
+		bool bLockPlayerMovement;
 
 	/*
 	* By default dialog camera will aim at the bone set  in this variable
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration|Dialog")
 		FName DefaultBoneToTrack;
 
 	/**Camera*/
@@ -90,6 +93,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 		TMap<FGameplayTag, TObjectPtr<AActor>> CachedParticipants;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
+		TArray<TObjectPtr<AActor>> SpawnedParticipants;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 		TObjectPtr<UDialogBuilderNode> CurrentNode;
@@ -143,6 +149,9 @@ public:
 	virtual void ApplyRotationSetting(class UDialogBuilderNode_DialogLine* InDialogLine, AActor* Speaker, AActor* Listener);
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	virtual void DetermineDialogShot(class UDialogBuilderNode_DialogLine* InDialogLine, AActor* Speaker, AActor* Listener);
+
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 	virtual void BeginChoiceSelection(class UDialogBuilderNode_DialogLine* InDialogLine);
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
@@ -176,6 +185,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 		virtual void EndDialog();
+
+	UFUNCTION()
+	virtual void DetermineAdvanceDialogRule(class UDialogBuilderNode_DialogLine* InDialogLine);
 
 	UFUNCTION()
 	virtual FVector GetSpeakerBoneLocation(class AActor* Actor) const;

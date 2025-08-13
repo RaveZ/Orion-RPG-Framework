@@ -2,19 +2,18 @@
 
 
 #include "Inventory/OrionInventoryNode_ItemContainer.h"
-#include "Kismet2/Kismet2NameValidators.h"
 
 
 #define LOCTEXT_NAMESPACE "InventorySystemGraphNode"
 
 
-
-#if WITH_EDITOR
-
 UOrionInventoryNode_ItemContainer::UOrionInventoryNode_ItemContainer()
 {
     GridCountX = 7;
 }
+
+#if WITH_EDITOR
+
 
 FText UOrionInventoryNode_ItemContainer::GetNodeTitle() const
 {

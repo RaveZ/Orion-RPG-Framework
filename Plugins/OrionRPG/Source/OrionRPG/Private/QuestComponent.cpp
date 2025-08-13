@@ -17,7 +17,6 @@
 #include "GameFramework/Controller.h"
 #include "QuestData.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "GeometryCollection/GeometryCollectionParticlesData.h"
 
 
 #define LOCTEXT_NAMESPACE "QuestComponent"

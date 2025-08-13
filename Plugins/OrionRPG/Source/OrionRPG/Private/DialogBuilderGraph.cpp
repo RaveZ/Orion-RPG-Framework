@@ -29,6 +29,7 @@ UDialogBuilderGraph::UDialogBuilderGraph()
 	bAutoRotateParticipant = false;
 	DefaultBoneToTrack = FName("head");
 	bAutoAdvanceDialogLine = true;
+	bLockPlayerMovement = true;
 }
 
 UDialogBuilderGraph::~UDialogBuilderGraph()
@@ -61,20 +62,15 @@ bool UDialogBuilderGraph::Initialize(UDialogComponent* InitializingComp)
 			}
 		}
 
-		TArray<FParticipantInfo> ParticipantList;
-		ParticipantInfoMap.GenerateValueArray(ParticipantList);
-		for (auto& Participant : ParticipantList)
+		for (TPair<FGameplayTag, FParticipantInfo>& Pair : ParticipantInfoMap)
 		{
-			if(AActor* ParticipantActor = RetrieveParticipant(Participant))
+			FGameplayTag ParticipantTag = Pair.Key;
+			FParticipantInfo& ParticipantInfo = Pair.Value;
+			if(AActor* ParticipantActor = RetrieveParticipant(ParticipantInfo))
 			{
-				CachedParticipants.Emplace(Participant.ParticipantTag, ParticipantActor);
+				CachedParticipants.Emplace(ParticipantInfo.ParticipantTag, ParticipantActor);
+				ParticipantInfo.InitialTransform = ParticipantActor->GetTransform();
 
-				// Log the cached participant
-				UE_LOG(LogTemp, Log, TEXT("Cached participant: %s -> %s"), *Participant.ParticipantName.ToString(), *GetNameSafe(ParticipantActor));
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Failed to retrieve participant: %s for Dialog : %s"), *Participant.ParticipantName.ToString(), *ID.ToString());
 			}
 		}
 
@@ -87,6 +83,10 @@ bool UDialogBuilderGraph::Initialize(UDialogComponent* InitializingComp)
 			}
 		}
 
+		if (!bLockPlayerMovement)
+		{
+			bAutoAdvanceDialogLine = true;
+		}
 	}
 	return false;
 }
@@ -142,43 +142,28 @@ void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialo
 	if (InDialogLine == nullptr)
 		return;
 
-	if (GetWorld() && bAutoAdvanceDialogLine)
-	{
-		FString LineString = InDialogLine->DialogLineData.Line.ToString();
-
-		// Split the string into words (splits on whitespace)
-		TArray<FString> Words;
-		LineString.ParseIntoArrayWS(Words);
-		float DialogLineDuration = Words.Num() / GetDefault<UDialogBuilderSetting>()->DialogLineWordsPerSecond;
-		DialogLineDuration = FMath::Max(GetDefault<UDialogBuilderSetting>()->MinDialogLineDuration, DialogLineDuration);
-		GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, this, &ThisClass::AdvanceDialogLine, DialogLineDuration, false);
-	}
-
-	UDialogCameraShot* DialogShot = nullptr;
 	AActor* Speaker = CachedParticipants.FindRef(InDialogLine->ParticipantInfo.ParticipantTag);
 	AActor* Listener = CachedParticipants.FindRef(InDialogLine->ListenerTag);
 
-	ApplyRotationSetting(InDialogLine, Speaker, Listener);
+	DetermineAdvanceDialogRule(InDialogLine);
 
-	//Determine the shot
-	switch (InDialogLine->DialogLineData.DialogCameraMode)
+	//Dialog Sound
+	if (InDialogLine->DialogLineData.DialogSound)
 	{
-		case EDialogCameraMode::E_GeneratedCameraShot:
-			DialogShot = InDialogLine->ParticipantInfo.DefaultShot;
-			if (!DialogShot || InDialogLine->DialogLineData.ShotOverride)
-			{
-				//if default shot not valid, try use override shot data instead
-				DialogShot = InDialogLine->DialogLineData.ShotOverride;
-			}
-
-			PlayDialogShot(DialogShot, Speaker);
-			
-			break;
-		case EDialogCameraMode::E_Sequence:
-			
-			PlayDialogSequence(InDialogLine->DialogLineData);
-			break;
+		if (Speaker)
+		{
+			DialogAudio = UGameplayStatics::SpawnSoundAttached(InDialogLine->DialogLineData.DialogSound, Speaker->GetRootComponent(), NAME_None, FVector::ZeroVector, EAttachLocation::SnapToTarget, false, 1.f, 1.f, 0.f, DialogSoundAttenuation);
+		}
+		else
+		{
+			DialogAudio = UGameplayStatics::SpawnSound2D(DialogComponent, InDialogLine->DialogLineData.DialogSound);
+		}
 	}
+
+	if (!bLockPlayerMovement && InDialogLine->ParticipantInfo.ParticipantTag == TAG_Dialog_Participant_Player)
+		return;
+
+	DetermineDialogShot(InDialogLine, Speaker, Listener);
 
 	//Dialog Animation 
 	if (Speaker && InDialogLine->DialogLineData.DialogMontage)
@@ -193,24 +178,9 @@ void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialo
 		}
 	}
 
-	//Dialog Sound
-	if (InDialogLine->DialogLineData.DialogSound)
-	{
-		if (Speaker)
-		{
-			DialogAudio = UGameplayStatics::SpawnSoundAttached(InDialogLine->DialogLineData.DialogSound, Speaker->GetRootComponent(), NAME_None, FVector::ZeroVector, EAttachLocation::SnapToTarget, false, 1.f, 1.f, 0.f, DialogSoundAttenuation);
-		}
-		else 
-		{
-			DialogAudio = UGameplayStatics::SpawnSound2D(DialogComponent, InDialogLine->DialogLineData.DialogSound);
-		}
-
-		
-	}
-
+	
 	
 	CachedLastSpeaker = Speaker;
-	CachedLastShot = DialogShot;
 	
 }
 
@@ -253,18 +223,53 @@ void UDialogBuilderGraph::ApplyRotationSetting(UDialogBuilderNode_DialogLine* In
 			FRotator LookAtRotation = ToSpeaker.Rotation();
 			Listener->SetActorRotation(LookAtRotation);
 		}
-
 	}
+}
+
+void UDialogBuilderGraph::DetermineDialogShot(UDialogBuilderNode_DialogLine* InDialogLine, AActor* Speaker, AActor* Listener)
+{
+	if (!bLockPlayerMovement)
+		return;
+
+	ApplyRotationSetting(InDialogLine, Speaker, Listener);
+
+	UDialogCameraShot* DialogShot = nullptr;
+
+	//Determine the shot
+	switch (InDialogLine->DialogLineData.DialogCameraMode)
+	{
+	case EDialogCameraMode::E_GeneratedCameraShot:
+		DialogShot = InDialogLine->ParticipantInfo.DefaultShot;
+		if (!DialogShot || InDialogLine->DialogLineData.ShotOverride)
+		{
+			//if default shot not valid, try use override shot data instead
+			DialogShot = InDialogLine->DialogLineData.ShotOverride;
+		}
+
+		PlayDialogShot(DialogShot, Speaker);
+
+		break;
+	case EDialogCameraMode::E_Sequence:
+		PlayDialogSequence(InDialogLine->DialogLineData);
+		break;
+	}
+	CachedLastShot = DialogShot;
 }
 
 void UDialogBuilderGraph::BeginChoiceSelection(UDialogBuilderNode_DialogLine* InDialogLine)
 {
+	if (!bLockPlayerMovement)
+	{
+		EndDialog();
+		return;
+	}
 	if (InDialogLine == nullptr)
 		return;
 
 	UDialogCameraShot* DialogShot = DefaultSelectingChoiceShot;
 	AActor* Speaker = CachedParticipants.FindRef(TAG_Dialog_Participant_Player);
 	Speaker = Speaker ? Speaker : GetOwningPawn();
+
 	if (!DialogShot || InDialogLine->SelectingChoiceShotOverride)
 	{
 		//if default shot not valid, try use override shot data instead
@@ -279,9 +284,8 @@ void UDialogBuilderGraph::BeginChoiceSelection(UDialogBuilderNode_DialogLine* In
 
 void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot, AActor* InSpeaker)
 {
-	if(!InDialogShot)
+	if(!InDialogShot || !InSpeaker)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("PlayDialogShot: Invalid shot or speaker for Dialog ID: %s"), *ID.ToString());
 		return;
 	}
 	//Shot method changed, make sure sequencer is destroyed
@@ -484,6 +488,20 @@ void UDialogBuilderGraph::EndDialog()
 {
 	GetDialogComponent()->OnEndDialog.Broadcast(this);
 
+	if (bLockPlayerMovement)
+	{
+		//Send all participants back to their initial transforms
+		for (const TPair<FGameplayTag, AActor*>& Pair : CachedParticipants)
+		{
+			FGameplayTag ParticipantTag = Pair.Key;
+			AActor* ParticipantActor = Pair.Value;
+			FTransform ParticipantInitialTransform = ParticipantInfoMap.FindRef(ParticipantTag).InitialTransform;
+
+			ParticipantActor->SetActorTransform(ParticipantInitialTransform);
+		}
+	}
+	
+	//clear shot and sequence
 	if (DialogSequencer)
 	{
 		if (ULevelSequencePlayer* SP = DialogSequencer->GetSequencePlayer())
@@ -505,6 +523,64 @@ void UDialogBuilderGraph::EndDialog()
 		OwningController->ClientStopCameraShake(DialogCameraShake);
 	}
 
+	//destroy spawned participant
+	for (auto& SpawnedParticipant : SpawnedParticipants)
+	{
+		SpawnedParticipant->Destroy();
+	}
+
+}
+
+void UDialogBuilderGraph::DetermineAdvanceDialogRule(UDialogBuilderNode_DialogLine* InDialogLine)
+{
+	/**Determine each dialog time before advance to the next line
+	* Each line duration will be determined by which one has the longest duration by aspects below:
+	* - The number of words in the line / Dialog line words per second setting
+	* - Sequence playback duration
+	* - Animation montage duration
+	* - Dialog sound duration
+	*/
+	if (GetWorld() && bAutoAdvanceDialogLine)
+	{
+		float DialogLineDuration = 0.f;
+
+		//Words duration
+		FString LineString = InDialogLine->DialogLineData.Line.ToString();
+		TArray<FString> Words;
+		LineString.ParseIntoArrayWS(Words);
+		DialogLineDuration = Words.Num() / GetDefault<UDialogBuilderSetting>()->DialogLineWordsPerSecond;
+		DialogLineDuration = FMath::Max(GetDefault<UDialogBuilderSetting>()->MinDialogLineDuration, DialogLineDuration);
+
+		//Sequence duration
+		ULevelSequence* SequenceToPlay = InDialogLine->DialogLineData.SequenceToPlay;
+		if (SequenceToPlay && InDialogLine->DialogLineData.DialogCameraMode == EDialogCameraMode::E_Sequence)
+		{
+			FFrameRate TickResolution = SequenceToPlay->MovieScene->GetTickResolution();
+			float SequenceDuration = SequenceToPlay->MovieScene->GetPlaybackRange().GetUpperBoundValue() / TickResolution;
+			DialogLineDuration = FMath::Max(DialogLineDuration, SequenceDuration);
+		}
+
+		//Montage duration
+		UAnimMontage* MontageToPlay = InDialogLine->DialogLineData.DialogMontage;
+		if (MontageToPlay)
+		{
+			float MontageDuration = MontageToPlay->GetPlayLength();
+			DialogLineDuration = FMath::Max(DialogLineDuration, MontageDuration);
+		}
+
+		//Sound duration
+		USoundBase* DialogSound = InDialogLine->DialogLineData.DialogSound;
+		if (DialogSound)
+		{
+			float SoundDuration = DialogSound->GetDuration();
+			DialogLineDuration = FMath::Max(DialogLineDuration, SoundDuration);
+		}
+
+		//UE_LOG(LogTemp, Log, TEXT("Dialog line duration calculated: %f seconds"), DialogLineDuration);
+
+		GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, this, &ThisClass::AdvanceDialogLine, DialogLineDuration, false);
+		
+	}
 }
 
 FVector UDialogBuilderGraph::GetSpeakerBoneLocation(AActor* Actor) const
@@ -541,50 +617,33 @@ AActor* UDialogBuilderGraph::RetrieveParticipant(const FParticipantInfo& Info)
 	APawn* PlayerPawn = GetOwningPawn();
 	
 	//retrieve player
-	if (Info.ParticipantTag == TAG_Dialog_Participant_Player)
+	if (PlayerPawn && Info.ParticipantTag == TAG_Dialog_Participant_Player)
 	{
+		if (bOverrideTransform)
+		{
+			PlayerPawn->SetActorTransform(PlayerTransform);
+		}
 		return PlayerPawn;
 	}
 
 	//Retrieve other participant
 	if(!Info.ParticipantTag.GetTagName().IsNone())
 	{
-		if (!CachedParticipants.Contains(Info.ParticipantTag) && IsValid(Info.ParticipantClassOverride))
+		if (!CachedParticipants.Contains(Info.ParticipantTag) && 
+			IsValid(Info.ParticipantToSpawn) &&
+			Info.ParticipantSetup == EParticipantSetup::E_SpawnParticipant)
 		{
 			FActorSpawnParameters SpawnParams;
 			SpawnParams.bNoFail = true;
 			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 			SpawnParams.Owner = OwningController;
 
-			FTransform SpawnTransform;
-
-			// If we have a valid player pawn, spawn in front of it within a cone
 			
-			if (PlayerPawn)
-			{
-				const FVector PawnLocation = PlayerPawn->GetActorLocation();
-				const FRotator PawnRotation = PlayerPawn->GetActorRotation();
-				const FVector ForwardVector = PawnRotation.Vector();
-
-				// Parameters for cone
-				const float Distance = 200.f; // Distance in front of pawn
-				const float ConeHalfAngleDegrees = 30.f; // Half angle of cone
-				const float RandomAngle = FMath::FRandRange(-ConeHalfAngleDegrees, ConeHalfAngleDegrees);
-
-				// Calculate random direction within cone
-				const FRotator OffsetRot = FRotator(0.f, RandomAngle, 0.f);
-				const FVector ConeDirection = OffsetRot.RotateVector(ForwardVector);
-
-				const FVector SpawnLocation = PawnLocation + ConeDirection * Distance;
-				const FRotator SpawnRotation = PawnRotation;
-
-				SpawnTransform.SetLocation(SpawnLocation);
-				SpawnTransform.SetRotation(SpawnRotation.Quaternion());
-			}
-
 			if (UWorld* World = GetWorld())
 			{
-				return World->SpawnActor(Info.ParticipantClassOverride, &SpawnTransform, SpawnParams);
+				AActor* SpawnedParticipant = World->SpawnActor(Info.ParticipantToSpawn, &Info.ParticipantTransform, SpawnParams);
+				SpawnedParticipants.AddUnique(SpawnedParticipant);
+				return SpawnedParticipant;
 			}
 		}
 		else

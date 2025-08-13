@@ -2,13 +2,20 @@
 
 
 #include "DialogBuilderSetting.h"
-#include "DialogData.h"
+#include "Blueprint/UserWidget.h"
 #include "UObject/ConstructorHelpers.h"
 
 UDialogBuilderSetting::UDialogBuilderSetting()
 {
-	MinDialogLineDuration = 2.f;
-	DialogLineWordsPerSecond = 3.0f; // Default words per second for dialog lines
+	MinDialogLineDuration = 2.5f;
+	DialogLineWordsPerSecond = 2.5f; // Default words per second for dialog lines
+
+	auto DialogueUserWidgetFinder = ConstructorHelpers::FClassFinder<UUserWidget>(TEXT("WidgetBlueprint'/OrionRPG/Widgets/Dialog/WBP_Dialog.WBP_Dialog_C'"));
+	if (DialogueUserWidgetFinder.Succeeded())
+	{
+		DefaultDialogWidget = DialogueUserWidgetFinder.Class;
+	}
+
 	DialogLineNodeColor = FLinearColor(0.15f, 0.15f, 0.15f);
 	PlayerLineNodeColor = FLinearColor(.06f, .135f, .175f);
 	RerouteNodeColor = FLinearColor(.063f, .096f, .1875f);

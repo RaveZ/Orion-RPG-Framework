@@ -45,7 +45,6 @@ UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Attributes_Secondary_MaxMana, "Attributes.Sec
 Reward
 */
 UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Attributes_XP, "Attributes.XP", "XP Attribute Tag")
-UE_DEFINE_GAMEPLAY_TAG_COMMENT(TAG_Item, "Item", "Item Tag")
 
 
 /*

@@ -100,10 +100,10 @@ void AOrionCharacter::RewardEventCallback(const FGameplayEventData* Payload)
 
 		Execute_AddToXP(this, LocalIncomingXP);
 	}
-	if (Payload->EventTag.MatchesTag(TAG_Item))
-	{
-		//TODO : Add Item to Inventory
-	}
+	//if (Payload->EventTag.MatchesTag(TAG_Item))
+	//{
+	//	//TODO : Add Item to Inventory
+	//}
 }
 
 void AOrionCharacter::AttributeUpgradeEventCallback(const FGameplayEventData* Payload)

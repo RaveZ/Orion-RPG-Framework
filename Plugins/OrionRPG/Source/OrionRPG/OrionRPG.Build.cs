@@ -27,7 +27,6 @@ public class OrionRPG : ModuleRules
                 "Core",
                 "CoreUObject",
                 "Engine",
-                "UnrealEd",
                 "CommonUI",
                 "UMG",
                 "CommonInput",

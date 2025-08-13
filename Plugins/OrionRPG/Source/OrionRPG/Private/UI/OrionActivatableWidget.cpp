@@ -16,15 +16,6 @@ UOrionActivatableWidget::UOrionActivatableWidget(const FObjectInitializer& Objec
 }
 
 
-#if WITH_EDITOR
-
-void UOrionActivatableWidget::ValidateCompiledWidgetTree(const UWidgetTree& BlueprintWidgetTree, class IWidgetCompilerLog& CompileLog) const
-{
-	Super::ValidateCompiledWidgetTree(BlueprintWidgetTree, CompileLog);
-
-	
-}
-
 void UOrionActivatableWidget::NativeDestruct()
 {
 	for (FUIActionBindingHandle Handle : BindingHandles)
@@ -41,14 +32,6 @@ void UOrionActivatableWidget::NativeDestruct()
 
 void UOrionActivatableWidget::RegisterBinding(FDataTableRowHandle InputAction, const FInputActionExecutedDelegate& Callback, FOrionInputActionBindingHandle& BindingHandle, FText OverrideDisplayName, const bool bShouldDisplayInActionBar, const bool bConsumeInput)
 {
-	/*
-	* Check if we should override default click input.
-	* Useful if you only want to display only the bound action bar without overriding the default click action
-	*/
-	/*if (InputAction == ICommonInputModule::GetSettings().GetDefaultClickAction())
-	{
-		return;
-	}*/
 	FBindUIActionArgs BindArgs(InputAction, FSimpleDelegate::CreateLambda([InputAction, Callback]()
 		{
 			Callback.ExecuteIfBound(InputAction.RowName);
@@ -87,6 +70,16 @@ void UOrionActivatableWidget::SetBindingDisplayName(FOrionInputActionBindingHand
 	{
 		BindingHandle.Handle.SetDisplayName(NewDisplayName);
 	}
+}
+
+
+#if WITH_EDITOR
+
+void UOrionActivatableWidget::ValidateCompiledWidgetTree(const UWidgetTree& BlueprintWidgetTree, class IWidgetCompilerLog& CompileLog) const
+{
+	Super::ValidateCompiledWidgetTree(BlueprintWidgetTree, CompileLog);
+
+	
 }
 
 #endif

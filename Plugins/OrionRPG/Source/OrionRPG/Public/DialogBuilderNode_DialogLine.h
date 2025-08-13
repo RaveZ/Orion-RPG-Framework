@@ -13,7 +13,6 @@
 class ORIONRPG_API IDialogNodeSharedDataHelper
 {
 public:
-	void UpdateSharedData(UDialogBuilderNode_DialogLine* Node, TSharedPtr<INameValidatorInterface> NameValidator);
 	void MakeSureGuidExists(UDialogBuilderNode_DialogLine* Node);
 
 protected:
@@ -102,18 +101,17 @@ public:
 public:
 	virtual void BeginNode() override;
 
-	//~ Begin UObject Interface
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
-	virtual void PostLoad() override;
-	virtual void Serialize(FArchive& Ar) override;
-	//~ End UObject Interface
 	virtual void EvaluateNextNode() override;
 
 	UFUNCTION()
 	bool EvaluateAnyPlayerOptions();
-	
+
+
+	UFUNCTION(BlueprintPure, Category="DialogLine")
+	UObject* GetParticipantImage();
+
 public:
-#if WITH_EDITOR
+	virtual void Serialize(FArchive& Ar) override;
 
 	//Participant Sharing
 	void MakeParticipantShareable(FString ShareName);
@@ -122,9 +120,19 @@ public:
 
 	void CopyParticipantSettings(const UDialogBuilderNode_DialogLine* SrcNode);
 	void PropagateParticipantSettings();
+
+public:
+#if WITH_EDITOR
+
 	//Node Setting
 	virtual FText GetNodeTitle() const override;
 	virtual void SetNodeTitle(const FText& NewTitle);
 	virtual FText GetNodeDescription() const override;
+
+
+	//~ Begin UObject Interface
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostLoad() override;
+	//~ End UObject Interface
 #endif
 };

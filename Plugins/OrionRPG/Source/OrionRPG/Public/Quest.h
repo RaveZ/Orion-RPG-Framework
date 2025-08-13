@@ -167,12 +167,7 @@ public:
 	virtual void EvaluateUniqueID();
 
 public:
-
-	//~ Begin UObject Interface
-	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
-	virtual void PostLoad() override;
 	virtual void Serialize(FArchive& Ar) override;
-	//~ End UObject Interface
 
 	//Quest Sharing
 	void MakeQuestSettingShareable(FString ShareName);
@@ -182,14 +177,18 @@ public:
 	void CopyQuestSettings(const UQuest* SrcQuest);
 	void PropagateQuestSettings();
 
-	
 
+#if WITH_EDITOR
+	//~ Begin UObject Interface
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	virtual void PostLoad() override;
+	//~ End UObject Interface
+#endif
 };
 
 class ORIONRPG_API IQuestSharedDataHelper
 {
 public:
-	void UpdateSharedData(UQuest* Quest, TSharedPtr<INameValidatorInterface> NameValidator);
 	void MakeSureGuidExists(UQuest* Quest);
 
 protected:

@@ -51,6 +51,7 @@ class ORIONRPG_API UDialogCameraShot : public UObject {
 public:
 	UDialogCameraShot();
 
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera Angle Rule")
 	EDialogCameraAngleRule CameraAngleRule = EDialogCameraAngleRule::E_RandomCone;
 
@@ -59,6 +60,22 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Angle Rule", meta = (EditCondition = "CameraAngleRule == EDialogCameraAngleRule::E_Custom", HideEditConditionToggle, EditConditionHides))
 	FVector2f CameraAngle;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera Transition")
+	bool bBlendCameraTransition;
+
+	/**time taken to blend*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera Transition", meta = (EditCondition = "bBlendCameraTransition == true", HideEditConditionToggle, EditConditionHides))
+	float BlendTime;
+
+	/** Cubic, Linear etc functions for blending*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera Transition", meta = (EditCondition = "bBlendCameraTransition == true", HideEditConditionToggle, EditConditionHides))
+	TEnumAsByte<EViewTargetBlendFunction> BlendFunc;
+
+	/**Exponent, used by certain blend functions to control the shape of the curve. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera Transition", meta = (EditCondition = "bBlendCameraTransition == true", HideEditConditionToggle, EditConditionHides))
+	float BlendExp;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Track & Focus Settings")
 	EDialogCameraTrackingRule CameraTrackingRule = EDialogCameraTrackingRule::E_Speaker;
@@ -99,6 +116,11 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Settings")
 	struct FPlateCropSettings CropSettings;
+
+	/** If bConstrainAspectRatio is true, black bars will be added if the destination view has a different aspect ratio than this camera requested. */
+	UPROPERTY(Interp, EditAnywhere, BlueprintReadWrite, Category = "Camera Settings")
+	bool bConstrainAspectRatio;
+
 
 	/** Controls the filmback of the camera. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Settings")

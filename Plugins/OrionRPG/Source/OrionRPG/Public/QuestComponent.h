@@ -171,7 +171,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void LockQuestFromTag(FGameplayTag QuestTag);
-
+		
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void RestartQuestFromTag(FGameplayTag QuestTag, FGameplayTag NodeTag = FGameplayTag(), const bool bNotifyQuestAdded = false);
 

@@ -385,45 +385,6 @@ void UQuest::EvaluateUniqueID()
 
 }
 
-void UQuest::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
-{
-	FName PropertyName = (PropertyChangedEvent.Property != NULL) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
-
-	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuest, QuestCategory) ||
-		PropertyName == GET_MEMBER_NAME_CHECKED(UQuest, bCanRetakeQuest) ||
-		PropertyName == GET_MEMBER_NAME_CHECKED(UQuest, bCanQuestBeAborted))
-	{
-		PropagateQuestSettings();
-	}
-
-	Super::PostEditChangeProperty(PropertyChangedEvent);
-
-	if (PropertyChangedEvent.MemberProperty)
-	{
-		//If we changed the ID, make sure it doesn't conflict with any other IDs in the quest
-		if (PropertyChangedEvent.MemberProperty->GetFName() == GET_MEMBER_NAME_CHECKED(UQuest, ID))
-		{
-			EvaluateUniqueID();
-		}
-	}
-}
-
-void UQuest::PostLoad()
-{
-	Super::PostLoad();
-
-	// make sure we have guid for shared quest setting 
-	if (bSharedCategory && !SharedCategoryGuid.IsValid())
-	{
-		FQuestSharedSettingHelper().MakeSureGuidExists(this);
-	}
-}
-
-void UQuest::Serialize(FArchive& Ar)
-{
-	Super::Serialize(Ar);
-}
-
 void UQuest::MakeQuestSettingShareable(FString ShareName)
 {
 	SharedCategoryIdx = INDEX_NONE;
@@ -478,7 +439,6 @@ void UQuest::UseSharedQuestSetting(const UQuest* Quest)
 		return;
 	}
 
-	FScopedTransaction Transaction(LOCTEXT("UseSharedParticipant", "Use Shared Participant"));
 
 	Modify();
 
@@ -533,51 +493,6 @@ void UQuest::PropagateQuestSettings()
 	}
 }
 
-void IQuestSharedDataHelper::UpdateSharedData(UQuest* Quest, TSharedPtr<INameValidatorInterface> NameValidator)
-{
-	if (!Quest || !Quest->QuestGraph)
-		return;
-	// get all other quest
-	TArray<UQuest*> QuestList;
-
-	UQuestBuilderGraph* ParentGraph = Quest->QuestGraph;
-	for (auto& OtherQuest : ParentGraph->QuestList)
-	{
-		if (OtherQuest)
-		{
-			QuestList.AddUnique(Quest);
-		}
-	}
-
-	// check if there is other node that can provide us with data
-	for (TArray<UQuest*>::TIterator It(QuestList); It; ++It)
-	{
-		UQuest* OtherQuest = *It;
-		if (OtherQuest != Quest &&
-			CheckIfHasDataToShare(OtherQuest) &&
-			CheckIfQuestShouldShareData(Quest, OtherQuest))
-		{
-			// use shared data of that node (to make sure everything is linked up properly)
-			ShareData(Quest, OtherQuest);
-			break;
-		}
-	}
-
-	// check if our shared rule name is original
-	if (NameValidator->FindValidString(AccessShareDataName(Quest)) != EValidatorResult::Ok)
-	{
-		// rename all shared rules name in nodes that should share same name
-		for (TArray<UQuest*>::TIterator It(QuestList); It; ++It)
-		{
-			UQuest* OtherQuest = *It;
-			if (OtherQuest != Quest &&
-				CheckIfQuestShouldShareData(Quest, OtherQuest))
-			{
-				AccessShareDataName(OtherQuest) = AccessShareDataName(Quest);
-			}
-		}
-	}
-}
 
 void IQuestSharedDataHelper::MakeSureGuidExists(UQuest* Quest)
 {
@@ -627,5 +542,49 @@ FGuid& FQuestSharedSettingHelper::AccessShareDataGuid(UQuest* Quest)
 {
 	return Quest->SharedCategoryGuid;
 }
+
+void UQuest::Serialize(FArchive& Ar)
+{
+	Super::Serialize(Ar);
+}
+
+#if WITH_EDITOR
+void UQuest::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	FName PropertyName = (PropertyChangedEvent.Property != NULL) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
+
+	if (PropertyName == GET_MEMBER_NAME_CHECKED(UQuest, QuestCategory) ||
+		PropertyName == GET_MEMBER_NAME_CHECKED(UQuest, bCanRetakeQuest) ||
+		PropertyName == GET_MEMBER_NAME_CHECKED(UQuest, bCanQuestBeAborted))
+	{
+		PropagateQuestSettings();
+	}
+
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+	if (PropertyChangedEvent.MemberProperty)
+	{
+		//If we changed the ID, make sure it doesn't conflict with any other IDs in the quest
+		if (PropertyChangedEvent.MemberProperty->GetFName() == GET_MEMBER_NAME_CHECKED(UQuest, ID))
+		{
+			EvaluateUniqueID();
+		}
+	}
+}
+
+void UQuest::PostLoad()
+{
+	Super::PostLoad();
+
+	// make sure we have guid for shared quest setting 
+	if (bSharedCategory && !SharedCategoryGuid.IsValid())
+	{
+		FQuestSharedSettingHelper().MakeSureGuidExists(this);
+	}
+}
+
+
+
+#endif
 
 #undef LOCTEXT_NAMESPACE

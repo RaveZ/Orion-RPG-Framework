@@ -3,7 +3,6 @@
 
 #include "DialogBuilderNode_DialogLine.h"
 #include "DialogBuilderNode_PlayerChoice.h"
-#include "Kismet2/Kismet2NameValidators.h"
 #include "Decorator/OrionDecorator.h"
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderSetting.h"
@@ -29,33 +28,6 @@ void UDialogBuilderNode_DialogLine::BeginNode()
 	Super::BeginNode();
 	GetOwningDialogGraph()->BeginDialogLine(this);
 	GetDialogComponent()->OnDialogUpdated.Broadcast(this);
-}
-
-void UDialogBuilderNode_DialogLine::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
-{
-	FName PropertyName = (PropertyChangedEvent.Property != NULL) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
-	FName ParticipantInfoProperty = FName("ParticipantInfo");
-
-	if (ParticipantInfoProperty == GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantInfo))
-	{
-		PropagateParticipantSettings();
-	}
-
-	Super::PostEditChangeProperty(PropertyChangedEvent);
-}
-void UDialogBuilderNode_DialogLine::PostLoad()
-{
-	Super::PostLoad();
-
-	// make sure we have guid for shared participant 
-	if (bSharedParticipant && !SharedParticipantGuid.IsValid())
-	{
-		FDialogSharedParticipantNodeHelper().MakeSureGuidExists(this);
-	}
-}
-void UDialogBuilderNode_DialogLine::Serialize(FArchive& Ar)
-{
-	Super::Serialize(Ar);
 }
 
 void UDialogBuilderNode_DialogLine::EvaluateNextNode()
@@ -109,7 +81,15 @@ bool UDialogBuilderNode_DialogLine::EvaluateAnyPlayerOptions()
 	return false;
 }
 
-#if WITH_EDITOR
+UObject* UDialogBuilderNode_DialogLine::GetParticipantImage()
+{
+	if (DialogLineData.ParticipantImageOverride)
+	{
+		return DialogLineData.ParticipantImageOverride;
+	}
+	return ParticipantInfo.ParticipantImage;
+}
+
 void UDialogBuilderNode_DialogLine::MakeParticipantShareable(FString ShareName)
 {
 	if (!DialogGraph)
@@ -147,8 +127,6 @@ void UDialogBuilderNode_DialogLine::UseSharedParticipant(const UDialogBuilderNod
 	{
 		return;
 	}
-
-	FScopedTransaction Transaction(LOCTEXT("UseSharedParticipant", "Use Shared Participant"));
 
 	Modify();
 
@@ -195,6 +173,8 @@ void UDialogBuilderNode_DialogLine::PropagateParticipantSettings()
 
 }
 
+#if WITH_EDITOR
+
 FText UDialogBuilderNode_DialogLine::GetNodeTitle() const
 {
     return ParticipantInfo.ParticipantName.IsEmpty() ? FText::FromString("Participant None") : ParticipantInfo.ParticipantName;
@@ -209,55 +189,38 @@ FText UDialogBuilderNode_DialogLine::GetNodeDescription() const
 {
 	return DialogLineData.Line;
 }
-#endif
 
 
-void IDialogNodeSharedDataHelper::UpdateSharedData(UDialogBuilderNode_DialogLine* Node, TSharedPtr<INameValidatorInterface> NameValidator)
+void UDialogBuilderNode_DialogLine::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
-	if (!Node || !Node->DialogGraph)
-		return;
-	// get all other dialog line nodes
-	TArray<UDialogBuilderNode_DialogLine*> DialogLineNodes;
+	FName PropertyName = (PropertyChangedEvent.Property != NULL) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
+	FName ParticipantInfoProperty = FName("ParticipantInfo");
 
-	UDialogBuilderGraph* ParentGraph = Node->DialogGraph;
-	for (auto& DialogBuilderNode : ParentGraph->AllNodes)
+	if (ParticipantInfoProperty == GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ParticipantInfo))
 	{
-		if (UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(DialogBuilderNode))
-		{
-			DialogLineNodes.AddUnique(DialogLineNode);
-		}
+		PropagateParticipantSettings();
 	}
 
-	// check if there is other node that can provide us with data
-	for (TArray<UDialogBuilderNode_DialogLine*>::TIterator It(DialogLineNodes); It; ++It)
-	{
-		UDialogBuilderNode_DialogLine* OtherNode = *It;
-		if (OtherNode != Node &&
-			CheckIfHasDataToShare(OtherNode) &&
-			CheckIfNodesShouldShareData(Node, OtherNode))
-		{
-			// use shared data of that node (to make sure everything is linked up properly)
-			ShareData(Node, OtherNode);
-			break;
-		}
-	}
+	Super::PostEditChangeProperty(PropertyChangedEvent);
+}
 
-	// check if our shared rule name is original
-	if (NameValidator->FindValidString(AccessShareDataName(Node)) != EValidatorResult::Ok)
+void UDialogBuilderNode_DialogLine::PostLoad()
+{
+	Super::PostLoad();
+
+	// make sure we have guid for shared participant 
+	if (bSharedParticipant && !SharedParticipantGuid.IsValid())
 	{
-		// rename all shared rules name in nodes that should share same name
-		for (TArray<UDialogBuilderNode_DialogLine*>::TIterator It(DialogLineNodes); It; ++It)
-		{
-			UDialogBuilderNode_DialogLine* OtherNode = *It;
-			if (OtherNode != Node &&
-				CheckIfNodesShouldShareData(Node, OtherNode))
-			{
-				AccessShareDataName(OtherNode) = AccessShareDataName(Node);
-			}
-		}
+		FDialogSharedParticipantNodeHelper().MakeSureGuidExists(this);
 	}
 }
 
+#endif
+
+void UDialogBuilderNode_DialogLine::Serialize(FArchive& Ar)
+{
+	Super::Serialize(Ar);
+}
 void IDialogNodeSharedDataHelper::MakeSureGuidExists(UDialogBuilderNode_DialogLine* Node)
 {
 	if (!Node || !Node->DialogGraph)

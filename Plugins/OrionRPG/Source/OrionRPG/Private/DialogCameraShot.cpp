@@ -16,10 +16,16 @@ UDialogCameraShot::UDialogCameraShot()
 	CustomNearClippingPlane = 15.f;
 
 	CropSettings.AspectRatio = 2.39f;
+	bConstrainAspectRatio = false;
 
 	Filmback.SensorWidth = 23.76f;
 	Filmback.SensorHeight = 13.365f;
 	Filmback.SensorAspectRatio = 1.777778f;
+
+	bBlendCameraTransition = false;
+	BlendTime = 0.75f; 
+	BlendFunc = VTBlend_Cubic; 
+	BlendExp = 2.0f;
 
 	LensSettings.MinFocalLength = 4.0f;
 	LensSettings.MaxFocalLength = 1000.0f;
@@ -27,6 +33,7 @@ UDialogCameraShot::UDialogCameraShot()
 	LensSettings.MaxFStop = 22.0f;
 	LensSettings.SqueezeFactor = 1.0f;
 	LensSettings.DiaphragmBladeCount = 7;
+
 }
 
 void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker)
@@ -49,42 +56,6 @@ void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker)
 		: CameraFocusRule == EDialogCameraFocusRule::E_OtherParticipant ? InDialog->CachedParticipants.FindRef(ParticipantToFocus).Get()
 		: nullptr;
 
-	//Set camera setting
-	if (UCineCameraComponent* CinecamComp = Cinecam->GetCineCameraComponent())
-	{
-		CinecamComp->CropSettings = CropSettings;
-		CinecamComp->SetCurrentFocalLength(FocalLengthOverride);
-		CinecamComp->SetCurrentAperture(ApertureOverride);
-		CinecamComp->SetFilmback(Filmback);
-		CinecamComp->SetLensSettings(LensSettings);
-		CinecamComp->bOverride_CustomNearClippingPlane = bOverride_CustomNearClippingPlane;
-		CinecamComp->CustomNearClippingPlane = CustomNearClippingPlane;
-		if (bUsePostProcess)
-		{
-			CinecamComp->PostProcessSettings = PostProcessSettings;
-		}
-
-
-		if (FocusActor.IsValid())
-		{
-			CinecamComp->FocusSettings.FocusMethod = ECameraFocusMethod::Tracking;
-			CinecamComp->FocusSettings.TrackingFocusSettings.RelativeOffset = FocusRelativeOffset;
-			CinecamComp->FocusSettings.TrackingFocusSettings.ActorToTrack = FocusActor.Get();
-		}
-		else
-		{
-			CinecamComp->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
-		}
-	}
-
-	// Set the current view target to the cinecam
-	APlayerController* PC = GetWorld()->GetFirstPlayerController();
-	if (PC)
-    {
-		PC->SetViewTarget(const_cast<ACineCameraActor*>(Cinecam));
-	}
-
-
     // Optionally, focus/track the speaker if LookAtActor is valid
     if (Cinecam && LookAtActor.IsValid())
     {
@@ -98,8 +69,6 @@ void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker)
 		FRotator RotationOverride = FRotator();
 		float RandomAngleX;
 		float RandomAngleY;
-
-       
 
 		switch (CameraAngleRule)
 		{
@@ -127,17 +96,88 @@ void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker)
         //make sure to generate camera only if shot get overidden or the last speaker is different
         if (InDialog->CachedLastShot != this)
         {
-            Cinecam->SetActorLocation(LocationOverride);
-			Cinecam->SetActorRotation(RotationOverride);
-            Cinecam->LookatTrackingSettings.bEnableLookAtTracking = true;
-            Cinecam->LookatTrackingSettings.ActorToTrack = LookAtActor.Get();
-            Cinecam->LookatTrackingSettings.RelativeOffset = RelativeOffset + CameraOffset;
+			APlayerController* PC = GetWorld()->GetFirstPlayerController();
+			if (bBlendCameraTransition)
+			{
+
+				if (PC)
+				{
+					//Spawn new cinecam so we can set view target from current camera to this cinecam
+					FActorSpawnParameters SpawnParams;
+					SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+					ACineCameraActor* NewCinecam = GetWorld()->SpawnActor<ACineCameraActor>(ACineCameraActor::StaticClass(), SpawnParams);
+
+					// Set the cinecam's transform before blending
+					NewCinecam->SetActorLocation(LocationOverride);
+					NewCinecam->SetActorRotation(RotationOverride);
+
+					// Smoothly blend to the cinecam as view target
+					PC->SetViewTargetWithBlend(
+						const_cast<ACineCameraActor*>(NewCinecam),
+						BlendTime,
+						BlendFunc,
+						BlendExp,
+						true // bLockOutgoing
+					);
+
+					//override cinecam with new one
+					InDialog->Cinecam = NewCinecam;
+					Cinecam->SetLifeSpan(BlendTime);
+					Cinecam = NewCinecam;
+
+				}
+			}
+			else
+			{
+				// Set the current view target to the cinecam
+				if (PC)
+				{
+					PC->SetViewTarget(const_cast<ACineCameraActor*>(Cinecam));
+				}
+				Cinecam->SetActorLocation(LocationOverride);
+				Cinecam->SetActorRotation(RotationOverride);
+				Cinecam->LookatTrackingSettings.bEnableLookAtTracking = true;
+				Cinecam->LookatTrackingSettings.ActorToTrack = LookAtActor.Get();
+				Cinecam->LookatTrackingSettings.RelativeOffset = RelativeOffset + CameraOffset;
+			}
+			
 
 			if(!bTrackEnabled)
 				Cinecam->LookatTrackingSettings.bEnableLookAtTracking = false;
 
 			
         }
+
+		//Set camera setting
+		if (UCineCameraComponent* CinecamComp = Cinecam->GetCineCameraComponent())
+		{
+			CinecamComp->CropSettings = CropSettings;
+			CinecamComp->SetCurrentFocalLength(FocalLengthOverride);
+			CinecamComp->SetCurrentAperture(ApertureOverride);
+			CinecamComp->SetFilmback(Filmback);
+			CinecamComp->SetLensSettings(LensSettings);
+			CinecamComp->SetConstraintAspectRatio(bConstrainAspectRatio);
+			CinecamComp->bOverride_CustomNearClippingPlane = bOverride_CustomNearClippingPlane;
+			CinecamComp->CustomNearClippingPlane = CustomNearClippingPlane;
+			if (bUsePostProcess)
+			{
+				CinecamComp->PostProcessSettings = PostProcessSettings;
+			}
+
+
+			if (FocusActor.IsValid())
+			{
+				CinecamComp->FocusSettings.FocusMethod = ECameraFocusMethod::Tracking;
+				CinecamComp->FocusSettings.TrackingFocusSettings.RelativeOffset = FocusRelativeOffset;
+				CinecamComp->FocusSettings.TrackingFocusSettings.ActorToTrack = FocusActor.Get();
+			}
+			else
+			{
+				CinecamComp->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
+			}
+		}
+
+		
 
     }
 }

@@ -4,11 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "DialogData.h"
 #include "DialogBuilderSetting.generated.h"
 
 
 
-UCLASS(config = Engine, defaultconfig)
+UCLASS(config = Engine, defaultconfig, BlueprintType)
 class ORIONRPG_API UDialogBuilderSetting : public UObject
 {
 	GENERATED_BODY()
@@ -20,11 +21,15 @@ public:
 
 	/**Determine how long the line should be displayed*/
 
-	UPROPERTY(EditAnywhere, config, Category = "Dialog Setting")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options")
 		float MinDialogLineDuration;
 
-	UPROPERTY(EditAnywhere, config, Category = "Dialog Setting")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options")
 		float DialogLineWordsPerSecond;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options", noclear)
+	TSubclassOf<class UCommonActivatableWidget> DefaultDialogWidget;
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor DialogLineNodeColor;
@@ -50,13 +55,13 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor SubNodeColor;
 
-	UPROPERTY(BlueprintReadOnly, config, Category = "Graph Rule")
+	UPROPERTY(config)
 	bool bEdgeEnabled;
 
-	UPROPERTY(BlueprintReadOnly, config, Category = "Graph Rule")
+	UPROPERTY(config)
 	bool bCanRenameNode;
 
-	UPROPERTY(BlueprintReadOnly, config, Category = "Graph Rule")
+	UPROPERTY(config)
 	bool bCanBeCyclical;
 	
 
