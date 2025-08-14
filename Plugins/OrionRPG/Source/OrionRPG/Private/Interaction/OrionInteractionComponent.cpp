@@ -2,7 +2,10 @@
 #include "Interaction/OrionInteractionTargetComponent.h"
 #include "CollisionQueryParams.h"
 #include "GameFramework/PlayerController.h"
-
+#include "GameFramework/Pawn.h"
+#include "Engine/World.h"
+#include "DrawDebugHelpers.h"
+#include "TimerManager.h"
 
 
 
@@ -14,6 +17,7 @@ UOrionInteractionComponent::UOrionInteractionComponent()
 	InteractionRadius = 250.f;
 	InteractionTraceDistance = 300.0f;
 	InteractionTraceIntervalSecond = 0.3f;
+	InteractionOffset = FVector(50.f, 0.f, 0.f);
 	bIsInteractionEnabled = false;
 	bDebugTrace = false;
 }
@@ -147,7 +151,9 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 		{
 			TraceStart = GetOwningPawn()->GetActorLocation();
 			Rotation = GetOwningPawn()->GetActorRotation();
-			TraceStart += InteractionOffset;
+            TraceStart += GetOwningPawn()->GetActorForwardVector() * InteractionOffset.X;
+            TraceStart += GetOwningPawn()->GetActorRightVector() * InteractionOffset.Y;
+            TraceStart += GetOwningPawn()->GetActorUpVector() * InteractionOffset.Z;
 			FCollisionShape Sphere = FCollisionShape::MakeSphere(InteractionRadius);
 
 			TArray<FHitResult> HitResults;
@@ -175,12 +181,12 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 					GetWorld(),
 					TraceStart,
 					InteractionRadius,
-					12, // Number of segments
+					12, 
 					FColor::Red,
-					false, // Persistent lines
-					2.f, // Duration
-					0, // Depth priority
-					1.f // Line thickness
+					false, 
+					2.f, 
+					0, 
+					1.f 
 				);
 			}
 			
@@ -212,10 +218,10 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 					TraceStart,
 					TraceEnd,
 					FColor::Red,
-					false, // Persistent lines  
-					2.f,  // Duration  
-					0,    // Depth priority  
-					1.f   // Line thickness  
+					false, 
+					2.f, 
+					0,    
+					1.f   
 				);
 			}
 			break;

@@ -15,6 +15,8 @@
 #include "Kismet/KismetMathLibrary.h"
 #include "Math/Vector.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
 
 UQuestComponent* UQuestBuilderFunctionLibrary::GetQuestComponent(const UObject* WorldContextObject)
 {

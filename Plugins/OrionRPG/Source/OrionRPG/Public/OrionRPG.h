@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Quest.h"
 #include "Modules/ModuleManager.h"
 
 class UQuest;

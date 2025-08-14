@@ -17,6 +17,7 @@ class ORIONRPG_API UCompleteQuest : public UOrionEvent
 public:
 	UCompleteQuest();
 
-	virtual void BeginEvent(AController* OwnerController, APawn* ControlledPawn) override;
+	virtual void BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn) override;
 	virtual FString GetNodeDisplayText_Implementation() const override;
 };
+

@@ -8,6 +8,7 @@
 #include "Quest.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "QuestBuilderGraph.h"
+#include "Engine/World.h"
 
 UIsQuestObjectiveCompleted::UIsQuestObjectiveCompleted()
 {
@@ -15,7 +16,7 @@ UIsQuestObjectiveCompleted::UIsQuestObjectiveCompleted()
 	bUseNodeTag = true;
 }
 
-bool UIsQuestObjectiveCompleted::PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const
+bool UIsQuestObjectiveCompleted::PerformConditionCheck_Implementation(APlayerController* OwnerController, APawn* ControlledPawn) const
 {
     FName QuestID = QuestTag.GetTagName();
     FName NodeID = NodeTag.GetTagName();

@@ -4,6 +4,7 @@
 #include "Decorator/IsQuestAtState.h"
 #include "QuestComponent.h"
 #include "QuestBuilderFunctionLibrary.h"
+#include "Engine/World.h"
 #include "Quest.h"
 
 UIsQuestAtState::UIsQuestAtState()
@@ -11,7 +12,7 @@ UIsQuestAtState::UIsQuestAtState()
     bUseQuestTag = true;
 }
 
-bool UIsQuestAtState::PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const
+bool UIsQuestAtState::PerformConditionCheck_Implementation(APlayerController* OwnerController, APawn* ControlledPawn) const
 {
     FName QuestID = QuestTag.GetTagName();
     if (GetWorld())

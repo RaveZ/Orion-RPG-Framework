@@ -49,6 +49,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event", meta = (EditCondition = "SoundType == EPlaySoundType::E_SoundLocation && bPlayAtAttachedPawnLocation == false", HideEditConditionToggle, EditConditionHides))
 	FVector Location;
 
-	virtual void BeginEvent(AController* OwnerController, APawn* ControlledPawn) override;
+	virtual void BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn) override;
 	virtual FString GetNodeDisplayText_Implementation() const override;
 };

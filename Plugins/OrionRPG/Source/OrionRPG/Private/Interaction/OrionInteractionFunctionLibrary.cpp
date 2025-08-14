@@ -8,6 +8,7 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "GameFramework/Pawn.h"
 
 
 UOrionInteractionComponent* UOrionInteractionFunctionLibrary::GetOrionInteractionComponent(const UObject* WorldContextObject)

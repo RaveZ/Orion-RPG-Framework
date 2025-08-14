@@ -19,6 +19,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "QuestEvent")
 	TObjectPtr<UQuestBuilderGraph> QuestAsset;
 
-	virtual void BeginEvent(AController* OwnerController, APawn* ControlledPawn) override;
+	virtual void BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn) override;
 	virtual FString GetNodeDisplayText_Implementation() const override;
 };

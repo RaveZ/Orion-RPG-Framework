@@ -2,6 +2,7 @@
 
 
 #include "Event/RestartQuest.h"
+#include "Engine/World.h"
 #include "Quest.h"
 #include "QuestComponent.h"
 #include "QuestBuilderFunctionLibrary.h"
@@ -16,7 +17,7 @@ URestartQuest::URestartQuest()
 	bUseNodeTag = true;
 }
 
-void URestartQuest::BeginEvent(AController* OwnerController, APawn* ControlledPawn)
+void URestartQuest::BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn)
 {
 	if (QuestTag.IsValid())
 	{

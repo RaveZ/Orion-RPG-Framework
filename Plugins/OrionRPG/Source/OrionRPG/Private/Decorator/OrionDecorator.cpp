@@ -18,7 +18,7 @@ UOrionDecorator::UOrionDecorator()
 	bIsNode = false;
 }
 
-bool UOrionDecorator::PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const
+bool UOrionDecorator::PerformConditionCheck_Implementation(APlayerController* OwnerController, APawn* ControlledPawn) const
 {
 	return true;
 }

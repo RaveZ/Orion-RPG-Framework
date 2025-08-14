@@ -9,7 +9,7 @@
 
 class UOrionInventoryComponent;
 class UOrionInventoryNode;
-class AController;
+class APlayerController;
 class APawn;
 
 UCLASS(Blueprintable, BlueprintType)
@@ -25,7 +25,7 @@ public:
 		FName ID;
 
 	UPROPERTY(BlueprintReadWrite, Category = "OrionInventoryGraph")
-		TObjectPtr<AController> OwningController;
+		TObjectPtr<APlayerController> OwningController;
 
 	UPROPERTY(BlueprintReadWrite, Category = "OrionInventoryGraph")
 		TObjectPtr < UOrionInventoryComponent> OrionInventoryComponent;
@@ -57,7 +57,7 @@ public:
 	void ClearGraph();
 	
 	UFUNCTION(BlueprintCallable, Category = "OrionInventory")
-	AController* GetOwningController();
+	APlayerController* GetOwningController();
 
 	UFUNCTION(BlueprintCallable, Category = "OrionInventory")
 	APawn* GetOwningPawn();

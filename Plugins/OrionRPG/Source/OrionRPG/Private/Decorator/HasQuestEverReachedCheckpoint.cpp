@@ -9,6 +9,7 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Quest.h"
 #include "QuestBuilderGraph.h"
+#include "Engine/World.h"
 
 UHasQuestEverReachedCheckpoint::UHasQuestEverReachedCheckpoint()
 {
@@ -16,7 +17,7 @@ UHasQuestEverReachedCheckpoint::UHasQuestEverReachedCheckpoint()
     bUseNodeTag = true;
 }
 
-bool UHasQuestEverReachedCheckpoint::PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const
+bool UHasQuestEverReachedCheckpoint::PerformConditionCheck_Implementation(APlayerController* OwnerController, APawn* ControlledPawn) const
 {
     FName QuestID = QuestTag.GetTagName();
     FName NodeID = NodeTag.GetTagName();

@@ -8,6 +8,7 @@
 #include "OrionInventoryNode_Item.generated.h"
 
 UCLASS(Blueprintable, BlueprintType)
+
 class ORIONRPG_API UOrionInventoryNode_Item : public UOrionInventoryNode
 {
 	GENERATED_BODY()
@@ -20,7 +21,7 @@ public:
 	FGameplayTag Tag;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail")
-	TObjectPtr<UTexture2D> DisplayImage;
+	TObjectPtr<class UTexture2D> DisplayImage;
 
 	
 	

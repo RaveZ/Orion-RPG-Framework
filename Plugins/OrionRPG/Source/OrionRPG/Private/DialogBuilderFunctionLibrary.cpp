@@ -3,6 +3,8 @@
 
 #include "DialogBuilderFunctionLibrary.h"
 #include "OrionRPG.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderNode.h"
 #include "DialogBuilderNode_DialogLine.h"

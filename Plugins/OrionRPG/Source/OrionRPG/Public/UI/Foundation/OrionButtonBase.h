@@ -15,7 +15,7 @@ class UOrionButtonBase : public UCommonButtonBase
 	GENERATED_BODY()
 
 public:
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "OrionRPG|CommonButton")
 	void SetButtonText(const FText& InText);
 
 protected:
@@ -35,6 +35,7 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void UpdateButtonStyle();
+
 
 private:
 	UPROPERTY(EditAnywhere, Category = "Button", meta = (InlineEditConditionToggle))

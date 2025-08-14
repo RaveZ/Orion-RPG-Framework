@@ -5,6 +5,8 @@
 #include "Quest.h"
 #include "QuestBuilderSetting.h"
 #include "QuestComponent.h"
+#include "Engine/World.h"	
+#include "TimerManager.h"
 
 
 #define LOCTEXT_NAMESPACE "QuestSystemGraphNode_Objective"

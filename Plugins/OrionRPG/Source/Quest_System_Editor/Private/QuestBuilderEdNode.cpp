@@ -18,6 +18,8 @@
 #include "Event/OrionEvent.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "QuestBuilderGraph.h"
+#include "UObject/TopLevelAssetPath.h"
+#include "AIGraphTypes.h"
 #include "Quest.h"
 
 #define LOCTEXT_NAMESPACE "QuestBuilderEditor"

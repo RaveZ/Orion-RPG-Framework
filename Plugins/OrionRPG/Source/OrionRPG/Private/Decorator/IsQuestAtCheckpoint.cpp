@@ -10,6 +10,7 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Quest.h"
 #include "QuestBuilderGraph.h"
+#include "Engine/World.h"
 
 UIsQuestAtCheckpoint::UIsQuestAtCheckpoint()
 {
@@ -17,7 +18,7 @@ UIsQuestAtCheckpoint::UIsQuestAtCheckpoint()
     bUseNodeTag = true;
 }
 
-bool UIsQuestAtCheckpoint::PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const
+bool UIsQuestAtCheckpoint::PerformConditionCheck_Implementation(APlayerController* OwnerController, APawn* ControlledPawn) const
 {
     FName QuestID = QuestTag.GetTagName();
     FName NodeID = NodeTag.GetTagName();

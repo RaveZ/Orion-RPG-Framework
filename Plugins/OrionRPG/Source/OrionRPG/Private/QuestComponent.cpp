@@ -17,12 +17,15 @@
 #include "GameFramework/Controller.h"
 #include "QuestData.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
 
 
 #define LOCTEXT_NAMESPACE "QuestComponent"
 
 UQuestComponent::UQuestComponent()
 {
+
 	SetIsReplicatedByDefault(true);
 	SetComponentTickEnabled(true);
 	PrimaryComponentTick.bCanEverTick = true;

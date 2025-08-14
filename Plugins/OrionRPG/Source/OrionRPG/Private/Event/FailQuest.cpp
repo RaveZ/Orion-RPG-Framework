@@ -3,6 +3,7 @@
 
 #include "Event/FailQuest.h"
 #include "Quest.h"
+#include "Engine/World.h"
 #include "QuestBuilderFunctionLibrary.h"
 #include "QuestComponent.h"
 #include "QuestBuilderGraph.h"
@@ -13,7 +14,7 @@ UFailQuest::UFailQuest()
 	bUseQuestTag = true;
 }
 
-void UFailQuest::BeginEvent(AController* OwnerController, APawn* ControlledPawn)
+void UFailQuest::BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn)
 {
 	if (QuestTag.IsValid())
 	{

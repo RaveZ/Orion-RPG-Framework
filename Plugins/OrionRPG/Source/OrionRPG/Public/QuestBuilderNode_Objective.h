@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "QuestBuilderNode.h"
 #include "QuestData.h"
+#include "Engine/TimerHandle.h"
 #include "QuestBuilderNode_Objective.generated.h"
 
 class UQuestObjective;
@@ -50,21 +51,21 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Objective")
 	float DistanceToTarget;
 
-	FTimerHandle TimerHandle_TickObjective;
+	struct FTimerHandle TimerHandle_TickObjective;
 
 public:
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Begin Objective", Category = "Objective")
-	void K2_BeginObjective(AController* OwnerController, APawn* ControlledPawn);
+	void K2_BeginObjective(APlayerController* OwnerController, APawn* ControlledPawn);
 
 	UFUNCTION(BlueprintNativeEvent, DisplayName = "Tick Objective", Category = "Objective")
 	void TickObjective();
 	virtual void TickObjective_Implementation();
 
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Objective Completed", Category = "Objective")
-	void K2_ObjectiveCompleted(AController* OwnerController, APawn* ControlledPawn);
+	void K2_ObjectiveCompleted(APlayerController* OwnerController, APawn* ControlledPawn);
 
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Objective Failed", Category = "Objective")
-	void K2_ObjectiveFailed(AController* OwnerController, APawn* ControlledPawn);
+	void K2_ObjectiveFailed(APlayerController* OwnerController, APawn* ControlledPawn);
 	
 	/**
 	 * Implement to provide the quest with the location of your objective, Useful if you wanted to use quest indicator.
@@ -72,7 +73,7 @@ public:
 	 * If there is no input on the component, will use ObjectiveLocation Instead.
 	 */
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Objective", meta = (DisplayName = "Get Objective Location"))
-	TArray<UPrimitiveComponent*> K2_GetObjectiveLocation(TArray<FVector>& ObjectiveLocation) const;
+	TArray<USceneComponent*> K2_GetObjectiveLocation(TArray<FVector>& ObjectiveLocation) const;
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
 	virtual void BeginObjective();

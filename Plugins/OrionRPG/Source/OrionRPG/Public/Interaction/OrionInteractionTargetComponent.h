@@ -24,7 +24,7 @@ enum class EOrionInteractionMode : uint8
  * Interaction component
  */
 UCLASS(ClassGroup = (Orion), meta = (BlueprintSpawnableComponent, ClassGroup = "OrionRPG", DisplayName = "Orion Interaction Target"))
-class UOrionInteractionTargetComponent : public UActorComponent
+class UOrionInteractionTargetComponent : public USceneComponent
 {
 	GENERATED_BODY()
 	

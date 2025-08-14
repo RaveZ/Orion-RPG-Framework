@@ -15,6 +15,8 @@
 #include "GameFramework/Controller.h"
 #include "DialogData.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
 
 
 

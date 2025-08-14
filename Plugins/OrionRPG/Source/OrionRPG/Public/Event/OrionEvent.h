@@ -8,6 +8,8 @@
 #include "GameplayTagContainer.h"
 #include "OrionEvent.generated.h"
 
+class APlayerController;
+class APawn;
 class UQuestBuilderGraph;
 class UQuestBuilderNode;
 class UQuest;
@@ -32,6 +34,12 @@ class ORIONRPG_API UOrionEvent : public UObject
 	GENERATED_BODY()
 public:
 	UOrionEvent();
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Event")
+	TObjectPtr<APlayerController> OwningController;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Event")
+	TObjectPtr<APawn> OwningPawn;
 
 	/** node name override*/
 	UPROPERTY(Category = "Node", EditAnywhere, meta = (EditCondition = "bIsNode == true", HideEditConditionToggle, EditConditionHides))
@@ -65,10 +73,10 @@ public:
 	FEventFinishedSignature OnEventFinished;
 
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Begin Event", Category = "Event")
-		void K2_BeginEvent(AController* OwnerController, APawn* ControlledPawn);
+		void K2_BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn);
 
 	UFUNCTION(BlueprintCallable, Category = "Event")
-	virtual void BeginEvent(AController* OwnerController, APawn* ControlledPawn);
+	virtual void BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn);
 
 
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Event Finished", Category = "Event")

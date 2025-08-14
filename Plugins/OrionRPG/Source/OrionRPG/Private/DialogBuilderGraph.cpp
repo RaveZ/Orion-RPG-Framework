@@ -20,6 +20,12 @@
 #include "Sound/SoundBase.h"
 #include "Components/AudioComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Camera/PlayerCameraManager.h"
+#include "Animation/AnimMontage.h"
+#include "TimerManager.h"
+#include "Animation/AnimInstance.h"
+#include "Camera/CameraShakeBase.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderGraph"
 

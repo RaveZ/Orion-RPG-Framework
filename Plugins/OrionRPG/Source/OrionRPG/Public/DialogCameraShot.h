@@ -8,6 +8,7 @@
 #include <MovieSceneSequencePlayer.h>
 #include <CineCameraSettings.h>
 #include "LevelSequencePlayer.h"
+#include "Camera/PlayerCameraManager.h"
 #include "DialogCameraShot.generated.h"
 
 UENUM(BlueprintType)
@@ -130,7 +131,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Settings")
 	FCameraLensSettings LensSettings;
 
-	UPROPERTY(EditAnywhere, meta = (InlineEditConditionToggle))
+	UPROPERTY(EditAnywhere, meta = (InlineEditConditionToggle), Category = "Camera Settings")
 	bool bUsePostProcess = false;
 
 	/**Camera post process override*/

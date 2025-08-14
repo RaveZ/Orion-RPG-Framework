@@ -46,6 +46,7 @@ void UOrionButtonBase::RefreshButtonText()
 	UpdateButtonText(ButtonText);
 }
 
+
 void UOrionButtonBase::OnInputMethodChanged(ECommonInputType CurrentInputType)
 {
 	Super::OnInputMethodChanged(CurrentInputType);

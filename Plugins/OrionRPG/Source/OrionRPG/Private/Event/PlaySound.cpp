@@ -7,6 +7,10 @@
 #include "QuestBuilderGraph.h"
 #include "Kismet/GameplayStatics.h"
 #include "QuestBuilderNode.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
+#include "Engine/World.h"
+#include "Sound/SoundBase.h"
 
 UPlaySound::UPlaySound()
 {
@@ -15,7 +19,7 @@ UPlaySound::UPlaySound()
 	bPlayAtAttachedPawnLocation = true;
 }
 
-void UPlaySound::BeginEvent(AController* OwnerController, APawn* ControlledPawn)
+void UPlaySound::BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn)
 {
     if (SoundToPlay)
     {

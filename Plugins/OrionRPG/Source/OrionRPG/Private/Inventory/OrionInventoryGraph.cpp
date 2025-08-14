@@ -4,6 +4,8 @@
 #include "Inventory/OrionInventoryGraph.h"
 #include "Inventory/OrionInventoryComponent.h"
 #include "Inventory/OrionInventoryNode.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
 
 #define LOCTEXT_NAMESPACE "OrionInventoryGraph"
 
@@ -77,7 +79,7 @@ void UOrionInventoryGraph::ClearGraph()
 	NodeMap.Empty();
 }
 
-AController* UOrionInventoryGraph::GetOwningController()
+APlayerController* UOrionInventoryGraph::GetOwningController()
 {
 	return OwningController;
 }

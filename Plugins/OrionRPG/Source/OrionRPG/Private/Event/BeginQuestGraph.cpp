@@ -5,6 +5,7 @@
 #include "Quest.h"
 #include "QuestBuilderFunctionLibrary.h"
 #include "QuestComponent.h"
+#include "Engine/World.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode.h"
 
@@ -12,7 +13,7 @@ UBeginQuestGraph::UBeginQuestGraph()
 {
 }
 
-void UBeginQuestGraph::BeginEvent(AController* OwnerController, APawn* ControlledPawn)
+void UBeginQuestGraph::BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn)
 {
 	if (GetWorld())
 	{

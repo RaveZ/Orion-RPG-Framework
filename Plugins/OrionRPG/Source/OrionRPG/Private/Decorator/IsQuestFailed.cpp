@@ -5,13 +5,14 @@
 #include "QuestComponent.h"
 #include "QuestBuilderFunctionLibrary.h"
 #include "Quest.h"
+#include "Engine/World.h"
 
 UIsQuestFailed::UIsQuestFailed()
 {
     bUseQuestTag = true;
 }
 
-bool UIsQuestFailed::PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const
+bool UIsQuestFailed::PerformConditionCheck_Implementation(APlayerController* OwnerController, APawn* ControlledPawn) const
 {
     FName QuestID = QuestTag.GetTagName();
     if (GetWorld())

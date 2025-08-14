@@ -8,12 +8,13 @@
 #include "QuestComponent.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode.h"
+#include "Engine/World.h"
 
 USetPlayerTransform::USetPlayerTransform()
 {
 }
 
-void USetPlayerTransform::BeginEvent(AController* OwnerController, APawn* ControlledPawn)
+void USetPlayerTransform::BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn)
 {
 	if (bUsePlayerStart)
 	{

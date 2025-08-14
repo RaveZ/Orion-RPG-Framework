@@ -4,6 +4,7 @@
 #include "Event/ActivateQuest.h"
 #include "Quest.h"
 #include "QuestComponent.h"
+#include "Engine/World.h"
 #include "QuestBuilderFunctionLibrary.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode.h"
@@ -13,7 +14,7 @@ UActivateQuest::UActivateQuest()
 	bUseQuestTag = true;
 }
 
-void UActivateQuest::BeginEvent(AController* OwnerController, APawn* ControlledPawn)
+void UActivateQuest::BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn)
 {
 	if (QuestTag.IsValid())
 	{

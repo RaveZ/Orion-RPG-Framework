@@ -4,6 +4,7 @@
 #include "DialogBuilderGraph.h"
 #include <CineCameraActor.h>
 #include <CineCameraComponent.h>
+#include "GameFramework/PlayerController.h"
 
 UDialogCameraShot::UDialogCameraShot()
 {
@@ -69,6 +70,8 @@ void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker)
 		FRotator RotationOverride = FRotator();
 		float RandomAngleX;
 		float RandomAngleY;
+		FRotator Rotation;
+		FVector Direction;
 
 		switch (CameraAngleRule)
 		{
@@ -77,16 +80,16 @@ void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker)
 				RandomAngleY = FMath::FRandRange(-ConeAngle.Y, ConeAngle.Y);
 
 				// Calculate random direction within cone
-				FRotator OffsetRot = FRotator(RandomAngleY, ActorRotation.Yaw + RandomAngleX, 0.f);
-				FVector ConeDirection = OffsetRot.Vector();
+				Rotation = FRotator(RandomAngleY, ActorRotation.Yaw + RandomAngleX, 0.f);
+				Direction = Rotation.Vector();
 
-				LocationOverride = ActorLocation + ConeDirection * CameraDistance;
+				LocationOverride = ActorLocation + Direction * CameraDistance;
 				RotationOverride = (ActorLocation - LocationOverride).Rotation();
 				break;
             case(EDialogCameraAngleRule::E_Custom):
 				// Calculate direction based on angle
-				FRotator CameraRot = FRotator(CameraAngle.Y, ActorRotation.Yaw + CameraAngle.X, 0.f);
-				FVector Direction = CameraRot.Vector();
+				Rotation = FRotator(CameraAngle.Y, ActorRotation.Yaw + CameraAngle.X, 0.f);
+				Direction = Rotation.Vector();
 
 				LocationOverride = ActorLocation + Direction * CameraDistance;
 				RotationOverride = (ActorLocation - LocationOverride).Rotation();

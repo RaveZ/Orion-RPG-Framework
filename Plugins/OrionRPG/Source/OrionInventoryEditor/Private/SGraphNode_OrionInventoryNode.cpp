@@ -375,7 +375,7 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 														]
 															//if parent node
 														+ SHorizontalBox::Slot()
-														.MinWidth(NodeMinWidth)
+														//.MinWidth(NodeMinWidth)
 														.MaxWidth(NodeMaxWidth)
 														[
 															SNew(SVerticalBox)
@@ -1084,11 +1084,11 @@ FSlateColor SGraphNode_OrionInventoryNode::GetBorderBackgroundColor() const
 	UOrionInventoryEdNode_ItemContainer* ItemContainerEdNode = Cast<UOrionInventoryEdNode_ItemContainer>(GraphNode);
 	UOrionInventoryEdNode* InventoryParentNode = InventoryEdNode ? Cast<UOrionInventoryEdNode>(InventoryEdNode->ParentNode) : nullptr;
 	const bool bSelectedSubNode = InventoryParentNode && GetOwnerPanel()->SelectionManager.SelectedNodes.Contains(GraphNode);
-	const bool bIsHovered = IsHovered();
+	const bool bHovered = IsHovered();
 	
 	UOrionInventoryNode* InventoryNode = InventoryEdNode ? Cast<UOrionInventoryNode>(InventoryEdNode->NodeInstance) : nullptr;
 
-	return (bIsHovered && !bSelectedSubNode && !ItemContainerEdNode) ? OrionInventoryColors::NodeBorder::Hovered:
+	return (bHovered && !bSelectedSubNode && !ItemContainerEdNode) ? OrionInventoryColors::NodeBorder::Hovered:
 		bSelectedSubNode ? OrionInventoryColors::NodeBorder::Selected :
 		InventoryEdNode && !InventoryEdNode->IsSubNode() ? InventoryEdNode->GetBackgroundColor() :
 		OrionInventoryColors::NodeBorder::InventoryNodeBorder;

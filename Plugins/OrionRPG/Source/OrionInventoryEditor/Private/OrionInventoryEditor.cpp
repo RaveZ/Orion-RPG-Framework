@@ -22,6 +22,7 @@
 #include "Inventory/OrionInventoryNode.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "K2Node.h"
+#include "AIGraphTypes.h"
 #include "GraphEditAction.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "HAL/PlatformApplicationMisc.h"

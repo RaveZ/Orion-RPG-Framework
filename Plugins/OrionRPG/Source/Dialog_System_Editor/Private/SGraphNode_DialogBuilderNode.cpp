@@ -416,7 +416,7 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 																						]
 																						//if parent node
 																						+ SHorizontalBox::Slot()
-																						.MinWidth(NodeMinWidth)
+																						//.MinWidth(NodeMinWidth)
 																						.MaxWidth(NodeMaxWidth)
 																						.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 																						[
@@ -467,7 +467,7 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 																						]
 																					//if subnode
 																					+ SHorizontalBox::Slot()
-																						.MinWidth(NodeMinWidth)
+																						//.MinWidth(NodeMinWidth)
 																						.MaxWidth(NodeMaxWidth)
 																						.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 																						[

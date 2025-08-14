@@ -22,6 +22,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Quest")
 	EQuestState QuestState = EQuestState::E_Active;
 	
-	virtual bool PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const override;
+	virtual bool PerformConditionCheck_Implementation(APlayerController* OwnerController, APawn* ControlledPawn) const override;
 	virtual FString GetNodeDisplayText_Implementation() const override;
 };

@@ -27,6 +27,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event", meta = (EditCondition = "bUsePlayerStart == true", HideEditConditionToggle, EditConditionHides))
 	FString PlayerStartTag;
 
-	virtual void BeginEvent(AController* OwnerController, APawn* ControlledPawn) override;
+	virtual void BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn) override;
 	virtual FString GetNodeDisplayText_Implementation() const override;
 };

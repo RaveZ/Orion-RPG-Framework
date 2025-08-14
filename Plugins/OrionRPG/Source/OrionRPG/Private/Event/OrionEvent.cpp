@@ -19,8 +19,10 @@ UOrionEvent::UOrionEvent()
 	bIsNode = false;
 }
 
-void UOrionEvent::BeginEvent(AController* OwnerController, APawn* ControlledPawn)
+void UOrionEvent::BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn)
 {
+	OwningController = OwnerController;
+	OwningPawn = ControlledPawn;
 	K2_BeginEvent(OwnerController, ControlledPawn);
 }
 

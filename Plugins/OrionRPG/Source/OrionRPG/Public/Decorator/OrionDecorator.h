@@ -42,9 +42,9 @@ public:
 		FGameplayTag NodeTag;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OrionDecorator")
-		bool PerformConditionCheck(AController* OwnerController, APawn* ControlledPawn) const;
+		bool PerformConditionCheck(APlayerController* OwnerController, APawn* ControlledPawn) const;
 
-		virtual bool PerformConditionCheck_Implementation(AController* OwnerController, APawn* ControlledPawn) const;
+		virtual bool PerformConditionCheck_Implementation(APlayerController* OwnerController, APawn* ControlledPawn) const;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OrionDecorator")
 	FString GetNodeDisplayText() const;
