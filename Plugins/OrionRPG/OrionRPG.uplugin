@@ -49,6 +49,18 @@
 				"IOS",
 				"Mac"
 			]
+		},
+		{
+			"Name": "OrionInventoryEditor",
+			"Type": "UncookedOnly",
+			"LoadingPhase": "PreDefault",
+			"PlatformAllowList": [
+				"Win64",
+				"Android",
+				"Linux",
+				"IOS",
+				"Mac"
+			]
 		}
 
 	],
