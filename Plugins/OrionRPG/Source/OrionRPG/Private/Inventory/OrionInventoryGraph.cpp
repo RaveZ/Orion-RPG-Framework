@@ -1,0 +1,120 @@
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
+
+
+#include "Inventory/OrionInventoryGraph.h"
+#include "Inventory/OrionInventoryComponent.h"
+#include "Inventory/OrionInventoryNode.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
+
+#define LOCTEXT_NAMESPACE "OrionInventoryGraph"
+
+UOrionInventoryGraph::UOrionInventoryGraph()
+{
+}
+
+UOrionInventoryGraph::~UOrionInventoryGraph()
+{
+	
+}
+
+bool UOrionInventoryGraph::Initialize(UOrionInventoryComponent* InitializingComp)
+{
+	if (!HasAnyFlags(RF_ClassDefaultObject))
+	{
+		//We need a valid Quest component to make a quest for 
+		if (!InitializingComp)
+		{
+			return false;
+		}
+		OwningController = InitializingComp->GetOwningController();
+		OrionInventoryComponent = InitializingComp;
+		VisitedNodeIDs.Empty();
+		NodeMap.Empty();
+		for (auto& Node : AllNodes)
+		{
+			if (Node)
+			{
+				Node->OrionInventoryGraph = this;
+				Node->OwningController = InitializingComp->GetOwningController();
+				Node->OrionInventoryComponent = InitializingComp;
+				NodeMap.Emplace(Node->ID, Node);
+			}
+		}
+	}
+	return false;
+}
+
+void UOrionInventoryGraph::Deinitialize()
+{
+	VisitedNodeIDs.Empty();
+	CurrentNode = nullptr;
+	
+	for (auto& Node : AllNodes)
+	{
+		Node->Deinitialize();
+	}
+}
+
+UWorld* UOrionInventoryGraph::GetWorld() const
+{
+	if (OrionInventoryComponent)
+	{
+		return OrionInventoryComponent->GetWorld();
+	}
+
+	return nullptr;
+}
+
+void UOrionInventoryGraph::BeginNode(UOrionInventoryNode* InNode, bool bLaunchEventOnLoad)
+{
+}
+
+void UOrionInventoryGraph::ClearGraph()
+{
+
+	VisitedNodeIDs.Empty();
+	AllNodes.Empty();
+	RootNodes.Empty();
+	NodeMap.Empty();
+}
+
+APlayerController* UOrionInventoryGraph::GetOwningController()
+{
+	return OwningController;
+}
+
+APawn* UOrionInventoryGraph::GetOwningPawn()
+{
+	if (OrionInventoryComponent)
+	{
+		return OrionInventoryComponent->GetOwningPawn();
+	}
+	return nullptr;
+}
+
+UOrionInventoryComponent* UOrionInventoryGraph::GetOrionInventoryComponent()
+{
+	return OrionInventoryComponent;
+}
+
+#if WITH_EDITORONLY_DATA
+
+void UOrionInventoryGraph::GetAllGraphs(TArray<UEdGraph*>& Graphs) const
+{
+	
+
+	for (int32 i = 0; i < InventoryGraphPages.Num(); ++i)
+	{
+		UEdGraph* Graph = InventoryGraphPages[i];
+		if (Graph)
+		{
+			Graphs.Add(Graph);
+			Graph->GetAllChildrenGraphs(Graphs);
+		}
+	}
+	
+}
+#endif // WITH_EDITORONLY_DATA
+
+#undef LOCTEXT_NAMESPACE

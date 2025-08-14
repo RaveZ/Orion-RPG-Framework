@@ -1,0 +1,76 @@
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Inventory/OrionInventoryGraph.h"
+#include "OrionInventoryEdNode.h"
+
+/**
+ * 
+ */
+class ORIONINVENTORYEDITOR_API FOrionInventoryEditorUtils
+{
+public:
+	FOrionInventoryEditorUtils();
+	~FOrionInventoryEditorUtils();
+
+
+	static FName FindUniqueInventoryName(const FString& InBaseName);
+
+	static FName FindUniqueInventoryGraphName(const FString& InBaseName);
+
+
+	/**
+	 * Creates a new empty graph.
+	 *
+	 * @param	ParentScope		The outer of the new graph.
+	 * @param	GraphName		Name of the graph to add.
+	 * @param	SchemaClass		Schema to use for the new graph.
+	 *
+	 * @return	null if it fails, else.
+	 */
+	static class UEdGraph* CreateNewGraph(UObject* ParentScope, const FName& GraphName, TSubclassOf<class UEdGraph> GraphClass, TSubclassOf<class UEdGraphSchema> SchemaClass);
+
+
+	/** Returns all nodes in all graphs of the specified class */
+	template< class T >
+	static inline void GetAllNodesOfClass(const UOrionInventoryGraph* OrionInventoryGraph, TArray<T*>& OutNodes)
+	{
+		TArray<UEdGraph*> AllGraphs;
+		OrionInventoryGraph->GetAllGraphs(AllGraphs);
+		for (int32 i = 0; i < AllGraphs.Num(); i++)
+		{
+			check(AllGraphs[i] != NULL);
+			TArray<T*> GraphNodes;
+			AllGraphs[i]->GetNodesOfClass<T>(GraphNodes);
+			OutNodes.Append(GraphNodes);
+		}
+	}
+
+	/**
+	 * Removes the supplied node from the UDialogBuilderGraph.
+	 *
+	 * @param Node				The node to remove.
+	 * @param bDontRecompile	If true, the UDialogBuilderGraph will not be marked as modified, and will not be recompiled.  Useful for if you are removing several node at once, and don't want to recompile each time
+	 */
+	static void RemoveNode(UOrionInventoryGraph* OrionInventoryGraph, UOrionInventoryEdNode* Node, bool bDontRecompile = false);
+
+	/**
+	 * Removes the supplied graph from the UDialogBuilderGraph.
+	 *
+	 * @param UDialogBuilderGraph	The UDialogBuilderGraph containing the graph
+	 * @param GraphToRemove		The graph to remove.
+	 */
+	static void RemoveGraph(UOrionInventoryGraph* OrionInventoryGraph, class UEdGraph* GraphToRemove);
+
+
+	/** Adds an inventorygraph page to this Inventory Editor */
+	static void AddInventoryGraphPage(UOrionInventoryGraph* InInventorySystemGraph, class UEdGraph* Graph);
+
+	/** Returns the event graph, if any */
+	static UEdGraph* FindInventoryGraph(const class UOrionInventoryGraph* OrionInventoryGraph);
+
+	/** Given a selection of nodes, return the instances that should be selected be selected for editing in the property panel */
+	static TArray<UObject*> GetSelectionForPropertyEditor(const TSet<UObject*>& InSelection);
+};
