@@ -436,10 +436,12 @@ void UOrionInventoryEdNode::UpdateNodeClassDataFrom(UClass* InstanceClass, FGrap
 		{
 			UpdatedData = FGraphNodeClassData(BPOwner->GetName(), BPOwner->GetOutermost()->GetName(), InstanceClass->GetName(), InstanceClass);
 		}
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 4)
 		else if (UBlueprintGeneratedClass* BPGC = Cast<UBlueprintGeneratedClass>(InstanceClass))
 		{
 			UpdatedData = FGraphNodeClassData(BPGC->GetClassPathName(), BPGC);
 		}
+#endif
 		else
 		{
 			UpdatedData = FGraphNodeClassData(InstanceClass, FGraphNodeClassHelper::GetDeprecationMessage(InstanceClass));
