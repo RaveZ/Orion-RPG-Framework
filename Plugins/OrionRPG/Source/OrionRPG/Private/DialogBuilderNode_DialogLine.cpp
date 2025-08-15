@@ -7,6 +7,10 @@
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderSetting.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "Animation/AnimMontage.h"
+#include "Sound/SoundBase.h"
+#include "LevelSequencePlayer.h"
+#include "LevelSequenceActor.h"
 #include "DialogComponent.h"
 
 
@@ -89,6 +93,53 @@ UObject* UDialogBuilderNode_DialogLine::GetParticipantImage()
 	}
 	return ParticipantInfo.ParticipantImage;
 }
+
+float UDialogBuilderNode_DialogLine::GetLineDuration()
+{
+	/**
+	* Each line duration will be determined by which one has the longest duration by aspects below:
+	* - The number of words in the line / Dialog line words per second setting
+	* - Sequence playback duration
+	* - Animation montage duration
+	* - Dialog sound duration
+	*/
+	float DialogLineDuration = 0.f;
+
+	//Words duration
+	FString LineString = DialogLineData.Line.ToString();
+	TArray<FString> Words;
+	LineString.ParseIntoArrayWS(Words);
+	DialogLineDuration = Words.Num() / GetDefault<UDialogBuilderSetting>()->DialogLineWordsPerSecond;
+	DialogLineDuration = FMath::Max(GetDefault<UDialogBuilderSetting>()->MinDialogLineDuration, DialogLineDuration);
+
+	//Sequence duration
+	ULevelSequence* SequenceToPlay = DialogLineData.SequenceToPlay;
+	if (SequenceToPlay && DialogLineData.DialogCameraMode == EDialogCameraMode::E_Sequence)
+	{
+		FFrameRate TickResolution = SequenceToPlay->MovieScene->GetTickResolution();
+		float SequenceDuration = SequenceToPlay->MovieScene->GetPlaybackRange().GetUpperBoundValue() / TickResolution;
+		DialogLineDuration = FMath::Max(DialogLineDuration, SequenceDuration);
+	}
+
+	//Montage duration
+	UAnimMontage* MontageToPlay = DialogLineData.DialogMontage;
+	if (MontageToPlay)
+	{
+		float MontageDuration = MontageToPlay->GetPlayLength();
+		DialogLineDuration = FMath::Max(DialogLineDuration, MontageDuration);
+	}
+
+	//Sound duration
+	USoundBase* DialogSound = DialogLineData.DialogSound;
+	if (DialogSound)
+	{
+		float SoundDuration = DialogSound->GetDuration();
+		DialogLineDuration = FMath::Max(DialogLineDuration, SoundDuration);
+	}
+
+	return DialogLineDuration;
+}
+
 
 void UDialogBuilderNode_DialogLine::MakeParticipantShareable(FString ShareName)
 {

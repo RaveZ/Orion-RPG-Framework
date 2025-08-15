@@ -46,6 +46,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Configuration|Player", meta = (NoResetToDefault))
 		TObjectPtr<class UDialogCameraShot> DefaultSelectingChoiceShot;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", Category = "Configuration|Player", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
+		TObjectPtr<UObject> DefaultPlayerImage;
+
 	/*
 	* Rotate all participant to whoever is currently speaking
 	*/

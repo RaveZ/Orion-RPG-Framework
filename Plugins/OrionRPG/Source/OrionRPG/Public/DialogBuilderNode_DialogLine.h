@@ -110,6 +110,9 @@ public:
 	UFUNCTION(BlueprintPure, Category="DialogLine")
 	UObject* GetParticipantImage();
 
+	UFUNCTION(BlueprintPure, Category = "DialogLine")
+	float GetLineDuration();
+
 public:
 	virtual void Serialize(FArchive& Ar) override;
 

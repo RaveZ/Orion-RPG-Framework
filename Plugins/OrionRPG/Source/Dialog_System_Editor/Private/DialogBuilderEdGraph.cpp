@@ -102,6 +102,7 @@ void UDialogBuilderEdGraph::UpdateAsset(bool bForce)
 				if (UDialogBuilderNode_PlayerLine* PlayerLineNode = Cast<UDialogBuilderNode_PlayerLine>(DialogNode))
 				{
 					PlayerLineNode->ParticipantInfo.DefaultShot = OwningDialog->DefaultPlayerShot;
+					PlayerLineNode->ParticipantInfo.ParticipantImage = OwningDialog->DefaultPlayerImage;
 					PlayerLineNode->ParticipantInfo.ParticipantName = OwningDialog->PlayerName;
 					OwningDialog->ParticipantInfoMap.Emplace(PlayerLineNode->ParticipantInfo.ParticipantTag, PlayerLineNode->ParticipantInfo);
 				}

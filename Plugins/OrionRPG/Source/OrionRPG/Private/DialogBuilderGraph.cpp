@@ -539,53 +539,10 @@ void UDialogBuilderGraph::EndDialog()
 
 void UDialogBuilderGraph::DetermineAdvanceDialogRule(UDialogBuilderNode_DialogLine* InDialogLine)
 {
-	/**Determine each dialog time before advance to the next line
-	* Each line duration will be determined by which one has the longest duration by aspects below:
-	* - The number of words in the line / Dialog line words per second setting
-	* - Sequence playback duration
-	* - Animation montage duration
-	* - Dialog sound duration
-	*/
+	//Determine each dialog time before advance to the next line
 	if (GetWorld() && bAutoAdvanceDialogLine)
 	{
-		float DialogLineDuration = 0.f;
-
-		//Words duration
-		FString LineString = InDialogLine->DialogLineData.Line.ToString();
-		TArray<FString> Words;
-		LineString.ParseIntoArrayWS(Words);
-		DialogLineDuration = Words.Num() / GetDefault<UDialogBuilderSetting>()->DialogLineWordsPerSecond;
-		DialogLineDuration = FMath::Max(GetDefault<UDialogBuilderSetting>()->MinDialogLineDuration, DialogLineDuration);
-
-		//Sequence duration
-		ULevelSequence* SequenceToPlay = InDialogLine->DialogLineData.SequenceToPlay;
-		if (SequenceToPlay && InDialogLine->DialogLineData.DialogCameraMode == EDialogCameraMode::E_Sequence)
-		{
-			FFrameRate TickResolution = SequenceToPlay->MovieScene->GetTickResolution();
-			float SequenceDuration = SequenceToPlay->MovieScene->GetPlaybackRange().GetUpperBoundValue() / TickResolution;
-			DialogLineDuration = FMath::Max(DialogLineDuration, SequenceDuration);
-		}
-
-		//Montage duration
-		UAnimMontage* MontageToPlay = InDialogLine->DialogLineData.DialogMontage;
-		if (MontageToPlay)
-		{
-			float MontageDuration = MontageToPlay->GetPlayLength();
-			DialogLineDuration = FMath::Max(DialogLineDuration, MontageDuration);
-		}
-
-		//Sound duration
-		USoundBase* DialogSound = InDialogLine->DialogLineData.DialogSound;
-		if (DialogSound)
-		{
-			float SoundDuration = DialogSound->GetDuration();
-			DialogLineDuration = FMath::Max(DialogLineDuration, SoundDuration);
-		}
-
-		//UE_LOG(LogTemp, Log, TEXT("Dialog line duration calculated: %f seconds"), DialogLineDuration);
-
-		GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, this, &ThisClass::AdvanceDialogLine, DialogLineDuration, false);
-		
+		GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, this, &ThisClass::AdvanceDialogLine, InDialogLine->GetLineDuration(), false);	
 	}
 }
 
