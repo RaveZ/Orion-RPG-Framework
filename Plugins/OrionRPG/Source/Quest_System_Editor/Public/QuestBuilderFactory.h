@@ -13,6 +13,7 @@
 #include "WorkflowOrientedApp/WorkflowTabFactory.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
 #include "WorkflowOrientedApp/WorkflowUObjectDocuments.h"
+#include "QuestBuilder_EditorStyle.h"
 #include "QuestBuilderFactory.generated.h"
 
 
@@ -133,7 +134,7 @@ public:
 
 	virtual const FSlateBrush* GetThumbnailBrush(const FAssetData& InAssetData, const FName InClassName) const override
 	{
-		return FQuest_System_EditorModule::CustomAssetsEditorSlateStyle->GetBrush(FName("QuestBuilder.Thumbnail"));
+		return FQuestBuilder_EditorStyle::Get().GetBrush("ClassThumbnail.Quest");
 	}
 
 	virtual EAssetCommandResult OpenAssets(const FAssetOpenArgs& OpenArgs) const override;

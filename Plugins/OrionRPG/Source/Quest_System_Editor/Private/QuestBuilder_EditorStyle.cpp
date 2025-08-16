@@ -11,6 +11,15 @@
 
 TSharedPtr<FSlateStyleSet> FQuestBuilder_EditorStyle::StyleInstance = nullptr;
 
+#define BOX_BRUSH( RelativePath, ... ) FSlateBoxBrush( RootToContentDir( RelativePath, TEXT(".png") ), __VA_ARGS__ )
+#define IMAGE_BRUSH( RelativePath, ... ) FSlateImageBrush( RootToContentDir( RelativePath, TEXT(".png") ), __VA_ARGS__ )
+
+const FVector2D Icon16x16(16.0f, 16.0f);
+const FVector2D Icon20x20(20.0f, 20.0f);
+const FVector2D Icon40x40(40.0f, 40.0f);
+const FVector2D Icon64x64(64.0f, 64.0f);
+
+
 void FQuestBuilder_EditorStyle::Initialize()
 {
 	if (!StyleInstance.IsValid())
@@ -29,23 +38,18 @@ void FQuestBuilder_EditorStyle::Shutdown()
 
 FName FQuestBuilder_EditorStyle::GetStyleSetName()
 {
-	static FName StyleSetName(TEXT("QuestBuilder_EditorStyle"));
+	static FName StyleSetName(TEXT("QuestEditorStyle"));
 	return StyleSetName;
 }
 
-const FVector2D Icon16x16(16.0f, 16.0f);
-const FVector2D Icon20x20(20.0f, 20.0f);
-const FVector2D Icon40x40(40.0f, 40.0f);
-const FVector2D Icon64x64(64.0f, 64.0f);
-
 TSharedRef< FSlateStyleSet > FQuestBuilder_EditorStyle::Create()
 {
-	TSharedRef< FSlateStyleSet > Style = MakeShareable(new FSlateStyleSet("QuestBuilder_EditorStyle"));
+	TSharedRef< FSlateStyleSet > Style = MakeShareable(new FSlateStyleSet(GetStyleSetName()));
 	Style->SetContentRoot(IPluginManager::Get().FindPlugin("OrionRPG")->GetBaseDir() / TEXT("Resources"));
 
-	Style->Set("QuestBuilder.OpenPluginWindow", new IMAGE_BRUSH_SVG(TEXT("PlaceholderButtonIcon"), Icon20x20));
-	Style->Set("QuestBuilder.questicon", new IMAGE_BRUSH_SVG(TEXT("questicon"), Icon40x40));
-	Style->Set("QuestBuilder.questicon.small", new IMAGE_BRUSH_SVG(TEXT("questicon"), Icon20x20));
+	//Thumbnails and icons
+	Style->Set(FName(TEXT("ClassThumbnail.Quest")), new IMAGE_BRUSH("Quest", Icon64x64));
+	Style->Set(FName(TEXT("ClassIcon.Quest")), new IMAGE_BRUSH("Quest", Icon16x16));
 	return Style;
 }
 

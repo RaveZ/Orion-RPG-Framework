@@ -13,6 +13,7 @@
 #include "WorkflowOrientedApp/WorkflowTabFactory.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
 #include "WorkflowOrientedApp/WorkflowUObjectDocuments.h"
+#include "DialogBuilder_EditorStyle.h"
 #include "DialogBuilderFactory.generated.h"
 
 
@@ -133,7 +134,7 @@ public:
 
 	virtual const FSlateBrush* GetThumbnailBrush(const FAssetData& InAssetData, const FName InClassName) const override
 	{
-		return FDialog_System_EditorModule::CustomAssetsEditorSlateStyle->GetBrush(FName("DialogBuilder.Thumbnail"));
+		return FDialogBuilder_EditorStyle::Get().GetBrush("ClassThumbnail.Dialog");
 	}
 
 	virtual EAssetCommandResult OpenAssets(const FAssetOpenArgs& OpenArgs) const override;

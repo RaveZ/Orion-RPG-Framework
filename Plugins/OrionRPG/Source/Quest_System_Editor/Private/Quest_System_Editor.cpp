@@ -48,14 +48,6 @@ void FQuest_System_EditorModule::StartupModule()
 	FEdGraphUtilities::RegisterVisualNodeFactory(GraphPanelNodeFactory_QuestEditor);
 	
 
-	// Register the slate styles	
-	const FString ProjectResourceDir = FPaths::ProjectPluginsDir() / TEXT("OrionRPG/Resources");
-	CustomAssetsEditorSlateStyle = MakeShareable(new FSlateStyleSet("QuestEditor"));
-	CustomAssetsEditorSlateStyle->Set("QuestBuilder.Thumbnail", new FSlateImageBrush(FString(ProjectResourceDir / "Icon128.png"), FVector2D(128.0f, 128.0f)));
-	CustomAssetsEditorSlateStyle->Set("ClassIcon.QuestBuilder", new FSlateImageBrush(FString(ProjectResourceDir / "Icon128.png"), FVector2D(32.0f, 32.0f)));
-	CustomAssetsEditorSlateStyle->Set("ClassIcon.UAssetDefinition_QuestBuilder", new FSlateImageBrush(FString(ProjectResourceDir / "Icon128.png"), FVector2D(32.0f, 32.0f)));
-
-	FSlateStyleRegistry::RegisterSlateStyle(*CustomAssetsEditorSlateStyle.Get());
 	PropertyModule.NotifyCustomizationModuleChanged();
 }
 

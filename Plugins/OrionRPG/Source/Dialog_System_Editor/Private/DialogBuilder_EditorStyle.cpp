@@ -11,6 +11,11 @@
 
 TSharedPtr<FSlateStyleSet> FDialogBuilder_EditorStyle::StyleInstance = nullptr;
 
+const FVector2D Icon16x16(16.0f, 16.0f);
+const FVector2D Icon20x20(20.0f, 20.0f);
+const FVector2D Icon40x40(40.0f, 40.0f);
+const FVector2D Icon64x64(64.0f, 64.0f);
+
 void FDialogBuilder_EditorStyle::Initialize()
 {
 	if (!StyleInstance.IsValid())
@@ -29,23 +34,19 @@ void FDialogBuilder_EditorStyle::Shutdown()
 
 FName FDialogBuilder_EditorStyle::GetStyleSetName()
 {
-	static FName StyleSetName(TEXT("DialogBuilder_EditorStyle"));
+	static FName StyleSetName(TEXT("DialogEditorStyle"));
 	return StyleSetName;
 }
 
-const FVector2D Icon16x16(16.0f, 16.0f);
-const FVector2D Icon20x20(20.0f, 20.0f);
-const FVector2D Icon40x40(40.0f, 40.0f);
-const FVector2D Icon64x64(64.0f, 64.0f);
-
 TSharedRef< FSlateStyleSet > FDialogBuilder_EditorStyle::Create()
 {
-	TSharedRef< FSlateStyleSet > Style = MakeShareable(new FSlateStyleSet("DialogBuilder_EditorStyle"));
+
+	TSharedRef< FSlateStyleSet > Style = MakeShareable(new FSlateStyleSet(GetStyleSetName()));
 	Style->SetContentRoot(IPluginManager::Get().FindPlugin("OrionRPG")->GetBaseDir() / TEXT("Resources"));
 
-	Style->Set("DialogBuilder.OpenPluginWindow", new IMAGE_BRUSH_SVG(TEXT("PlaceholderButtonIcon"), Icon20x20));
-	Style->Set("DialogBuilder.dialogicon", new IMAGE_BRUSH_SVG(TEXT("dialogicon"), Icon40x40));
-	Style->Set("DialogBuilder.dialogicon.small", new IMAGE_BRUSH_SVG(TEXT("dialogicon"), Icon20x20));
+	//Thumbnails and icons
+	Style->Set(FName(TEXT("ClassThumbnail.Dialog")), new IMAGE_BRUSH("Dialog", Icon64x64));
+	Style->Set(FName(TEXT("ClassIcon.Dialog")), new IMAGE_BRUSH("Dialog", Icon16x16));
 	return Style;
 }
 
