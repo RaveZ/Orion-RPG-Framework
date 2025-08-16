@@ -11,6 +11,11 @@
 
 TSharedPtr<FSlateStyleSet> FOrionInventory_EditorStyle::StyleInstance = nullptr;
 
+const FVector2D Icon16x16(16.0f, 16.0f);
+const FVector2D Icon20x20(20.0f, 20.0f);
+const FVector2D Icon40x40(40.0f, 40.0f);
+const FVector2D Icon64x64(64.0f, 64.0f);
+
 void FOrionInventory_EditorStyle::Initialize()
 {
 	if (!StyleInstance.IsValid())
@@ -29,23 +34,20 @@ void FOrionInventory_EditorStyle::Shutdown()
 
 FName FOrionInventory_EditorStyle::GetStyleSetName()
 {
-	static FName StyleSetName(TEXT("OrionInventory_EditorStyle"));
+	static FName StyleSetName(TEXT("InventoryEditorStyle"));
 	return StyleSetName;
 }
 
-const FVector2D Icon16x16(16.0f, 16.0f);
-const FVector2D Icon20x20(20.0f, 20.0f);
-const FVector2D Icon40x40(40.0f, 40.0f);
-const FVector2D Icon64x64(64.0f, 64.0f);
 
 TSharedRef< FSlateStyleSet > FOrionInventory_EditorStyle::Create()
 {
-	TSharedRef< FSlateStyleSet > Style = MakeShareable(new FSlateStyleSet("OrionInventory_EditorStyle"));
+
+	TSharedRef< FSlateStyleSet > Style = MakeShareable(new FSlateStyleSet(GetStyleSetName()));
 	Style->SetContentRoot(IPluginManager::Get().FindPlugin("OrionRPG")->GetBaseDir() / TEXT("Resources"));
 
-	Style->Set("OrionInventory.OpenPluginWindow", new IMAGE_BRUSH_SVG(TEXT("PlaceholderButtonIcon"), Icon20x20));
-	Style->Set("OrionInventory.inventoryicon", new IMAGE_BRUSH_SVG(TEXT("inventoryicon"), Icon40x40));
-	Style->Set("OrionInventory.inventoryicon.small", new IMAGE_BRUSH_SVG(TEXT("inventoryicon"), Icon20x20));
+	//Thumbnails and icons
+	Style->Set(FName(TEXT("ClassThumbnail.Inventory")), new IMAGE_BRUSH("Inventory", Icon64x64));
+	Style->Set(FName(TEXT("ClassIcon.Inventory")), new IMAGE_BRUSH("Inventory", Icon16x16));
 	return Style;
 }
 

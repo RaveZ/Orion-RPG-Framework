@@ -8,6 +8,7 @@
 #include "Inventory/OrionInventoryGraph.h"
 #include "UObject/Object.h"
 #include "AssetDefinitionDefault.h"
+#include "OrionInventory_EditorStyle.h"
 #include "OrionInventoryEditorModule.h"
 #include "UObject/WeakObjectPtrTemplates.h"
 #include "WorkflowOrientedApp/WorkflowTabFactory.h"
@@ -130,7 +131,7 @@ public:
 
 	virtual const FSlateBrush* GetThumbnailBrush(const FAssetData& InAssetData, const FName InClassName) const override
 	{
-		return FOrionInventoryEditorModule::CustomAssetsEditorSlateStyle->GetBrush(FName("OrionInventory.Thumbnail"));
+		return FOrionInventory_EditorStyle::Get().GetBrush("ClassThumbnail.Inventory");
 	}
 
 	virtual EAssetCommandResult OpenAssets(const FAssetOpenArgs& OpenArgs) const override;

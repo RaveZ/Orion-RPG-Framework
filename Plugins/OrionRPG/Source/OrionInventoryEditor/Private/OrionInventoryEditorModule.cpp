@@ -40,15 +40,6 @@ void FOrionInventoryEditorModule::StartupModule()
 	GraphPanelNodeFactory_InventoryEditor = MakeShareable(new FOrionInventoryNodeFactory());
 	FEdGraphUtilities::RegisterVisualNodeFactory(GraphPanelNodeFactory_InventoryEditor);
 	
-
-	// Register the slate styles	
-	const FString ProjectResourceDir = FPaths::ProjectPluginsDir() / TEXT("OrionRPG/Resources");
-	CustomAssetsEditorSlateStyle = MakeShareable(new FSlateStyleSet("InventoryEditor"));
-	CustomAssetsEditorSlateStyle->Set("OrionInventory.Thumbnail", new FSlateImageBrush(FString(ProjectResourceDir / "InventoryIcon128.png"), FVector2D(128.0f, 128.0f)));
-	CustomAssetsEditorSlateStyle->Set("ClassIcon.OrionInventory", new FSlateImageBrush(FString(ProjectResourceDir / "InventoryIcon128.png"), FVector2D(32.0f, 32.0f)));
-	CustomAssetsEditorSlateStyle->Set("ClassIcon.UAssetDefinition_OrionInventory", new FSlateImageBrush(FString(ProjectResourceDir / "InventoryIcon128.png"), FVector2D(32.0f, 32.0f)));
-
-	FSlateStyleRegistry::RegisterSlateStyle(*CustomAssetsEditorSlateStyle.Get());
 }
 
 void FOrionInventoryEditorModule::ShutdownModule()
