@@ -5,7 +5,9 @@
 #include "QuestBuilderEditor.h"
 #include "ClassViewerModule.h"
 #include "ClassViewerFilter.h"
+#include "Quest.h"
 #include "QuestBuilderEditorUtils.h"
+#include "QuestBuilderEdGraph.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "Kismet2/SClassPickerDialog.h"
 
@@ -77,7 +79,6 @@ UObject* UQuestBuilderFactory::FactoryCreateNew(UClass* Class, UObject* InParent
 	{
 		QuestGraph =  NewObject<UQuestBuilderGraph>(InParent, QuestSystemGraphClass, Name, Flags | RF_Transactional);
 		QuestGraph->ID = FQuestBuilderEditorUtils::FindUniqueQuestGraphName("QuestBuilderAsset");
-		QuestGraph->CategoryDisplayName = QuestGraph->GetFName().ToString();
 		
 	}
 
@@ -127,6 +128,22 @@ void FQuestGraphEditorSummoner::SaveState(TSharedPtr<SDockTab> Tab, TSharedPtr<F
 		// Don't save references to external graphs.
 		QuestEditorPtr.Pin()->GetQuestBuilderGraph()->LastEditedDocuments.Add(FEditedDocumentInfo(Graph, ViewLocation, ZoomAmount));
 	}
+}
+
+TAttribute<FText> FQuestGraphEditorSummoner::ConstructTabNameForObject(UEdGraph* DocumentID) const
+{
+	UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(DocumentID);
+	UQuest* Quest = QuestGraph ? QuestGraph->Quest : nullptr;
+	if (Quest)
+	{
+		return Quest->QuestName;
+	}
+	FString GraphName = DocumentID->GetName();
+	// Create FText with the extracted name
+	FText TabName = FText::FromString(GraphName);
+
+	// Return TAttribute containing the constructed FText
+	return TAttribute<FText>(TabName);
 }
 
 TSharedRef<SWidget> FQuestGraphEditorSummoner::CreateTabBodyForObject(const FWorkflowTabSpawnInfo& Info, UEdGraph* DocumentID) const

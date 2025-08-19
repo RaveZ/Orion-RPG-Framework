@@ -117,7 +117,7 @@ class UAssetDefinition_DialogEditor : public UAssetDefinitionDefault
 
 public:
 
-	virtual FText GetAssetDisplayName() const override { return FText::FromString("Dialog Builder Graph"); }
+	virtual FText GetAssetDisplayName() const override { return FText::FromString("Dialog Graph"); }
 	virtual FLinearColor GetAssetColor() const override { return FLinearColor(FColor(48, 165, 171)); }
 	virtual TSoftClassPtr<UObject> GetAssetClass() const override { return UDialogBuilderGraph::StaticClass(); }
 
@@ -135,6 +135,11 @@ public:
 	virtual const FSlateBrush* GetThumbnailBrush(const FAssetData& InAssetData, const FName InClassName) const override
 	{
 		return FDialogBuilder_EditorStyle::Get().GetBrush("ClassThumbnail.Dialog");
+	}
+
+	virtual const FSlateBrush* GetIconBrush(const FAssetData& InAssetData, const FName InClassName) const override
+	{
+		return FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.Dialog");
 	}
 
 	virtual EAssetCommandResult OpenAssets(const FAssetOpenArgs& OpenArgs) const override;

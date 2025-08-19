@@ -64,10 +64,10 @@ public:
 	FText Line;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
-	class USoundBase* DialogSound;
+	class USoundBase* DialogSound = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Animation"), Category = "Default")
-	class UAnimMontage* DialogMontage;
+	class UAnimMontage* DialogMontage = nullptr;
 
 	/**Participant image override, will use this instead of default participant image.
 	* Useful if you want to have different expression for your participant.
@@ -140,7 +140,7 @@ public:
 	TObjectPtr<UDialogCameraShot> DefaultShot;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog", meta = (NoResetToDefault))
-	FLinearColor NodeColor;
+	FLinearColor NodeColor = FLinearColor(0.3f, 0.3f, 0.3f);
 
 	/**participant initial transforms, used to get participant back in this transfrom when dialog ended*/
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")

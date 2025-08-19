@@ -46,7 +46,7 @@ void SQuestPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActi
 	QuestEditorPtr = InQuestEditor;
 
 	// construct the icon widget
-	FSlateBrush const* IconBrush = FAppStyle::GetBrush(TEXT("GraphEditor.EventGraph_16x"));
+	FSlateBrush const* IconBrush = FQuestBuilder_EditorStyle::Get().GetBrush("ClassIcon.Quest");
 	FSlateBrush const* SecondaryBrush = FAppStyle::GetBrush(TEXT("NoBrush"));
 	FSlateColor        IconColor = FSlateColor::UseForeground();
 	FSlateColor        SecondaryIconColor = FSlateColor::UseForeground();
@@ -73,7 +73,7 @@ void SQuestPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForActi
 
 	ActionBox.Get().AddSlot()
 		.AutoWidth()
-		.Padding(FMargin(0.0f, 5.0f, 0.0f, 0.0f))
+		.Padding(/* horizontal */ 0.0f, /* vertical */ 3.0f)
 		.VAlign(VAlign_Top)
 		[
 			IconWidget

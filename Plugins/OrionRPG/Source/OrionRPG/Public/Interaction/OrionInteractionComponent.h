@@ -20,7 +20,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOrionInteractionSignature, UOrionIn
 /**
  * Interaction component
  */
-UCLASS( ClassGroup = (Orion), meta = (BlueprintSpawnableComponent, ClassGroup = "OrionRPG", DisplayName = "Orion Interaction") )
+UCLASS(meta = (BlueprintSpawnableComponent), Blueprintable, HideDropdown, ClassGroup = "OrionRPG", DisplayName = "Orion Interaction")
 class UOrionInteractionComponent : public UActorComponent
 {
 	GENERATED_BODY()

@@ -49,7 +49,7 @@ TSharedRef< FSlateStyleSet > FQuestBuilder_EditorStyle::Create()
 
 	//Thumbnails and icons
 	Style->Set(FName(TEXT("ClassThumbnail.Quest")), new IMAGE_BRUSH("Quest", Icon64x64));
-	Style->Set(FName(TEXT("ClassIcon.Quest")), new IMAGE_BRUSH("Quest", Icon16x16));
+	Style->Set(FName(TEXT("ClassIcon.Quest")), new IMAGE_BRUSH("Quest", Icon40x40));
 	return Style;
 }
 

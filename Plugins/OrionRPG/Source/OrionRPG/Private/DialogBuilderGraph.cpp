@@ -156,7 +156,7 @@ void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialo
 	//Dialog Sound
 	if (InDialogLine->DialogLineData.DialogSound)
 	{
-		if (Speaker)
+		if (Speaker && bLockPlayerMovement)
 		{
 			DialogAudio = UGameplayStatics::SpawnSoundAttached(InDialogLine->DialogLineData.DialogSound, Speaker->GetRootComponent(), NAME_None, FVector::ZeroVector, EAttachLocation::SnapToTarget, false, 1.f, 1.f, 0.f, DialogSoundAttenuation);
 		}

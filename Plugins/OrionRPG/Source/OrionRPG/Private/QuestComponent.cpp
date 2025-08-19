@@ -29,12 +29,12 @@ UQuestComponent::UQuestComponent()
 	SetIsReplicatedByDefault(true);
 	SetComponentTickEnabled(true);
 	PrimaryComponentTick.bCanEverTick = true;
+	bAutoNavigateQuest = true;
 }
 
 void UQuestComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	bAutoNavigateQuest = true;
 	QuestMap.Empty();
 	QuestCategories.Empty();
 	

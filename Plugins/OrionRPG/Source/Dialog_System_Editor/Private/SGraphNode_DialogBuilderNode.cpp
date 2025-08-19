@@ -2,6 +2,7 @@
 
 
 #include "SGraphNode_DialogBuilderNode.h"
+#include "DialogBuilder_EditorStyle.h"
 #include "SlateOptMacros.h"
 #include "Types/SlateStructs.h"
 #include "Widgets/SBoxPanel.h"
@@ -408,7 +409,7 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 																						+ SHorizontalBox::Slot()
 																						.AutoWidth()
 																						.VAlign(VAlign_Top)
-																						.Padding(FMargin(0.0f, 5.0f, 0.0f, 0.0f))
+																						.Padding(FMargin(0.0f, 2.0f, 0.0f, 0.0f))
 																						[
 																							SNew(SImage)
 																								.Image(this, &SGraphNode_DialogBuilderNode::GetNameIcon)
@@ -418,7 +419,7 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 																						+ SHorizontalBox::Slot()
 																						//.MinWidth(NodeMinWidth)
 																						.MaxWidth(NodeMaxWidth)
-																						.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
+																						.Padding(FMargin(8.0f, 0.0f, 4.0f, 0.0f))
 																						[
 																							SNew(SVerticalBox)
 																								.Visibility(this, &SGraphNode_DialogBuilderNode::GetParentNodeVisibility)
@@ -1309,12 +1310,13 @@ EVisibility SGraphNode_DialogBuilderNode::GetDebuggerSearchFailedMarkerVisibilit
 
 const FSlateBrush* SGraphNode_DialogBuilderNode::GetNameIcon() const
 {
-	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
-	if (DialogEdNode != nullptr)
+	UDialogBuilderEdSubNode* DialogEdSubNode = Cast<UDialogBuilderEdSubNode>(GraphNode);
+	if (DialogEdSubNode != nullptr)
 	{
-		return FAppStyle::GetBrush(DialogEdNode->GetNameIcon());
+		return FAppStyle::GetBrush(DialogEdSubNode->GetNameIcon());
 	}
-	return FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Icon"));
+
+	return FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.DialogNode");
 }
 
 void SGraphNode_DialogBuilderNode::SetDragMarker(bool bEnabled)

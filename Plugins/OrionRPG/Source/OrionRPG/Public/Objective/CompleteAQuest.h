@@ -13,7 +13,7 @@ class ORIONRPG_API UCompleteAQuest : public UQuestBuilderNode_Objective
 public:
 	UCompleteAQuest();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective", meta = (Categories = "Quest"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Objective", meta = (DisplayName = "Quest Tag To Complete", Categories = "Quest"))
 	FGameplayTag QuestTag;
 
 	virtual void BeginObjective() override;
