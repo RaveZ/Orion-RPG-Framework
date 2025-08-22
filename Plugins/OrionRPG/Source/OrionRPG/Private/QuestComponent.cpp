@@ -81,6 +81,7 @@ bool UQuestComponent::BeginQuestGraph(UQuestBuilderGraph* QuestGraphAsset)
 	}
 
 	AutoNavigateQuest();
+
 	return true;
 	
 }
@@ -188,6 +189,7 @@ void UQuestComponent::UpdateAllQuest()
 			Quest->UpdateQuest();
 		}
 	}
+
 }
 
 void UQuestComponent::ActivateQuestFromTag(FGameplayTag QuestTag)
@@ -416,7 +418,6 @@ void UQuestComponent::FailQuest(UQuest* InQuest)
 
 		OnQuestFailed.Broadcast(InQuest);
 		OnQuestUpdated.Broadcast();
-		OnQuestAutoSave.Broadcast();
 	}
 	else
 	{
@@ -445,7 +446,6 @@ void UQuestComponent::CompleteQuest(UQuest* InQuest)
 
 		OnQuestCompleted.Broadcast(InQuest);
 		OnQuestUpdated.Broadcast();
-		OnQuestAutoSave.Broadcast();
 	}
 	else
 	{
@@ -574,6 +574,7 @@ void UQuestComponent::ResetAllQuest()
 		QuestMap.Remove(Key);
 	}
 	QuestMap.Empty();
+	QuestCategories.Empty();
 	CurrentNavigatedQuest = nullptr;
 }
 

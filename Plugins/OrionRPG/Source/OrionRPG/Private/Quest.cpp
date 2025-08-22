@@ -68,10 +68,14 @@ void UQuest::Deinitialize()
 	VisitedNodeIDs.Empty();
 	CurrentNodes.Empty();
 	CurrentNavigatedObjective = nullptr;
+
+
 	for (auto& Node : AllNodes)
 	{
-		Node->Deinitialize();
+		Node->ConditionalBeginDestroy();
 	}
+	AllNodes.Empty();
+	ConditionalBeginDestroy();
 }
 
 UWorld* UQuest::GetWorld() const

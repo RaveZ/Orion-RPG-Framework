@@ -39,7 +39,6 @@ void UQuestBuilderNode_Objective::BeginNode()
 {
     Super::BeginNode();
 	BeginObjective();
-    GetQuestComponent()->OnQuestAutoSave.Broadcast();
 }
 
 void UQuestBuilderNode_Objective::Deinitialize()
@@ -129,7 +128,6 @@ void UQuestBuilderNode_Objective::CompleteObjective()
     ObjectiveState = EObjectiveState::E_Completed;
     K2_ObjectiveCompleted(GetOwningController(), GetOwningPawn());
     GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
-    GetQuestComponent()->OnQuestAutoSave.Broadcast();
     GetQuestComponent()->OnQuestUpdated.Broadcast();
 
 
@@ -147,7 +145,6 @@ void UQuestBuilderNode_Objective::FailObjective()
     ObjectiveState = EObjectiveState::E_Failed;
     K2_ObjectiveFailed(GetOwningController(), GetOwningPawn());
     GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
-    GetQuestComponent()->OnQuestAutoSave.Broadcast();
     GetQuestComponent()->OnQuestUpdated.Broadcast();
 
     DeactivateTick();

@@ -15,7 +15,6 @@ class USaveGame;
 class APlayerController;
 
 //Quest Delegate
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FQuestAutoSave);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FQuestUpdated);
 
@@ -95,9 +94,6 @@ public:
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 		FQuestAdded OnQuestUnlocked;
-	
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
-		FQuestAutoSave OnQuestAutoSave;
 
 	/**Called when a save has begun*/
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Saving/Loading")
