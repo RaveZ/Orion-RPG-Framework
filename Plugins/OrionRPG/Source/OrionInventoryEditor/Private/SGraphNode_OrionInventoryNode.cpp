@@ -692,25 +692,6 @@ void SGraphNode_OrionInventoryNode::MoveTo(const FVector2D & NewPosition, FNodeS
 	}
 }
 
-TArray<FOverlayWidgetInfo> SGraphNode_OrionInventoryNode::GetOverlayWidgets(bool bSelected, const FVector2D& WidgetSize) const
-{
-	TArray<FOverlayWidgetInfo> Widgets;
-
-	check(NodeBody.IsValid());
-	check(IndexOverlay.IsValid());
-
-	FVector2D Origin(0.0f, 0.0f);
-	
-
-	FOverlayWidgetInfo Overlay(IndexOverlay);
-	Overlay.OverlayOffset = FVector2D(WidgetSize.X - (IndexOverlay->GetDesiredSize().X * 0.5f), Origin.Y);
-	Widgets.Add(Overlay);
-
-	
-
-	return Widgets;
-}
-
 void SGraphNode_OrionInventoryNode::CreatePinWidgets()
 {
 	UOrionInventoryEdNode* StateNode = CastChecked<UOrionInventoryEdNode>(GraphNode);

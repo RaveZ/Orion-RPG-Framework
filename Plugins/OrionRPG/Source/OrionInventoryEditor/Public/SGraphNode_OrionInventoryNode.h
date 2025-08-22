@@ -36,7 +36,6 @@ public:
 	//~ Begin SGraphNode Interface
 	void Construct(const FArguments& InArgs, UOrionInventoryEdNode* InNode);
 	virtual void UpdateGraphNode() override;
-	virtual TArray<FOverlayWidgetInfo> GetOverlayWidgets(bool bSelected, const FVector2D& WidgetSize) const override;
 	virtual void OnDragEnter(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent) override;
 	virtual FReply OnDragOver(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent) override;
 	virtual FReply OnDrop(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent) override;
