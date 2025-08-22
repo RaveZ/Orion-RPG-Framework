@@ -15,7 +15,7 @@ UOrionInteractionComponent::UOrionInteractionComponent()
 	InteractionTraceChannel = ECC_WorldDynamic;
 	InteractionType = EOrionInteractionType::E_InteractionPawn;
 	InteractionRadius = 250.f;
-	InteractionTraceDistance = 300.0f;
+	InteractionTraceDistance = 750.0f;
 	InteractionTraceIntervalSecond = 0.3f;
 	InteractionOffset = FVector(50.f, 0.f, 0.f);
 	bIsInteractionEnabled = false;

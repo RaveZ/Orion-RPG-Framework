@@ -19,6 +19,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FQuestAutoSave);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FQuestUpdated);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStopNavigateQuest);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestObjectiveBegin, UQuestBuilderNode_Objective*, Objective);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestObjectiveUpdated, UQuest*, Quest);
@@ -78,6 +80,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 		FStartNavigateQuest OnStartNavigateQuest;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestManager")
+		FStopNavigateQuest OnStopNavigateQuest;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 		FQuestFailed OnQuestFailed;
@@ -188,6 +193,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void StartNavigateQuest(UQuest* InQuest, class UQuestBuilderNode_Objective* InObjective = nullptr);
 
+	UFUNCTION(BlueprintCallable, Category = "QuestManager")
+		void StopNavigateQuest();
+
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void ActivateQuest(UQuest* InQuest);
 
@@ -238,6 +246,15 @@ public:
 	UFUNCTION(BlueprintPure, Category = "QuestComponent")
 	virtual APlayerController* GetOwningController() const;
 
+	void DumpLog() const;
+
+// ================================================================================================ //
+// CONSOLE COMMANDS
+// ================================================================================================ //
+public:
+
+	UFUNCTION(Exec)
+	void DumpQuestLog();
 
 protected:
 	// Called when the game starts

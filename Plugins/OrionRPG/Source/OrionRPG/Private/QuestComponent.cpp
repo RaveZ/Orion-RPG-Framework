@@ -32,6 +32,7 @@ UQuestComponent::UQuestComponent()
 	bAutoNavigateQuest = true;
 }
 
+
 void UQuestComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -93,7 +94,7 @@ class UQuest* UQuestComponent::MakeQuestInstance(UQuest* QuestTemplate)
 		NewQuest->Initialize(this);
 		if (QuestMap.FindRef(NewQuest->ID))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("%s Already Registered."), *QuestTemplate->GetName());
+			//UE_LOG(LogTemp, Warning, TEXT("%s Already Registered."), *QuestTemplate->GetName());
 			return nullptr;
 		}
 
@@ -153,6 +154,8 @@ class UQuest* UQuestComponent::TryMakeQuestInstanceFromTag(FGameplayTag QuestTag
 
 void UQuestComponent::AutoNavigateQuest()
 {
+	if (!bAutoNavigateQuest)
+		return;
 	if (CurrentNavigatedQuest && CurrentNavigatedQuest->QuestState == EQuestState::E_Active)
 		return;
 
@@ -510,6 +513,41 @@ APlayerController* UQuestComponent::GetOwningController() const
 	return nullptr;
 }
 
+void UQuestComponent::StopNavigateQuest()
+{
+	CurrentNavigatedQuest = nullptr;
+	OnStopNavigateQuest.Broadcast();
+}
+
+void UQuestComponent::DumpLog() const
+{
+#if !UE_BUILD_SHIPPING
+
+	static FString Message;
+	Message.Reset();
+
+	Message += TEXT("\n==================== BEGIN Quest ====================\n");
+
+	for (int32 i = 0; i < QuestCategories.Num(); ++i)
+	{
+		const FQuestCategory& QuestCategory = QuestCategories[i];
+
+		const FString CategoryStr = QuestCategory.Category.ToString();
+		Message += FString::Printf(TEXT("Category: %s\n"), *CategoryStr);
+		for (auto& Quest : QuestCategory.QuestList)
+		{
+			const FString QuestStateStr = UEnum::GetValueAsString(Quest->QuestState);
+			Message += FString::Printf(TEXT("\tQuest: %s, State: %s\n"), *Quest->ID.ToString(), *QuestStateStr);
+		}
+	}
+
+	Message += TEXT("==================== END Quest ====================\n");
+
+	UE_LOG(LogTemp, Log, TEXT(" %s"), *Message);
+
+#endif // UE_BUILD_SHIPPING
+}
+
 UQuest* UQuestComponent::FindQuest(FGameplayTag QuestTag) const
 {
 	FName QuestID = QuestTag.GetTagName();
@@ -723,6 +761,7 @@ void UQuestComponent::Load_Implementation(const FString& SaveFileName, int SlotI
 			}
 		}
 
+		StopNavigateQuest();
 		UQuest* FoundedQuest = QuestMap.FindRef(LoadedData->NavigatedQuestID);
 		UQuestBuilderNode_Objective* FoundedObjective = FoundedQuest ? Cast<UQuestBuilderNode_Objective>(FoundedQuest->NodeMap.FindRef(LoadedData->NavigatedObjectiveID)) : nullptr;
 
@@ -825,5 +864,15 @@ void UQuestComponent::LoadComplete(FString SaveName)
 	UE_LOG(LogTemp, Verbose, TEXT("Load complete for save name: %s"), *SaveName);
 }
 
+
+// ================================================================================================ //
+// CONSOLE COMMANDS
+// ================================================================================================ //
+void UQuestComponent::DumpQuestLog()
+{
+	DumpLog();
+
+	
+}
 
 #undef LOCTEXT_NAMESPACE

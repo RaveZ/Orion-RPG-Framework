@@ -860,7 +860,11 @@ void SGraphNode_DialogBuilderNode::MoveTo(const FVector2D & NewPosition, FNodeSe
 	}
 }
 
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+TArray<FOverlayWidgetInfo> SGraphNode_DialogBuilderNode::GetOverlayWidgets(bool bSelected, const FVector2f& WidgetSize) const
+#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 TArray<FOverlayWidgetInfo> SGraphNode_DialogBuilderNode::GetOverlayWidgets(bool bSelected, const FVector2D& WidgetSize) const
+#endif
 {
 	TArray<FOverlayWidgetInfo> Widgets;
 
@@ -871,7 +875,11 @@ TArray<FOverlayWidgetInfo> SGraphNode_DialogBuilderNode::GetOverlayWidgets(bool 
 	
 
 	FOverlayWidgetInfo Overlay(IndexOverlay);
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+	Overlay.OverlayOffset = FVector2f(WidgetSize.X - (IndexOverlay->GetDesiredSize().X * 0.5f), Origin.Y);
+#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 	Overlay.OverlayOffset = FVector2D(WidgetSize.X - (IndexOverlay->GetDesiredSize().X * 0.5f), Origin.Y);
+#endif
 	Widgets.Add(Overlay);
 
 	
@@ -1374,8 +1382,9 @@ EVisibility SGraphNode_DialogBuilderNode::GetIndexVisibility() const
 	UDialogBuilderNode* DialogNode = Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance);
 
 	// Visible if ((we are in PIE || if we have siblings) && (SelectedNodes only one && Matching parent with selected nodes))
-	const bool bCanShowIndex = (ShouldShowExecutionIndex() || (MyParentOutputPin && MyParentOutputPin->LinkedTo.Num() > 1)) && (SelectedNodes.Num() == 1 && (FirstSelectedNode && DialogNode) && (DialogNode->ParentNodes.Contains(FirstSelectedNode)));
-
+	const bool bCanShowIndex = (ShouldShowExecutionIndex() || (MyParentOutputPin && MyParentOutputPin->LinkedTo.Num() > 1)) &&
+        (SelectedNodes.Num() == 1 && (FirstSelectedNode && DialogNode) &&
+        (DialogNode->ParentNodes.Contains(FirstSelectedNode) || DialogNode == FirstSelectedNode));
 	return (bCanShowIndex && (!MyOwnerPanel.IsValid() || MyOwnerPanel->GetCurrentLOD() > EGraphRenderingLOD::LowDetail)) ? EVisibility::Visible : EVisibility::Collapsed;
 }
 
@@ -1445,7 +1454,8 @@ FSlateColor SGraphNode_DialogBuilderNode::GetIndexColor(bool bHovered) const
 	static const FName HoveredColor("BTEditor.Graph.BTNode.Index.HoveredColor");
 	static const FName DefaultColor("BTEditor.Graph.BTNode.Index.Color");
 
-	return bHighlightHover ? FAppStyle::Get().GetSlateColor(HoveredColor) : FAppStyle::Get().GetSlateColor(DefaultColor);
+	return FAppStyle::Get().GetSlateColor(HoveredColor);
+	//return bHighlightHover ? FAppStyle::Get().GetSlateColor(HoveredColor) : FAppStyle::Get().GetSlateColor(DefaultColor);
 }
 
 void SGraphNode_DialogBuilderNode::OnIndexHoverStateChanged(bool bHovered)

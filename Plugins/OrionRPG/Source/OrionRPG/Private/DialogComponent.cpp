@@ -60,7 +60,7 @@ bool UDialogComponent::BeginDialog(UDialogBuilderGraph* DialogAsset)
 	}
 	if (CurrentActiveDialog)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Can't begin dialog, make sure current active dialog has finished before starting another dialog"));
+		//UE_LOG(LogTemp, Warning, TEXT("Can't begin dialog, make sure current active dialog has finished before starting another dialog"));
 		return false;
 	}
 
