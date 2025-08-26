@@ -19,11 +19,12 @@ class ORIONRPG_API UDialogBuilderSetting : public UObject
 
 public:
 
-	/**Determine how long the line should be displayed*/
-
+	/**Determine minimum time the line should be displayed*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options")
 		float MinDialogLineDuration;
 
+
+	/**Determine how long the line should be displayed*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options")
 		float DialogLineWordsPerSecond;
 

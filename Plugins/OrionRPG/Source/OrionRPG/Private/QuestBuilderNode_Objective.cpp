@@ -88,6 +88,8 @@ void UQuestBuilderNode_Objective::AddToProgress(int AmountToAdd)
         CompleteObjective();
     }
     
+    GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
+    
 }
 
 void UQuestBuilderNode_Objective::BeginObjective()

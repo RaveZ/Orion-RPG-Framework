@@ -58,7 +58,7 @@ bool UDialogComponent::BeginDialog(UDialogBuilderGraph* DialogAsset)
 		UE_LOG(LogTemp, Warning, TEXT("Dialog Asset is null"));
 		return false;
 	}
-	if (CurrentActiveDialog)
+	if (CurrentActiveDialog && CurrentActiveDialog->bCanInterruptDialog == false)
 	{
 		//UE_LOG(LogTemp, Warning, TEXT("Can't begin dialog, make sure current active dialog has finished before starting another dialog"));
 		return false;
@@ -69,6 +69,10 @@ bool UDialogComponent::BeginDialog(UDialogBuilderGraph* DialogAsset)
 	UDialogBuilderGraph* NewDialogGraph = MakeDialogGraphInstance(DialogAsset);
 	if (NewDialogGraph)
 	{
+		if (CurrentActiveDialog)
+		{
+			CurrentActiveDialog->EndDialog();
+		}
 		NewDialogGraph->Initialize(this);
 		CurrentActiveDialog = NewDialogGraph;
 		

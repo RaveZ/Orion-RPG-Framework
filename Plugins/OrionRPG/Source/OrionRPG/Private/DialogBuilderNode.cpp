@@ -15,6 +15,7 @@
 
 UDialogBuilderNode::UDialogBuilderNode()
 {
+	bVisited = false;
 #if WITH_EDITORONLY_DATA
 	CompatibleGraphType = UDialogBuilderGraph::StaticClass();
 

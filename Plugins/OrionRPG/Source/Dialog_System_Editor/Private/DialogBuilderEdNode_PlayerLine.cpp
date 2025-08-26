@@ -27,7 +27,7 @@ FText UDialogBuilderEdNode_PlayerLine::GetTooltipText() const
 	if (PlayerLineNode)
 	{
 		return FText::Format(FText::FromString(TEXT("Player Line Node\n{0}")),
-			NSLOCTEXT("DialogBuilderEditor", "PlayerLineNodeScopeTooltip", "This Node signifies the conclusion point of a dialog, determining its outcome, either Completed or Failed.\nThis node contain series of events, and decorators.\n**Right click the node to start adding a subnodes."));
+			NSLOCTEXT("DialogBuilderEditor", "PlayerLineNodeScopeTooltip", "This Node contain the data for player lines.\n**Right click the node to start adding a subnodes."));
 	}
 
 	return Super::GetTooltipText();

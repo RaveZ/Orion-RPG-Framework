@@ -49,8 +49,8 @@ FText UDialogBuilderEdNode_DialogLine::GetTooltipText() const
 	const UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance);
 	if (DialogLineNode)
 	{
-		return FText::Format(FText::FromString(TEXT("Objective Node\n{0}")),
-			NSLOCTEXT("DialogBuilderEditor", "SpeakerNodeScopeTooltip", "This Node serves as the central unit within your dialog graph.\nEncapsulating a series of tasks, events, and decorators that define the player's objectives.\n**Right click the node to start adding a subnodes."));
+		return FText::Format(FText::FromString(TEXT("Dialog Line Node\n{0}")),
+			NSLOCTEXT("DialogBuilderEditor", "SpeakerNodeScopeTooltip", "This Node contain the data for participant lines.\n**Right click the node to start adding a subnodes."));
 	}
 
 	return Super::GetTooltipText();

@@ -3,6 +3,7 @@
 #include "CollisionQueryParams.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
+#include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
 #include "TimerManager.h"
@@ -14,7 +15,7 @@ UOrionInteractionComponent::UOrionInteractionComponent()
 	// Initialize variables
 	InteractionTraceChannel = ECC_WorldDynamic;
 	InteractionType = EOrionInteractionType::E_InteractionPawn;
-	InteractionRadius = 250.f;
+	InteractionRadius = 150.f;
 	InteractionTraceDistance = 750.0f;
 	InteractionTraceIntervalSecond = 0.3f;
 	InteractionOffset = FVector(50.f, 0.f, 0.f);
@@ -140,6 +141,7 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 	FVector TraceStart;
 	FRotator Rotation;
 	InteractionhitResults.Empty();
+	TArray<AActor*> InteractionActors;
 
 	FCollisionQueryParams CollisionQueryParams(SCENE_QUERY_STAT(AOrionInteractionComponent_UpdateInteracionTrace));
 	CollisionQueryParams.AddIgnoredActor(GetOwningPawn());
@@ -166,13 +168,18 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 			{
 				if (UOrionInteractionTargetComponent* TargetInteractable = Hit.GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>())
 				{
+					if (Hit.GetActor()->IsPendingKillPending())
+						continue;
+
 					InteractionhitResults.Add(Hit);
+					InteractionActors.AddUnique(Hit.GetActor());
 				}
 			}
 
 			if (InteractionIndex < InteractionhitResults.Num())
 			{
-				CurrentInteractionTarget = InteractionhitResults[InteractionIndex].GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>();
+				float Dist;
+				CurrentInteractionTarget = UGameplayStatics::FindNearestActor(GetOwningPawn()->GetActorLocation(), InteractionActors, Dist)->FindComponentByClass<UOrionInteractionTargetComponent>();
 			}
 
 			if (bDebugTrace)
@@ -207,7 +214,9 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 			PrevInteractable = CurrentInteractionTarget;
 			CurrentInteractionTarget = nullptr;
 
-			if (InteractionhitResults[0].bBlockingHit && InteractionhitResults[0].GetComponent())
+			if (InteractionhitResults[0].bBlockingHit 
+				&& InteractionhitResults[0].GetComponent()
+				&& !InteractionhitResults[0].GetActor()->IsPendingKillPending())
 			{
 				CurrentInteractionTarget = InteractionhitResults[0].GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>();
 			}
