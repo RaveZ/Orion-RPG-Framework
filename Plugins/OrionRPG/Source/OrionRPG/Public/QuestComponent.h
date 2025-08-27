@@ -8,7 +8,7 @@
 #include "QuestComponent.generated.h"
 
 struct FQuestCategory;
-class UQuestSaveObject;
+class UOrionSaveObject;
 class UQuestBuilderNode_Objective;
 class UQuest;
 class USaveGame;

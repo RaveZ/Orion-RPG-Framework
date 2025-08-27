@@ -1,3 +1,5 @@
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
+
 #pragma once
 
 #include "Components/BoxComponent.h"

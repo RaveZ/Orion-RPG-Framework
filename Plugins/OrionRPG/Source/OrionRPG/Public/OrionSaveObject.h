@@ -6,12 +6,12 @@
 #include "GameFramework/SaveGame.h"
 #include "Quest.h"
 #include "QuestData.h"
-#include "QuestSaveObject.generated.h"
+#include "OrionSaveObject.generated.h"
 
 
 
 UCLASS(Blueprintable)
-class ORIONRPG_API UQuestSaveObject : public USaveGame
+class ORIONRPG_API UOrionSaveObject : public USaveGame
 {
 	GENERATED_BODY()
 public:

@@ -1,3 +1,5 @@
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
+
 #include "Interaction/OrionInteractionTargetComponent.h"
 #include "Interaction/OrionInteractionFunctionLibrary.h"
 #include "Interaction/OrionInteractionComponent.h"

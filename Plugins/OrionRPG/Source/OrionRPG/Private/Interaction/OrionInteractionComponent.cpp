@@ -1,3 +1,5 @@
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
+
 #include "Interaction/OrionInteractionComponent.h"
 #include "Interaction/OrionInteractionTargetComponent.h"
 #include "CollisionQueryParams.h"

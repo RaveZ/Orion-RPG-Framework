@@ -6,7 +6,7 @@
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 #include "UObject/UObjectIterator.h"
-#include "QuestSaveObject.h"
+#include "OrionSaveObject.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode_State.h"
 #include "QuestBuilderNode_Checkpoint.h"
@@ -608,7 +608,7 @@ void UQuestComponent::Save_Implementation(const FString& SaveFileName, int SlotI
 {
 	OnBeginSave.Broadcast(SaveFileName);
 	//Create New Save
-	if (UQuestSaveObject* QuestSaveObject = Cast<UQuestSaveObject>(UGameplayStatics::CreateSaveGameObject(UQuestSaveObject::StaticClass())))
+	if (UOrionSaveObject* OrionSaveObject = Cast<UOrionSaveObject>(UGameplayStatics::CreateSaveGameObject(UOrionSaveObject::StaticClass())))
 	{
 		//Start Saving Data
 
@@ -616,7 +616,7 @@ void UQuestComponent::Save_Implementation(const FString& SaveFileName, int SlotI
 		{
 			FName Key = It.Key;
 			UQuest* Quest = It.Value;
-			QuestSaveObject->QuestAssetIDs.Add(Quest->ID);
+			OrionSaveObject->QuestAssetIDs.Add(Quest->ID);
 				TMap<FName, FNodeData> NodeMapData;
 				for (auto& Node : Quest->AllNodes)
 				{
@@ -645,20 +645,20 @@ void UQuestComponent::Save_Implementation(const FString& SaveFileName, int SlotI
 				QuestData.QuestState = Quest->QuestState;
 				QuestData.NodeMapData = NodeMapData;
 				QuestData.VisitedNodeIDs = Quest->VisitedNodeIDs;
-				QuestSaveObject->QuestMapData.Emplace(Quest->ID, QuestData);
+				OrionSaveObject->QuestMapData.Emplace(Quest->ID, QuestData);
 			
 		}
 
 		if (CurrentNavigatedQuest)
 		{
-			QuestSaveObject->NavigatedQuestID = CurrentNavigatedQuest->ID;
+			OrionSaveObject->NavigatedQuestID = CurrentNavigatedQuest->ID;
 			if (CurrentNavigatedQuest->CurrentNavigatedObjective)
 			{
-				QuestSaveObject->NavigatedObjectiveID = CurrentNavigatedQuest->CurrentNavigatedObjective->ID;
+				OrionSaveObject->NavigatedObjectiveID = CurrentNavigatedQuest->CurrentNavigatedObjective->ID;
 			}
 		}
 
-		if (UGameplayStatics::SaveGameToSlot(QuestSaveObject, SaveFileName, SlotIndex))
+		if (UGameplayStatics::SaveGameToSlot(OrionSaveObject, SaveFileName, SlotIndex))
 		{
 			OnSaveComplete.Broadcast(SaveFileName);
 		}
@@ -673,7 +673,7 @@ void UQuestComponent::Load_Implementation(const FString& SaveFileName, int SlotI
 		return;
 	}
 	TArray<UQuest*> LoadedQuestAssets;
-	if (UQuestSaveObject* LoadedData = Cast<UQuestSaveObject>(UGameplayStatics::LoadGameFromSlot(SaveFileName, SlotIndex)))
+	if (UOrionSaveObject* LoadedData = Cast<UOrionSaveObject>(UGameplayStatics::LoadGameFromSlot(SaveFileName, SlotIndex)))
 	{
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 

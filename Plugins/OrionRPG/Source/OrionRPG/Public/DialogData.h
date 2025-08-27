@@ -94,7 +94,7 @@ public:
 	TObjectPtr<UObject> ParticipantImageOverride;
 
 	UPROPERTY(EditAnywhere, Category = "Override", meta = (InlineEditConditionToggle))
-	bool bOverrideTrackedBone;
+	bool bOverrideTrackedBone = false;
 
 	/*
 	* Override the default bone to track.
