@@ -208,7 +208,13 @@ void UDialogBuilderGraph::ApplyRotationSetting(UDialogBuilderNode_DialogLine* In
 				if (!ToSpeaker.IsNearlyZero())
 				{
 					FRotator LookAtRotation = ToSpeaker.Rotation();
+					if (GetOwningController() && GetOwningController()->GetPawn() == Participant.Value)
+					{
+						GetOwningController()->SetControlRotation(LookAtRotation);
+					}
+
 					Participant.Value->SetActorRotation(LookAtRotation);
+					
 				}
 			}
 		}
