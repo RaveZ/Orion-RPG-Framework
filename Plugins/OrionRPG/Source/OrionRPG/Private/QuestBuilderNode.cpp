@@ -128,6 +128,7 @@ void UQuestBuilderNode::EvaluateNextNode()
 {
 	if (Quest->QuestState != EQuestState::E_Active)
 	 return;
+
 	
 	NextNodes.Empty();
 	
@@ -165,6 +166,8 @@ void UQuestBuilderNode::EvaluateNextNode()
 			{
 				GetOwningQuest()->GetNavigatedObjective();
 			}
+
+			GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
 		}
 		else
 		{
@@ -183,7 +186,6 @@ void UQuestBuilderNode::EvaluateNextNode()
 		}
 	}
 
-	GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
 	/**
 	* Going to next node will begin when all End Events are finished.
 	* If node already deinitialized, immediately broadcast OnAllEndEventFinished
@@ -244,14 +246,22 @@ void UQuestBuilderNode::LaunchStartEventQueue()
 		OnAllStartEventFinished.Broadcast();
 		return;
 	}
-	StartEventQueue[0]->OnEventFinished.AddLambda(
-		[this]()
-		{
-			StartEventQueue.RemoveAt(0);
-			LaunchStartEventQueue();
-		}
-	);
-	StartEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
+	if (StartEventQueue.IsValidIndex(0))
+	{
+		StartEventQueue[0]->OnEventFinished.AddLambda(
+			[this]()
+			{
+				StartEventQueue.RemoveAt(0);
+				LaunchStartEventQueue();
+			}
+		);
+		StartEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
+	}
+	else
+	{
+		StartEventQueue.Empty();
+		LaunchStartEventQueue();
+	}
 }
 
 void UQuestBuilderNode::LaunchEndEventQueue()
@@ -261,15 +271,22 @@ void UQuestBuilderNode::LaunchEndEventQueue()
 		OnAllEndEventFinished.Broadcast();
 		return;
 	}
-	EndEventQueue[0]->OnEventFinished.AddLambda(
-		[this]()
-		{
-			EndEventQueue.RemoveAt(0);
-			LaunchEndEventQueue();
-		}
-	);
-	EndEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
-	
+	if (EndEventQueue.IsValidIndex(0))
+	{
+		EndEventQueue[0]->OnEventFinished.AddLambda(
+			[this]()
+			{
+				EndEventQueue.RemoveAt(0);
+				LaunchEndEventQueue();
+			}
+		);
+		EndEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
+	}
+	else
+	{
+		EndEventQueue.Empty();
+		LaunchEndEventQueue();
+	}
 }
 
 FString UQuestBuilderNode::GetShortTypeName(const UObject* Ob)

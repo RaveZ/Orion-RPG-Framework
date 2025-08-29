@@ -239,14 +239,22 @@ void UDialogBuilderNode::LaunchStartEventQueue()
 		OnAllStartEventFinished.Broadcast();
 		return;
 	}
-	StartEventQueue[0]->OnEventFinished.AddLambda(
-		[this]()
-		{
-			StartEventQueue.RemoveAt(0);
-			LaunchStartEventQueue();
-		}
-	);
-	StartEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
+	if (StartEventQueue.IsValidIndex(0))
+	{
+		StartEventQueue[0]->OnEventFinished.AddLambda(
+			[this]()
+			{
+				StartEventQueue.RemoveAt(0);
+				LaunchStartEventQueue();
+			}
+		);
+		StartEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
+	}
+	else
+	{
+		StartEventQueue.Empty();
+		LaunchStartEventQueue();
+	}
 }
 
 void UDialogBuilderNode::LaunchEndEventQueue()
@@ -256,14 +264,22 @@ void UDialogBuilderNode::LaunchEndEventQueue()
 		OnAllEndEventFinished.Broadcast();
 		return;
 	}
-	EndEventQueue[0]->OnEventFinished.AddLambda(
-		[this]()
-		{
-			EndEventQueue.RemoveAt(0);
-			LaunchEndEventQueue();
-		}
-	);
-	EndEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
+	if (EndEventQueue.IsValidIndex(0))
+	{
+		EndEventQueue[0]->OnEventFinished.AddLambda(
+			[this]()
+			{
+				EndEventQueue.RemoveAt(0);
+				LaunchEndEventQueue();
+			}
+		);
+		EndEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
+	}
+	else
+	{
+		EndEventQueue.Empty();
+		LaunchEndEventQueue();
+	}
 }
 
 void UDialogBuilderNode::EvaluateUniqueID()

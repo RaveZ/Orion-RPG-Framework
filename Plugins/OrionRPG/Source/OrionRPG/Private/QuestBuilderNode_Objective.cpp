@@ -14,7 +14,7 @@
 
 UQuestBuilderNode_Objective::UQuestBuilderNode_Objective()
 {
-    ObjectiveState = EObjectiveState::E_Active;
+    ObjectiveState = EObjectiveState::E_Inactive;
     bOptional = false;
     bHidden = false;
     bIsObjectiveTickable = false;
@@ -49,7 +49,7 @@ void UQuestBuilderNode_Objective::Deinitialize()
 void UQuestBuilderNode_Objective::Reset()
 {
     Super::Reset();
-    ObjectiveState = EObjectiveState::E_Active;
+    ObjectiveState = EObjectiveState::E_Inactive;
     CurrentProgress = 0;
 	DeactivateTick();
 }
@@ -94,8 +94,12 @@ void UQuestBuilderNode_Objective::AddToProgress(int AmountToAdd)
 
 void UQuestBuilderNode_Objective::BeginObjective()
 {
+    if(ObjectiveState != EObjectiveState::E_Inactive)
+		return;
+
     ObjectiveState = EObjectiveState::E_Active;
     K2_BeginObjective(GetOwningController(), GetOwningPawn());
+
 
     GetQuestComponent()->OnQuestObjectiveBegin.Broadcast(this);
     if (GetQuestComponent() && bIsObjectiveTickable)
@@ -129,7 +133,6 @@ void UQuestBuilderNode_Objective::CompleteObjective()
 
     ObjectiveState = EObjectiveState::E_Completed;
     K2_ObjectiveCompleted(GetOwningController(), GetOwningPawn());
-    GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
     GetQuestComponent()->OnQuestUpdated.Broadcast();
 
 
@@ -146,7 +149,6 @@ void UQuestBuilderNode_Objective::FailObjective()
 
     ObjectiveState = EObjectiveState::E_Failed;
     K2_ObjectiveFailed(GetOwningController(), GetOwningPawn());
-    GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
     GetQuestComponent()->OnQuestUpdated.Broadcast();
 
     DeactivateTick();
