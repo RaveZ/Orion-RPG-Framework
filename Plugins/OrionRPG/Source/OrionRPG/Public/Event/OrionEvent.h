@@ -75,7 +75,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Begin Event", Category = "Event")
 		void K2_BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn);
 
-	UFUNCTION(BlueprintCallable, Category = "Event")
+	UFUNCTION(Category = "Event")
 	virtual void BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn);
 
 

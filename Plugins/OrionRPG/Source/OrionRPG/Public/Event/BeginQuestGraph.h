@@ -7,7 +7,7 @@
 #include "BeginQuestGraph.generated.h"
 
 /**
- * Begin your quest graph asset.
+ * Begin the quest graph asset.
  */
 UCLASS()
 class ORIONRPG_API UBeginQuestGraph : public UOrionEvent
