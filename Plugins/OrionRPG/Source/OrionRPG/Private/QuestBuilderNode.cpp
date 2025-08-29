@@ -36,21 +36,21 @@ void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 
 	if (bLaunchEventOnLoad)
 	{
-		for (auto& EndEvent : Events)
+		for (auto& StartEvent : Events)
 		{
-			if (EndEvent && EndEvent->bLaunchEventOnLoad && (EndEvent->EventLaunchType == EEventLaunchType::E_Both || EndEvent->EventLaunchType == EEventLaunchType::E_Start))
+			if (StartEvent && StartEvent->bLaunchEventOnLoad && (StartEvent->EventLaunchType == EEventLaunchType::E_Both || StartEvent->EventLaunchType == EEventLaunchType::E_Start))
 			{
-				StartEventQueue.Add(EndEvent);
+				StartEventQueue.Add(StartEvent);
 			}
 		}
 	}
 	else
 	{
-		for (auto& EndEvent : Events)
+		for (auto& StartEvent : Events)
 		{
-			if (EndEvent && (EndEvent->EventLaunchType == EEventLaunchType::E_Both || EndEvent->EventLaunchType == EEventLaunchType::E_Start))
+			if (StartEvent && (StartEvent->EventLaunchType == EEventLaunchType::E_Both || StartEvent->EventLaunchType == EEventLaunchType::E_Start))
 			{
-				StartEventQueue.Add(EndEvent);
+				StartEventQueue.Add(StartEvent);
 			}
 		}
 	}
@@ -251,8 +251,11 @@ void UQuestBuilderNode::LaunchStartEventQueue()
 		StartEventQueue[0]->OnEventFinished.AddLambda(
 			[this]()
 			{
-				StartEventQueue.RemoveAt(0);
-				LaunchStartEventQueue();
+				if (StartEventQueue.IsValidIndex(0))
+				{
+					StartEventQueue.RemoveAt(0);
+					LaunchStartEventQueue();
+				}
 			}
 		);
 		StartEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
@@ -276,8 +279,12 @@ void UQuestBuilderNode::LaunchEndEventQueue()
 		EndEventQueue[0]->OnEventFinished.AddLambda(
 			[this]()
 			{
-				EndEventQueue.RemoveAt(0);
-				LaunchEndEventQueue();
+				if (EndEventQueue.IsValidIndex(0))
+				{
+					EndEventQueue.RemoveAt(0);
+					LaunchEndEventQueue();
+				}
+
 			}
 		);
 		EndEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
