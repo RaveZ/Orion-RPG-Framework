@@ -84,6 +84,10 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOrionInteractionSignature OnInteractionUpdated;
+
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FOrionInteractionSignature OnInteractionBlocked;
+
 public:
 	UFUNCTION(BlueprintPure, Category = "Interaction")
 	virtual APawn* GetOwningPawn() const;

@@ -799,7 +799,7 @@ TSharedRef<SGraphNode> SGraphNode_QuestBuilderNode::GetNodeUnderMouse(const FGeo
 void SGraphNode_QuestBuilderNode::MoveTo(const FVector2f& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
 {
 	SGraphNode::MoveTo(NewPosition, NodeFilter, bMarkDirty);
-#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 void SGraphNode_QuestBuilderNode::MoveTo(const FVector2D & NewPosition, FNodeSet & NodeFilter, bool bMarkDirty)
 {
 	SGraphNode::MoveTo(NewPosition, NodeFilter, bMarkDirty);
@@ -830,7 +830,7 @@ void SGraphNode_QuestBuilderNode::MoveTo(const FVector2D & NewPosition, FNodeSet
 
 #if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
 TArray<FOverlayWidgetInfo> SGraphNode_QuestBuilderNode::GetOverlayWidgets(bool bSelected, const FVector2f& WidgetSize) const
-#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 TArray<FOverlayWidgetInfo> SGraphNode_QuestBuilderNode::GetOverlayWidgets(bool bSelected, const FVector2D& WidgetSize) const
 #endif
 {
@@ -845,7 +845,7 @@ TArray<FOverlayWidgetInfo> SGraphNode_QuestBuilderNode::GetOverlayWidgets(bool b
 	FOverlayWidgetInfo Overlay(IndexOverlay);
 #if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
 	Overlay.OverlayOffset = FVector2f(WidgetSize.X - (IndexOverlay->GetDesiredSize().X * 0.5f), Origin.Y);
-#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 	Overlay.OverlayOffset = FVector2D(WidgetSize.X - (IndexOverlay->GetDesiredSize().X * 0.5f), Origin.Y); 
 #endif
 	

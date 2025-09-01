@@ -580,24 +580,27 @@ void UQuestComponent::ResetAllQuest()
 
 void UQuestComponent::EvaluateQuestState(UQuest* QuestParam)
 {
-	if (QuestParam->QuestState != EQuestState::E_Locked) // only evaluate if the quest state is locked
+	if (QuestParam->QuestState != EQuestState::E_Locked)
+	{
+		// only evaluate if the quest state is locked
 		return;
+	}
 
-		switch (QuestParam->DesiredQuestState)
-		{
-			case EQuestState::E_Active:
-				ActivateQuest(QuestParam);
-				return;
-			case EQuestState::E_Fail:
-				FailQuest(QuestParam);
-				return;
-			case EQuestState::E_Complete:
-				CompleteQuest(QuestParam);
-				return;
-			case EQuestState::E_Unlocked:
-				UnlockQuest(QuestParam);
-				return;
-		}
+	switch (QuestParam->DesiredQuestState)
+	{
+		case EQuestState::E_Active:
+			ActivateQuest(QuestParam);
+			return;
+		case EQuestState::E_Fail:
+			FailQuest(QuestParam);
+			return;
+		case EQuestState::E_Complete:
+			CompleteQuest(QuestParam);
+			return;
+		case EQuestState::E_Unlocked:
+			UnlockQuest(QuestParam);
+			return;
+	}
 		
 }
 

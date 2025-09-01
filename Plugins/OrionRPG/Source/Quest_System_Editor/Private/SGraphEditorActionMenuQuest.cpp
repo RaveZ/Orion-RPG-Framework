@@ -98,7 +98,7 @@ void SGraphEditorActionMenuQuest::OnActionSelected( const TArray< TSharedPtr<FEd
 #if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
 					FVector2f NewNodePostition2f(NewNodePosition.X, NewNodePosition.Y);
 					CurrentAction->PerformAction(GraphObj, DraggedFromPins, NewNodePostition2f);
-#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 					CurrentAction->PerformAction(GraphObj, DraggedFromPins, NewNodePosition);
 #endif
 					bDoDismissMenus = true;

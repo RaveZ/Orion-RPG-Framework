@@ -4,6 +4,7 @@
 
 #include "Components/BoxComponent.h"
 #include "Event/OrionEvent.h"
+#include "Decorator/OrionDecorator.h"
 #include "OrionInteractionTargetComponent.generated.h"
 
 
@@ -59,14 +60,29 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable", meta = (EditCondition = "Mode == EOrionInteractionMode::Hold", HideEditConditionToggle, EditConditionHides))
 	float HoldDuration;
 
+	/**
+	* Interact conditions that must be met before interaction can occur.
+	*/
+	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Interactable", DisplayName = "Interact Conditions")
+	TArray<TObjectPtr<UOrionDecorator>> InteractConditions;
+
+	/**
+	* When interaction conditions not met, it will be counted as blocked interaction.
+	* you can add notification and the reason here.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable")
+	FText InteractionBlockedReason;
+
+	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Interactable", DisplayName = "Interaction Completed Events")
+	TArray<TObjectPtr<UOrionEvent>> Events;
+
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interactable")
 	TObjectPtr<AActor> CurrentInteractor;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interactable")
 	float CurrentProgress;
 
-	UPROPERTY(Instanced, EditAnywhere, BlueprintReadOnly, Category = "Interactable", DisplayName="Interaction Completed Events")
-	TArray<TObjectPtr<UOrionEvent>> Events;
 private:
 	FTimerHandle TimerHandle_UpdateProgressValue;
 
@@ -93,6 +109,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Interactable")
 	void UpdateInteractionProgress(float Progress);
 
+	UFUNCTION(Category = "Interactable")
+	bool DecoratorConditionMet() const;
 private:
 	void UpdateProgressValue();
 

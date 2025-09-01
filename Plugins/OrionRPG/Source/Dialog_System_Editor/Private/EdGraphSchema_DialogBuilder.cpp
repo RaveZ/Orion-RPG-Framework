@@ -744,7 +744,7 @@ UEdGraphNode* FAssetSchemaAction_DialogSystem_NewSubNode::PerformAction(UEdGraph
 {
 	return PerformAction(ParentGraph, NULL, Location, bSelectNewNode);
 }
-#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 UEdGraphNode* FAssetSchemaAction_DialogSystem_NewSubNode::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode)
 {
 	ParentNode->AddSubNode(NodeTemplate, ParentGraph);
@@ -796,7 +796,7 @@ UEdGraphNode* FDialogSchemaAction_AddComment::PerformAction(UEdGraph* ParentGrap
 
 	return NewNode;
 }
-#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 UEdGraphNode* FDialogSchemaAction_AddComment::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode)
 {
 	UEdGraphNode_Comment* const CommentTemplate = NewObject<UEdGraphNode_Comment>();

@@ -113,7 +113,7 @@ void FDialogGraphEditorSummoner::SaveState(TSharedPtr<SDockTab> Tab, TSharedPtr<
 
 #if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
 	FVector2f ViewLocation;
-#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 	FVector2D ViewLocation;
 #endif
 	float ZoomAmount;

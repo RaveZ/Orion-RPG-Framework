@@ -20,7 +20,7 @@ UOrionInteractionComponent::UOrionInteractionComponent()
 	InteractionRadius = 150.f;
 	InteractionTraceDistance = 750.0f;
 	InteractionTraceIntervalSecond = 0.3f;
-	InteractionOffset = FVector(50.f, 0.f, 0.f);
+	InteractionOffset = FVector(75.f, 0.f, 0.f);
 	bIsInteractionEnabled = false;
 	bDebugTrace = false;
 }
@@ -220,7 +220,11 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 				&& InteractionhitResults[0].GetComponent()
 				&& !InteractionhitResults[0].GetActor()->IsPendingKillPending())
 			{
-				CurrentInteractionTarget = InteractionhitResults[0].GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>();
+				if (UOrionInteractionTargetComponent* TargetInteractable = InteractionhitResults[0].GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>())
+				{
+					CurrentInteractionTarget = TargetInteractable;
+				}
+				
 			}
 			if (bDebugTrace)
 			{
@@ -253,11 +257,21 @@ void UOrionInteractionComponent::StartInteraction()
 		CurrentInteractionTarget &&
 		CurrentInteractionTarget->CanInteract())
 	{
-		CurrentInteractionTarget->StartInteraction(GetOwningPawn());
-
-		if (OnInteractionStarted.IsBound())
+		if (CurrentInteractionTarget->DecoratorConditionMet())
 		{
-			OnInteractionStarted.Broadcast(CurrentInteractionTarget);
+			CurrentInteractionTarget->StartInteraction(GetOwningPawn());
+
+			if (OnInteractionStarted.IsBound())
+			{
+				OnInteractionStarted.Broadcast(CurrentInteractionTarget);
+			}
+		}
+		else
+		{
+			if (OnInteractionBlocked.IsBound())
+			{
+				OnInteractionBlocked.Broadcast(CurrentInteractionTarget);
+			}
 		}
 	}
 }

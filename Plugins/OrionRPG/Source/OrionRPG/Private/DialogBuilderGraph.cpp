@@ -512,15 +512,15 @@ void UDialogBuilderGraph::EndDialog()
 
 	if (bLockPlayerMovement)
 	{
-		//Send all participants back to their initial transforms
-		for (const TPair<FGameplayTag, AActor*>& Pair : CachedParticipants)
-		{
-			FGameplayTag ParticipantTag = Pair.Key;
-			AActor* ParticipantActor = Pair.Value;
-			FTransform ParticipantInitialTransform = ParticipantInfoMap.FindRef(ParticipantTag).InitialTransform;
+        //Send all participants back to their initial transforms
+        for (const TPair<FGameplayTag, TObjectPtr<AActor>>& Pair : CachedParticipants)
+        {
+            FGameplayTag ParticipantTag = Pair.Key;
+            AActor* ParticipantActor = Pair.Value;
+            FTransform ParticipantInitialTransform = ParticipantInfoMap.FindRef(ParticipantTag).InitialTransform;
 
-			ParticipantActor->SetActorTransform(ParticipantInitialTransform);
-		}
+            ParticipantActor->SetActorTransform(ParticipantInitialTransform);
+        }
 	}
 	
 	//clear shot and sequence

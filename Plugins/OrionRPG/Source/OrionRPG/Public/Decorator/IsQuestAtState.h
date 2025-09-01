@@ -19,7 +19,7 @@ class ORIONRPG_API UIsQuestAtState : public UOrionDecorator
 public:
 	UIsQuestAtState();
 
-	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Quest")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "OrionDecorator")
 	EQuestState QuestState = EQuestState::E_Active;
 	
 	virtual bool PerformConditionCheck_Implementation(APlayerController* OwnerController, APawn* ControlledPawn) const override;

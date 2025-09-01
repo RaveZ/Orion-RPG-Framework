@@ -35,6 +35,27 @@ bool UOrionInteractionTargetComponent::CanInteract() const
 	return (Mode != EOrionInteractionMode::None) && (CurrentInteractor == nullptr) && FMath::IsNearlyEqual(CurrentProgress, 0.0f, UE_KINDA_SMALL_NUMBER);
 }
 
+bool UOrionInteractionTargetComponent::DecoratorConditionMet() const
+{
+	int SumConditionMet = 0;
+	//Evaluate Decorator
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+
+	for (auto& Condition : InteractConditions)
+	{
+		if (Condition && PC && Pawn)
+		{
+			bool bConditionMet = Condition && Condition->InvertCondition ? !Condition->PerformConditionCheck(PC, Pawn) : Condition->PerformConditionCheck(PC, Pawn);
+			if (bConditionMet)
+			{
+				SumConditionMet++;
+			}
+		}
+		
+	}
+	return SumConditionMet >= InteractConditions.Num();
+}
 
 void UOrionInteractionTargetComponent::Focused(AActor* Interactor)
 {
@@ -48,7 +69,7 @@ void UOrionInteractionTargetComponent::Focused(AActor* Interactor)
 
 void UOrionInteractionTargetComponent::StartInteraction(AActor* Interactor)
 {
-	UE_LOG(LogTemp, Log, __FUNCTIONW__);
+	//UE_LOG(LogTemp, Log, __FUNCTIONW__);
 
 	check(Mode != EOrionInteractionMode::None);
 
@@ -81,7 +102,7 @@ void UOrionInteractionTargetComponent::StartInteraction(AActor* Interactor)
 
 void UOrionInteractionTargetComponent::EndInteraction(bool bCompleted)
 {
-	UE_LOG(LogTemp, Log, __FUNCTIONW__);
+	//UE_LOG(LogTemp, Log, __FUNCTIONW__);
 
 	check(Mode != EOrionInteractionMode::None);
 

@@ -106,7 +106,7 @@ public:
 		: Line(FText::FromString("None"))
 	{
 		PlaybackSettings.bPauseAtEnd = true;
-		PlaybackSettings.LoopCount.Value = 1;
+		PlaybackSettings.LoopCount.Value = 0;
 		PlaybackSettings.PlayRate = 1.f;
 		PlaybackSettings.StartTime = 0.f;
 		PlaybackSettings.bRandomStartTime = false;
