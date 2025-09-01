@@ -253,7 +253,7 @@ TSharedRef<SWidget> FDialogNodeDetails::OnGetShareableNodesMenu()
 		TArray<FAssetData> DialogGraphDataArray;
 		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), DialogGraphDataArray);
 
-		for (const FAssetData& AssetData : DialogGraphDataArray)
+		/*for (const FAssetData& AssetData : DialogGraphDataArray)
 		{
 			UDialogBuilderGraph* DialogGraphAsset = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
 			if (DialogGraphAsset)
@@ -267,6 +267,21 @@ TSharedRef<SWidget> FDialogNodeDetails::OnGetShareableNodesMenu()
 						{
 							SharedParticipants.Add(DialogLineNodeInst->SharedParticipantName, DialogLineNodeInst);
 						}
+					}
+				}
+			}
+		}*/
+
+		if (CurrentDialogGraph)
+		{
+			for (auto& Node : CurrentDialogGraph->AllNodes)
+			{
+				UDialogBuilderNode_DialogLine* DialogLineNodeInst = Node ? Cast<UDialogBuilderNode_DialogLine>(Node) : nullptr;
+				if (DialogLineNodeInst)
+				{
+					if (!DialogLineNodeInst->SharedParticipantName.IsEmpty())
+					{
+						SharedParticipants.Add(DialogLineNodeInst->SharedParticipantName, DialogLineNodeInst);
 					}
 				}
 			}
