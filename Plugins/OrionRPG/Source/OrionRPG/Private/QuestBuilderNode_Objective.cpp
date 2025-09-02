@@ -94,8 +94,8 @@ void UQuestBuilderNode_Objective::AddToProgress(int AmountToAdd)
 
 void UQuestBuilderNode_Objective::BeginObjective()
 {
-    if(ObjectiveState != EObjectiveState::E_Inactive)
-		return;
+    if (ObjectiveState == EObjectiveState::E_Completed || ObjectiveState == EObjectiveState::E_Failed)
+        return;
 
     ObjectiveState = EObjectiveState::E_Active;
     K2_BeginObjective(GetOwningController(), GetOwningPawn());
