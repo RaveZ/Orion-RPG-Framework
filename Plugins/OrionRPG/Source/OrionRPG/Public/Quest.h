@@ -167,7 +167,7 @@ public:
 	virtual void Serialize(FArchive& Ar) override;
 
 	//Quest Sharing
-	void MakeQuestSettingShareable(FString ShareName);
+	void MakeQuestSettingShareable(FString ShareName, bool bInitialize = false);
 	void UnshareQuestSetting();
 	void UseSharedQuestSetting(const UQuest* Quest);
 
