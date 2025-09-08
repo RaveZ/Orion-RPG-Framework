@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
+#include "Net/UnrealNetwork.h"
 #include "TimerManager.h"
 
 
@@ -38,6 +39,15 @@ void UOrionInteractionComponent::BeginPlay()
      
 	}
 	SetInteractionEnabled(true);
+}
+void UOrionInteractionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UOrionInteractionComponent, CurrentInteractionTarget);
+	DOREPLIFETIME(UOrionInteractionComponent, bIsInteractionEnabled);
+	DOREPLIFETIME(UOrionInteractionComponent, InteractionType);
+	DOREPLIFETIME(UOrionInteractionComponent, InteractionIndex);
 }
 
 void UOrionInteractionComponent::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
@@ -242,7 +252,7 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 			break;
 		}
 	}
-	OnInteractionUpdated.Broadcast(CurrentInteractionTarget);
+	MulticastOnInteractionUpdated(CurrentInteractionTarget);
 	// If we have previous interactable and we lose focus from it, cancel interaction
 	if (PrevInteractable && PrevInteractable->Mode == EOrionInteractionMode::Hold && PrevInteractable->IsInteractionInProgress() && CurrentInteractionTarget == nullptr)
 	{
@@ -260,18 +270,11 @@ void UOrionInteractionComponent::StartInteraction()
 		if (CurrentInteractionTarget->DecoratorConditionMet())
 		{
 			CurrentInteractionTarget->StartInteraction(GetOwningPawn());
-
-			if (OnInteractionStarted.IsBound())
-			{
-				OnInteractionStarted.Broadcast(CurrentInteractionTarget);
-			}
+			MulticastOnInteractionStarted(CurrentInteractionTarget);
 		}
 		else
 		{
-			if (OnInteractionBlocked.IsBound())
-			{
-				OnInteractionBlocked.Broadcast(CurrentInteractionTarget);
-			}
+			MulticastOnInteractionBlocked(CurrentInteractionTarget);
 		}
 	}
 }
@@ -283,10 +286,7 @@ void UOrionInteractionComponent::CancelInteraction()
 		CurrentInteractionTarget->IsInteractionInProgress())
 	{
 		CurrentInteractionTarget->EndInteraction(false);
-		if (OnInteractionCanceled.IsBound())
-		{
-			OnInteractionCanceled.Broadcast(CurrentInteractionTarget);
-		}
+		MulticastOnInteractionCanceled(CurrentInteractionTarget);
 	}
 }
 
@@ -294,8 +294,33 @@ void UOrionInteractionComponent::InteractionEnded(UOrionInteractionTargetCompone
 {
 	check(Component);
 
-	if (bCompleted && OnInteractionCompleted.IsBound())
+	if (bCompleted)
 	{
-		OnInteractionCompleted.Broadcast(Component);
+		MulticastOnInteractionCompleted(Component);
 	}
+}
+
+void UOrionInteractionComponent::MulticastOnInteractionStarted_Implementation(UOrionInteractionTargetComponent* Target)
+{
+	OnInteractionStarted.Broadcast(Target);
+}
+
+void UOrionInteractionComponent::MulticastOnInteractionCanceled_Implementation(UOrionInteractionTargetComponent* Target)
+{
+	OnInteractionCanceled.Broadcast(Target);
+}
+
+void UOrionInteractionComponent::MulticastOnInteractionCompleted_Implementation(UOrionInteractionTargetComponent* Target)
+{
+	OnInteractionCompleted.Broadcast(Target);
+}
+
+void UOrionInteractionComponent::MulticastOnInteractionUpdated_Implementation(UOrionInteractionTargetComponent* Target)
+{
+	OnInteractionUpdated.Broadcast(Target);
+}
+
+void UOrionInteractionComponent::MulticastOnInteractionBlocked_Implementation(UOrionInteractionTargetComponent* Target)
+{
+	OnInteractionBlocked.Broadcast(Target);
 }

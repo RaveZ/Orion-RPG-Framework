@@ -78,6 +78,15 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera Transition", meta = (EditCondition = "bBlendCameraTransition == true", HideEditConditionToggle, EditConditionHides))
 	float BlendExp;
 
+	UPROPERTY(EditAnywhere, Category = "Override", meta = (InlineEditConditionToggle))
+	bool bOverrideTrackedBone = false;
+
+	/*
+	* Override the default bone to track.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Track & Focus Settings", meta = (EditCondition = "bOverrideTrackedBone"))
+	FName OverrideTrackedBone;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Track & Focus Settings")
 	EDialogCameraTrackingRule CameraTrackingRule = EDialogCameraTrackingRule::E_Speaker;
 
@@ -115,12 +124,13 @@ public:
 	UPROPERTY(Interp, EditAnywhere, BlueprintReadWrite, Category = "Camera Settings", meta = (UIMin = "0.00001", ClampMin = "0.00001", editcondition = "bOverride_CustomNearClippingPlane"))
 	float CustomNearClippingPlane;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Settings")
+	/** If bConstrainAspectRatio is true, black bars will be added if the destination view has a different aspect ratio than this camera requested. */
+	UPROPERTY(Interp, EditAnywhere, BlueprintReadWrite, Category = "Camera Settings", meta = (InlineEditConditionToggle))
+	bool bConstrainAspectRatio;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Settings", meta = (EditCondition = "bConstrainAspectRatio"))
 	struct FPlateCropSettings CropSettings;
 
-	/** If bConstrainAspectRatio is true, black bars will be added if the destination view has a different aspect ratio than this camera requested. */
-	UPROPERTY(Interp, EditAnywhere, BlueprintReadWrite, Category = "Camera Settings")
-	bool bConstrainAspectRatio;
 
 
 	/** Controls the filmback of the camera. */

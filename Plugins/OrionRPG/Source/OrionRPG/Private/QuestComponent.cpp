@@ -6,7 +6,7 @@
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 #include "UObject/UObjectIterator.h"
-#include "OrionSaveObject.h"
+#include "OrionSaveGame.h"
 #include "QuestBuilderGraph.h"
 #include "QuestBuilderNode_State.h"
 #include "QuestBuilderNode_Checkpoint.h"
@@ -50,10 +50,6 @@ void UQuestComponent::BeginPlay()
 	OnQuestCompleted.AddDynamic(this, &UQuestComponent::QuestCompleted);
 	OnQuestAdded.AddDynamic(this, &UQuestComponent::QuestAdded);
 	OnQuestUnlocked.AddDynamic(this, &UQuestComponent::QuestUnlocked);
-	OnBeginSave.AddDynamic(this, &UQuestComponent::BeginSave);
-	OnSaveComplete.AddDynamic(this, &UQuestComponent::SaveComplete);
-	OnBeginLoad.AddDynamic(this, &UQuestComponent::BeginLoad);
-	OnLoadComplete.AddDynamic(this, &UQuestComponent::LoadComplete);
 }
 
 
@@ -604,182 +600,161 @@ void UQuestComponent::EvaluateQuestState(UQuest* QuestParam)
 		
 }
 
-
-
-
-void UQuestComponent::Save_Implementation(const FString& SaveFileName, int SlotIndex)
+FOrionQuestSaveData UQuestComponent::GetSaveGameData() const
 {
-	OnBeginSave.Broadcast(SaveFileName);
-	//Create New Save
-	if (UOrionSaveObject* OrionSaveObject = Cast<UOrionSaveObject>(UGameplayStatics::CreateSaveGameObject(UOrionSaveObject::StaticClass())))
+	FOrionQuestSaveData QuestSaveData;
+	for (const auto& It : QuestMap)
 	{
-		//Start Saving Data
-
-		for (const auto& It : QuestMap)
+		FName Key = It.Key;
+		UQuest* Quest = It.Value;
+		QuestSaveData.QuestAssetIDs.Add(Quest->ID);
+		TMap<FName, FNodeData> NodeMapData;
+		for (auto& Node : Quest->AllNodes)
 		{
-			FName Key = It.Key;
-			UQuest* Quest = It.Value;
-			OrionSaveObject->QuestAssetIDs.Add(Quest->ID);
-				TMap<FName, FNodeData> NodeMapData;
-				for (auto& Node : Quest->AllNodes)
-				{
-					FNodeData NodeData;
-					if (Node)
-					{
-						NodeData.NodeID = Node->ID;
-						NodeData.bNodeActive = Node->bNodeActive;
-						if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(Node))
-						{
-							NodeData.CurrentProgress = ObjectiveNode->CurrentProgress;
-							NodeData.ObjectiveState = ObjectiveNode->ObjectiveState;
-						}
-					}
-					NodeMapData.Emplace(Node->ID, NodeData);
-				}
-				FQuestData QuestData;
-				for (int i = 0; i < Quest->CurrentNodes.Num(); i++)
-				{
-					if (Quest->CurrentNodes.IsValidIndex(i))
-					{
-						QuestData.CurrentNodeIDs.AddUnique(Quest->CurrentNodes[i]->ID);
-					}
-				}
-				
-				QuestData.QuestState = Quest->QuestState;
-				QuestData.NodeMapData = NodeMapData;
-				QuestData.VisitedNodeIDs = Quest->VisitedNodeIDs;
-				OrionSaveObject->QuestMapData.Emplace(Quest->ID, QuestData);
-			
-		}
-
-		if (CurrentNavigatedQuest)
-		{
-			OrionSaveObject->NavigatedQuestID = CurrentNavigatedQuest->ID;
-			if (CurrentNavigatedQuest->CurrentNavigatedObjective)
+			FNodeData NodeData;
+			if (Node)
 			{
-				OrionSaveObject->NavigatedObjectiveID = CurrentNavigatedQuest->CurrentNavigatedObjective->ID;
+				NodeData.NodeID = Node->ID;
+				NodeData.bNodeActive = Node->bNodeActive;
+				if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(Node))
+				{
+					NodeData.CurrentProgress = ObjectiveNode->CurrentProgress;
+					NodeData.ObjectiveState = ObjectiveNode->ObjectiveState;
+				}
+			}
+			NodeMapData.Emplace(Node->ID, NodeData);
+		}
+		FQuestData QuestData;
+		for (int i = 0; i < Quest->CurrentNodes.Num(); i++)
+		{
+			if (Quest->CurrentNodes.IsValidIndex(i))
+			{
+				QuestData.CurrentNodeIDs.AddUnique(Quest->CurrentNodes[i]->ID);
 			}
 		}
 
-		if (UGameplayStatics::SaveGameToSlot(OrionSaveObject, SaveFileName, SlotIndex))
+		QuestData.QuestState = Quest->QuestState;
+		QuestData.NodeMapData = NodeMapData;
+		QuestData.VisitedNodeIDs = Quest->VisitedNodeIDs;
+		QuestSaveData.QuestMapData.Emplace(Quest->ID, QuestData);
+	}
+	if (CurrentNavigatedQuest)
+	{
+		QuestSaveData.NavigatedQuestID = CurrentNavigatedQuest->ID;
+		if (CurrentNavigatedQuest->CurrentNavigatedObjective)
 		{
-			OnSaveComplete.Broadcast(SaveFileName);
+			QuestSaveData.NavigatedObjectiveID = CurrentNavigatedQuest->CurrentNavigatedObjective->ID;
 		}
 	}
+	return QuestSaveData;
 }
 
-void UQuestComponent::Load_Implementation(const FString& SaveFileName, int SlotIndex) 
+void UQuestComponent::InitializeFromSaveGame(FOrionQuestSaveData& QuestSaveData)
 {
-	if (!UGameplayStatics::DoesSaveGameExist(SaveFileName, 0))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Quest Component: Loading Save file failed, %s save file does not exist "), *SaveFileName);
-		return;
-	}
 	TArray<UQuest*> LoadedQuestAssets;
-	if (UOrionSaveObject* LoadedData = Cast<UOrionSaveObject>(UGameplayStatics::LoadGameFromSlot(SaveFileName, SlotIndex)))
+
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+	TArray<FAssetData> QuestGraphDataArray;
+	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+
+	//reset all quest before load the new quest graph asset
+	ResetAllQuest();
+
+	//Begin Questasset which their asset id has registered
+	for (const FAssetData& AssetData : QuestGraphDataArray)
 	{
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-		TArray<FAssetData> QuestGraphDataArray;
-		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
-
-		//reset all quest before load the new quest graph asset
-		ResetAllQuest();
-
-		//Begin Questasset which their asset id has registered
-		for (const FAssetData& AssetData : QuestGraphDataArray)
+		UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
+		if (QuestGraphAsset)
 		{
-			UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
-			if (QuestGraphAsset)
+			for (auto& QuestTemplate : QuestGraphAsset->QuestList)
 			{
-				for (auto& QuestTemplate : QuestGraphAsset->QuestList)
+				if (QuestSaveData.QuestAssetIDs.Contains(QuestTemplate->ID) ||
+					QuestSaveData.QuestAssetIDs.Contains(QuestTemplate->QuestTag.GetTagName()))
 				{
-					if (LoadedData->QuestAssetIDs.Contains(QuestTemplate->ID) ||
-						LoadedData->QuestAssetIDs.Contains(QuestTemplate->QuestTag.GetTagName()))
+					//make quest instance from template found
+					if (UQuest* LoadedQuestAsset = MakeQuestInstance(QuestTemplate))
 					{
-						//make quest instance from template found
-						if (UQuest* LoadedQuestAsset = MakeQuestInstance(QuestTemplate))
-						{
-							LoadedQuestAssets.Add(LoadedQuestAsset);
-						}
+						LoadedQuestAssets.Add(LoadedQuestAsset);
 					}
 				}
 			}
 		}
+	}
 
-		TMap<FName, UQuest*> QuestLoadMap;
-		for (auto& Quest : LoadedQuestAssets)
-		{
-			QuestLoadMap.Add(Quest->ID, Quest);
-		}
+	TMap<FName, UQuest*> QuestLoadMap;
+	for (auto& Quest : LoadedQuestAssets)
+	{
+		QuestLoadMap.Add(Quest->ID, Quest);
+	}
 
-		OnBeginLoad.Broadcast(SaveFileName);
-		for (const auto& QuestIt : LoadedData->QuestMapData)
-		{
-			FName ID = QuestIt.Key;
-			FQuestData QuestData = QuestIt.Value;
+	for (const auto& QuestIt : QuestSaveData.QuestMapData)
+	{
+		FName ID = QuestIt.Key;
+		FQuestData QuestData = QuestIt.Value;
 
-			UQuest* FoundedQuest = QuestLoadMap.FindRef(ID);
-			if (FoundedQuest)
-			{
-				//Fill Quest Data Here
-				FoundedQuest->QuestState = QuestData.QuestState;
-				for (int i = 0; i < QuestData.CurrentNodeIDs.Num(); i++)
-				{
-					if (QuestData.CurrentNodeIDs.IsValidIndex(i))
-					{
-						if (UQuestBuilderNode* FoundedCurrentNode = FoundedQuest->NodeMap.FindRef(QuestData.CurrentNodeIDs[i]))
-						{
-							FoundedQuest->CurrentNodes.AddUnique(FoundedCurrentNode);
-						}
-					}
-				}
-				FoundedQuest->VisitedNodeIDs = QuestData.VisitedNodeIDs;
-
-				for (const auto& NodeIt : QuestData.NodeMapData)
-				{
-					FName NodeID = NodeIt.Key;
-					FNodeData NodeData = NodeIt.Value;
-
-					UQuestBuilderNode* FoundedNode = FoundedQuest->NodeMap.FindRef(NodeID);
-					if (FoundedNode)
-					{
-						//Fill Node Data Here
-						FoundedNode->bNodeActive = NodeData.bNodeActive;
-						if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(FoundedNode))
-						{
-							ObjectiveNode->CurrentProgress = NodeData.CurrentProgress;
-							ObjectiveNode->ObjectiveState = NodeData.ObjectiveState;
-						}
-					}
-				}
-			}
-		}
-		for (auto& LoadedQuestAsset : LoadedQuestAssets)
-		{
-			EvaluateQuestState(LoadedQuestAsset);
-			if (!LoadedQuestAsset->CurrentNodes.IsEmpty() && LoadedQuestAsset->QuestState == EQuestState::E_Active)
-			{
-				bool bLaunchEventOnLoad = true;
-				LoadedQuestAsset->BeginMultipleNodes(LoadedQuestAsset->CurrentNodes, bLaunchEventOnLoad);
-			}
-		}
-
-		StopNavigateQuest();
-		UQuest* FoundedQuest = QuestMap.FindRef(LoadedData->NavigatedQuestID);
-		UQuestBuilderNode_Objective* FoundedObjective = FoundedQuest ? Cast<UQuestBuilderNode_Objective>(FoundedQuest->NodeMap.FindRef(LoadedData->NavigatedObjectiveID)) : nullptr;
-
+		UQuest* FoundedQuest = QuestLoadMap.FindRef(ID);
 		if (FoundedQuest)
 		{
-			StartNavigateQuest(FoundedQuest, FoundedObjective);
+			//Fill Quest Data Here
+			FoundedQuest->QuestState = QuestData.QuestState;
+			for (int i = 0; i < QuestData.CurrentNodeIDs.Num(); i++)
+			{
+				if (QuestData.CurrentNodeIDs.IsValidIndex(i))
+				{
+					if (UQuestBuilderNode* FoundedCurrentNode = FoundedQuest->NodeMap.FindRef(QuestData.CurrentNodeIDs[i]))
+					{
+						FoundedQuest->CurrentNodes.AddUnique(FoundedCurrentNode);
+					}
+				}
+			}
+			FoundedQuest->VisitedNodeIDs = QuestData.VisitedNodeIDs;
+
+			for (const auto& NodeIt : QuestData.NodeMapData)
+			{
+				FName NodeID = NodeIt.Key;
+				FNodeData NodeData = NodeIt.Value;
+
+				UQuestBuilderNode* FoundedNode = FoundedQuest->NodeMap.FindRef(NodeID);
+				if (FoundedNode)
+				{
+					//Fill Node Data Here
+					FoundedNode->bNodeActive = NodeData.bNodeActive;
+					if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(FoundedNode))
+					{
+						ObjectiveNode->CurrentProgress = NodeData.CurrentProgress;
+						ObjectiveNode->ObjectiveState = NodeData.ObjectiveState;
+					}
+				}
+			}
 		}
-		else
+	}
+	for (auto& LoadedQuestAsset : LoadedQuestAssets)
+	{
+		EvaluateQuestState(LoadedQuestAsset);
+		if (!LoadedQuestAsset->CurrentNodes.IsEmpty() && LoadedQuestAsset->QuestState == EQuestState::E_Active)
 		{
-			AutoNavigateQuest();
+			bool bLaunchEventOnLoad = true;
+			LoadedQuestAsset->BeginMultipleNodes(LoadedQuestAsset->CurrentNodes, bLaunchEventOnLoad);
 		}
-		OnLoadComplete.Broadcast(SaveFileName);
+	}
+
+	StopNavigateQuest();
+	UQuest* FoundedQuest = QuestMap.FindRef(QuestSaveData.NavigatedQuestID);
+	UQuestBuilderNode_Objective* FoundedObjective = FoundedQuest ? Cast<UQuestBuilderNode_Objective>(FoundedQuest->NodeMap.FindRef(QuestSaveData.NavigatedObjectiveID)) : nullptr;
+
+	if (FoundedQuest)
+	{
+		StartNavigateQuest(FoundedQuest, FoundedObjective);
+	}
+	else
+	{
+		AutoNavigateQuest();
 	}
 }
+
+
+
 
 bool UQuestComponent::DeleteSave(const FString& SaveName, const int32 Slot)
 {
@@ -846,26 +821,6 @@ void UQuestComponent::QuestUnlocked(UQuest* Quest)
 	{
 		UE_LOG(LogTemp, Log, TEXT("Quest Unlocked: %s"), *Quest->ID.ToString());
 	}
-}
-
-void UQuestComponent::BeginSave(FString SaveName)
-{
-	UE_LOG(LogTemp, Verbose, TEXT("Begun saving using save name: %s"), *SaveName);
-}
-
-void UQuestComponent::BeginLoad(FString SaveName)
-{
-	UE_LOG(LogTemp, Verbose, TEXT("Begun loading using save name: %s"), *SaveName);
-}
-
-void UQuestComponent::SaveComplete(FString SaveName)
-{
-	UE_LOG(LogTemp, Verbose, TEXT("Save complete for save name: %s"), *SaveName);
-}
-
-void UQuestComponent::LoadComplete(FString SaveName)
-{
-	UE_LOG(LogTemp, Verbose, TEXT("Load complete for save name: %s"), *SaveName);
 }
 
 

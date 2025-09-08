@@ -13,6 +13,7 @@
 #include "DialogBuilderNode.h"
 #include "DialogBuilderNode_DialogLine.h"
 #include "DialogBuilderNode_PlayerLine.h"
+#include "DialogBuilderEditorUtils.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 
@@ -62,7 +63,7 @@ void UDialogBuilderEdGraph::UpdateAsset(bool bForce)
 
 
 	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
-
+	DialogGraph->ID = FDialogBuilderEditorUtils::FindUniqueDialogGraphName(DialogGraph->ID.ToString());
 	Clear();
 
 	UpdateAllSubnodeDependencies();

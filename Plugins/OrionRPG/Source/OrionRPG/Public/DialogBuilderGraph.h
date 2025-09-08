@@ -202,7 +202,7 @@ public:
 	virtual void DetermineAdvanceDialogRule(class UDialogBuilderNode_DialogLine* InDialogLine);
 
 	UFUNCTION()
-	virtual FVector GetSpeakerBoneLocation(class AActor* Actor, FName BoneOverride = NAME_None) const;
+	virtual FVector GetSpeakerBoneLocation(class AActor* Actor, bool bOverrideTrackedBone = false, FName BoneOverride = NAME_None) const;
 
 protected:
 	virtual AActor* RetrieveParticipant(const FParticipantInfo& Info);

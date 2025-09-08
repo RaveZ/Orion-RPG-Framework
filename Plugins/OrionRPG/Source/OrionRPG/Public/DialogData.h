@@ -93,15 +93,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", Category = "Override", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
 	TObjectPtr<UObject> ParticipantImageOverride;
 
-	UPROPERTY(EditAnywhere, Category = "Override", meta = (InlineEditConditionToggle))
-	bool bOverrideTrackedBone = false;
-
-	/*
-	* Override the default bone to track.
-	*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Override", meta = (EditCondition = "bOverrideTrackedBone"))
-	FName OverrideTrackedBone;
-
 	FDialogLineData()
 		: Line(FText::FromString("None"))
 	{

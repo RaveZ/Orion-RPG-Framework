@@ -574,7 +574,7 @@ void UDialogBuilderGraph::DetermineAdvanceDialogRule(UDialogBuilderNode_DialogLi
 	}
 }
 
-FVector UDialogBuilderGraph::GetSpeakerBoneLocation(AActor* Actor, FName BoneOverride) const
+FVector UDialogBuilderGraph::GetSpeakerBoneLocation(AActor* Actor, bool bOverrideTrackedBone, FName BoneOverride) const
 {
 	if (!Actor)
 	{
@@ -594,17 +594,23 @@ FVector UDialogBuilderGraph::GetSpeakerBoneLocation(AActor* Actor, FName BoneOve
 		}
 	}
 
-	if (CurrentLine && CurrentLine->DialogLineData.bOverrideTrackedBone)
+	if (bOverrideTrackedBone)
 	{
 		for (auto& ActorSkelMesh : Actor->GetComponents())
 		{
 			if (USkeletalMeshComponent* SkelMesh = Cast<USkeletalMeshComponent>(ActorSkelMesh))
 			{
-				BoneLoc = SkelMesh->GetBoneLocation(CurrentLine->DialogLineData.OverrideTrackedBone);
+				FVector FoundedLocation;
+				FoundedLocation = SkelMesh->GetBoneLocation(BoneOverride);
+				if(!FoundedLocation.IsNearlyZero())
+				{
+					BoneLoc = FoundedLocation;
+				}
 				break;
 			}
 		}
 	}
+	
 
 	if (BoneLoc == FVector::ZeroVector)
 	{

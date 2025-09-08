@@ -15,6 +15,7 @@
 UQuestBuilderNode::UQuestBuilderNode()
 {
 	bNodeActive = false;
+	bInitialized = false;
 #if WITH_EDITORONLY_DATA
 	CompatibleGraphType = UQuestBuilderGraph::StaticClass();
 
@@ -29,9 +30,13 @@ UQuestBuilderNode::~UQuestBuilderNode()
 
 void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 {
+	if (bInitialized)
+		return;
+
 	OnAllStartEventFinished.RemoveAll(this);
 	OnAllEndEventFinished.RemoveAll(this);
 	bNodeActive = true;
+	bInitialized = true;
 	StartEventQueue.Empty();
 
 	if (bLaunchEventOnLoad)
@@ -101,6 +106,7 @@ void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 void UQuestBuilderNode::Deinitialize()
 {
 	bNodeActive = false;
+	bInitialized = false;
 	EndEventQueue.Empty();
 	for (auto& EndEvent : Events)
 	{
@@ -122,6 +128,7 @@ void UQuestBuilderNode::BeginNode()
 void UQuestBuilderNode::Reset()
 {
 	bNodeActive = false;
+	bInitialized = false;
 }
 
 void UQuestBuilderNode::EvaluateNextNode()
