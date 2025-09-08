@@ -23,17 +23,17 @@ public:
 	TObjectPtr<UOrionSaveGame> CurrentSaveGame;
 
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Saving/Loading")
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "SaveSubsystem")
 	FOrionSaveGameMulticastSignature OnSaved;
 
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Saving/Loading")
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "SaveSubsystem")
 	FOrionSaveGameMulticastSignature OnLoaded;
 
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "SaveSubsystem")
 	void SaveGame(FString SlotName, FOrionSaveGameSignature SaveCallback);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "SaveSubsystem")
 	void LoadGame(FString SlotName, FOrionSaveGameSignature LoadCallback);
 
 

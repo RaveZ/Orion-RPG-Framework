@@ -3,9 +3,12 @@
 
 #include "OrionSaveGameSubsystem.h"
 #include "OrionSaveGame.h"
+#include "Engine/World.h"
 #include "QuestComponent.h"
 #include "QuestBuilderFunctionLibrary.h"
 #include "Kismet/GameplayStatics.h"
+#include "Serialization/MemoryWriter.h"
+#include "Serialization/MemoryReader.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
 
 void UOrionSaveGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
