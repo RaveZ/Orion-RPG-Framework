@@ -8,16 +8,18 @@
 #include "QuestComponent.generated.h"
 
 struct FQuestCategory;
-class UQuestSaveObject;
+struct FOrionQuestSaveData;
+class UOrionSaveGame;
 class UQuestBuilderNode_Objective;
 class UQuest;
 class USaveGame;
 class APlayerController;
 
 //Quest Delegate
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FQuestAutoSave);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FQuestUpdated);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FStopNavigateQuest);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestObjectiveBegin, UQuestBuilderNode_Objective*, Objective);
 
@@ -33,11 +35,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestAdded, UQuest*, Quest);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FQuestUnlocked, UQuest*, Quest);
 
-//Save/Load Delegate
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBeginSave, FString, SaveFileName);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSaveComplete, FString, SaveFileName);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBeginLoad, FString, SaveFileName);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnLoadComplete, FString, SaveFileName);
 
 UCLASS(meta=(BlueprintSpawnableComponent), Blueprintable, HideDropdown, ClassGroup = "OrionRPG", DisplayName = "Orion Quest Component")
 class ORIONRPG_API UQuestComponent : public UActorComponent
@@ -79,6 +76,9 @@ public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 		FStartNavigateQuest OnStartNavigateQuest;
 
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestManager")
+		FStopNavigateQuest OnStopNavigateQuest;
+
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 		FQuestFailed OnQuestFailed;
 
@@ -90,25 +90,6 @@ public:
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 		FQuestAdded OnQuestUnlocked;
-	
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
-		FQuestAutoSave OnQuestAutoSave;
-
-	/**Called when a save has begun*/
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Saving/Loading")
-		FOnBeginSave OnBeginSave;
-
-	/**Called when a save has completed*/
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Saving/Loading")
-		FOnSaveComplete OnSaveComplete;
-
-	/**Called when a load has begun*/
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Saving/Loading")
-		FOnBeginLoad OnBeginLoad;
-
-	/**Called when a load has completed*/
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Saving/Loading")
-		FOnLoadComplete OnLoadComplete;
 
 public:
 	UFUNCTION()
@@ -134,18 +115,6 @@ public:
 
 	UFUNCTION()
 		virtual void QuestUnlocked(UQuest* Quest);
-
-	UFUNCTION()
-		virtual void BeginSave(FString SaveName);
-
-	UFUNCTION()
-		virtual void BeginLoad(FString SaveName);
-
-	UFUNCTION()
-		virtual void SaveComplete(FString SaveName);
-
-	UFUNCTION()
-		virtual void LoadComplete(FString SaveName);
 	
 public:
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
@@ -188,6 +157,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void StartNavigateQuest(UQuest* InQuest, class UQuestBuilderNode_Objective* InObjective = nullptr);
 
+	UFUNCTION(BlueprintCallable, Category = "QuestManager")
+		void StopNavigateQuest();
+
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void ActivateQuest(UQuest* InQuest);
 
@@ -217,16 +189,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void EvaluateQuestState(UQuest* QuestParam);
-	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintAuthorityOnly, Category = "Saving")
-		void Save(const FString& SaveFileName, int SlotIndex);
 
-	virtual void Save_Implementation(const FString& SaveFileName, int SlotIndex);
-	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintAuthorityOnly, Category = "Saving")
-		void Load(const FString& SaveFileName, int SlotIndex);
+	UFUNCTION()
+	FOrionQuestSaveData GetSaveGameData() const;
 
-	virtual void Load_Implementation(const FString& SaveFileName, int SlotIndex);
+	UFUNCTION()
+	void InitializeFromSaveGame(FOrionQuestSaveData& QuestSaveData);
 
 	UFUNCTION(BlueprintCallable, Category = "Saving")
 	virtual bool DeleteSave(const FString& SaveName = "QuestBuilderSaveData", const int32 Slot = 0);
@@ -238,6 +206,15 @@ public:
 	UFUNCTION(BlueprintPure, Category = "QuestComponent")
 	virtual APlayerController* GetOwningController() const;
 
+	void DumpLog() const;
+
+// ================================================================================================ //
+// CONSOLE COMMANDS
+// ================================================================================================ //
+public:
+
+	UFUNCTION(Exec)
+	void DumpQuestLog();
 
 protected:
 	// Called when the game starts

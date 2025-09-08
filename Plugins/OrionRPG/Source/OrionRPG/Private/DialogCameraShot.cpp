@@ -2,6 +2,7 @@
 
 #include "DialogCameraShot.h"
 #include "DialogBuilderGraph.h"
+#include "DialogBuilderNode_DialogLine.h"
 #include <CineCameraActor.h>
 #include <CineCameraComponent.h>
 #include "GameFramework/PlayerController.h"
@@ -45,7 +46,7 @@ void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker)
 
 	K2_PreCameraSetup();
 
-	ACineCameraActor* Cinecam = InDialog->Cinecam.Get();
+	ACineCameraActor* Cinecam = InDialog->Cinecam.Get();	
 
 	//Define Track & Focus rules
 	bool bTrackEnabled = CameraTrackingRule == EDialogCameraTrackingRule::E_Disabled ? false : true;
@@ -61,7 +62,7 @@ void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker)
     if (Cinecam && LookAtActor.IsValid())
     {
         // Replace this block in UDialogBuilderGraph::PlayDialogShot
-        const FVector RelativeOffset = LookAtActor->GetActorTransform().InverseTransformPosition(InDialog->GetSpeakerBoneLocation(LookAtActor.Get()));
+        const FVector RelativeOffset = LookAtActor->GetActorTransform().InverseTransformPosition(InDialog->GetSpeakerBoneLocation(LookAtActor.Get(), bOverrideTrackedBone, OverrideTrackedBone));
         const FVector ActorLocation = LookAtActor->GetActorLocation() + RelativeOffset;
         const FRotator ActorRotation = LookAtActor->GetActorRotation();
         const FVector ForwardVector = ActorRotation.Vector();
@@ -96,8 +97,9 @@ void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker)
             break;
 		}
 
-        //make sure to generate camera only if shot get overidden or the last speaker is different
-        if (InDialog->CachedLastShot != this)
+        //make sure to generate camera only if (shot get overidden || tracked bone get overidden)
+        if ((InDialog->CachedLastShot != this) || 
+			(bOverrideTrackedBone))
         {
 			APlayerController* PC = GetWorld()->GetFirstPlayerController();
 			if (bBlendCameraTransition)
@@ -128,6 +130,19 @@ void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker)
 					Cinecam->SetLifeSpan(BlendTime);
 					Cinecam = NewCinecam;
 
+					// Wait for BlendTime, then execute lambda
+					/*FTimerHandle BlendTimerHandle;
+					GetWorld()->GetTimerManager().SetTimer(
+						BlendTimerHandle,
+						[this, InDialog, NewCinecam, bTrackEnabled, RelativeOffset]()
+						{
+							NewCinecam->LookatTrackingSettings.bEnableLookAtTracking = bTrackEnabled;
+							NewCinecam->LookatTrackingSettings.ActorToTrack = LookAtActor.Get();
+							NewCinecam->LookatTrackingSettings.RelativeOffset = RelativeOffset + CameraOffset;
+						},
+						BlendTime,
+						false
+					);*/
 				}
 			}
 			else
@@ -139,16 +154,12 @@ void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker)
 				}
 				Cinecam->SetActorLocation(LocationOverride);
 				Cinecam->SetActorRotation(RotationOverride);
-				Cinecam->LookatTrackingSettings.bEnableLookAtTracking = true;
+				Cinecam->LookatTrackingSettings.bEnableLookAtTracking = bTrackEnabled;
 				Cinecam->LookatTrackingSettings.ActorToTrack = LookAtActor.Get();
 				Cinecam->LookatTrackingSettings.RelativeOffset = RelativeOffset + CameraOffset;
 			}
 			
 
-			if(!bTrackEnabled)
-				Cinecam->LookatTrackingSettings.bEnableLookAtTracking = false;
-
-			
         }
 
 		//Set camera setting
@@ -165,6 +176,10 @@ void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker)
 			if (bUsePostProcess)
 			{
 				CinecamComp->PostProcessSettings = PostProcessSettings;
+			}
+			else
+			{
+				CinecamComp->PostProcessSettings = FPostProcessSettings();
 			}
 
 

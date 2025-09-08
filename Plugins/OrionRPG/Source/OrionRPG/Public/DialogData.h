@@ -15,9 +15,9 @@ class UDialogBuilderNode_DialogLine;
 class UDialogCameraShot;
 
 //Gameplay Tags
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Dialog);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Dialog_Participant);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Dialog_Participant_Player);
+ORIONRPG_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Dialog);
+ORIONRPG_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Dialog_Participant);
+ORIONRPG_API UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Dialog_Participant_Player);
 
 UENUM(BlueprintType)
 enum class ESelectionTimeLimit : uint8
@@ -64,40 +64,40 @@ public:
 	FText Line;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
-	class USoundBase* DialogSound;
+	class USoundBase* DialogSound = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Animation"), Category = "Default")
-	class UAnimMontage* DialogMontage;
+	class UAnimMontage* DialogMontage = nullptr;
 
-	/**Participant image override, will use this instead of default participant image.
-	* Useful if you want to have different expression for your participant.
-	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", Category = "Default", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
-	TObjectPtr<UObject> ParticipantImageOverride;
 
 
 	/**
 	* Select ypur shot method to override.
 	* instead of generated shot, you can play sequence instead.
 	**/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shot Override")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Override")
 	EDialogCameraMode DialogCameraMode = EDialogCameraMode::E_GeneratedCameraShot;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Shot Override", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_Sequence", HideEditConditionToggle, EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Override", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_Sequence", HideEditConditionToggle, EditConditionHides))
 	TObjectPtr<class ULevelSequence> SequenceToPlay;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Shot Override", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_Sequence", HideEditConditionToggle, EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Override", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_Sequence", HideEditConditionToggle, EditConditionHides))
 	FMovieSceneSequencePlaybackSettings PlaybackSettings;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Shot Override", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_GeneratedCameraShot", HideEditConditionToggle, EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Override", meta = (EditCondition = "DialogCameraMode == EDialogCameraMode::E_GeneratedCameraShot", HideEditConditionToggle, EditConditionHides))
 	TObjectPtr<UDialogCameraShot> ShotOverride;
 
+	/**Participant image override, will use this instead of default participant image.
+	* Useful if you want to have different expression for your participant.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", Category = "Override", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
+	TObjectPtr<UObject> ParticipantImageOverride;
 
 	FDialogLineData()
 		: Line(FText::FromString("None"))
 	{
 		PlaybackSettings.bPauseAtEnd = true;
-		PlaybackSettings.LoopCount.Value = 1;
+		PlaybackSettings.LoopCount.Value = 0;
 		PlaybackSettings.PlayRate = 1.f;
 		PlaybackSettings.StartTime = 0.f;
 		PlaybackSettings.bRandomStartTime = false;
@@ -140,7 +140,7 @@ public:
 	TObjectPtr<UDialogCameraShot> DefaultShot;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog", meta = (NoResetToDefault))
-	FLinearColor NodeColor;
+	FLinearColor NodeColor = FLinearColor(0.3f, 0.3f, 0.3f);
 
 	/**participant initial transforms, used to get participant back in this transfrom when dialog ended*/
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")

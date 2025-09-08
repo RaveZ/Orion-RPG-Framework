@@ -47,6 +47,15 @@ public:
 	static class UDialogBuilderNode* GetCurrentDialogNode(const UObject* WorldContextObject);
 
 	/**
+	* Get the current dialog line node.
+	*
+	* @return The Dialog Node reference.
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "DialogBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	static class UDialogBuilderNode_DialogLine* GetCurrentLine(const UObject* WorldContextObject);
+
+
+	/**
 	* Advance the dialog line
 	*
 	*/

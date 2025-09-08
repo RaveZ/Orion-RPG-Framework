@@ -75,7 +75,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "Objective", meta = (DisplayName = "Get Objective Location"))
 	TArray<USceneComponent*> K2_GetObjectiveLocation(TArray<FVector>& ObjectiveLocation) const;
 
-	UFUNCTION(BlueprintCallable, Category = "Objective")
+	UFUNCTION(Category = "Objective")
 	virtual void BeginObjective();
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")

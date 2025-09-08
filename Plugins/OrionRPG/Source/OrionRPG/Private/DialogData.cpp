@@ -8,6 +8,6 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 
 //Gameplay Tags
-UE_DEFINE_GAMEPLAY_TAG(TAG_Dialog, "Dialog");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Dialog_Participant, "Dialog.Participant");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Dialog_Participant_Player, "Dialog.Participant.Player");
+ORIONRPG_API UE_DEFINE_GAMEPLAY_TAG(TAG_Dialog, "Dialog");
+ORIONRPG_API UE_DEFINE_GAMEPLAY_TAG(TAG_Dialog_Participant, "Dialog.Participant");
+ORIONRPG_API UE_DEFINE_GAMEPLAY_TAG(TAG_Dialog_Participant_Player, "Dialog.Participant.Player");

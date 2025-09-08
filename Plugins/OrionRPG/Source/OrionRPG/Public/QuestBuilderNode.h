@@ -85,6 +85,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Quest")
 		bool bNodeActive;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Quest")
+		bool bInitialized;
+
 	/**Called when all Start Node events finished*/
 	FQuestNodeEventFinishedSignature OnAllStartEventFinished;
 	

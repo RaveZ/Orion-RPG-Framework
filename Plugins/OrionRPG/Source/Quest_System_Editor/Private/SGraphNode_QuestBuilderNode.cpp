@@ -799,7 +799,7 @@ TSharedRef<SGraphNode> SGraphNode_QuestBuilderNode::GetNodeUnderMouse(const FGeo
 void SGraphNode_QuestBuilderNode::MoveTo(const FVector2f& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty)
 {
 	SGraphNode::MoveTo(NewPosition, NodeFilter, bMarkDirty);
-#else if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 void SGraphNode_QuestBuilderNode::MoveTo(const FVector2D & NewPosition, FNodeSet & NodeFilter, bool bMarkDirty)
 {
 	SGraphNode::MoveTo(NewPosition, NodeFilter, bMarkDirty);
@@ -828,7 +828,11 @@ void SGraphNode_QuestBuilderNode::MoveTo(const FVector2D & NewPosition, FNodeSet
 	}
 }
 
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+TArray<FOverlayWidgetInfo> SGraphNode_QuestBuilderNode::GetOverlayWidgets(bool bSelected, const FVector2f& WidgetSize) const
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 TArray<FOverlayWidgetInfo> SGraphNode_QuestBuilderNode::GetOverlayWidgets(bool bSelected, const FVector2D& WidgetSize) const
+#endif
 {
 	TArray<FOverlayWidgetInfo> Widgets;
 
@@ -839,7 +843,12 @@ TArray<FOverlayWidgetInfo> SGraphNode_QuestBuilderNode::GetOverlayWidgets(bool b
 	
 
 	FOverlayWidgetInfo Overlay(IndexOverlay);
-	Overlay.OverlayOffset = FVector2D(WidgetSize.X - (IndexOverlay->GetDesiredSize().X * 0.5f), Origin.Y);
+#if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
+	Overlay.OverlayOffset = FVector2f(WidgetSize.X - (IndexOverlay->GetDesiredSize().X * 0.5f), Origin.Y);
+#elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
+	Overlay.OverlayOffset = FVector2D(WidgetSize.X - (IndexOverlay->GetDesiredSize().X * 0.5f), Origin.Y); 
+#endif
+	
 	Widgets.Add(Overlay);
 	
 
@@ -1303,7 +1312,9 @@ EVisibility SGraphNode_QuestBuilderNode::GetIndexVisibility() const
 	UQuestBuilderNode* QuestNode = Cast<UQuestBuilderNode>(QuestEdNode->NodeInstance);
 
 	// Visible if ((we are in PIE || if we have siblings) && (SelectedNodes only one && Matching parent with selected nodes))
-	const bool bCanShowIndex = (ShouldShowExecutionIndex() || (MyParentOutputPin && MyParentOutputPin->LinkedTo.Num() > 1)) && (SelectedNodes.Num() == 1 && (FirstSelectedNode && QuestNode) && (QuestNode->ParentNodes.Contains(FirstSelectedNode)));
+	const bool bCanShowIndex = (ShouldShowExecutionIndex() || (MyParentOutputPin && MyParentOutputPin->LinkedTo.Num() > 1)) &&
+		(SelectedNodes.Num() == 1 && (FirstSelectedNode && QuestNode) &&
+		(QuestNode->ParentNodes.Contains(FirstSelectedNode) || QuestNode == FirstSelectedNode));
 
 	return (bCanShowIndex && (!MyOwnerPanel.IsValid() || MyOwnerPanel->GetCurrentLOD() > EGraphRenderingLOD::LowDetail)) ? EVisibility::Visible : EVisibility::Collapsed;
 }
@@ -1374,7 +1385,8 @@ FSlateColor SGraphNode_QuestBuilderNode::GetIndexColor(bool bHovered) const
 	static const FName HoveredColor("BTEditor.Graph.BTNode.Index.HoveredColor");
 	static const FName DefaultColor("BTEditor.Graph.BTNode.Index.Color");
 
-	return bHighlightHover ? FAppStyle::Get().GetSlateColor(HoveredColor) : FAppStyle::Get().GetSlateColor(DefaultColor);
+	return FAppStyle::Get().GetSlateColor(HoveredColor);
+	//return bHighlightHover ? FAppStyle::Get().GetSlateColor(HoveredColor) : FAppStyle::Get().GetSlateColor(DefaultColor);
 }
 
 void SGraphNode_QuestBuilderNode::OnIndexHoverStateChanged(bool bHovered)

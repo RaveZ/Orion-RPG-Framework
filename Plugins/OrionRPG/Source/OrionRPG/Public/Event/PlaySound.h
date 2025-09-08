@@ -14,7 +14,8 @@ enum class EPlaySoundType : uint8
 };
 
 /**
- * Play Sound Event
+ * Play sound from sound base asset. 
+ * You can choose to spawn sound in 2d or at location.
  */
 UCLASS()
 class ORIONRPG_API UPlaySound : public UOrionEvent

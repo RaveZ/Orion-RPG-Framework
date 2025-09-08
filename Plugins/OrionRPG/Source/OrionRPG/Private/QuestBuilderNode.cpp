@@ -15,6 +15,7 @@
 UQuestBuilderNode::UQuestBuilderNode()
 {
 	bNodeActive = false;
+	bInitialized = false;
 #if WITH_EDITORONLY_DATA
 	CompatibleGraphType = UQuestBuilderGraph::StaticClass();
 
@@ -29,28 +30,32 @@ UQuestBuilderNode::~UQuestBuilderNode()
 
 void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 {
+	if (bInitialized)
+		return;
+
 	OnAllStartEventFinished.RemoveAll(this);
 	OnAllEndEventFinished.RemoveAll(this);
 	bNodeActive = true;
+	bInitialized = true;
 	StartEventQueue.Empty();
 
 	if (bLaunchEventOnLoad)
 	{
-		for (auto& EndEvent : Events)
+		for (auto& StartEvent : Events)
 		{
-			if (EndEvent && EndEvent->bLaunchEventOnLoad && (EndEvent->EventLaunchType == EEventLaunchType::E_Both || EndEvent->EventLaunchType == EEventLaunchType::E_Start))
+			if (StartEvent && StartEvent->bLaunchEventOnLoad && (StartEvent->EventLaunchType == EEventLaunchType::E_Both || StartEvent->EventLaunchType == EEventLaunchType::E_Start))
 			{
-				StartEventQueue.Add(EndEvent);
+				StartEventQueue.Add(StartEvent);
 			}
 		}
 	}
 	else
 	{
-		for (auto& EndEvent : Events)
+		for (auto& StartEvent : Events)
 		{
-			if (EndEvent && (EndEvent->EventLaunchType == EEventLaunchType::E_Both || EndEvent->EventLaunchType == EEventLaunchType::E_Start))
+			if (StartEvent && (StartEvent->EventLaunchType == EEventLaunchType::E_Both || StartEvent->EventLaunchType == EEventLaunchType::E_Start))
 			{
-				StartEventQueue.Add(EndEvent);
+				StartEventQueue.Add(StartEvent);
 			}
 		}
 	}
@@ -101,6 +106,7 @@ void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 void UQuestBuilderNode::Deinitialize()
 {
 	bNodeActive = false;
+	bInitialized = false;
 	EndEventQueue.Empty();
 	for (auto& EndEvent : Events)
 	{
@@ -122,12 +128,14 @@ void UQuestBuilderNode::BeginNode()
 void UQuestBuilderNode::Reset()
 {
 	bNodeActive = false;
+	bInitialized = false;
 }
 
 void UQuestBuilderNode::EvaluateNextNode()
 {
 	if (Quest->QuestState != EQuestState::E_Active)
 	 return;
+
 	
 	NextNodes.Empty();
 	
@@ -165,6 +173,8 @@ void UQuestBuilderNode::EvaluateNextNode()
 			{
 				GetOwningQuest()->GetNavigatedObjective();
 			}
+
+			GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
 		}
 		else
 		{
@@ -183,7 +193,6 @@ void UQuestBuilderNode::EvaluateNextNode()
 		}
 	}
 
-	GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
 	/**
 	* Going to next node will begin when all End Events are finished.
 	* If node already deinitialized, immediately broadcast OnAllEndEventFinished
@@ -244,14 +253,25 @@ void UQuestBuilderNode::LaunchStartEventQueue()
 		OnAllStartEventFinished.Broadcast();
 		return;
 	}
-	StartEventQueue[0]->OnEventFinished.AddLambda(
-		[this]()
-		{
-			StartEventQueue.RemoveAt(0);
-			LaunchStartEventQueue();
-		}
-	);
-	StartEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
+	if (StartEventQueue.IsValidIndex(0))
+	{
+		StartEventQueue[0]->OnEventFinished.AddLambda(
+			[this]()
+			{
+				if (StartEventQueue.IsValidIndex(0))
+				{
+					StartEventQueue.RemoveAt(0);
+					LaunchStartEventQueue();
+				}
+			}
+		);
+		StartEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
+	}
+	else
+	{
+		StartEventQueue.Empty();
+		LaunchStartEventQueue();
+	}
 }
 
 void UQuestBuilderNode::LaunchEndEventQueue()
@@ -261,15 +281,26 @@ void UQuestBuilderNode::LaunchEndEventQueue()
 		OnAllEndEventFinished.Broadcast();
 		return;
 	}
-	EndEventQueue[0]->OnEventFinished.AddLambda(
-		[this]()
-		{
-			EndEventQueue.RemoveAt(0);
-			LaunchEndEventQueue();
-		}
-	);
-	EndEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
-	
+	if (EndEventQueue.IsValidIndex(0))
+	{
+		EndEventQueue[0]->OnEventFinished.AddLambda(
+			[this]()
+			{
+				if (EndEventQueue.IsValidIndex(0))
+				{
+					EndEventQueue.RemoveAt(0);
+					LaunchEndEventQueue();
+				}
+
+			}
+		);
+		EndEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
+	}
+	else
+	{
+		EndEventQueue.Empty();
+		LaunchEndEventQueue();
+	}
 }
 
 FString UQuestBuilderNode::GetShortTypeName(const UObject* Ob)

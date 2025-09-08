@@ -7,7 +7,7 @@ set "PACKAGE_BASE_PATH=C:\ALPHA\Build\OrionRPG-Plugin"
 set "ENGINE_BASE_PATH=C:\Program Files\Epic Games"
 
 :: Define the Unreal Engine versions to build for
-set "UE_VERSIONS=UE_5.3 UE_5.4 UE_5.5 UE_5.6"
+set "UE_VERSIONS=UE_5.6 UE_5.5 UE_5.4 UE_5.3"
 
 echo.
 echo Starting multi-version plugin build for OrionRPG...

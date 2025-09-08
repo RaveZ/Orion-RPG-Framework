@@ -38,7 +38,7 @@ public:
 		bool bOverrideTransform;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration|Player", meta = (EditCondition = "bOverrideTransform"))
-		FTransform PlayerTransform;
+		FTransform PlayerTransformOverride;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Configuration|Player", meta = (NoResetToDefault))
 		TObjectPtr<class UDialogCameraShot> DefaultPlayerShot;
@@ -64,6 +64,12 @@ public:
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration|Dialog")
 		bool bLockPlayerMovement;
+
+	/**
+	* Can this dialog be interrupted by another dialog (if another dialog is triggered while this one is active)
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration|Dialog", meta = (DisplayName = "Can Interrupt this Dialog"))
+		bool bCanInterruptDialog;
 
 	/*
 	* By default dialog camera will aim at the bone set  in this variable
@@ -102,6 +108,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 		TObjectPtr<UDialogBuilderNode> CurrentNode;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
+		TObjectPtr<class UDialogBuilderNode_DialogLine> CurrentLine;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
 		TArray< TObjectPtr<UDialogBuilderNode>> RootNodes;
@@ -193,7 +202,7 @@ public:
 	virtual void DetermineAdvanceDialogRule(class UDialogBuilderNode_DialogLine* InDialogLine);
 
 	UFUNCTION()
-	virtual FVector GetSpeakerBoneLocation(class AActor* Actor) const;
+	virtual FVector GetSpeakerBoneLocation(class AActor* Actor, bool bOverrideTrackedBone = false, FName BoneOverride = NAME_None) const;
 
 protected:
 	virtual AActor* RetrieveParticipant(const FParticipantInfo& Info);

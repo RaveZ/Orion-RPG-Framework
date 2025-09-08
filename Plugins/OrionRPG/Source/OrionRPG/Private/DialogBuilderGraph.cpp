@@ -34,8 +34,9 @@ UDialogBuilderGraph::UDialogBuilderGraph()
 {
 	bAutoRotateParticipant = false;
 	DefaultBoneToTrack = FName("head");
-	bAutoAdvanceDialogLine = true;
+	bAutoAdvanceDialogLine = false;
 	bLockPlayerMovement = true;
+	bCanInterruptDialog = false;
 }
 
 UDialogBuilderGraph::~UDialogBuilderGraph()
@@ -147,6 +148,7 @@ void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialo
 {
 	if (InDialogLine == nullptr)
 		return;
+	CurrentLine = InDialogLine;
 
 	AActor* Speaker = CachedParticipants.FindRef(InDialogLine->ParticipantInfo.ParticipantTag);
 	AActor* Listener = CachedParticipants.FindRef(InDialogLine->ListenerTag);
@@ -156,7 +158,7 @@ void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialo
 	//Dialog Sound
 	if (InDialogLine->DialogLineData.DialogSound)
 	{
-		if (Speaker)
+		if (Speaker && bLockPlayerMovement)
 		{
 			DialogAudio = UGameplayStatics::SpawnSoundAttached(InDialogLine->DialogLineData.DialogSound, Speaker->GetRootComponent(), NAME_None, FVector::ZeroVector, EAttachLocation::SnapToTarget, false, 1.f, 1.f, 0.f, DialogSoundAttenuation);
 		}
@@ -206,7 +208,13 @@ void UDialogBuilderGraph::ApplyRotationSetting(UDialogBuilderNode_DialogLine* In
 				if (!ToSpeaker.IsNearlyZero())
 				{
 					FRotator LookAtRotation = ToSpeaker.Rotation();
+					if (GetOwningController() && GetOwningController()->GetPawn() == Participant.Value)
+					{
+						GetOwningController()->SetControlRotation(LookAtRotation);
+					}
+
 					Participant.Value->SetActorRotation(LookAtRotation);
+					
 				}
 			}
 		}
@@ -453,6 +461,14 @@ UDialogComponent* UDialogBuilderGraph::GetDialogComponent()
 
 void UDialogBuilderGraph::AdvanceDialogLine()
 {
+	if (CurrentLine && !CurrentLine->bCanSkipDialogLine 
+		&& DialogLineTimer.IsValid() 
+		&& GetWorld() && GetWorld()->GetTimerManager().GetTimerRemaining(DialogLineTimer) > .0f)
+	{
+		return;
+	}
+
+
 	if (GetWorld())
 	{
 		GetWorld()->GetTimerManager().ClearTimer(DialogLineTimer);
@@ -496,15 +512,15 @@ void UDialogBuilderGraph::EndDialog()
 
 	if (bLockPlayerMovement)
 	{
-		//Send all participants back to their initial transforms
-		for (const TPair<FGameplayTag, AActor*>& Pair : CachedParticipants)
-		{
-			FGameplayTag ParticipantTag = Pair.Key;
-			AActor* ParticipantActor = Pair.Value;
-			FTransform ParticipantInitialTransform = ParticipantInfoMap.FindRef(ParticipantTag).InitialTransform;
+        //Send all participants back to their initial transforms
+        for (const TPair<FGameplayTag, TObjectPtr<AActor>>& Pair : CachedParticipants)
+        {
+            FGameplayTag ParticipantTag = Pair.Key;
+            AActor* ParticipantActor = Pair.Value;
+            FTransform ParticipantInitialTransform = ParticipantInfoMap.FindRef(ParticipantTag).InitialTransform;
 
-			ParticipantActor->SetActorTransform(ParticipantInitialTransform);
-		}
+            ParticipantActor->SetActorTransform(ParticipantInitialTransform);
+        }
 	}
 	
 	//clear shot and sequence
@@ -539,40 +555,69 @@ void UDialogBuilderGraph::EndDialog()
 
 void UDialogBuilderGraph::DetermineAdvanceDialogRule(UDialogBuilderNode_DialogLine* InDialogLine)
 {
+	if(!GetWorld())
+		return;
 	//Determine each dialog time before advance to the next line
-	if (GetWorld() && bAutoAdvanceDialogLine)
+	if (bAutoAdvanceDialogLine)
 	{
 		GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, this, &ThisClass::AdvanceDialogLine, InDialogLine->GetLineDuration(), false);	
 	}
+	else
+    {		
+		FTimerDelegate TimerDel;
+		TimerDel = FTimerDelegate::CreateLambda([this]()
+		{
+			//empty implementation, just to make sure timer is valid
+		});
+		GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, TimerDel, InDialogLine->GetLineDuration(), false);
+    
+	}
 }
 
-FVector UDialogBuilderGraph::GetSpeakerBoneLocation(AActor* Actor) const
+FVector UDialogBuilderGraph::GetSpeakerBoneLocation(AActor* Actor, bool bOverrideTrackedBone, FName BoneOverride) const
 {
 	if (!Actor)
 	{
 		return FVector::ZeroVector;
 	}
 
-	FVector EyesLoc;
-	FRotator EyesRot;
+	FVector BoneLoc;
+	FRotator BoneRot;
 
-	const bool bIsChar = Actor->IsA<ACharacter>();
 
 	for (auto& ActorSkelMesh : Actor->GetComponents())
 	{
 		if (USkeletalMeshComponent* SkelMesh = Cast<USkeletalMeshComponent>(ActorSkelMesh))
 		{
-			EyesLoc = SkelMesh->GetBoneLocation(DefaultBoneToTrack);
+			BoneLoc = SkelMesh->GetBoneLocation(DefaultBoneToTrack);
 			break;
 		}
 	}
 
-	if (EyesLoc == FVector::ZeroVector)
+	if (bOverrideTrackedBone)
 	{
-		Actor->GetActorEyesViewPoint(EyesLoc, EyesRot);
+		for (auto& ActorSkelMesh : Actor->GetComponents())
+		{
+			if (USkeletalMeshComponent* SkelMesh = Cast<USkeletalMeshComponent>(ActorSkelMesh))
+			{
+				FVector FoundedLocation;
+				FoundedLocation = SkelMesh->GetBoneLocation(BoneOverride);
+				if(!FoundedLocation.IsNearlyZero())
+				{
+					BoneLoc = FoundedLocation;
+				}
+				break;
+			}
+		}
+	}
+	
+
+	if (BoneLoc == FVector::ZeroVector)
+	{
+		Actor->GetActorEyesViewPoint(BoneLoc, BoneRot);
 	}
 
-	return EyesLoc;
+	return BoneLoc;
 }
 
 AActor* UDialogBuilderGraph::RetrieveParticipant(const FParticipantInfo& Info)
@@ -584,7 +629,7 @@ AActor* UDialogBuilderGraph::RetrieveParticipant(const FParticipantInfo& Info)
 	{
 		if (bOverrideTransform)
 		{
-			PlayerPawn->SetActorTransform(PlayerTransform);
+			PlayerPawn->SetActorTransform(PlayerTransformOverride);
 		}
 		return PlayerPawn;
 	}

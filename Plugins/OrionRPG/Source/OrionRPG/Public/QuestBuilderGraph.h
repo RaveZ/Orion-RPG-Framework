@@ -23,10 +23,6 @@ public:
 	UQuestBuilderGraph();
 	virtual ~UQuestBuilderGraph();
 
-	/**This data will be displayed on the category for your quest log*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "QuestBuilderGraph")
-		FString CategoryDisplayName;
-
 	/** AssetID */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "QuestBuilderGraph")
 		FName ID;

@@ -11,7 +11,7 @@ class QUEST_SYSTEM_EDITOR_API FQuestBuilder_ConnectionDrawingPolicy : public FCo
 protected:
 	UEdGraph* GraphObj;
 	TMap<UEdGraphNode*, int32> NodeWidgetMap;
-
+	
 public:
 	FQuestBuilder_ConnectionDrawingPolicy(int32 InBackLayerID, int32 InFrontLayerID, float ZoomFactor, const FSlateRect& InClippingRect, FSlateWindowElementList& InDrawElements, UEdGraph* InGraphObj);
 

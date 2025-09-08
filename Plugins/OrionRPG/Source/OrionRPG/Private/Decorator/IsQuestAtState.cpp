@@ -30,5 +30,7 @@ bool UIsQuestAtState::PerformConditionCheck_Implementation(APlayerController* Ow
 
 FString UIsQuestAtState::GetNodeDisplayText_Implementation() const
 {
-    return FString::Printf(TEXT("Is Quest Active :  %s"), *GetShortTag(QuestTag));
+    FString QuestStateString = StaticEnum<EQuestState>()->GetNameStringByValue(static_cast<int64>(QuestState));
+    return FString::Printf(TEXT("Is %s At State :  %s"), *GetShortTag(QuestTag), *QuestStateString);
+
 }

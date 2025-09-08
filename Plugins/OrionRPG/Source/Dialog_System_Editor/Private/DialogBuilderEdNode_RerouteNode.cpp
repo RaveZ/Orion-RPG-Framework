@@ -32,7 +32,7 @@ FText UDialogBuilderEdNode_RerouteNode::GetTooltipText() const
 	if (RerouteSelectorNode)
 	{
 		return FText::Format(FText::FromString(TEXT("Reroute Node\n{0}")),
-			NSLOCTEXT("DialogBuilderEditor", "RerouteSelectorNodeScopeTooltip", "This Node signifies the conclusion point of a dialog, determining its outcome.\nThis node contain series of events, and decorators.\n**Right click the node to start adding a subnodes."));
+			NSLOCTEXT("DialogBuilderEditor", "RerouteSelectorNodeScopeTooltip", "This Node will reroute/jump back to other node.\nUseful if you want to revisit other node after choice selections"));
 	}
 
 	return Super::GetTooltipText();

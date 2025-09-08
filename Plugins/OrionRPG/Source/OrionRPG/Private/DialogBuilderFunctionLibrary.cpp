@@ -50,7 +50,6 @@ UDialogComponent* UDialogBuilderFunctionLibrary::GetDialogComponentFromTarget(AA
         }
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("DialogBuilderFunctionLibrary : Current Component Not Found!"));
     return nullptr;
 }
 
@@ -61,7 +60,6 @@ UDialogBuilderGraph* UDialogBuilderFunctionLibrary::GetCurrentActiveDialog(const
         return DialogComp->CurrentActiveDialog;
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("DialogBuilderFunctionLibrary : Current Active Dialog Is Null!"));
     return nullptr;
 }
 
@@ -73,7 +71,17 @@ UDialogBuilderNode* UDialogBuilderFunctionLibrary::GetCurrentDialogNode(const UO
         return CurrentDialogGraph->CurrentNode;
     }
 
-    UE_LOG(LogTemp, Warning, TEXT("DialogBuilderFunctionLibrary : Current Dialog Node Is Null!"));
+    return nullptr;
+}
+
+UDialogBuilderNode_DialogLine* UDialogBuilderFunctionLibrary::GetCurrentLine(const UObject* WorldContextObject)
+{
+    UDialogBuilderGraph* CurrentDialogGraph = GetCurrentActiveDialog(WorldContextObject);
+    if (CurrentDialogGraph && CurrentDialogGraph->CurrentNode)
+    {
+        return CurrentDialogGraph->CurrentLine;
+    }
+
     return nullptr;
 }
 

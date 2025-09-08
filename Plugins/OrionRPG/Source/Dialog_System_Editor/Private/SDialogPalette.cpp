@@ -46,7 +46,7 @@ void SDialogPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForAct
 	DialogEditorPtr = InDialogEditor;
 
 	// construct the icon widget
-	FSlateBrush const* IconBrush = FAppStyle::GetBrush(TEXT("GraphEditor.EventGraph_16x"));
+	FSlateBrush const* IconBrush = FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.Dialog");
 	FSlateBrush const* SecondaryBrush = FAppStyle::GetBrush(TEXT("NoBrush"));
 	FSlateColor        IconColor = FSlateColor::UseForeground();
 	FSlateColor        SecondaryIconColor = FSlateColor::UseForeground();
@@ -73,6 +73,7 @@ void SDialogPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForAct
 
 	ActionBox.Get().AddSlot()
 		.AutoWidth()
+		.Padding(FMargin(0.0f, 0.0f, 0.0f, 0.0f))
 		.VAlign(VAlign_Center)
 		[
 			IconWidget
@@ -82,7 +83,7 @@ void SDialogPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForAct
 	ActionBox.Get().AddSlot()
 		.FillWidth(1.f)
 		.VAlign(VAlign_Center)
-		.Padding(/* horizontal */ 3.0f, /* vertical */ 3.0f)
+		.Padding(/* horizontal */ 1.5f, /* vertical */ 1.0f)
 		[
 			NameSlotWidget
 		];
@@ -132,6 +133,8 @@ TSharedRef<SWidget> SDialogPaletteItem::CreateTextSlotWidget(FCreateWidgetForAct
 		[
 			SAssignNew(EditableTextElement, SInlineEditableTextBlock)
 				.Text(this, &SDialogPaletteItem::GetDisplayText)
+				.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
+				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 11.5f))
 				.HighlightText(InCreateData->HighlightText)
 				.ToolTip(ToolTipWidget)
 				.OnVerifyTextChanged(OnVerifyTextChanged)

@@ -7,7 +7,7 @@
 #include "IsQuestAtCheckpoint.generated.h"
 
 /**
- * Evaluate if quest lastest checkpoint node.
+ * Evaluate if quest is in latest checkpoint node.
  */
 UCLASS()
 class ORIONRPG_API UIsQuestAtCheckpoint : public UOrionDecorator

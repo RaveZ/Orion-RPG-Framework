@@ -29,7 +29,7 @@ FText UQuestBuilderEdNode_Root::GetTooltipText() const
 
 FText UQuestBuilderEdNode_Root::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
-	return NSLOCTEXT("QuestEditor", "Root", "ROOT");
+	return NSLOCTEXT("QuestEditor", "Quest Start", "Quest Start");
 	
 }
 

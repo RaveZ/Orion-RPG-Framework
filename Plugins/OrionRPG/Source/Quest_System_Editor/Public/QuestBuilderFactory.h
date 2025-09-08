@@ -69,16 +69,8 @@ public:
 	virtual void SaveState(TSharedPtr<SDockTab> Tab, TSharedPtr<FTabPayload> Payload) const override;
 
 protected:
-	virtual TAttribute<FText> ConstructTabNameForObject(UEdGraph* DocumentID) const override
-	{
-		// Extract the name of the graph from DocumentID (replace with your logic)
-		FString GraphName = DocumentID->GetName();
-		// Create FText with the extracted name
-		FText TabName = FText::FromString(GraphName);
-
-		// Return TAttribute containing the constructed FText
-		return TAttribute<FText>(TabName);
-	}
+	virtual TAttribute<FText> ConstructTabNameForObject(UEdGraph* DocumentID) const override;
+	
 
 	virtual TSharedRef<SWidget> CreateTabBodyForObject(const FWorkflowTabSpawnInfo& Info, UEdGraph* DocumentID) const override;
 
@@ -117,7 +109,7 @@ class UAssetDefinition_QuestEditor : public UAssetDefinitionDefault
 
 public:
 
-	virtual FText GetAssetDisplayName() const override { return FText::FromString("Quest Builder Graph"); }
+	virtual FText GetAssetDisplayName() const override { return FText::FromString("Quest Graph"); }
 	virtual FLinearColor GetAssetColor() const override { return FLinearColor(FColor(48, 165, 171)); }
 	virtual TSoftClassPtr<UObject> GetAssetClass() const override { return UQuestBuilderGraph::StaticClass(); }
 
@@ -135,6 +127,11 @@ public:
 	virtual const FSlateBrush* GetThumbnailBrush(const FAssetData& InAssetData, const FName InClassName) const override
 	{
 		return FQuestBuilder_EditorStyle::Get().GetBrush("ClassThumbnail.Quest");
+	}
+
+	virtual const FSlateBrush* GetIconBrush(const FAssetData& InAssetData, const FName InClassName) const override
+	{
+		return FQuestBuilder_EditorStyle::Get().GetBrush("ClassIcon.Quest");
 	}
 
 	virtual EAssetCommandResult OpenAssets(const FAssetOpenArgs& OpenArgs) const override;

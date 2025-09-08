@@ -7,7 +7,9 @@ IMPLEMENT_MODULE(FOrionRPGModule, OrionRPG)
 
 void FOrionRPGModule::StartupModule()
 {
+#if WITH_EDITOR
 	RegisterQuestPresets();
+#endif
 }
 
 
@@ -18,6 +20,7 @@ void FOrionRPGModule::ShutdownModule()
 
 void FOrionRPGModule::RegisterQuestPresets()
 {
+
 	//Adding QuestPresets
 	UQuest* MainQuestPreset = NewObject<UQuest>(UQuest::StaticClass(), NAME_None, RF_Transactional);
 	MainQuestPreset->QuestCategory = FText::FromString("Main Quest");
@@ -28,6 +31,6 @@ void FOrionRPGModule::RegisterQuestPresets()
 	QuestPresets.Add(SecondaryQuestPreset);
 
 	
-	MainQuestPreset->MakeQuestSettingShareable("Main Quest");
-	SecondaryQuestPreset->MakeQuestSettingShareable("Secondary Quest");
+	MainQuestPreset->MakeQuestSettingShareable("Main Quest", true);
+	SecondaryQuestPreset->MakeQuestSettingShareable("Secondary Quest", true);
 }

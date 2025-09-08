@@ -1,3 +1,5 @@
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
+
 #pragma once
 
 #include "Components/BoxComponent.h"
@@ -20,7 +22,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOrionInteractionSignature, UOrionIn
 /**
  * Interaction component
  */
-UCLASS( ClassGroup = (Orion), meta = (BlueprintSpawnableComponent, ClassGroup = "OrionRPG", DisplayName = "Orion Interaction") )
+UCLASS(meta = (BlueprintSpawnableComponent), Blueprintable, HideDropdown, ClassGroup = "OrionRPG", DisplayName = "Orion Interaction")
 class UOrionInteractionComponent : public UActorComponent
 {
 	GENERATED_BODY()
@@ -30,6 +32,7 @@ public:
 
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 	//We cache the OwningController, we won't cache pawn as this might change
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
@@ -38,7 +41,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interaction")
     TEnumAsByte<ECollisionChannel> InteractionTraceChannel;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interaction")
+	UPROPERTY(EditDefaultsOnly, Replicated, BlueprintReadOnly, Category = "Interaction")
 	EOrionInteractionType InteractionType;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interaction", meta = (DisplayName = "Debug Trace?"))
@@ -59,14 +62,14 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	TArray<FHitResult> InteractionhitResults;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Interaction")
 	TObjectPtr<class UOrionInteractionTargetComponent> CurrentInteractionTarget;
 
 	/*Index of the interaction list chosen by player*/
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Interaction")
 	int32 InteractionIndex;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Interaction")
 	bool bIsInteractionEnabled;
 
 	FTimerHandle TimerHandle_UpdateInteractionTrace;
@@ -82,6 +85,10 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOrionInteractionSignature OnInteractionUpdated;
+
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FOrionInteractionSignature OnInteractionBlocked;
+
 public:
 	UFUNCTION(BlueprintPure, Category = "Interaction")
 	virtual APawn* GetOwningPawn() const;
@@ -103,6 +110,22 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Interaction")
 	void InteractionEnded(UOrionInteractionTargetComponent* Component, bool bCompleted);
+
+public:
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastOnInteractionStarted(UOrionInteractionTargetComponent* Target);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastOnInteractionCanceled(UOrionInteractionTargetComponent* Target);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastOnInteractionCompleted(UOrionInteractionTargetComponent* Target);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastOnInteractionUpdated(UOrionInteractionTargetComponent* Target);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void MulticastOnInteractionBlocked(UOrionInteractionTargetComponent* Target);
 private:
 	void UpdateInteractionTrace();
 };

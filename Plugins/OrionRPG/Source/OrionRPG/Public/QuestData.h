@@ -16,6 +16,7 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Quest);
 UENUM(BlueprintType)
 enum class EObjectiveState : uint8
 {
+	E_Inactive		UMETA(DisplayName = "INACTIVE"),
 	E_Active		UMETA(DisplayName = "ACTIVE"),
 	E_Completed		UMETA(DisplayName = "COMPLETED"),
 	E_Failed		UMETA(DisplayName = "FAILED"),

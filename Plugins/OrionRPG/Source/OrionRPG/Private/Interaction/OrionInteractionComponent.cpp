@@ -1,10 +1,14 @@
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
+
 #include "Interaction/OrionInteractionComponent.h"
 #include "Interaction/OrionInteractionTargetComponent.h"
 #include "CollisionQueryParams.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/Pawn.h"
+#include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "DrawDebugHelpers.h"
+#include "Net/UnrealNetwork.h"
 #include "TimerManager.h"
 
 
@@ -14,10 +18,10 @@ UOrionInteractionComponent::UOrionInteractionComponent()
 	// Initialize variables
 	InteractionTraceChannel = ECC_WorldDynamic;
 	InteractionType = EOrionInteractionType::E_InteractionPawn;
-	InteractionRadius = 250.f;
-	InteractionTraceDistance = 300.0f;
+	InteractionRadius = 150.f;
+	InteractionTraceDistance = 750.0f;
 	InteractionTraceIntervalSecond = 0.3f;
-	InteractionOffset = FVector(50.f, 0.f, 0.f);
+	InteractionOffset = FVector(75.f, 0.f, 0.f);
 	bIsInteractionEnabled = false;
 	bDebugTrace = false;
 }
@@ -35,6 +39,15 @@ void UOrionInteractionComponent::BeginPlay()
      
 	}
 	SetInteractionEnabled(true);
+}
+void UOrionInteractionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(UOrionInteractionComponent, CurrentInteractionTarget);
+	DOREPLIFETIME(UOrionInteractionComponent, bIsInteractionEnabled);
+	DOREPLIFETIME(UOrionInteractionComponent, InteractionType);
+	DOREPLIFETIME(UOrionInteractionComponent, InteractionIndex);
 }
 
 void UOrionInteractionComponent::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
@@ -140,6 +153,7 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 	FVector TraceStart;
 	FRotator Rotation;
 	InteractionhitResults.Empty();
+	TArray<AActor*> InteractionActors;
 
 	FCollisionQueryParams CollisionQueryParams(SCENE_QUERY_STAT(AOrionInteractionComponent_UpdateInteracionTrace));
 	CollisionQueryParams.AddIgnoredActor(GetOwningPawn());
@@ -166,13 +180,18 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 			{
 				if (UOrionInteractionTargetComponent* TargetInteractable = Hit.GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>())
 				{
+					if (Hit.GetActor()->IsPendingKillPending())
+						continue;
+
 					InteractionhitResults.Add(Hit);
+					InteractionActors.AddUnique(Hit.GetActor());
 				}
 			}
 
 			if (InteractionIndex < InteractionhitResults.Num())
 			{
-				CurrentInteractionTarget = InteractionhitResults[InteractionIndex].GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>();
+				float Dist;
+				CurrentInteractionTarget = UGameplayStatics::FindNearestActor(GetOwningPawn()->GetActorLocation(), InteractionActors, Dist)->FindComponentByClass<UOrionInteractionTargetComponent>();
 			}
 
 			if (bDebugTrace)
@@ -207,9 +226,15 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 			PrevInteractable = CurrentInteractionTarget;
 			CurrentInteractionTarget = nullptr;
 
-			if (InteractionhitResults[0].bBlockingHit && InteractionhitResults[0].GetComponent())
+			if (InteractionhitResults[0].bBlockingHit 
+				&& InteractionhitResults[0].GetComponent()
+				&& !InteractionhitResults[0].GetActor()->IsPendingKillPending())
 			{
-				CurrentInteractionTarget = InteractionhitResults[0].GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>();
+				if (UOrionInteractionTargetComponent* TargetInteractable = InteractionhitResults[0].GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>())
+				{
+					CurrentInteractionTarget = TargetInteractable;
+				}
+				
 			}
 			if (bDebugTrace)
 			{
@@ -227,7 +252,7 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 			break;
 		}
 	}
-	OnInteractionUpdated.Broadcast(CurrentInteractionTarget);
+	MulticastOnInteractionUpdated(CurrentInteractionTarget);
 	// If we have previous interactable and we lose focus from it, cancel interaction
 	if (PrevInteractable && PrevInteractable->Mode == EOrionInteractionMode::Hold && PrevInteractable->IsInteractionInProgress() && CurrentInteractionTarget == nullptr)
 	{
@@ -242,11 +267,14 @@ void UOrionInteractionComponent::StartInteraction()
 		CurrentInteractionTarget &&
 		CurrentInteractionTarget->CanInteract())
 	{
-		CurrentInteractionTarget->StartInteraction(GetOwningPawn());
-
-		if (OnInteractionStarted.IsBound())
+		if (CurrentInteractionTarget->DecoratorConditionMet())
 		{
-			OnInteractionStarted.Broadcast(CurrentInteractionTarget);
+			CurrentInteractionTarget->StartInteraction(GetOwningPawn());
+			MulticastOnInteractionStarted(CurrentInteractionTarget);
+		}
+		else
+		{
+			MulticastOnInteractionBlocked(CurrentInteractionTarget);
 		}
 	}
 }
@@ -258,10 +286,7 @@ void UOrionInteractionComponent::CancelInteraction()
 		CurrentInteractionTarget->IsInteractionInProgress())
 	{
 		CurrentInteractionTarget->EndInteraction(false);
-		if (OnInteractionCanceled.IsBound())
-		{
-			OnInteractionCanceled.Broadcast(CurrentInteractionTarget);
-		}
+		MulticastOnInteractionCanceled(CurrentInteractionTarget);
 	}
 }
 
@@ -269,8 +294,33 @@ void UOrionInteractionComponent::InteractionEnded(UOrionInteractionTargetCompone
 {
 	check(Component);
 
-	if (bCompleted && OnInteractionCompleted.IsBound())
+	if (bCompleted)
 	{
-		OnInteractionCompleted.Broadcast(Component);
+		MulticastOnInteractionCompleted(Component);
 	}
+}
+
+void UOrionInteractionComponent::MulticastOnInteractionStarted_Implementation(UOrionInteractionTargetComponent* Target)
+{
+	OnInteractionStarted.Broadcast(Target);
+}
+
+void UOrionInteractionComponent::MulticastOnInteractionCanceled_Implementation(UOrionInteractionTargetComponent* Target)
+{
+	OnInteractionCanceled.Broadcast(Target);
+}
+
+void UOrionInteractionComponent::MulticastOnInteractionCompleted_Implementation(UOrionInteractionTargetComponent* Target)
+{
+	OnInteractionCompleted.Broadcast(Target);
+}
+
+void UOrionInteractionComponent::MulticastOnInteractionUpdated_Implementation(UOrionInteractionTargetComponent* Target)
+{
+	OnInteractionUpdated.Broadcast(Target);
+}
+
+void UOrionInteractionComponent::MulticastOnInteractionBlocked_Implementation(UOrionInteractionTargetComponent* Target)
+{
+	OnInteractionBlocked.Broadcast(Target);
 }

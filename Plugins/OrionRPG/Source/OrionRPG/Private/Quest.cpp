@@ -68,10 +68,14 @@ void UQuest::Deinitialize()
 	VisitedNodeIDs.Empty();
 	CurrentNodes.Empty();
 	CurrentNavigatedObjective = nullptr;
+
+
 	for (auto& Node : AllNodes)
 	{
-		Node->Deinitialize();
+		Node->ConditionalBeginDestroy();
 	}
+	AllNodes.Empty();
+	ConditionalBeginDestroy();
 }
 
 UWorld* UQuest::GetWorld() const
@@ -201,10 +205,6 @@ void UQuest::BeginNode(UQuestBuilderNode* InNode, bool bLaunchEventOnLoad)
 	if (InNode)
 	{
 		CurrentNodes.AddUnique(InNode);
-		if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(InNode))
-		{
-			OnQuestObjectiveAdded.Broadcast(ObjectiveNode);
-		}
 	}
 	if (InNode == nullptr)  
 	{  
@@ -385,44 +385,54 @@ void UQuest::EvaluateUniqueID()
 
 }
 
-void UQuest::MakeQuestSettingShareable(FString ShareName)
+
+void UQuest::MakeQuestSettingShareable(FString ShareName, bool bInitialize)
 {
 	SharedCategoryIdx = INDEX_NONE;
-	
+
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 	TArray<FAssetData> QuestgraphDataArray;
 	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestgraphDataArray);
 
 	TArray<int32> Remap;
-	
-	for (const FAssetData& AssetData : QuestgraphDataArray)
+
+	if (bInitialize)
 	{
-		UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
-		if (QuestGraphAsset)
+		FOrionRPGModule& OrionRPGModule = FModuleManager::GetModuleChecked<FOrionRPGModule>(TEXT("OrionRPG"));
+		for (auto& QuestPreset : OrionRPGModule.QuestPresets)
 		{
-			for (auto& OtherQuest : QuestGraphAsset->QuestList)
+			if (QuestPreset == this || QuestPreset->SharedCategoryIdx != INDEX_NONE)
 			{
-				if (OtherQuest->SharedCategoryIdx != INDEX_NONE || OtherQuest == this)
+				QuestPreset->SharedCategoryIdx = Remap.AddUnique(QuestPreset->SharedCategoryIdx) + 1; // Remaps existing index to lowest index available
+			}
+		}
+	}
+	else
+	{
+		for (const FAssetData& AssetData : QuestgraphDataArray)
+		{
+			UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
+			if (QuestGraphAsset)
+			{
+				for (auto& OtherQuest : QuestGraphAsset->QuestList)
 				{
-					OtherQuest->SharedCategoryIdx = Remap.AddUnique(OtherQuest->SharedCategoryIdx) + 1; // Remaps existing index to lowest index available
+					if (OtherQuest->SharedCategoryIdx != INDEX_NONE || OtherQuest == this)
+					{
+						OtherQuest->SharedCategoryIdx = Remap.AddUnique(OtherQuest->SharedCategoryIdx) + 1; // Remaps existing index to lowest index available
+					}
 				}
 			}
 		}
 	}
 
-	FOrionRPGModule& OrionRPGModule = FModuleManager::GetModuleChecked<FOrionRPGModule>(TEXT("OrionRPG"));
-	for (auto& QuestPreset : OrionRPGModule.QuestPresets)
-	{
-		if (QuestPreset == this || QuestPreset->SharedCategoryIdx != INDEX_NONE)
-		{
-			QuestPreset->SharedCategoryIdx = Remap.AddUnique(QuestPreset->SharedCategoryIdx) + 1; // Remaps existing index to lowest index available
-		}
-	}
+
+
 
 	bSharedCategory = true;
 	SharedCategoryName = ShareName;
 	SharedCategoryGuid = FGuid::NewGuid();
 }
+
 
 void UQuest::UnshareQuestSetting()
 {
@@ -549,6 +559,7 @@ void UQuest::Serialize(FArchive& Ar)
 }
 
 #if WITH_EDITOR
+
 void UQuest::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	FName PropertyName = (PropertyChangedEvent.Property != NULL) ? PropertyChangedEvent.Property->GetFName() : NAME_None;

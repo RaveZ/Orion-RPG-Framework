@@ -53,9 +53,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "DialogBuilderNode")
 		TMap<TObjectPtr<UDialogBuilderNode>, TObjectPtr<UDialogBuilderEdge>> Edges;
 
-	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")
-		virtual UDialogBuilderEdge* GetEdge(UDialogBuilderNode* ChildNode);
-
+	UPROPERTY(BlueprintReadOnly, Category = "DialogBuilderNode")
+		bool bVisited;
 
 	UPROPERTY(BlueprintReadWrite, Category = "DialogBuilderNode")
 	TObjectPtr<APlayerController> OwningController;
@@ -78,6 +77,9 @@ public:
 	
 	/** initialize any asset related data */
 	virtual void InitializeFromAsset(UDialogBuilderGraph& OwningDialogGraph);
+
+	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")
+	virtual UDialogBuilderEdge* GetEdge(UDialogBuilderNode* ChildNode);
 
 	UFUNCTION(BlueprintCallable, Category = "DialogBuilderNode")
 	virtual void EvaluateNextNode();
