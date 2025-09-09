@@ -23,37 +23,6 @@ void FOrionInventoryEditorToolbar::FillInventorySystemToolbar(FToolBarBuilder& T
 	check(InventorySystemEditor.IsValid());
 	TSharedPtr<FOrionInventoryEditor> InventorySystemEditorPtr = InventorySystemEditor.Pin();
 
-	ToolbarBuilder.BeginSection("Inventory System");
-	{
-		const FText NewDecoratorLabel = LOCTEXT("NewOrionDecorator_Label", "New Orion Decorator");
-		const FText NewDecoratorTooltip = LOCTEXT("NewOrionDecorator_Tooltip", "Create a new Decorator Blueprint from a base class");
-		const FSlateIcon NewDecoratorIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "BTEditor.Graph.BTNode.Decorator.Conditional.Icon");
-
-
-		ToolbarBuilder.AddToolBarButton(FOrionInventory_EditorCommands::Get().NewInventoryDecorator,
-			NAME_None,
-			NewDecoratorLabel,
-			NewDecoratorTooltip,
-			NewDecoratorIcon
-		);
-	}
-	ToolbarBuilder.EndSection();
-
-	ToolbarBuilder.BeginSection("Inventory System");
-	{
-		const FText NewEventLabel = LOCTEXT("NewInventoryEvent_Label", "New Orion Event");
-		const FText NewEventTooltip = LOCTEXT("NewInventoryEvent_ToolTip", "Create a new Inventory Event Blueprint from a base class");
-		const FSlateIcon NewEventIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.CustomEvent_16x");
-
-
-		ToolbarBuilder.AddToolBarButton(FOrionInventory_EditorCommands::Get().NewInventoryEvent,
-			NAME_None,
-			NewEventLabel,
-			NewEventTooltip,
-			NewEventIcon
-		);
-	}
-	ToolbarBuilder.EndSection();
 
 	ToolbarBuilder.BeginSection("Inventory System");
 	{

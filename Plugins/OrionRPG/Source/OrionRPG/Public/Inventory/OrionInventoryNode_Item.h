@@ -20,7 +20,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (Categories = "Item"))
 	FGameplayTag Tag;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail", meta = (NoResetToDefault))
 	TObjectPtr<class UTexture2D> DisplayImage;
 
 	

@@ -3,6 +3,7 @@
 
 #include "OrionInventoryEdSubNode_Item.h"
 #include "Inventory/OrionInventoryNode.h"
+#include "Inventory/OrionInventoryNode_Item.h"
 #include "Inventory/OrionInventorySetting.h"
 #include "DialogBuilderNode.h"
 #include "Inventory/OrionInventoryNode_Item.h"
@@ -33,6 +34,12 @@ FLinearColor UOrionInventoryEdSubNode_Item::GetBackgroundColor() const
 
 FText UOrionInventoryEdSubNode_Item::GetTooltipText() const
 {
+	const UOrionInventoryNode_Item* InventoryNodeItem = Cast<UOrionInventoryNode_Item>(NodeInstance);
+	if (InventoryNodeItem)
+	{
+		FText Desc = InventoryNodeItem->Description.IsEmpty() ? FText::FromString("Item Description...") : InventoryNodeItem->Description;
+		return Desc;
+	}
 	return Super::GetTooltipText();
 }
 

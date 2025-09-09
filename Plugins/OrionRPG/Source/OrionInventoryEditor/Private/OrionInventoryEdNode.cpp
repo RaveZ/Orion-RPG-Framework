@@ -217,11 +217,12 @@ void UOrionInventoryEdNode::PostPlacedNewNode()
 			{
 				if (UOrionInventoryNode_ItemContainer* ItemContainerNode = Cast<UOrionInventoryNode_ItemContainer>(NodeInstance))
 				{
-					FindUniqueNodeName("ItemContainer");
+					FindUniqueNodeName("Container");
+					ItemContainerNode->Category = FText::FromString("New Container");
 				}
 				if (UOrionInventoryNode_Item* ItemNode = Cast<UOrionInventoryNode_Item>(NodeInstance))
 				{
-					FindUniqueNodeName("Item");
+					ItemNode->DisplayName =  FText::FromString("New Item");
 				}
 			}
 			
@@ -476,7 +477,7 @@ FName UOrionInventoryEdNode::GetNameIcon() const
 	return FName("BTEditor.Graph.BTNode.Icon");
 }
 
-void UOrionInventoryEdNode::FindUniqueNodeName(const FString& InBaseName)
+FText UOrionInventoryEdNode::FindUniqueNodeName(const FString& InBaseName)
 {
 	// Start with the base name
 	FString BaseName = InBaseName;
@@ -524,13 +525,15 @@ void UOrionInventoryEdNode::FindUniqueNodeName(const FString& InBaseName)
 			if (bIsUnique)
 			{
 				InventoryNode->ID = FName(UniqueName);
-				return;
+                return FText::FromString(UniqueName);
 			}
 
 			// If the current name is not unique, append a number to it and try again
 			UniqueName = FString::Printf(TEXT("%s_%d"), *BaseName, i + 1);
 		}
 	}
+
+	return FText();
 }
 
 FText UOrionInventoryEdNode::GetDescription() const

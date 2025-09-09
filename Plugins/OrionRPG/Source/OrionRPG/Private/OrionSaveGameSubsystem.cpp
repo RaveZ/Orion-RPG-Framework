@@ -131,6 +131,4 @@ void UOrionSaveGameSubsystem::LoadGame(FString SlotName, FOrionSaveGameSignature
 		}
 		
 	}
-
-	
 }

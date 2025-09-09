@@ -386,6 +386,7 @@ UEdGraphNode* FInventorySchemaAction_AddComment::PerformAction(UEdGraph* ParentG
 {
 	UEdGraphNode_Comment* const CommentTemplate = NewObject<UEdGraphNode_Comment>();
 	CommentTemplate->bCommentBubbleVisible_InDetailsPanel = true;
+	CommentTemplate->bCanRenameNode = true;
 
 	FVector2f SpawnLocation = Location;
 	FSlateRect Bounds;

@@ -93,7 +93,7 @@ public:
 	/** gets icon resource name for title bar */
 	virtual FName GetNameIcon() const;
 
-	virtual void FindUniqueNodeName(const FString& InBaseName);
+	virtual FText FindUniqueNodeName(const FString& InBaseName);
 
 	virtual FText GetDescription() const;
 
