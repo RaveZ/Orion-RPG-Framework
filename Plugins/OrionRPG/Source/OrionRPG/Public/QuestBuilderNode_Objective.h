@@ -51,6 +51,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Objective")
 	float DistanceToTarget;
 
+	bool bObjectiveInitialized;
 	struct FTimerHandle TimerHandle_TickObjective;
 
 public:

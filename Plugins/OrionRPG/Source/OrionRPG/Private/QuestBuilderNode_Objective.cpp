@@ -14,7 +14,8 @@
 
 UQuestBuilderNode_Objective::UQuestBuilderNode_Objective()
 {
-    ObjectiveState = EObjectiveState::E_Inactive;
+    ObjectiveState = EObjectiveState::E_Active;
+	bObjectiveInitialized = false;
     bOptional = false;
     bHidden = false;
     bIsObjectiveTickable = false;
@@ -49,7 +50,7 @@ void UQuestBuilderNode_Objective::Deinitialize()
 void UQuestBuilderNode_Objective::Reset()
 {
     Super::Reset();
-    ObjectiveState = EObjectiveState::E_Inactive;
+    ObjectiveState = EObjectiveState::E_Active;
     CurrentProgress = 0;
 	DeactivateTick();
 }
@@ -96,7 +97,10 @@ void UQuestBuilderNode_Objective::BeginObjective()
 {
     if (ObjectiveState == EObjectiveState::E_Completed || ObjectiveState == EObjectiveState::E_Failed)
         return;
+    if(bObjectiveInitialized)
+		return;
 
+	bObjectiveInitialized = true;
     ObjectiveState = EObjectiveState::E_Active;
     K2_BeginObjective(GetOwningController(), GetOwningPawn());
 
