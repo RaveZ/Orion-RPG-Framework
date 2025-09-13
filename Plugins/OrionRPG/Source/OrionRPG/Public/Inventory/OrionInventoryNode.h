@@ -99,8 +99,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "OrionInventoryNode", meta = (ClampMin = "0", EditCondition = "ChildrenLimitType == EOrionInventoryNodeLimits::Limited", EditConditionHides))
 		int32 ChildrenLimit;
 
-
-
 #endif
 
 #if WITH_EDITOR
