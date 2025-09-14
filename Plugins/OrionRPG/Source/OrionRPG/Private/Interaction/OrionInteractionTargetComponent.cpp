@@ -138,7 +138,7 @@ void UOrionInteractionTargetComponent::EndInteraction(bool bCompleted)
 		}
 	}
 
-	if (UOrionInteractionComponent* InteractionComp = UOrionInteractionFunctionLibrary::GetOrionInteractionComponent(GetWorld()))
+	if (UOrionInteractionComponent* InteractionComp = UOrionInteractionFunctionLibrary::GetInteractionComponent(GetWorld()))
 	{
 		InteractionComp->InteractionEnded(this, bCompleted);
 	}

@@ -508,7 +508,6 @@ void UDialogBuilderGraph::StopCurrentDialogLine()
 
 void UDialogBuilderGraph::EndDialog()
 {
-	GetDialogComponent()->OnEndDialog.Broadcast(this);
 
 	if (bLockPlayerMovement)
 	{
@@ -551,6 +550,8 @@ void UDialogBuilderGraph::EndDialog()
 		SpawnedParticipant->Destroy();
 	}
 
+	StopCurrentDialogLine();
+	GetDialogComponent()->OnEndDialog.Broadcast(this);
 }
 
 void UDialogBuilderGraph::DetermineAdvanceDialogRule(UDialogBuilderNode_DialogLine* InDialogLine)

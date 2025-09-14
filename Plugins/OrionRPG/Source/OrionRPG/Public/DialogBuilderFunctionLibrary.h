@@ -19,7 +19,7 @@ public:
 	*
 	* @return The Dialog component.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "DialogBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Dialog", meta = (WorldContext = "WorldContextObject"))
 	static class UDialogComponent* GetDialogComponent(const UObject* WorldContextObject);
 
 	/**
@@ -27,7 +27,7 @@ public:
 	*
 	* @return The Dialog component.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "DialogBuilderLibrary", meta = (DefaultToSelf = "Target"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Dialog", meta = (DefaultToSelf = "Target"))
 	static class UDialogComponent* GetDialogComponentFromTarget(AActor* Target);
 
 	/**
@@ -35,7 +35,7 @@ public:
 	* 
 	* @return The Dialog Graph reference.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "DialogBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Dialog", meta = (WorldContext = "WorldContextObject"))
 	static class UDialogBuilderGraph* GetCurrentActiveDialog(const UObject* WorldContextObject);
 
 	/**
@@ -43,7 +43,7 @@ public:
 	*
 	* @return The Dialog Node reference.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "DialogBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Dialog", meta = (WorldContext = "WorldContextObject"))
 	static class UDialogBuilderNode* GetCurrentDialogNode(const UObject* WorldContextObject);
 
 	/**
@@ -51,7 +51,7 @@ public:
 	*
 	* @return The Dialog Node reference.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "DialogBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Dialog", meta = (WorldContext = "WorldContextObject"))
 	static class UDialogBuilderNode_DialogLine* GetCurrentLine(const UObject* WorldContextObject);
 
 
@@ -59,13 +59,13 @@ public:
 	* Advance the dialog line
 	*
 	*/
-	UFUNCTION(BlueprintCallable, Category = "DialogBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Dialog", meta = (WorldContext = "WorldContextObject"))
 	static void AdvanceDialogLine(const UObject* WorldContextObject);
 
 	/**
 	* Select Dialog Option
 	*
 	*/
-	UFUNCTION(BlueprintCallable, Category = "DialogBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Dialog", meta = (WorldContext = "WorldContextObject"))
 	static void SelectDialogChoice(const UObject* WorldContextObject, class UDialogBuilderNode_PlayerChoice* InOption);
 };

@@ -126,9 +126,11 @@ void UOrionSaveGameSubsystem::LoadGame(FString SlotName, FOrionSaveGameSignature
 					IOrionSaveGameInterface::Execute_OnLoaded(FoundActor);
 				}
 			}
-			LoadCallback.ExecuteIfBound(bSuccess);
-			OnLoaded.IsBound() ? OnLoaded.Broadcast(bSuccess) : void();
 		}
 		
 	}
+	LoadCallback.ExecuteIfBound(bSuccess);
+	OnLoaded.IsBound() ? OnLoaded.Broadcast(bSuccess) : void();
+
+	
 }

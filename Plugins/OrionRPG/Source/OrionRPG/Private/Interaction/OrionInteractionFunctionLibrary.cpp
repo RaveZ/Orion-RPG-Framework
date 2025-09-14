@@ -11,12 +11,12 @@
 #include "GameFramework/Pawn.h"
 
 
-UOrionInteractionComponent* UOrionInteractionFunctionLibrary::GetOrionInteractionComponent(const UObject* WorldContextObject)
+UOrionInteractionComponent* UOrionInteractionFunctionLibrary::GetInteractionComponent(const UObject* WorldContextObject)
 {
-    return GetOrionInteractionComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0));
+    return GetInteractionComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0));
 }
 
-UOrionInteractionComponent* UOrionInteractionFunctionLibrary::GetOrionInteractionComponentFromTarget(AActor* Target)
+UOrionInteractionComponent* UOrionInteractionFunctionLibrary::GetInteractionComponentFromTarget(AActor* Target)
 {
     if (!Target)
     {
