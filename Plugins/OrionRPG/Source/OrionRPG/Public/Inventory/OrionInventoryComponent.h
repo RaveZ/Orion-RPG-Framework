@@ -22,13 +22,14 @@ public:
 	// Sets default values for this component's properties
 	UOrionInventoryComponent();
 
+
+	/**Inventory database*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orion")
+	TObjectPtr<UOrionInventoryGraph> InventoryData;
+
 	//We cache the OwningController, we won't cache pawn as this might change
 	UPROPERTY(BlueprintReadOnly, Category = "OrionInventoryComponent")
 		TObjectPtr<APlayerController> OwningController;
-
-	/** Current OrionInventory That is Running, only one OrionInventory should active at a time*/
-	UPROPERTY(BlueprintReadWrite, Category = "OrionInventoryComponent")
-		TObjectPtr<UOrionInventoryGraph> CurrentActiveOrionInventory;
 
 	UPROPERTY(BlueprintReadWrite, Category = "OrionInventoryComponent")
 		TMap<FName, TObjectPtr<UOrionInventoryGraph>> OrionInventoryMap;
@@ -39,19 +40,6 @@ public:
 
 	UFUNCTION()
 		virtual class UOrionInventoryGraph* MakeOrionInventoryGraphInstance(UOrionInventoryGraph* OrionInventoryGraphTemplate);
-
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintAuthorityOnly, Category = "Saving")
-		void Save(const FString& SaveFileName, int SlotIndex);
-
-	virtual void Save_Implementation(const FString& SaveFileName, int SlotIndex);
-	
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, BlueprintAuthorityOnly, Category = "Saving")
-		void Load(const FString& SaveFileName, int SlotIndex);
-
-	virtual void Load_Implementation(const FString& SaveFileName, int SlotIndex);
-
-	UFUNCTION(BlueprintCallable, Category = "Saving")
-	virtual bool DeleteSave(const FString& SaveName = "OrionInventorySaveData", const int32 Slot = 0);
 
 public:
 	UFUNCTION(BlueprintPure, Category = "OrionInventoryComponent")

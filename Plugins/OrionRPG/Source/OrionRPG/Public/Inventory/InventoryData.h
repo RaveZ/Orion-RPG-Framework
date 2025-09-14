@@ -11,3 +11,4 @@ class UDialogBuilderNode_DialogLine;
 
 //Gameplay Tags
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item);
+

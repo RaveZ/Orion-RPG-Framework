@@ -105,24 +105,5 @@ APlayerController* UOrionInventoryComponent::GetOwningController() const
 	return nullptr;
 }
 
-void UOrionInventoryComponent::Save_Implementation(const FString& SaveFileName, int SlotIndex)
-{
-}
-
-void UOrionInventoryComponent::Load_Implementation(const FString& SaveFileName, int SlotIndex) 
-{
-	
-}
-
-bool UOrionInventoryComponent::DeleteSave(const FString& SaveName, const int32 Slot)
-{
-	if (!UGameplayStatics::DoesSaveGameExist(SaveName, 0))
-	{
-		return false;
-	}
-
-	return UGameplayStatics::DeleteGameInSlot(SaveName, Slot);
-}
-
 
 #undef LOCTEXT_NAMESPACE

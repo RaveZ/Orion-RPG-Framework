@@ -12,4 +12,21 @@ class ORIONRPG_API UOrionInventoryFunctionLibrary : public UBlueprintFunctionLib
 {
 	GENERATED_BODY()
 public:
+
+	/**
+	* Grab the Inventory component from the local pawn or player controller, whichever it exists on.
+	*
+	* @return The Inventory component.
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionFunctionLibrary", meta = (WorldContext = "WorldContextObject"))
+	static class UOrionInventoryComponent* GetInventoryComponent(const UObject* WorldContextObject);
+
+	/**
+	* Find the Inventory component from the supplied target object.
+	*
+	* @return The Inventory component.
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionFunctionLibrary", meta = (DefaultToSelf = "Target"))
+	static class UOrionInventoryComponent* GetInventoryComponentFromTarget(AActor* Target);
+
 };
