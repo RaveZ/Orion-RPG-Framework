@@ -18,7 +18,7 @@ public:
 	*
 	* @return The Inventory component.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionFunctionLibrary", meta = (WorldContext = "WorldContextObject"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
 	static class UOrionInventoryComponent* GetInventoryComponent(const UObject* WorldContextObject);
 
 	/**
@@ -26,7 +26,7 @@ public:
 	*
 	* @return The Inventory component.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionFunctionLibrary", meta = (DefaultToSelf = "Target"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Inventory", meta = (DefaultToSelf = "Target"))
 	static class UOrionInventoryComponent* GetInventoryComponentFromTarget(AActor* Target);
 
 };

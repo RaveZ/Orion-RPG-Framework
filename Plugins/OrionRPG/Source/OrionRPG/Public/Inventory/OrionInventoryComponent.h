@@ -6,12 +6,12 @@
 #include "Components/ActorComponent.h"
 #include "OrionInventoryComponent.generated.h"
 
-class UOrionInventorySaveObject;
 class UOrionInventoryGraph;
-class USaveGame;
+class UOrionInventoryNode_Item;
 class APlayerController;
 
-//OrionInventory Delegate
+//Inventory Delegate
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemSignature, UOrionInventoryNode_Item*, Item);
 
 UCLASS(meta=(BlueprintSpawnableComponent), Blueprintable, HideDropdown, ClassGroup = "OrionRPG", DisplayName = "Orion Inventory Component")
 class ORIONRPG_API UOrionInventoryComponent : public UActorComponent
@@ -24,28 +24,36 @@ public:
 
 
 	/**Inventory database*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Orion")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InventoryComponent")
 	TObjectPtr<UOrionInventoryGraph> InventoryData;
 
 	//We cache the OwningController, we won't cache pawn as this might change
-	UPROPERTY(BlueprintReadOnly, Category = "OrionInventoryComponent")
+	UPROPERTY(BlueprintReadOnly, Category = "InventoryComponent")
 		TObjectPtr<APlayerController> OwningController;
 
-	UPROPERTY(BlueprintReadWrite, Category = "OrionInventoryComponent")
+	UPROPERTY(BlueprintReadWrite, Category = "InventoryComponent")
 		TMap<FName, TObjectPtr<UOrionInventoryGraph>> OrionInventoryMap;
+
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
+		FInventoryItemSignature OnItemAdded;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
+		FInventoryItemSignature OnItemRemoved;
+
 public:
 	
-	UFUNCTION(BlueprintCallable, Category = "OrionInventoryComponent")
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
 		bool BeginOrionInventory(UOrionInventoryGraph* OrionInventoryAsset);
 
 	UFUNCTION()
 		virtual class UOrionInventoryGraph* MakeOrionInventoryGraphInstance(UOrionInventoryGraph* OrionInventoryGraphTemplate);
 
 public:
-	UFUNCTION(BlueprintPure, Category = "OrionInventoryComponent")
+	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
 	virtual APawn* GetOwningPawn() const;
 
-	UFUNCTION(BlueprintPure, Category = "OrionInventoryComponent")
+	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
 	virtual APlayerController* GetOwningController() const;
 protected:
 	// Called when the game starts
