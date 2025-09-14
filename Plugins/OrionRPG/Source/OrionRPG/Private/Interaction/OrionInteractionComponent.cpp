@@ -178,6 +178,9 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 
 			for (auto& Hit : HitResults)
 			{
+				if(!Hit.GetActor())
+					continue;
+
 				if (UOrionInteractionTargetComponent* TargetInteractable = Hit.GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>())
 				{
 					if (Hit.GetActor()->IsPendingKillPending())

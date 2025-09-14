@@ -18,6 +18,8 @@ class ORIONRPG_API UDialogBuilderSetting : public UObject
 	virtual ~UDialogBuilderSetting();
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Quest Options")
+		bool ShowUIBoundAction;
 
 	/**Determine minimum time the line should be displayed*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options")

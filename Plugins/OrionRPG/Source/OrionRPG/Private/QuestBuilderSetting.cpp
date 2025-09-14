@@ -7,6 +7,7 @@
 UQuestBuilderSetting::UQuestBuilderSetting()
 {
 	//Quest runtime
+	ShowUIBoundAction = true;
 	
 
 	//Graph Setting
