@@ -19,6 +19,10 @@ class ORIONRPG_API UQuestBuilderSetting : public UObject
 public:
 	//Runtime Config
 
+	/**Show the common UI bound action*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Quest Options")
+	bool ShowUIBoundAction;
+
 	//Graph Setting
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor FailedNodeColor;
@@ -38,13 +42,13 @@ public:
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor SubNodeColor;
 
-	UPROPERTY(BlueprintReadOnly, config, Category = "Graph Rule")
+	UPROPERTY(config)
 	bool bEdgeEnabled;
 
-	UPROPERTY(BlueprintReadOnly, config, Category = "Graph Rule")
+	UPROPERTY(config)
 	bool bCanRenameNode;
 
-	UPROPERTY(BlueprintReadOnly, config, Category = "Graph Rule")
+	UPROPERTY(config)
 	bool bCanBeCyclical;
 
 };
