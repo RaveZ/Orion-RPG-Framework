@@ -21,7 +21,7 @@ public:
 	*
 	* @return The Quest component.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
 	static class UQuestComponent* GetQuestComponent(const UObject* WorldContextObject);
 
 	/**
@@ -29,7 +29,7 @@ public:
 	*
 	* @return The Quest component.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (DefaultToSelf = "Target"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Quest", meta = (DefaultToSelf = "Target"))
 	static class UQuestComponent* GetQuestComponentFromTarget(AActor* Target);
 
 	/**
@@ -37,7 +37,7 @@ public:
 	*
 	* @return The Quest.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
 	static class UQuest* FindQuest(const UObject* WorldContextObject, FGameplayTag QuestTag);
 
 	/**
@@ -45,7 +45,7 @@ public:
 	*
 	* @return true if the quest id and node id match.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
 	static bool CanProgressQuestObjective(const UObject* WorldContextObject, FGameplayTag QuestTag, FGameplayTag NodeTag);
 
 	/**
@@ -53,7 +53,7 @@ public:
 	*
 	* @return bool.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
 	static bool IsQuestAtState(const UObject* WorldContextObject, FGameplayTag QuestTag, EQuestState QuestState);
 
 	/**
@@ -61,7 +61,7 @@ public:
 	*
 	* @return The Quest.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
 	static class UQuest* GetCurrentNavigatedQuest(const UObject* WorldContextObject);
 	
 	/**
@@ -69,7 +69,7 @@ public:
 	*
 	* @return bool.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
 	static bool IsCurrentlyNavigatedObjective(const UObject* WorldContextObject, FName QuestID, FName NodeID);
 	
 	/**
@@ -77,14 +77,14 @@ public:
 	*
 	* @return bool.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
 	static bool IsObjectiveCompleted(const UObject* WorldContextObject, UQuestBuilderNode* QuestNode);
 
 	/**
 	* Auto Navigate Quest
 	*
 	*/
-	UFUNCTION(BlueprintCallable, Category = "QuestBuilderLibrary", meta = (WorldContext = "WorldContextObject"))
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
 	static void AutoNavigateQuest(const UObject* WorldContextObject);
 };
 

@@ -19,15 +19,15 @@ public:
 	*
 	* @return The Interaction component.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionInteractionLibrary", meta = (WorldContext = "WorldContextObject"))
-	static class UOrionInteractionComponent* GetOrionInteractionComponent(const UObject* WorldContextObject);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Interaction", meta = (WorldContext = "WorldContextObject"))
+	static class UOrionInteractionComponent* GetInteractionComponent(const UObject* WorldContextObject);
 
 	/**
 	* Find the Interaction component from the supplied target object.
 	*
 	* @return The Interaction component.
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionInteractionLibrary", meta = (DefaultToSelf = "Target"))
-	static class UOrionInteractionComponent* GetOrionInteractionComponentFromTarget(AActor* Target);
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Interaction", meta = (DefaultToSelf = "Target"))
+	static class UOrionInteractionComponent* GetInteractionComponentFromTarget(AActor* Target);
 
 };
