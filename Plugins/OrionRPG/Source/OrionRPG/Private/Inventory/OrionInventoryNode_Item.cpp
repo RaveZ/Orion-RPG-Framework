@@ -16,14 +16,14 @@ UOrionInventoryNode_Item::UOrionInventoryNode_Item()
     auto ItemIconObj = ConstructorHelpers::FObjectFinder<UTexture2D>(TEXT("Texture2D'/OrionRPG/Widgets/Assets/InventoryItem.InventoryItem'"));
     if (ItemIconObj.Succeeded())
     {
-        DisplayImage = ItemIconObj.Object;
+        ItemDefinition.Icon = ItemIconObj.Object;
     }
 }
 
 #if WITH_EDITOR
 FText UOrionInventoryNode_Item::GetNodeTitle() const
 {
-    return DisplayName;
+    return ItemDefinition.DisplayName;
 }
 
 void UOrionInventoryNode_Item::SetNodeTitle(const FText& NewTitle)

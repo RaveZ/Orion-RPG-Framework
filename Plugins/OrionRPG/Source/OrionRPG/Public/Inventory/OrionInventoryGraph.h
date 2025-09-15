@@ -21,21 +21,14 @@ public:
 	virtual ~UOrionInventoryGraph();
 
 	/** AssetID */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OrionInventoryGraph")
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OrionInventory")
 		FName ID;
 
-	UPROPERTY(BlueprintReadWrite, Category = "OrionInventoryGraph")
+	UPROPERTY(BlueprintReadWrite, Category = "OrionInventory")
 		TObjectPtr<APlayerController> OwningController;
 
-	UPROPERTY(BlueprintReadWrite, Category = "OrionInventoryGraph")
+	UPROPERTY(BlueprintReadWrite, Category = "OrionInventory")
 		TObjectPtr < UOrionInventoryComponent> OrionInventoryComponent;
-
-	/** List of All Visited Node IDs in Sequence*/
-	UPROPERTY(BlueprintReadWrite, Category = "OrionInventory")
-		TArray<FName> VisitedNodeIDs;
-
-	UPROPERTY(BlueprintReadWrite, Category = "OrionInventory")
-		TObjectPtr<UOrionInventoryNode> CurrentNode;
 
 	UPROPERTY(BlueprintReadOnly, Category = "OrionInventory")
 		TArray< TObjectPtr<UOrionInventoryNode>> RootNodes;
@@ -45,6 +38,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "OrionInventory")
 		TMap<FName, TObjectPtr<UOrionInventoryNode>> NodeMap;
+
+	UPROPERTY(BlueprintReadOnly, Category = "OrionInventory")
+		TMap<FGameplayTag, TObjectPtr<class UOrionInventoryNode_Item>> ItemDefinitionMap;
 
 public:
 	virtual bool Initialize(UOrionInventoryComponent* InitializingComp);

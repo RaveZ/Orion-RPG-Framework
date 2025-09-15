@@ -223,9 +223,9 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 	
 	FSlateBrush* ItemBrush = new FSlateBrush();
 	UTexture2D* LoadedTexture = nullptr;
-	if (InventoryItemNode && InventoryItemNode->DisplayImage)
+	if (InventoryItemNode && InventoryItemNode->ItemDefinition.Icon)
 	{
-		LoadedTexture = InventoryItemNode->DisplayImage;
+		LoadedTexture = InventoryItemNode->ItemDefinition.Icon;
 		if (LoadedTexture)
 		{
 			ItemBrush->SetResourceObject(LoadedTexture);

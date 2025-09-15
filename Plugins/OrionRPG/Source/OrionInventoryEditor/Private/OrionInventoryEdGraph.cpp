@@ -117,6 +117,7 @@ void UOrionInventoryEdGraph::UpdateAllSubnodeDependencies()
 					InventoryEdNode->InventoryItems[iAux]->ParentNode = InventoryEdNode;
 					if (UOrionInventoryNode_Item* ItemInstance = Cast<UOrionInventoryNode_Item>(InventoryEdNode->InventoryItems[iAux]->NodeInstance))
 					{
+						InventoryGraph->ItemDefinitionMap.Add(ItemInstance->ItemDefinition.Tag, ItemInstance);
 						ItemInstance->Rename(nullptr, InventoryGraph, REN_DontCreateRedirectors | REN_DoNotDirty);
 					}
 				}

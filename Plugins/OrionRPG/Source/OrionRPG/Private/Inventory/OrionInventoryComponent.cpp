@@ -4,6 +4,7 @@
 #include "Inventory/OrionInventoryComponent.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
+#include "Inventory/InventoryData.h"
 #include "UObject/UObjectIterator.h"
 #include "Inventory/OrionInventoryGraph.h"
 #include "Kismet/GameplayStatics.h"
@@ -103,6 +104,17 @@ APlayerController* UOrionInventoryComponent::GetOwningController() const
 	}
 
 	return nullptr;
+}
+
+void UOrionInventoryComponent::AddItem(FGameplayTag Tag, int32 Count, FInventoryItem& OutItem)
+{
+	if (!Tag.MatchesTag(TAG_Item))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Fail to add item. Invalid item Tag (%s)!"), *Tag.ToString());
+		return;
+	}
+
+	//FInventoryItem& NewItem = OrionInventoryMap.FindOrAdd(Tag);
 }
 
 

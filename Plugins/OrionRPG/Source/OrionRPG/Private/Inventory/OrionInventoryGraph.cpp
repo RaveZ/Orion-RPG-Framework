@@ -29,7 +29,6 @@ bool UOrionInventoryGraph::Initialize(UOrionInventoryComponent* InitializingComp
 		}
 		OwningController = InitializingComp->GetOwningController();
 		OrionInventoryComponent = InitializingComp;
-		VisitedNodeIDs.Empty();
 		NodeMap.Empty();
 		for (auto& Node : AllNodes)
 		{
@@ -47,8 +46,6 @@ bool UOrionInventoryGraph::Initialize(UOrionInventoryComponent* InitializingComp
 
 void UOrionInventoryGraph::Deinitialize()
 {
-	VisitedNodeIDs.Empty();
-	CurrentNode = nullptr;
 	
 	for (auto& Node : AllNodes)
 	{
@@ -72,11 +69,10 @@ void UOrionInventoryGraph::BeginNode(UOrionInventoryNode* InNode, bool bLaunchEv
 
 void UOrionInventoryGraph::ClearGraph()
 {
-
-	VisitedNodeIDs.Empty();
 	AllNodes.Empty();
 	RootNodes.Empty();
 	NodeMap.Empty();
+	ItemDefinitionMap.Empty();
 }
 
 APlayerController* UOrionInventoryGraph::GetOwningController()

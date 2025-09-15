@@ -6,7 +6,7 @@
 #include "OrionRPG.h"
 
 //Gameplay Tags
-UE_DEFINE_GAMEPLAY_TAG(TAG_Item, "Item");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Item, "Inventory.Item");
 
 void FInventoryFastArray::PreReplicatedRemove(const TArrayView<int32> RemovedIndices, int32 FinalSize)
 {

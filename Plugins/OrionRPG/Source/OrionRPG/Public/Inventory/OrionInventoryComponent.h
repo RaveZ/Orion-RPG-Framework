@@ -10,6 +10,8 @@ class UOrionInventoryGraph;
 class UOrionInventoryNode_Item;
 class APlayerController;
 
+struct FInventoryItem;
+
 //Inventory Delegate
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemSignature, UOrionInventoryNode_Item*, Item);
 
@@ -55,6 +57,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
 	virtual APlayerController* GetOwningController() const;
+
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	void AddItem(UPARAM(meta = (Categories = "Inventory.Item")) FGameplayTag Tag, int32 Count, FInventoryItem& OutItem);
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;

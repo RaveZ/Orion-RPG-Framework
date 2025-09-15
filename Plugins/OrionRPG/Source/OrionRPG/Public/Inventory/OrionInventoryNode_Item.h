@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "OrionInventoryNode.h"
+#include "Inventory/InventoryData.h"
 #include "NativeGameplayTags.h"
 #include "OrionInventoryNode_Item.generated.h"
 
@@ -17,19 +18,8 @@ public:
 	UOrionInventoryNode_Item();
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail", meta = (Categories = "Item"))
-	FGameplayTag Tag;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail", meta = (NoResetToDefault))
-	TObjectPtr<class UTexture2D> DisplayImage;
-
-	
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
-	FText DisplayName;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
-	FText Description;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail", meta = (ShowOnlyInnerProperties))
+	FInventoryItemDefinition ItemDefinition;
 	
 
 public:
