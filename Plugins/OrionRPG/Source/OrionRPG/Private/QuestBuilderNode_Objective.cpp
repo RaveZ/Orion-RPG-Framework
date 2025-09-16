@@ -83,13 +83,16 @@ void UQuestBuilderNode_Objective::AddToProgress(int AmountToAdd)
         {
             CompleteObjective();
         }
+        else
+        {
+            GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
+        }
     }
     else
     {
         CompleteObjective();
     }
     
-    GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
     
 }
 
@@ -125,7 +128,6 @@ void UQuestBuilderNode_Objective::BeginObjective()
         TickObjective();
     }
 
-    GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
 }
 
 void UQuestBuilderNode_Objective::CompleteObjective()

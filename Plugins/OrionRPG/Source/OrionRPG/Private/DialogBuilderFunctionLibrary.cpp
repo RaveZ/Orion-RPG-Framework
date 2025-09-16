@@ -102,3 +102,11 @@ void UDialogBuilderFunctionLibrary::SelectDialogChoice(const UObject* WorldConte
     }
 
 }
+
+void UDialogBuilderFunctionLibrary::BeginDialog(const UObject* WorldContextObject, UDialogBuilderGraph* DialogAsset)
+{
+    if (UDialogComponent* DialogComp = GetDialogComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        DialogComp->BeginDialog(DialogAsset);
+    }
+}

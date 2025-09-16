@@ -83,7 +83,7 @@ public:
 		TObjectPtr < UQuestComponent> QuestComponent;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Quest")
-		bool bNodeActive;
+		bool bWaitForBranching;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Quest")
 		bool bInitialized;

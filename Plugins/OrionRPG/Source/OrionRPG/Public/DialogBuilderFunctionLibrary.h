@@ -68,4 +68,12 @@ public:
 	*/
 	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Dialog", meta = (WorldContext = "WorldContextObject"))
 	static void SelectDialogChoice(const UObject* WorldContextObject, class UDialogBuilderNode_PlayerChoice* InOption);
+
+
+	/**
+	* Begin Dialog Graph
+	*
+	*/
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Dialog", meta = (WorldContext = "WorldContextObject"))
+	static void BeginDialog(const UObject* WorldContextObject, class UDialogBuilderGraph* DialogAsset);
 };

@@ -615,7 +615,7 @@ FOrionQuestSaveData UQuestComponent::GetSaveGameData() const
 			if (Node)
 			{
 				NodeData.NodeID = Node->ID;
-				NodeData.bNodeActive = Node->bNodeActive;
+				NodeData.bWaitForBranching = Node->bWaitForBranching;
 				if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(Node))
 				{
 					NodeData.CurrentProgress = ObjectiveNode->CurrentProgress;
@@ -719,7 +719,7 @@ void UQuestComponent::InitializeFromSaveGame(FOrionQuestSaveData& QuestSaveData)
 				if (FoundedNode)
 				{
 					//Fill Node Data Here
-					FoundedNode->bNodeActive = NodeData.bNodeActive;
+					FoundedNode->bWaitForBranching = NodeData.bWaitForBranching;
 					if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(FoundedNode))
 					{
 						ObjectiveNode->CurrentProgress = NodeData.CurrentProgress;
