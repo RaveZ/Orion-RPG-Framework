@@ -25,6 +25,78 @@ public:
 	TArray<uint8> ByteData;
 };
 
+
+USTRUCT(BlueprintType)
+struct FOrionPlayInfoSaveData
+{
+	GENERATED_BODY()
+
+public:
+	// Total playtime in seconds
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PlayInfo")
+	float TotalPlayTimeSeconds;
+
+	// Last play date time
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PlayInfo")
+	FDateTime LastPlayDateTime;
+
+	// Created date time
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "PlayInfo")
+	FDateTime CreatedDateTime;
+
+	// Map URL when saving the game
+	UPROPERTY()
+	FString MapURL;
+
+	// Activated data layers when saving the game
+	UPROPERTY()
+	TSet<FName> DataLayerNames;
+
+
+public:
+	FOrionPlayInfoSaveData()
+	{
+		TotalPlayTimeSeconds = 0.0f;
+		LastPlayDateTime = FDateTime::Now();
+		CreatedDateTime = FDateTime::Now();
+	}
+
+
+	FORCEINLINE FString ToString() const
+	{
+		return FString::Printf(TEXT("(TotalPlayTimeSeconds: %.3f, LastPlayDateTime: %s, CreatedDateTime: %s)")
+			, TotalPlayTimeSeconds
+			, *LastPlayDateTime.ToString(TEXT("%d-%m-%Y %H:%M:%S"))
+			, *CreatedDateTime.ToString(TEXT("%d-%m-%Y %H:%M:%S"))
+		);
+	}
+
+};
+
+
+USTRUCT()
+struct FOrionPlayerSaveData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	FVector Location;
+
+	UPROPERTY()
+	FRotator Rotation;
+
+public:
+	FOrionPlayerSaveData()
+	{
+		Location = FVector::ZeroVector;
+		Rotation = FRotator::ZeroRotator;
+	}
+
+};
+
+
+
 USTRUCT()
 struct FOrionQuestSaveData
 {
@@ -49,16 +121,33 @@ public:
 
 
 UCLASS(Blueprintable)
-class ORIONRPG_API UOrionSaveGame : public USaveGame
+class ORIONRPG_API UOrionSaveGame : public ULocalPlayerSaveGame
 {
 	GENERATED_BODY()
+public:
+
+	UOrionSaveGame();
+	virtual void ResetToDefault() override;
+	virtual int32 GetLatestDataVersion() const override;
+	virtual void HandlePreSave() override;
+	virtual void HandlePostSave(bool bSuccess) override;
+
+	void HandlePostLoadLevel(UWorld* World, bool bFromLoadGame);
 public:
 	UPROPERTY()
 	TArray<FOrionActorSaveData> SavedActors;
 
-
 	UPROPERTY()
 	FOrionQuestSaveData QuestData;
+
+	UPROPERTY()
+	FOrionPlayerSaveData PlayerData;
+
+	UPROPERTY()
+	FOrionPlayInfoSaveData PlayInfoData;
+
+private:
+	TArray<TObjectPtr<AActor>> CachedActors;
 };
 
 

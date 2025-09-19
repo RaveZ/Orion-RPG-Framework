@@ -155,7 +155,7 @@ public:
 	* if the objective is none, auto navigate the first objective found.
 	*/
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void StartNavigateQuest(UQuest* InQuest, class UQuestBuilderNode_Objective* InObjective = nullptr);
+		void StartNavigateQuest(UQuest* InQuest, class UQuestBuilderNode_Objective* InObjective = nullptr, bool bOverrideCurrentNavigatedQuest = false);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestManager")
 		void StopNavigateQuest();

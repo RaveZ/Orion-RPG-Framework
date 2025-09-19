@@ -153,8 +153,7 @@ void UQuestComponent::AutoNavigateQuest()
 {
 	if (!bAutoNavigateQuest)
 		return;
-	if (CurrentNavigatedQuest && CurrentNavigatedQuest->QuestState == EQuestState::E_Active)
-		return;
+	
 
 	TArray<FName> QuestKeys;
 	QuestMap.GetKeys(QuestKeys);
@@ -290,8 +289,17 @@ void UQuestComponent::CompleteQuestFromTag(FGameplayTag QuestTag)
 
 
 
-void UQuestComponent::StartNavigateQuest(UQuest* InQuest, UQuestBuilderNode_Objective* InObjective)
+void UQuestComponent::StartNavigateQuest(UQuest* InQuest, UQuestBuilderNode_Objective* InObjective, bool bOverrideCurrentNavigatedQuest)
 {
+	if (!bOverrideCurrentNavigatedQuest)
+	{
+		if (CurrentNavigatedQuest && CurrentNavigatedQuest->QuestState == EQuestState::E_Active)
+		{
+			return;
+		}
+	}
+	
+
 	if (InQuest && InQuest->QuestState == EQuestState::E_Active)
 	{
 		CurrentNavigatedQuest = InQuest;

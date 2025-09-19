@@ -72,11 +72,13 @@ void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 					{
 						if (NextNodes.IsValidIndex(i))
 						{
+							if (NextNodes[i]->HasBeenVisited())
+								continue;
 							//remove previous nodes from current nodes
 							for (auto& ParentNode : NextNodes[i]->ParentNodes)
 							{
 								//also check if all children nodes has been visited before removing from current node
-								if (ParentNode && Quest->CurrentNodes.Contains(ParentNode) && ParentNode->AllChildrenHasBeenVisited())
+								if (ParentNode && ParentNode->AllChildrenHasBeenVisited())
 								{
 									Quest->CurrentNodes.RemoveSingle(ParentNode);
 									ParentNode->bWaitForBranching = false;
@@ -212,6 +214,15 @@ void UQuestBuilderNode::EvaluateNextNode()
 	{
 		OnAllEndEventFinished.Broadcast();
 	}
+}
+
+bool UQuestBuilderNode::HasBeenVisited()
+{
+	if (GetOwningQuest())
+	{
+		return GetOwningQuest()->VisitedNodeIDs.Contains(ID);
+	}
+	return false;
 }
 
 bool UQuestBuilderNode::AllChildrenHasBeenVisited()
