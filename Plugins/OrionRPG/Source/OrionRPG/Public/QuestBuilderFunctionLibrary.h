@@ -140,6 +140,14 @@ public:
 	*/
 	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
 	static void RestartQuestFromTag(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag, UPARAM(meta = (Categories = "Quest"))FGameplayTag NodeTag, const bool bNotifyQuestAdded);
+
+	/**
+	* Check if there is Any Active Quest
+	*
+	*/
+	UFUNCTION(BlueprintPure, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
+	static bool IsAnyQuestActive(const UObject* WorldContextObject);
+
 };
 
 

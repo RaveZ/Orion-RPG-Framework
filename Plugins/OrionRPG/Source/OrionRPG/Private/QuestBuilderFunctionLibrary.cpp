@@ -201,5 +201,22 @@ void UQuestBuilderFunctionLibrary::RestartQuestFromTag(const UObject* WorldConte
 	}
 }
 
+bool UQuestBuilderFunctionLibrary::IsAnyQuestActive(const UObject* WorldContextObject)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        TArray<FName> QuestKeys;
+        QuestComp->QuestMap.GetKeys(QuestKeys);
 
-
+        for (int32 j = QuestKeys.Num() - 1; j >= 0; --j)
+        {
+            FName Key = QuestKeys[j];
+            UQuest* Quest = QuestComp->QuestMap.FindRef(Key);
+            if(Quest && Quest->QuestState == EQuestState::E_Active)
+            {
+                return true;
+			}
+        }
+    }
+    return false;
+}
