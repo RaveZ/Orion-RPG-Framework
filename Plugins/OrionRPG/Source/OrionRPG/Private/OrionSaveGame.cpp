@@ -2,6 +2,7 @@
 
 
 #include "OrionSaveGame.h"
+#include "OrionSetting.h"
 #include "QuestBuilderFunctionLibrary.h"
 #include "QuestComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -15,6 +16,7 @@
 
 UOrionSaveGame::UOrionSaveGame()
 {
+	bIsSaving = false;
 }
 
 void UOrionSaveGame::ResetToDefault()
@@ -32,6 +34,8 @@ int32 UOrionSaveGame::GetLatestDataVersion() const
 
 void UOrionSaveGame::HandlePreSave()
 {
+	UOrionSetting* OrionSetting = GetMutableDefault<UOrionSetting>();
+	bIsSaving = true;
 	Super::HandlePreSave();
 	UWorld* World = OwningPlayer->GetWorld();
 	check(World);
@@ -62,9 +66,13 @@ void UOrionSaveGame::HandlePreSave()
 
 		PlayInfoData.MapURL = FString::Printf(TEXT("%s/%s"), *MapPath, *MapName);
 
-		if (UDataLayerManager* DataLayerManager = UDataLayerManager::GetDataLayerManager(World))
+
+		if (OrionSetting->bSaveDataLayer)
 		{
-			PlayInfoData.DataLayerNames = DataLayerManager->GetEffectiveActiveDataLayerNames();
+			if (UDataLayerManager* DataLayerManager = UDataLayerManager::GetDataLayerManager(World))
+			{
+				PlayInfoData.DataLayerNames = DataLayerManager->GetEffectiveActiveDataLayerNames();
+			}
 		}
 	}
 
@@ -87,7 +95,7 @@ void UOrionSaveGame::HandlePreSave()
 	SavedActors.Empty();
 
 	TArray<AActor*> SaveGameActors;
-	UGameplayStatics::GetAllActorsWithInterface(GetWorld(), UOrionSaveGameInterface::StaticClass(), SaveGameActors);
+	UGameplayStatics::GetAllActorsWithInterface(World, UOrionSaveGameInterface::StaticClass(), SaveGameActors);
 
 	for (AActor* Actor : SaveGameActors)
 	{
@@ -111,6 +119,7 @@ void UOrionSaveGame::HandlePreSave()
 
 void UOrionSaveGame::HandlePostSave(bool bSuccess)
 {
+	bIsSaving = false;
 	if (bSuccess)
 	{
 		for (AActor* Actor : CachedActors)
@@ -120,13 +129,15 @@ void UOrionSaveGame::HandlePostSave(bool bSuccess)
 	}
 }
 
-void UOrionSaveGame::HandlePostLoadLevel(UWorld* World, bool bFromLoadGame)
+void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
 {
 	check(World);
 	UE_LOG(LogTemp, Log, TEXT("Handle post load level (bFromLoadGame: %d)"), bFromLoadGame);
 
 	APlayerController* PC = World->GetFirstPlayerController<APlayerController>();
 	check(PC);
+
+	UOrionSetting* OrionSetting = GetMutableDefault<UOrionSetting>();
 
 	// Data that we need to restore if load game only, not on every level transition)
 	if (bFromLoadGame)
@@ -141,8 +152,8 @@ void UOrionSaveGame::HandlePostLoadLevel(UWorld* World, bool bFromLoadGame)
 
 			if (PlayerData.Location != FVector::ZeroVector)
 			{
-				PlayerChar->SetActorLocation(PlayerData.Location);
-				PlayerChar->SetActorRotation(PlayerData.Rotation);
+				FHitResult HitResult;
+				PlayerChar->SetActorTransform(FTransform(PlayerData.Rotation, PlayerData.Location), false, &HitResult, ETeleportType::TeleportPhysics);
 			}
 		}
 
@@ -155,13 +166,16 @@ void UOrionSaveGame::HandlePostLoadLevel(UWorld* World, bool bFromLoadGame)
 
 		// Datalayers
 		{
-			UDataLayerManager* DataLayerManager = UDataLayerManager::GetDataLayerManager(World);
-
-			for (const FName& DataLayerName : PlayInfoData.DataLayerNames)
+			if(OrionSetting->bSaveDataLayer)
 			{
-				const UDataLayerInstance* DataLayerInstance = DataLayerManager->GetDataLayerInstanceFromName(DataLayerName);
-				check(DataLayerInstance);
-				DataLayerManager->SetDataLayerInstanceRuntimeState(DataLayerInstance, EDataLayerRuntimeState::Activated);
+				UDataLayerManager* DataLayerManager = UDataLayerManager::GetDataLayerManager(World);
+
+				for (const FName& DataLayerName : PlayInfoData.DataLayerNames)
+				{
+					const UDataLayerInstance* DataLayerInstance = DataLayerManager->GetDataLayerInstanceFromName(DataLayerName);
+					check(DataLayerInstance);
+					DataLayerManager->SetDataLayerInstanceRuntimeState(DataLayerInstance, EDataLayerRuntimeState::Activated);
+				}
 			}
 		}
 	}

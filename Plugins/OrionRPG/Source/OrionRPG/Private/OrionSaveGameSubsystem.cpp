@@ -3,6 +3,7 @@
 
 #include "OrionSaveGameSubsystem.h"
 #include "OrionSaveGame.h"
+#include "OrionSetting.h"
 #include "Engine/World.h"
 #include "QuestComponent.h"
 #include "QuestBuilderFunctionLibrary.h"
@@ -14,14 +15,16 @@
 UOrionSaveGameSubsystem::UOrionSaveGameSubsystem()
 {
 	bIsLoadingSaveGame = false;
+	bIsSavingGame = false;
 	SaveGameClass = UOrionSaveGame::StaticClass();
-	SaveGameSlots.SetNum(8);
+	SaveGameSlots.SetNum(99);
 	CurrentSaveSlot = 0;
 }
 
 void UOrionSaveGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
+	OrionSetting = GetMutableDefault<UOrionSetting>();
 	UGameInstance* GI = GetGameInstance();
 	//Delegates
 	{
@@ -61,7 +64,7 @@ void UOrionSaveGameSubsystem::HandlePostLoadMap(UWorld* World)
 	{
 		if (UOrionSaveGame* SaveGame = GetCurrentSaveGameObject())
 		{
-			SaveGame->HandlePostLoadLevel(World, bIsLoadingSaveGame);
+			SaveGame->HandleLoadGame(World, bIsLoadingSaveGame);
 		}
 
 		bIsLoadingSaveGame = false;
@@ -102,14 +105,25 @@ FString UOrionSaveGameSubsystem::Platform_CreateSaveSnapshotName(ULocalPlayer* L
 #endif // UE_BUILD_SHIPPING
 }
 
-void UOrionSaveGameSubsystem::StartNewGame(int32 Slot)
-{
-}
 
-void UOrionSaveGameSubsystem::SaveGame()
+void UOrionSaveGameSubsystem::SaveGame(int32 Slot)
 {
+	if (Slot < 0 || Slot >= SaveGameSlots.Num())
+	{
+		UE_LOG(LogTemp, Error, TEXT("OrionSaveSubsystem: Fail to save game from slot (%i). Invalid save slot!"), Slot);
+		return;
+	}
+
+	CurrentSaveSlot = Slot;
 	UOrionSaveGame* SaveGameObject = SaveGameSlots[CurrentSaveSlot];
 	check(SaveGameObject);
+
+	if (SaveGameObject->IsSavingGame())
+	{
+		UE_LOG(LogTemp, Error, TEXT("OrionSaveSubsystem: Fail to save game, Save game in progress on slot (%i)."), Slot);
+		return;
+	}
+	
 
 	UE_LOG(LogTemp, Log, TEXT("OrionSaveSubsystem: Save game (SaveSlot: %i, SaveName: %s)"), CurrentSaveSlot, *SaveGameObject->GetSaveSlotName());
 	SaveGameObject->AsyncSaveGameToSlotForLocalPlayer();
@@ -133,138 +147,28 @@ void UOrionSaveGameSubsystem::LoadGame(int32 Slot)
 	UOrionSaveGame* SaveGameObject = SaveGameSlots[CurrentSaveSlot];
 	check(SaveGameObject);
 
-	const FOrionPlayInfoSaveData& PlayInfo = SaveGameObject->PlayInfoData;
-
-	TravelURL = FString::Printf(TEXT("%s"), *PlayInfo.MapURL);
-
-	UE_LOG(LogTemp, Log, TEXT("OrionSaveSubsystem: Load game (SaveSlot: %i, SaveName: %s, TravelURL: %s)"), CurrentSaveSlot, *SaveGameObject->GetSaveSlotName(), *TravelURL);
-
-	bIsLoadingSaveGame = true;
-	GetWorld()->ServerTravel(TravelURL, true);
-}
-
-void UOrionSaveGameSubsystem::SaveGame(FString SlotName, FOrionSaveGameSignature SaveCallback)
-{
-	if (UGameplayStatics::DoesSaveGameExist(SlotName, 0))
+	if (OrionSetting->bSaveLevel)
 	{
-		CurrentSaveGame = Cast<UOrionSaveGame>(UGameplayStatics::LoadGameFromSlot(SlotName, 0));
+		const FOrionPlayInfoSaveData& PlayInfo = SaveGameObject->PlayInfoData;
+
+		TravelURL = FString::Printf(TEXT("%s"), *PlayInfo.MapURL);
+
+		UE_LOG(LogTemp, Log, TEXT("OrionSaveSubsystem: Load game (SaveSlot: %i, SaveName: %s, TravelURL: %s)"), CurrentSaveSlot, *SaveGameObject->GetSaveSlotName(), *TravelURL);
+
+		bIsLoadingSaveGame = true;
+		GetWorld()->ServerTravel(TravelURL, true);
 	}
 	else
 	{
-		CurrentSaveGame = CastChecked<UOrionSaveGame>(UGameplayStatics::CreateSaveGameObject(UOrionSaveGame::StaticClass()));
-	}
-	//QUEST
-	UWorld* World = GetWorld();
-	if (World)
-	{
-		UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
-		if(QuestComp)
-		{
-			CurrentSaveGame->QuestData = QuestComp->GetSaveGameData();
-		}
-	}
-	
-
-	//ACTOR DATA
-	bool bSuccess = false;
-	CurrentSaveGame->SavedActors.Empty();
-
-	TArray<AActor*> SaveGameActors;
-	UGameplayStatics::GetAllActorsWithInterface(GetWorld(), UOrionSaveGameInterface::StaticClass(), SaveGameActors);
-
-	for (AActor* Actor : SaveGameActors)
-	{
-		FOrionActorSaveData ActorData;
-		ActorData.ActorName = Actor->GetFName();
-
-		FMemoryWriter MyMemoryWriter(ActorData.ByteData);
-
-		FObjectAndNameAsStringProxyArchive Ar(MyMemoryWriter, true);
-
-		Ar.ArIsSaveGame = true;
-		Ar.ArNoDelta = true;
-		Actor->Serialize(Ar);
-
-		CurrentSaveGame->SavedActors.Add(ActorData);
-	}
-
-	bSuccess = UGameplayStatics::SaveGameToSlot(CurrentSaveGame, SlotName, 0);
-	SaveCallback.ExecuteIfBound(bSuccess);
-	OnSaved.IsBound() ? OnSaved.Broadcast(bSuccess) : void();
-
-	if (bSuccess)
-	{
-		for (AActor* Actor : SaveGameActors)
-		{
-			IOrionSaveGameInterface::Execute_OnSaved(Actor);
-		}
+		SaveGameObject->HandleLoadGame(GetWorld(), true);
 	}
 }
 
-void UOrionSaveGameSubsystem::LoadGame(FString SlotName, FOrionSaveGameSignature LoadCallback)
+
+
+void UOrionSaveGameSubsystem::orionSaveGame(int32 Slot)
 {
-	bool bSuccess = false;
-	if (UGameplayStatics::DoesSaveGameExist(SlotName, 0))
-	{
-		CurrentSaveGame = Cast<UOrionSaveGame>(UGameplayStatics::LoadGameFromSlot(SlotName, 0));
-		if (CurrentSaveGame)
-		{
-			bSuccess = true;
-			//QUEST
-			UWorld* World = GetWorld();
-			if (World)
-			{
-				UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
-				if (QuestComp)
-				{
-					QuestComp->InitializeFromSaveGame(CurrentSaveGame->QuestData);
-				}
-			}
-
-
-			//ACTOR DATA
-			TArray<AActor*> SaveGameActors;
-			UGameplayStatics::GetAllActorsWithInterface(GetWorld(), UOrionSaveGameInterface::StaticClass(), SaveGameActors);
-
-			// Build TMap<FName, AActor*> for fast lookup
-			TMap<FName, AActor*> ActorMap;
-			for (AActor* Actor : SaveGameActors)
-			{
-				if (Actor)
-				{
-					ActorMap.Add(Actor->GetFName(), Actor);
-				}
-			}
-
-			// Restore saved data using the map
-			for (FOrionActorSaveData ActorData : CurrentSaveGame->SavedActors)
-			{
-				AActor* FoundActor = ActorMap.FindRef(ActorData.ActorName);
-				if (FoundActor)
-				{
-					FMemoryReader MyMemoryReader(ActorData.ByteData);
-
-					FObjectAndNameAsStringProxyArchive Ar(MyMemoryReader, true);
-					Ar.ArNoDelta = true;
-					Ar.ArIsSaveGame = true;
-
-					FoundActor->Serialize(Ar);
-
-					IOrionSaveGameInterface::Execute_OnLoaded(FoundActor);
-				}
-			}
-		}
-		
-	}
-	LoadCallback.ExecuteIfBound(bSuccess);
-	OnLoaded.IsBound() ? OnLoaded.Broadcast(bSuccess) : void();
-
-	
-}
-
-void UOrionSaveGameSubsystem::orionSaveGame()
-{
-	SaveGame();
+	SaveGame(Slot);
 }
 
 void UOrionSaveGameSubsystem::orionLoadGame(int32 Slot)

@@ -21,6 +21,7 @@
 #include "Styling/SlateStyleRegistry.h"
 #include "QuestDetails.h"
 #include "QuestBuilderSetting.h"
+#include "OrionSetting.h"
 #include "QuestData.h"
 
 
@@ -125,10 +126,16 @@ void FQuest_System_EditorModule::RegisterSettings()
 	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
 		// Register the settings
-		SettingsModule->RegisterSettings("Project", "Plugins", "OrionRPG - Quest",
+		SettingsModule->RegisterSettings("Project", "Game", "OrionRPG - Quest",
 			LOCTEXT("QuestBuilderSettingsName", "OrionRPG - Quest"),
 			LOCTEXT("QuestBuilderSettingsDescription", "Configuration Settings for the Quest Builder Editor"),
 			GetMutableDefault<UQuestBuilderSetting>()
+		);
+
+		SettingsModule->RegisterSettings("Project", "Game", "OrionRPG - General Settings",
+			LOCTEXT("OrionSettingsName", "OrionRPG - General Settings"),
+			LOCTEXT("OrionSettingsDescription", "Configuration Settings for Orion RPG Plugin"),
+			GetMutableDefault<UOrionSetting>()
 		);
 
 	}

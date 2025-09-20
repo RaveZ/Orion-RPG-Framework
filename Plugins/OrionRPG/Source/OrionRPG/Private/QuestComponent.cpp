@@ -3,6 +3,7 @@
 
 #include "QuestComponent.h"
 #include "Quest.h"
+#include "OrionSaveGameSubsystem.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 #include "UObject/UObjectIterator.h"
@@ -61,6 +62,22 @@ void UQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 
 bool UQuestComponent::BeginQuestGraph(UQuestBuilderGraph* QuestGraphAsset)
 {
+	if (!GetWorld())
+	{
+		return false;
+	}
+	UGameInstance* GameInstance = GetWorld()->GetGameInstance();
+	if (!GameInstance)
+	{
+		return false;
+	}
+
+	UOrionSaveGameSubsystem* SaveSubsystem = GameInstance->GetSubsystem<UOrionSaveGameSubsystem>();
+	if (SaveSubsystem && SaveSubsystem->IsLoadingSaveGame())
+	{
+		return false;
+	}
+
 	if (QuestGraphAsset == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Quest Asset is null"));
@@ -334,6 +351,7 @@ void UQuestComponent::ActivateQuest(UQuest* InQuest)
 			OnQuestAdded.Broadcast(InQuest);
 			RestartQuest(InQuest);
 		}
+		AutoNavigateQuest();
 	}
 	else
 	{

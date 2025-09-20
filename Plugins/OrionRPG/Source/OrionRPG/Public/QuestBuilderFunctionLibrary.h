@@ -80,6 +80,14 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
 	static bool IsObjectiveCompleted(const UObject* WorldContextObject, UQuestBuilderNode* QuestNode);
 
+
+	/**
+	* Navigate Quest
+	*
+	*/
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
+	static void NavigateQuest(const UObject* WorldContextObject, UQuest* InQuest, bool bOverrideNavigatedQuest);
+
 	/**
 	* Auto Navigate Quest
 	*

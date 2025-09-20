@@ -134,6 +134,17 @@ bool UQuestBuilderFunctionLibrary::IsObjectiveCompleted(const UObject* WorldCont
     return false;
 }
 
+void UQuestBuilderFunctionLibrary::NavigateQuest(const UObject* WorldContextObject, UQuest* InQuest, bool bOverrideNavigatedQuest)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        if (InQuest)
+        {
+            QuestComp->StartNavigateQuest(InQuest, nullptr, bOverrideNavigatedQuest);
+        }
+    }
+}
+
 void UQuestBuilderFunctionLibrary::AutoNavigateQuest(const UObject* WorldContextObject)
 {
     if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))

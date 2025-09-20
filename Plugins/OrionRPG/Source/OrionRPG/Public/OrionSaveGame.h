@@ -132,7 +132,12 @@ public:
 	virtual void HandlePreSave() override;
 	virtual void HandlePostSave(bool bSuccess) override;
 
-	void HandlePostLoadLevel(UWorld* World, bool bFromLoadGame);
+	void HandleLoadGame(UWorld* World, bool bFromLoadGame);
+public:
+	FORCEINLINE bool IsSavingGame()
+	{
+		return bIsSaving;
+	}
 public:
 	UPROPERTY()
 	TArray<FOrionActorSaveData> SavedActors;
@@ -148,6 +153,9 @@ public:
 
 private:
 	TArray<TObjectPtr<AActor>> CachedActors;
+	bool bIsSaving;
+
+
 };
 
 

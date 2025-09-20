@@ -40,7 +40,9 @@ public:
 
 private:
 	FString TravelURL;
+	bool bIsSavingGame;
 	bool bIsLoadingSaveGame;
+	TObjectPtr<class UOrionSetting> OrionSetting;
 
 public:
 	UOrionSaveGameSubsystem();
@@ -56,13 +58,10 @@ private:
 	FString Platform_CreateSaveSnapshotName(ULocalPlayer* LocalPlayer, int32 SaveSlotIndex) const;
 
 public:
-	// Start new at save slot
-	// @param Slot - Save slot index
-	void StartNewGame(int32 Slot);
 
 	// Save game at current save slot
 	UFUNCTION(BlueprintCallable, Category = "SaveSubsystem")
-	void SaveGame();
+	void SaveGame(int32 Slot);
 
 	// Load game from save slot
 	// @param Slot - Save slot index
@@ -76,10 +75,11 @@ public:
 		return (CurrentSaveSlot == -1) ? nullptr : SaveGameSlots[CurrentSaveSlot];
 	}
 
+	FORCEINLINE bool IsLoadingSaveGame()
+	{
+		return bIsLoadingSaveGame;
+	}
 
-	void SaveGame(FString SlotName, FOrionSaveGameSignature SaveCallback);
-
-	void LoadGame(FString SlotName, FOrionSaveGameSignature LoadCallback);
 
 
 
@@ -89,7 +89,7 @@ public:
 public:
 
 	UFUNCTION(Exec)
-	void orionSaveGame();
+	void orionSaveGame(int32 Slot);
 
 	UFUNCTION(Exec)
 	void orionLoadGame(int32 Slot);
