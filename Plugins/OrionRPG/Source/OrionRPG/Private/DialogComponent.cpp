@@ -4,6 +4,7 @@
 #include "DialogComponent.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
+#include "Engine/World.h"
 #include "UObject/UObjectIterator.h"
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderNode_RerouteNode.h"

@@ -153,3 +153,53 @@ void UQuestBuilderFunctionLibrary::AutoNavigateQuest(const UObject* WorldContext
     }
 }
 
+void UQuestBuilderFunctionLibrary::ActivateQuestFromTag(const UObject* WorldContextObject, FGameplayTag QuestTag)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        QuestComp->ActivateQuestFromTag(QuestTag);
+	}
+}
+
+void UQuestBuilderFunctionLibrary::LockQuestFromTag(const UObject* WorldContextObject, FGameplayTag QuestTag)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        QuestComp->LockQuestFromTag(QuestTag);
+	}
+}
+
+void UQuestBuilderFunctionLibrary::UnlockQuestFromTag(const UObject* WorldContextObject, FGameplayTag QuestTag)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        QuestComp->UnlockQuestFromTag(QuestTag);
+	}
+}
+
+void UQuestBuilderFunctionLibrary::CompleteQuestFromTag(const UObject* WorldContextObject, FGameplayTag QuestTag)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        QuestComp->CompleteQuestFromTag(QuestTag);
+	}
+}
+
+void UQuestBuilderFunctionLibrary::FailQuestFromTag(const UObject* WorldContextObject, FGameplayTag QuestTag)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        QuestComp->FailQuestFromTag(QuestTag);
+	}
+}
+
+void UQuestBuilderFunctionLibrary::RestartQuestFromTag(const UObject* WorldContextObject, FGameplayTag QuestTag, FGameplayTag NodeTag, const bool bNotifyQuestAdded)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        QuestComp->RestartQuestFromTag(QuestTag, NodeTag, bNotifyQuestAdded);
+	}
+}
+
+
+

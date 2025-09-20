@@ -2,6 +2,8 @@
 
 
 #include "OrionSaveGame.h"
+#include "Engine/GameInstance.h"
+#include "Engine/LocalPlayer.h"
 #include "OrionSetting.h"
 #include "QuestBuilderFunctionLibrary.h"
 #include "QuestComponent.h"

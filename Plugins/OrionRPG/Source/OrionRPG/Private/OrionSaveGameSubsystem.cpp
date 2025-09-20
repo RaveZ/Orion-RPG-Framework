@@ -2,7 +2,7 @@
 
 
 #include "OrionSaveGameSubsystem.h"
-#include "OrionSaveGame.h"
+#include "Engine/GameInstance.h"
 #include "OrionSetting.h"
 #include "Engine/World.h"
 #include "QuestComponent.h"

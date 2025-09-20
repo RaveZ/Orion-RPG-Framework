@@ -5,6 +5,7 @@
 #include "QuestBuilderEdNode_Edge.h"
 #include "QuestBuilderEdNode_Root.h"
 #include "QuestBuilderEdNode.h"
+#include "QuestBuilderEditorUtils.h"
 #include "QuestBuilderEdNode.h"
 #include "QuestBuilderEdge.h"
 #include "QuestBuilderNode.h"
@@ -59,7 +60,8 @@ void UQuestBuilderEdGraph::UpdateAsset(bool bForce)
 	UQuestBuilderGraph* QuestGraph = GetQuestBuilderGraph();
 
 	Clear();
-
+	Quest->ID = FQuestBuilderEditorUtils::FindUniqueQuestName("Quest");
+	
 	UpdateAllSubnodeDependencies();
 
 	for (int i = 0; i < Nodes.Num(); ++i)

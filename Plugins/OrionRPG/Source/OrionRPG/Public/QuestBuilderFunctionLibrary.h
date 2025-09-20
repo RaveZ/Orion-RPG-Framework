@@ -94,6 +94,52 @@ public:
 	*/
 	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
 	static void AutoNavigateQuest(const UObject* WorldContextObject);
+
+
+	/**
+	* Activate Quest from Tag
+	*
+	*/
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
+	static void ActivateQuestFromTag(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag);
+
+	/**
+	* Lock Quest from Tag
+	*
+	*/
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
+	static void LockQuestFromTag(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag);
+
+	/**
+	* Unlock Quest from Tag
+	*
+	*/
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
+	static void UnlockQuestFromTag(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag);
+
+
+	/**
+	* Complete Quest from Tag
+	*
+	*/
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
+	static void CompleteQuestFromTag(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag);
+
+
+	/**
+	* Fail Quest from Tag
+	*
+	*/
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
+	static void FailQuestFromTag(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag);
+
+
+	/**
+	* Restart Quest from Tag
+	*
+	*/
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
+	static void RestartQuestFromTag(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag, UPARAM(meta = (Categories = "Quest"))FGameplayTag NodeTag, const bool bNotifyQuestAdded);
 };
 
 

@@ -2,6 +2,8 @@
 
 
 #include "QuestComponent.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
 #include "Quest.h"
 #include "OrionSaveGameSubsystem.h"
 #include "Decorator/OrionDecorator.h"
@@ -42,6 +44,7 @@ void UQuestComponent::BeginPlay()
 	
 	//Set Dependency
 	OwningController = GetOwningController();
+	GetQuestRegistryMap();
 
 	OnQuestUpdated.AddDynamic(this, &UQuestComponent::QuestUpdated);
 	OnQuestObjectiveBegin.AddDynamic(this, &UQuestComponent::QuestObjectiveBegin);
@@ -140,27 +143,11 @@ class UQuest* UQuestComponent::MakeQuestInstance(UQuest* QuestTemplate)
 class UQuest* UQuestComponent::TryMakeQuestInstanceFromTag(FGameplayTag QuestTag)
 {
 	FName QuestID = QuestTag.GetTagName();
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-	TArray<FAssetData> QuestGraphDataArray;
-	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
-		
-	for (const FAssetData& AssetData : QuestGraphDataArray)
+	if (UQuest* QuestTemplate = GetQuestRegistryMap().FindRef(QuestID))
 	{
-		if (UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset()))
+		if (UQuest* QuestInstance = MakeQuestInstance(QuestTemplate))
 		{
-			for (auto& QuestTemplate : QuestGraphAsset->QuestList)
-			{
-				if (QuestID == QuestTemplate->ID ||
-					QuestID == QuestTemplate->QuestTag.GetTagName())
-				{
-					//make quest instance from template found
-					if (UQuest* QuestInstance = MakeQuestInstance(QuestTemplate))
-					{
-						return QuestInstance;
-					}
-				}
-			}
+			return QuestInstance;
 		}
 	}
 	return nullptr;
@@ -792,6 +779,40 @@ bool UQuestComponent::DeleteSave(const FString& SaveName, const int32 Slot)
 	return UGameplayStatics::DeleteGameInSlot(SaveName, Slot);
 }
 
+TMap<FName, TObjectPtr<UQuest>> UQuestComponent::GetQuestRegistryMap()
+{
+	if(QuestRegistryMap.Num() == 0)
+	{
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+		TArray<FAssetData> QuestGraphDataArray;
+		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+
+		for (const FAssetData& AssetData : QuestGraphDataArray)
+		{
+			UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
+			if (QuestGraphAsset)
+			{
+				QuestRegistryMap.Empty();
+				for (const auto& Quest : QuestGraphAsset->QuestList)
+					if (Quest)
+					{
+						if (Quest->QuestTag.IsValid())
+						{
+							QuestRegistryMap.Emplace(Quest->QuestTag.GetTagName(), Quest);
+						}
+						else
+						{
+							QuestRegistryMap.Emplace(Quest->ID, Quest);
+						}
+
+					}
+			}
+		}
+		return QuestRegistryMap;
+	}
+	return QuestRegistryMap;
+}
 
 void UQuestComponent::QuestUpdated()
 {

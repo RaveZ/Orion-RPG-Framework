@@ -3,10 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "OrionSaveGame.h"
+#include "Engine/LocalPlayer.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "OrionSaveGameSubsystem.generated.h"
 
-class UOrionSaveGame;
 
 DECLARE_DYNAMIC_DELEGATE_OneParam(FOrionSaveGameSignature, const bool, bSuccess);
 
