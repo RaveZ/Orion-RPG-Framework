@@ -76,7 +76,7 @@ UObject* UDialogBuilderFactory::FactoryCreateNew(UClass* Class, UObject* InParen
 	if (DialogSystemGraphClass)
 	{
 		DialogGraph =  NewObject<UDialogBuilderGraph>(InParent, DialogSystemGraphClass, Name, Flags | RF_Transactional);
-		DialogGraph->ID = FDialogBuilderEditorUtils::FindUniqueDialogGraphName("DialogBuilderAsset");
+		DialogGraph->ID = FDialogBuilderEditorUtils::FindUniqueDialogGraphName("DialogAsset_");
 		
 	}
 

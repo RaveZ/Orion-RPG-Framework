@@ -60,7 +60,7 @@ void UQuestBuilderEdGraph::UpdateAsset(bool bForce)
 	UQuestBuilderGraph* QuestGraph = GetQuestBuilderGraph();
 
 	Clear();
-	Quest->ID = FQuestBuilderEditorUtils::FindUniqueQuestName("Quest");
+	Quest->ID = FQuestBuilderEditorUtils::FindUniqueQuestName("QUEST_");
 	
 	UpdateAllSubnodeDependencies();
 

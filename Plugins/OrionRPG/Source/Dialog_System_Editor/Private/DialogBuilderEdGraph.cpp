@@ -63,7 +63,7 @@ void UDialogBuilderEdGraph::UpdateAsset(bool bForce)
 
 
 	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
-	DialogGraph->ID = FDialogBuilderEditorUtils::FindUniqueDialogGraphName("DialogBuilderAsset");
+	DialogGraph->ID = FDialogBuilderEditorUtils::FindUniqueDialogGraphName("DialogAsset_");
 	Clear();
 
 	UpdateAllSubnodeDependencies();
