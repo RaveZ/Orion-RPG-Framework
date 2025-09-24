@@ -95,6 +95,7 @@ void UOrionSaveGame::HandlePreSave()
 	}
 
 	SavedActors.Empty();
+	CachedActors.Empty();
 
 	TArray<AActor*> SaveGameActors;
 	UGameplayStatics::GetAllActorsWithInterface(World, UOrionSaveGameInterface::StaticClass(), SaveGameActors);
@@ -126,7 +127,10 @@ void UOrionSaveGame::HandlePostSave(bool bSuccess)
 	{
 		for (AActor* Actor : CachedActors)
 		{
-			IOrionSaveGameInterface::Execute_OnSaved(Actor);
+			if (Actor)
+			{
+				IOrionSaveGameInterface::Execute_OnSaved(Actor);
+			}
 		}
 	}
 }
@@ -147,7 +151,7 @@ void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
 		UGameInstance* GI = World->GetGameInstance<UGameInstance>();
 		check(GI);
 
-		// Player
+		// PLAYER
 		{
 			APawn* PlayerChar = PC->GetPawn<APawn>();
 			check(PlayerChar);
@@ -159,16 +163,16 @@ void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
 			}
 		}
 
-		// Quest
+		// QUEST
 		{
 			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(PC);
 			check(QuestComp)
-			QuestComp->InitializeFromSaveGame(QuestData);
+				QuestComp->InitializeFromSaveGame(QuestData);
 		}
 
-		// Datalayers
+		// DATA LAYERS
 		{
-			if(OrionSetting->bSaveDataLayer)
+			if (OrionSetting->bSaveDataLayer)
 			{
 				UDataLayerManager* DataLayerManager = UDataLayerManager::GetDataLayerManager(World);
 
@@ -177,6 +181,40 @@ void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
 					const UDataLayerInstance* DataLayerInstance = DataLayerManager->GetDataLayerInstanceFromName(DataLayerName);
 					check(DataLayerInstance);
 					DataLayerManager->SetDataLayerInstanceRuntimeState(DataLayerInstance, EDataLayerRuntimeState::Activated);
+				}
+			}
+		}
+
+		//ACTOR DATA
+		{
+			TArray<AActor*> SaveGameActors;
+			UGameplayStatics::GetAllActorsWithInterface(World, UOrionSaveGameInterface::StaticClass(), SaveGameActors);
+
+			// Build TMap<FName, AActor*> for fast lookup
+			TMap<FName, AActor*> ActorMap;
+			for (AActor* Actor : SaveGameActors)
+			{
+				if (Actor)
+				{
+					ActorMap.Add(Actor->GetFName(), Actor);
+				}
+			}
+
+			// Restore saved data using the map
+			for (FOrionActorSaveData ActorData : SavedActors)
+			{
+				AActor* FoundActor = ActorMap.FindRef(ActorData.ActorName);
+				if (FoundActor)
+				{
+					FMemoryReader MyMemoryReader(ActorData.ByteData);
+
+					FObjectAndNameAsStringProxyArchive Ar(MyMemoryReader, true);
+					Ar.ArNoDelta = true;
+					Ar.ArIsSaveGame = true;
+
+					FoundActor->Serialize(Ar);
+
+					IOrionSaveGameInterface::Execute_OnLoaded(FoundActor);
 				}
 			}
 		}

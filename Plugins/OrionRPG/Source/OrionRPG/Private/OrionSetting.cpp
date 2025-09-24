@@ -8,7 +8,7 @@ UOrionSetting::UOrionSetting()
 {
 	//Quest runtime
 	ShowUIBottomBarAction = true;
-	bSaveLevel = true;
+	bSaveLevel = false;
 	bSaveDataLayer = true;
 }
 

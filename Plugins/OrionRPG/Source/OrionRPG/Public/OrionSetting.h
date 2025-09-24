@@ -24,7 +24,7 @@ public:
 	bool ShowUIBottomBarAction;
 
 	//Will save your last level and travel when game loaded
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Save")
+	UPROPERTY(BlueprintReadOnly, config, Category = "Save")
 	bool bSaveLevel;
 
 	//Will save data layer and activate them on streaming map when game loaded
