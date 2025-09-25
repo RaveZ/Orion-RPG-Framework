@@ -153,6 +153,17 @@ void UQuestBuilderFunctionLibrary::AutoNavigateQuest(const UObject* WorldContext
     }
 }
 
+void UQuestBuilderFunctionLibrary::BeginQuestGraph(const UObject* WorldContextObject, UQuestBuilderGraph* QuestAsset)
+{
+    if(UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        if (QuestAsset)
+        {
+            QuestComp->BeginQuestGraph(QuestAsset);
+        }
+	}
+}
+
 void UQuestBuilderFunctionLibrary::ActivateQuestFromTag(const UObject* WorldContextObject, FGameplayTag QuestTag)
 {
     if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))

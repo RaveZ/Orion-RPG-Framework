@@ -95,6 +95,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
 	static void AutoNavigateQuest(const UObject* WorldContextObject);
 
+	/**
+	* Begin Quest Graph
+	*
+	*/
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Quest", meta = (WorldContext = "WorldContextObject"))
+	static void BeginQuestGraph(const UObject* WorldContextObject, class UQuestBuilderGraph* QuestAsset);
 
 	/**
 	* Activate Quest from Tag
