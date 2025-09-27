@@ -32,7 +32,7 @@ public:
 	FName NodeID;
 
 	UPROPERTY(SaveGame)
-	bool bNodeActive = false;
+	bool bWaitForBranching = false;
 
 	UPROPERTY(SaveGame)
 	int CurrentProgress = 0;

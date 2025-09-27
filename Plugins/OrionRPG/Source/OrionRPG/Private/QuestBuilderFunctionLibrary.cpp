@@ -134,6 +134,17 @@ bool UQuestBuilderFunctionLibrary::IsObjectiveCompleted(const UObject* WorldCont
     return false;
 }
 
+void UQuestBuilderFunctionLibrary::NavigateQuest(const UObject* WorldContextObject, UQuest* InQuest, bool bOverrideNavigatedQuest)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        if (InQuest)
+        {
+            QuestComp->StartNavigateQuest(InQuest, nullptr, bOverrideNavigatedQuest);
+        }
+    }
+}
+
 void UQuestBuilderFunctionLibrary::AutoNavigateQuest(const UObject* WorldContextObject)
 {
     if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
@@ -142,3 +153,81 @@ void UQuestBuilderFunctionLibrary::AutoNavigateQuest(const UObject* WorldContext
     }
 }
 
+void UQuestBuilderFunctionLibrary::BeginQuestGraph(const UObject* WorldContextObject, UQuestBuilderGraph* QuestAsset)
+{
+    if(UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        if (QuestAsset)
+        {
+            QuestComp->BeginQuestGraph(QuestAsset);
+        }
+	}
+}
+
+void UQuestBuilderFunctionLibrary::ActivateQuestFromTag(const UObject* WorldContextObject, FGameplayTag QuestTag)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        QuestComp->ActivateQuestFromTag(QuestTag);
+	}
+}
+
+void UQuestBuilderFunctionLibrary::LockQuestFromTag(const UObject* WorldContextObject, FGameplayTag QuestTag)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        QuestComp->LockQuestFromTag(QuestTag);
+	}
+}
+
+void UQuestBuilderFunctionLibrary::UnlockQuestFromTag(const UObject* WorldContextObject, FGameplayTag QuestTag)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        QuestComp->UnlockQuestFromTag(QuestTag);
+	}
+}
+
+void UQuestBuilderFunctionLibrary::CompleteQuestFromTag(const UObject* WorldContextObject, FGameplayTag QuestTag)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        QuestComp->CompleteQuestFromTag(QuestTag);
+	}
+}
+
+void UQuestBuilderFunctionLibrary::FailQuestFromTag(const UObject* WorldContextObject, FGameplayTag QuestTag)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        QuestComp->FailQuestFromTag(QuestTag);
+	}
+}
+
+void UQuestBuilderFunctionLibrary::RestartQuestFromTag(const UObject* WorldContextObject, FGameplayTag QuestTag, FGameplayTag NodeTag, const bool bNotifyQuestAdded)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        QuestComp->RestartQuestFromTag(QuestTag, NodeTag, bNotifyQuestAdded);
+	}
+}
+
+bool UQuestBuilderFunctionLibrary::IsAnyQuestActive(const UObject* WorldContextObject)
+{
+    if (UQuestComponent* QuestComp = GetQuestComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0)))
+    {
+        TArray<FName> QuestKeys;
+        QuestComp->QuestMap.GetKeys(QuestKeys);
+
+        for (int32 j = QuestKeys.Num() - 1; j >= 0; --j)
+        {
+            FName Key = QuestKeys[j];
+            UQuest* Quest = QuestComp->QuestMap.FindRef(Key);
+            if(Quest && Quest->QuestState == EQuestState::E_Active)
+            {
+                return true;
+			}
+        }
+    }
+    return false;
+}

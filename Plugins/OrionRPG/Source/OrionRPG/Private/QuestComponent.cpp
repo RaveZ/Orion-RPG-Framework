@@ -2,7 +2,10 @@
 
 
 #include "QuestComponent.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
 #include "Quest.h"
+#include "OrionSaveGameSubsystem.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 #include "UObject/UObjectIterator.h"
@@ -41,6 +44,7 @@ void UQuestComponent::BeginPlay()
 	
 	//Set Dependency
 	OwningController = GetOwningController();
+	GetQuestRegistryMap();
 
 	OnQuestUpdated.AddDynamic(this, &UQuestComponent::QuestUpdated);
 	OnQuestObjectiveBegin.AddDynamic(this, &UQuestComponent::QuestObjectiveBegin);
@@ -61,6 +65,22 @@ void UQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActor
 
 bool UQuestComponent::BeginQuestGraph(UQuestBuilderGraph* QuestGraphAsset)
 {
+	if (!GetWorld())
+	{
+		return false;
+	}
+	UGameInstance* GameInstance = GetWorld()->GetGameInstance();
+	if (!GameInstance)
+	{
+		return false;
+	}
+
+	UOrionSaveGameSubsystem* SaveSubsystem = GameInstance->GetSubsystem<UOrionSaveGameSubsystem>();
+	if (SaveSubsystem && SaveSubsystem->IsLoadingSaveGame())
+	{
+		return false;
+	}
+
 	if (QuestGraphAsset == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Quest Asset is null"));
@@ -123,27 +143,11 @@ class UQuest* UQuestComponent::MakeQuestInstance(UQuest* QuestTemplate)
 class UQuest* UQuestComponent::TryMakeQuestInstanceFromTag(FGameplayTag QuestTag)
 {
 	FName QuestID = QuestTag.GetTagName();
-	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-	TArray<FAssetData> QuestGraphDataArray;
-	AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
-		
-	for (const FAssetData& AssetData : QuestGraphDataArray)
+	if (UQuest* QuestTemplate = GetQuestRegistryMap().FindRef(QuestID))
 	{
-		if (UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset()))
+		if (UQuest* QuestInstance = MakeQuestInstance(QuestTemplate))
 		{
-			for (auto& QuestTemplate : QuestGraphAsset->QuestList)
-			{
-				if (QuestID == QuestTemplate->ID ||
-					QuestID == QuestTemplate->QuestTag.GetTagName())
-				{
-					//make quest instance from template found
-					if (UQuest* QuestInstance = MakeQuestInstance(QuestTemplate))
-					{
-						return QuestInstance;
-					}
-				}
-			}
+			return QuestInstance;
 		}
 	}
 	return nullptr;
@@ -153,8 +157,7 @@ void UQuestComponent::AutoNavigateQuest()
 {
 	if (!bAutoNavigateQuest)
 		return;
-	if (CurrentNavigatedQuest && CurrentNavigatedQuest->QuestState == EQuestState::E_Active)
-		return;
+	
 
 	TArray<FName> QuestKeys;
 	QuestMap.GetKeys(QuestKeys);
@@ -290,8 +293,17 @@ void UQuestComponent::CompleteQuestFromTag(FGameplayTag QuestTag)
 
 
 
-void UQuestComponent::StartNavigateQuest(UQuest* InQuest, UQuestBuilderNode_Objective* InObjective)
+void UQuestComponent::StartNavigateQuest(UQuest* InQuest, UQuestBuilderNode_Objective* InObjective, bool bOverrideCurrentNavigatedQuest)
 {
+	if (!bOverrideCurrentNavigatedQuest)
+	{
+		if (CurrentNavigatedQuest && CurrentNavigatedQuest->QuestState == EQuestState::E_Active)
+		{
+			return;
+		}
+	}
+	
+
 	if (InQuest && InQuest->QuestState == EQuestState::E_Active)
 	{
 		CurrentNavigatedQuest = InQuest;
@@ -326,6 +338,7 @@ void UQuestComponent::ActivateQuest(UQuest* InQuest)
 			OnQuestAdded.Broadcast(InQuest);
 			RestartQuest(InQuest);
 		}
+		AutoNavigateQuest();
 	}
 	else
 	{
@@ -615,7 +628,7 @@ FOrionQuestSaveData UQuestComponent::GetSaveGameData() const
 			if (Node)
 			{
 				NodeData.NodeID = Node->ID;
-				NodeData.bNodeActive = Node->bNodeActive;
+				NodeData.bWaitForBranching = Node->bWaitForBranching;
 				if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(Node))
 				{
 					NodeData.CurrentProgress = ObjectiveNode->CurrentProgress;
@@ -719,7 +732,7 @@ void UQuestComponent::InitializeFromSaveGame(FOrionQuestSaveData& QuestSaveData)
 				if (FoundedNode)
 				{
 					//Fill Node Data Here
-					FoundedNode->bNodeActive = NodeData.bNodeActive;
+					FoundedNode->bWaitForBranching = NodeData.bWaitForBranching;
 					if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(FoundedNode))
 					{
 						ObjectiveNode->CurrentProgress = NodeData.CurrentProgress;
@@ -766,6 +779,40 @@ bool UQuestComponent::DeleteSave(const FString& SaveName, const int32 Slot)
 	return UGameplayStatics::DeleteGameInSlot(SaveName, Slot);
 }
 
+TMap<FName, TObjectPtr<UQuest>> UQuestComponent::GetQuestRegistryMap()
+{
+	if(QuestRegistryMap.Num() == 0)
+	{
+		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+
+		TArray<FAssetData> QuestGraphDataArray;
+		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
+
+		for (const FAssetData& AssetData : QuestGraphDataArray)
+		{
+			UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
+			if (QuestGraphAsset)
+			{
+				QuestRegistryMap.Empty();
+				for (const auto& Quest : QuestGraphAsset->QuestList)
+					if (Quest)
+					{
+						if (Quest->QuestTag.IsValid())
+						{
+							QuestRegistryMap.Emplace(Quest->QuestTag.GetTagName(), Quest);
+						}
+						else
+						{
+							QuestRegistryMap.Emplace(Quest->ID, Quest);
+						}
+
+					}
+			}
+		}
+		return QuestRegistryMap;
+	}
+	return QuestRegistryMap;
+}
 
 void UQuestComponent::QuestUpdated()
 {

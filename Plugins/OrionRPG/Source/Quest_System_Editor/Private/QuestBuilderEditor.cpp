@@ -598,7 +598,7 @@ void FQuestBuilderEditor::NewDocument_OnClicked(ECreatedQuestDocumentType GraphT
 	switch (GraphType)
 	{
 	case CGT_NewQuestGraph:
-		DocumentNameText = LOCTEXT("NewDocQuestName", "Quest");
+		DocumentNameText = LOCTEXT("NewDocQuestName", "QUEST_");
 		bResetMyBlueprintFilter = true;
 		break;
 	

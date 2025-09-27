@@ -7,7 +7,6 @@
 
 UDialogBuilderSetting::UDialogBuilderSetting()
 {
-	ShowUIBoundAction = true;
 	MinDialogLineDuration = 2.5f;
 	DialogLineWordsPerSecond = 4.0f; // Default words per second for dialog lines
 

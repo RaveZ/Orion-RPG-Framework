@@ -110,7 +110,7 @@ void FDialog_System_EditorModule::RegisterSettings()
 	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
 		// Register the settings
-		SettingsModule->RegisterSettings("Project", "Plugins", "OrionRPG - Dialog",
+		SettingsModule->RegisterSettings("Project", "Game", "OrionRPG - Dialog",
 			LOCTEXT("DialogBuilderSettingsName", "OrionRPG - Dialog"),
 			LOCTEXT("DialogBuilderSettingsDescription", "Configuration Settings for the Dialog Builder Editor"),
 			GetMutableDefault<UDialogBuilderSetting>()
