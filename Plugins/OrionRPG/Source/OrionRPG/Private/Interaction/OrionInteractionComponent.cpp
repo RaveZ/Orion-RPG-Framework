@@ -255,7 +255,11 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 			break;
 		}
 	}
-	MulticastOnInteractionUpdated(CurrentInteractionTarget);
+	OnInteractionUpdated.Broadcast(CurrentInteractionTarget);
+	if(PrevInteractable != CurrentInteractionTarget)
+	{
+		MulticastOnInteractionChanged(CurrentInteractionTarget);
+	}
 	// If we have previous interactable and we lose focus from it, cancel interaction
 	if (PrevInteractable && PrevInteractable->Mode == EOrionInteractionMode::Hold && PrevInteractable->IsInteractionInProgress() && CurrentInteractionTarget == nullptr)
 	{
@@ -317,10 +321,9 @@ void UOrionInteractionComponent::MulticastOnInteractionCompleted_Implementation(
 {
 	OnInteractionCompleted.Broadcast(Target);
 }
-
-void UOrionInteractionComponent::MulticastOnInteractionUpdated_Implementation(UOrionInteractionTargetComponent* Target)
+void UOrionInteractionComponent::MulticastOnInteractionChanged_Implementation(UOrionInteractionTargetComponent* Target)
 {
-	OnInteractionUpdated.Broadcast(Target);
+	OnInteractionChanged.Broadcast(Target);
 }
 
 void UOrionInteractionComponent::MulticastOnInteractionBlocked_Implementation(UOrionInteractionTargetComponent* Target)
