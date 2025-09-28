@@ -46,6 +46,21 @@ void UOrionButtonBase::RefreshButtonText()
 	UpdateButtonText(ButtonText);
 }
 
+void UOrionButtonBase::SetHoldData(float InHoldTime, float InHoldRollbackTime)
+{
+	HoldTime = InHoldTime;
+	HoldRollbackTime = InHoldRollbackTime;
+}
+
+
+void UOrionButtonBase::UpdateHoldData(ECommonInputType CurrentInputType)
+{
+	Super::UpdateHoldData(CurrentInputType);
+	
+	K2_OnUpdateHoldData();
+	
+}
+
 
 void UOrionButtonBase::OnInputMethodChanged(ECommonInputType CurrentInputType)
 {

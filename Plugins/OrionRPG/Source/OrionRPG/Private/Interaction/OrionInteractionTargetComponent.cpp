@@ -75,7 +75,8 @@ void UOrionInteractionTargetComponent::StartInteraction(AActor* Interactor)
 
 	CurrentInteractor = Interactor;
 	CurrentProgress = 0.0f;
-
+	CurrentHoldTime= 0.0f;
+	
 	// Blueprint event
 	if (OnStarted.IsBound())
 	{
@@ -163,10 +164,12 @@ void UOrionInteractionTargetComponent::UpdateInteractionProgress(float Progress)
 
 void UOrionInteractionTargetComponent::UpdateProgressValue()
 {
-	CurrentProgress = FMath::Clamp(CurrentProgress + 0.0333f, 0.0f, 1.0f);
-
-	if (CurrentProgress >= 1.0f)
+	CurrentHoldTime = FMath::Clamp(CurrentHoldTime + 0.0333f, 0.0f, HoldDuration);
+	CurrentProgress = FMath::Clamp(CurrentHoldTime / HoldDuration, 0.f, 1.f);
+	if (CurrentProgress >= 1.f)
 	{
+		CurrentProgress = 0.0f;
+		CurrentHoldTime= 0.0f;
 		EndInteraction(true);
 	}
 }

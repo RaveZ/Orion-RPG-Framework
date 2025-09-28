@@ -85,6 +85,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOrionInteractionSignature OnInteractionUpdated;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FOrionInteractionSignature OnInteractionChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOrionInteractionSignature OnInteractionBlocked;
@@ -122,8 +125,8 @@ public:
 	void MulticastOnInteractionCompleted(UOrionInteractionTargetComponent* Target);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastOnInteractionUpdated(UOrionInteractionTargetComponent* Target);
-
+	void MulticastOnInteractionChanged(UOrionInteractionTargetComponent* Target);
+	
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastOnInteractionBlocked(UOrionInteractionTargetComponent* Target);
 private:

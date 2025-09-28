@@ -60,6 +60,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable", meta = (EditCondition = "Mode == EOrionInteractionMode::Hold", HideEditConditionToggle, EditConditionHides))
 	float HoldDuration;
 
+	float CurrentHoldTime;
+
 	/**
 	* Interact conditions that must be met before interaction can occur.
 	*/
