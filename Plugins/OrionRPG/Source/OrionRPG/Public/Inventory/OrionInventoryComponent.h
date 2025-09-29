@@ -14,6 +14,7 @@ struct FInventoryItem;
 
 //Inventory Delegate
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemSignature, UOrionInventoryNode_Item*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInventorySignature);
 
 UCLASS(meta=(BlueprintSpawnableComponent), Blueprintable, HideDropdown, ClassGroup = "OrionRPG", DisplayName = "Orion Inventory Component")
 class ORIONRPG_API UOrionInventoryComponent : public UActorComponent
@@ -24,9 +25,8 @@ public:
 	// Sets default values for this component's properties
 	UOrionInventoryComponent();
 
-
 	/**Inventory database*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "InventoryComponent")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "InventoryComponent")
 	TObjectPtr<UOrionInventoryGraph> InventoryData;
 
 	//We cache the OwningController, we won't cache pawn as this might change
@@ -35,21 +35,19 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "InventoryComponent")
 		TMap<FName, TObjectPtr<UOrionInventoryGraph>> OrionInventoryMap;
-
-
+		
+	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FInventoryItemSignature OnItemAdded;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FInventoryItemSignature OnItemRemoved;
 
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
+		FInventorySignature NoRoomInInventory;
+		
 public:
 	
-	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
-		bool BeginOrionInventory(UOrionInventoryGraph* OrionInventoryAsset);
-
-	UFUNCTION()
-		virtual class UOrionInventoryGraph* MakeOrionInventoryGraphInstance(UOrionInventoryGraph* OrionInventoryGraphTemplate);
 
 public:
 	UFUNCTION(BlueprintPure, Category = "InventoryComponent")

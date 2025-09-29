@@ -40,25 +40,6 @@ void UOrionInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 }
 
-bool UOrionInventoryComponent::BeginOrionInventory(UOrionInventoryGraph* OrionInventoryAsset)
-{
-	if (OrionInventoryAsset == nullptr)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("OrionInventory Asset is null"));
-		return false;
-	}
-
-	bool bSuccess = false;
-
-	return bSuccess;
-}
-
-class UOrionInventoryGraph* UOrionInventoryComponent::MakeOrionInventoryGraphInstance(UOrionInventoryGraph* OrionInventoryGraphTemplate)
-{
-
-	return nullptr;
-}
-
 APawn* UOrionInventoryComponent::GetOwningPawn() const
 {
 	if (OwningController)
@@ -114,6 +95,8 @@ void UOrionInventoryComponent::AddItem(FGameplayTag Tag, int32 Count, FInventory
 		return;
 	}
 
+	
+	
 	//FInventoryItem& NewItem = OrionInventoryMap.FindOrAdd(Tag);
 }
 
