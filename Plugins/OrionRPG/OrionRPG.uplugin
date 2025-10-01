@@ -2,13 +2,13 @@
 	"FileVersion": 3,
 	"Version": 1,
 	"VersionName": "1.1",
-	"FriendlyName": "Orion RPG Plugin",
-	"Description": "Orion RPG Plugin is a powerful tool using node graph based editor that enables you to craft engaging, and immersive narrative for your players.",
-	"Category": "Orion RPG",
+	"FriendlyName": "Orion RPG Plugin - Lite",
+	"Description": "Orion RPG - Lite Plugin is a powerful tool using node graph based editor that enables you to craft engaging, and immersive narrative for your players.",
+	"Category": "Orion RPG - Lite",
 	"CreatedBy": "IC",
 	"CreatedByURL": "",
 	"DocsURL": "https://slimwiki.com/orion/orion-rpg-documentation/welcome",
-	"MarketplaceURL": "com.epicgames.launcher://ue/Fab/product/eab00427-3d38-42b0-adb0-d057883d4c3c",
+	"MarketplaceURL": "com.epicgames.launcher://ue/Fab/product/093c79d0-1ce0-49a4-a708-d29345ca4419",
 	"SupportURL": "https://discord.gg/qbrVtCmXfe",
 	"EngineVersion": "ANY_VERSION",
 	"CanContainContent": true,
@@ -18,18 +18,6 @@
 			"Name": "OrionRPG",
 			"Type": "Runtime",
 			"LoadingPhase": "Default",
-			"PlatformAllowList": [
-				"Win64",
-				"Android",
-				"Linux",
-				"IOS",
-				"Mac"
-			]
-		},
-		{
-			"Name": "Dialog_System_Editor",
-			"Type": "UncookedOnly",
-			"LoadingPhase": "PreDefault",
 			"PlatformAllowList": [
 				"Win64",
 				"Android",
