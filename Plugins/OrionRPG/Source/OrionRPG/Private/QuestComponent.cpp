@@ -40,6 +40,7 @@ void UQuestComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	QuestMap.Empty();
+	QuestRegistryMap.Empty();
 	QuestCategories.Empty();
 	
 	//Set Dependency
@@ -107,7 +108,7 @@ class UQuest* UQuestComponent::MakeQuestInstance(UQuest* QuestTemplate)
 	if (IsValid(QuestTemplate))
 	{
 		//Duplicate the quest template
-		UQuest* NewQuest = Cast<UQuest>(StaticDuplicateObject(QuestTemplate, this, NAME_None, RF_Transactional));
+		TObjectPtr<UQuest> NewQuest = Cast<UQuest>(StaticDuplicateObject(QuestTemplate, this, NAME_None, RF_Transactional));
 		NewQuest->Initialize(this);
 		if (QuestMap.FindRef(NewQuest->ID))
 		{
@@ -143,13 +144,16 @@ class UQuest* UQuestComponent::MakeQuestInstance(UQuest* QuestTemplate)
 class UQuest* UQuestComponent::TryMakeQuestInstanceFromTag(FGameplayTag QuestTag)
 {
 	FName QuestID = QuestTag.GetTagName();
-	if (UQuest* QuestTemplate = GetQuestRegistryMap().FindRef(QuestID))
+	TObjectPtr<UQuest> QuestPtr = GetQuestRegistryMap().FindRef(QuestID);
+	UQuest* QuestTemplate = QuestPtr.Get();
+	if (IsValid(QuestTemplate))
 	{
 		if (UQuest* QuestInstance = MakeQuestInstance(QuestTemplate))
 		{
 			return QuestInstance;
 		}
 	}
+
 	return nullptr;
 }
 
@@ -194,12 +198,14 @@ void UQuestComponent::UpdateAllQuest()
 void UQuestComponent::ActivateQuestFromTag(FGameplayTag QuestTag)
 {
 	FName QuestID = QuestTag.GetTagName();
-	if (UQuest* Quest = QuestMap.FindRef(QuestID))
-	{		
-		ActivateQuest(Quest);
+	TObjectPtr<UQuest> QuestPtr = QuestMap.FindRef(QuestID);
+	if (IsValid(QuestPtr.Get()))
+	{
+		ActivateQuest(QuestPtr.Get());
 	}
 	else
 	{
+		QuestMap.Remove(QuestID);
 		ActivateQuest(TryMakeQuestInstanceFromTag(QuestTag));
 	}
 }
@@ -207,12 +213,14 @@ void UQuestComponent::ActivateQuestFromTag(FGameplayTag QuestTag)
 void UQuestComponent::UnlockQuestFromTag(FGameplayTag QuestTag)
 {
 	FName QuestID = QuestTag.GetTagName();
-	if (UQuest* Quest = QuestMap.FindRef(QuestID))
+	TObjectPtr<UQuest> QuestPtr = QuestMap.FindRef(QuestID);
+	if (IsValid(QuestPtr.Get()))
 	{
-		UnlockQuest(Quest);
+		UnlockQuest(QuestPtr.Get());
 	}
 	else
 	{
+		QuestMap.Remove(QuestID);
 		UnlockQuest(TryMakeQuestInstanceFromTag(QuestTag));
 	}
 }
@@ -220,12 +228,14 @@ void UQuestComponent::UnlockQuestFromTag(FGameplayTag QuestTag)
 void UQuestComponent::LockQuestFromTag(FGameplayTag QuestTag)
 {
 	FName QuestID = QuestTag.GetTagName();
-	if (UQuest* Quest = QuestMap.FindRef(QuestID))
+	TObjectPtr<UQuest> QuestPtr = QuestMap.FindRef(QuestID);
+	if (IsValid(QuestPtr.Get()))
 	{
-		LockQuest(Quest);
+		LockQuest(QuestPtr.Get());
 	}
 	else
 	{
+		QuestMap.Remove(QuestID);
 		LockQuest(TryMakeQuestInstanceFromTag(QuestTag));
 	}
 }
@@ -234,32 +244,34 @@ void UQuestComponent::RestartQuestFromTag(FGameplayTag QuestTag, FGameplayTag No
 {
 	FName QuestID = QuestTag.GetTagName();
 	FName NodeID = NodeTag.GetTagName();
-	if (UQuest* FoundedQuest = QuestMap.FindRef(QuestID))
+
+	TObjectPtr<UQuest> QuestPtr = QuestMap.FindRef(QuestID);
+	UQuest* FoundedQuest = QuestPtr.Get();
+	if (IsValid(FoundedQuest))
 	{
-		UQuestBuilderNode* FoundedNode = nullptr;
-		if (!NodeTag.IsValid())
+		TObjectPtr<UQuestBuilderNode> NodePtr = FoundedQuest->NodeMap.FindRef(NodeID);
+		UQuestBuilderNode* FoundedNode = NodePtr.Get();
+		if (IsValid(FoundedNode))
 		{
-			FoundedNode = FoundedQuest->NodeMap.FindRef(NodeID);
-			if (FoundedNode)
+			//Reset all visited node that is not visited by FoundedNode
+			for (int32 i = FoundedQuest->VisitedNodeIDs.Num() - 1; i >= 0; --i)
 			{
-				//Reset all visited node that is not visited by FoundedNode
-				for (int32 i = FoundedQuest->VisitedNodeIDs.Num() - 1; i >= 0; --i)
+				FName CachedVisitedNodeID = FoundedQuest->VisitedNodeIDs[i];
+				if (UQuestBuilderNode* VisitedNode = FoundedQuest->NodeMap.FindRef(CachedVisitedNodeID))
 				{
-					FName CachedVisitedNodeID = FoundedQuest->VisitedNodeIDs[i];
-					if (UQuestBuilderNode* VisitedNode = FoundedQuest->NodeMap.FindRef(CachedVisitedNodeID))
-					{
-						VisitedNode->Reset();
-					}
-					FoundedQuest->VisitedNodeIDs.RemoveAt(i);
-					if (CachedVisitedNodeID == NodeID)
-						break;
+					VisitedNode->Reset();
 				}
+				FoundedQuest->VisitedNodeIDs.RemoveAt(i);
+				if (CachedVisitedNodeID == NodeID)
+					break;
 			}
 		}
+		
 		RestartQuest(FoundedQuest, FoundedNode, bNotifyQuestAdded);
 	}
 	else
 	{
+		QuestMap.Remove(QuestID);
 		RestartQuest(TryMakeQuestInstanceFromTag(QuestTag), nullptr, bNotifyQuestAdded);
 	}
 }
@@ -267,12 +279,14 @@ void UQuestComponent::RestartQuestFromTag(FGameplayTag QuestTag, FGameplayTag No
 void UQuestComponent::FailQuestFromTag(FGameplayTag QuestTag)
 {
 	FName QuestID = QuestTag.GetTagName();
-	if (UQuest* Quest = QuestMap.FindRef(QuestID))
+	TObjectPtr<UQuest> QuestPtr = QuestMap.FindRef(QuestID);
+	if (IsValid(QuestPtr.Get()))
 	{
-		FailQuest(Quest);
+		FailQuest(QuestPtr.Get());
 	}
 	else
 	{
+		QuestMap.Remove(QuestID);
 		FailQuest(TryMakeQuestInstanceFromTag(QuestTag));
 	}
 }
@@ -280,12 +294,14 @@ void UQuestComponent::FailQuestFromTag(FGameplayTag QuestTag)
 void UQuestComponent::CompleteQuestFromTag(FGameplayTag QuestTag)
 {
 	FName QuestID = QuestTag.GetTagName();
-	if (UQuest* Quest = QuestMap.FindRef(QuestID))
+	TObjectPtr<UQuest> QuestPtr = QuestMap.FindRef(QuestID);
+	if (IsValid(QuestPtr.Get()))
 	{
-		CompleteQuest(Quest);
+		CompleteQuest(QuestPtr.Get());
 	}
 	else
 	{
+		QuestMap.Remove(QuestID);
 		CompleteQuest(TryMakeQuestInstanceFromTag(QuestTag));
 	}
 }
@@ -326,7 +342,7 @@ void UQuestComponent::StartNavigateQuest(UQuest* InQuest, UQuestBuilderNode_Obje
 
 void UQuestComponent::ActivateQuest(UQuest* InQuest)
 {
-	if (InQuest && InQuest->QuestState == EQuestState::E_Locked || InQuest->QuestState == EQuestState::E_Unlocked)
+	if (IsValid(InQuest) && InQuest->QuestState == EQuestState::E_Locked || InQuest->QuestState == EQuestState::E_Unlocked)
 	{
 		InQuest->QuestState = EQuestState::E_Active;
 		if (!InQuest->CurrentNodes.IsEmpty())
@@ -613,7 +629,7 @@ void UQuestComponent::EvaluateQuestState(UQuest* QuestParam)
 		
 }
 
-FOrionQuestSaveData UQuestComponent::GetSaveGameData() const
+FOrionQuestSaveData UQuestComponent::GetSaveGameData()
 {
 	FOrionQuestSaveData QuestSaveData;
 	for (const auto& It : QuestMap)
@@ -659,11 +675,13 @@ FOrionQuestSaveData UQuestComponent::GetSaveGameData() const
 			QuestSaveData.NavigatedObjectiveID = CurrentNavigatedQuest->CurrentNavigatedObjective->ID;
 		}
 	}
+	CurrentQuestSaveData = QuestSaveData;
 	return QuestSaveData;
 }
 
 void UQuestComponent::InitializeFromSaveGame(FOrionQuestSaveData& QuestSaveData)
 {
+	CurrentQuestSaveData = QuestSaveData;
 	TArray<UQuest*> LoadedQuestAssets;
 
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");

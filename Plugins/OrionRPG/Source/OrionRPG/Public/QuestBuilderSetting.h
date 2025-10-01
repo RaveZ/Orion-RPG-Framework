@@ -8,7 +8,7 @@
 
 
 
-UCLASS(config = Engine, defaultconfig)
+UCLASS(config = Engine, defaultconfig, BlueprintType)
 class ORIONRPG_API UQuestBuilderSetting : public UObject
 {
 	GENERATED_BODY()

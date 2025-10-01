@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "OrionSaveGame.h"
 #include "Components/ActorComponent.h"
 #include "QuestComponent.generated.h"
 
@@ -59,6 +60,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
 		TObjectPtr<UQuest> CurrentNavigatedQuest;
+
+	UPROPERTY()
+		FOrionQuestSaveData CurrentQuestSaveData;
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere,  Category = "QuestComponent")
 		bool bAutoNavigateQuest;
@@ -197,7 +201,7 @@ public:
 		void EvaluateQuestState(UQuest* QuestParam);
 
 	UFUNCTION()
-	FOrionQuestSaveData GetSaveGameData() const;
+	FOrionQuestSaveData GetSaveGameData();
 
 	UFUNCTION()
 	void InitializeFromSaveGame(FOrionQuestSaveData& QuestSaveData);

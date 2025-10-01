@@ -120,7 +120,7 @@ public:
 };
 
 
-UCLASS(Blueprintable)
+UCLASS(Blueprintable, BlueprintType)
 class ORIONRPG_API UOrionSaveGame : public ULocalPlayerSaveGame
 {
 	GENERATED_BODY()
@@ -132,7 +132,7 @@ public:
 	virtual void HandlePreSave() override;
 	virtual void HandlePostSave(bool bSuccess) override;
 
-	void HandleLoadGame(UWorld* World, bool bFromLoadGame);
+	virtual void HandleLoadGame(UWorld* World, bool bFromLoadGame);
 public:
 	FORCEINLINE bool IsSavingGame()
 	{

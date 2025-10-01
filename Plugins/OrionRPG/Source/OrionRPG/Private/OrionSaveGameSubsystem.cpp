@@ -16,8 +16,6 @@ UOrionSaveGameSubsystem::UOrionSaveGameSubsystem()
 {
 	bIsLoadingSaveGame = false;
 	bIsSavingGame = false;
-	SaveGameClass = UOrionSaveGame::StaticClass();
-	SaveGameSlots.SetNum(99);
 	CurrentSaveSlot = 0;
 }
 
@@ -25,6 +23,8 @@ void UOrionSaveGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 	OrionSetting = GetMutableDefault<UOrionSetting>();
+	SaveGameSlots.SetNum(OrionSetting->SaveSlotCapacity);
+	SaveGameClass = OrionSetting->SaveGameClass;
 	UGameInstance* GI = GetGameInstance();
 	//Delegates
 	{
@@ -88,23 +88,23 @@ FString UOrionSaveGameSubsystem::Platform_CreateSaveGameName(ULocalPlayer* Local
 #endif // UE_BUILD_SHIPPING
 }
 
-FString UOrionSaveGameSubsystem::Platform_CreateSaveSnapshotName(ULocalPlayer* LocalPlayer, int32 SaveSlotIndex) const
+void UOrionSaveGameSubsystem::DeleteSaveGame(int32 Slot)
 {
-	const FString SaveSnapshotName = FString::Printf(TEXT("save_snapshot_%i"), SaveSlotIndex);
+	if (Slot < 0 || Slot >= SaveGameSlots.Num())
+	{
+		UE_LOG(LogTemp, Error, TEXT("Fail to delete save game at slot (%i). Invalid save slot!"), Slot);
+		return;
+	}
 
-#if (UE_BUILD_SHIPPING && PLATFORM_WINDOWS)
-
+	UGameInstance* GI = GetGameInstance();
+	ULocalPlayer* LocalPlayer = GI ? GI->GetLocalPlayerByIndex(0) : nullptr;
 	check(LocalPlayer);
-	const FUniqueNetIdRepl UniqueNetId = LocalPlayer->GetUniqueNetIdForPlatformUser();
-	check(UniqueNetId.IsValid());
-	return FString::Printf(TEXT("%s/%s"), *UniqueNetId->ToString(), *SaveSnapshotName);
 
-#else
-	return SaveSnapshotName;
-
-#endif // UE_BUILD_SHIPPING
+	CurrentSaveSlot = Slot;
+	const FString SaveName = Platform_CreateSaveGameName(LocalPlayer, CurrentSaveSlot);
+	UE_LOG(LogTemp, Log, TEXT("Delete and create new save game (SaveSlot: %i, SaveName: %s"), CurrentSaveSlot, *SaveName);
+	SaveGameSlots[CurrentSaveSlot] = Cast<UOrionSaveGame>(ULocalPlayerSaveGame::CreateNewSaveGameForLocalPlayer(SaveGameClass, LocalPlayer, SaveName));
 }
-
 
 void UOrionSaveGameSubsystem::SaveGame(int32 Slot)
 {
@@ -115,8 +115,9 @@ void UOrionSaveGameSubsystem::SaveGame(int32 Slot)
 	}
 
 	CurrentSaveSlot = Slot;
-	UOrionSaveGame* SaveGameObject = SaveGameSlots[CurrentSaveSlot];
-	check(SaveGameObject);
+	TObjectPtr<UOrionSaveGame> SaveGameObject = SaveGameSlots[CurrentSaveSlot];
+
+	if (!SaveGameObject) return;
 
 	if (SaveGameObject->IsSavingGame())
 	{

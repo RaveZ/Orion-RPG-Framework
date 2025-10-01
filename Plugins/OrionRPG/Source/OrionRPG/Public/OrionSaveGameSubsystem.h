@@ -23,7 +23,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "SaveSubsystem")
 	TSubclassOf<UOrionSaveGame> SaveGameClass;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SaveSubsystem")
 	TArray<TObjectPtr<UOrionSaveGame>> SaveGameSlots;
 
 	UPROPERTY()
@@ -56,9 +55,10 @@ private:
 	void HandlePostLoadMap(UWorld* World);
 
 	FString Platform_CreateSaveGameName(ULocalPlayer* LocalPlayer, int32 SaveSlotIndex) const;
-	FString Platform_CreateSaveSnapshotName(ULocalPlayer* LocalPlayer, int32 SaveSlotIndex) const;
 
 public:
+	UFUNCTION(BlueprintCallable, Category = "SaveSubsystem")
+	void DeleteSaveGame(int32 Slot);
 
 	// Save game at current save slot
 	UFUNCTION(BlueprintCallable, Category = "SaveSubsystem")
@@ -71,11 +71,20 @@ public:
 
 	// Get save game object from current save slot
 	// @return NULL if not using save slot (e.g PIE)
+	UFUNCTION(BlueprintPure, Category = "SaveSubsystem")
 	FORCEINLINE UOrionSaveGame* GetCurrentSaveGameObject() const
 	{
 		return (CurrentSaveSlot == -1) ? nullptr : SaveGameSlots[CurrentSaveSlot];
 	}
 
+	// Get save game list
+	UFUNCTION(BlueprintPure, Category = "SaveSubsystem")
+	FORCEINLINE TArray<UOrionSaveGame*> GetSaveSlots() const
+	{
+		return SaveGameSlots;
+	}
+
+	UFUNCTION(BlueprintPure, Category = "SaveSubsystem")
 	FORCEINLINE bool IsLoadingSaveGame()
 	{
 		return bIsLoadingSaveGame;
