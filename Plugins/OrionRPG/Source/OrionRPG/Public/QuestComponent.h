@@ -97,6 +97,7 @@ public:
 
 private:
 	/**Map of Quest from asset registry. this quest are from asset, DONT manipulate the property unless you know that you're doing*/
+	UPROPERTY()
 	TMap<FName, TObjectPtr<UQuest>> QuestRegistryMap;
 
 	TMap<FName, TObjectPtr<UQuest>> GetQuestRegistryMap();
