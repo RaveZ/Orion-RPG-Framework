@@ -23,6 +23,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "SaveSubsystem")
 	TSubclassOf<UOrionSaveGame> SaveGameClass;
 
+	UPROPERTY(EditDefaultsOnly, Category = "SaveSubsystem")
 	TArray<TObjectPtr<UOrionSaveGame>> SaveGameSlots;
 
 	UPROPERTY()
