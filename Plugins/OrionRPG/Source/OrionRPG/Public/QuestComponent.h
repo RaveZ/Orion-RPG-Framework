@@ -54,6 +54,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
 		TMap<FName, TObjectPtr<UQuest>> QuestMap;
 	
+	/**Map of Quest from asset registry. this quest are from asset, DONT manipulate the property unless you know that you're doing*/
+	UPROPERTY(BlueprintReadOnly, Category = "QuestComponent")
+	TMap<FName, TObjectPtr<UQuest>> QuestRegistryMap;
+
 	/** List of quest category*/
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
 		TArray<FQuestCategory> QuestCategories;
@@ -93,12 +97,10 @@ public:
 		FQuestAdded OnQuestAdded;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
-		FQuestAdded OnQuestUnlocked;
+		FQuestUnlocked OnQuestUnlocked;
 
 private:
-	/**Map of Quest from asset registry. this quest are from asset, DONT manipulate the property unless you know that you're doing*/
-	UPROPERTY()
-	TMap<FName, TObjectPtr<UQuest>> QuestRegistryMap;
+	
 
 	TMap<FName, TObjectPtr<UQuest>> GetQuestRegistryMap();
 
@@ -230,6 +232,7 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:	
 	// Called every frame

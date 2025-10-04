@@ -2,7 +2,19 @@
 
 
 #include "UI/OrionUIManagerSubsystem.h"
+#include "CommonInputSubsystem.h"
+#include "Engine/GameInstance.h"	
+#include "GameFramework/PlayerController.h"
+#include "Engine/LocalPlayer.h"
 #include "Framework/Application/SlateApplication.h"
+
+int32 UOrionUILibrary::InputSuspensions = 0;
+
+//Gameplay Tags
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_Layer_Game, "UI.Layer.Game");
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_Layer_GameMenu, "UI.Layer.GameMenu");
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_Layer_Menu, "UI.Layer.Menu");
+UE_DEFINE_GAMEPLAY_TAG(TAG_UI_Layer_Modal , "UI.Layer.Modal");
 
 UOrionUIManagerSubsystem::UOrionUIManagerSubsystem() : 
 	OrionNavigationConfig(MakeShared<FOrionNavigationConfig>())
@@ -18,4 +30,61 @@ void UOrionUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 void UOrionUIManagerSubsystem::Deinitialize()
 {
 	Super::Deinitialize();
+}
+
+bool UOrionUIManagerSubsystem::ShouldCreateSubsystem(UObject* Outer) const
+{
+	if (!CastChecked<UGameInstance>(Outer)->IsDedicatedServerInstance())
+	{
+		TArray<UClass*> ChildClasses;
+		GetDerivedClasses(GetClass(), ChildClasses, false);
+
+		// Only create an instance if there is no override implementation defined elsewhere
+		return ChildClasses.Num() == 0;
+	}
+
+	return false;
+}
+
+FName UOrionUILibrary::SuspendInputForPlayer(APlayerController* PlayerController, FName SuspendReason)
+{
+	return SuspendInputForPlayer(PlayerController ? PlayerController->GetLocalPlayer() : nullptr, SuspendReason);
+}
+
+FName UOrionUILibrary::SuspendInputForPlayer(ULocalPlayer* LocalPlayer, FName SuspendReason)
+{
+	if (UCommonInputSubsystem* CommonInputSubsystem = UCommonInputSubsystem::Get(LocalPlayer))
+	{
+		InputSuspensions++;
+		FName SuspendToken = SuspendReason;
+		SuspendToken.SetNumber(InputSuspensions);
+
+		CommonInputSubsystem->SetInputTypeFilter(ECommonInputType::MouseAndKeyboard, SuspendToken, true);
+		CommonInputSubsystem->SetInputTypeFilter(ECommonInputType::Gamepad, SuspendToken, true);
+		CommonInputSubsystem->SetInputTypeFilter(ECommonInputType::Touch, SuspendToken, true);
+
+		return SuspendToken;
+	}
+
+	return NAME_None;
+}
+
+void UOrionUILibrary::ResumeInputForPlayer(APlayerController* PlayerController, FName SuspendToken)
+{
+	ResumeInputForPlayer(PlayerController ? PlayerController->GetLocalPlayer() : nullptr, SuspendToken);
+}
+
+void UOrionUILibrary::ResumeInputForPlayer(ULocalPlayer* LocalPlayer, FName SuspendToken)
+{
+	if (SuspendToken == NAME_None)
+	{
+		return;
+	}
+
+	if (UCommonInputSubsystem* CommonInputSubsystem = UCommonInputSubsystem::Get(LocalPlayer))
+	{
+		CommonInputSubsystem->SetInputTypeFilter(ECommonInputType::MouseAndKeyboard, SuspendToken, false);
+		CommonInputSubsystem->SetInputTypeFilter(ECommonInputType::Gamepad, SuspendToken, false);
+		CommonInputSubsystem->SetInputTypeFilter(ECommonInputType::Touch, SuspendToken, false);
+	}
 }

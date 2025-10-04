@@ -3,10 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "NativeGameplayTags.h"
 #include "Subsystems/GameInstanceSubsystem.h"
+#include "Kismet/BlueprintFunctionLibrary.h"
 #include "Framework/Application/NavigationConfig.h"
 #include "OrionUIManagerSubsystem.generated.h"
 
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_Layer_Game);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_Layer_GameMenu);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_Layer_Menu);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_UI_Layer_Modal);
 
 class ORIONRPG_API FOrionNavigationConfig : public FNavigationConfig
 {
@@ -33,9 +40,9 @@ public:
 		KeyEventRules.Emplace(EKeys::C, EUINavigation::Next);
 	}
 };
-/**
- *
- */
+
+class UOrionPrimaryGameLayout;
+
 UCLASS()
 class ORIONRPG_API UOrionUIManagerSubsystem : public UGameInstanceSubsystem
 {
@@ -47,7 +54,35 @@ public:
 
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
+	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
 
+public:
+	UPROPERTY(BlueprintReadOnly, Category = "UI Subsystem")
+	TObjectPtr<UOrionPrimaryGameLayout> PrimaryLayout;
 private:
 	TSharedRef<FOrionNavigationConfig> OrionNavigationConfig;
+};
+
+class ULocalPlayer;
+
+
+UCLASS()
+class ORIONRPG_API UOrionUILibrary : public UBlueprintFunctionLibrary
+{
+	GENERATED_BODY()
+
+public:
+
+	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "Global UI Extensions")
+	static FName SuspendInputForPlayer(APlayerController* PlayerController, FName SuspendReason);
+
+	static FName SuspendInputForPlayer(ULocalPlayer* LocalPlayer, FName SuspendReason);
+
+	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "Global UI Extensions")
+	static void ResumeInputForPlayer(APlayerController* PlayerController, FName SuspendToken);
+
+	static void ResumeInputForPlayer(ULocalPlayer* LocalPlayer, FName SuspendToken);
+
+private:
+	static int32 InputSuspensions;
 };

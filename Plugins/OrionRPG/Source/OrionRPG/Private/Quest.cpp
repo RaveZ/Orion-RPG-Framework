@@ -59,6 +59,7 @@ bool UQuest::Initialize(UQuestComponent* InitializingComp)
 				NodeMap.Emplace(Node->ID, Node);
 			}
 		}
+		return true;
 	}
 	return false;
 }
@@ -70,12 +71,25 @@ void UQuest::Deinitialize()
 	CurrentNavigatedObjective = nullptr;
 
 
+	// Clean up references safely: do not force destroy UObjects that may still be referenced elsewhere.
 	for (auto& Node : AllNodes)
 	{
-		Node->ConditionalBeginDestroy();
+		if (IsValid(Node))
+		{
+			Node->Quest = nullptr;
+			Node->QuestComponent = nullptr;
+			Node->OwningController = nullptr;
+			Node->ParentNodes.Empty();
+			Node->ChildrenNodes.Empty();
+			Node->Edges.Empty();
+			// reset node-specific runtime state (if available)
+			Node->Reset();
+		}
 	}
+
 	AllNodes.Empty();
-	ConditionalBeginDestroy();
+	RootNodes.Empty();
+	NodeMap.Empty();
 }
 
 UWorld* UQuest::GetWorld() const
@@ -202,15 +216,17 @@ UQuestBuilderNode_Objective* UQuest::GetNavigatedObjective()
 
 void UQuest::BeginNode(UQuestBuilderNode* InNode, bool bLaunchEventOnLoad)
 {
+	if (InNode == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("BeginNode: Node is null for Quest ID: %s"), *ID.ToString());
+		return;
+	}
+
 	if (InNode)
 	{
 		CurrentNodes.AddUnique(InNode);
 	}
-	if (InNode == nullptr)  
-	{  
-		UE_LOG(LogTemp, Warning, TEXT("BeginNode: Node is null for Quest ID: %s"), *ID.ToString());  
-		return;  
-	}
+	
 	
 	if (UQuestBuilderNode_Root* RootNode = Cast<UQuestBuilderNode_Root>(InNode))
 	{
