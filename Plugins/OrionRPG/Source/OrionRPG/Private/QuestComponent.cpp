@@ -57,6 +57,20 @@ void UQuestComponent::BeginPlay()
 	OnQuestUnlocked.AddDynamic(this, &UQuestComponent::QuestUnlocked);
 }
 
+void UQuestComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	OnQuestUpdated.RemoveDynamic(this, &UQuestComponent::QuestUpdated);
+	OnQuestObjectiveBegin.RemoveDynamic(this, &UQuestComponent::QuestObjectiveBegin);
+	OnQuestObjectiveUpdated.RemoveDynamic(this, &UQuestComponent::QuestObjectiveUpdated);
+	OnStartNavigateQuest.RemoveDynamic(this, &UQuestComponent::StartNavigatingQuest);
+	OnQuestFailed.RemoveDynamic(this, &UQuestComponent::QuestFailed);
+	OnQuestCompleted.RemoveDynamic(this, &UQuestComponent::QuestCompleted);
+	OnQuestAdded.RemoveDynamic(this, &UQuestComponent::QuestAdded);
+	OnQuestUnlocked.RemoveDynamic(this, &UQuestComponent::QuestUnlocked);
+}
+
 
 void UQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
@@ -84,7 +98,7 @@ bool UQuestComponent::BeginQuestGraph(UQuestBuilderGraph* QuestGraphAsset)
 
 	if (QuestGraphAsset == nullptr)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Quest Asset is null"));
+		UE_LOG(LogTemp, Log, TEXT("Quest Asset is null"));
 		return false;
 	}
 
@@ -112,7 +126,7 @@ class UQuest* UQuestComponent::MakeQuestInstance(UQuest* QuestTemplate)
 		NewQuest->Initialize(this);
 		if (QuestMap.FindRef(NewQuest->ID))
 		{
-			//UE_LOG(LogTemp, Warning, TEXT("%s Already Registered."), *QuestTemplate->GetName());
+			//UE_LOG(LogTemp, Log, TEXT("%s Already Registered."), *QuestTemplate->GetName());
 			return nullptr;
 		}
 
@@ -144,6 +158,7 @@ class UQuest* UQuestComponent::MakeQuestInstance(UQuest* QuestTemplate)
 class UQuest* UQuestComponent::TryMakeQuestInstanceFromTag(FGameplayTag QuestTag)
 {
 	FName QuestID = QuestTag.GetTagName();
+
 	TObjectPtr<UQuest> QuestPtr = GetQuestRegistryMap().FindRef(QuestID);
 	UQuest* QuestTemplate = QuestPtr.Get();
 	if (IsValid(QuestTemplate))
@@ -204,7 +219,8 @@ void UQuestComponent::ActivateQuestFromTag(FGameplayTag QuestTag)
 		ActivateQuest(QuestPtr.Get());
 	}
 	else
-	{
+    {
+		UE_LOG(LogTemp, Log, TEXT("%s: Quest not found, try make quest instance instead"), TEXT(__FUNCTION__));
 		QuestMap.Remove(QuestID);
 		ActivateQuest(TryMakeQuestInstanceFromTag(QuestTag));
 	}
@@ -220,6 +236,7 @@ void UQuestComponent::UnlockQuestFromTag(FGameplayTag QuestTag)
 	}
 	else
 	{
+		UE_LOG(LogTemp, Log, TEXT("%s: Quest not found, try make quest instance instead"), TEXT(__FUNCTION__));
 		QuestMap.Remove(QuestID);
 		UnlockQuest(TryMakeQuestInstanceFromTag(QuestTag));
 	}
@@ -235,6 +252,7 @@ void UQuestComponent::LockQuestFromTag(FGameplayTag QuestTag)
 	}
 	else
 	{
+		UE_LOG(LogTemp, Log, TEXT("%s: Quest not found, try make quest instance instead"), TEXT(__FUNCTION__));
 		QuestMap.Remove(QuestID);
 		LockQuest(TryMakeQuestInstanceFromTag(QuestTag));
 	}
@@ -271,6 +289,7 @@ void UQuestComponent::RestartQuestFromTag(FGameplayTag QuestTag, FGameplayTag No
 	}
 	else
 	{
+		UE_LOG(LogTemp, Log, TEXT("%s: Quest not found, try make quest instance instead"), TEXT(__FUNCTION__));
 		QuestMap.Remove(QuestID);
 		RestartQuest(TryMakeQuestInstanceFromTag(QuestTag), nullptr, bNotifyQuestAdded);
 	}
@@ -286,6 +305,7 @@ void UQuestComponent::FailQuestFromTag(FGameplayTag QuestTag)
 	}
 	else
 	{
+		UE_LOG(LogTemp, Log, TEXT("%s: Quest not found, try make quest instance instead"), TEXT(__FUNCTION__));
 		QuestMap.Remove(QuestID);
 		FailQuest(TryMakeQuestInstanceFromTag(QuestTag));
 	}
@@ -301,6 +321,7 @@ void UQuestComponent::CompleteQuestFromTag(FGameplayTag QuestTag)
 	}
 	else
 	{
+		UE_LOG(LogTemp, Log, TEXT("%s: Quest not found, try make quest instance instead"), TEXT(__FUNCTION__));
 		QuestMap.Remove(QuestID);
 		CompleteQuest(TryMakeQuestInstanceFromTag(QuestTag));
 	}
@@ -333,16 +354,27 @@ void UQuestComponent::StartNavigateQuest(UQuest* InQuest, UQuestBuilderNode_Obje
 		}
 
 		OnStartNavigateQuest.Broadcast(InQuest);
+
+		UE_LOG(LogTemp, Log, TEXT("Navigate Quest: %s, Tag: %s"),
+			*InQuest->QuestName.ToString(),
+			*InQuest->QuestTag.ToString()
+		);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("QuestComponent : Failed to Navigate Quest. Quest not found or has Completed/Failed"));
+		UE_LOG(LogTemp, Log, TEXT("QuestComponent : Failed to Navigate Quest. Quest not found or has Completed/Failed"));
 	}
 }
 
 void UQuestComponent::ActivateQuest(UQuest* InQuest)
 {
-	if (IsValid(InQuest) && InQuest->QuestState == EQuestState::E_Locked || InQuest->QuestState == EQuestState::E_Unlocked)
+	if (!IsValid(InQuest))
+	{
+		UE_LOG(LogTemp, Log, TEXT("QuestComponent : Failed to Activate Quest, Quest not found or invalid pointer"));
+		return;
+	}
+
+	if (InQuest->QuestState == EQuestState::E_Locked || InQuest->QuestState == EQuestState::E_Unlocked)
 	{
 		InQuest->QuestState = EQuestState::E_Active;
 		if (!InQuest->CurrentNodes.IsEmpty())
@@ -355,77 +387,102 @@ void UQuestComponent::ActivateQuest(UQuest* InQuest)
 			RestartQuest(InQuest);
 		}
 		AutoNavigateQuest();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("QuestComponent : Failed to Activate Quest, Quest not found"));
+
+		UE_LOG(LogTemp, Log, TEXT("Activate Quest: %s, Tag: %s"),
+			*InQuest->QuestName.ToString(),
+			*InQuest->QuestTag.ToString()
+		);
+
 	}
 	
 }
 
 void UQuestComponent::UnlockQuest(UQuest* InQuest)
 {
-	if (InQuest && InQuest->QuestState == EQuestState::E_Locked)
+	if (!IsValid(InQuest))
+	{
+		UE_LOG(LogTemp, Log, TEXT("QuestComponent : Failed to Unlock Quest, Quest not found or invalid pointer"));
+		return;
+	}
+
+	if (InQuest->QuestState == EQuestState::E_Locked)
 	{
 		InQuest->QuestState = EQuestState::E_Unlocked;
 		OnQuestUnlocked.Broadcast(InQuest);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("QuestComponent : Failed to Unlock Quest, Quest not found"));
+
+		UE_LOG(LogTemp, Log, TEXT("Unlock Quest: %s, Tag: %s"),
+			*InQuest->QuestName.ToString(),
+			*InQuest->QuestTag.ToString()
+		);
 	}
 }
 
 void UQuestComponent::LockQuest(UQuest* InQuest)
 {
-	if (InQuest)
+	if (!IsValid(InQuest))
 	{
-		InQuest->QuestState = EQuestState::E_Locked;
-		InQuest->CurrentNodes.Empty();
-		InQuest->VisitedNodeIDs.Empty();
+		UE_LOG(LogTemp, Log, TEXT("QuestComponent : Failed to Lock Quest, Quest not found or invalid pointer"));
+		return;
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("QuestComponent : Failed to Lock Quest, Quest not found"));
-	}
+
+	InQuest->QuestState = EQuestState::E_Locked;
+	InQuest->CurrentNodes.Empty();
+	InQuest->VisitedNodeIDs.Empty();
+
+	UE_LOG(LogTemp, Log, TEXT("Lock Quest: %s, Tag: %s"),
+		*InQuest->QuestName.ToString(),
+		*InQuest->QuestTag.ToString()
+	);
+	
 }
 
 void UQuestComponent::RestartQuest(UQuest* InQuest, UQuestBuilderNode* InNode, const bool bNotifyQuestAdded)
 {
-	if (InQuest)
+	if (!IsValid(InQuest))
 	{
-		InQuest->QuestState = EQuestState::E_Active;
-		if(bNotifyQuestAdded)
-		{
-			OnQuestAdded.Broadcast(InQuest);
-		}
-		if (InNode)
-		{
-			InQuest->BeginNode(InNode);
-		}
-		else
-		{
-			//reset all Node
-			for (auto& Node : InQuest->AllNodes)
-			{
-				Node->Reset();
-			}
-			InQuest->VisitedNodeIDs.Empty();
-			if (InQuest->RootNodes.IsValidIndex(0))
-			{
-				InQuest->BeginNode(InQuest->RootNodes[0]);
-			}
-		}
+		UE_LOG(LogTemp, Log, TEXT("QuestComponent : Failed to Restart Quest, Quest not found or invalid pointer"));
+		return;
+	}
+
+	InQuest->QuestState = EQuestState::E_Active;
+	if(bNotifyQuestAdded)
+	{
+		OnQuestAdded.Broadcast(InQuest);
+	}
+	if (InNode)
+	{
+		InQuest->BeginNode(InNode);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("QuestComponent : Failed to Restart Quest, Quest not found"));
+		//reset all Node
+		for (auto& Node : InQuest->AllNodes)
+		{
+			Node->Reset();
+		}
+		InQuest->VisitedNodeIDs.Empty();
+		if (InQuest->RootNodes.IsValidIndex(0))
+		{
+			InQuest->BeginNode(InQuest->RootNodes[0]);
+		}
 	}
+
+	UE_LOG(LogTemp, Log, TEXT("Restart Quest: %s, Tag: %s"),
+		*InQuest->QuestName.ToString(),
+		*InQuest->QuestTag.ToString()
+	);
+	
 }
 
 void UQuestComponent::FailQuest(UQuest* InQuest)
 {
-	if (InQuest && InQuest->QuestState == EQuestState::E_Active)
+	if (!IsValid(InQuest))
+	{
+		UE_LOG(LogTemp, Log, TEXT("QuestComponent : Failed to Fail Quest, Quest not found or invalid pointer"));
+		return;
+	}
+
+	if (InQuest->QuestState == EQuestState::E_Active)
 	{
 		//fail all current nodes
 		for (int32 i = 0; i < InQuest->CurrentNodes.Num(); i++)
@@ -443,16 +500,25 @@ void UQuestComponent::FailQuest(UQuest* InQuest)
 
 		OnQuestFailed.Broadcast(InQuest);
 		OnQuestUpdated.Broadcast();
+
+		UE_LOG(LogTemp, Log, TEXT("Fail Quest: %s, Tag: %s"),
+			*InQuest->QuestName.ToString(),
+			*InQuest->QuestTag.ToString()
+		);
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("QuestComponent : Failed to Fail Quest, Quest not found"));
-	}
+
+	
 }
 
 void UQuestComponent::CompleteQuest(UQuest* InQuest)
 {
-	if (InQuest && InQuest->QuestState == EQuestState::E_Active)
+	if (!IsValid(InQuest))
+	{
+		UE_LOG(LogTemp, Log, TEXT("QuestComponent : Failed to Complete Quest, Quest not found or invalid pointer"));
+		return;
+	}
+
+	if (InQuest->QuestState == EQuestState::E_Active)
 	{
 		//fail all current nodes
 		for (int32 i = 0; i < InQuest->CurrentNodes.Num(); i++)
@@ -471,10 +537,11 @@ void UQuestComponent::CompleteQuest(UQuest* InQuest)
 
 		OnQuestCompleted.Broadcast(InQuest);
 		OnQuestUpdated.Broadcast();
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("QuestComponent : Failed to Complete Quest, Quest not found"));
+
+		UE_LOG(LogTemp, Log, TEXT("Complete Quest: %s, Tag: %s"),
+			*InQuest->QuestName.ToString(),
+			*InQuest->QuestTag.ToString()
+		);
 	}
 }
 
@@ -581,7 +648,7 @@ UQuest* UQuestComponent::FindQuest(FGameplayTag QuestTag) const
 		return FoundedQuest;
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("Quest Not Found"));
+	UE_LOG(LogTemp, Log, TEXT("Quest Not Found"));
 	return nullptr;
 }
 
@@ -593,13 +660,18 @@ void UQuestComponent::ResetAllQuest()
 	for (int32 j = QuestKeys.Num() - 1; j >= 0; --j)
 	{
 		FName Key = QuestKeys[j];
-		UQuest* Quest = QuestMap.FindRef(Key);
-		Quest->Deinitialize();
-		Quest->CurrentNodes.Empty();
+		TObjectPtr<UQuest> QuestPtr = QuestMap.FindRef(Key);
+		UQuest* Quest = QuestPtr.Get();
+		if (IsValid(Quest))
+		{
+			Quest->Deinitialize();
+			Quest->CurrentNodes.Empty();
+		}
 		QuestMap.Remove(Key);
 	}
 	QuestMap.Empty();
 	QuestCategories.Empty();
+	QuestRegistryMap.Empty();
 	CurrentNavigatedQuest = nullptr;
 }
 
@@ -799,21 +871,24 @@ bool UQuestComponent::DeleteSave(const FString& SaveName, const int32 Slot)
 
 TMap<FName, TObjectPtr<UQuest>> UQuestComponent::GetQuestRegistryMap()
 {
-	if(QuestRegistryMap.Num() == 0)
+	if (QuestRegistryMap.Num() == 0)
 	{
 		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
 
 		TArray<FAssetData> QuestGraphDataArray;
 		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UQuestBuilderGraph::StaticClass()), QuestGraphDataArray);
 
+		// Only clear once before populating.
+		QuestRegistryMap.Empty();
+
 		for (const FAssetData& AssetData : QuestGraphDataArray)
 		{
 			UQuestBuilderGraph* QuestGraphAsset = Cast<UQuestBuilderGraph>(AssetData.GetAsset());
 			if (QuestGraphAsset)
 			{
-				QuestRegistryMap.Empty();
 				for (const auto& Quest : QuestGraphAsset->QuestList)
-					if (Quest)
+				{
+					if (IsValid(Quest))
 					{
 						if (Quest->QuestTag.IsValid())
 						{
@@ -823,11 +898,10 @@ TMap<FName, TObjectPtr<UQuest>> UQuestComponent::GetQuestRegistryMap()
 						{
 							QuestRegistryMap.Emplace(Quest->ID, Quest);
 						}
-
 					}
+				}
 			}
 		}
-		return QuestRegistryMap;
 	}
 	return QuestRegistryMap;
 }
@@ -848,28 +922,17 @@ void UQuestComponent::QuestObjectiveUpdated(UQuest* Quest)
 
 void UQuestComponent::StartNavigatingQuest(UQuest* Quest)
 {
-	if (Quest)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Start Navigating Quest: %s"), *Quest->ID.ToString());  
-	}  
+	  
 }
 
 void UQuestComponent::QuestFailed(UQuest* Quest)
 {
 	AutoNavigateQuest();
-	if (Quest)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Quest failed: %s"), *Quest->ID.ToString());
-	}
 }
 
 void UQuestComponent::QuestCompleted(UQuest* Quest)
 {
 	AutoNavigateQuest();
-	if (Quest)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Quest Completed: %s"), *Quest->ID.ToString());
-	}
 }
 
 void UQuestComponent::QuestAdded(UQuest* Quest)
@@ -882,10 +945,6 @@ void UQuestComponent::QuestAdded(UQuest* Quest)
 
 void UQuestComponent::QuestUnlocked(UQuest* Quest)
 {
-	if (Quest)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Quest Unlocked: %s"), *Quest->ID.ToString());
-	}
 }
 
 
