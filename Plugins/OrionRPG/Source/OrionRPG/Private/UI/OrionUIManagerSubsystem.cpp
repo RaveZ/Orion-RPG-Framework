@@ -21,6 +21,7 @@ UOrionUIManagerSubsystem::UOrionUIManagerSubsystem() :
 {
 }
 
+ 
 void UOrionUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);

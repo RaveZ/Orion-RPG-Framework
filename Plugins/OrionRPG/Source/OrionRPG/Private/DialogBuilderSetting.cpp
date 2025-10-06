@@ -16,6 +16,12 @@ UDialogBuilderSetting::UDialogBuilderSetting()
 		DefaultDialogWidget = DialogueUserWidgetFinder.Class;
 	}
 
+	auto DialogueFreeMovementWidgetFinder = ConstructorHelpers::FClassFinder<UUserWidget>(TEXT("WidgetBlueprint'/OrionRPG/Widgets/Dialog/WBP_Dialog_FreeMovement.WBP_Dialog_FreeMovement_C'"));
+	if (DialogueFreeMovementWidgetFinder.Succeeded())
+	{
+		DefaultFreeMovementDialogWidget = DialogueFreeMovementWidgetFinder.Class;
+	}
+
 	DialogLineNodeColor = FLinearColor(0.15f, 0.15f, 0.15f);
 	PlayerLineNodeColor = FLinearColor(.06f, .135f, .175f);
 	RerouteNodeColor = FLinearColor(.063f, .096f, .1875f);

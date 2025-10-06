@@ -32,6 +32,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options", noclear)
 	TSubclassOf<class UCommonActivatableWidget> DefaultDialogWidget;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options", noclear)
+	TSubclassOf<class UCommonActivatableWidget> DefaultFreeMovementDialogWidget;
+
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor DialogLineNodeColor;
 
