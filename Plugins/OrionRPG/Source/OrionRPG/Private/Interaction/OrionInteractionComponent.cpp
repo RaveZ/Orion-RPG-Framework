@@ -24,6 +24,7 @@ UOrionInteractionComponent::UOrionInteractionComponent()
 	InteractionOffset = FVector(75.f, 0.f, 0.f);
 	bIsInteractionEnabled = false;
 	bDebugTrace = false;
+	SetComponentTickEnabled(false);
 }
 
 void UOrionInteractionComponent::BeginPlay()

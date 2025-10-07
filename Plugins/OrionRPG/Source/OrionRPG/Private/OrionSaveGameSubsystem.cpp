@@ -3,6 +3,7 @@
 
 #include "OrionSaveGameSubsystem.h"
 #include "Engine/GameInstance.h"
+#include "OrionSaveGame.h"
 #include "OrionSetting.h"
 #include "Engine/World.h"
 #include "QuestComponent.h"
@@ -61,6 +62,7 @@ void UOrionSaveGameSubsystem::HandlePostLoadMap(UWorld* World)
 	APlayerController* PC = World->GetFirstPlayerController();
 	
 
+	if (OrionSetting->bSaveLevel && bIsLoadingSaveGame)
 	{
 		if (UOrionSaveGame* SaveGame = GetCurrentSaveGameObject())
 		{
@@ -132,6 +134,8 @@ void UOrionSaveGameSubsystem::SaveGame(int32 Slot)
 
 void UOrionSaveGameSubsystem::LoadGame(int32 Slot)
 {
+	if (bIsLoadingSaveGame) return; // already loading a save game
+
 	if (Slot < 0 || Slot >= SaveGameSlots.Num())
 	{
 		UE_LOG(LogTemp, Error, TEXT("OrionSaveSubsystem: Fail to load game from slot (%i). Invalid save slot!"), Slot);
@@ -145,8 +149,16 @@ void UOrionSaveGameSubsystem::LoadGame(int32 Slot)
 
 	CurrentSaveSlot = Slot;
 
+
 	UOrionSaveGame* SaveGameObject = SaveGameSlots[CurrentSaveSlot];
 	check(SaveGameObject);
+
+
+	if (SaveGameObject->GetSavedDataVersion() == SaveGameObject->GetInvalidDataVersion()) // no need to load anything if save data version is invalid | newly created | being reset
+	{
+		UE_LOG(LogTemp, Warning, TEXT("OrionSaveSubsystem: Abort load game from slot (%i). save data version invalid"), Slot);
+		return;
+	}
 
 	if (OrionSetting->bSaveLevel)
 	{
@@ -161,7 +173,9 @@ void UOrionSaveGameSubsystem::LoadGame(int32 Slot)
 	}
 	else
 	{
+		bIsLoadingSaveGame = true;
 		SaveGameObject->HandleLoadGame(GetWorld(), true);
+		bIsLoadingSaveGame = false;
 	}
 }
 

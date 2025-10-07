@@ -23,7 +23,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options")
 		float MinDialogLineDuration;
 
-
 	/**Determine how long the line should be displayed*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options")
 		float DialogLineWordsPerSecond;

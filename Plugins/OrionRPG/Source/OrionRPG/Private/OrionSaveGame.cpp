@@ -25,6 +25,8 @@ void UOrionSaveGame::ResetToDefault()
 {
 	PlayInfoData = FOrionPlayInfoSaveData();
 	PlayerData = FOrionPlayerSaveData();
+	SavedActors.Reset();
+
 
 	Super::ResetToDefault();
 }
@@ -137,6 +139,7 @@ void UOrionSaveGame::HandlePostSave(bool bSuccess)
 
 void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
 {
+
 	check(World);
 	UE_LOG(LogTemp, Log, TEXT("Handle post load level (bFromLoadGame: %d)"), bFromLoadGame);
 

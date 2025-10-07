@@ -85,9 +85,14 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interactable")
 	float CurrentProgress;
 
+	//Ensure Each interaction has cooldown in between and avoid interacting the same object twice in one frame
+	UPROPERTY(Transient)
+	bool bNativeCanInteract;
+
 private:
 	FTimerHandle TimerHandle_UpdateProgressValue;
 
+	FTimerHandle TimerHandle_ResetInteraction;
 
 public:
 	UOrionInteractionTargetComponent();

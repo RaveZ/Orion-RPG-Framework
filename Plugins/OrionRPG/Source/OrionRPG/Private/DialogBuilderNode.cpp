@@ -55,12 +55,16 @@ void UDialogBuilderNode::Initialize(bool bLaunchEventOnLoad)
 
 	if (!OnAllEndEventFinished.IsBound())
 	{
+		TWeakObjectPtr<UDialogBuilderNode> WeakThis = this;
 		OnAllEndEventFinished.AddLambda(
-			[this]()
+			[this, WeakThis]()
 			{
-				if (NextNode)
+				if (WeakThis.IsValid())
 				{
-					DialogGraph->BeginNode(NextNode);
+					if (NextNode)
+					{
+						DialogGraph->BeginNode(NextNode);
+					}
 				}
 			}
 		);
@@ -69,10 +73,14 @@ void UDialogBuilderNode::Initialize(bool bLaunchEventOnLoad)
 	
 	if (!OnAllStartEventFinished.IsBound())
 	{
+		TWeakObjectPtr<UDialogBuilderNode> WeakThis = this;
 		OnAllStartEventFinished.AddLambda(
-			[this]()
+			[this, WeakThis]()
 			{
-				BeginNode();
+				if (WeakThis.IsValid())
+				{
+					BeginNode();
+				}
 			}
 		);
 	}
@@ -241,13 +249,17 @@ void UDialogBuilderNode::LaunchStartEventQueue()
 	}
 	if (StartEventQueue.IsValidIndex(0))
 	{
+		TWeakObjectPtr<UDialogBuilderNode> WeakThis = this;
 		StartEventQueue[0]->OnEventFinished.AddLambda(
-			[this]()
+			[this, WeakThis]()
 			{
-				if (StartEventQueue.IsValidIndex(0))
+				if (WeakThis.IsValid())
 				{
-					StartEventQueue.RemoveAt(0);
-					LaunchStartEventQueue();
+					if (StartEventQueue.IsValidIndex(0))
+					{
+						StartEventQueue.RemoveAt(0);
+						LaunchStartEventQueue();
+					}
 				}
 			}
 		);
@@ -269,15 +281,18 @@ void UDialogBuilderNode::LaunchEndEventQueue()
 	}
 	if (EndEventQueue.IsValidIndex(0))
 	{
+		TWeakObjectPtr<UDialogBuilderNode> WeakThis = this;
 		EndEventQueue[0]->OnEventFinished.AddLambda(
-			[this]()
+			[this, WeakThis]()
 			{
-				if (EndEventQueue.IsValidIndex(0))
+				if (WeakThis.IsValid())
 				{
-					EndEventQueue.RemoveAt(0);
-					LaunchEndEventQueue();
+					if (EndEventQueue.IsValidIndex(0))
+					{
+						EndEventQueue.RemoveAt(0);
+						LaunchEndEventQueue();
+					}
 				}
-
 			}
 		);
 		EndEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());

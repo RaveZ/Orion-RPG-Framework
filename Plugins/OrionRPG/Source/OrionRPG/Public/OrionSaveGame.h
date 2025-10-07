@@ -133,11 +133,7 @@ public:
 	virtual void HandlePostSave(bool bSuccess) override;
 
 	virtual void HandleLoadGame(UWorld* World, bool bFromLoadGame);
-public:
-	FORCEINLINE bool IsSavingGame()
-	{
-		return bIsSaving;
-	}
+
 public:
 	UPROPERTY()
 	TArray<FOrionActorSaveData> SavedActors;
@@ -152,10 +148,21 @@ public:
 	FOrionPlayInfoSaveData PlayInfoData;
 
 private:
+	UPROPERTY(Transient)
 	TArray<TObjectPtr<AActor>> CachedActors;
 	bool bIsSaving;
 
+public:
+	FORCEINLINE bool IsSavingGame()
+	{
+		return bIsSaving;
+	}
 
+	UFUNCTION(BlueprintPure, Category = "Orion|SaveGame")
+	FORCEINLINE FName GetSavedMapName()
+	{
+		return FName(*PlayInfoData.MapURL);
+	}
 };
 
 

@@ -78,6 +78,13 @@ public:
 		return (CurrentSaveSlot == -1) ? nullptr : SaveGameSlots[CurrentSaveSlot];
 	}
 
+	UFUNCTION(BlueprintPure, Category = "SaveSubsystem")
+	FORCEINLINE UOrionSaveGame* GetSaveGameObject(int slot = 0) const
+	{
+		return (CurrentSaveSlot == -1) ? nullptr : SaveGameSlots[slot];
+	}
+
+
 	// Get save game list
 	UFUNCTION(BlueprintPure, Category = "SaveSubsystem")
 	FORCEINLINE TArray<UOrionSaveGame*> GetSaveSlots() const

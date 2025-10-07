@@ -15,6 +15,9 @@ UOrionInteractionTargetComponent::UOrionInteractionTargetComponent()
 	HoldDuration = 1.0f;
 	CurrentInteractor = nullptr;
 	CurrentProgress = 0.0f;
+	bAutoActivate = true;
+	bNativeCanInteract = true;
+	SetComponentTickEnabled(false);
 }
 
 void UOrionInteractionTargetComponent::BeginPlay()
@@ -32,7 +35,7 @@ void UOrionInteractionTargetComponent::BeginPlay()
 
 bool UOrionInteractionTargetComponent::CanInteract() const
 {
-	return (Mode != EOrionInteractionMode::None) && (CurrentInteractor == nullptr) && FMath::IsNearlyEqual(CurrentProgress, 0.0f, UE_KINDA_SMALL_NUMBER);
+	return bNativeCanInteract && (Mode != EOrionInteractionMode::None) && (CurrentInteractor == nullptr) && FMath::IsNearlyEqual(CurrentProgress, 0.0f, UE_KINDA_SMALL_NUMBER);
 }
 
 bool UOrionInteractionTargetComponent::DecoratorConditionMet() const
@@ -70,7 +73,6 @@ void UOrionInteractionTargetComponent::Focused(AActor* Interactor)
 void UOrionInteractionTargetComponent::StartInteraction(AActor* Interactor)
 {
 	//UE_LOG(LogTemp, Log, __FUNCTIONW__);
-
 	check(Mode != EOrionInteractionMode::None);
 
 	CurrentInteractor = Interactor;
@@ -143,6 +145,24 @@ void UOrionInteractionTargetComponent::EndInteraction(bool bCompleted)
 	{
 		InteractionComp->InteractionEnded(this, bCompleted);
 	}
+
+	bNativeCanInteract = false;
+	FTimerDelegate ResetInteractionTimerDel;
+	TWeakObjectPtr<UOrionInteractionTargetComponent> WeakThis = this;
+	ResetInteractionTimerDel.BindLambda([this, WeakThis]()
+		{
+			if (WeakThis.IsValid())
+			{
+				bNativeCanInteract = true;
+			}
+		});
+
+	GetWorld()->GetTimerManager().SetTimer(
+		TimerHandle_ResetInteraction, 
+		ResetInteractionTimerDel,
+		0.5f,
+		false 
+	);
 
 	CurrentInteractor = nullptr;
 	CurrentProgress = 0.0f;
