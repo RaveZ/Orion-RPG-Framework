@@ -132,7 +132,7 @@ void UQuestBuilderNode_Objective::BeginObjective()
 
 void UQuestBuilderNode_Objective::CompleteObjective()
 {
-    if (Quest->QuestState != EQuestState::E_Active)
+    if (Quest && Quest->QuestState != EQuestState::E_Active)
         return;
     if (ObjectiveState != EObjectiveState::E_Active)
         return;

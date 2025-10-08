@@ -141,7 +141,7 @@ void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
 {
 
 	check(World);
-	UE_LOG(LogTemp, Log, TEXT("Handle post load level (bFromLoadGame: %d)"), bFromLoadGame);
+	UE_LOG(LogTemp, Log, TEXT("Handle load game (bFromLoadGame: %d)"), bFromLoadGame);
 
 	APlayerController* PC = World->GetFirstPlayerController<APlayerController>();
 	check(PC);
@@ -166,12 +166,7 @@ void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
 			}
 		}
 
-		// QUEST
-		{
-			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(PC);
-			check(QuestComp)
-				QuestComp->InitializeFromSaveGame(QuestData);
-		}
+		
 
 		// DATA LAYERS
 		{
@@ -220,6 +215,13 @@ void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
 					IOrionSaveGameInterface::Execute_OnLoaded(FoundActor);
 				}
 			}
+		}
+
+		// QUEST
+		{
+			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(PC);
+			check(QuestComp)
+				QuestComp->InitializeFromSaveGame(QuestData);
 		}
 	}
 

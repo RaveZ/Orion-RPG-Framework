@@ -47,14 +47,7 @@ void UQuestComponent::BeginPlay()
 	OwningController = GetOwningController();
 	GetQuestRegistryMap();
 
-	OnQuestUpdated.AddDynamic(this, &UQuestComponent::QuestUpdated);
-	OnQuestObjectiveBegin.AddDynamic(this, &UQuestComponent::QuestObjectiveBegin);
-	OnQuestObjectiveUpdated.AddDynamic(this, &UQuestComponent::QuestObjectiveUpdated);
-	OnStartNavigateQuest.AddDynamic(this, &UQuestComponent::StartNavigatingQuest);
-	OnQuestFailed.AddDynamic(this, &UQuestComponent::QuestFailed);
-	OnQuestCompleted.AddDynamic(this, &UQuestComponent::QuestCompleted);
-	OnQuestAdded.AddDynamic(this, &UQuestComponent::QuestAdded);
-	OnQuestUnlocked.AddDynamic(this, &UQuestComponent::QuestUnlocked);
+	InitializeDelegate();
 }
 
 void UQuestComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -71,6 +64,17 @@ void UQuestComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	OnQuestUnlocked.RemoveDynamic(this, &UQuestComponent::QuestUnlocked);
 }
 
+void UQuestComponent::InitializeDelegate()
+{
+	OnQuestUpdated.AddDynamic(this, &UQuestComponent::QuestUpdated);
+	OnQuestObjectiveBegin.AddDynamic(this, &UQuestComponent::QuestObjectiveBegin);
+	OnQuestObjectiveUpdated.AddDynamic(this, &UQuestComponent::QuestObjectiveUpdated);
+	OnStartNavigateQuest.AddDynamic(this, &UQuestComponent::StartNavigatingQuest);
+	OnQuestFailed.AddDynamic(this, &UQuestComponent::QuestFailed);
+	OnQuestCompleted.AddDynamic(this, &UQuestComponent::QuestCompleted);
+	OnQuestAdded.AddDynamic(this, &UQuestComponent::QuestAdded);
+	OnQuestUnlocked.AddDynamic(this, &UQuestComponent::QuestUnlocked);
+}
 
 void UQuestComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
@@ -613,6 +617,10 @@ APlayerController* UQuestComponent::GetOwningController() const
 
 	return nullptr;
 }
+
+
+
+
 
 void UQuestComponent::StopNavigateQuest()
 {
