@@ -108,6 +108,7 @@ public:
 
 	virtual void BeginNode() override;
 	virtual void EvaluateNextNode() override;
+	virtual bool HasBeenVisited() override;
 
 #if WITH_EDITOR
 	virtual FText GetNodeTitle() const override;

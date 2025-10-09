@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Class.h"
+#include "Engine/DataTable.h"
 #include "UObject/NoExportTypes.h"
 #include "UObject/ObjectMacros.h"
 #include "UObject/ScriptMacros.h"
@@ -43,6 +44,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Save")
 	bool bSaveDataLayer;
 
+	//Interaction input. add your own input here
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Input")
+	FDataTableRowHandle InteractInput;
 
 };
 

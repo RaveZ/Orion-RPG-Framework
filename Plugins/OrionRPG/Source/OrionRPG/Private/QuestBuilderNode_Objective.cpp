@@ -184,6 +184,10 @@ void UQuestBuilderNode_Objective::EvaluateNextNode()
     }
 }
 
+bool UQuestBuilderNode_Objective::HasBeenVisited()
+{
+    return Super::HasBeenVisited() && (IsObjectiveCompleted() || IsObjectiveFailed());
+}
 
 #if WITH_EDITOR
 FText UQuestBuilderNode_Objective::GetNodeTitle() const
