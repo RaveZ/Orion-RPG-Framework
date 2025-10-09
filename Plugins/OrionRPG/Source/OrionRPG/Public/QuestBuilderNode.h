@@ -103,7 +103,7 @@ public:
 	virtual void EvaluateNextNode();
 
 	/**Check if this node has been visited*/
-	bool HasBeenVisited();
+	virtual bool HasBeenVisited();
 	/**Check if the child node still has active objectives*/
 	bool AllChildrenHasBeenVisited();
 
