@@ -69,9 +69,10 @@ void UQuest::Deinitialize()
 	VisitedNodeIDs.Empty();
 	CurrentNodes.Empty();
 	CurrentNavigatedObjective = nullptr;
+	QuestComponent = nullptr;
+	OwningController = nullptr;
 
 
-	// Clean up references safely: do not force destroy UObjects that may still be referenced elsewhere.
 	for (auto& Node : AllNodes)
 	{
 		if (IsValid(Node))
@@ -82,10 +83,10 @@ void UQuest::Deinitialize()
 			Node->ParentNodes.Empty();
 			Node->ChildrenNodes.Empty();
 			Node->Edges.Empty();
-			// reset node-specific runtime state (if available)
 			Node->Reset();
 		}
 	}
+
 
 	AllNodes.Empty();
 	RootNodes.Empty();

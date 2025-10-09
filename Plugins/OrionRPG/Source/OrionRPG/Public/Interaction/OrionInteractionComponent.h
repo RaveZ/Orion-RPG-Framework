@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Components/BoxComponent.h"
+#include "NativeGameplayTags.h"
 #include "OrionInteractionComponent.generated.h"
 
 
@@ -16,8 +17,7 @@ enum class EOrionInteractionType : uint8
 };
 
 class UOrionInteractionTargetComponent;
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOrionInteractionSignature, UOrionInteractionTargetComponent*, InteractionTarget);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOrionInteractionSignature, UOrionInteractionTargetComponent*, InteractionTarget, FGameplayTag, InteractionTargetTag);
 
 /**
  * Interaction component

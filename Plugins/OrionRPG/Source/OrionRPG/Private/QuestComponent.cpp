@@ -4,6 +4,7 @@
 #include "QuestComponent.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
+#include "Containers/Ticker.h"
 #include "Quest.h"
 #include "OrionSaveGameSubsystem.h"
 #include "Decorator/OrionDecorator.h"
@@ -66,6 +67,16 @@ void UQuestComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void UQuestComponent::InitializeDelegate()
 {
+
+	OnQuestUpdated.RemoveDynamic(this, &UQuestComponent::QuestUpdated);
+	OnQuestObjectiveBegin.RemoveDynamic(this, &UQuestComponent::QuestObjectiveBegin);
+	OnQuestObjectiveUpdated.RemoveDynamic(this, &UQuestComponent::QuestObjectiveUpdated);
+	OnStartNavigateQuest.RemoveDynamic(this, &UQuestComponent::StartNavigatingQuest);
+	OnQuestFailed.RemoveDynamic(this, &UQuestComponent::QuestFailed);
+	OnQuestCompleted.RemoveDynamic(this, &UQuestComponent::QuestCompleted);
+	OnQuestAdded.RemoveDynamic(this, &UQuestComponent::QuestAdded);
+	OnQuestUnlocked.RemoveDynamic(this, &UQuestComponent::QuestUnlocked);
+
 	OnQuestUpdated.AddDynamic(this, &UQuestComponent::QuestUpdated);
 	OnQuestObjectiveBegin.AddDynamic(this, &UQuestComponent::QuestObjectiveBegin);
 	OnQuestObjectiveUpdated.AddDynamic(this, &UQuestComponent::QuestObjectiveUpdated);
@@ -682,6 +693,7 @@ void UQuestComponent::ResetAllQuest()
 		if (IsValid(Quest))
 		{
 			Quest->Deinitialize();
+
 			Quest->CurrentNodes.Empty();
 		}
 		QuestMap.Remove(Key);
@@ -862,6 +874,8 @@ void UQuestComponent::InitializeFromSaveGame(FOrionQuestSaveData& QuestSaveData)
 			LoadedQuestAsset->BeginMultipleNodes(LoadedQuestAsset->CurrentNodes, bLaunchEventOnLoad);
 		}
 	}
+
+	InitializeDelegate();//remove and add delegate binding, so other destroyed object that bind to the delegate will also be removed
 
 	StopNavigateQuest();
 	UQuest* FoundedQuest = QuestMap.FindRef(QuestSaveData.NavigatedQuestID);

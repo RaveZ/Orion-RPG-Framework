@@ -24,7 +24,7 @@ UOrionInteractionComponent::UOrionInteractionComponent()
 	InteractionOffset = FVector(75.f, 0.f, 0.f);
 	bIsInteractionEnabled = false;
 	bDebugTrace = false;
-	SetComponentTickEnabled(false);
+	//SetComponentTickEnabled(false);
 }
 
 void UOrionInteractionComponent::BeginPlay()
@@ -256,7 +256,8 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 			break;
 		}
 	}
-	OnInteractionUpdated.Broadcast(CurrentInteractionTarget);
+
+	OnInteractionUpdated.Broadcast(CurrentInteractionTarget, CurrentInteractionTarget ? CurrentInteractionTarget->Tag : FGameplayTag().EmptyTag);
 	if(PrevInteractable != CurrentInteractionTarget)
 	{
 		MulticastOnInteractionChanged(CurrentInteractionTarget);
@@ -310,24 +311,24 @@ void UOrionInteractionComponent::InteractionEnded(UOrionInteractionTargetCompone
 
 void UOrionInteractionComponent::MulticastOnInteractionStarted_Implementation(UOrionInteractionTargetComponent* Target)
 {
-	OnInteractionStarted.Broadcast(Target);
+	OnInteractionStarted.Broadcast(Target, Target ? Target->Tag : FGameplayTag().EmptyTag);
 }
 
 void UOrionInteractionComponent::MulticastOnInteractionCanceled_Implementation(UOrionInteractionTargetComponent* Target)
 {
-	OnInteractionCanceled.Broadcast(Target);
+	OnInteractionCanceled.Broadcast(Target, Target ? Target->Tag : FGameplayTag().EmptyTag);
 }
 
 void UOrionInteractionComponent::MulticastOnInteractionCompleted_Implementation(UOrionInteractionTargetComponent* Target)
 {
-	OnInteractionCompleted.Broadcast(Target);
+	OnInteractionCompleted.Broadcast(Target, Target ? Target->Tag : FGameplayTag().EmptyTag);
 }
 void UOrionInteractionComponent::MulticastOnInteractionChanged_Implementation(UOrionInteractionTargetComponent* Target)
 {
-	OnInteractionChanged.Broadcast(Target);
+	OnInteractionChanged.Broadcast(Target, Target ? Target->Tag : FGameplayTag().EmptyTag);
 }
 
 void UOrionInteractionComponent::MulticastOnInteractionBlocked_Implementation(UOrionInteractionTargetComponent* Target)
 {
-	OnInteractionBlocked.Broadcast(Target);
+	OnInteractionBlocked.Broadcast(Target, Target ? Target->Tag : FGameplayTag().EmptyTag);
 }

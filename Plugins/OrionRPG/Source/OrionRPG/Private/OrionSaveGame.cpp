@@ -47,6 +47,9 @@ void UOrionSaveGame::HandlePreSave()
 	APlayerController* PC = World->GetFirstPlayerController<APlayerController>();
 	check(PC);
 
+	APawn* PlayerChar = PC->GetPawn<APawn>();
+	check(PlayerChar);
+
 	// Play info data
 	{
 		const FDateTime CurrentDateTime = FDateTime::Now();
@@ -83,8 +86,6 @@ void UOrionSaveGame::HandlePreSave()
 
 	// Player data
 	{
-		APawn* PlayerChar = PC->GetPawn<APawn>();
-		check(PlayerChar);
 		PlayerData.Location = PlayerChar->GetActorLocation();
 		PlayerData.Rotation = PlayerChar->GetActorRotation();
 	}
@@ -159,11 +160,29 @@ void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
 			APawn* PlayerChar = PC->GetPawn<APawn>();
 			check(PlayerChar);
 
-			if (PlayerData.Location != FVector::ZeroVector)
+			FString MapName = World->GetMapName();
+			MapName.RemoveFromStart(World->StreamingLevelsPrefix);
+
+			FString MapPath;
+			const FString PathName = World->GetPathName();
+			int32 TokenIndex = INDEX_NONE;
+			if (PathName.FindLastChar(TEXT('/'), TokenIndex))
+			{
+				MapPath = PathName.LeftChop(PathName.Len() - TokenIndex);
+			}
+			FString CurrentMapURL = FString::Printf(TEXT("%s/%s"), *MapPath, *MapName);
+
+			// Compare with saved URL
+			UE_LOG(LogTemp, Log, TEXT("CurrentMapURL: %s, PlayInfoData.MapURL: %s"), *CurrentMapURL, *PlayInfoData.MapURL);
+			// Compare with saved URL
+			bool bIsSameMap = CurrentMapURL.Equals(PlayInfoData.MapURL, ESearchCase::IgnoreCase);
+
+			if (bIsSameMap)
 			{
 				FHitResult HitResult;
 				PlayerChar->SetActorTransform(FTransform(PlayerData.Rotation, PlayerData.Location), false, &HitResult, ETeleportType::TeleportPhysics);
 			}
+			
 		}
 
 		

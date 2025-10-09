@@ -16,14 +16,14 @@ UOrionInteractionTargetComponent::UOrionInteractionTargetComponent()
 	CurrentInteractor = nullptr;
 	CurrentProgress = 0.0f;
 	bAutoActivate = true;
-	bNativeCanInteract = true;
-	SetComponentTickEnabled(false);
+	//SetComponentTickEnabled(false);
 }
 
 void UOrionInteractionTargetComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
+	bNativeCanInteract = true;
 	AActor* Owner = GetOwner();
 	if (Owner)
 	{

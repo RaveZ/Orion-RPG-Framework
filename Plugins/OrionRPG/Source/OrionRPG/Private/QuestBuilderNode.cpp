@@ -77,21 +77,27 @@ void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 							{
 								if (NextNodes[i]->HasBeenVisited())
 									continue;
-								//remove previous nodes from current nodes
-								for (auto& ParentNode : NextNodes[i]->ParentNodes)
-								{
-									//also check if all children nodes has been visited before removing from current node
-									if (ParentNode && ParentNode->AllChildrenHasBeenVisited())
-									{
-										Quest->CurrentNodes.RemoveSingle(ParentNode);
-										ParentNode->bWaitForBranching = false;
-									}
-								}
+								
 								if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(NextNodes[i]))
 								{
 									bObjectiveUpdated = true;
 								}
 								Quest->BeginNode(NextNodes[i]);
+							}
+						}
+
+						for(int i = 0; i< Quest->CurrentNodes.Num(); i++)
+						{
+							if (Quest->CurrentNodes.IsValidIndex(i))
+							{
+								UQuestBuilderNode* CurrNode = Quest->CurrentNodes[i];
+								if ((CurrNode->AllChildrenHasBeenVisited() && CurrNode->HasBeenVisited()) ||
+									(CurrNode->ParentNodes.IsEmpty() && CurrNode->ChildrenNodes.IsEmpty()))
+								{
+									Quest->CurrentNodes.RemoveSingle(CurrNode);
+									CurrNode->bWaitForBranching = false;
+								}
+
 							}
 						}
 						NextNodes.Empty();
