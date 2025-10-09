@@ -219,6 +219,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "QuestComponent")
 	virtual APlayerController* GetOwningController() const;
 
+	void InitializeDelegate();
+
 	void DumpLog() const;
 
 // ================================================================================================ //

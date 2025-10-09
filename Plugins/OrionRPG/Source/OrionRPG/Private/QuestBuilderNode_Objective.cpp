@@ -76,6 +76,7 @@ void UQuestBuilderNode_Objective::TickObjective_Implementation()
 
 void UQuestBuilderNode_Objective::AddToProgress(int AmountToAdd)
 {
+    if (!bInitialized) return;
     if (bUseAmount)
     {
         CurrentProgress = FMath::Clamp(CurrentProgress + AmountToAdd, 0, RequiredAmount);
@@ -98,6 +99,8 @@ void UQuestBuilderNode_Objective::AddToProgress(int AmountToAdd)
 
 void UQuestBuilderNode_Objective::BeginObjective()
 {
+    if (!bInitialized) return;
+
     if (ObjectiveState == EObjectiveState::E_Completed || ObjectiveState == EObjectiveState::E_Failed)
         return;
     if(bObjectiveInitialized)
@@ -127,12 +130,13 @@ void UQuestBuilderNode_Objective::BeginObjective()
         // Fire the first tick off after BeginTask since begin task will usually init things that TickTask may need  
         TickObjective();
     }
-
 }
 
 void UQuestBuilderNode_Objective::CompleteObjective()
 {
-    if (Quest->QuestState != EQuestState::E_Active)
+    if (!bInitialized) return;
+
+    if (Quest && Quest->QuestState != EQuestState::E_Active)
         return;
     if (ObjectiveState != EObjectiveState::E_Active)
         return;
@@ -148,6 +152,8 @@ void UQuestBuilderNode_Objective::CompleteObjective()
 
 void UQuestBuilderNode_Objective::FailObjective()
 {
+    if (!bInitialized) return;
+
     if (Quest->QuestState != EQuestState::E_Active)
         return;
     if (ObjectiveState != EObjectiveState::E_Active)
@@ -176,6 +182,11 @@ void UQuestBuilderNode_Objective::EvaluateNextNode()
     {
         Super::EvaluateNextNode();
     }
+}
+
+bool UQuestBuilderNode_Objective::HasBeenVisited()
+{
+	return Super::HasBeenVisited() && (IsObjectiveCompleted() || IsObjectiveFailed());
 }
 
 

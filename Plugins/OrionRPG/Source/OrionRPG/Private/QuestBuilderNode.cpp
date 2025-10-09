@@ -61,42 +61,52 @@ void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 
 	if (!OnAllEndEventFinished.IsBound())
 	{
+		TWeakObjectPtr<UQuestBuilderNode> WeakThis = this;
 		//when all end event is finished, begin going to next node
 		OnAllEndEventFinished.AddLambda(
-			[this]()
+			[this, WeakThis]()
 			{
-				if (!NextNodes.IsEmpty())
+				if (WeakThis.IsValid())
 				{
-					bool bObjectiveUpdated = false;
-					for (int i = 0; i < NextNodes.Num(); i++)
+					if (!NextNodes.IsEmpty())
 					{
-						if (NextNodes.IsValidIndex(i))
+						bool bObjectiveUpdated = false;
+						for (int i = 0; i < NextNodes.Num(); i++)
 						{
-							if (NextNodes[i]->HasBeenVisited())
-								continue;
-							//remove previous nodes from current nodes
-							for (auto& ParentNode : NextNodes[i]->ParentNodes)
+							if (NextNodes.IsValidIndex(i))
 							{
-								//also check if all children nodes has been visited before removing from current node
-								if (ParentNode && ParentNode->AllChildrenHasBeenVisited())
+								if (NextNodes[i]->HasBeenVisited())
+									continue;
+								
+								if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(NextNodes[i]))
 								{
-									Quest->CurrentNodes.RemoveSingle(ParentNode);
-									ParentNode->bWaitForBranching = false;
+									bObjectiveUpdated = true;
 								}
+								Quest->BeginNode(NextNodes[i]);
 							}
-							if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(NextNodes[i]))
-							{
-								bObjectiveUpdated = true;
-							}
-							Quest->BeginNode(NextNodes[i]);
 						}
+
+						for(int i = 0; i< Quest->CurrentNodes.Num(); i++)
+						{
+							if (Quest->CurrentNodes.IsValidIndex(i))
+							{
+								UQuestBuilderNode* CurrNode = Quest->CurrentNodes[i];
+								if ((CurrNode->AllChildrenHasBeenVisited() && CurrNode->HasBeenVisited()) ||
+									(CurrNode->ParentNodes.IsEmpty() && CurrNode->ChildrenNodes.IsEmpty()))
+								{
+									Quest->CurrentNodes.RemoveSingle(CurrNode);
+									CurrNode->bWaitForBranching = false;
+								}
+
+							}
+						}
+						NextNodes.Empty();
+						if (bObjectiveUpdated)
+						{
+							GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
+						}
+
 					}
-					NextNodes.Empty();
-					if (bObjectiveUpdated)
-					{
-						GetQuestComponent()->OnQuestObjectiveUpdated.Broadcast(GetOwningQuest());
-					}
-					
 				}
 			}
 		);
@@ -104,10 +114,14 @@ void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 
 	if (!OnAllStartEventFinished.IsBound())
 	{
+		TWeakObjectPtr<UQuestBuilderNode> WeakThis = this;
 		OnAllStartEventFinished.AddLambda(
-			[this]()
+			[this, WeakThis]()
 			{
-				BeginNode();
+				if (WeakThis.IsValid())
+				{
+					BeginNode();
+				}
 			}
 		);
 	}
@@ -276,13 +290,17 @@ void UQuestBuilderNode::LaunchStartEventQueue()
 	}
 	if (StartEventQueue.IsValidIndex(0))
 	{
+		TWeakObjectPtr<UQuestBuilderNode> WeakThis = this;
 		StartEventQueue[0]->OnEventFinished.AddLambda(
-			[this]()
+			[this, WeakThis]()
 			{
-				if (StartEventQueue.IsValidIndex(0))
+				if (WeakThis.IsValid())
 				{
-					StartEventQueue.RemoveAt(0);
-					LaunchStartEventQueue();
+					if (StartEventQueue.IsValidIndex(0))
+					{
+						StartEventQueue.RemoveAt(0);
+						LaunchStartEventQueue();
+					}
 				}
 			}
 		);
@@ -304,15 +322,18 @@ void UQuestBuilderNode::LaunchEndEventQueue()
 	}
 	if (EndEventQueue.IsValidIndex(0))
 	{
+		TWeakObjectPtr<UQuestBuilderNode> WeakThis = this;
 		EndEventQueue[0]->OnEventFinished.AddLambda(
-			[this]()
+			[this, WeakThis]()
 			{
-				if (EndEventQueue.IsValidIndex(0))
+				if (WeakThis.IsValid())
 				{
-					EndEventQueue.RemoveAt(0);
-					LaunchEndEventQueue();
+					if (EndEventQueue.IsValidIndex(0))
+					{
+						EndEventQueue.RemoveAt(0);
+						LaunchEndEventQueue();
+					}
 				}
-
 			}
 		);
 		EndEventQueue[0]->BeginEvent(GetOwningController(), GetOwningPawn());
