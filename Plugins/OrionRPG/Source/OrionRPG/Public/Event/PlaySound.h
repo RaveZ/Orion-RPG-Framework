@@ -30,7 +30,7 @@ public:
 
 	// Sound to play
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event")
-	class USoundBase* SoundToPlay;
+	TObjectPtr<class USoundBase> SoundToPlay;
 
 	// Volume multiplier
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Event")

@@ -15,15 +15,47 @@
 
 UOrionEvent::UOrionEvent()
 {
+	bSetupCompleted = false;
+	bPendingToStart = false;
 	bLaunchEventOnLoad = false;
 	bIsNode = false;
+}
+
+void UOrionEvent::BeginSetup(APlayerController* OwnerController, APawn* ControlledPawn)
+{
+	//UE_LOG(LogTemp, Log, TEXT("Begin Setup for event - %s"), *GetNodeDisplayText());
+	bSetupCompleted = false;
+	OwningController = OwnerController;
+	OwningPawn = ControlledPawn;
+	K2_BeginSetup(OwnerController, ControlledPawn);
+}
+
+void UOrionEvent::K2_BeginSetup_Implementation(APlayerController* OwnerController, APawn* ControlledPawn)
+{
+	FinishSetup();
 }
 
 void UOrionEvent::BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn)
 {
 	OwningController = OwnerController;
 	OwningPawn = ControlledPawn;
+	if (!bSetupCompleted)
+	{
+		bPendingToStart = true;
+		return;
+	}
 	K2_BeginEvent(OwnerController, ControlledPawn);
+	bPendingToStart = false;
+}
+
+void UOrionEvent::FinishSetup()
+{
+	//UE_LOG(LogTemp, Log, TEXT("Finish Setup for event - %s"), *GetNodeDisplayText());
+	bSetupCompleted = true;
+	if (bPendingToStart)
+	{
+		BeginEvent(OwningController, OwningPawn);
+	}
 }
 
 void UOrionEvent::EndEvent()

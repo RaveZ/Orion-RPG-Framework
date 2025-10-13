@@ -21,6 +21,7 @@ class FOrionRPGModule;
 
 UQuest::UQuest()
 {
+	bSetupCompleted = false;
 	bCanQuestBeAborted = false;
 	bCanRetakeQuest = false;
 	QuestState = EQuestState::E_Locked;
@@ -91,6 +92,10 @@ void UQuest::Deinitialize()
 	AllNodes.Empty();
 	RootNodes.Empty();
 	NodeMap.Empty();
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(TimerHandle_CheckPrerequisites);
+	}
 }
 
 UWorld* UQuest::GetWorld() const
@@ -198,20 +203,137 @@ void UQuest::SortVisitedNodes()
 	VisitedNodeIDs = CachedVisitedNodeIDs;
 }
 
+
+void UQuest::ActivateQuest(const bool bNotifyQuestAdded, const bool bLaunchEventOnLoad)
+{
+	QuestState = EQuestState::E_Active;
+	if (CurrentNodes.IsEmpty())
+	{
+		//reset all Node
+		for (auto& Node : AllNodes)
+		{
+			Node->Reset();
+		}
+		VisitedNodeIDs.Empty();
+	}
+
+	TWeakObjectPtr<UQuest> WeakThis = this;
+	OnQuestSetupFinished.AddLambda(
+		[this, WeakThis, bNotifyQuestAdded, bLaunchEventOnLoad]()
+		{
+			if (WeakThis.IsValid() && QuestComponent)
+			{
+				if (CurrentNodes.IsEmpty())
+				{
+					if (RootNodes.IsValidIndex(0))
+					{
+						BeginNode(RootNodes[0]);
+					}
+				}
+				else
+				{
+					BeginMultipleNodes(CurrentNodes, bLaunchEventOnLoad);
+				}
+				if (bNotifyQuestAdded)
+				{
+					QuestComponent->OnQuestAdded.Broadcast(this);
+				}
+
+				bool bShouldNavigateThisQuest = QuestComponent->CurrentQuestSaveData.NavigatedQuestID == (QuestTag.IsValid() ? QuestTag.GetTagName() : ID);
+				UQuestBuilderNode_Objective* FoundedObjective = this ? Cast<UQuestBuilderNode_Objective>(NodeMap.FindRef(QuestComponent->CurrentQuestSaveData.NavigatedObjectiveID)) : nullptr;
+
+				if (bShouldNavigateThisQuest && QuestState == EQuestState::E_Active)
+				{
+					QuestComponent->StartNavigateQuest(this, FoundedObjective, true);
+				}
+				else
+				{
+					QuestComponent->AutoNavigateQuest();
+				}
+				OnQuestSetupFinished.Clear();
+			}
+		}
+	);
+
+	UWorld* World = GetWorld();
+	if (World && !World->GetTimerManager().IsTimerActive(TimerHandle_CheckPrerequisites))
+	{
+		World->GetTimerManager().SetTimer(TimerHandle_CheckPrerequisites, this, &UQuest::CheckQuestPrerequisites, .2f, true);
+	}
+	
+}
+
+
+void UQuest::RestartQuest(UQuestBuilderNode* InNode, const bool bNotifyQuestAdded)
+{
+	QuestState = EQuestState::E_Active;
+
+	if (InNode)
+	{
+		//Reset all visited node that is not visited by FoundedNode
+		for (int32 i = VisitedNodeIDs.Num() - 1; i >= 0; --i)
+		{
+			FName CachedVisitedNodeID = VisitedNodeIDs[i];
+			if (UQuestBuilderNode* VisitedNode = NodeMap.FindRef(CachedVisitedNodeID))
+			{
+				VisitedNode->Reset();
+			}
+			VisitedNodeIDs.RemoveAt(i);
+			
+			if (CachedVisitedNodeID == InNode->NodeTag.GetTagName())
+				break;
+		}
+		CurrentNodes.Empty();
+	}
+	else
+	{
+		//reset all Node
+		for (auto& Node : AllNodes)
+		{
+			Node->Reset();
+		}
+		VisitedNodeIDs.Empty();
+		CurrentNodes.Empty();
+	}
+
+	TWeakObjectPtr<UQuest> WeakThis = this;
+	OnQuestSetupFinished.AddLambda(
+		[this, WeakThis, InNode, bNotifyQuestAdded]()
+		{
+			if(WeakThis.IsValid() && QuestComponent)
+			{
+				if (bNotifyQuestAdded)
+				{
+					QuestComponent->OnQuestAdded.Broadcast(this);
+				}
+				UQuestBuilderNode* NodeToStart = InNode ? InNode : RootNodes.IsValidIndex(0) ? RootNodes[0].Get() : nullptr;
+				BeginNode(NodeToStart);
+				OnQuestSetupFinished.Clear();
+			}
+		}
+	);
+	
+
+	UWorld* World = GetWorld();
+	if (World && !World->GetTimerManager().IsTimerActive(TimerHandle_CheckPrerequisites))
+	{
+		World->GetTimerManager().SetTimer(TimerHandle_CheckPrerequisites, this, &UQuest::CheckQuestPrerequisites, .2f, true);
+	}
+}
+
+
 UQuestBuilderNode_Objective* UQuest::GetNavigatedObjective()
 {
-	if (!CurrentNavigatedObjective)
-	{
-        for (int32 i = CurrentNodes.Num() - 1; i >= 0; --i)
-        {
-			UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(CurrentNodes[i]);
-			if (ObjectiveNode && ObjectiveNode->IsObjectiveActive())
-			{
-				CurrentNavigatedObjective = ObjectiveNode;
-				break;
-			}
-        }
-	}
+    for (int32 i = CurrentNodes.Num() - 1; i >= 0; --i)
+    {
+		UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(CurrentNodes[i]);
+		if (ObjectiveNode && ObjectiveNode->IsObjectiveActive())
+		{
+			CurrentNavigatedObjective = ObjectiveNode;
+			break;
+		}
+    }
+	
 	return CurrentNavigatedObjective;
 }
 
@@ -331,6 +453,122 @@ UQuestBuilderGraph* UQuest::GetOwningQuestGraph() const
 		return nullptr;
 
 	return QuestGraph;
+}
+
+void UQuest::GetNodePrerequisites(TArray<UQuestBuilderNode*>& Nodes)
+{
+	if (CurrentNodes.IsEmpty())
+	{
+		Nodes = AllNodes;
+		return;
+	}
+	TSet<UQuestBuilderNode*> Visited;
+	TQueue<UQuestBuilderNode*> Queue;
+
+	// Enqueue all current nodes
+	for (UQuestBuilderNode* Node : CurrentNodes)
+	{
+		if (Node && !Visited.Contains(Node))
+		{
+			Queue.Enqueue(Node);
+			Visited.Add(Node);
+		}
+	}
+
+	while (!Queue.IsEmpty())
+	{
+		UQuestBuilderNode* Node = nullptr;
+		Queue.Dequeue(Node);
+		if (!Node)
+			continue;
+
+		Nodes.AddUnique(Node);
+
+		for (UQuestBuilderNode* Child : Node->ChildrenNodes)
+		{
+			if (Child && !Visited.Contains(Child))
+			{
+				Queue.Enqueue(Child);
+				Visited.Add(Child);
+			}
+		}
+	}
+}
+
+void UQuest::SetupPrerequisites()
+{
+	if (QuestState != EQuestState::E_Active) return;
+	if (!PrerequisiteNodes.IsEmpty()) return;
+
+
+	PrerequisiteNodes.Empty();
+	TArray<UQuestBuilderNode*> NodesToProcess;
+	GetNodePrerequisites(NodesToProcess);
+
+	for (auto& NodeToSetup : NodesToProcess)
+	{
+		PrerequisiteNodes.AddUnique(NodeToSetup);
+		if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(NodeToSetup))
+		{
+			ObjectiveNode->K2_BeginSetup(QuestComponent->GetOwningController(), GetOwningPawn());
+		}
+		for (auto& Event : NodeToSetup->Events)
+		{
+			if (Event)
+			{
+				Event->BeginSetup(QuestComponent->GetOwningController(), GetOwningPawn());
+			}
+		}
+	}
+}
+
+
+void UQuest::CheckQuestPrerequisites()
+{
+	bool bPrerequisiteMet = true;
+	bool bShouldWaitForSetup = true;
+
+
+
+	SetupPrerequisites();
+
+	if (PrerequisiteNodes.IsEmpty())
+	{
+		SetupPrerequisites();
+		bPrerequisiteMet = false;
+	}
+	else
+	{
+		//if there is any prerequisite node, it will keep checking until all of them has finished setup
+		for (auto& NodeToSetup : PrerequisiteNodes)
+		{
+			if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(NodeToSetup))
+			{
+				if (!ObjectiveNode->bSetupCompleted) bPrerequisiteMet = false;
+			}
+			for (auto& Event : NodeToSetup->Events)
+			{
+				if (!Event->bSetupCompleted) bPrerequisiteMet = false;
+			}
+		}
+	}
+
+
+	bSetupCompleted = bPrerequisiteMet;
+
+
+	if (bSetupCompleted)
+	{
+		if (UWorld* World = GetWorld())
+		{
+			World->GetTimerManager().ClearTimer(TimerHandle_CheckPrerequisites);
+		}
+		PrerequisiteNodes.Empty();
+		OnQuestSetupFinished.Broadcast();
+
+		UE_LOG(LogTemp, Log, TEXT("Quest Loaded - %s"), *QuestName.ToString());
+	}
+
 }
 
 void UQuest::ClearGraph()

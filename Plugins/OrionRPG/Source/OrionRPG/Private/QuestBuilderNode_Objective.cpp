@@ -16,6 +16,7 @@ UQuestBuilderNode_Objective::UQuestBuilderNode_Objective()
 {
     ObjectiveState = EObjectiveState::E_Active;
 	bObjectiveInitialized = false;
+    bSetupCompleted = false;
     bOptional = false;
     bHidden = false;
     bIsObjectiveTickable = false;
@@ -34,6 +35,16 @@ void UQuestBuilderNode_Objective::Initialize(bool bLaunchEventOnLoad)
     {
         Super::Initialize(bLaunchEventOnLoad);
     }
+}
+
+void UQuestBuilderNode_Objective::K2_BeginSetup_Implementation(APlayerController* OwnerController, APawn* ControlledPawn)
+{
+    FinishSetup();
+}
+
+void UQuestBuilderNode_Objective::FinishSetup()
+{
+    bSetupCompleted = true;
 }
 
 void UQuestBuilderNode_Objective::BeginNode()

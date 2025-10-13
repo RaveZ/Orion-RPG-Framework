@@ -29,6 +29,18 @@ void UOrionInteractionTargetComponent::BeginPlay()
 	{
 		Owner->Tags.AddUnique(Tag.GetTagName());
 	}
+
+	//Begin event setup to load async any soft reference
+	for(auto& Event : Events)
+	{
+		if (Event)
+		{
+			APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+			APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+			Event->BeginSetup(PC, Pawn);
+		}
+	}
+	
 }
 
 
