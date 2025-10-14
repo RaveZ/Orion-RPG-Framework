@@ -3,6 +3,8 @@
 
 #include "OrionFunctionLibrary.h"
 #include "OrionRPG.h"
+#include "Engine/GameInstance.h"
+#include "Engine/World.h"
 #include "OrionSaveGameSubsystem.h"
 #include "OrionSaveGame.h"
 #include "Kismet/GameplayStatics.h"
@@ -15,7 +17,7 @@
 
 UOrionSaveGame* UOrionFunctionLibrary::GetCurrentSaveGameObject(const UObject* WorldContextObject)
 {
-	UWorld* World = GEngine->GetWorldFromContextObjectChecked(WorldContextObject);
+	UWorld* World = WorldContextObject->GetWorld();
 	UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
 	UOrionSaveGameSubsystem* SaveSubsystem = GameInstance ? GameInstance->GetSubsystem<UOrionSaveGameSubsystem>() : nullptr;
 	UOrionSaveGame* SaveGameObject = SaveSubsystem ? SaveSubsystem->GetCurrentSaveGameObject() : nullptr;
@@ -25,7 +27,7 @@ UOrionSaveGame* UOrionFunctionLibrary::GetCurrentSaveGameObject(const UObject* W
 
 UOrionSaveGame* UOrionFunctionLibrary::GetSaveGameObject(const UObject* WorldContextObject, int slot)
 {
-	UWorld* World = GEngine->GetWorldFromContextObjectChecked(WorldContextObject);
+	UWorld* World = WorldContextObject->GetWorld();
 	UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
 	UOrionSaveGameSubsystem* SaveSubsystem = GameInstance ? GameInstance->GetSubsystem<UOrionSaveGameSubsystem>() : nullptr;
 	UOrionSaveGame* SaveGameObject = SaveSubsystem ? SaveSubsystem->GetSaveGameObject(slot) : nullptr;

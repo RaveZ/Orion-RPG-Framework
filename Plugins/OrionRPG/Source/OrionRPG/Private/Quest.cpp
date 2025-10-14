@@ -11,6 +11,8 @@
 #include "QuestBuilderEdge.h"
 #include "QuestBuilderNode_Objective.h"
 #include "QuestBuilderNode_Root.h"
+#include "TimerManager.h"
+#include "Engine/World.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 
 
@@ -463,22 +465,22 @@ void UQuest::GetNodePrerequisites(TArray<UQuestBuilderNode*>& Nodes)
 		return;
 	}
 	TSet<UQuestBuilderNode*> Visited;
-	TQueue<UQuestBuilderNode*> Queue;
+	TQueue<UQuestBuilderNode*> NodeQueue;
 
 	// Enqueue all current nodes
 	for (UQuestBuilderNode* Node : CurrentNodes)
 	{
 		if (Node && !Visited.Contains(Node))
 		{
-			Queue.Enqueue(Node);
+			NodeQueue.Enqueue(Node);
 			Visited.Add(Node);
 		}
 	}
 
-	while (!Queue.IsEmpty())
+	while (!NodeQueue.IsEmpty())
 	{
 		UQuestBuilderNode* Node = nullptr;
-		Queue.Dequeue(Node);
+		NodeQueue.Dequeue(Node);
 		if (!Node)
 			continue;
 
@@ -488,7 +490,7 @@ void UQuest::GetNodePrerequisites(TArray<UQuestBuilderNode*>& Nodes)
 		{
 			if (Child && !Visited.Contains(Child))
 			{
-				Queue.Enqueue(Child);
+				NodeQueue.Enqueue(Child);
 				Visited.Add(Child);
 			}
 		}
