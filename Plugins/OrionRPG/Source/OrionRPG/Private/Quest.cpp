@@ -13,6 +13,7 @@
 #include "QuestBuilderNode_Root.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
+#include "Containers/Queue.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 
 
