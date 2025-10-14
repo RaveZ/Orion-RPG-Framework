@@ -1,0 +1,57 @@
+﻿// Copyright 2025 Ivan Chandra. All Rights Reserved.
+
+
+#include "Inventory/OrionInventoryNode_ItemDefinition.h"
+#include "Engine/Texture2D.h"
+#include "UObject/ConstructorHelpers.h"
+
+
+#define LOCTEXT_NAMESPACE "OrionInventoryNode_ItemDefinition"
+
+
+
+UOrionInventoryNode_ItemDefinition::UOrionInventoryNode_ItemDefinition()
+{
+    // Example: Load a texture asset from plugin resources
+    auto ItemIconObj = ConstructorHelpers::FObjectFinder<UTexture2D>(TEXT("Texture2D'/OrionRPG/Widgets/Assets/InventoryItem.InventoryItem'"));
+    if (ItemIconObj.Succeeded())
+    {
+        ItemDefinition.Icon = ItemIconObj.Object;
+    }
+}
+const UOrionInventoryItemFragment* UOrionInventoryNode_ItemDefinition::FindFragmentByClass(TSubclassOf<UOrionInventoryItemFragment> FragmentClass) const
+{
+	if (FragmentClass != nullptr)
+	{
+		for (UOrionInventoryItemFragment* Fragment : Fragments)
+		{
+			if (Fragment && Fragment->IsA(FragmentClass))
+			{
+				return Fragment;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+#if WITH_EDITOR
+FText UOrionInventoryNode_ItemDefinition::GetNodeTitle() const
+{
+    return ItemDefinition.DisplayName;
+}
+
+void UOrionInventoryNode_ItemDefinition::SetNodeTitle(const FText& NewTitle)
+{
+    ID = FName(NewTitle.ToString());
+}
+
+FText UOrionInventoryNode_ItemDefinition::GetNodeDescription() const
+{
+	return FText();
+}
+#endif
+
+
+#undef LOCTEXT_NAMESPACE
+

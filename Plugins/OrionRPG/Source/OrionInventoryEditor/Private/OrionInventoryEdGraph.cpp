@@ -7,7 +7,7 @@
 #include "OrionInventoryEdSubNode_Item.h"
 #include "Inventory/OrionInventoryGraph.h"
 #include "Inventory/OrionInventoryNode.h"
-#include "Inventory/OrionInventoryNode_Item.h"
+#include "Inventory/OrionInventoryNode_ItemDefinition.h"
 
 
 UOrionInventoryEdGraph::UOrionInventoryEdGraph()
@@ -115,7 +115,7 @@ void UOrionInventoryEdGraph::UpdateAllSubnodeDependencies()
 				for (int32 iAux = 0; iAux < InventoryEdNode->InventoryItems.Num(); iAux++)
 				{
 					InventoryEdNode->InventoryItems[iAux]->ParentNode = InventoryEdNode;
-					if (UOrionInventoryNode_Item* ItemInstance = Cast<UOrionInventoryNode_Item>(InventoryEdNode->InventoryItems[iAux]->NodeInstance))
+					if (UOrionInventoryNode_ItemDefinition* ItemInstance = Cast<UOrionInventoryNode_ItemDefinition>(InventoryEdNode->InventoryItems[iAux]->NodeInstance))
 					{
 						InventoryGraph->ItemDefinitionMap.Add(ItemInstance->ItemDefinition.Tag, ItemInstance);
 						ItemInstance->Rename(nullptr, InventoryGraph, REN_DontCreateRedirectors | REN_DoNotDirty);
@@ -161,7 +161,7 @@ void UOrionInventoryEdGraph::CreateNewInventoryItemOnNode(UOrionInventoryEdNode*
 		InNode = InNode->ParentNode;
 
 	UClass* ItemEdNodeClass = UOrionInventoryEdSubNode_Item::StaticClass();
-	UClass* ItemNodeClass = UOrionInventoryNode_Item::StaticClass();
+	UClass* ItemNodeClass = UOrionInventoryNode_ItemDefinition::StaticClass();
 
 	// Create a new subnode (replace with your subnode class if different)
 	UOrionInventoryEdNode* SubNode = NewObject<UOrionInventoryEdNode>(this, ItemEdNodeClass);

@@ -6,6 +6,8 @@
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "OrionInventoryFunctionLibrary.generated.h"
 
+class UOrionInventoryItemFragment;
+class UOrionInventoryNode_ItemDefinition;
 
 UCLASS()
 class ORIONRPG_API UOrionInventoryFunctionLibrary : public UBlueprintFunctionLibrary
@@ -29,4 +31,6 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Inventory", meta = (DefaultToSelf = "Target"))
 	static class UOrionInventoryComponent* GetInventoryComponentFromTarget(AActor* Target);
 
+	UFUNCTION(BlueprintCallable, meta = (DeterminesOutputType = FragmentClass))
+	static const UOrionInventoryItemFragment* FindItemDefinitionFragment(TSubclassOf<UOrionInventoryNode_ItemDefinition> ItemDef, TSubclassOf<UOrionInventoryItemFragment> FragmentClass);
 };

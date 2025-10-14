@@ -8,7 +8,7 @@
 #include "NativeGameplayTags.h"
 #include "InventoryData.generated.h"
 
-class UOrionInventoryNode_Item;
+class UOrionInventoryNode_ItemDefinition;
 class UOrionInventoryComponent;
 class UOrionInteractionTargetComponent;
 
@@ -18,58 +18,64 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item);
 
 
 USTRUCT(BlueprintType)
-struct FInventoryEntry : public FFastArraySerializerItem
+struct FOrionInventoryEntry : public FFastArraySerializerItem
 {
     GENERATED_USTRUCT_BODY()
-	FInventoryEntry() {}
+	FOrionInventoryEntry() {}
+	FString GetDebugString() const;
 
 private:
-	friend struct FInventoryFastArray;
+	friend struct FOrionInventoryList;
 	friend UOrionInventoryComponent;
 
 	UPROPERTY()
-	TObjectPtr<UOrionInventoryNode_Item> Item = nullptr;
+	TObjectPtr<UOrionInventoryNode_ItemDefinition> Item = nullptr;
 
+	UPROPERTY()
+	int32 StackCount = 0;
+
+	UPROPERTY(NotReplicated)
+	int32 LastObservedCount = INDEX_NONE;
 };
 
 /** List of inventory items */
 USTRUCT(BlueprintType)
-struct FInventoryFastArray : public FFastArraySerializer
+struct FOrionInventoryList : public FFastArraySerializer
 {
 	GENERATED_USTRUCT_BODY()
 
-	FInventoryFastArray() : OwnerComponent(nullptr) {}
-	FInventoryFastArray(UOrionInventoryComponent* InOwnerComponent) : OwnerComponent(InOwnerComponent) {}
+	FOrionInventoryList() : OwnerComponent(nullptr) {}
+	FOrionInventoryList(UOrionInventoryComponent* InOwnerComponent) : OwnerComponent(InOwnerComponent) {}
 
-	TArray<UOrionInventoryNode_Item*> GetAllItems() const;
+	TArray<UOrionInventoryNode_ItemDefinition*> GetAllItems() const;
 
 	// FFastArraySerializer contract
 	void PreReplicatedRemove(const TArrayView<int32> RemovedIndices, int32 FinalSize);
 	void PostReplicatedAdd(const TArrayView<int32> AddedIndices, int32 FinalSize);
-	// End of FFastArraySerializer contract
+	// End of FFastArraySerializer contract			
 
 	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParams)
 	{
-		return FastArrayDeltaSerialize<FInventoryEntry, FInventoryFastArray>(Entries, DeltaParams, *this);
+		return FastArrayDeltaSerialize<FOrionInventoryEntry, FOrionInventoryList>(Entries, DeltaParams, *this);
 	}
 
-	UOrionInventoryNode_Item* AddEntry(UOrionInteractionTargetComponent* ItemComponent);
-	UOrionInventoryNode_Item* AddEntry(UOrionInventoryNode_Item* Item);
-	void RemoveEntry(UOrionInventoryNode_Item* Item);
+	UOrionInventoryNode_ItemDefinition* AddEntry(UOrionInteractionTargetComponent* ItemComponent);
+	UOrionInventoryNode_ItemDefinition* AddEntry(UOrionInventoryNode_ItemDefinition* Item);
+	void RemoveEntry(UOrionInventoryNode_ItemDefinition* Item);
 
 private:
 	friend UOrionInventoryComponent;
 
 	// Replicated list of items
 	UPROPERTY()
-	TArray<FInventoryEntry> Entries;
+	TArray<FOrionInventoryEntry> Entries;
 
 	UPROPERTY(NotReplicated)
 	TObjectPtr<UOrionInventoryComponent> OwnerComponent;
 };
 
 template<>
-struct TStructOpsTypeTraits<FInventoryFastArray> : public TStructOpsTypeTraitsBase2<FInventoryFastArray>
+struct TStructOpsTypeTraits<FOrionInventoryList> : public TStructOpsTypeTraitsBase2<FOrionInventoryList>
 {
 	enum { WithNetDeltaSerializer = true };
 };

@@ -2,6 +2,7 @@
 
 
 #include "Inventory/OrionInventoryFunctionLibrary.h"
+#include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "OrionRPG.h"
 #include "Inventory/OrionInventoryComponent.h"
 #include "Kismet/GameplayStatics.h"
@@ -41,5 +42,14 @@ UOrionInventoryComponent* UOrionInventoryFunctionLibrary::GetInventoryComponentF
         }
     }
 
+    return nullptr;
+}
+
+const UOrionInventoryItemFragment* UOrionInventoryFunctionLibrary::FindItemDefinitionFragment(TSubclassOf<UOrionInventoryNode_ItemDefinition> ItemDef, TSubclassOf<UOrionInventoryItemFragment> FragmentClass)
+{
+    if ((ItemDef != nullptr) && (FragmentClass != nullptr))
+    {
+        return GetDefault<UOrionInventoryNode_ItemDefinition>(ItemDef)->FindFragmentByClass(FragmentClass);
+    }
     return nullptr;
 }

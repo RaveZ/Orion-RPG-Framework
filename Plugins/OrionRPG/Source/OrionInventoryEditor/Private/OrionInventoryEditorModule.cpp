@@ -3,7 +3,7 @@
 #include "OrionInventoryEditorModule.h"
 #include "OrionInventory_EditorStyle.h"
 #include "OrionInventory_EditorCommands.h"
-#include "Inventory/OrionInventoryNode_Item.h"
+#include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Inventory/OrionInventorySetting.h"
 #include "IAssetTools.h"
 #include "ISettingsModule.h"
@@ -76,8 +76,8 @@ void FOrionInventoryEditorModule::CheckClassCache()
 {
 	if (!InventoryItemClassCache.IsValid())
 	{
-		InventoryItemClassCache = MakeShareable(new FGraphNodeClassHelper(UOrionInventoryNode_Item::StaticClass()));
-		FGraphNodeClassHelper::AddObservedBlueprintClasses(UOrionInventoryNode_Item::StaticClass());
+		InventoryItemClassCache = MakeShareable(new FGraphNodeClassHelper(UOrionInventoryNode_ItemDefinition::StaticClass()));
+		FGraphNodeClassHelper::AddObservedBlueprintClasses(UOrionInventoryNode_ItemDefinition::StaticClass());
 		InventoryItemClassCache->UpdateAvailableBlueprintClasses();
 	}
 

@@ -22,7 +22,7 @@
 #include "Inventory/OrionInventoryNode.h"
 #include "Inventory/OrionInventoryGraph.h"
 #include "Inventory/OrionInventorySetting.h"	
-#include "Inventory/OrionInventoryNode_Item.h"
+#include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Inventory/OrionInventoryNode_ItemContainer.h"
 #include "OrionInventoryEdSubNode_Item.h"
 #include "OrionInventoryEdNode_ItemContainer.h"
@@ -219,7 +219,7 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 	UOrionInventoryEdNode* InventoryEdNode = Cast<UOrionInventoryEdNode>(GraphNode);
 	UOrionInventoryNode_ItemContainer* ItemContainerNode = InventoryEdNode ? Cast<UOrionInventoryNode_ItemContainer>(InventoryEdNode->NodeInstance) : nullptr;
 	UOrionInventoryEdSubNode_Item* InventoryEdNode_Item = Cast<UOrionInventoryEdSubNode_Item>(GraphNode);
-	const UOrionInventoryNode_Item* InventoryItemNode = InventoryEdNode_Item ? Cast<UOrionInventoryNode_Item>(InventoryEdNode_Item->NodeInstance) : nullptr;
+	const UOrionInventoryNode_ItemDefinition* InventoryItemNode = InventoryEdNode_Item ? Cast<UOrionInventoryNode_ItemDefinition>(InventoryEdNode_Item->NodeInstance) : nullptr;
 	
 	FSlateBrush* ItemBrush = new FSlateBrush();
 	UTexture2D* LoadedTexture = nullptr;

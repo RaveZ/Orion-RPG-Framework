@@ -7,13 +7,13 @@
 #include "OrionInventoryComponent.generated.h"
 
 class UOrionInventoryGraph;
-class UOrionInventoryNode_Item;
+class UOrionInventoryNode_ItemDefinition;
 class APlayerController;
 
 struct FInventoryItem;
 
 //Inventory Delegate
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemSignature, UOrionInventoryNode_Item*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemSignature, UOrionInventoryNode_ItemDefinition*, Item);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInventorySignature);
 
 UCLASS(meta=(BlueprintSpawnableComponent), Blueprintable, HideDropdown, ClassGroup = "OrionRPG", DisplayName = "Orion Inventory Component")

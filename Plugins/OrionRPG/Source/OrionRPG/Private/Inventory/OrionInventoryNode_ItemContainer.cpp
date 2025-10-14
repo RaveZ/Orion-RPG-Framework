@@ -4,7 +4,7 @@
 #include "Inventory/OrionInventoryNode_ItemContainer.h"
 
 
-#define LOCTEXT_NAMESPACE "InventorySystemGraphNode"
+#define LOCTEXT_NAMESPACE "OrionInventoryNode_ItemContainer"
 
 
 UOrionInventoryNode_ItemContainer::UOrionInventoryNode_ItemContainer()

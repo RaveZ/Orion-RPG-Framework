@@ -6,7 +6,7 @@
 #include "SGraphEditorActionMenuInventory.h"
 #include "Inventory/OrionInventoryGraph.h"
 #include "Inventory/OrionInventoryNode.h"
-#include "Inventory/OrionInventoryNode_Item.h"
+#include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Inventory/OrionInventoryNode_ItemContainer.h"
 #include "OrionInventoryEdSubNode_Item.h"
 #include "OrionInventoryEditorUtils.h"
@@ -83,7 +83,7 @@ FText UOrionInventoryEdNode::GetTooltipText() const
 			}
 		}
 	}
-	if (NodeInstance->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint) && !NodeInstance->GetClass()->GetPackage()->HasAnyPackageFlags(PKG_Cooked))
+	if (NodeInstance && NodeInstance->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint) && !NodeInstance->GetClass()->GetPackage()->HasAnyPackageFlags(PKG_Cooked))
 	{
 		TooltipDesc = FText::FromString(TooltipDesc.ToString() + "\n**Double click node to open blueprint");
 	}
@@ -220,7 +220,7 @@ void UOrionInventoryEdNode::PostPlacedNewNode()
 					FindUniqueNodeName("Container");
 					ItemContainerNode->Category = FText::FromString("New Container");
 				}
-				if (UOrionInventoryNode_Item* ItemNode = Cast<UOrionInventoryNode_Item>(NodeInstance))
+				if (UOrionInventoryNode_ItemDefinition* ItemNode = Cast<UOrionInventoryNode_ItemDefinition>(NodeInstance))
 				{
 					ItemNode->ItemDefinition.DisplayName =  FText::FromString("New Item");
 				}
@@ -365,7 +365,7 @@ void UOrionInventoryEdNode::InsertSubNodeAt(UOrionInventoryEdNode* SubNode, int3
 	}
 
 	UOrionInventoryEdNode* TypedNode = Cast<UOrionInventoryEdNode>(SubNode);
-	const bool bIsInventoryItem = Cast<UOrionInventoryNode_Item>(SubNode->NodeInstance) != nullptr;
+	const bool bIsInventoryItem = Cast<UOrionInventoryNode_ItemDefinition>(SubNode->NodeInstance) != nullptr;
 
 	if (TypedNode)
 	{
@@ -494,7 +494,7 @@ FText UOrionInventoryEdNode::FindUniqueNodeName(const FString& InBaseName)
 	}
 
 	UOrionInventoryNode* InventoryNode = NodeInstance ? Cast<UOrionInventoryNode>(NodeInstance) : nullptr;
-	UOrionInventoryNode_Item* InventoryItemNode = NodeInstance ? Cast<UOrionInventoryNode_Item>(NodeInstance) : nullptr;
+	UOrionInventoryNode_ItemDefinition* InventoryItemNode = NodeInstance ? Cast<UOrionInventoryNode_ItemDefinition>(NodeInstance) : nullptr;
 	UOrionInventoryEdGraph* InventoryEdGraph = GetOrionInventoryEdGraph();
 
 	if (InventoryNode && InventoryEdGraph)
@@ -647,7 +647,7 @@ void UOrionInventoryEdNode::PostEditUndo()
 	UOrionInventoryEdNode* MyParentNode = Cast<UOrionInventoryEdNode>(ParentNode);
 	if (MyParentNode)
 	{
-		const bool bIsInventoryItem = Cast<UOrionInventoryNode_Item>(NodeInstance) != nullptr;
+		const bool bIsInventoryItem = Cast<UOrionInventoryNode_ItemDefinition>(NodeInstance) != nullptr;
 
 		if (bIsInventoryItem)
 		{

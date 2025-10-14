@@ -18,7 +18,7 @@
 #include "OrionInventoryEdGraph.h"
 #include "OrionInventoryEdNode.h"
 #include "OrionInventoryEdSubNode_Item.h"
-#include "Inventory/OrionInventoryNode_Item.h"
+#include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Inventory/OrionInventoryNode.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "K2Node.h"
@@ -1525,7 +1525,7 @@ void FOrionInventoryEditor::CreateNewInventoryItem()
 		SelectedNode = SelectedNode->ParentNode;
 
 	UClass* ItemEdNodeClass = UOrionInventoryEdSubNode_Item::StaticClass();
-	UClass* ItemNodeClass = UOrionInventoryNode_Item::StaticClass();
+	UClass* ItemNodeClass = UOrionInventoryNode_ItemDefinition::StaticClass();
 
     // Create a new subnode (replace with your subnode class if different)
     UOrionInventoryEdNode* SubNode = NewObject<UOrionInventoryEdNode>(Graph, ItemEdNodeClass);

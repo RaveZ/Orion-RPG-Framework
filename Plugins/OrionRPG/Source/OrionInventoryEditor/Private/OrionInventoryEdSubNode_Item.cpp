@@ -3,10 +3,10 @@
 
 #include "OrionInventoryEdSubNode_Item.h"
 #include "Inventory/OrionInventoryNode.h"
-#include "Inventory/OrionInventoryNode_Item.h"
+#include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Inventory/OrionInventorySetting.h"
 #include "DialogBuilderNode.h"
-#include "Inventory/OrionInventoryNode_Item.h"
+#include "Inventory/OrionInventoryNode_ItemDefinition.h"
 
 FText UOrionInventoryEdSubNode_Item::GetNodeTitle(ENodeTitleType::Type TitleType) const
 {
@@ -34,7 +34,7 @@ FLinearColor UOrionInventoryEdSubNode_Item::GetBackgroundColor() const
 
 FText UOrionInventoryEdSubNode_Item::GetTooltipText() const
 {
-	const UOrionInventoryNode_Item* InventoryNodeItem = Cast<UOrionInventoryNode_Item>(NodeInstance);
+	const UOrionInventoryNode_ItemDefinition* InventoryNodeItem = Cast<UOrionInventoryNode_ItemDefinition>(NodeInstance);
 	if (InventoryNodeItem)
 	{
 		FText Desc = InventoryNodeItem->ItemDefinition.Description.IsEmpty() ? FText::FromString("Item Description...") : InventoryNodeItem->ItemDefinition.Description;
