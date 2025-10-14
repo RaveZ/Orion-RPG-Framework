@@ -49,6 +49,12 @@ void UQuestComponent::BeginPlay()
 	GetQuestRegistryMap();
 
 	InitializeDelegate();
+
+	//Begin Default quest 
+	for(auto& DefaultQuestGraph : DefaultQuestGraphs)
+	{
+		BeginQuestGraph(DefaultQuestGraph);
+	}
 }
 
 void UQuestComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -131,7 +137,6 @@ bool UQuestComponent::BeginQuestGraph(UQuestBuilderGraph* QuestGraphAsset)
 				}
 			}
 
-			AutoNavigateQuest();
 		}
 		return false;
 	}));
@@ -234,19 +239,19 @@ void UQuestComponent::UpdateAllQuest()
 
 }
 
-void UQuestComponent::ActivateQuestFromTag(FGameplayTag QuestTag)
+void UQuestComponent::ActivateQuestFromTag(FGameplayTag QuestTag, const bool bNotifyQuestAdded)
 {
 	FName QuestID = QuestTag.GetTagName();
 	TObjectPtr<UQuest> QuestPtr = QuestMap.FindRef(QuestID);
 	if (IsValid(QuestPtr.Get()))
 	{
-		ActivateQuest(QuestPtr.Get());
+		ActivateQuest(QuestPtr.Get(), bNotifyQuestAdded);
 	}
 	else
     {
 		UE_LOG(LogTemp, Warning, TEXT("QuestComponent: ActivateQuestFromTag: %s not found, try make quest instance instead"), *QuestTag.ToString());
 		QuestMap.Remove(QuestID);
-		ActivateQuest(TryMakeQuestInstanceFromTag(QuestTag));
+		ActivateQuest(TryMakeQuestInstanceFromTag(QuestTag), bNotifyQuestAdded);
 	}
 }
 
@@ -289,24 +294,14 @@ void UQuestComponent::RestartQuestFromTag(FGameplayTag QuestTag, FGameplayTag No
 
 	TObjectPtr<UQuest> QuestPtr = QuestMap.FindRef(QuestID);
 	UQuest* FoundedQuest = QuestPtr.Get();
+
+	TObjectPtr<UQuestBuilderNode> NodePtr = FoundedQuest ? FoundedQuest->NodeMap.FindRef(NodeID) : nullptr;
+	UQuestBuilderNode* FoundedNode = NodePtr.Get();
 	if (IsValid(FoundedQuest))
 	{
-		TObjectPtr<UQuestBuilderNode> NodePtr = FoundedQuest->NodeMap.FindRef(NodeID);
-		UQuestBuilderNode* FoundedNode = NodePtr.Get();
 		if (IsValid(FoundedNode))
 		{
-			//Reset all visited node that is not visited by FoundedNode
-			for (int32 i = FoundedQuest->VisitedNodeIDs.Num() - 1; i >= 0; --i)
-			{
-				FName CachedVisitedNodeID = FoundedQuest->VisitedNodeIDs[i];
-				if (UQuestBuilderNode* VisitedNode = FoundedQuest->NodeMap.FindRef(CachedVisitedNodeID))
-				{
-					VisitedNode->Reset();
-				}
-				FoundedQuest->VisitedNodeIDs.RemoveAt(i);
-				if (CachedVisitedNodeID == NodeID)
-					break;
-			}
+			
 		}
 
 		RestartQuest(FoundedQuest, FoundedNode, bNotifyQuestAdded);
@@ -368,7 +363,7 @@ void UQuestComponent::StartNavigateQuest(UQuest* InQuest, UQuestBuilderNode_Obje
 	if (InQuest && InQuest->QuestState == EQuestState::E_Active)
 	{
 		CurrentNavigatedQuest = InQuest;
-		if (InObjective)
+		if (InObjective && InObjective->IsObjectiveActive())
 		{
 			InQuest->CurrentNavigatedObjective = InObjective;
 		}
@@ -390,34 +385,22 @@ void UQuestComponent::StartNavigateQuest(UQuest* InQuest, UQuestBuilderNode_Obje
 	}
 }
 
-void UQuestComponent::ActivateQuest(UQuest* InQuest)
+void UQuestComponent::ActivateQuest(UQuest* InQuest, const bool bNotifyQuestAdded, const bool bLaunchEventOnLoad)
 {
 	if (!IsValid(InQuest))
 	{
 		UE_LOG(LogTemp, Log, TEXT("QuestComponent : Failed to Activate Quest, Quest not found or invalid pointer"));
 		return;
 	}
+	
+	InQuest->ActivateQuest(bNotifyQuestAdded, bLaunchEventOnLoad);
 
-	if (InQuest->QuestState == EQuestState::E_Locked || InQuest->QuestState == EQuestState::E_Unlocked)
-	{
-		InQuest->QuestState = EQuestState::E_Active;
-		if (!InQuest->CurrentNodes.IsEmpty())
-		{
-			InQuest->BeginMultipleNodes(InQuest->CurrentNodes);
-		}
-		else
-		{
-			OnQuestAdded.Broadcast(InQuest);
-			RestartQuest(InQuest);
-		}
-		AutoNavigateQuest();
+	UE_LOG(LogTemp, Log, TEXT("QuestComponent: Activate Quest: %s, Tag: %s"),
+		*InQuest->QuestName.ToString(),
+		*InQuest->QuestTag.ToString()
+	);
 
-		UE_LOG(LogTemp, Log, TEXT("QuestComponent: Activate Quest: %s, Tag: %s"),
-			*InQuest->QuestName.ToString(),
-			*InQuest->QuestTag.ToString()
-		);
-
-	}
+	
 
 }
 
@@ -468,28 +451,7 @@ void UQuestComponent::RestartQuest(UQuest* InQuest, UQuestBuilderNode* InNode, c
 		return;
 	}
 
-	InQuest->QuestState = EQuestState::E_Active;
-	if (bNotifyQuestAdded)
-	{
-		OnQuestAdded.Broadcast(InQuest);
-	}
-	if (InNode)
-	{
-		InQuest->BeginNode(InNode);
-	}
-	else
-	{
-		//reset all Node
-		for (auto& Node : InQuest->AllNodes)
-		{
-			Node->Reset();
-		}
-		InQuest->VisitedNodeIDs.Empty();
-		if (InQuest->RootNodes.IsValidIndex(0))
-		{
-			InQuest->BeginNode(InQuest->RootNodes[0]);
-		}
-	}
+	InQuest->RestartQuest(InNode, bNotifyQuestAdded);
 
 	UE_LOG(LogTemp, Log, TEXT("QuestComponent: Restart Quest: %s, Tag: %s"),
 		*InQuest->QuestName.ToString(),
@@ -865,30 +827,18 @@ void UQuestComponent::InitializeFromSaveGame(FOrionQuestSaveData& QuestSaveData)
 			}
 		}
 	}
+	InitializeDelegate();//remove and add delegate binding, so other destroyed object that bind to the delegate will also be removed
+	StopNavigateQuest();
 	for (auto& LoadedQuestAsset : LoadedQuestAssets)
 	{
 		EvaluateQuestState(LoadedQuestAsset);
 		if (!LoadedQuestAsset->CurrentNodes.IsEmpty() && LoadedQuestAsset->QuestState == EQuestState::E_Active)
 		{
-			bool bLaunchEventOnLoad = true;
-			LoadedQuestAsset->BeginMultipleNodes(LoadedQuestAsset->CurrentNodes, bLaunchEventOnLoad);
+			ActivateQuest(LoadedQuestAsset, false /*bNotifyQuestAdded*/, true /*bLaunchEventOnLoad*/);
 		}
 	}
 
-	InitializeDelegate();//remove and add delegate binding, so other destroyed object that bind to the delegate will also be removed
 
-	StopNavigateQuest();
-	UQuest* FoundedQuest = QuestMap.FindRef(QuestSaveData.NavigatedQuestID);
-	UQuestBuilderNode_Objective* FoundedObjective = FoundedQuest ? Cast<UQuestBuilderNode_Objective>(FoundedQuest->NodeMap.FindRef(QuestSaveData.NavigatedObjectiveID)) : nullptr;
-
-	if (FoundedQuest)
-	{
-		StartNavigateQuest(FoundedQuest, FoundedObjective);
-	}
-	else
-	{
-		AutoNavigateQuest();
-	}
 }
 
 
@@ -903,6 +853,7 @@ bool UQuestComponent::DeleteSave(const FString& SaveName, const int32 Slot)
 
 	return UGameplayStatics::DeleteGameInSlot(SaveName, Slot);
 }
+
 
 TMap<FName, TObjectPtr<UQuest>> UQuestComponent::GetQuestRegistryMap()
 {

@@ -71,6 +71,11 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere,  Category = "QuestComponent")
 		bool bAutoNavigateQuest;
 
+	/**
+	* Default quest to be added when the game start.
+	*/
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "QuestComponent")
+		TArray<TObjectPtr<UQuestBuilderGraph>> DefaultQuestGraphs;
 public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 	FQuestUpdated OnQuestUpdated;
@@ -146,7 +151,7 @@ public:
 		void UpdateAllQuest();
 	
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void ActivateQuestFromTag(UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag);
+		void ActivateQuestFromTag(UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag, const bool bNotifyQuestAdded = true);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void UnlockQuestFromTag(UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag);
@@ -174,7 +179,7 @@ public:
 		void StopNavigateQuest();
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void ActivateQuest(UQuest* InQuest);
+		void ActivateQuest(UQuest* InQuest, const bool bNotifyQuestAdded = true, const bool bLaunchEventOnLoad = false);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void UnlockQuest(UQuest* InQuest);

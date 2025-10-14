@@ -97,7 +97,6 @@ void UOrionSaveGame::HandlePreSave()
 		QuestData = QuestComp->GetSaveGameData();
 	}
 
-	SavedActors.Empty();
 	CachedActors.Empty();
 
 	TArray<AActor*> SaveGameActors;
@@ -128,11 +127,11 @@ void UOrionSaveGame::HandlePostSave(bool bSuccess)
 	bIsSaving = false;
 	if (bSuccess)
 	{
-		for (AActor* Actor : CachedActors)
+		for (auto& Actor : CachedActors)
 		{
-			if (Actor)
+			if (Actor.IsValid())
 			{
-				IOrionSaveGameInterface::Execute_OnSaved(Actor);
+				IOrionSaveGameInterface::Execute_OnSaved(Actor.Get());
 			}
 		}
 	}
@@ -217,9 +216,9 @@ void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
 				}
 			}
 
-			// Restore saved data using the map
-			for (FOrionActorSaveData ActorData : SavedActors)
-			{
+            for (int32 i = 0; i < SavedActors.Num(); ++i)
+            {
+				const FOrionActorSaveData& ActorData = SavedActors[i];
 				AActor* FoundActor = ActorMap.FindRef(ActorData.ActorName);
 				if (FoundActor)
 				{
@@ -233,7 +232,7 @@ void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
 
 					IOrionSaveGameInterface::Execute_OnLoaded(FoundActor);
 				}
-			}
+            }
 		}
 
 		// QUEST
@@ -246,4 +245,24 @@ void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
 
 
 	
+}
+
+void UOrionSaveGame::SaveActor(AActor* Actor)
+{
+	if (Actor && Actor->Implements<UOrionSaveGameInterface>())
+	{
+		CachedActors.AddUnique(Actor);
+		FOrionActorSaveData ActorData;
+		ActorData.ActorName = Actor->GetFName();
+
+		FMemoryWriter MyMemoryWriter(ActorData.ByteData);
+
+		FObjectAndNameAsStringProxyArchive Ar(MyMemoryWriter, true);
+
+		Ar.ArIsSaveGame = true;
+		Ar.ArNoDelta = true;
+		Actor->Serialize(Ar);
+
+		SavedActors.Add(ActorData);
+	}
 }

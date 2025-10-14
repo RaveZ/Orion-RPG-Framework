@@ -16,6 +16,14 @@ UOrionSetting::UOrionSetting()
 	SaveSlotCapacity = 99;
 	bSaveLevel = false;
 	bSaveDataLayer = true;
+
+	//Input
+	auto InputDTFinder = ConstructorHelpers::FObjectFinder<UDataTable>(TEXT("DataTable'/OrionRPG/CommonUI/Data/DT_OrionInputActions.DT_OrionInputActions'"));
+	if (InputDTFinder.Succeeded())
+	{
+		InteractInput.DataTable = InputDTFinder.Object;
+		InteractInput.RowName = FName("Interact");
+	}
 }
 
 UOrionSetting::~UOrionSetting()

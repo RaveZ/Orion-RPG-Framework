@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Engine/TimerHandle.h"
 #include "UObject/NoExportTypes.h"
 #include "Quest.generated.h"
 
@@ -28,6 +29,7 @@ enum class EQuestState : uint8
 	E_Locked		UMETA(DisplayName = "LOCKED"),
 };
 
+DECLARE_MULTICAST_DELEGATE(FQuestSetupFinishedSignature);
 
 UCLASS(Blueprintable, BlueprintType)
 class ORIONRPG_API UQuest : public UObject
@@ -115,6 +117,16 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Quest")
 		TObjectPtr < UQuestComponent> QuestComponent;
 
+	/**Nodes that need to be setup before finished loading map*/
+	UPROPERTY(BlueprintReadWrite, Category = "Quest")
+		TArray<TObjectPtr<UQuestBuilderNode>> PrerequisiteNodes;
+	
+public:
+	bool bSetupCompleted;
+	/**Called when quest setup finished*/
+	FQuestSetupFinishedSignature OnQuestSetupFinished;
+	struct FTimerHandle TimerHandle_CheckPrerequisites;
+
 public:
 
 	virtual bool Initialize(class UQuestComponent* InitializingComp);
@@ -163,6 +175,11 @@ public:
 
 	virtual void EvaluateUniqueID();
 
+
+	void RestartQuest(UQuestBuilderNode* InNode = nullptr, const bool bNotifyQuestAdded = false);
+
+	void ActivateQuest(const bool bNotifyQuestAdded = true, const bool bLaunchEventOnLoad = false);
+
 public:
 	virtual void Serialize(FArchive& Ar) override;
 
@@ -174,9 +191,13 @@ public:
 	void CopyQuestSettings(const UQuest* SrcQuest);
 	void PropagateQuestSettings();
 
+	void GetNodePrerequisites(TArray<UQuestBuilderNode*>& Nodes);
+	void SetupPrerequisites();
+	void CheckQuestPrerequisites();
 
 
 #if WITH_EDITOR
+public:
 	//~ Begin UObject Interface
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 	virtual void PostLoad() override;

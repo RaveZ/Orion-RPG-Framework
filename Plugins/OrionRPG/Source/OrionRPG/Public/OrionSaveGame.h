@@ -149,9 +149,12 @@ public:
 
 private:
 	UPROPERTY(Transient)
-	TArray<TObjectPtr<AActor>> CachedActors;
+	TArray<TWeakObjectPtr<AActor>> CachedActors;
 	bool bIsSaving;
 
+public:
+	UFUNCTION(BlueprintCallable, Category = "Orion|SaveGame")
+	void SaveActor(AActor* Actor);
 public:
 	FORCEINLINE bool IsSavingGame()
 	{
