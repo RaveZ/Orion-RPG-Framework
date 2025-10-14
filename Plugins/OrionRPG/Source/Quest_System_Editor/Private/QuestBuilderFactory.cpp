@@ -78,7 +78,7 @@ UObject* UQuestBuilderFactory::FactoryCreateNew(UClass* Class, UObject* InParent
 	if (QuestSystemGraphClass)
 	{
 		QuestGraph =  NewObject<UQuestBuilderGraph>(InParent, QuestSystemGraphClass, Name, Flags | RF_Transactional);
-		QuestGraph->ID = FQuestBuilderEditorUtils::FindUniqueQuestGraphName("QuestBuilderAsset");
+		QuestGraph->ID = FQuestBuilderEditorUtils::FindUniqueQuestGraphName("QuestAsset_");
 		
 	}
 

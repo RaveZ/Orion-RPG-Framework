@@ -83,7 +83,7 @@ public:
 		TObjectPtr < UQuestComponent> QuestComponent;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Quest")
-		bool bNodeActive;
+		bool bWaitForBranching;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Quest")
 		bool bInitialized;
@@ -102,8 +102,9 @@ public:
 	virtual void BeginNode();
 	virtual void EvaluateNextNode();
 
+	/**Check if this node has been visited*/
+	virtual bool HasBeenVisited();
 	/**Check if the child node still has active objectives*/
-	UFUNCTION(Category = "QuestBuilderNode")
 	bool AllChildrenHasBeenVisited();
 
 	UFUNCTION(BlueprintCallable, Category = "QuestBuilderNode")

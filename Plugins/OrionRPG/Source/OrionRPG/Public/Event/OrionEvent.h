@@ -41,6 +41,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Event")
 	TObjectPtr<APawn> OwningPawn;
 
+
 	/** node name override*/
 	UPROPERTY(Category = "Node", EditAnywhere, meta = (EditCondition = "bIsNode == true", HideEditConditionToggle, EditConditionHides))
 	FString NodeName;
@@ -69,8 +70,21 @@ public:
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Node", DisplayName = "Launch Event On Load", meta = (EditCondition = "bIsNode == true", HideEditConditionToggle, EditConditionHides))
 		bool bLaunchEventOnLoad = false;
 		
+public:
 	/**Called when event finished*/
 	FEventFinishedSignature OnEventFinished;
+
+	bool bSetupCompleted;
+	bool bPendingToStart;
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "Event")
+	void BeginSetup(APlayerController* OwnerController, APawn* ControlledPawn);
+
+	UFUNCTION(BlueprintNativeEvent, DisplayName = "Begin Setup", Category = "Event")
+	void K2_BeginSetup(APlayerController* OwnerController, APawn* ControlledPawn);
+
+	void K2_BeginSetup_Implementation(APlayerController* OwnerController, APawn* ControlledPawn);
 
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Begin Event", Category = "Event")
 		void K2_BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn);
@@ -78,6 +92,8 @@ public:
 	UFUNCTION(Category = "Event")
 	virtual void BeginEvent(APlayerController* OwnerController, APawn* ControlledPawn);
 
+	UFUNCTION(BlueprintCallable, Category = "Event")
+	virtual void FinishSetup();
 
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Event Finished", Category = "Event")
 	void K2_EventFinished();

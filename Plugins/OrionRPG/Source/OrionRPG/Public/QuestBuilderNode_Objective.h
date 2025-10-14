@@ -52,9 +52,15 @@ public:
 	float DistanceToTarget;
 
 	bool bObjectiveInitialized;
+	bool bSetupCompleted;
 	struct FTimerHandle TimerHandle_TickObjective;
 
 public:
+	UFUNCTION(BlueprintNativeEvent, DisplayName = "Begin Setup", Category = "Objective")
+	void K2_BeginSetup(APlayerController* OwnerController, APawn* ControlledPawn);
+
+	void K2_BeginSetup_Implementation(APlayerController* OwnerController, APawn* ControlledPawn);
+
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "Begin Objective", Category = "Objective")
 	void K2_BeginObjective(APlayerController* OwnerController, APawn* ControlledPawn);
 
@@ -86,6 +92,9 @@ public:
 	virtual void FailObjective();
 
 	UFUNCTION(BlueprintCallable, Category = "Objective")
+	virtual void FinishSetup();
+
+	UFUNCTION(BlueprintCallable, Category = "Objective")
 	virtual void DeactivateTick();
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Objective")
@@ -108,6 +117,7 @@ public:
 
 	virtual void BeginNode() override;
 	virtual void EvaluateNextNode() override;
+	virtual bool HasBeenVisited() override;
 
 #if WITH_EDITOR
 	virtual FText GetNodeTitle() const override;

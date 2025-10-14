@@ -24,6 +24,7 @@ UOrionInteractionComponent::UOrionInteractionComponent()
 	InteractionOffset = FVector(75.f, 0.f, 0.f);
 	bIsInteractionEnabled = false;
 	bDebugTrace = false;
+	//SetComponentTickEnabled(false);
 }
 
 void UOrionInteractionComponent::BeginPlay()
@@ -255,7 +256,12 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 			break;
 		}
 	}
-	MulticastOnInteractionUpdated(CurrentInteractionTarget);
+
+	OnInteractionUpdated.Broadcast(CurrentInteractionTarget, CurrentInteractionTarget ? CurrentInteractionTarget->Tag : FGameplayTag().EmptyTag);
+	if(PrevInteractable != CurrentInteractionTarget)
+	{
+		MulticastOnInteractionChanged(CurrentInteractionTarget);
+	}
 	// If we have previous interactable and we lose focus from it, cancel interaction
 	if (PrevInteractable && PrevInteractable->Mode == EOrionInteractionMode::Hold && PrevInteractable->IsInteractionInProgress() && CurrentInteractionTarget == nullptr)
 	{
@@ -305,25 +311,24 @@ void UOrionInteractionComponent::InteractionEnded(UOrionInteractionTargetCompone
 
 void UOrionInteractionComponent::MulticastOnInteractionStarted_Implementation(UOrionInteractionTargetComponent* Target)
 {
-	OnInteractionStarted.Broadcast(Target);
+	OnInteractionStarted.Broadcast(Target, Target ? Target->Tag : FGameplayTag().EmptyTag);
 }
 
 void UOrionInteractionComponent::MulticastOnInteractionCanceled_Implementation(UOrionInteractionTargetComponent* Target)
 {
-	OnInteractionCanceled.Broadcast(Target);
+	OnInteractionCanceled.Broadcast(Target, Target ? Target->Tag : FGameplayTag().EmptyTag);
 }
 
 void UOrionInteractionComponent::MulticastOnInteractionCompleted_Implementation(UOrionInteractionTargetComponent* Target)
 {
-	OnInteractionCompleted.Broadcast(Target);
+	OnInteractionCompleted.Broadcast(Target, Target ? Target->Tag : FGameplayTag().EmptyTag);
 }
-
-void UOrionInteractionComponent::MulticastOnInteractionUpdated_Implementation(UOrionInteractionTargetComponent* Target)
+void UOrionInteractionComponent::MulticastOnInteractionChanged_Implementation(UOrionInteractionTargetComponent* Target)
 {
-	OnInteractionUpdated.Broadcast(Target);
+	OnInteractionChanged.Broadcast(Target, Target ? Target->Tag : FGameplayTag().EmptyTag);
 }
 
 void UOrionInteractionComponent::MulticastOnInteractionBlocked_Implementation(UOrionInteractionTargetComponent* Target)
 {
-	OnInteractionBlocked.Broadcast(Target);
+	OnInteractionBlocked.Broadcast(Target, Target ? Target->Tag : FGameplayTag().EmptyTag);
 }

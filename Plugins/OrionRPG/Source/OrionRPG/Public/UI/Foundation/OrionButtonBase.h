@@ -35,8 +35,15 @@ protected:
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void UpdateButtonStyle();
+	
+	UFUNCTION(BlueprintImplementableEvent, DisplayName = "On Update Hold Data")
+	void K2_OnUpdateHoldData();
+	
+	UFUNCTION(BlueprintCallable, Category = "OrionRPG|CommonButton")
+	void SetHoldData(float InHoldTime, float InHoldRollbackTime);
 
-
+	/**Current Common Button will always override the hold data using this function, so us k2_OnUpdateHoldData -> then Set Hold Data Manually*/
+	virtual void UpdateHoldData(ECommonInputType CurrentInputType) override;
 private:
 	UPROPERTY(EditAnywhere, Category = "Button", meta = (InlineEditConditionToggle))
 	uint8 bOverride_ButtonText : 1;
@@ -44,3 +51,4 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Button", meta = (editcondition = "bOverride_ButtonText"))
 	FText ButtonText;
 };
+

@@ -19,76 +19,15 @@ FDialogBuilderEditorUtils::~FDialogBuilderEditorUtils()
 FName FDialogBuilderEditorUtils::FindUniqueDialogName(const FString& InBaseName)
 {
 	// Start with the base name
-	FString UniqueName = InBaseName;
-
-	// Iterate through the dialog graph pages until we find a unique name
-	for (int i = 0;; i++)
-	{
-		bool bIsUnique = true;
-
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-		TArray<FAssetData> DialogGraphDataArray;
-		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), DialogGraphDataArray);
-
-		for (const FAssetData& AssetData : DialogGraphDataArray)
-		{
-			UDialogBuilderGraph* DialogGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
-			if (DialogGraph)
-			{
-				
-			}
-		}
-
-		// If the current name is unique, return it
-		if (bIsUnique)
-		{
-			return FName(*UniqueName);
-		}
-
-		// If the current name is not unique, append a number to it and try again
-		UniqueName = FString::Printf(TEXT("%s%d"), *InBaseName, i + 1);
-	}
+	FString UniqueName = InBaseName + FGuid::NewGuid().ToString();
+	return FName(*UniqueName);
 }
 
 FName FDialogBuilderEditorUtils::FindUniqueDialogGraphName(const FString& InBaseName)
 {
 	// Start with the base name
-	FString UniqueName = InBaseName;
-
-	// Iterate through the dialog graph pages until we find a unique name
-	for (int i = 0;; i++)
-	{
-		bool bIsUnique = true;
-
-		FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
-
-		TArray<FAssetData> DialogGraphDataArray;
-		AssetRegistryModule.Get().GetAssetsByClass(FTopLevelAssetPath(UDialogBuilderGraph::StaticClass()), DialogGraphDataArray);
-
-		for (const FAssetData& AssetData : DialogGraphDataArray)
-		{
-			UDialogBuilderGraph* DialogGraph = Cast<UDialogBuilderGraph>(AssetData.GetAsset());
-			if (DialogGraph)
-			{
-				FString FullName = DialogGraph->ID.ToString();
-				if (FullName == UniqueName)
-				{
-					bIsUnique = false;
-					break;
-				}
-			}
-		}
-
-		// If the current name is unique, return it
-		if (bIsUnique)
-		{
-			return FName(*UniqueName);
-		}
-
-		// If the current name is not unique, append a number to it and try again
-		UniqueName = FString::Printf(TEXT("%s%d"), *InBaseName, i + 1);
-	}
+	FString UniqueName = InBaseName + FGuid::NewGuid().ToString();
+	return FName(*UniqueName);
 }
 
 

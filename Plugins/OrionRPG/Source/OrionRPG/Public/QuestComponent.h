@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "OrionSaveGame.h"
 #include "Components/ActorComponent.h"
 #include "QuestComponent.generated.h"
 
@@ -53,6 +54,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
 		TMap<FName, TObjectPtr<UQuest>> QuestMap;
 	
+	/**Map of Quest from asset registry. this quest are from asset, DONT manipulate the property unless you know that you're doing*/
+	UPROPERTY(BlueprintReadOnly, Category = "QuestComponent")
+	TMap<FName, TObjectPtr<UQuest>> QuestRegistryMap;
+
 	/** List of quest category*/
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
 		TArray<FQuestCategory> QuestCategories;
@@ -60,9 +65,17 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "QuestComponent")
 		TObjectPtr<UQuest> CurrentNavigatedQuest;
 
+	UPROPERTY()
+		FOrionQuestSaveData CurrentQuestSaveData;
+
 	UPROPERTY(BlueprintReadWrite, EditAnywhere,  Category = "QuestComponent")
 		bool bAutoNavigateQuest;
 
+	/**
+	* Default quest to be added when the game start.
+	*/
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "QuestComponent")
+		TArray<TObjectPtr<UQuestBuilderGraph>> DefaultQuestGraphs;
 public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
 	FQuestUpdated OnQuestUpdated;
@@ -89,7 +102,12 @@ public:
 		FQuestAdded OnQuestAdded;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "QuestComponent")
-		FQuestAdded OnQuestUnlocked;
+		FQuestUnlocked OnQuestUnlocked;
+
+private:
+	
+
+	TMap<FName, TObjectPtr<UQuest>> GetQuestRegistryMap();
 
 public:
 	UFUNCTION()
@@ -133,35 +151,35 @@ public:
 		void UpdateAllQuest();
 	
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void ActivateQuestFromTag(FGameplayTag QuestTag);
+		void ActivateQuestFromTag(UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag, const bool bNotifyQuestAdded = true);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void UnlockQuestFromTag(FGameplayTag QuestTag);
+		void UnlockQuestFromTag(UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void LockQuestFromTag(FGameplayTag QuestTag);
+		void LockQuestFromTag(UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag);
 		
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void RestartQuestFromTag(FGameplayTag QuestTag, FGameplayTag NodeTag = FGameplayTag(), const bool bNotifyQuestAdded = false);
+		void RestartQuestFromTag(UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag, UPARAM(meta = (Categories = "Quest"))FGameplayTag NodeTag, const bool bNotifyQuestAdded = false);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void FailQuestFromTag(FGameplayTag QuestTag);
+		void FailQuestFromTag(UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void CompleteQuestFromTag(FGameplayTag QuestTag);
+		void CompleteQuestFromTag(UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag);
 
 	/**
 	* Start navigate the selected quest. (Objective input is optional)
 	* if the objective is none, auto navigate the first objective found.
 	*/
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void StartNavigateQuest(UQuest* InQuest, class UQuestBuilderNode_Objective* InObjective = nullptr);
+		void StartNavigateQuest(UQuest* InQuest, class UQuestBuilderNode_Objective* InObjective = nullptr, bool bOverrideCurrentNavigatedQuest = false);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestManager")
 		void StopNavigateQuest();
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		void ActivateQuest(UQuest* InQuest);
+		void ActivateQuest(UQuest* InQuest, const bool bNotifyQuestAdded = true, const bool bLaunchEventOnLoad = false);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void UnlockQuest(UQuest* InQuest);
@@ -179,10 +197,10 @@ public:
 		void CompleteQuest(UQuest* InQuest);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		bool IsQuestAtState(FGameplayTag QuestTag, enum EQuestState QuestState);
+		bool IsQuestAtState(UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag, enum EQuestState QuestState);
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
-		UQuest* FindQuest(FGameplayTag QuestTag) const;
+		UQuest* FindQuest(UPARAM(meta = (Categories = "Quest"))FGameplayTag QuestTag) const;
 
 	UFUNCTION(BlueprintCallable, Category = "QuestComponent")
 		void ResetAllQuest();
@@ -191,7 +209,7 @@ public:
 		void EvaluateQuestState(UQuest* QuestParam);
 
 	UFUNCTION()
-	FOrionQuestSaveData GetSaveGameData() const;
+	FOrionQuestSaveData GetSaveGameData();
 
 	UFUNCTION()
 	void InitializeFromSaveGame(FOrionQuestSaveData& QuestSaveData);
@@ -206,6 +224,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "QuestComponent")
 	virtual APlayerController* GetOwningController() const;
 
+	void InitializeDelegate();
+
 	void DumpLog() const;
 
 // ================================================================================================ //
@@ -219,6 +239,7 @@ public:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:	
 	// Called every frame

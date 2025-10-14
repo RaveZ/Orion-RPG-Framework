@@ -7,7 +7,6 @@
 
 UDialogBuilderSetting::UDialogBuilderSetting()
 {
-	ShowUIBoundAction = true;
 	MinDialogLineDuration = 2.5f;
 	DialogLineWordsPerSecond = 4.0f; // Default words per second for dialog lines
 
@@ -15,6 +14,12 @@ UDialogBuilderSetting::UDialogBuilderSetting()
 	if (DialogueUserWidgetFinder.Succeeded())
 	{
 		DefaultDialogWidget = DialogueUserWidgetFinder.Class;
+	}
+
+	auto DialogueFreeMovementWidgetFinder = ConstructorHelpers::FClassFinder<UUserWidget>(TEXT("WidgetBlueprint'/OrionRPG/Widgets/Dialog/WBP_Dialog_FreeMovement.WBP_Dialog_FreeMovement_C'"));
+	if (DialogueFreeMovementWidgetFinder.Succeeded())
+	{
+		DefaultFreeMovementDialogWidget = DialogueFreeMovementWidgetFinder.Class;
 	}
 
 	DialogLineNodeColor = FLinearColor(0.15f, 0.15f, 0.15f);

@@ -18,13 +18,10 @@ class ORIONRPG_API UDialogBuilderSetting : public UObject
 	virtual ~UDialogBuilderSetting();
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Quest Options")
-		bool ShowUIBoundAction;
 
 	/**Determine minimum time the line should be displayed*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options")
 		float MinDialogLineDuration;
-
 
 	/**Determine how long the line should be displayed*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options")
@@ -33,6 +30,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options", noclear)
 	TSubclassOf<class UCommonActivatableWidget> DefaultDialogWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options", noclear)
+	TSubclassOf<class UCommonActivatableWidget> DefaultFreeMovementDialogWidget;
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor DialogLineNodeColor;

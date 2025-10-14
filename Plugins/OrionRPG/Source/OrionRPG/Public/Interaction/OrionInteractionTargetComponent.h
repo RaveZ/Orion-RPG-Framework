@@ -60,6 +60,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable", meta = (EditCondition = "Mode == EOrionInteractionMode::Hold", HideEditConditionToggle, EditConditionHides))
 	float HoldDuration;
 
+	float CurrentHoldTime;
+
 	/**
 	* Interact conditions that must be met before interaction can occur.
 	*/
@@ -83,9 +85,14 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interactable")
 	float CurrentProgress;
 
+	//Ensure Each interaction has cooldown in between and avoid interacting the same object twice in one frame
+	UPROPERTY(Transient)
+	bool bNativeCanInteract;
+
 private:
 	FTimerHandle TimerHandle_UpdateProgressValue;
 
+	FTimerHandle TimerHandle_ResetInteraction;
 
 public:
 	UOrionInteractionTargetComponent();

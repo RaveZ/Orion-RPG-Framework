@@ -7,8 +7,9 @@
 UQuestBuilderSetting::UQuestBuilderSetting()
 {
 	//Quest runtime
-	ShowUIBoundAction = true;
-	
+	ShowObjectiveIndicator = true;
+	ShowNavigatedQuestOverlay = true;
+	ShowObjectiveUpdatedNotification = false;
 
 	//Graph Setting
 	FailedNodeColor = FLinearColor(.34f, .024f, .024f);

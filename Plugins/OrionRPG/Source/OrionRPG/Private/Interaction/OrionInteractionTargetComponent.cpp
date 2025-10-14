@@ -15,24 +15,39 @@ UOrionInteractionTargetComponent::UOrionInteractionTargetComponent()
 	HoldDuration = 1.0f;
 	CurrentInteractor = nullptr;
 	CurrentProgress = 0.0f;
+	bAutoActivate = true;
+	//SetComponentTickEnabled(false);
 }
 
 void UOrionInteractionTargetComponent::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
+	bNativeCanInteract = true;
 	AActor* Owner = GetOwner();
 	if (Owner)
 	{
 		Owner->Tags.AddUnique(Tag.GetTagName());
 	}
+
+	//Begin event setup to load async any soft reference
+	for(auto& Event : Events)
+	{
+		if (Event)
+		{
+			APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+			APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+			Event->BeginSetup(PC, Pawn);
+		}
+	}
+	
 }
 
 
 
 bool UOrionInteractionTargetComponent::CanInteract() const
 {
-	return (Mode != EOrionInteractionMode::None) && (CurrentInteractor == nullptr) && FMath::IsNearlyEqual(CurrentProgress, 0.0f, UE_KINDA_SMALL_NUMBER);
+	return bNativeCanInteract && (Mode != EOrionInteractionMode::None) && (CurrentInteractor == nullptr) && FMath::IsNearlyEqual(CurrentProgress, 0.0f, UE_KINDA_SMALL_NUMBER);
 }
 
 bool UOrionInteractionTargetComponent::DecoratorConditionMet() const
@@ -70,12 +85,12 @@ void UOrionInteractionTargetComponent::Focused(AActor* Interactor)
 void UOrionInteractionTargetComponent::StartInteraction(AActor* Interactor)
 {
 	//UE_LOG(LogTemp, Log, __FUNCTIONW__);
-
 	check(Mode != EOrionInteractionMode::None);
 
 	CurrentInteractor = Interactor;
 	CurrentProgress = 0.0f;
-
+	CurrentHoldTime= 0.0f;
+	
 	// Blueprint event
 	if (OnStarted.IsBound())
 	{
@@ -143,6 +158,24 @@ void UOrionInteractionTargetComponent::EndInteraction(bool bCompleted)
 		InteractionComp->InteractionEnded(this, bCompleted);
 	}
 
+	bNativeCanInteract = false;
+	FTimerDelegate ResetInteractionTimerDel;
+	TWeakObjectPtr<UOrionInteractionTargetComponent> WeakThis = this;
+	ResetInteractionTimerDel.BindLambda([this, WeakThis]()
+		{
+			if (WeakThis.IsValid())
+			{
+				bNativeCanInteract = true;
+			}
+		});
+
+	GetWorld()->GetTimerManager().SetTimer(
+		TimerHandle_ResetInteraction, 
+		ResetInteractionTimerDel,
+		0.5f,
+		false 
+	);
+
 	CurrentInteractor = nullptr;
 	CurrentProgress = 0.0f;
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_UpdateProgressValue);
@@ -163,10 +196,12 @@ void UOrionInteractionTargetComponent::UpdateInteractionProgress(float Progress)
 
 void UOrionInteractionTargetComponent::UpdateProgressValue()
 {
-	CurrentProgress = FMath::Clamp(CurrentProgress + 0.0333f, 0.0f, 1.0f);
-
-	if (CurrentProgress >= 1.0f)
+	CurrentHoldTime = FMath::Clamp(CurrentHoldTime + 0.0333f, 0.0f, HoldDuration);
+	CurrentProgress = FMath::Clamp(CurrentHoldTime / HoldDuration, 0.f, 1.f);
+	if (CurrentProgress >= 1.f)
 	{
+		CurrentProgress = 0.0f;
+		CurrentHoldTime= 0.0f;
 		EndInteraction(true);
 	}
 }

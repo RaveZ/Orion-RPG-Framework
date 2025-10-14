@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Components/BoxComponent.h"
+#include "NativeGameplayTags.h"
 #include "OrionInteractionComponent.generated.h"
 
 
@@ -16,8 +17,7 @@ enum class EOrionInteractionType : uint8
 };
 
 class UOrionInteractionTargetComponent;
-
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOrionInteractionSignature, UOrionInteractionTargetComponent*, InteractionTarget);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOrionInteractionSignature, UOrionInteractionTargetComponent*, InteractionTarget, FGameplayTag, InteractionTargetTag);
 
 /**
  * Interaction component
@@ -85,6 +85,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOrionInteractionSignature OnInteractionUpdated;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FOrionInteractionSignature OnInteractionChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOrionInteractionSignature OnInteractionBlocked;
@@ -122,8 +125,8 @@ public:
 	void MulticastOnInteractionCompleted(UOrionInteractionTargetComponent* Target);
 
 	UFUNCTION(NetMulticast, Reliable)
-	void MulticastOnInteractionUpdated(UOrionInteractionTargetComponent* Target);
-
+	void MulticastOnInteractionChanged(UOrionInteractionTargetComponent* Target);
+	
 	UFUNCTION(NetMulticast, Reliable)
 	void MulticastOnInteractionBlocked(UOrionInteractionTargetComponent* Target);
 private:
