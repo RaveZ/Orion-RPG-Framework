@@ -63,6 +63,7 @@ void UQuestBuilderNode_Objective::Reset()
     Super::Reset();
     ObjectiveState = EObjectiveState::E_Active;
     CurrentProgress = 0;
+    bObjectiveInitialized = false;
 	DeactivateTick();
 }
 

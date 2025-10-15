@@ -226,24 +226,31 @@ public:
 
 	void InitializeDelegate();
 
-	void DumpLog() const;
-
-// ================================================================================================ //
-// CONSOLE COMMANDS
-// ================================================================================================ //
-public:
-
-	UFUNCTION(Exec)
-	void DumpQuestLog();
-
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
 public:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-		
+
+	// ================================================================================================ //
+	// CONSOLE COMMANDS
+	// ================================================================================================ //
+public:
+	UFUNCTION(Exec)
+	void execDumpQuestLog();
+
+	UFUNCTION(Exec)
+	void execCompleteQuestObjectives(const TArray<FString>& QuestTag);
+
+	UFUNCTION(Exec)
+	void execActivateQuest(const TArray<FString>& QuestTag);
+
+	UFUNCTION(Exec)
+	void execCompleteQuest(const TArray<FString>& QuestTag);
+
+	UFUNCTION(Exec)
+	void execFailQuest(const TArray<FString>& QuestTag);
 };

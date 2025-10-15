@@ -98,17 +98,13 @@ public:
 		return bIsLoadingSaveGame;
 	}
 
-
-
-
-// ================================================================================================ //
-// CONSOLE COMMANDS
-// ================================================================================================ //
-public:
+	// ================================================================================================ //
+	// CONSOLE COMMANDS
+	// ================================================================================================ //
+	UFUNCTION(Exec)
+	void orionSaveGame(const TArray<FString>& Slot);
 
 	UFUNCTION(Exec)
-	void orionSaveGame(int32 Slot);
+	void orionLoadGame(const TArray<FString>& Slot);
 
-	UFUNCTION(Exec)
-	void orionLoadGame(int32 Slot);
 };
