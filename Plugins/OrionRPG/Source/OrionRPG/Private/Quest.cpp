@@ -13,6 +13,7 @@
 #include "QuestBuilderNode_Root.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
+#include "Containers/Queue.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 
 
@@ -208,6 +209,11 @@ void UQuest::SortVisitedNodes()
 
 void UQuest::ActivateQuest(const bool bNotifyQuestAdded, const bool bLaunchEventOnLoad)
 {
+	if (bCanRetakeQuest &&  (QuestState == EQuestState::E_Complete || QuestState == EQuestState::E_Fail))
+	{
+		RestartQuest(nullptr, bNotifyQuestAdded);
+	}
+
 	QuestState = EQuestState::E_Active;
 	if (CurrentNodes.IsEmpty())
 	{

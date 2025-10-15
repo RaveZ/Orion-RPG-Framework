@@ -23,6 +23,7 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "HAL/IConsoleManager.h"
 
 
 #define LOCTEXT_NAMESPACE "QuestComponent"
@@ -55,6 +56,37 @@ void UQuestComponent::BeginPlay()
 	{
 		BeginQuestGraph(DefaultQuestGraph);
 	}
+
+	//Register Console Commands
+	IConsoleManager::Get().RegisterConsoleCommand(
+		TEXT("orionLogQuest"),
+		TEXT("Dump all quest and it's state"),
+		FConsoleCommandDelegate::CreateUObject(this, &ThisClass::execDumpQuestLog),
+		ECVF_Default);
+
+	IConsoleManager::Get().RegisterConsoleCommand(
+		TEXT("orionCompleteQuestObjectives"),
+		TEXT("[QuestTag] Complete specific quest objectives"),
+		FConsoleCommandWithArgsDelegate::CreateUObject(this, &ThisClass::execCompleteQuestObjectives),
+		ECVF_Default);
+
+	IConsoleManager::Get().RegisterConsoleCommand(
+		TEXT("orionActivateQuest"),
+		TEXT("[QuestTag] Activate specific quest"),
+		FConsoleCommandWithArgsDelegate::CreateUObject(this, &ThisClass::execActivateQuest),
+		ECVF_Default);
+
+	IConsoleManager::Get().RegisterConsoleCommand(
+		TEXT("orionCompleteQuest"),
+		TEXT("[QuestTag] Complete specific quest"),
+		FConsoleCommandWithArgsDelegate::CreateUObject(this, &ThisClass::execCompleteQuest),
+		ECVF_Default);
+
+	IConsoleManager::Get().RegisterConsoleCommand(
+		TEXT("orionFailQuest"),
+		TEXT("[QuestTag] Fail specific quest"),
+		FConsoleCommandWithArgsDelegate::CreateUObject(this, &ThisClass::execFailQuest),
+		ECVF_Default);
 }
 
 void UQuestComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -299,11 +331,6 @@ void UQuestComponent::RestartQuestFromTag(FGameplayTag QuestTag, FGameplayTag No
 	UQuestBuilderNode* FoundedNode = NodePtr.Get();
 	if (IsValid(FoundedQuest))
 	{
-		if (IsValid(FoundedNode))
-		{
-			
-		}
-
 		RestartQuest(FoundedQuest, FoundedNode, bNotifyQuestAdded);
 	}
 	else
@@ -477,7 +504,7 @@ void UQuestComponent::FailQuest(UQuest* InQuest)
 			{
 				if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(InQuest->CurrentNodes[i]))
 				{
-					ObjectiveNode->FailObjective();
+					ObjectiveNode->ObjectiveState = EObjectiveState::E_Failed;
 				}
 			}
 		}
@@ -513,7 +540,7 @@ void UQuestComponent::CompleteQuest(UQuest* InQuest)
 			{
 				if (UQuestBuilderNode_Objective* ObjectiveNode = Cast<UQuestBuilderNode_Objective>(InQuest->CurrentNodes[i]))
 				{
-					ObjectiveNode->FailObjective();
+					ObjectiveNode->ObjectiveState = EObjectiveState::E_Completed;
 				}
 			}
 		}
@@ -601,34 +628,6 @@ void UQuestComponent::StopNavigateQuest()
 	OnStopNavigateQuest.Broadcast();
 }
 
-void UQuestComponent::DumpLog() const
-{
-#if !UE_BUILD_SHIPPING
-
-	static FString Message;
-	Message.Reset();
-
-	Message += TEXT("\n==================== BEGIN Quest ====================\n");
-
-	for (int32 i = 0; i < QuestCategories.Num(); ++i)
-	{
-		const FQuestCategory& QuestCategory = QuestCategories[i];
-
-		const FString CategoryStr = QuestCategory.Category.ToString();
-		Message += FString::Printf(TEXT("Category: %s\n"), *CategoryStr);
-		for (auto& Quest : QuestCategory.QuestList)
-		{
-			const FString QuestStateStr = UEnum::GetValueAsString(Quest->QuestState);
-			Message += FString::Printf(TEXT("\tQuest: %s, State: %s\n"), *Quest->ID.ToString(), *QuestStateStr);
-		}
-	}
-
-	Message += TEXT("==================== END Quest ====================\n");
-
-	UE_LOG(LogTemp, Log, TEXT(" %s"), *Message);
-
-#endif // UE_BUILD_SHIPPING
-}
 
 UQuest* UQuestComponent::FindQuest(FGameplayTag QuestTag) const
 {
@@ -937,11 +936,77 @@ void UQuestComponent::QuestUnlocked(UQuest* Quest)
 // ================================================================================================ //
 // CONSOLE COMMANDS
 // ================================================================================================ //
-void UQuestComponent::DumpQuestLog()
+void UQuestComponent::execDumpQuestLog()
 {
-	DumpLog();
+#if !UE_BUILD_SHIPPING
 
-	
+	static FString Message;
+	Message.Reset();
+
+	Message += TEXT("\n==================== BEGIN Quest ====================\n");
+
+	Message += CurrentNavigatedQuest ? FString::Printf(TEXT("Navigated Quest: %s \n\n"), *CurrentNavigatedQuest->QuestName.ToString()) : FString();
+
+	for (int32 i = 0; i < QuestCategories.Num(); ++i)
+	{
+		const FQuestCategory& QuestCategory = QuestCategories[i];
+
+		const FString CategoryStr = QuestCategory.Category.ToString();
+		Message += FString::Printf(TEXT("Category: %s\n"), *CategoryStr);
+		for (auto& Quest : QuestCategory.QuestList)
+		{
+			const FString QuestStateStr = UEnum::GetValueAsString(Quest->QuestState);
+			Message += FString::Printf(TEXT("\tQuest: %s | Tag: %s, State: %s\n"), *Quest->QuestName.ToString(), *Quest->ID.ToString(), *QuestStateStr);
+			for (auto& Objective : Quest->GetCurrentObjectives())
+			{
+				const FString ObjectiveStateStr = UEnum::GetValueAsString(Objective->ObjectiveState);
+				Message += FString::Printf(TEXT("\t\tObjective: %s, Progress: %d/%d\n"), *Objective->Description.ToString(), Objective->CurrentProgress, Objective->RequiredAmount);
+			}
+		}
+	}
+
+
+	Message += TEXT("==================== END Quest ====================\n");
+
+	UE_LOG(LogTemp, Log, TEXT(" %s"), *Message);
+
+#endif // UE_BUILD_SHIPPING
+}
+
+void UQuestComponent::execCompleteQuestObjectives(const TArray<FString>& QuestTag)
+{
+	if (QuestTag.IsEmpty()) return;
+
+	FName QuestID = FName(*QuestTag[0]);
+	if (UQuest* FoundedQuest = QuestMap.FindRef(QuestID))
+	{
+		for (auto& CurrObjective : FoundedQuest->GetCurrentObjectives())
+		{
+			CurrObjective->CompleteObjective();
+		}
+	}
+
+}
+
+void UQuestComponent::execActivateQuest(const TArray<FString>& QuestTag)
+{
+	if (QuestTag.IsEmpty()) return;
+
+	ActivateQuestFromTag(FGameplayTag::RequestGameplayTag(FName(*QuestTag[0])));
+}
+
+void UQuestComponent::execCompleteQuest(const TArray<FString>& QuestTag)
+{
+	if (QuestTag.IsEmpty()) return;
+
+	CompleteQuestFromTag(FGameplayTag::RequestGameplayTag(FName(*QuestTag[0])));
+}
+
+void UQuestComponent::execFailQuest(const TArray<FString>& QuestTag)
+{
+	if (QuestTag.IsEmpty()) return;
+
+	FailQuestFromTag(FGameplayTag::RequestGameplayTag(FName(*QuestTag[0])));
 }
 
 #undef LOCTEXT_NAMESPACE

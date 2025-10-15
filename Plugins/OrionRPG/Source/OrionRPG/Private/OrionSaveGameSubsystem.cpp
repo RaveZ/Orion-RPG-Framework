@@ -12,6 +12,7 @@
 #include "Serialization/MemoryWriter.h"
 #include "Serialization/MemoryReader.h"
 #include "Serialization/ObjectAndNameAsStringProxyArchive.h"
+#include "HAL/IConsoleManager.h"
 
 UOrionSaveGameSubsystem::UOrionSaveGameSubsystem()
 {
@@ -33,6 +34,20 @@ void UOrionSaveGameSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(this, &UOrionSaveGameSubsystem::HandlePostLoadMap);
 		GI->OnLocalPlayerAddedEvent.AddUObject(this, &UOrionSaveGameSubsystem::InitializeLocalPlayerSaveGameSlots);
 	}
+
+	//Register Console Commands
+	IConsoleManager::Get().RegisterConsoleCommand(
+		TEXT("orionSaveGame"),
+		TEXT("Slot[int] Save game on specific save "),
+		FConsoleCommandWithArgsDelegate::CreateUObject(this, &ThisClass::orionSaveGame),
+		ECVF_Default);
+
+	IConsoleManager::Get().RegisterConsoleCommand(
+		TEXT("orionLoadGame"),
+		TEXT("Slot[int] Load game on specific save"),
+		FConsoleCommandWithArgsDelegate::CreateUObject(this, &ThisClass::orionLoadGame),
+		ECVF_Default);
+
 }
 
 
@@ -179,14 +194,18 @@ void UOrionSaveGameSubsystem::LoadGame(int32 Slot)
 	}
 }
 
-
-
-void UOrionSaveGameSubsystem::orionSaveGame(int32 Slot)
+// ================================================================================================ //
+// CONSOLE COMMANDS
+// ================================================================================================ //
+void UOrionSaveGameSubsystem::orionSaveGame(const TArray<FString>& Slot)
 {
-	SaveGame(Slot);
+	if (Slot[0].IsEmpty()) return;
+	SaveGame(FCString::Atoi(*Slot[0]));
+	
 }
 
-void UOrionSaveGameSubsystem::orionLoadGame(int32 Slot)
+void UOrionSaveGameSubsystem::orionLoadGame(const TArray<FString>& Slot)
 {
-	LoadGame(Slot);
+	if (Slot[0].IsEmpty()) return;
+	LoadGame(FCString::Atoi(*Slot[0]));
 }
