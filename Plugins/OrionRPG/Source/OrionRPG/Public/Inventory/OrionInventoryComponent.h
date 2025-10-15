@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Inventory/InventoryData.h"
 #include "Components/ActorComponent.h"
 #include "OrionInventoryComponent.generated.h"
 
@@ -27,7 +28,7 @@ public:
 
 	/**Inventory database*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "InventoryComponent")
-	TObjectPtr<UOrionInventoryGraph> InventoryData;
+	TObjectPtr<UOrionInventoryGraph> InventoryDB;
 
 	//We cache the OwningController, we won't cache pawn as this might change
 	UPROPERTY(BlueprintReadOnly, Category = "InventoryComponent")
@@ -47,7 +48,15 @@ public:
 		FInventorySignature NoRoomInInventory;
 		
 public:
-	
+
+private:
+	UPROPERTY(Replicated)
+	FOrionInventoryList InventoryList;
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	void AddItem(UPARAM(meta = (Categories = "Inventory.Item")) FGameplayTag Tag, int32 Count, FInventoryItem& OutItem);
+
 
 public:
 	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
@@ -56,8 +65,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
 	virtual APlayerController* GetOwningController() const;
 
-	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
-	void AddItem(UPARAM(meta = (Categories = "Inventory.Item")) FGameplayTag Tag, int32 Count, FInventoryItem& OutItem);
 
 protected:
 	// Called when the game starts

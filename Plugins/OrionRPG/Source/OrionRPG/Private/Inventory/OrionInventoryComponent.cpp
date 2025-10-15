@@ -12,6 +12,8 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
+#include "Net/UnrealNetwork.h"
+#include "NativeGameplayTags.h"
 
 
 
@@ -20,9 +22,9 @@
 
 UOrionInventoryComponent::UOrionInventoryComponent()
 {
+	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
-	SetComponentTickEnabled(true);
-	PrimaryComponentTick.bCanEverTick = true;
+	bReplicateUsingRegisteredSubObjectList = true;
 }
 
 void UOrionInventoryComponent::BeginPlay()
@@ -31,6 +33,26 @@ void UOrionInventoryComponent::BeginPlay()
 	OrionInventoryMap.Empty();
 	//Set Dependency
 	OwningController = GetOwningController();
+}
+
+void UOrionInventoryComponent::AddItem(FGameplayTag Tag, int32 Count, FInventoryItem& OutItem)
+{
+	if (!Tag.MatchesTag(TAG_Item))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Fail to add item. Invalid item Tag (%s)!"), *Tag.ToString());
+		return;
+	}
+
+
+
+	//FInventoryItem& NewItem = OrionInventoryMap.FindOrAdd(Tag);
+}
+
+void UOrionInventoryComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ThisClass, InventoryList);
 }
 
 
@@ -87,18 +109,6 @@ APlayerController* UOrionInventoryComponent::GetOwningController() const
 	return nullptr;
 }
 
-void UOrionInventoryComponent::AddItem(FGameplayTag Tag, int32 Count, FInventoryItem& OutItem)
-{
-	if (!Tag.MatchesTag(TAG_Item))
-	{
-		UE_LOG(LogTemp, Error, TEXT("Fail to add item. Invalid item Tag (%s)!"), *Tag.ToString());
-		return;
-	}
-
-	
-	
-	//FInventoryItem& NewItem = OrionInventoryMap.FindOrAdd(Tag);
-}
 
 
 #undef LOCTEXT_NAMESPACE
