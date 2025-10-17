@@ -40,7 +40,8 @@ public:
 		TMap<FName, TObjectPtr<UOrionInventoryNode>> NodeMap;
 
 	UPROPERTY(BlueprintReadOnly, Category = "OrionInventory")
-		TMap<FGameplayTag, TObjectPtr<class UOrionInventoryNode_ItemDefinition>> ItemDefinitionMap;
+		TMap<FGameplayTag, TObjectPtr<class UOrionInventoryNode_ItemDefinition>> ItemDefinitions;
+
 
 public:
 	virtual bool Initialize(UOrionInventoryComponent* InitializingComp);

@@ -2,6 +2,7 @@
 
 
 #include "Inventory/OrionInventoryItemInstance.h"
+#include "Inventory/OrionInventoryItemFragment.h"
 
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Net/UnrealNetwork.h"
@@ -27,6 +28,7 @@ void UOrionInventoryItemInstance::GetLifetimeReplicatedProps(TArray<FLifetimePro
 
 	DOREPLIFETIME(ThisClass, StatTags);
 	DOREPLIFETIME(ThisClass, ItemDef);
+	DOREPLIFETIME(ThisClass, TotalStackCount);
 }
 
 #if UE_WITH_IRIS
@@ -59,7 +61,7 @@ bool UOrionInventoryItemInstance::HasStatTag(FGameplayTag Tag) const
 	return StatTags.ContainsTag(Tag);
 }
 
-void UOrionInventoryItemInstance::SetItemDef(TSubclassOf<UOrionInventoryNode_ItemDefinition> InDef)
+void UOrionInventoryItemInstance::SetItemDef(UOrionInventoryNode_ItemDefinition* InDef)
 {
 	ItemDef = InDef;
 }
@@ -68,7 +70,7 @@ const UOrionInventoryItemFragment* UOrionInventoryItemInstance::FindFragmentByCl
 {
 	if ((ItemDef != nullptr) && (FragmentClass != nullptr))
 	{
-		return GetDefault<UOrionInventoryNode_ItemDefinition>(ItemDef)->FindFragmentByClass(FragmentClass);
+		return ItemDef->FindFragmentByClass(FragmentClass);
 	}
 
 	return nullptr;

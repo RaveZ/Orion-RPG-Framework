@@ -2,6 +2,7 @@
 
 
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
+#include "Inventory/OrionInventoryItemFragment.h"
 #include "Engine/Texture2D.h"
 #include "UObject/ConstructorHelpers.h"
 

@@ -9,22 +9,29 @@
 
 class UOrionInventoryGraph;
 class UOrionInventoryNode_ItemDefinition;
+class UOrionInventoryItemInstance;
 class APlayerController;
+struct FNetDeltaSerializeInfo;
+struct FReplicationFlags;
+struct FFrame;
 
 struct FInventoryItem;
 
 //Inventory Delegate
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemSignature, UOrionInventoryNode_ItemDefinition*, Item);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInventorySignature);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemSignature, UOrionInventoryItemInstance*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInventoryItemStackChange, UOrionInventoryItemInstance*, Item, int32, CurrentStackCount, int32, MaxStackCount);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryMaxWeightChanged, float, InMaxWeight);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryEncumberedStateChanged, bool, bEncumbered);
 
-UCLASS(meta=(BlueprintSpawnableComponent), Blueprintable, HideDropdown, ClassGroup = "OrionRPG", DisplayName = "Orion Inventory Component")
+UCLASS(meta=(BlueprintSpawnableComponent), BlueprintType, Blueprintable, HideDropdown, ClassGroup = "OrionRPG", DisplayName = "Orion Inventory Component")
 class ORIONRPG_API UOrionInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
 	// Sets default values for this component's properties
-	UOrionInventoryComponent();
+	UOrionInventoryComponent(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 	/**Inventory database*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "InventoryComponent")
@@ -34,9 +41,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "InventoryComponent")
 		TObjectPtr<APlayerController> OwningController;
 
-	UPROPERTY(BlueprintReadWrite, Category = "InventoryComponent")
-		TMap<FName, TObjectPtr<UOrionInventoryGraph>> OrionInventoryMap;
-		
+	/**Max Weight for this inventory*/
+	UPROPERTY(EditAnywhere, meta = (Units = "Kilograms", UIMin = "0"))
+		float DefaultMaxInventoryWeight;
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FInventoryItemSignature OnItemAdded;
@@ -45,19 +52,49 @@ public:
 		FInventoryItemSignature OnItemRemoved;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
-		FInventorySignature NoRoomInInventory;
-		
+	FInventoryItemStackChange OnItemStackChanged;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
+		FInventoryMaxWeightChanged OnMaxWeightChanged;
+
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
+		FInventoryEncumberedStateChanged OnEncumberedStateChanged;
+
+
 public:
 
 private:
 	UPROPERTY(Replicated)
 	FOrionInventoryList InventoryList;
 
+	/**Current Capacity for this inventory*/
+	float MaxWeight;
+
+	/**Current Capacity for this inventory*/
+	float CurrentWeight;
+
+protected:
+	// Called when the game starts
+	virtual void BeginPlay() override;
+
+	//~UObject interface
+	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
+	virtual void ReadyForReplication() override;
+	//~End of UObject interface
+
 public:
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "InventoryComponent")
+	void AddItem(UPARAM(meta = (Categories = "Inventory.Item")) FGameplayTag ItemTag, int32 Count, FInventoryItem& OutItem);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = Inventory)
+	void DropItem(UOrionInventoryItemInstance* ItemInstance, int32 StackCount);
+
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
-	void AddItem(UPARAM(meta = (Categories = "Inventory.Item")) FGameplayTag Tag, int32 Count, FInventoryItem& OutItem);
+	void SetInventoryMaxWeight(float InNewMaxWeight);
 
-
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	UOrionInventoryNode_ItemDefinition* FindItemDefinition(UPARAM(meta = (Categories = "Inventory.Item")) FGameplayTag ItemTag);
 public:
 	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
 	virtual APawn* GetOwningPawn() const;
@@ -66,9 +103,6 @@ public:
 	virtual APlayerController* GetOwningController() const;
 
 
-protected:
-	// Called when the game starts
-	virtual void BeginPlay() override;
 
 public:	
 	// Called every frame

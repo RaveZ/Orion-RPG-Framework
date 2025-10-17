@@ -8,19 +8,7 @@
 #include "NativeGameplayTags.h"
 #include "OrionInventoryNode_ItemDefinition.generated.h"
 
-class UOrionInventoryItemInstance;
-//////////////////////////////////////////////////////////////////////
-
-// Represents a fragment of an item definition
-UCLASS(MinimalAPI, DefaultToInstanced, EditInlineNew, Abstract)
-class UOrionInventoryItemFragment : public UObject
-{
-	GENERATED_BODY()
-
-public:
-	virtual void OnInstanceCreated(UOrionInventoryItemInstance* Instance) const {}
-};
-
+class UOrionInventoryItemFragment;
 //////////////////////////////////////////////////////////////////////
 
 /**
@@ -34,11 +22,10 @@ class ORIONRPG_API UOrionInventoryNode_ItemDefinition : public UOrionInventoryNo
 public:
 	UOrionInventoryNode_ItemDefinition();
 
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail", meta = (ShowOnlyInnerProperties))
 	FInventoryItemDefinition ItemDefinition;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Display, Instanced)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fragments", Instanced)
 	TArray<TObjectPtr<UOrionInventoryItemFragment>> Fragments;
 
 public:

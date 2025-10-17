@@ -23,6 +23,17 @@ public:
 	virtual bool IsSupportedForNetworking() const override { return true; }
 	//~End of UObject interface
 
+	UOrionInventoryNode_ItemDefinition* GetItemDef() const { return ItemDef; }
+	FOrion
+	template <typename ResultClass>
+	const ResultClass* FindFragmentByClass() const { return (ResultClass*)FindFragmentByClass(ResultClass::StaticClass()); }
+
+	void SetItemDef(UOrionInventoryNode_ItemDefinition* InDef);
+
+	int32 GetTotalStackCount() const { return TotalStackCount; }
+	void SetTotalStackCount(int32 Count) { TotalStackCount = Count; }
+
+public:
 	// Adds a specified number of stacks to the tag (does nothing if StackCount is below 1)
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = Inventory)
 	void AddStatTagStack(FGameplayTag Tag, int32 StackCount);
@@ -39,19 +50,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 	bool HasStatTag(FGameplayTag Tag) const;
 
-	TSubclassOf<UOrionInventoryNode_ItemDefinition> GetItemDef() const
-	{
-		return ItemDef;
-	}
-
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, meta = (DeterminesOutputType = FragmentClass))
 	const UOrionInventoryItemFragment* FindFragmentByClass(TSubclassOf<UOrionInventoryItemFragment> FragmentClass) const;
 
-	template <typename ResultClass>
-	const ResultClass* FindFragmentByClass() const
-	{
-		return (ResultClass*)FindFragmentByClass(ResultClass::StaticClass());
-	}
+	
 
 private:
 #if UE_WITH_IRIS
@@ -59,17 +61,19 @@ private:
 	virtual void RegisterReplicationFragments(UE::Net::FFragmentRegistrationContext& Context, UE::Net::EFragmentRegistrationFlags RegistrationFlags) override;
 #endif // UE_WITH_IRIS
 
-	void SetItemDef(TSubclassOf<UOrionInventoryNode_ItemDefinition> InDef);
 
 	friend struct FLyraInventoryList;
 
 private:
 	UPROPERTY(Replicated)
+	int32 TotalStackCount{0};
+
+	UPROPERTY(Replicated)
 	FOrionGameplayTagStackContainer StatTags;
 
 	// The item definition
 	UPROPERTY(Replicated)
-	TSubclassOf<UOrionInventoryNode_ItemDefinition> ItemDef;
+	TObjectPtr<UOrionInventoryNode_ItemDefinition> ItemDef;
 
 
 };

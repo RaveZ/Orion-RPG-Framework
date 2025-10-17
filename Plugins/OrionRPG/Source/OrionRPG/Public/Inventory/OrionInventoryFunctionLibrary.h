@@ -4,6 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Inventory/OrionInventoryItemFragment.h"
+#include "Templates/SubclassOf.h"
 #include "OrionInventoryFunctionLibrary.generated.h"
 
 class UOrionInventoryItemFragment;

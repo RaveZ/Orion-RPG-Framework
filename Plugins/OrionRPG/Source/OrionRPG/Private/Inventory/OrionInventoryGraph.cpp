@@ -11,7 +11,7 @@
 
 UOrionInventoryGraph::UOrionInventoryGraph()
 {
-}
+} 
 
 UOrionInventoryGraph::~UOrionInventoryGraph()
 {
@@ -72,7 +72,7 @@ void UOrionInventoryGraph::ClearGraph()
 	AllNodes.Empty();
 	RootNodes.Empty();
 	NodeMap.Empty();
-	ItemDefinitionMap.Empty();
+	ItemDefinitions.Empty();
 }
 
 APlayerController* UOrionInventoryGraph::GetOwningController()

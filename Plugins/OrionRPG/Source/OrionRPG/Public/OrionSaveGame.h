@@ -119,6 +119,18 @@ public:
 
 };
 
+USTRUCT()
+struct FOrionInventorySaveData
+{
+	GENERATED_BODY()
+
+public:
+	/** Array of saved QuestIDs*/
+	UPROPERTY(VisibleAnywhere, Category = QuestSaveData)
+	float MaxCapacity;
+
+};
+
 
 UCLASS(Blueprintable, BlueprintType)
 class ORIONRPG_API UOrionSaveGame : public ULocalPlayerSaveGame

@@ -9,6 +9,8 @@
 #include "InventoryData.generated.h"
 
 class UOrionInventoryNode_ItemDefinition;
+class UOrionInventoryItemInstance;
+class UOrionInventoryItemFragment;
 class UOrionInventoryComponent;
 class UOrionInteractionTargetComponent;
 
@@ -29,13 +31,7 @@ private:
 	friend UOrionInventoryComponent;
 
 	UPROPERTY()
-	TObjectPtr<UOrionInventoryNode_ItemDefinition> Item = nullptr;
-
-	UPROPERTY()
-	int32 StackCount = 0;
-
-	UPROPERTY(NotReplicated)
-	int32 LastObservedCount = INDEX_NONE;
+	TObjectPtr<UOrionInventoryItemInstance> ItemInstance = nullptr;
 };
 
 /** List of inventory items */
@@ -44,11 +40,19 @@ struct FOrionInventoryList : public FFastArraySerializer
 {
 	GENERATED_USTRUCT_BODY()
 
-	FOrionInventoryList() : OwnerComponent(nullptr) {}
-	FOrionInventoryList(UOrionInventoryComponent* InOwnerComponent) : OwnerComponent(InOwnerComponent) {}
+	FOrionInventoryList() 
+		: OwnerComponent(nullptr) 
+	{
+	}
 
-	TArray<UOrionInventoryNode_ItemDefinition*> GetAllItems() const;
+	FOrionInventoryList(UOrionInventoryComponent* InOwnerComponent) 
+		: OwnerComponent(InOwnerComponent) 
+	{
+	}
 
+	TArray<UOrionInventoryItemInstance*> GetAllItems() const;
+
+public:
 	// FFastArraySerializer contract
 	void PreReplicatedRemove(const TArrayView<int32> RemovedIndices, int32 FinalSize);
 	void PostReplicatedAdd(const TArrayView<int32> AddedIndices, int32 FinalSize);
@@ -59,9 +63,10 @@ struct FOrionInventoryList : public FFastArraySerializer
 		return FastArrayDeltaSerialize<FOrionInventoryEntry, FOrionInventoryList>(Entries, DeltaParams, *this);
 	}
 
-	UOrionInventoryNode_ItemDefinition* AddEntry(UOrionInteractionTargetComponent* ItemComponent);
-	UOrionInventoryNode_ItemDefinition* AddEntry(UOrionInventoryNode_ItemDefinition* Item);
-	void RemoveEntry(UOrionInventoryNode_ItemDefinition* Item);
+	void AddEntry(UOrionInventoryItemInstance* ItemInstance);
+	UOrionInventoryItemInstance* AddEntry(UOrionInventoryNode_ItemDefinition* ItemDef);
+	void RemoveEntry(UOrionInventoryItemInstance* ItemToRemove);
+	UOrionInventoryItemInstance* FindFirstItemByTag(const FGameplayTag& ItemTag);
 
 private:
 	friend UOrionInventoryComponent;
@@ -101,13 +106,20 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	int32 MaxCount;
 
+	UPROPERTY(EditAnywhere, meta = (Units = "Kilograms", UIMin = "0"))
+	float Weight;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSoftClassPtr<AActor> ActorClass;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fragments", Instanced)
+	TArray<TObjectPtr<UOrionInventoryItemFragment>> Fragments;
 
 public:
 	FInventoryItemDefinition()
 	{
+		Tag = TAG_Item;
+		Weight = 0.0f;
 		Icon = nullptr;
 		MaxCount = 1;
 		ActorClass = nullptr;
@@ -136,10 +148,11 @@ public:
 	TObjectPtr<UTexture2D> Icon;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
-	int32 MaxCount;
+	int32 Count;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
-	int32 Count;
+	int32 MaxCount;
+
 
 
 public:

@@ -2,6 +2,8 @@
 
 
 #include "Inventory/OrionInventoryComponent.h"
+#include "Inventory/OrionInventoryItemInstance.h"
+#include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 #include "Inventory/InventoryData.h"
@@ -14,39 +16,32 @@
 #include "GameFramework/PlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "NativeGameplayTags.h"
+#include "Engine/ActorChannel.h"
+#include "Engine/World.h"
 
 
 
 
 #define LOCTEXT_NAMESPACE "OrionInventoryComponent"
 
-UOrionInventoryComponent::UOrionInventoryComponent()
+UOrionInventoryComponent::UOrionInventoryComponent(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+	, InventoryList(this)
 {
-	PrimaryComponentTick.bCanEverTick = false;
 	SetIsReplicatedByDefault(true);
 	bReplicateUsingRegisteredSubObjectList = true;
+	DefaultMaxInventoryWeight = 100.0f;
+	CurrentWeight = 0;
 }
 
 void UOrionInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	OrionInventoryMap.Empty();
 	//Set Dependency
 	OwningController = GetOwningController();
+	MaxWeight = DefaultMaxInventoryWeight;
 }
 
-void UOrionInventoryComponent::AddItem(FGameplayTag Tag, int32 Count, FInventoryItem& OutItem)
-{
-	if (!Tag.MatchesTag(TAG_Item))
-	{
-		UE_LOG(LogTemp, Error, TEXT("Fail to add item. Invalid item Tag (%s)!"), *Tag.ToString());
-		return;
-	}
-
-
-
-	//FInventoryItem& NewItem = OrionInventoryMap.FindOrAdd(Tag);
-}
 
 void UOrionInventoryComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
@@ -60,6 +55,77 @@ void UOrionInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+}
+
+void UOrionInventoryComponent::AddItem(FGameplayTag ItemTag, int32 Count, FInventoryItem& OutItem)
+{
+	if (!ItemTag.MatchesTag(TAG_Item))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Fail to add item. Invalid item Tag (%s)!"), *ItemTag.ToString());
+		return;
+	}
+
+	UOrionInventoryItemInstance* FoundItem = InventoryList.FindFirstItemByTag(ItemTag);
+
+	if (FoundItem)
+	{
+		//Item found, increase stack count instead  
+		//TODO: broadcast event on stack count changed
+		FoundItem->SetTotalStackCount(FoundItem->GetTotalStackCount() + Count);
+		//OnItemStackChanged.Broadcast(FoundItem, FoundItem->GetTotalStackCount(), FoundItem->GetItemDef()->ItemDefinition);
+	}
+	else
+	{
+		//Item not found, create new entry
+		UOrionInventoryNode_ItemDefinition* ItemDef = FindItemDefinition(ItemTag);
+
+		if (ItemDef)
+		{
+			UOrionInventoryItemInstance* Result = nullptr;
+			Result = InventoryList.AddEntry(ItemDef);
+
+			if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && Result)
+			{
+				AddReplicatedSubObject(Result);
+				if (GetOwner()->GetNetMode() == NM_ListenServer || GetOwner()->GetNetMode() == NM_Standalone)
+				{
+					OnItemAdded.Broadcast(Result);
+				}
+			}
+		}
+	}
+	
+}
+
+UOrionInventoryNode_ItemDefinition* UOrionInventoryComponent::FindItemDefinition(FGameplayTag ItemTag)
+{
+	if (!ItemTag.MatchesTag(TAG_Item))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Fail to add item. Invalid item Tag (%s)!"), *ItemTag.ToString());
+		return nullptr;
+	}
+
+	if(InventoryDB)
+	{
+		return InventoryDB->ItemDefinitions.FindRef(ItemTag);
+	}
+	return nullptr;
+}
+
+
+void UOrionInventoryComponent::DropItem(UOrionInventoryItemInstance* ItemInstance, int32 StackCount)
+{
+
+}
+
+void UOrionInventoryComponent::SetInventoryMaxWeight(float InNewMaxWeight)
+{
+	if(MaxWeight == InNewMaxWeight)
+	{
+		return;
+	}
+	MaxWeight = InNewMaxWeight;
+	OnMaxWeightChanged.Broadcast(MaxWeight);
 }
 
 APawn* UOrionInventoryComponent::GetOwningPawn() const
@@ -109,6 +175,42 @@ APlayerController* UOrionInventoryComponent::GetOwningController() const
 	return nullptr;
 }
 
+
+bool UOrionInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+	for (FOrionInventoryEntry& Entry : InventoryList.Entries)
+	{
+		UOrionInventoryItemInstance* Instance = Entry.ItemInstance;
+
+		if (Instance && IsValid(Instance))
+		{
+			WroteSomething |= Channel->ReplicateSubobject(Instance, *Bunch, *RepFlags);
+		}
+	}
+
+	return WroteSomething;
+}
+
+void UOrionInventoryComponent::ReadyForReplication()
+{
+	Super::ReadyForReplication();
+
+	// Register existing UOrionInventoryItemInstance
+	if (IsUsingRegisteredSubObjectList())
+	{
+		for (const FOrionInventoryEntry& Entry : InventoryList.Entries)
+		{
+			UOrionInventoryItemInstance* Instance = Entry.ItemInstance;
+
+			if (IsValid(Instance))
+			{
+				AddReplicatedSubObject(Instance);
+			}
+		}
+	}
+}
 
 
 #undef LOCTEXT_NAMESPACE

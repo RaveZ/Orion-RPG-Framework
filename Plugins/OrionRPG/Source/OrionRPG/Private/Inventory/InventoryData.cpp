@@ -3,6 +3,8 @@
 #include "Inventory/InventoryData.h"
 #include "Inventory/OrionInventoryComponent.h"
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
+#include "Inventory/OrionInventoryItemInstance.h"
+#include "Inventory/OrionInventoryItemFragment.h"
 #include "OrionRPG.h"
 
 //Gameplay Tags
@@ -13,7 +15,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Item, "Inventory.Item");
 
 FString FOrionInventoryEntry::GetDebugString() const
 {
-	/*TSubclassOf<ULyraInventoryItemDefinition> ItemDef;
+	/*TSubclassOf<UOrionInventoryItemDefinition> ItemDef;
 	if (Instance != nullptr)
 	{
 		ItemDef = Instance->GetItemDef();
@@ -32,7 +34,7 @@ void FOrionInventoryList::PreReplicatedRemove(const TArrayView<int32> RemovedInd
 
 	for (int32 Index : RemovedIndices)
 	{
-		InvComponent->OnItemRemoved.Broadcast(Entries[Index].Item);
+		InvComponent->OnItemRemoved.Broadcast(Entries[Index].ItemInstance);
 	}
 }
 
@@ -43,64 +45,78 @@ void FOrionInventoryList::PostReplicatedAdd(const TArrayView<int32> AddedIndices
 
 	for (int32 Index : AddedIndices)
 	{
-		InvComponent->OnItemAdded.Broadcast(Entries[Index].Item);
+		InvComponent->OnItemAdded.Broadcast(Entries[Index].ItemInstance);
 	}
 }
 
 
-TArray<UOrionInventoryNode_ItemDefinition*> FOrionInventoryList::GetAllItems() const
+TArray<UOrionInventoryItemInstance*> FOrionInventoryList::GetAllItems() const
 {
 
-	TArray<UOrionInventoryNode_ItemDefinition*> Results;
+	TArray<UOrionInventoryItemInstance*> Results;
 	Results.Reserve(Entries.Num());
-	for (const auto& Entry : Entries)
+	for (const FOrionInventoryEntry& Entry : Entries)
 	{
-		if (!IsValid(Entry.Item)) continue;
-		Results.Add(Entry.Item);
+		if (Entry.ItemInstance != nullptr) //@TODO: Would prefer to not deal with this here and hide it further?
+		{
+			Results.Add(Entry.ItemInstance);
+		}
 	}
 	return Results;
 }
 
-
-UOrionInventoryNode_ItemDefinition* FOrionInventoryList::AddEntry(UOrionInteractionTargetComponent* ItemComponent)
+void FOrionInventoryList::AddEntry(UOrionInventoryItemInstance* ItemInstance)
 {
-	check(OwnerComponent);
-	AActor* OwningActor = OwnerComponent->GetOwner();
-	check(OwningActor->HasAuthority());
-	UOrionInventoryComponent* IC = Cast<UOrionInventoryComponent>(OwnerComponent);
-	if (!IsValid(IC)) return nullptr;
-
-	FOrionInventoryEntry& NewEntry = Entries.AddDefaulted_GetRef();
-	//NewEntry.Item = ItemComponent->GetItemManifest().Manifest(OwningActor);
-
-	//IC->AddRepSubObj(NewEntry.Item);
-	MarkItemDirty(NewEntry);
-
-	return NewEntry.Item;
+	unimplemented();
 }
 
-UOrionInventoryNode_ItemDefinition* FOrionInventoryList::AddEntry(UOrionInventoryNode_ItemDefinition* Item)
+UOrionInventoryItemInstance* FOrionInventoryList::AddEntry(UOrionInventoryNode_ItemDefinition* ItemDef)
 {
+	UOrionInventoryItemInstance* Result = nullptr;
+
+	check(ItemDef != nullptr);
 	check(OwnerComponent);
+
 	AActor* OwningActor = OwnerComponent->GetOwner();
 	check(OwningActor->HasAuthority());
 
-	FOrionInventoryEntry& NewEntry = Entries.AddDefaulted_GetRef();
-	NewEntry.Item = Item;
 
+	FOrionInventoryEntry& NewEntry = Entries.AddDefaulted_GetRef();
+	NewEntry.ItemInstance = NewObject<UOrionInventoryItemInstance>(OwnerComponent->GetOwner());  //@TODO: Using the actor instead of component as the outer due to UE-127172
+	NewEntry.ItemInstance->SetItemDef(ItemDef);
+	for (UOrionInventoryItemFragment* Fragment : ItemDef->Fragments)
+	{
+		if (Fragment != nullptr)
+		{
+			Fragment->OnInstanceCreated(NewEntry.ItemInstance);
+		}
+	}
+	Result = NewEntry.ItemInstance;
+
+	//const UOrionInventoryItemDefinition* ItemCDO = GetDefault<UOrionInventoryItemDefinition>(ItemDef);
 	MarkItemDirty(NewEntry);
-	return Item;
+
+	return Result;
 }
 
-void FOrionInventoryList::RemoveEntry(UOrionInventoryNode_ItemDefinition* Item)
+void FOrionInventoryList::RemoveEntry(UOrionInventoryItemInstance* ItemToRemove)
 {
 	for (auto EntryIt = Entries.CreateIterator(); EntryIt; ++EntryIt)
 	{
 		FOrionInventoryEntry& Entry = *EntryIt;
-		if (Entry.Item == Item)
+		if (Entry.ItemInstance == ItemToRemove)
 		{
 			EntryIt.RemoveCurrent();
 			MarkArrayDirty();
 		}
 	}
+}
+
+UOrionInventoryItemInstance* FOrionInventoryList::FindFirstItemByTag(const FGameplayTag& ItemTag)
+{
+	auto* FoundItem = Entries.FindByPredicate([ItemTag = ItemTag](const FOrionInventoryEntry& Entry)
+		{
+			return IsValid(Entry.ItemInstance) && IsValid(Entry.ItemInstance->GetItemDef()) && Entry.ItemInstance->GetItemDef()->ItemDefinition.Tag.MatchesTagExact(ItemTag);
+		});
+	return FoundItem ? FoundItem->ItemInstance : nullptr;
 }
