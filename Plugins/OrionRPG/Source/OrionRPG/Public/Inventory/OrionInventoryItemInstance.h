@@ -24,7 +24,6 @@ public:
 	//~End of UObject interface
 
 	UOrionInventoryNode_ItemDefinition* GetItemDef() const { return ItemDef; }
-	FOrion
 	template <typename ResultClass>
 	const ResultClass* FindFragmentByClass() const { return (ResultClass*)FindFragmentByClass(ResultClass::StaticClass()); }
 

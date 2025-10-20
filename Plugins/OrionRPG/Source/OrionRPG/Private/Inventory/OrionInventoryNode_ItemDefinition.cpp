@@ -17,8 +17,10 @@ UOrionInventoryNode_ItemDefinition::UOrionInventoryNode_ItemDefinition()
     auto ItemIconObj = ConstructorHelpers::FObjectFinder<UTexture2D>(TEXT("Texture2D'/OrionRPG/Widgets/Assets/InventoryItem.InventoryItem'"));
     if (ItemIconObj.Succeeded())
     {
-        ItemDefinition.Icon = ItemIconObj.Object;
+        Icon = ItemIconObj.Object;
     }
+	MaxCount = 1;
+
 }
 const UOrionInventoryItemFragment* UOrionInventoryNode_ItemDefinition::FindFragmentByClass(TSubclassOf<UOrionInventoryItemFragment> FragmentClass) const
 {
@@ -39,7 +41,7 @@ const UOrionInventoryItemFragment* UOrionInventoryNode_ItemDefinition::FindFragm
 #if WITH_EDITOR
 FText UOrionInventoryNode_ItemDefinition::GetNodeTitle() const
 {
-    return ItemDefinition.DisplayName;
+    return DisplayName;
 }
 
 void UOrionInventoryNode_ItemDefinition::SetNodeTitle(const FText& NewTitle)

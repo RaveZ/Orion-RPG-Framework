@@ -222,7 +222,7 @@ void UOrionInventoryEdNode::PostPlacedNewNode()
 				}
 				if (UOrionInventoryNode_ItemDefinition* ItemNode = Cast<UOrionInventoryNode_ItemDefinition>(NodeInstance))
 				{
-					ItemNode->ItemDefinition.DisplayName =  FText::FromString("New Item");
+					ItemNode->DisplayName =  FText::FromString("New Item");
 				}
 			}
 			

@@ -42,7 +42,7 @@ public:
 		TObjectPtr<APlayerController> OwningController;
 
 	/**Max Weight for this inventory*/
-	UPROPERTY(EditAnywhere, meta = (Units = "Kilograms", UIMin = "0"))
+	UPROPERTY(EditAnywhere, meta = (Units = "Kilograms", UIMin = "0"), Category = "InventoryComponent")
 		float DefaultMaxInventoryWeight;
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
@@ -85,7 +85,7 @@ protected:
 
 public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "InventoryComponent")
-	void AddItem(UPARAM(meta = (Categories = "Inventory.Item")) FGameplayTag ItemTag, int32 Count, FInventoryItem& OutItem);
+	void AddItem(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag(), int32 Count = 1);
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = Inventory)
 	void DropItem(UOrionInventoryItemInstance* ItemInstance, int32 StackCount);
@@ -94,7 +94,7 @@ public:
 	void SetInventoryMaxWeight(float InNewMaxWeight);
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
-	UOrionInventoryNode_ItemDefinition* FindItemDefinition(UPARAM(meta = (Categories = "Inventory.Item")) FGameplayTag ItemTag);
+	UOrionInventoryNode_ItemDefinition* FindItemDefinition(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
 public:
 	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
 	virtual APawn* GetOwningPawn() const;
@@ -108,5 +108,14 @@ public:
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
-		
+
+// ================================================================================================ //
+// CONSOLE COMMANDS
+// ================================================================================================ //
+public:
+	UFUNCTION(Exec)
+	void execLogInventory();
+
+	UFUNCTION(Exec)
+	void execAddItem(const TArray<FString>& ItemTag);
 };

@@ -22,8 +22,26 @@ class ORIONRPG_API UOrionInventoryNode_ItemDefinition : public UOrionInventoryNo
 public:
 	UOrionInventoryNode_ItemDefinition();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail", meta = (ShowOnlyInnerProperties))
-	FInventoryItemDefinition ItemDefinition;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Categories = "Item"))
+	FGameplayTag Tag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FText DisplayName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	FText Description;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TObjectPtr<UTexture2D> Icon;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (UIMin = "1"))
+	int32 MaxCount;
+
+	UPROPERTY(EditAnywhere, meta = (Units = "Kilograms", UIMin = "0"))
+	float Weight;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSoftClassPtr<AActor> ActorClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fragments", Instanced)
 	TArray<TObjectPtr<UOrionInventoryItemFragment>> Fragments;

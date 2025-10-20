@@ -37,7 +37,7 @@ FText UOrionInventoryEdSubNode_Item::GetTooltipText() const
 	const UOrionInventoryNode_ItemDefinition* InventoryNodeItem = Cast<UOrionInventoryNode_ItemDefinition>(NodeInstance);
 	if (InventoryNodeItem)
 	{
-		FText Desc = InventoryNodeItem->ItemDefinition.Description.IsEmpty() ? FText::FromString("Item Description...") : InventoryNodeItem->ItemDefinition.Description;
+		FText Desc = InventoryNodeItem->Description.IsEmpty() ? FText::FromString("Item Description...") : InventoryNodeItem->Description;
 		return Desc;
 	}
 	return Super::GetTooltipText();

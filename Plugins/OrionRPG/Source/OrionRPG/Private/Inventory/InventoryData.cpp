@@ -8,7 +8,7 @@
 #include "OrionRPG.h"
 
 //Gameplay Tags
-UE_DEFINE_GAMEPLAY_TAG(TAG_Item, "Inventory.Item");
+UE_DEFINE_GAMEPLAY_TAG(TAG_Item, "Item");
 
 //////////////////////////////////////////////////////////////////////
 // FOrionInventoryEntry
@@ -116,7 +116,7 @@ UOrionInventoryItemInstance* FOrionInventoryList::FindFirstItemByTag(const FGame
 {
 	auto* FoundItem = Entries.FindByPredicate([ItemTag = ItemTag](const FOrionInventoryEntry& Entry)
 		{
-			return IsValid(Entry.ItemInstance) && IsValid(Entry.ItemInstance->GetItemDef()) && Entry.ItemInstance->GetItemDef()->ItemDefinition.Tag.MatchesTagExact(ItemTag);
+			return IsValid(Entry.ItemInstance) && IsValid(Entry.ItemInstance->GetItemDef()) && Entry.ItemInstance->GetItemDef()->Tag.MatchesTagExact(ItemTag);
 		});
 	return FoundItem ? FoundItem->ItemInstance : nullptr;
 }
