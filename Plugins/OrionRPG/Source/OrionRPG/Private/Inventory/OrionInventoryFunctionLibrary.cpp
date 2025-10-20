@@ -53,3 +53,12 @@ const UOrionInventoryItemFragment* UOrionInventoryFunctionLibrary::FindItemDefin
     }
     return nullptr;
 }
+
+
+void UOrionInventoryFunctionLibrary::AddInventoryItem(const UObject* WorldContextObject, FGameplayTag ItemTag, int32 StackCount)
+{
+    if (UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject))
+    {
+        InventoryComp->AddItem(ItemTag, StackCount);
+    }
+}

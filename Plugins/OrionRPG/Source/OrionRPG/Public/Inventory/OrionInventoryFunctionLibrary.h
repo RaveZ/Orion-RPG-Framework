@@ -33,6 +33,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Inventory", meta = (DefaultToSelf = "Target"))
 	static class UOrionInventoryComponent* GetInventoryComponentFromTarget(AActor* Target);
 
-	UFUNCTION(BlueprintCallable, meta = (DeterminesOutputType = FragmentClass))
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (DeterminesOutputType = FragmentClass))
 	static const UOrionInventoryItemFragment* FindItemDefinitionFragment(TSubclassOf<UOrionInventoryNode_ItemDefinition> ItemDef, TSubclassOf<UOrionInventoryItemFragment> FragmentClass);
+
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static void AddInventoryItem(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag, int32 StackCount = 1);
 };

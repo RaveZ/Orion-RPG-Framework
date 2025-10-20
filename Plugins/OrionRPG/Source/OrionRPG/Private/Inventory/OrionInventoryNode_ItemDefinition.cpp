@@ -19,7 +19,7 @@ UOrionInventoryNode_ItemDefinition::UOrionInventoryNode_ItemDefinition()
     {
         Icon = ItemIconObj.Object;
     }
-	MaxCount = 1;
+	MaxStackCount = 1;
 
 }
 const UOrionInventoryItemFragment* UOrionInventoryNode_ItemDefinition::FindFragmentByClass(TSubclassOf<UOrionInventoryItemFragment> FragmentClass) const

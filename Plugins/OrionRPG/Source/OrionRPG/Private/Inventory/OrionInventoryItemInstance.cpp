@@ -66,6 +66,11 @@ void UOrionInventoryItemInstance::SetItemDef(UOrionInventoryNode_ItemDefinition*
 	ItemDef = InDef;
 }
 
+bool UOrionInventoryItemInstance::HasRoomForItem() const
+{
+	return GetItemDef() ? TotalStackCount < GetItemDef()->MaxStackCount : false;
+}
+
 const UOrionInventoryItemFragment* UOrionInventoryItemInstance::FindFragmentByClass(TSubclassOf<UOrionInventoryItemFragment> FragmentClass) const
 {
 	if ((ItemDef != nullptr) && (FragmentClass != nullptr))

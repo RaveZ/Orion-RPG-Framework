@@ -30,6 +30,7 @@ public:
 	void SetItemDef(UOrionInventoryNode_ItemDefinition* InDef);
 
 	int32 GetTotalStackCount() const { return TotalStackCount; }
+	bool HasRoomForItem() const;
 	void SetTotalStackCount(int32 Count) { TotalStackCount = Count; }
 
 public:

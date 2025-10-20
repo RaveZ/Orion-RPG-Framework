@@ -84,14 +84,26 @@ protected:
 	//~End of UObject interface
 
 public:
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "InventoryComponent")
-	void AddItem(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag(), int32 Count = 1);
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	void AddItem(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag(), int32 StackCount = 1);
 
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = Inventory)
-	void DropItem(UOrionInventoryItemInstance* ItemInstance, int32 StackCount);
+	UFUNCTION(Server, Reliable)
+    void Server_AddItem(FGameplayTag ItemTag, int32 StackCount);
+
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	void DropItem(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag(), int32 StackCount = 1);
+
+	UFUNCTION(Server, Reliable)
+	void Server_DropItem(FGameplayTag ItemTag, int32 StackCount);
+
+	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "InventoryComponent")
+	void DropItemInstance(UOrionInventoryItemInstance* ItemInstance, int32 StackCount);
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
 	void SetInventoryMaxWeight(float InNewMaxWeight);
+
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent", BlueprintPure = false)
+	TArray<UOrionInventoryItemInstance*> GetAllItems() const;
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
 	UOrionInventoryNode_ItemDefinition* FindItemDefinition(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
@@ -118,4 +130,7 @@ public:
 
 	UFUNCTION(Exec)
 	void execAddItem(const TArray<FString>& ItemTag);
+
+	UFUNCTION(Exec)
+	void execDropItem(const TArray<FString>& ItemTag);
 };

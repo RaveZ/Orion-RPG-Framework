@@ -35,7 +35,7 @@ public:
 	TObjectPtr<UTexture2D> Icon;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (UIMin = "1"))
-	int32 MaxCount;
+	int32 MaxStackCount;
 
 	UPROPERTY(EditAnywhere, meta = (Units = "Kilograms", UIMin = "0"))
 	float Weight;

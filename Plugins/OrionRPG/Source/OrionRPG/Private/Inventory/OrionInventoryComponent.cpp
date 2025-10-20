@@ -49,9 +49,15 @@ void UOrionInventoryComponent::BeginPlay()
 		ECVF_Default);
 
 	IConsoleManager::Get().RegisterConsoleCommand(
-		TEXT("orionAddInventoryItem"),
+		TEXT("orionAddItem"),
 		TEXT("[ItemTag] Add item to inventory"),
 		FConsoleCommandWithArgsDelegate::CreateUObject(this, &ThisClass::execAddItem),
+		ECVF_Default);
+
+	IConsoleManager::Get().RegisterConsoleCommand(
+		TEXT("orionDropItem"),
+		TEXT("[ItemTag] Drop inventory item"),
+		FConsoleCommandWithArgsDelegate::CreateUObject(this, &ThisClass::execDropItem),
 		ECVF_Default);
 }
 
@@ -70,27 +76,37 @@ void UOrionInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 }
 
-void UOrionInventoryComponent::AddItem(FGameplayTag ItemTag, int32 Count)
+void UOrionInventoryComponent::AddItem(FGameplayTag ItemTag, int32 StackCount)
 {
 	if (!ItemTag.MatchesTag(TAG_Item))
 	{
 		UE_LOG(LogTemp, Error, TEXT("Fail to add item. Invalid item Tag (%s)!"), *ItemTag.ToString());
 		return;
 	}
+	
+	Server_AddItem(ItemTag, StackCount);
+	
+		
+}
 
+
+// Fixes for signature and member function calls
+
+void UOrionInventoryComponent::Server_AddItem_Implementation(FGameplayTag ItemTag, int32 StackCount)
+{
 	UOrionInventoryItemInstance* ItemInstance = InventoryList.FindFirstItemByTag(ItemTag);
 
 	if (ItemInstance)
 	{
 		//Item found, increase stack count instead  
 		//TODO: broadcast event on stack count changed
-		if(ItemInstance->GetTotalStackCount() + Count > ItemInstance->GetItemDef()->MaxCount)
+		if (!ItemInstance->HasRoomForItem())
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Cannot add item %s. Stack count exceeded max count (%d/%d)"), *ItemInstance->GetItemDef()->DisplayName.ToString(), ItemInstance->GetTotalStackCount() + Count, ItemInstance->GetItemDef()->MaxCount);
+			UE_LOG(LogTemp, Warning, TEXT("Fail to add item: %s. Stack is full (%d/%d)"), *ItemInstance->GetItemDef()->DisplayName.ToString(), ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
 			return;
 		}
-		ItemInstance->SetTotalStackCount(ItemInstance->GetTotalStackCount() + Count);
-		OnItemStackChanged.Broadcast(ItemInstance, ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxCount);
+		OnItemStackChanged.Broadcast(ItemInstance, ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
+		ItemInstance->SetTotalStackCount(FMath::Clamp(ItemInstance->GetTotalStackCount() + StackCount, 0, ItemInstance->GetItemDef()->MaxStackCount));
 	}
 	else
 	{
@@ -99,13 +115,13 @@ void UOrionInventoryComponent::AddItem(FGameplayTag ItemTag, int32 Count)
 
 		if (ItemDef)
 		{
-			ItemInstance = InventoryList.AddEntry(ItemDef);
-
-			if (IsUsingRegisteredSubObjectList() && IsReadyForReplication() && ItemInstance)
+			ItemInstance = InventoryList.AddEntry(const_cast<UOrionInventoryNode_ItemDefinition*>(ItemDef));
+			if (ItemInstance && this->IsUsingRegisteredSubObjectList() && this->IsReadyForReplication())
 			{
-				AddReplicatedSubObject(ItemInstance);
-				ItemInstance->SetTotalStackCount(ItemInstance->GetTotalStackCount() + Count);
-				if (GetOwner()->GetNetMode() == NM_ListenServer || GetOwner()->GetNetMode() == NM_Standalone)
+				this->AddReplicatedSubObject(ItemInstance);
+				ItemInstance->SetTotalStackCount(FMath::Clamp(ItemInstance->GetTotalStackCount() + StackCount, 0, ItemInstance->GetItemDef()->MaxStackCount));
+				AActor* OwnerActor = this->GetOwner();
+				if (OwnerActor && (OwnerActor->GetNetMode() == NM_ListenServer || OwnerActor->GetNetMode() == NM_Standalone))
 				{
 					OnItemAdded.Broadcast(ItemInstance);
 				}
@@ -115,9 +131,37 @@ void UOrionInventoryComponent::AddItem(FGameplayTag ItemTag, int32 Count)
 
 	if (ItemInstance)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Item Added: %s | Tag: %s, StackCount: %d/%d\n"), *ItemInstance->GetItemDef()->DisplayName.ToString(), *ItemInstance->GetItemDef()->Tag.ToString(), ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxCount);
+		UE_LOG(LogTemp, Log, TEXT("Item Added: %s | Tag: %s, StackCount: %d/%d\n"), *ItemInstance->GetItemDef()->DisplayName.ToString(), *ItemInstance->GetItemDef()->Tag.ToString(), ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
 	}
-		
+
+    
+   
+}
+
+void UOrionInventoryComponent::DropItem(FGameplayTag ItemTag, int32 StackCount)
+{
+	if (!ItemTag.MatchesTag(TAG_Item))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Fail to add item. Invalid item Tag (%s)!"), *ItemTag.ToString());
+		return;
+	}
+
+	Server_DropItem(ItemTag, StackCount);
+}
+
+
+void UOrionInventoryComponent::Server_DropItem_Implementation(FGameplayTag ItemTag, int32 StackCount)
+{
+	UOrionInventoryItemInstance* ItemInstance = InventoryList.FindFirstItemByTag(ItemTag);
+
+	if (ItemInstance)
+	{
+		DropItemInstance(ItemInstance, StackCount);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Fail to drop item. Item with Tag (%s) not found in inventory!"), *ItemTag.ToString());
+	}
 }
 
 UOrionInventoryNode_ItemDefinition* UOrionInventoryComponent::FindItemDefinition(FGameplayTag ItemTag)
@@ -136,10 +180,44 @@ UOrionInventoryNode_ItemDefinition* UOrionInventoryComponent::FindItemDefinition
 }
 
 
-void UOrionInventoryComponent::DropItem(UOrionInventoryItemInstance* ItemInstance, int32 StackCount)
+
+void UOrionInventoryComponent::DropItemInstance(UOrionInventoryItemInstance* ItemInstance, int32 StackCount)
 {
+	if (!ItemInstance)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Fail to drop item. ItemInstance is null!"));
+		return;
+	}
+
+	const int32 NewStackCount = ItemInstance->GetTotalStackCount() - FMath::Abs(StackCount);
+	ItemInstance->SetTotalStackCount(FMath::Clamp(NewStackCount, 0, ItemInstance->GetItemDef()->MaxStackCount));
+	
+	if(NewStackCount <= 0)
+	{
+		InventoryList.RemoveEntry(ItemInstance);
+		if (IsUsingRegisteredSubObjectList())
+		{
+			RemoveReplicatedSubObject(ItemInstance);
+		}
+		OnItemRemoved.Broadcast(ItemInstance);
+	}
+	else
+	{
+		OnItemStackChanged.Broadcast(ItemInstance, NewStackCount, ItemInstance->GetItemDef()->MaxStackCount);
+	}
+	UE_LOG(LogTemp, Log, TEXT("Drop Item: %s | Tag: %s, StackCount: %d/%d\n"), *ItemInstance->GetItemDef()->DisplayName.ToString(), *ItemInstance->GetItemDef()->Tag.ToString(), ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
+
+
+
+	//TODO: Spawn dropped item in the world
 
 }
+
+TArray<UOrionInventoryItemInstance*> UOrionInventoryComponent::GetAllItems() const
+{
+	return InventoryList.GetAllItems();
+}
+
 
 void UOrionInventoryComponent::SetInventoryMaxWeight(float InNewMaxWeight)
 {
@@ -257,7 +335,7 @@ void UOrionInventoryComponent::execLogInventory()
 			UOrionInventoryItemInstance* Item = ItemList[i];
 			if (Item)
 			{
-				Message += FString::Printf(TEXT("Name: %s | Tag: %s, StackCount: %d/%d\n"), *Item->GetItemDef()->DisplayName.ToString(), *Item->GetItemDef()->Tag.ToString(), Item->GetTotalStackCount(), Item->GetItemDef()->MaxCount);
+				Message += FString::Printf(TEXT("Name: %s | Tag: %s, StackCount: %d/%d\n"), *Item->GetItemDef()->DisplayName.ToString(), *Item->GetItemDef()->Tag.ToString(), Item->GetTotalStackCount(), Item->GetItemDef()->MaxStackCount);
 			}
 		}
 	}
@@ -275,6 +353,13 @@ void UOrionInventoryComponent::execAddItem(const TArray<FString>& ItemTag)
 	if (ItemTag.IsEmpty()) return;
 
 	AddItem(FGameplayTag::RequestGameplayTag(FName(*ItemTag[0])));
+}
+
+void UOrionInventoryComponent::execDropItem(const TArray<FString>& ItemTag)
+{
+	if (ItemTag.IsEmpty()) return;
+
+	DropItem(FGameplayTag::RequestGameplayTag(FName(*ItemTag[0])));
 }
 
 
