@@ -15,6 +15,26 @@ enum class EOrionInteractionType : uint8
 	/**Interaction trace from pawn*/
 	E_InteractionPawn		UMETA(DisplayName = "Pawn"),
 };
+UENUM(BlueprintType)
+enum class EOrionInteractionResult : uint8
+{
+	E_None			UMETA(DisplayName = "None"),
+	E_Started		UMETA(DisplayName = "Started"),
+	E_Completed		UMETA(DisplayName = "Completed"),
+	E_Canceled		UMETA(DisplayName = "Canceled"),
+	E_Blocked		UMETA(DisplayName = "Blocked")
+};
+
+UENUM(BlueprintType)
+enum class EOrionInteractionNetMode : uint8
+{
+	E_None		UMETA(DisplayName = "None"),
+	/**Notify client only for interaction result*/
+	E_OwnerOnly	UMETA(DisplayName = "OwnerOnly"),
+	/**Using multicast to notify interaction result*/
+	E_All			UMETA(DisplayName = "All")
+};
+
 
 class UOrionInteractionTargetComponent;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOrionInteractionSignature, UOrionInteractionTargetComponent*, InteractionTarget, FGameplayTag, InteractionTargetTag);
@@ -40,6 +60,9 @@ public:
 	TObjectPtr<APlayerController> OwningController;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interaction")
+	EOrionInteractionNetMode InteractionNetMode;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interaction")
     TEnumAsByte<ECollisionChannel> InteractionTraceChannel;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interaction")
@@ -63,7 +86,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	TArray<FHitResult> InteractionhitResults;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "Interaction")
 	TObjectPtr<class UOrionInteractionTargetComponent> CurrentInteractionTarget;
 
 	/*Index of the interaction list chosen by player*/
@@ -78,6 +101,9 @@ public:
 	FOrionOnInteractingChanged OnInteractingStateChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FOrionInteractionSignature OnInteractionChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOrionInteractionSignature OnInteractionStarted;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
@@ -85,12 +111,6 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOrionInteractionSignature OnInteractionCompleted;
-
-	UPROPERTY(BlueprintAssignable, Category = "Interaction")
-	FOrionInteractionSignature OnInteractionUpdated;
-	
-	UPROPERTY(BlueprintAssignable, Category = "Interaction")
-	FOrionInteractionSignature OnInteractionChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOrionInteractionSignature OnInteractionBlocked;
@@ -164,19 +184,6 @@ public:
 	UFUNCTION()
 	void DeRegisterInteractionTarget();
 
-	/**
-	 * Performs an Interaction Trace
-	 *
-	 * @param OutInteractionComponent - Out Interaction Component If Found
-	 * @returns True If Interaction Exists
-	 */
-	UFUNCTION()
-	FORCEINLINE bool TryGetInteraction(UOrionInteractionTargetComponent*& OutInteractionComponent)
-	{
-		OutInteractionComponent = GetInteractionTrace();
-		return ValidateDirection(OutInteractionComponent);
-	}
-
 	UFUNCTION(BlueprintPure, Category = Interactor)
 	bool IsLocalInteractor() const
 	{
@@ -220,12 +227,6 @@ public:
 	};
 
 	/**
-	 * Validates the Direction Towards Interaction Component
-	 */
-	UFUNCTION()
-	bool ValidateDirection(const UOrionInteractionTargetComponent* InteractionTarget) const;
-
-	/**
 	 * Determines Whether this Interactor Instance Should Tick
 	 *
 	 * @return True If Local is Owner Or Instance is on Server
@@ -236,6 +237,35 @@ public:
 		return GetNetMode() == NM_Client && GetInteractorRole() != ROLE_AutonomousProxy ? false : true;
 	}
 
+	/**
+	 * Handles Interaction Notification Based on Config
+	 *
+	 * @param InteractionResult - Result of the Interaction
+	 * @param InteractionType - Type of Interaction
+	 */
+	UFUNCTION()
+	void NotifyInteraction(EOrionInteractionResult NewInteractionResult);
+
+	/**
+	 * Owner Only Interaction State Notification
+	 *
+	 * @param InteractionResult - Result of the Interaction
+	 * @param InteractionType - Type of Interaction
+	 */
+	UFUNCTION(Client, Reliable)
+	void Client_NotifyInteraction(EOrionInteractionResult NewInteractionResult);
+
+	/**
+	 * Multi Cast Call to all Clients Notifying Interaction State
+	 *
+	 * @param InteractionResult - Result of the Interaction
+	 * @param InteractionType - Type of Interaction
+	 */
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_NotifyInteraction(EOrionInteractionResult NewInteractionResult);
+
+	UFUNCTION()
+	void CallInteractionResult(EOrionInteractionResult NewInteractionResult, UOrionInteractionTargetComponent* InteractionTarget, FGameplayTag Tag);
 private:
 	UFUNCTION()
 	void UpdateInteractionTrace(); 

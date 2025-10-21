@@ -19,7 +19,7 @@ UENUM(BlueprintType)
 enum class EOrionInteractionMode : uint8
 {
 	None	UMETA(DisplayName = "None"),
-	Tap		UMETA(DisplayName = "Tap"),
+	Instant		UMETA(DisplayName = "Instant"),
 	Hold	UMETA(DisplayName = "Hold")
 };
 

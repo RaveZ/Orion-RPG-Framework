@@ -12,7 +12,7 @@
 
 UOrionInteractionTargetComponent::UOrionInteractionTargetComponent()
 {
-	Mode = EOrionInteractionMode::Tap;
+	Mode = EOrionInteractionMode::Instant;
 	HoldDuration = 1.0f;
 	CurrentInteractor = nullptr;
 	CurrentProgress = 0.0f;
@@ -107,7 +107,7 @@ void UOrionInteractionTargetComponent::StartInteraction(AActor* Interactor)
 		OnStarted.Broadcast(CurrentInteractor, this);
 	}
 
-	if (Mode == EOrionInteractionMode::Tap)
+	if (Mode == EOrionInteractionMode::Instant)
 	{
 		if (OnProcessed.IsBound())
 		{

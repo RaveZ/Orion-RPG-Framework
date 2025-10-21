@@ -17,6 +17,7 @@ UOrionInteractionComponent::UOrionInteractionComponent()
 {
 	// Initialize variables
 	bInteracting = false;
+	InteractionNetMode = EOrionInteractionNetMode::E_OwnerOnly;
 	InteractionTraceChannel = ECC_WorldDynamic;
 	InteractionType = EOrionInteractionType::E_InteractionPawn;
 	InteractionRadius = 150.f;
@@ -63,6 +64,7 @@ void UOrionInteractionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME_CONDITION(ThisClass, CurrentInteractionTarget, COND_OwnerOnly);
 	DOREPLIFETIME(ThisClass, bIsInteractionEnabled);
 	DOREPLIFETIME(ThisClass, InteractionIndex);
 	DOREPLIFETIME(ThisClass, bInteracting);
@@ -79,8 +81,6 @@ void UOrionInteractionComponent::OnPossessedPawnChanged(APawn* OldPawn, APawn* N
 		SetInteractionEnabled(true);
 	}
 }
-
-
 
 
 void UOrionInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -173,29 +173,6 @@ void UOrionInteractionComponent::SetInteractionEnabled(bool bEnabled)
 	}
 }
 
-bool UOrionInteractionComponent::ValidateDirection(const UOrionInteractionTargetComponent* InteractionTarget) const
-{
-	/*if (!IsValid(InteractionTarget))
-	{
-		return false;
-	}*/
-
-	return true;
-	/* Return True Early If Face Only Interaction is Not Required */
-	/*if (!InteractionTarget->bOnlyFaceInteraction)
-	{
-		return true;
-	}*/
-
-	/* Get Interactor Direction from Our Location */
-	/*FVector Direction = GetOwner()->GetActorLocation() - InteractionTarget->GetComponentLocation();
-	Direction.Normalize();
-
-	float DirectionPoint = 0.0f;
-
-	return FVector::DotProduct(Direction, InteractionTarget->GetForwardVector()) > 0.5f;*/
-}
-
 
 void UOrionInteractionComponent::RegisterNewInteractionTarget(UOrionInteractionTargetComponent* NewInteractionTarget)
 {
@@ -247,6 +224,67 @@ void UOrionInteractionComponent::DeRegisterInteractionTarget()
 	CurrentInteractionTarget = nullptr;
 }
 
+void UOrionInteractionComponent::NotifyInteraction(EOrionInteractionResult NewInteractionResult)
+{
+	switch (InteractionNetMode)
+	{
+		case EOrionInteractionNetMode::E_OwnerOnly:
+			Client_NotifyInteraction(NewInteractionResult);
+			break;
+		case EOrionInteractionNetMode::E_All:
+			Multicast_NotifyInteraction(NewInteractionResult);
+			break;
+		default:
+			break;
+	}
+}
+
+void UOrionInteractionComponent::Client_NotifyInteraction_Implementation(EOrionInteractionResult NewInteractionResult)
+{
+	CallInteractionResult(
+		NewInteractionResult,
+		CurrentInteractionTarget,
+		CurrentInteractionTarget ? CurrentInteractionTarget->Tag : FGameplayTag().EmptyTag
+	);
+	
+	/* Notify Interaction Locally If Interaction Net Mode is Owner Only*/
+	/*if (IsValid(CurrentInteractionTarget) &&
+		CurrentInteractionTarget->InteractionStateNetMode == EInteractionNetMode::INM_OwnerOnly)
+	{
+		InteractionCandidate->ClientNotifyInteraction(NewInteractionResult, this);
+	}*/
+}
+
+void UOrionInteractionComponent::Multicast_NotifyInteraction_Implementation(EOrionInteractionResult NewInteractionResult)
+{
+	CallInteractionResult(
+		NewInteractionResult,
+		CurrentInteractionTarget,
+		CurrentInteractionTarget ? CurrentInteractionTarget->Tag : FGameplayTag().EmptyTag
+	);
+}
+
+void UOrionInteractionComponent::CallInteractionResult(EOrionInteractionResult NewInteractionResult, UOrionInteractionTargetComponent* InteractionTarget, FGameplayTag Tag)
+{
+	switch (NewInteractionResult)
+	{
+		case EOrionInteractionResult::E_Started:
+			OnInteractionStarted.Broadcast(InteractionTarget, Tag);
+			break;
+		case EOrionInteractionResult::E_Completed:
+			OnInteractionCompleted.Broadcast(InteractionTarget, Tag);
+			break;
+		case EOrionInteractionResult::E_Canceled:
+			OnInteractionCanceled.Broadcast(InteractionTarget, Tag);
+			break;
+		case EOrionInteractionResult::E_Blocked:
+			OnInteractionBlocked.Broadcast(InteractionTarget, Tag);
+			break;
+		default:
+			break;
+	}
+}
+
 void UOrionInteractionComponent::UpdateInteractionTrace()
 {
 	if (bInteracting)
@@ -275,7 +313,6 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 
 	}
 
-	OnInteractionUpdated.Broadcast(CurrentInteractionTarget, CurrentInteractionTarget ? CurrentInteractionTarget->Tag : FGameplayTag().EmptyTag);
 	
 	/*if (LastInteractionTarget && LastInteractionTarget->Mode == EOrionInteractionMode::Hold && LastInteractionTarget->IsInteractionInProgress() && CurrentInteractionTarget == nullptr)
 	{
@@ -440,11 +477,11 @@ void UOrionInteractionComponent::StartInteraction()
 		{
 			SetInteracting(true);
 			CurrentInteractionTarget->StartInteraction(GetOwningPawn());
-			OnInteractionStarted.Broadcast(CurrentInteractionTarget, CurrentInteractionTarget ? CurrentInteractionTarget->Tag : FGameplayTag().EmptyTag);
+			NotifyInteraction(EOrionInteractionResult::E_Started);
 		}
 		else
 		{
-			OnInteractionBlocked.Broadcast(CurrentInteractionTarget, CurrentInteractionTarget ? CurrentInteractionTarget->Tag : FGameplayTag().EmptyTag);
+			NotifyInteraction(EOrionInteractionResult::E_Blocked);
 		}
 	}
 	
@@ -475,7 +512,7 @@ void UOrionInteractionComponent::CancelInteraction()
 		CurrentInteractionTarget->IsInteractionInProgress())
 	{
 		CurrentInteractionTarget->EndInteraction(false);
-		OnInteractionCanceled.Broadcast(CurrentInteractionTarget, CurrentInteractionTarget ? CurrentInteractionTarget->Tag : FGameplayTag().EmptyTag);
+		NotifyInteraction(EOrionInteractionResult::E_Canceled);
 	}
 }
 
@@ -493,9 +530,8 @@ void UOrionInteractionComponent::EndInteraction(UOrionInteractionTargetComponent
 
 	if (bCompleted)
 	{
-		OnInteractionCompleted.Broadcast(InteractionTarget, InteractionTarget ? InteractionTarget->Tag : FGameplayTag().EmptyTag);
+		NotifyInteraction(EOrionInteractionResult::E_Completed);
 	}
-	
 }
 
 
