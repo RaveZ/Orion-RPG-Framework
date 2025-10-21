@@ -11,6 +11,8 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOrionInteractionTargetSignature, AActor*, Interactor, UOrionInteractionTargetComponent*, Component);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnInteractionTargetFocusChanged, AActor*, Interactor, UOrionInteractionTargetComponent*, Component, bool, bFocused);
+
 
 
 UENUM(BlueprintType)
@@ -33,7 +35,7 @@ class UOrionInteractionTargetComponent : public USceneComponent
 	
 public:
 	UPROPERTY(BlueprintAssignable, Category = "Interactable")
-	FOrionInteractionTargetSignature OnFocused;
+	FOnInteractionTargetFocusChanged OnFocusChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interactable")
 	FOrionInteractionTargetSignature OnStarted;
@@ -79,10 +81,10 @@ public:
 	TArray<TObjectPtr<UOrionEvent>> Events;
 
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interactable")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "Interactable")
 	TObjectPtr<AActor> CurrentInteractor;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interactable")
+	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "Interactable")
 	float CurrentProgress;
 
 	//Ensure Each interaction has cooldown in between and avoid interacting the same object twice in one frame
@@ -94,18 +96,22 @@ private:
 
 	FTimerHandle TimerHandle_ResetInteraction;
 
+protected:
+
+	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 public:
 	UOrionInteractionTargetComponent();
 
-	virtual void BeginPlay() override;
 
 	UFUNCTION(BlueprintPure, Category = "Interactable")
 	bool CanInteract() const;
 
-	void Focused(AActor* Interactor);
+	void SetFocusState(bool bFocused, AActor* Interactor);
 
 	UFUNCTION(BlueprintCallable, Category = "Interactable")
 	void StartInteraction(AActor* Interactor);
+
 
 	UFUNCTION(BlueprintCallable, Category = "Interactable")
 	void EndInteraction(bool bCompleted);

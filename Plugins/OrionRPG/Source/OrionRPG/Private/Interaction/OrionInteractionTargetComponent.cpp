@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
+#include "Net/UnrealNetwork.h"
 
 
 
@@ -16,6 +17,7 @@ UOrionInteractionTargetComponent::UOrionInteractionTargetComponent()
 	CurrentInteractor = nullptr;
 	CurrentProgress = 0.0f;
 	bAutoActivate = true;
+	SetIsReplicatedByDefault(true);
 	//SetComponentTickEnabled(false);
 }
 
@@ -43,12 +45,22 @@ void UOrionInteractionTargetComponent::BeginPlay()
 	
 }
 
+void UOrionInteractionTargetComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	// This tells the engine to replicate these variables.
+	DOREPLIFETIME(ThisClass, CurrentInteractor);
+}
+
 
 
 bool UOrionInteractionTargetComponent::CanInteract() const
 {
 	return bNativeCanInteract && (Mode != EOrionInteractionMode::None) && (CurrentInteractor == nullptr) && FMath::IsNearlyEqual(CurrentProgress, 0.0f, UE_KINDA_SMALL_NUMBER);
 }
+
+
 
 bool UOrionInteractionTargetComponent::DecoratorConditionMet() const
 {
@@ -72,25 +84,23 @@ bool UOrionInteractionTargetComponent::DecoratorConditionMet() const
 	return SumConditionMet >= InteractConditions.Num();
 }
 
-void UOrionInteractionTargetComponent::Focused(AActor* Interactor)
-{
-	// Blueprint event
-	if (OnFocused.IsBound())
+
+void UOrionInteractionTargetComponent::SetFocusState(bool bFocused, AActor* Interactor)
+{// Blueprint event
+	if (OnFocusChanged.IsBound())
 	{
-		OnFocused.Broadcast(Interactor, this);
+		OnFocusChanged.Broadcast(Interactor, this, bFocused);
 	}
 }
 
-
 void UOrionInteractionTargetComponent::StartInteraction(AActor* Interactor)
 {
-	//UE_LOG(LogTemp, Log, __FUNCTIONW__);
 	check(Mode != EOrionInteractionMode::None);
 
 	CurrentInteractor = Interactor;
 	CurrentProgress = 0.0f;
-	CurrentHoldTime= 0.0f;
-	
+	CurrentHoldTime = 0.0f;
+
 	// Blueprint event
 	if (OnStarted.IsBound())
 	{
@@ -112,13 +122,12 @@ void UOrionInteractionTargetComponent::StartInteraction(AActor* Interactor)
 	{
 		GetWorld()->GetTimerManager().SetTimer(TimerHandle_UpdateProgressValue, this, &UOrionInteractionTargetComponent::UpdateProgressValue, 0.0333f, true);
 	}
+
 }
 
 
 void UOrionInteractionTargetComponent::EndInteraction(bool bCompleted)
 {
-	//UE_LOG(LogTemp, Log, __FUNCTIONW__);
-
 	check(Mode != EOrionInteractionMode::None);
 
 	// Blueprint event
@@ -155,7 +164,7 @@ void UOrionInteractionTargetComponent::EndInteraction(bool bCompleted)
 
 	if (UOrionInteractionComponent* InteractionComp = UOrionInteractionFunctionLibrary::GetInteractionComponent(GetWorld()))
 	{
-		InteractionComp->InteractionEnded(this, bCompleted);
+		InteractionComp->EndInteraction(this, bCompleted);
 	}
 
 	bNativeCanInteract = false;
@@ -170,15 +179,16 @@ void UOrionInteractionTargetComponent::EndInteraction(bool bCompleted)
 		});
 
 	GetWorld()->GetTimerManager().SetTimer(
-		TimerHandle_ResetInteraction, 
+		TimerHandle_ResetInteraction,
 		ResetInteractionTimerDel,
 		0.5f,
-		false 
+		false
 	);
 
 	CurrentInteractor = nullptr;
 	CurrentProgress = 0.0f;
 	GetWorld()->GetTimerManager().ClearTimer(TimerHandle_UpdateProgressValue);
+	
 }
 
 

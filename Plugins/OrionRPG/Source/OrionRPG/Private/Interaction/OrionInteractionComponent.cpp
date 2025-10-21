@@ -16,6 +16,7 @@
 UOrionInteractionComponent::UOrionInteractionComponent()
 {
 	// Initialize variables
+	bInteracting = false;
 	InteractionTraceChannel = ECC_WorldDynamic;
 	InteractionType = EOrionInteractionType::E_InteractionPawn;
 	InteractionRadius = 150.f;
@@ -24,15 +25,19 @@ UOrionInteractionComponent::UOrionInteractionComponent()
 	InteractionOffset = FVector(75.f, 0.f, 0.f);
 	bIsInteractionEnabled = false;
 	bDebugTrace = false;
-	//SetComponentTickEnabled(false);
+
+	PrimaryComponentTick.bCanEverTick = true;
+	SetIsReplicatedByDefault(true);
 }
 
 void UOrionInteractionComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	SetComponentTickInterval(InteractionTraceIntervalSecond);
 
 	// Cache the owning controller
 	OwningController = GetOwningController();
+
 	if (OwningController)
 	{
         // Fix: Use a delegate to bind the function properly
@@ -40,15 +45,27 @@ void UOrionInteractionComponent::BeginPlay()
      
 	}
 	SetInteractionEnabled(true);
+
+	
 }
+void UOrionInteractionComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	if ((EndPlayReason == EEndPlayReason::Destroyed ||
+		EndPlayReason == EEndPlayReason::RemovedFromWorld) && bInteracting)
+	{
+		CancelInteraction();
+	}
+}
+
 void UOrionInteractionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME(UOrionInteractionComponent, CurrentInteractionTarget);
-	DOREPLIFETIME(UOrionInteractionComponent, bIsInteractionEnabled);
-	DOREPLIFETIME(UOrionInteractionComponent, InteractionType);
-	DOREPLIFETIME(UOrionInteractionComponent, InteractionIndex);
+	DOREPLIFETIME(ThisClass, bIsInteractionEnabled);
+	DOREPLIFETIME(ThisClass, InteractionIndex);
+	DOREPLIFETIME(ThisClass, bInteracting);
 }
 
 void UOrionInteractionComponent::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
@@ -63,10 +80,22 @@ void UOrionInteractionComponent::OnPossessedPawnChanged(APawn* OldPawn, APawn* N
 	}
 }
 
+
+
+
 void UOrionInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	UpdateInteractionTrace();
 
+}
+
+void UOrionInteractionComponent::OnRep_bInteracting()
+{
+	if (OnInteractingStateChanged.IsBound())
+	{
+		OnInteractingStateChanged.Broadcast(bInteracting);
+	}
 }
 
 APawn* UOrionInteractionComponent::GetOwningPawn() const
@@ -130,12 +159,13 @@ void UOrionInteractionComponent::SetInteractionEnabled(bool bEnabled)
 	{
 		if (bIsInteractionEnabled)
 		{
-
-			World->GetTimerManager().SetTimer(TimerHandle_UpdateInteractionTrace, this, &UOrionInteractionComponent::UpdateInteractionTrace, InteractionTraceIntervalSecond, true);
+			SetComponentTickEnabled(
+				ShouldTickInstance()
+			);
 		}
 		else
 		{
-			World->GetTimerManager().ClearTimer(TimerHandle_UpdateInteractionTrace);
+			SetComponentTickEnabled(false);
 			CancelInteraction();
 			CurrentInteractionTarget = nullptr;
 
@@ -143,14 +173,125 @@ void UOrionInteractionComponent::SetInteractionEnabled(bool bEnabled)
 	}
 }
 
-void UOrionInteractionComponent::UpdateInteractionTrace()
+bool UOrionInteractionComponent::ValidateDirection(const UOrionInteractionTargetComponent* InteractionTarget) const
 {
-	if (!bIsInteractionEnabled || OwningController == nullptr)
+	/*if (!IsValid(InteractionTarget))
+	{
+		return false;
+	}*/
+
+	return true;
+	/* Return True Early If Face Only Interaction is Not Required */
+	/*if (!InteractionTarget->bOnlyFaceInteraction)
+	{
+		return true;
+	}*/
+
+	/* Get Interactor Direction from Our Location */
+	/*FVector Direction = GetOwner()->GetActorLocation() - InteractionTarget->GetComponentLocation();
+	Direction.Normalize();
+
+	float DirectionPoint = 0.0f;
+
+	return FVector::DotProduct(Direction, InteractionTarget->GetForwardVector()) > 0.5f;*/
+}
+
+
+void UOrionInteractionComponent::RegisterNewInteractionTarget(UOrionInteractionTargetComponent* NewInteractionTarget)
+{
+	/* Prevent Duplicate Registration */
+	if (CurrentInteractionTarget == NewInteractionTarget)
 	{
 		return;
 	}
 
-	UOrionInteractionTargetComponent* PrevInteractable = nullptr;
+	CurrentInteractionTarget = NewInteractionTarget;
+
+	/* Local Interactor */
+	if (IsLocalInteractor())
+	{
+		if (IsValid(CurrentInteractionTarget))
+		{
+			NewInteractionTarget->SetFocusState(true, GetOwningPawn());
+		}
+
+		if (OnInteractionChanged.IsBound())
+		{
+			OnInteractionChanged.Broadcast(NewInteractionTarget, NewInteractionTarget ? NewInteractionTarget->Tag : FGameplayTag().EmptyTag);
+		}
+	}
+}
+
+void UOrionInteractionComponent::DeRegisterInteractionTarget()
+{
+	/* Cancel Interaction If Already Interacting */
+	if (bInteracting)
+	{
+		CancelInteraction();
+	}
+
+	/* Local Interactor */
+	if (IsLocalInteractor())
+	{
+		if (IsValid(CurrentInteractionTarget))
+		{
+			CurrentInteractionTarget->SetFocusState(false, nullptr);
+		}
+
+		if (OnInteractionChanged.IsBound())
+		{
+			OnInteractionChanged.Broadcast(nullptr, FGameplayTag().EmptyTag);
+		}
+	}
+
+	CurrentInteractionTarget = nullptr;
+}
+
+void UOrionInteractionComponent::UpdateInteractionTrace()
+{
+	if (bInteracting)
+	{
+		/* If Interacting Get the New Interaction Candidate and Compare to the Current Interacting Component*/
+		const UOrionInteractionTargetComponent* NewInteraction = GetInteractionTrace();
+
+		if (NewInteraction != CurrentInteractionTarget)
+		{
+			/* Cancel Interaction If not Valid Interaction */
+			DeRegisterInteractionTarget();
+		}
+
+	}
+	else if (IsLocalInteractor())
+	{
+		/* Locally Get Interaction and Validate the Component */
+		UOrionInteractionTargetComponent* NewInteraction = GetInteractionTrace();
+
+		/* Register If New Interaction is Not Equal to the Current Candidate */
+		if (NewInteraction != CurrentInteractionTarget)
+		{
+			RegisterNewInteractionTarget(NewInteraction);
+		}
+		
+
+	}
+
+	OnInteractionUpdated.Broadcast(CurrentInteractionTarget, CurrentInteractionTarget ? CurrentInteractionTarget->Tag : FGameplayTag().EmptyTag);
+	
+	/*if (LastInteractionTarget && LastInteractionTarget->Mode == EOrionInteractionMode::Hold && LastInteractionTarget->IsInteractionInProgress() && CurrentInteractionTarget == nullptr)
+	{
+		LastInteractionTarget->EndInteraction(false);
+	}*/
+	
+
+}
+
+UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrace()
+{
+	if (!bIsInteractionEnabled)
+	{
+		return nullptr;
+	}
+
 	FVector TraceStart;
 	FRotator Rotation;
 	InteractionhitResults.Empty();
@@ -166,25 +307,23 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 		{
 			TraceStart = GetOwningPawn()->GetActorLocation();
 			Rotation = GetOwningPawn()->GetActorRotation();
-            TraceStart += GetOwningPawn()->GetActorForwardVector() * InteractionOffset.X;
-            TraceStart += GetOwningPawn()->GetActorRightVector() * InteractionOffset.Y;
-            TraceStart += GetOwningPawn()->GetActorUpVector() * InteractionOffset.Z;
+			TraceStart += GetOwningPawn()->GetActorForwardVector() * InteractionOffset.X;
+			TraceStart += GetOwningPawn()->GetActorRightVector() * InteractionOffset.Y;
+			TraceStart += GetOwningPawn()->GetActorUpVector() * InteractionOffset.Z;
 			FCollisionShape Sphere = FCollisionShape::MakeSphere(InteractionRadius);
 
 			TArray<FHitResult> HitResults;
 			GetWorld()->SweepMultiByChannel(HitResults, TraceStart, TraceStart, FQuat::Identity, InteractionTraceChannel, Sphere);
 
-			PrevInteractable = CurrentInteractionTarget;
-			CurrentInteractionTarget = nullptr;
 
 			for (auto& Hit : HitResults)
 			{
-				if(!Hit.GetActor())
+				if (!Hit.GetActor())
 					continue;
 
 				if (UOrionInteractionTargetComponent* TargetInteractable = Hit.GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>())
 				{
-					if (Hit.GetActor()->IsPendingKillPending())
+					if (Hit.GetActor()->IsPendingKillPending() || Hit.GetActor()->IsHidden())
 						continue;
 
 					InteractionhitResults.Add(Hit);
@@ -195,27 +334,28 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 			if (InteractionIndex < InteractionhitResults.Num())
 			{
 				float Dist;
-				CurrentInteractionTarget = UGameplayStatics::FindNearestActor(GetOwningPawn()->GetActorLocation(), InteractionActors, Dist)->FindComponentByClass<UOrionInteractionTargetComponent>();
+				return UGameplayStatics::FindNearestActor(GetOwningPawn()->GetActorLocation(), InteractionActors, Dist)->FindComponentByClass<UOrionInteractionTargetComponent>();
 			}
-
+	#if WITH_EDITOR
 			if (bDebugTrace)
 			{
 				DrawDebugSphere(
 					GetWorld(),
 					TraceStart,
 					InteractionRadius,
-					12, 
+					12,
 					FColor::Red,
-					false, 
-					2.f, 
-					0, 
-					1.f 
+					false,
+					2.f,
+					0,
+					1.f
 				);
 			}
-			
+	#endif // WITH_EDITOR
+
 			break;
 		}
-			
+
 		case EOrionInteractionType::E_InteractionCamera:
 		{
 			OwningController->GetPlayerViewPoint(TraceStart, Rotation);
@@ -227,19 +367,20 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 			GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, InteractionTraceChannel, CollisionQueryParams);
 			InteractionhitResults.Add(HitResult);
 
-			PrevInteractable = CurrentInteractionTarget;
-			CurrentInteractionTarget = nullptr;
 
-			if (InteractionhitResults[0].bBlockingHit 
-				&& InteractionhitResults[0].GetComponent()
+			if ((InteractionhitResults.IsValidIndex(0)
+				&& InteractionhitResults[0].bBlockingHit
+				&& InteractionhitResults[0].GetActor()
 				&& !InteractionhitResults[0].GetActor()->IsPendingKillPending())
+				|| !InteractionhitResults[0].GetActor()->IsHidden())
 			{
 				if (UOrionInteractionTargetComponent* TargetInteractable = InteractionhitResults[0].GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>())
 				{
-					CurrentInteractionTarget = TargetInteractable;
+					return TargetInteractable;
 				}
-				
+
 			}
+	#if WITH_EDITOR
 			if (bDebugTrace)
 			{
 				DrawDebugLine(
@@ -247,88 +388,115 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 					TraceStart,
 					TraceEnd,
 					FColor::Red,
-					false, 
-					2.f, 
-					0,    
-					1.f   
+					false,
+					2.f,
+					0,
+					1.f
 				);
 			}
+	#endif // WITH_EDITOR
 			break;
 		}
 	}
 
-	OnInteractionUpdated.Broadcast(CurrentInteractionTarget, CurrentInteractionTarget ? CurrentInteractionTarget->Tag : FGameplayTag().EmptyTag);
-	if(PrevInteractable != CurrentInteractionTarget)
-	{
-		MulticastOnInteractionChanged(CurrentInteractionTarget);
-	}
-	// If we have previous interactable and we lose focus from it, cancel interaction
-	if (PrevInteractable && PrevInteractable->Mode == EOrionInteractionMode::Hold && PrevInteractable->IsInteractionInProgress() && CurrentInteractionTarget == nullptr)
-	{
-		PrevInteractable->EndInteraction(false);
-	}
+	return nullptr;
 
+
+	
 }
 
 void UOrionInteractionComponent::StartInteraction()
 {
+	/* Make Sure Interaction Starts on Authority */
+	if (GetInteractorRole() != ROLE_Authority)
+	{
+		Server_StartInteraction();
+		return;
+	}
+
+	/* Prevent New Interaction If One Already In Progress */
+	if (bInteracting)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Unable to Start Interaction Due to In Progress Interaction"));
+		return;
+	}
+
+    /* Get Server Sided Interaction */
+    CurrentInteractionTarget = GetInteractionTrace();
+
+    if (!IsValid(CurrentInteractionTarget))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Unable to Start Interaction Due to No Interaction Available On Server Side"));
+		return;
+	}
+
+	/* Start the Interaction */
+
 	if (bIsInteractionEnabled &&
 		CurrentInteractionTarget &&
 		CurrentInteractionTarget->CanInteract())
 	{
 		if (CurrentInteractionTarget->DecoratorConditionMet())
 		{
+			SetInteracting(true);
 			CurrentInteractionTarget->StartInteraction(GetOwningPawn());
-			MulticastOnInteractionStarted(CurrentInteractionTarget);
+			OnInteractionStarted.Broadcast(CurrentInteractionTarget, CurrentInteractionTarget ? CurrentInteractionTarget->Tag : FGameplayTag().EmptyTag);
 		}
 		else
 		{
-			MulticastOnInteractionBlocked(CurrentInteractionTarget);
+			OnInteractionBlocked.Broadcast(CurrentInteractionTarget, CurrentInteractionTarget ? CurrentInteractionTarget->Tag : FGameplayTag().EmptyTag);
 		}
 	}
+	
+	
+}
+
+void UOrionInteractionComponent::Server_StartInteraction_Implementation()
+{
+	StartInteraction();
 }
 
 void UOrionInteractionComponent::CancelInteraction()
 {
+	if (GetInteractorRole() != ROLE_Authority)
+	{
+		Server_CancelInteraction();
+		return;
+	}
+	if (!bInteracting || !IsValid(CurrentInteractionTarget))
+	{
+		return;
+	}
+
+	SetInteracting(false);
+
 	if (CurrentInteractionTarget &&
 		CurrentInteractionTarget->Mode == EOrionInteractionMode::Hold &&
 		CurrentInteractionTarget->IsInteractionInProgress())
 	{
 		CurrentInteractionTarget->EndInteraction(false);
-		MulticastOnInteractionCanceled(CurrentInteractionTarget);
+		OnInteractionCanceled.Broadcast(CurrentInteractionTarget, CurrentInteractionTarget ? CurrentInteractionTarget->Tag : FGameplayTag().EmptyTag);
 	}
 }
 
-void UOrionInteractionComponent::InteractionEnded(UOrionInteractionTargetComponent* Component, bool bCompleted)
+void UOrionInteractionComponent::Server_CancelInteraction_Implementation()
 {
-	check(Component);
+	CancelInteraction();
+}
+
+
+void UOrionInteractionComponent::EndInteraction(UOrionInteractionTargetComponent* InteractionTarget, bool bCompleted)
+{
+	check(InteractionTarget);
+
+	SetInteracting(false);
 
 	if (bCompleted)
 	{
-		MulticastOnInteractionCompleted(Component);
+		OnInteractionCompleted.Broadcast(InteractionTarget, InteractionTarget ? InteractionTarget->Tag : FGameplayTag().EmptyTag);
 	}
+	
 }
 
-void UOrionInteractionComponent::MulticastOnInteractionStarted_Implementation(UOrionInteractionTargetComponent* Target)
-{
-	OnInteractionStarted.Broadcast(Target, Target ? Target->Tag : FGameplayTag().EmptyTag);
-}
 
-void UOrionInteractionComponent::MulticastOnInteractionCanceled_Implementation(UOrionInteractionTargetComponent* Target)
-{
-	OnInteractionCanceled.Broadcast(Target, Target ? Target->Tag : FGameplayTag().EmptyTag);
-}
 
-void UOrionInteractionComponent::MulticastOnInteractionCompleted_Implementation(UOrionInteractionTargetComponent* Target)
-{
-	OnInteractionCompleted.Broadcast(Target, Target ? Target->Tag : FGameplayTag().EmptyTag);
-}
-void UOrionInteractionComponent::MulticastOnInteractionChanged_Implementation(UOrionInteractionTargetComponent* Target)
-{
-	OnInteractionChanged.Broadcast(Target, Target ? Target->Tag : FGameplayTag().EmptyTag);
-}
-
-void UOrionInteractionComponent::MulticastOnInteractionBlocked_Implementation(UOrionInteractionTargetComponent* Target)
-{
-	OnInteractionBlocked.Broadcast(Target, Target ? Target->Tag : FGameplayTag().EmptyTag);
-}
