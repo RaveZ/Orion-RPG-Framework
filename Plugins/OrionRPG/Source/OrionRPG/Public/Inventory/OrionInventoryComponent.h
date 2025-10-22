@@ -84,15 +84,32 @@ protected:
 	//~End of UObject interface
 
 public:
+	/**
+	 * Add Item to Inventory
+	 *
+	 * @param ItemTag:			The Item Tag to add
+	 * @param StackCount:		The Stack Count to add
+	 * 
+	 * @return	StackRemainder:	The Remainder Stack Count that couldn't be added (if any)
+	 * @return	ItemData:		ItemInstanceData
+	 */
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
-	void AddItem(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag(), int32 StackCount = 1);
+	void AddItem(int32& StackRemainder, FItemInstanceData& OutItemData, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag(), int32 StackCount = 1);
 
 	UFUNCTION(Server, Reliable, WithValidation)
     void Server_AddItem(FGameplayTag ItemTag, int32 StackCount);
 	bool Server_AddItem_Validate(FGameplayTag ItemTag, int32 StackCount) { return true; };
 
+	/**
+	 * Drop Item from Inventory
+	 *
+	 * @param ItemTag:			The Item Tag to drop
+	 * @param StackCount:		The Stack Count to drop
+	 *
+	 * @return	ItemData:		ItemInstanceData
+	 */
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
-	void DropItem(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag(), int32 StackCount = 1);
+	void DropItem(FItemInstanceData& OutItemData, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag(), int32 StackCount = 1);
 
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_DropItem(FGameplayTag ItemTag, int32 StackCount);
@@ -101,6 +118,11 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "InventoryComponent")
 	void DropItemInstance(UOrionInventoryItemInstance* ItemInstance, int32 StackCount);
 
+	/**
+	 * Set inventory max weight, 
+	 *
+	 * @param  InNewMaxWeight		New max weight to set
+	 */
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
 	void SetInventoryMaxWeight(float InNewMaxWeight);
 
@@ -109,6 +131,27 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
 	UOrionInventoryNode_ItemDefinition* FindItemDefinition(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
+
+	/**
+	 * Get Item Instance
+	 *
+	 * @param ItemTag:				The Item Tag
+	 *
+	 * @return	ItemInstance		Item Instance from the inventory list
+	 */
+	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
+	UOrionInventoryItemInstance* GetItemInstanceByTag(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
+
+	/**
+	 * Get Item Instance data
+	 *
+	 * @param ItemTag:				The Item Tag
+	 *
+	 * @return	bSuccess:			return true if item found in Inventory List
+	 * @return	ItemData:			ItemInstanceData
+	 */
+	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
+	bool GetItemData(FItemInstanceData& OutItemData, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
 
 	/**
 	 * Returns the Component Owner Role

@@ -33,9 +33,47 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Inventory", meta = (DefaultToSelf = "Target"))
 	static class UOrionInventoryComponent* GetInventoryComponentFromTarget(AActor* Target);
 
+
 	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (DeterminesOutputType = FragmentClass))
 	static const UOrionInventoryItemFragment* FindItemDefinitionFragment(TSubclassOf<UOrionInventoryNode_ItemDefinition> ItemDef, TSubclassOf<UOrionInventoryItemFragment> FragmentClass);
 
+	/**
+	 * Add Item to Inventory
+	 *
+	 * @param InOptionalInteractor: Optional Interactor, determine to whom this item we should give on replicated network
+	 * @param ItemTag:				The Item Tag to add
+	 * @param StackCount:			The Stack Count to add
+	 *
+	 * @return	ItemData:			ItemInstanceData
+	 */
 	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
-	static void AddInventoryItem(const UObject* WorldContextObject, AActor* InOptionalInteractor, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag, int32 StackCount = 1);
+	static void AddInventoryItem(const UObject* WorldContextObject, int32& StackRemainder, FItemInstanceData& OutItemData, AActor* InOptionalInteractor, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag, int32 StackCount = 1);
+
+	/**
+	 * Drop Item from Inventory
+	 *
+	 * @param InOptionalInteractor: Optional Interactor, determine to whom this item we should give on replicated network
+	 * @param ItemTag:				The Item Tag to drop
+	 * @param StackCount:			The Stack Count to drop
+	 *
+	 * @return	ItemData:			ItemInstanceData
+	 */
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static void DropInventoryItem(const UObject* WorldContextObject, FItemInstanceData& OutItemData, AActor* InOptionalInteractor, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag, int32 StackCount = 1);
+
+	/**
+	 * Get Item Instance data
+	 *
+	 * @param InOptionalInteractor: Optional Interactor, determine to whom this item we should give on replicated network
+	 * @param ItemTag:				The Item Tag
+	 *
+	 * @return	bSuccess:			return true if item found in Inventory List
+	 * @return	ItemData:			ItemInstanceData
+	 */
+	UFUNCTION(BlueprintPure, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static bool GetItemData(const UObject* WorldContextObject, FItemInstanceData& OutItemData, AActor* InOptionalInteractor, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
+
+
+
+
 };

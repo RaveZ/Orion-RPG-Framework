@@ -130,7 +130,7 @@ public:
 
 
 USTRUCT(BlueprintType)
-struct FInventoryItem
+struct FItemInstanceData
 {
 	GENERATED_BODY()
 
@@ -148,19 +148,23 @@ public:
 	TObjectPtr<UTexture2D> Icon;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
-	int32 Count;
+	int32 StackCount;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
-	int32 MaxCount;
+	int32 MaxStackCount;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
+	TObjectPtr<UOrionInventoryNode_ItemDefinition> ItemDefinition;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
+	TArray<TObjectPtr<UOrionInventoryItemFragment>> Fragments;
 
 public:
-	FInventoryItem()
+	FItemInstanceData()
 	{
 		Icon = nullptr;
-		MaxCount = 0;
-		Count = 0;
+		MaxStackCount = 0;
+		StackCount = 0;
 	}
 
 

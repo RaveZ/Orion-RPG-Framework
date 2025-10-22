@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "OrionGameplayTagStack.h"
+#include "Inventory/InventoryData.h"
 #include "Inventory/OrionInventoryNode.h"
 #include "Templates/SubclassOf.h"
 #include "OrionInventoryItemInstance.generated.h"
@@ -31,7 +32,7 @@ public:
 
 	int32 GetTotalStackCount() const { return TotalStackCount; }
 	bool HasRoomForItem() const;
-	void SetTotalStackCount(int32 Count) { TotalStackCount = Count; }
+	void SetTotalStackCount(int32 Count);
 
 public:
 	// Adds a specified number of stacks to the tag (does nothing if StackCount is below 1)
@@ -53,7 +54,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure = false, meta = (DeterminesOutputType = FragmentClass))
 	const UOrionInventoryItemFragment* FindFragmentByClass(TSubclassOf<UOrionInventoryItemFragment> FragmentClass) const;
 
-	
+	UFUNCTION(BlueprintPure, Category = Inventory)
+	FItemInstanceData GetItemInstanceData() const;
 
 private:
 #if UE_WITH_IRIS

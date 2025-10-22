@@ -76,8 +76,9 @@ void UOrionInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 }
 
-void UOrionInventoryComponent::AddItem(FGameplayTag ItemTag, int32 StackCount)
+void UOrionInventoryComponent::AddItem(int32& StackRemainder, FItemInstanceData& OutItemData, FGameplayTag ItemTag, int32 StackCount)
 {
+	StackRemainder = StackCount;
 	if (GetRole() != ROLE_Authority)
 	{
 		Server_AddItem(ItemTag, StackCount);
@@ -91,18 +92,19 @@ void UOrionInventoryComponent::AddItem(FGameplayTag ItemTag, int32 StackCount)
 	}
 
 	UOrionInventoryItemInstance* ItemInstance = InventoryList.FindFirstItemByTag(ItemTag);
+	int32 InitialStackCount = 0;
 
 	if (ItemInstance)
 	{
 		//Item found, increase stack count instead  
-		//TODO: broadcast event on stack count changed
 		if (!ItemInstance->HasRoomForItem())
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Fail to add item: %s. Stack is full (%d/%d)"), *ItemInstance->GetItemDef()->DisplayName.ToString(), ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
 			return;
 		}
+		InitialStackCount = ItemInstance->GetTotalStackCount();
+		ItemInstance->SetTotalStackCount(ItemInstance->GetTotalStackCount() + FMath::Abs(StackCount));
 		OnItemStackChanged.Broadcast(ItemInstance, ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
-		ItemInstance->SetTotalStackCount(FMath::Clamp(ItemInstance->GetTotalStackCount() + StackCount, 0, ItemInstance->GetItemDef()->MaxStackCount));
 	}
 	else
 	{
@@ -115,7 +117,8 @@ void UOrionInventoryComponent::AddItem(FGameplayTag ItemTag, int32 StackCount)
 			if (ItemInstance && this->IsUsingRegisteredSubObjectList() && this->IsReadyForReplication())
 			{
 				this->AddReplicatedSubObject(ItemInstance);
-				ItemInstance->SetTotalStackCount(FMath::Clamp(ItemInstance->GetTotalStackCount() + StackCount, 0, ItemInstance->GetItemDef()->MaxStackCount));
+				InitialStackCount = ItemInstance->GetTotalStackCount();
+				ItemInstance->SetTotalStackCount(ItemInstance->GetTotalStackCount() + FMath::Abs(StackCount));
 				AActor* OwnerActor = this->GetOwner();
 				if (OwnerActor && (OwnerActor->GetNetMode() == NM_ListenServer || OwnerActor->GetNetMode() == NM_Standalone))
 				{
@@ -127,6 +130,11 @@ void UOrionInventoryComponent::AddItem(FGameplayTag ItemTag, int32 StackCount)
 
 	if (ItemInstance)
 	{
+		int32 RoomLeft = ItemInstance->GetItemDef()->MaxStackCount - InitialStackCount;
+
+		OutItemData = ItemInstance->GetItemInstanceData();
+		StackRemainder = StackCount - FMath::Clamp(StackCount, 0, RoomLeft);
+		
 		UE_LOG(LogTemp, Log, TEXT("Item Added: %s | Tag: %s, StackCount: %d/%d\n"), *ItemInstance->GetItemDef()->DisplayName.ToString(), *ItemInstance->GetItemDef()->Tag.ToString(), ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
 	}
 }
@@ -135,10 +143,12 @@ void UOrionInventoryComponent::AddItem(FGameplayTag ItemTag, int32 StackCount)
 
 void UOrionInventoryComponent::Server_AddItem_Implementation(FGameplayTag ItemTag, int32 StackCount)
 {
-	AddItem(ItemTag, StackCount);
+	int32 Remainder;
+	FItemInstanceData ItemData;
+	AddItem(Remainder, ItemData, ItemTag, StackCount);
 }
 
-void UOrionInventoryComponent::DropItem(FGameplayTag ItemTag, int32 StackCount)
+void UOrionInventoryComponent::DropItem(FItemInstanceData& OutItemData, FGameplayTag ItemTag, int32 StackCount)
 {
 	if (GetRole() != ROLE_Authority)
 	{
@@ -157,6 +167,7 @@ void UOrionInventoryComponent::DropItem(FGameplayTag ItemTag, int32 StackCount)
 	if (ItemInstance)
 	{
 		DropItemInstance(ItemInstance, StackCount);
+		OutItemData = ItemInstance->GetItemInstanceData();
 	}
 	else
 	{
@@ -167,7 +178,8 @@ void UOrionInventoryComponent::DropItem(FGameplayTag ItemTag, int32 StackCount)
 
 void UOrionInventoryComponent::Server_DropItem_Implementation(FGameplayTag ItemTag, int32 StackCount)
 {
-	DropItem(ItemTag, StackCount);
+	FItemInstanceData ItemData;
+	DropItem(ItemData, ItemTag, StackCount);
 }
 
 UOrionInventoryNode_ItemDefinition* UOrionInventoryComponent::FindItemDefinition(FGameplayTag ItemTag)
@@ -196,7 +208,7 @@ void UOrionInventoryComponent::DropItemInstance(UOrionInventoryItemInstance* Ite
 	}
 
 	const int32 NewStackCount = ItemInstance->GetTotalStackCount() - FMath::Abs(StackCount);
-	ItemInstance->SetTotalStackCount(FMath::Clamp(NewStackCount, 0, ItemInstance->GetItemDef()->MaxStackCount));
+	ItemInstance->SetTotalStackCount(NewStackCount);
 	
 	if(NewStackCount <= 0)
 	{
@@ -224,6 +236,23 @@ TArray<UOrionInventoryItemInstance*> UOrionInventoryComponent::GetAllItems() con
 	return InventoryList.GetAllItems();
 }
 
+UOrionInventoryItemInstance* UOrionInventoryComponent::GetItemInstanceByTag(FGameplayTag ItemTag)
+{
+	return InventoryList.FindFirstItemByTag(ItemTag);
+}
+
+bool UOrionInventoryComponent::GetItemData(FItemInstanceData& OutItemData, FGameplayTag ItemTag)
+{
+	UOrionInventoryItemInstance* ItemInstance = GetItemInstanceByTag(ItemTag);
+
+	if (ItemInstance)
+	{
+		OutItemData = ItemInstance->GetItemInstanceData();
+		return true;
+	}
+	return false;
+}
+
 
 void UOrionInventoryComponent::SetInventoryMaxWeight(float InNewMaxWeight)
 {
@@ -231,7 +260,8 @@ void UOrionInventoryComponent::SetInventoryMaxWeight(float InNewMaxWeight)
 	{
 		return;
 	}
-	MaxWeight = InNewMaxWeight;
+
+	MaxWeight = FMath::Max(0, InNewMaxWeight);
 	OnMaxWeightChanged.Broadcast(MaxWeight);
 }
 
@@ -358,14 +388,17 @@ void UOrionInventoryComponent::execAddItem(const TArray<FString>& ItemTag)
 {
 	if (ItemTag.IsEmpty()) return;
 
-	AddItem(FGameplayTag::RequestGameplayTag(FName(*ItemTag[0])));
+	int32 Remainder;
+	FItemInstanceData ItemData;
+	AddItem(Remainder, ItemData, FGameplayTag::RequestGameplayTag(FName(*ItemTag[0])));
 }
 
 void UOrionInventoryComponent::execDropItem(const TArray<FString>& ItemTag)
 {
 	if (ItemTag.IsEmpty()) return;
 
-	DropItem(FGameplayTag::RequestGameplayTag(FName(*ItemTag[0])));
+	FItemInstanceData ItemData;
+	DropItem(ItemData, FGameplayTag::RequestGameplayTag(FName(*ItemTag[0])));
 }
 
 
