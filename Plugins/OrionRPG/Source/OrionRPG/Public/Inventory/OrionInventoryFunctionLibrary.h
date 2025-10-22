@@ -37,5 +37,5 @@ public:
 	static const UOrionInventoryItemFragment* FindItemDefinitionFragment(TSubclassOf<UOrionInventoryNode_ItemDefinition> ItemDef, TSubclassOf<UOrionInventoryItemFragment> FragmentClass);
 
 	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
-	static void AddInventoryItem(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag, int32 StackCount = 1);
+	static void AddInventoryItem(const UObject* WorldContextObject, AActor* InOptionalInteractor, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag, int32 StackCount = 1);
 };

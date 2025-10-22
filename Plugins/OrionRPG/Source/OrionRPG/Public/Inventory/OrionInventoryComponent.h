@@ -87,14 +87,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
 	void AddItem(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag(), int32 StackCount = 1);
 
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(Server, Reliable, WithValidation)
     void Server_AddItem(FGameplayTag ItemTag, int32 StackCount);
+	bool Server_AddItem_Validate(FGameplayTag ItemTag, int32 StackCount) { return true; };
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
 	void DropItem(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag(), int32 StackCount = 1);
 
-	UFUNCTION(Server, Reliable)
+	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_DropItem(FGameplayTag ItemTag, int32 StackCount);
+	bool Server_DropItem_Validate(FGameplayTag ItemTag, int32 StackCount) { return true; };
 
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "InventoryComponent")
 	void DropItemInstance(UOrionInventoryItemInstance* ItemInstance, int32 StackCount);
@@ -107,6 +109,16 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
 	UOrionInventoryNode_ItemDefinition* FindItemDefinition(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
+
+	/**
+	 * Returns the Component Owner Role
+	 */
+	UFUNCTION(BlueprintPure, Category = Interactor)
+	FORCEINLINE ENetRole GetRole() const
+	{
+		return IsValid(GetOwner()) ? GetOwner()->GetLocalRole() : ENetRole::ROLE_None;
+	};
+
 public:
 	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
 	virtual APawn* GetOwningPawn() const;

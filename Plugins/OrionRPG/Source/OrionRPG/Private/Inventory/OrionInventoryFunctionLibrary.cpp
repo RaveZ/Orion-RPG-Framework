@@ -55,9 +55,11 @@ const UOrionInventoryItemFragment* UOrionInventoryFunctionLibrary::FindItemDefin
 }
 
 
-void UOrionInventoryFunctionLibrary::AddInventoryItem(const UObject* WorldContextObject, FGameplayTag ItemTag, int32 StackCount)
+void UOrionInventoryFunctionLibrary::AddInventoryItem(const UObject* WorldContextObject, AActor* InOptionalInteractor, FGameplayTag ItemTag, int32 StackCount)
 {
-    if (UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject))
+    UOrionInventoryComponent* InventoryComp = InOptionalInteractor ? GetInventoryComponentFromTarget(InOptionalInteractor) : GetInventoryComponent(WorldContextObject);
+
+    if (InventoryComp)
     {
         InventoryComp->AddItem(ItemTag, StackCount);
     }

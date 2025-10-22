@@ -78,22 +78,18 @@ void UOrionInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 void UOrionInventoryComponent::AddItem(FGameplayTag ItemTag, int32 StackCount)
 {
+	if (GetRole() != ROLE_Authority)
+	{
+		Server_AddItem(ItemTag, StackCount);
+		return;
+	}
+
 	if (!ItemTag.MatchesTag(TAG_Item))
 	{
 		UE_LOG(LogTemp, Error, TEXT("Fail to add item. Invalid item Tag (%s)!"), *ItemTag.ToString());
 		return;
 	}
-	
-	Server_AddItem(ItemTag, StackCount);
-	
-		
-}
 
-
-// Fixes for signature and member function calls
-
-void UOrionInventoryComponent::Server_AddItem_Implementation(FGameplayTag ItemTag, int32 StackCount)
-{
 	UOrionInventoryItemInstance* ItemInstance = InventoryList.FindFirstItemByTag(ItemTag);
 
 	if (ItemInstance)
@@ -133,25 +129,29 @@ void UOrionInventoryComponent::Server_AddItem_Implementation(FGameplayTag ItemTa
 	{
 		UE_LOG(LogTemp, Log, TEXT("Item Added: %s | Tag: %s, StackCount: %d/%d\n"), *ItemInstance->GetItemDef()->DisplayName.ToString(), *ItemInstance->GetItemDef()->Tag.ToString(), ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
 	}
+}
 
-    
-   
+
+
+void UOrionInventoryComponent::Server_AddItem_Implementation(FGameplayTag ItemTag, int32 StackCount)
+{
+	AddItem(ItemTag, StackCount);
 }
 
 void UOrionInventoryComponent::DropItem(FGameplayTag ItemTag, int32 StackCount)
 {
+	if (GetRole() != ROLE_Authority)
+	{
+		Server_DropItem(ItemTag, StackCount);
+		return;
+	}
+
 	if (!ItemTag.MatchesTag(TAG_Item))
 	{
 		UE_LOG(LogTemp, Error, TEXT("Fail to add item. Invalid item Tag (%s)!"), *ItemTag.ToString());
 		return;
 	}
 
-	Server_DropItem(ItemTag, StackCount);
-}
-
-
-void UOrionInventoryComponent::Server_DropItem_Implementation(FGameplayTag ItemTag, int32 StackCount)
-{
 	UOrionInventoryItemInstance* ItemInstance = InventoryList.FindFirstItemByTag(ItemTag);
 
 	if (ItemInstance)
@@ -162,6 +162,12 @@ void UOrionInventoryComponent::Server_DropItem_Implementation(FGameplayTag ItemT
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Fail to drop item. Item with Tag (%s) not found in inventory!"), *ItemTag.ToString());
 	}
+}
+
+
+void UOrionInventoryComponent::Server_DropItem_Implementation(FGameplayTag ItemTag, int32 StackCount)
+{
+	DropItem(ItemTag, StackCount);
 }
 
 UOrionInventoryNode_ItemDefinition* UOrionInventoryComponent::FindItemDefinition(FGameplayTag ItemTag)
