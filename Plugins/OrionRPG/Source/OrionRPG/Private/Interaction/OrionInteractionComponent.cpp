@@ -64,7 +64,7 @@ void UOrionInteractionComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProp
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	DOREPLIFETIME_CONDITION(ThisClass, CurrentInteractionTarget, COND_OwnerOnly);
+	DOREPLIFETIME(ThisClass, CurrentInteractionTarget);
 	DOREPLIFETIME(ThisClass, bIsInteractionEnabled);
 	DOREPLIFETIME(ThisClass, InteractionIndex);
 	DOREPLIFETIME(ThisClass, bInteracting);
@@ -226,8 +226,12 @@ void UOrionInteractionComponent::DeRegisterInteractionTarget()
 
 void UOrionInteractionComponent::NotifyInteraction(EOrionInteractionResult NewInteractionResult)
 {
+	Client_NotifyInteractionTarget(NewInteractionResult);
 	switch (InteractionNetMode)
 	{
+		case EOrionInteractionNetMode::E_Server:
+			CallInteractionResult(NewInteractionResult, CurrentInteractionTarget, CurrentInteractionTarget ? CurrentInteractionTarget->Tag : FGameplayTag().EmptyTag);
+			break;
 		case EOrionInteractionNetMode::E_OwnerOnly:
 			Client_NotifyInteraction(NewInteractionResult);
 			break;
@@ -247,12 +251,16 @@ void UOrionInteractionComponent::Client_NotifyInteraction_Implementation(EOrionI
 		CurrentInteractionTarget ? CurrentInteractionTarget->Tag : FGameplayTag().EmptyTag
 	);
 	
-	/* Notify Interaction Locally If Interaction Net Mode is Owner Only*/
-	/*if (IsValid(CurrentInteractionTarget) &&
-		CurrentInteractionTarget->InteractionStateNetMode == EInteractionNetMode::INM_OwnerOnly)
+	
+}
+
+void UOrionInteractionComponent::Client_NotifyInteractionTarget_Implementation(EOrionInteractionResult NewInteractionResult)
+{
+	if (IsValid(CurrentInteractionTarget) &&
+		CurrentInteractionTarget->InteractionNetMode == EOrionInteractionNetMode::E_OwnerOnly)
 	{
-		InteractionCandidate->ClientNotifyInteraction(NewInteractionResult, this);
-	}*/
+		CurrentInteractionTarget->Client_NotifyInteraction(NewInteractionResult, GetOwningPawn());
+	}
 }
 
 void UOrionInteractionComponent::Multicast_NotifyInteraction_Implementation(EOrionInteractionResult NewInteractionResult)
@@ -263,6 +271,7 @@ void UOrionInteractionComponent::Multicast_NotifyInteraction_Implementation(EOri
 		CurrentInteractionTarget ? CurrentInteractionTarget->Tag : FGameplayTag().EmptyTag
 	);
 }
+
 
 void UOrionInteractionComponent::CallInteractionResult(EOrionInteractionResult NewInteractionResult, UOrionInteractionTargetComponent* InteractionTarget, FGameplayTag Tag)
 {
@@ -360,7 +369,10 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 
 				if (UOrionInteractionTargetComponent* TargetInteractable = Hit.GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>())
 				{
-					if (Hit.GetActor()->IsPendingKillPending() || Hit.GetActor()->IsHidden())
+					if (Hit.GetActor()->IsPendingKillPending())
+						continue;
+
+					if (Hit.GetActor()->IsHidden())
 						continue;
 
 					InteractionhitResults.Add(Hit);
@@ -368,7 +380,7 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 				}
 			}
 
-			if (InteractionIndex < InteractionhitResults.Num())
+			if (!InteractionActors.IsEmpty())
 			{
 				float Dist;
 				return UGameplayStatics::FindNearestActor(GetOwningPawn()->GetActorLocation(), InteractionActors, Dist)->FindComponentByClass<UOrionInteractionTargetComponent>();
@@ -405,11 +417,11 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 			InteractionhitResults.Add(HitResult);
 
 
-			if ((InteractionhitResults.IsValidIndex(0)
-				&& InteractionhitResults[0].bBlockingHit
-				&& InteractionhitResults[0].GetActor()
-				&& !InteractionhitResults[0].GetActor()->IsPendingKillPending())
-				|| !InteractionhitResults[0].GetActor()->IsHidden())
+			if ((InteractionhitResults.IsValidIndex(0) && 
+				InteractionhitResults[0].bBlockingHit && 
+				InteractionhitResults[0].GetActor()  && 
+				!InteractionhitResults[0].GetActor()->IsPendingKillPending()) || 
+				!InteractionhitResults[0].GetActor()->IsHidden())
 			{
 				if (UOrionInteractionTargetComponent* TargetInteractable = InteractionhitResults[0].GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>())
 				{

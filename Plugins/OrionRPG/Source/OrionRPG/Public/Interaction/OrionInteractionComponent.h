@@ -3,37 +3,10 @@
 #pragma once
 
 #include "Components/BoxComponent.h"
+#include "Interaction/InteractionData.h"
 #include "NativeGameplayTags.h"
 #include "OrionInteractionComponent.generated.h"
 
-
-UENUM(BlueprintType)
-enum class EOrionInteractionType : uint8
-{
-	/**Interaction trace from camera*/
-	E_InteractionCamera		UMETA(DisplayName = "Camera"),
-	/**Interaction trace from pawn*/
-	E_InteractionPawn		UMETA(DisplayName = "Pawn"),
-};
-UENUM(BlueprintType)
-enum class EOrionInteractionResult : uint8
-{
-	E_None			UMETA(DisplayName = "None"),
-	E_Started		UMETA(DisplayName = "Started"),
-	E_Completed		UMETA(DisplayName = "Completed"),
-	E_Canceled		UMETA(DisplayName = "Canceled"),
-	E_Blocked		UMETA(DisplayName = "Blocked")
-};
-
-UENUM(BlueprintType)
-enum class EOrionInteractionNetMode : uint8
-{
-	E_None		UMETA(DisplayName = "None"),
-	/**Notify client only for interaction result*/
-	E_OwnerOnly	UMETA(DisplayName = "OwnerOnly"),
-	/**Using multicast to notify interaction result*/
-	E_All			UMETA(DisplayName = "All")
-};
 
 
 class UOrionInteractionTargetComponent;
@@ -59,6 +32,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	TObjectPtr<APlayerController> OwningController;
 
+	/**
+	* Give notification based on configured netmode
+	* E_Server		: Default, will notify only in server side
+	* E_OwnerOnly	: Notify client only for interaction result
+	* E_All			: Using multicast to notify interaction result
+	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interaction")
 	EOrionInteractionNetMode InteractionNetMode;
 
@@ -241,7 +220,6 @@ public:
 	 * Handles Interaction Notification Based on Config
 	 *
 	 * @param InteractionResult - Result of the Interaction
-	 * @param InteractionType - Type of Interaction
 	 */
 	UFUNCTION()
 	void NotifyInteraction(EOrionInteractionResult NewInteractionResult);
@@ -250,16 +228,22 @@ public:
 	 * Owner Only Interaction State Notification
 	 *
 	 * @param InteractionResult - Result of the Interaction
-	 * @param InteractionType - Type of Interaction
 	 */
 	UFUNCTION(Client, Reliable)
 	void Client_NotifyInteraction(EOrionInteractionResult NewInteractionResult);
 
 	/**
+	 * Interaction Target State Notification
+	 *
+	 * @param InteractionResult - Result of the Interaction
+	 */
+	UFUNCTION(Client, Reliable)
+	void Client_NotifyInteractionTarget(EOrionInteractionResult NewInteractionResult);
+
+	/**
 	 * Multi Cast Call to all Clients Notifying Interaction State
 	 *
 	 * @param InteractionResult - Result of the Interaction
-	 * @param InteractionType - Type of Interaction
 	 */
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_NotifyInteraction(EOrionInteractionResult NewInteractionResult);

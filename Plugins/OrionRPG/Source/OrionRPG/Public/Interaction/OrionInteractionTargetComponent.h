@@ -4,6 +4,7 @@
 
 #include "Components/BoxComponent.h"
 #include "Event/OrionEvent.h"
+#include "Interaction/InteractionData.h"
 #include "Decorator/OrionDecorator.h"
 #include "OrionInteractionTargetComponent.generated.h"
 
@@ -14,14 +15,6 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOrionInteractionTargetSignature, A
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnInteractionTargetFocusChanged, AActor*, Interactor, UOrionInteractionTargetComponent*, Component, bool, bFocused);
 
 
-
-UENUM(BlueprintType)
-enum class EOrionInteractionMode : uint8
-{
-	None	UMETA(DisplayName = "None"),
-	Instant		UMETA(DisplayName = "Instant"),
-	Hold	UMETA(DisplayName = "Hold")
-};
 
 
 
@@ -48,6 +41,28 @@ public:
 
 	UPROPERTY(BlueprintAssignable, Category = "Interactable")
 	FOrionInteractionTargetSignature OnCompleted;
+
+	/**Will only execute on client that interact with this object*/
+	UPROPERTY(BlueprintAssignable, Category = "Interactable")
+	FOrionInteractionTargetSignature Local_OnStarted;
+
+	/**Will only execute on client that interact with this object*/
+	UPROPERTY(BlueprintAssignable, Category = "Interactable")
+	FOrionInteractionTargetSignature Local_OnCanceled;
+
+	/**Will only execute on client that interact with this object*/
+	UPROPERTY(BlueprintAssignable, Category = "Interactable")
+	FOrionInteractionTargetSignature Local_OnCompleted;
+
+
+	/**
+	* Give notification based on configured netmode
+	* E_Server		: Default, will notify only in server side
+	* E_OwnerOnly	: Notify client only for interaction result
+	* E_All			: Using multicast to notify interaction result
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable", meta = (ValidEnumValues = "E_Server, E_All"))
+	EOrionInteractionNetMode InteractionNetMode;
 
 	/**
 	* Tag for this component.
@@ -124,6 +139,33 @@ public:
 
 	UFUNCTION(Category = "Interactable")
 	bool DecoratorConditionMet() const;
+
+	/**
+	 * Handles Interaction Notification Based on Config
+	 *
+	 * @param InteractionResult - Result of the Interaction
+	 */
+	UFUNCTION()
+	void NotifyInteraction(EOrionInteractionResult NewInteractionResult, AActor* InInteractor);
+
+	/**
+	 * Owner Only Interaction State Notification
+	 *
+	 * @param InteractionResult - Result of the Interaction
+	 */
+	UFUNCTION()
+	void Client_NotifyInteraction(EOrionInteractionResult NewInteractionResult, AActor* InInteractor);
+
+	/**
+	 * Multi Cast Call to all Clients Notifying Interaction State
+	 *
+	 * @param InteractionResult - Result of the Interaction
+	 */
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_NotifyInteraction(EOrionInteractionResult NewInteractionResult, AActor* InInteractor);
+
+	UFUNCTION()
+	void CallInteractionResult(EOrionInteractionResult NewInteractionResult, AActor* InInteractor);
 private:
 	void UpdateProgressValue();
 

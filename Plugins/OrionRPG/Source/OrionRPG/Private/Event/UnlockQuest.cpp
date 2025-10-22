@@ -20,7 +20,7 @@ void UUnlockQuest::BeginEvent(APlayerController* OwnerController, APawn* Control
 	{
 		if (GetWorld())
 		{
-			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
+			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(OwnerController);
 			if (QuestComp)
 			{
 				QuestComp->UnlockQuestFromTag(QuestTag);

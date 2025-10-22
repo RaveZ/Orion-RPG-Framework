@@ -17,7 +17,7 @@ void UBeginQuestGraph::BeginEvent(APlayerController* OwnerController, APawn* Con
 {
 	if (GetWorld())
 	{
-		UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
+		UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(OwnerController);
 		if (QuestComp)
 		{
 			QuestComp->BeginQuestGraph(QuestAsset);

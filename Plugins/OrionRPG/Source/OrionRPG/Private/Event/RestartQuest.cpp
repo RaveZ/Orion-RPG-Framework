@@ -23,7 +23,7 @@ void URestartQuest::BeginEvent(APlayerController* OwnerController, APawn* Contro
 	{
 		if (GetWorld())
 		{
-			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
+			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(OwnerController);
 			if (QuestComp)
 			{
 				QuestComp->RestartQuestFromTag(QuestTag, NodeTag);

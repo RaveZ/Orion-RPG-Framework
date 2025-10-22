@@ -12,6 +12,7 @@
 
 UOrionInteractionTargetComponent::UOrionInteractionTargetComponent()
 {
+	InteractionNetMode = EOrionInteractionNetMode::E_Server;
 	Mode = EOrionInteractionMode::Instant;
 	HoldDuration = 1.0f;
 	CurrentInteractor = nullptr;
@@ -101,11 +102,10 @@ void UOrionInteractionTargetComponent::StartInteraction(AActor* Interactor)
 	CurrentProgress = 0.0f;
 	CurrentHoldTime = 0.0f;
 
+	UE_LOG(LogTemp, Log, TEXT("Interaction STARTED! (Actor: %s, Interactor: %s)"), *GetOwner()->GetName(), *CurrentInteractor->GetName());
+
 	// Blueprint event
-	if (OnStarted.IsBound())
-	{
-		OnStarted.Broadcast(CurrentInteractor, this);
-	}
+	NotifyInteraction(EOrionInteractionResult::E_Started, CurrentInteractor);
 
 	if (Mode == EOrionInteractionMode::Instant)
 	{
@@ -133,36 +133,23 @@ void UOrionInteractionTargetComponent::EndInteraction(bool bCompleted)
 	// Blueprint event
 	if (bCompleted)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Interaction COMPLETED! (Actor: %s, Interactor: %s)"), *GetName(), *CurrentInteractor->GetName());
+		UE_LOG(LogTemp, Log, TEXT("Interaction COMPLETED! (Actor: %s, Interactor: %s)"), *GetOwner()->GetName(), *CurrentInteractor->GetName());
 
-		APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-		APawn* Pawn = PC ? PC->GetPawn() : nullptr;
-		for (auto& Event : Events)
-		{
-			if (Event)
-			{
-				if (PC && Pawn)
-				{
-					Event->BeginEvent(PC, Pawn);
-				}
-			}
-		}
-		if (OnCompleted.IsBound())
-		{
-			OnCompleted.Broadcast(CurrentInteractor, this);
-		}
+		
+		
+		NotifyInteraction(EOrionInteractionResult::E_Completed, CurrentInteractor);
+		
 	}
 	else
 	{
-		UE_LOG(LogTemp, Log, TEXT("Interaction CANCELED! (Actor: %s, Interactor: %s)"), *GetName(), *CurrentInteractor->GetName());
+		UE_LOG(LogTemp, Log, TEXT("Interaction CANCELED! (Actor: %s, Interactor: %s)"), *GetOwner()->GetName(), *CurrentInteractor->GetName());
 
-		if (OnCanceled.IsBound())
-		{
-			OnCanceled.Broadcast(CurrentInteractor, this);
-		}
+
+		NotifyInteraction(EOrionInteractionResult::E_Canceled, CurrentInteractor);
 	}
 
-	if (UOrionInteractionComponent* InteractionComp = UOrionInteractionFunctionLibrary::GetInteractionComponent(GetWorld()))
+	UOrionInteractionComponent* InteractionComp = CurrentInteractor ? UOrionInteractionFunctionLibrary::GetInteractionComponentFromTarget(CurrentInteractor) : nullptr;
+	if (InteractionComp)
 	{
 		InteractionComp->EndInteraction(this, bCompleted);
 	}
@@ -213,5 +200,79 @@ void UOrionInteractionTargetComponent::UpdateProgressValue()
 		CurrentProgress = 0.0f;
 		CurrentHoldTime= 0.0f;
 		EndInteraction(true);
+	}
+}
+
+
+
+void UOrionInteractionTargetComponent::NotifyInteraction(EOrionInteractionResult NewInteractionResult, AActor* InInteractor)
+{
+	switch (InteractionNetMode)
+	{
+		case EOrionInteractionNetMode::E_Server:
+			CallInteractionResult(NewInteractionResult, InInteractor);
+		case EOrionInteractionNetMode::E_All:
+			Multicast_NotifyInteraction(NewInteractionResult, InInteractor);
+			break;
+		default:
+			break;
+	}
+}
+
+void UOrionInteractionTargetComponent::Client_NotifyInteraction(EOrionInteractionResult NewInteractionResult, AActor* InInteractor)
+{
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+	switch (NewInteractionResult)
+	{
+	case EOrionInteractionResult::E_Started:
+		Local_OnStarted.Broadcast(InInteractor, this);
+		break;
+	case EOrionInteractionResult::E_Completed:
+		Local_OnCompleted.Broadcast(InInteractor, this);
+		break;
+	case EOrionInteractionResult::E_Canceled:
+		Local_OnCanceled.Broadcast(InInteractor, this);
+		break;
+	default:
+		break;
+	}
+}
+
+void UOrionInteractionTargetComponent::Multicast_NotifyInteraction_Implementation(EOrionInteractionResult NewInteractionResult, AActor* InInteractor)
+{
+	CallInteractionResult(
+		NewInteractionResult,
+		InInteractor
+	);
+}
+
+void UOrionInteractionTargetComponent::CallInteractionResult(EOrionInteractionResult NewInteractionResult, AActor* InInteractor)
+{
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+	switch (NewInteractionResult)
+	{
+	case EOrionInteractionResult::E_Started:
+		OnStarted.Broadcast(InInteractor, this);
+		break;
+	case EOrionInteractionResult::E_Completed:
+		for (auto& Event : Events)
+		{
+			if (Event)
+			{
+				if (PC && Pawn)
+				{
+					Event->BeginEvent(PC, Pawn);
+				}
+			}
+		}
+		OnCompleted.Broadcast(InInteractor, this);
+		break;
+	case EOrionInteractionResult::E_Canceled:
+		OnCanceled.Broadcast(InInteractor, this);
+		break;
+	default:
+		break;
 	}
 }

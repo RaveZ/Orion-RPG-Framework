@@ -20,7 +20,7 @@ void UFailQuest::BeginEvent(APlayerController* OwnerController, APawn* Controlle
 	{
 		if (GetWorld())
 		{
-			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(GetWorld());
+			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(OwnerController);
 			if (QuestComp)
 			{
 				QuestComp->FailQuestFromTag(QuestTag);
