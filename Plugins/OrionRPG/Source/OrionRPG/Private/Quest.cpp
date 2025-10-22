@@ -248,7 +248,7 @@ void UQuest::ActivateQuest(const bool bNotifyQuestAdded, const bool bLaunchEvent
 				}
 
 				bool bShouldNavigateThisQuest = QuestComponent->CurrentQuestSaveData.NavigatedQuestID == (QuestTag.IsValid() ? QuestTag.GetTagName() : ID);
-				UQuestBuilderNode_Objective* FoundedObjective = this ? Cast<UQuestBuilderNode_Objective>(NodeMap.FindRef(QuestComponent->CurrentQuestSaveData.NavigatedObjectiveID)) : nullptr;
+				UQuestBuilderNode_Objective* FoundedObjective = Cast<UQuestBuilderNode_Objective>(NodeMap.FindRef(QuestComponent->CurrentQuestSaveData.NavigatedObjectiveID));
 
 				if (bShouldNavigateThisQuest && QuestState == EQuestState::E_Active)
 				{
