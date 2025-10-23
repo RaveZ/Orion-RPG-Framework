@@ -32,10 +32,14 @@ void FOrionInventoryList::PreReplicatedRemove(const TArrayView<int32> RemovedInd
 	UOrionInventoryComponent* InvComponent = Cast<UOrionInventoryComponent>(OwnerComponent);
 	if (!IsValid(InvComponent)) return;
 
-	for (int32 Index : RemovedIndices)
+	if (!InvComponent->bInitializingSaveGame)
 	{
-		InvComponent->OnItemRemoved.Broadcast(Entries[Index].ItemInstance);
+		for (int32 Index : RemovedIndices)
+		{
+			InvComponent->OnItemRemoved.Broadcast(Entries[Index].ItemInstance);
+		}
 	}
+	
 }
 
 void FOrionInventoryList::PostReplicatedAdd(const TArrayView<int32> AddedIndices, int32 FinalSize)
@@ -43,9 +47,12 @@ void FOrionInventoryList::PostReplicatedAdd(const TArrayView<int32> AddedIndices
 	UOrionInventoryComponent* InvComponent = Cast<UOrionInventoryComponent>(OwnerComponent);
 	if (!IsValid(InvComponent)) return;
 
-	for (int32 Index : AddedIndices)
+	if (!InvComponent->bInitializingSaveGame)
 	{
-		InvComponent->OnItemAdded.Broadcast(Entries[Index].ItemInstance);
+		for (int32 Index : AddedIndices)
+		{
+			InvComponent->OnItemAdded.Broadcast(Entries[Index].ItemInstance);
+		}
 	}
 }
 
@@ -110,6 +117,15 @@ void FOrionInventoryList::RemoveEntry(UOrionInventoryItemInstance* ItemToRemove)
 			MarkArrayDirty();
 		}
 	}
+}
+
+void FOrionInventoryList::Reset()
+{
+	for (auto EntryIt = Entries.CreateIterator(); EntryIt; ++EntryIt)
+	{
+		EntryIt.RemoveCurrent();
+	}
+	MarkArrayDirty();
 }
 
 UOrionInventoryItemInstance* FOrionInventoryList::FindFirstItemByTag(const FGameplayTag& ItemTag)

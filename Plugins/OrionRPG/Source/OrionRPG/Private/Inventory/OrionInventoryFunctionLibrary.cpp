@@ -56,9 +56,9 @@ const UOrionInventoryItemFragment* UOrionInventoryFunctionLibrary::FindItemDefin
 }
 
 
-void UOrionInventoryFunctionLibrary::AddInventoryItem(const UObject* WorldContextObject, int32& StackRemainder, FItemInstanceData& OutItemData, AActor* InOptionalInteractor, FGameplayTag ItemTag, int32 StackCount)
+void UOrionInventoryFunctionLibrary::AddInventoryItem(const UObject* WorldContextObject, int32& StackRemainder, FItemInstanceData& OutItemData, AActor* InOptionalInstigator, FGameplayTag ItemTag, int32 StackCount)
 {
-    UOrionInventoryComponent* InventoryComp = InOptionalInteractor ? GetInventoryComponentFromTarget(InOptionalInteractor) : GetInventoryComponent(WorldContextObject);
+    UOrionInventoryComponent* InventoryComp = InOptionalInstigator ? GetInventoryComponentFromTarget(InOptionalInstigator) : GetInventoryComponent(WorldContextObject);
 
     if (InventoryComp)
     {
@@ -66,9 +66,9 @@ void UOrionInventoryFunctionLibrary::AddInventoryItem(const UObject* WorldContex
     }
 }
 
-void UOrionInventoryFunctionLibrary::DropInventoryItem(const UObject* WorldContextObject, FItemInstanceData& OutItemData, AActor* InOptionalInteractor, FGameplayTag ItemTag, int32 StackCount)
+void UOrionInventoryFunctionLibrary::DropInventoryItem(const UObject* WorldContextObject, FItemInstanceData& OutItemData, AActor* InOptionalInstigator, FGameplayTag ItemTag, int32 StackCount)
 {
-    UOrionInventoryComponent* InventoryComp = InOptionalInteractor ? GetInventoryComponentFromTarget(InOptionalInteractor) : GetInventoryComponent(WorldContextObject);
+    UOrionInventoryComponent* InventoryComp = InOptionalInstigator ? GetInventoryComponentFromTarget(InOptionalInstigator) : GetInventoryComponent(WorldContextObject);
 
     if (InventoryComp)
     {
@@ -76,9 +76,9 @@ void UOrionInventoryFunctionLibrary::DropInventoryItem(const UObject* WorldConte
     }
 }
 
-bool UOrionInventoryFunctionLibrary::GetItemData(const UObject* WorldContextObject, FItemInstanceData& OutItemData, AActor* InOptionalInteractor, FGameplayTag ItemTag)
+bool UOrionInventoryFunctionLibrary::GetItemData(const UObject* WorldContextObject, FItemInstanceData& OutItemData, AActor* InOptionalInstigator, FGameplayTag ItemTag)
 {
-    UOrionInventoryComponent* InventoryComp = InOptionalInteractor ? GetInventoryComponentFromTarget(InOptionalInteractor) : GetInventoryComponent(WorldContextObject);
+    UOrionInventoryComponent* InventoryComp = InOptionalInstigator ? GetInventoryComponentFromTarget(InOptionalInstigator) : GetInventoryComponent(WorldContextObject);
 	
     if (InventoryComp)
     {

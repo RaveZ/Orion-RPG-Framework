@@ -66,6 +66,7 @@ public:
 	void AddEntry(UOrionInventoryItemInstance* ItemInstance);
 	UOrionInventoryItemInstance* AddEntry(UOrionInventoryNode_ItemDefinition* ItemDef);
 	void RemoveEntry(UOrionInventoryItemInstance* ItemToRemove);
+	void Reset();
 	UOrionInventoryItemInstance* FindFirstItemByTag(const FGameplayTag& ItemTag);
 
 private:
@@ -168,4 +169,25 @@ public:
 	}
 
 
+};
+
+/** Quest Data To Be Saved */
+USTRUCT()
+struct FOrionInventoryItemSaveData
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(SaveGame)
+	FGameplayTag ItemTag;
+
+	UPROPERTY(SaveGame)
+	int32 TotalStackCount;
+
+
+public:
+	FOrionInventoryItemSaveData()
+	{
+		ItemTag = FGameplayTag::EmptyTag;
+		TotalStackCount = 0;
+	}
 };

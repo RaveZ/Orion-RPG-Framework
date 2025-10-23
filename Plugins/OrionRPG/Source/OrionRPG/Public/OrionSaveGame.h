@@ -6,6 +6,7 @@
 #include "GameFramework/SaveGame.h"
 #include "Quest.h"
 #include "QuestData.h"
+#include "Inventory/InventoryData.h"
 #include "UObject/Interface.h"
 #include "OrionSaveGame.generated.h"
 
@@ -125,9 +126,16 @@ struct FOrionInventorySaveData
 	GENERATED_BODY()
 
 public:
-	/** Array of saved QuestIDs*/
-	UPROPERTY(VisibleAnywhere, Category = QuestSaveData)
-	float MaxCapacity;
+	/**
+	* Max weight capacity for the inventory
+	* Current weight capacity will be calculated based on the items stored in the inventory
+	*/
+	UPROPERTY(VisibleAnywhere, Category = InventorySaveData)
+	float MaxWeight;
+
+	UPROPERTY(VisibleAnywhere, Category = InventorySaveData)
+	TArray<FOrionInventoryItemSaveData> SavedInventoryItems;
+
 
 };
 
@@ -152,6 +160,9 @@ public:
 
 	UPROPERTY()
 	FOrionQuestSaveData QuestData;
+
+	UPROPERTY()
+	FOrionInventorySaveData InventorySaveData;
 
 	UPROPERTY()
 	FOrionPlayerSaveData PlayerData;

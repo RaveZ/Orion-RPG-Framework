@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Inventory/InventoryData.h"
 #include "Components/ActorComponent.h"
+#include "OrionSaveGame.h"
 #include "OrionInventoryComponent.generated.h"
 
 class UOrionInventoryGraph;
@@ -52,11 +53,14 @@ public:
 		FInventoryItemSignature OnItemRemoved;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
+		FInventoryItemSignature OnItemConsumed;
+
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 	FInventoryItemStackChange OnItemStackChanged;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FInventoryMaxWeightChanged OnMaxWeightChanged;
-
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FInventoryEncumberedStateChanged OnEncumberedStateChanged;
@@ -115,8 +119,26 @@ public:
 	void Server_DropItem(FGameplayTag ItemTag, int32 StackCount);
 	bool Server_DropItem_Validate(FGameplayTag ItemTag, int32 StackCount) { return true; };
 
-	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = "InventoryComponent")
-	void DropItemInstance(UOrionInventoryItemInstance* ItemInstance, int32 StackCount);
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "InventoryComponent", meta = (DisplayName="Drop Item Instance"))
+	void Server_DropItemInstance(UOrionInventoryItemInstance* ItemInstance, int32 StackCount);
+
+	/**
+	 * Consume item from Inventory
+	 *
+	 * @param ItemTag:			The Item Tag to consume
+	 * @param StackCount:		The Stack Count to consume
+	 *
+	 * @return	ItemData:		ItemInstanceData
+	 */
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	void ConsumeItem(FItemInstanceData& OutItemData, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag(), int32 StackCount = 1);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_ConsumeItem(FGameplayTag ItemTag, int32 StackCount);
+	bool Server_ConsumeItem_Validate(FGameplayTag ItemTag, int32 StackCount) { return true; };
+
+	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "InventoryComponent", meta = (DisplayName = "Consume Item Instance"))
+	void Server_ConsumeItemInstance(UOrionInventoryItemInstance* ItemInstance, int32 StackCount);
 
 	/**
 	 * Set inventory max weight, 
@@ -161,6 +183,16 @@ public:
 	{
 		return IsValid(GetOwner()) ? GetOwner()->GetLocalRole() : ENetRole::ROLE_None;
 	};
+
+
+public:
+	UFUNCTION()
+	FOrionInventorySaveData GetSaveGameData();
+
+	UFUNCTION()
+	void InitializeFromSaveGame(FOrionInventorySaveData& InventorySaveData);
+
+	bool bInitializingSaveGame;
 
 public:
 	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
