@@ -41,12 +41,13 @@ public:
 	float Weight;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TSoftClassPtr<AActor> ActorClass;
+	TSoftClassPtr<AActor> PickupActorClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fragments", Instanced)
 	TArray<TObjectPtr<UOrionInventoryItemFragment>> Fragments;
 
 public:
+	void LoadPrerequisites();
 	const UOrionInventoryItemFragment* FindFragmentByClass(TSubclassOf<UOrionInventoryItemFragment> FragmentClass) const;
 
 

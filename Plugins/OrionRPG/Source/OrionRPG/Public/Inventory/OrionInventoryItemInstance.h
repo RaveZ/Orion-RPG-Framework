@@ -17,13 +17,14 @@ class ORIONRPG_API UOrionInventoryItemInstance : public UOrionInventoryNode
 {
 	GENERATED_BODY()
 
-public:
+protected:
 	UOrionInventoryItemInstance();
 
 	//~UObject interface
 	virtual bool IsSupportedForNetworking() const override { return true; }
 	//~End of UObject interface
 
+public:
 	UOrionInventoryNode_ItemDefinition* GetItemDef() const { return ItemDef; }
 	template <typename ResultClass>
 	const ResultClass* FindFragmentByClass() const { return (ResultClass*)FindFragmentByClass(ResultClass::StaticClass()); }

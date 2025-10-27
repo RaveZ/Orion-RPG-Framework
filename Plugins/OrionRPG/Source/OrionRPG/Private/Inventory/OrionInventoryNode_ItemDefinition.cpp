@@ -22,6 +22,12 @@ UOrionInventoryNode_ItemDefinition::UOrionInventoryNode_ItemDefinition()
 	MaxStackCount = 1;
 
 }
+
+void UOrionInventoryNode_ItemDefinition::LoadPrerequisites()
+{
+	PickupActorClass.LoadSynchronous();
+}
+
 const UOrionInventoryItemFragment* UOrionInventoryNode_ItemDefinition::FindFragmentByClass(TSubclassOf<UOrionInventoryItemFragment> FragmentClass) const
 {
 	if (FragmentClass != nullptr)

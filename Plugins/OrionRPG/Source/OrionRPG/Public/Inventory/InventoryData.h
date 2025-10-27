@@ -129,7 +129,6 @@ public:
 };
 
 
-
 USTRUCT(BlueprintType)
 struct FItemInstanceData
 {

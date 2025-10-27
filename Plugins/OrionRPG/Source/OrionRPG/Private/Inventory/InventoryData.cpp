@@ -89,8 +89,9 @@ UOrionInventoryItemInstance* FOrionInventoryList::AddEntry(UOrionInventoryNode_I
 
 
 	FOrionInventoryEntry& NewEntry = Entries.AddDefaulted_GetRef();
-	NewEntry.ItemInstance = NewObject<UOrionInventoryItemInstance>(OwnerComponent->GetOwner());  //@TODO: Using the actor instead of component as the outer due to UE-127172
+	NewEntry.ItemInstance = NewObject<UOrionInventoryItemInstance>(OwnerComponent->GetOwner());
 	NewEntry.ItemInstance->SetItemDef(ItemDef);
+	ItemDef->LoadPrerequisites();
 	for (UOrionInventoryItemFragment* Fragment : ItemDef->Fragments)
 	{
 		if (Fragment != nullptr)
@@ -100,7 +101,6 @@ UOrionInventoryItemInstance* FOrionInventoryList::AddEntry(UOrionInventoryNode_I
 	}
 	Result = NewEntry.ItemInstance;
 
-	//const UOrionInventoryItemDefinition* ItemCDO = GetDefault<UOrionInventoryItemDefinition>(ItemDef);
 	MarkItemDirty(NewEntry);
 
 	return Result;

@@ -17,5 +17,46 @@ class UOrionInventoryItemFragment : public UObject
 	GENERATED_BODY()
 
 public:
+	UOrionInventoryItemFragment();
+
 	virtual void OnInstanceCreated(UOrionInventoryItemInstance* Instance) const {}
 };
+
+
+//////////////////////////////////////////////////////////////////////
+
+// Equippable item fragment
+UCLASS(meta = (DisplayName="Equippable Item Fragment"))
+class UOrionInventoryFragment_EquippableItem : public UOrionInventoryItemFragment
+{
+	GENERATED_BODY()
+
+public:
+	UOrionInventoryFragment_EquippableItem();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment)
+	TSoftClassPtr<AActor> ActorToSpawn;
+
+	/**Which socket to attach this equipment*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment)
+	FName AttachSocket;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment)
+	FTransform AttachTransform;
+};
+
+
+//////////////////////////////////////////////////////////////////////
+
+// Consumable item fragment
+UCLASS(meta = (DisplayName = "Consumable Item Fragment"))
+class UOrionInventoryFragment_ConsumableItem : public UOrionInventoryItemFragment
+{
+	GENERATED_BODY()
+
+public:
+	UOrionInventoryFragment_ConsumableItem();
+
+};
+
+
