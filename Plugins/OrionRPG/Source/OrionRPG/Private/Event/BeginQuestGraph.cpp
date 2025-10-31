@@ -4,6 +4,7 @@
 #include "Event/BeginQuestGraph.h"
 #include "Quest.h"
 #include "QuestBuilderFunctionLibrary.h"
+#include "GameFramework/PlayerController.h"
 #include "QuestComponent.h"
 #include "Engine/World.h"
 #include "QuestBuilderGraph.h"
@@ -17,7 +18,7 @@ void UBeginQuestGraph::BeginEvent(APlayerController* OwnerController, APawn* Con
 {
 	if (GetWorld())
 	{
-		UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(OwnerController);
+		UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(Cast<AActor>(OwnerController));
 		if (QuestComp)
 		{
 			QuestComp->BeginQuestGraph(QuestAsset);

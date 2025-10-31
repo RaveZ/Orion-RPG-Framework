@@ -17,7 +17,7 @@ UOrionInteractionComponent::UOrionInteractionComponent()
 {
 	// Initialize variables
 	bInteracting = false;
-	DetectionRadius = 750.0f;
+	DetectionRadius = 600.0f;
 	InteractionNetMode = EOrionInteractionNetMode::E_OwnerOnly;
 	InteractionTraceChannel = ECC_WorldDynamic;
 	InteractionType = EOrionInteractionType::E_InteractionPawn;

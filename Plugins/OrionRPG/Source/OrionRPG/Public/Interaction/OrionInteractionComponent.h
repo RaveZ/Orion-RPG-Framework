@@ -111,7 +111,7 @@ public:
 
 protected:
 
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_bInteracting)
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_bInteracting, Category = "Interaction")
 	bool bInteracting;
 
 protected:

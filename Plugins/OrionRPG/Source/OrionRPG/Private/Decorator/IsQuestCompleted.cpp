@@ -17,7 +17,7 @@ bool UIsQuestCompleted::PerformConditionCheck_Implementation(APlayerController* 
     FName QuestID = QuestTag.GetTagName();
     if (GetWorld())
     {
-        if (UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(OwnerController))
+        if (UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(Cast<AActor>(OwnerController)))
         {
             return QuestComp->IsQuestAtState(QuestTag, EQuestState::E_Complete);
         }

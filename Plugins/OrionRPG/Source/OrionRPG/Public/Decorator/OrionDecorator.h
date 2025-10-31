@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "GameFramework/PlayerController.h"
 #include "GameplayTagContainer.h"
 #include "OrionDecorator.generated.h"
 

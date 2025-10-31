@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "QuestData.h"
 #include "UObject/NoExportTypes.h"
+#include "GameFramework/PlayerController.h"
 #include "GameplayTagContainer.h"
 #include "OrionEvent.generated.h"
 

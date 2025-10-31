@@ -23,7 +23,7 @@ bool UHasQuestEverReachedCheckpoint::PerformConditionCheck_Implementation(APlaye
     FName NodeID = NodeTag.GetTagName();
     if (GetWorld())
     {
-        if (UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(OwnerController))
+        if (UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(Cast<AActor>(OwnerController)))
         {
             if (UQuest* FoundedQuest = QuestComp->QuestMap.FindRef(QuestID))
             {

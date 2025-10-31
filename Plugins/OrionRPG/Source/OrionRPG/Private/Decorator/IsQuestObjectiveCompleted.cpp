@@ -22,7 +22,7 @@ bool UIsQuestObjectiveCompleted::PerformConditionCheck_Implementation(APlayerCon
     FName NodeID = NodeTag.GetTagName();
     if (GetWorld())
     {
-        if (UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(OwnerController))
+        if (UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(Cast<AActor>(OwnerController)))
         {
             if (UQuest* FoundedQuest = QuestComp->QuestMap.FindRef(QuestID))
             {
