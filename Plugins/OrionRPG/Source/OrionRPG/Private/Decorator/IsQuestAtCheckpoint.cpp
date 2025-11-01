@@ -24,7 +24,7 @@ bool UIsQuestAtCheckpoint::PerformConditionCheck_Implementation(APlayerControlle
     FName NodeID = NodeTag.GetTagName();
     if (GetWorld())
     {
-        if (UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(OwnerController))
+        if (UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(Cast<AActor>(OwnerController)))
         {
             //find the first found checkpoint and break
             if (UQuest* FoundedQuest = QuestComp->QuestMap.FindRef(QuestID))

@@ -10,7 +10,9 @@
 
 
 class UOrionInteractionTargetComponent;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOrionInteractionSignature, UOrionInteractionTargetComponent*, InteractionTarget, FGameplayTag, InteractionTargetTag);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOrionAvailableInteractionChanged, const TArray<class UOrionInteractionTargetComponent*>&, AvailableInteractions);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOrionOnInteractingChanged, bool, bIsInteracting);
 /**
  * Interaction component
@@ -31,6 +33,10 @@ public:
 	//We cache the OwningController, we won't cache pawn as this might change
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	TObjectPtr<APlayerController> OwningController;
+
+	/**The radius where the character becomes "aware" of interactable objects. This is used detect and trigger UI elements for highlighting the object.*/
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interaction")
+	float DetectionRadius;
 
 	/**
 	* Give notification based on configured netmode
@@ -62,11 +68,11 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interaction")
 	float InteractionTraceIntervalSecond;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
-	TArray<FHitResult> InteractionhitResults;
-
 	UPROPERTY(VisibleAnywhere, Replicated, BlueprintReadOnly, Category = "Interaction")
-	TObjectPtr<class UOrionInteractionTargetComponent> CurrentInteractionTarget;
+	TObjectPtr<UOrionInteractionTargetComponent> CurrentInteractionTarget;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction")
+	TArray<TObjectPtr<UOrionInteractionTargetComponent>> AvailableInteractionTargets;
 
 	/*Index of the interaction list chosen by player*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Replicated, Category = "Interaction")
@@ -83,6 +89,15 @@ public:
 	FOrionInteractionSignature OnInteractionChanged;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FOrionAvailableInteractionChanged OnAvailableInteractionChanged;
+
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FOrionInteractionSignature OnAvailableInteractionAdded;
+
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+	FOrionInteractionSignature OnAvailableInteractionRemoved;
+
+	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOrionInteractionSignature OnInteractionStarted;
 
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
@@ -96,7 +111,7 @@ public:
 
 protected:
 
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_bInteracting)
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_bInteracting, Category = "Interaction")
 	bool bInteracting;
 
 protected:
@@ -256,4 +271,7 @@ private:
 
 	UFUNCTION()
 	UOrionInteractionTargetComponent* GetInteractionTrace();
+
+	UFUNCTION()
+	void DetectAvailableInteractionTargets();
 };

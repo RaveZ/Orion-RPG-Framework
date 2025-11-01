@@ -20,7 +20,7 @@ void UCompleteQuest::BeginEvent(APlayerController* OwnerController, APawn* Contr
 	{
 		if (GetWorld())
 		{
-			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(OwnerController);
+			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(Cast<AActor>(OwnerController));
 			if (QuestComp)
 			{
 				QuestComp->CompleteQuestFromTag(QuestTag);

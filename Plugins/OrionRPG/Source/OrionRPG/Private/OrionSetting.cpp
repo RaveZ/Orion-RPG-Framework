@@ -1,6 +1,7 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #include "OrionSetting.h"
+#include "Blueprint/UserWidget.h"
 #include "UObject/ConstructorHelpers.h"
 #include "OrionSaveGame.h"
 
@@ -10,6 +11,11 @@ UOrionSetting::UOrionSetting()
 	
 	//UI
 	ShowUIBottomBarAction = true;
+	auto OverlayWidgetFinder = ConstructorHelpers::FClassFinder<UUserWidget>(TEXT("WidgetBlueprint'/OrionRPG/Widgets/WBP_OrionOverlay.WBP_OrionOverlay_C'"));
+	if (OverlayWidgetFinder.Succeeded())
+	{
+		DefaultOverlayWidget = OverlayWidgetFinder.Class;
+	}
 
 	//Save
 	SaveGameClass = UOrionSaveGame::StaticClass();

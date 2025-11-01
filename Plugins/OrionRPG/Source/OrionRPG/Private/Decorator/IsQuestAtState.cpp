@@ -17,7 +17,7 @@ bool UIsQuestAtState::PerformConditionCheck_Implementation(APlayerController* Ow
     FName QuestID = QuestTag.GetTagName();
     if (GetWorld())
     {
-        if (UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(OwnerController))
+        if (UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(Cast<AActor>(OwnerController)))
         {
             if (UQuest* FoundedQuest = QuestComp->QuestMap.FindRef(QuestID))
             {

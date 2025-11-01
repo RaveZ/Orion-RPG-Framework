@@ -17,6 +17,7 @@ UOrionInteractionComponent::UOrionInteractionComponent()
 {
 	// Initialize variables
 	bInteracting = false;
+	DetectionRadius = 600.0f;
 	InteractionNetMode = EOrionInteractionNetMode::E_OwnerOnly;
 	InteractionTraceChannel = ECC_WorldDynamic;
 	InteractionType = EOrionInteractionType::E_InteractionPawn;
@@ -86,6 +87,7 @@ void UOrionInteractionComponent::OnPossessedPawnChanged(APawn* OldPawn, APawn* N
 void UOrionInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	DetectAvailableInteractionTargets();
 	UpdateInteractionTrace();
 
 }
@@ -340,12 +342,11 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 
 	FVector TraceStart;
 	FRotator Rotation;
-	InteractionhitResults.Empty();
+	TArray<FHitResult> InteractionhitResults;
 	TArray<AActor*> InteractionActors;
 
 	FCollisionQueryParams CollisionQueryParams(SCENE_QUERY_STAT(AOrionInteractionComponent_UpdateInteracionTrace));
 	CollisionQueryParams.AddIgnoredActor(GetOwningPawn());
-
 
 	switch (InteractionType)
 	{
@@ -375,8 +376,14 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 					if (Hit.GetActor()->IsHidden())
 						continue;
 
-					InteractionhitResults.Add(Hit);
-					InteractionActors.AddUnique(Hit.GetActor());
+					FVector Direction = TargetInteractable->GetOwner()->GetActorLocation() - GetOwningPawn()->GetActorLocation();
+					Direction.Normalize();
+
+					if (FVector::DotProduct(Direction, GetOwningPawn()->GetActorForwardVector()) > 0.5f)
+					{
+						InteractionhitResults.Add(Hit);
+						InteractionActors.AddUnique(Hit.GetActor());
+					}
 				}
 			}
 
@@ -452,6 +459,100 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 
 
 	
+}
+
+void UOrionInteractionComponent::DetectAvailableInteractionTargets()
+{
+	if (!bIsInteractionEnabled)
+	{
+		return;
+	}
+
+	FVector TraceStart;
+	FRotator Rotation;
+	TArray<FHitResult> InteractionhitResults;
+	TArray<TObjectPtr<UOrionInteractionTargetComponent>> CachedInteractionTargets;
+
+	FCollisionQueryParams CollisionQueryParams(SCENE_QUERY_STAT(AOrionInteractionComponent_DetectAvailableInteractionTargets));
+	CollisionQueryParams.AddIgnoredActor(GetOwningPawn());
+
+	TraceStart = GetOwningPawn()->GetActorLocation();
+	Rotation = GetOwningPawn()->GetActorRotation();
+	FCollisionShape Sphere = FCollisionShape::MakeSphere(DetectionRadius);
+
+	TArray<FHitResult> HitResults;
+	GetWorld()->SweepMultiByChannel(HitResults, TraceStart, TraceStart, FQuat::Identity, InteractionTraceChannel, Sphere);
+
+	for (auto& Hit : HitResults)
+	{
+		if (!Hit.GetActor())
+			continue;
+
+		if (UOrionInteractionTargetComponent* TargetInteractable = Hit.GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>())
+		{
+			if (Hit.GetActor()->IsPendingKillPending())
+				continue;
+
+			if (Hit.GetActor()->IsHidden())
+				continue;
+
+			InteractionhitResults.Add(Hit);
+			CachedInteractionTargets.AddUnique(TargetInteractable);
+		}
+	}
+
+	bool bChanged = false;
+	TSet<TObjectPtr<UOrionInteractionTargetComponent>> OldSet(AvailableInteractionTargets);
+	TSet<TObjectPtr<UOrionInteractionTargetComponent>> NewSet(CachedInteractionTargets);
+	if (!OldSet.Includes(NewSet) || !NewSet.Includes(OldSet))
+	{
+		bChanged = true;
+	}
+
+	// Broadcast added and removed interaction targets
+	if (bChanged)
+	{
+		// Find added targets (in NewSet but not in OldSet)
+		for (TObjectPtr<UOrionInteractionTargetComponent> AddedTarget : NewSet.Difference(OldSet))
+		{
+			if (OnAvailableInteractionAdded.IsBound())
+			{
+				OnAvailableInteractionAdded.Broadcast(AddedTarget, AddedTarget ? AddedTarget->Tag : FGameplayTag().EmptyTag);
+			}
+		}
+
+		// Find removed targets (in OldSet but not in NewSet)
+		for (TObjectPtr<UOrionInteractionTargetComponent> RemovedTarget : OldSet.Difference(NewSet))
+		{
+			if (OnAvailableInteractionRemoved.IsBound())
+			{
+				OnAvailableInteractionRemoved.Broadcast(RemovedTarget, RemovedTarget ? RemovedTarget->Tag : FGameplayTag().EmptyTag);
+			}
+		}
+
+		AvailableInteractionTargets = CachedInteractionTargets;
+		if (OnAvailableInteractionChanged.IsBound())
+		{
+			OnAvailableInteractionChanged.Broadcast(AvailableInteractionTargets);
+		}
+	}
+
+#if WITH_EDITOR
+	if (bDebugTrace)
+	{
+		DrawDebugSphere(
+			GetWorld(),
+			TraceStart,
+			DetectionRadius,
+			12,
+			FColor::Blue,
+			false,
+			2.f,
+			0,
+			1.f
+		);
+	}
+#endif // WITH_EDITOR
 }
 
 void UOrionInteractionComponent::StartInteraction()

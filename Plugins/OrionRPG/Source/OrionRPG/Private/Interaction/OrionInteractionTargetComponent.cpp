@@ -50,8 +50,8 @@ void UOrionInteractionTargetComponent::GetLifetimeReplicatedProps(TArray<FLifeti
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
-	// This tells the engine to replicate these variables.
 	DOREPLIFETIME(ThisClass, CurrentInteractor);
+	DOREPLIFETIME(ThisClass, CurrentProgress);
 }
 
 
@@ -157,6 +157,7 @@ void UOrionInteractionTargetComponent::EndInteraction(bool bCompleted)
 	bNativeCanInteract = false;
 	FTimerDelegate ResetInteractionTimerDel;
 	TWeakObjectPtr<UOrionInteractionTargetComponent> WeakThis = this;
+	//Ensure user dont spam interact, it will have .25 sec cooldown before it can be interacted again
 	ResetInteractionTimerDel.BindLambda([this, WeakThis]()
 		{
 			if (WeakThis.IsValid())
@@ -168,7 +169,7 @@ void UOrionInteractionTargetComponent::EndInteraction(bool bCompleted)
 	GetWorld()->GetTimerManager().SetTimer(
 		TimerHandle_ResetInteraction,
 		ResetInteractionTimerDel,
-		0.5f,
+		0.25f,
 		false
 	);
 
