@@ -11,7 +11,7 @@ UOrionSetting::UOrionSetting()
 	
 	//UI
 	ShowUIBottomBarAction = true;
-	auto OverlayWidgetFinder = ConstructorHelpers::FClassFinder<UUserWidget>(TEXT("WidgetBlueprint'/OrionRPG/Widgets/WBP_Overlay.WBP_Overlay_C'"));
+	auto OverlayWidgetFinder = ConstructorHelpers::FClassFinder<UUserWidget>(TEXT("WidgetBlueprint'/OrionRPG/Widgets/WBP_OrionOverlay.WBP_OrionOverlay_C'"));
 	if (OverlayWidgetFinder.Succeeded())
 	{
 		DefaultOverlayWidget = OverlayWidgetFinder.Class;
