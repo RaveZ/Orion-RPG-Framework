@@ -28,6 +28,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "UI")
 	bool ShowUIBottomBarAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "UI", noclear)
+	TSubclassOf<class UCommonActivatableWidget> DefaultOverlayWidget;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Save")
 	TSubclassOf<UOrionSaveGame> SaveGameClass;
