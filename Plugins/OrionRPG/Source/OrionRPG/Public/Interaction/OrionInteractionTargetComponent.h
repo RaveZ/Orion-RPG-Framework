@@ -71,6 +71,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable")
 	FGameplayTag Tag;
 
+	/**
+	* Can only interact when facing this target.
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable")
+	bool bFacingTarget;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable")
 	EOrionInteractionMode Mode;
 
