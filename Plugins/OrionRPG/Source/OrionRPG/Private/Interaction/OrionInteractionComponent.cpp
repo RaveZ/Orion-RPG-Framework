@@ -21,7 +21,7 @@ UOrionInteractionComponent::UOrionInteractionComponent()
 	InteractionNetMode = EOrionInteractionNetMode::E_OwnerOnly;
 	InteractionTraceChannel = ECC_WorldDynamic;
 	InteractionType = EOrionInteractionType::E_InteractionPawn;
-	InteractionRadius = 150.f;
+	InteractionRadius = 80.0f;
 	InteractionTraceDistance = 750.0f;
 	InteractionTraceIntervalSecond = 0.3f;
 	InteractionOffset = FVector(75.f, 0.f, 0.f);
@@ -381,9 +381,14 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 					FVector InteractableDirection =  GetOwningPawn()->GetActorLocation() - TargetInteractable->GetOwner()->GetActorLocation();
 					InteractableDirection.Normalize();
 
-					bool bAllowInteractable = TargetInteractable->bFacingTarget ? FVector::DotProduct(InteractableDirection, TargetInteractable->GetOwner()->GetActorForwardVector()) > 0.5f && FVector::DotProduct(Direction, GetOwningPawn()->GetActorForwardVector()) > 0.5f :  FVector::DotProduct(Direction, GetOwningPawn()->GetActorForwardVector()) > 0.5f;
+					bool bPawnFacingInteractable = FVector::DotProduct(Direction, GetOwningPawn()->GetActorForwardVector()) > 0.5f;
+					bool bInteractableFacingPawn = FVector::DotProduct(InteractableDirection, TargetInteractable->GetOwner()->GetActorForwardVector()) > 0.5f;
 
-					if (FVector::DotProduct(Direction, GetOwningPawn()->GetActorForwardVector()) > 0.5f)
+					bool bAllowInteractable = TargetInteractable->bFacingTarget
+						? (bPawnFacingInteractable && bInteractableFacingPawn)
+						: bPawnFacingInteractable;
+
+					if (bAllowInteractable)
 					{
 						InteractionhitResults.Add(Hit);
 						InteractionActors.AddUnique(Hit.GetActor());
