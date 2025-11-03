@@ -15,6 +15,7 @@ UOrionInteractionTargetComponent::UOrionInteractionTargetComponent()
 	InteractionNetMode = EOrionInteractionNetMode::E_Server;
 	Mode = EOrionInteractionMode::Instant;
 	HoldDuration = 1.0f;
+	bFacingTarget = false;
 	CurrentInteractor = nullptr;
 	CurrentProgress = 0.0f;
 	bAutoActivate = true;
