@@ -18,6 +18,12 @@ class UOrionInventoryItemFragment : public UObject
 
 public:
 	UOrionInventoryItemFragment();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment)
+	bool bIsMenuAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment)
+	FText ActionDisplayName;
 
 	virtual void OnInstanceCreated(UOrionInventoryItemInstance* Instance) const {}
 };
