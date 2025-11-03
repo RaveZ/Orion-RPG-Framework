@@ -383,12 +383,14 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 
 					bool bPawnFacingInteractable = FVector::DotProduct(Direction, GetOwningPawn()->GetActorForwardVector()) > 0.5f;
 					bool bInteractableFacingPawn = FVector::DotProduct(InteractableDirection, TargetInteractable->GetOwner()->GetActorForwardVector()) > 0.5f;
+					bool bInteractableIsNotSelf = TargetInteractable->GetOwner() != GetOwningPawn();
+
 
 					bool bAllowInteractable = TargetInteractable->bFacingTarget
 						? (bPawnFacingInteractable && bInteractableFacingPawn)
 						: bPawnFacingInteractable;
 
-					if (bAllowInteractable)
+					if (bAllowInteractable && bInteractableIsNotSelf)
 					{
 						InteractionhitResults.Add(Hit);
 						InteractionActors.AddUnique(Hit.GetActor());
@@ -432,7 +434,6 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 			GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, InteractionTraceChannel, CollisionQueryParams);
 			InteractionhitResults.Add(HitResult);
 
-
 			if ((InteractionhitResults.IsValidIndex(0) && 
 				InteractionhitResults[0].bBlockingHit && 
 				InteractionhitResults[0].GetActor()  && 
@@ -441,7 +442,11 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 			{
 				if (UOrionInteractionTargetComponent* TargetInteractable = InteractionhitResults[0].GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>())
 				{
-					return TargetInteractable;
+					bool bInteractableIsNotSelf = TargetInteractable->GetOwner() != GetOwningPawn();
+					if (bInteractableIsNotSelf)
+					{
+						return TargetInteractable;
+					}
 				}
 
 			}
@@ -505,8 +510,14 @@ void UOrionInteractionComponent::DetectAvailableInteractionTargets()
 			if (Hit.GetActor()->IsHidden())
 				continue;
 
-			InteractionhitResults.Add(Hit);
-			CachedInteractionTargets.AddUnique(TargetInteractable);
+			bool bInteractableIsNotSelf = TargetInteractable->GetOwner() != GetOwningPawn();
+
+			if (bInteractableIsNotSelf)
+			{
+				InteractionhitResults.Add(Hit);
+				CachedInteractionTargets.AddUnique(TargetInteractable);
+			}
+			
 		}
 	}
 
