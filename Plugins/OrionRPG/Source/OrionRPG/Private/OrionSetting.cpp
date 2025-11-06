@@ -23,13 +23,14 @@ UOrionSetting::UOrionSetting()
 	bSaveLevel = false;
 	bSaveDataLayer = true;
 
-	//Input
+	//Interaction
 	auto InputDTFinder = ConstructorHelpers::FObjectFinder<UDataTable>(TEXT("DataTable'/OrionRPG/CommonUI/Data/DT_OrionInputActions.DT_OrionInputActions'"));
 	if (InputDTFinder.Succeeded())
 	{
 		InteractInput.DataTable = InputDTFinder.Object;
 		InteractInput.RowName = FName("Interact");
 	}
+	InteractionWidgetType = EOrionInteractionWidgetType::E_WorldSpace;
 }
 
 UOrionSetting::~UOrionSetting()

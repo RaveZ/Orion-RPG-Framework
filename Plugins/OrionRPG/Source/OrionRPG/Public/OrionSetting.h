@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "UObject/Class.h"
 #include "Engine/DataTable.h"
+#include "Interaction/InteractionData.h"
 #include "UObject/NoExportTypes.h"
 #include "UObject/ObjectMacros.h"
 #include "UObject/ScriptMacros.h"
@@ -47,8 +48,10 @@ public:
 	bool bSaveDataLayer;
 
 	//Interaction input. add your own input here
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Interaction")
 	FDataTableRowHandle InteractInput;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Interaction")
+	EOrionInteractionWidgetType InteractionWidgetType;
 };
 
