@@ -2,6 +2,8 @@
 
 
 #include "UI/OrionUIManagerSubsystem.h"
+#include "CommonActivatableWidget.h"
+#include "UI/OrionPrimaryGameLayout.h"
 #include "CommonInputSubsystem.h"
 #include "Engine/GameInstance.h"	
 #include "GameFramework/PlayerController.h"
@@ -88,4 +90,33 @@ void UOrionUILibrary::ResumeInputForPlayer(ULocalPlayer* LocalPlayer, FName Susp
 		CommonInputSubsystem->SetInputTypeFilter(ECommonInputType::Gamepad, SuspendToken, false);
 		CommonInputSubsystem->SetInputTypeFilter(ECommonInputType::Touch, SuspendToken, false);
 	}
+}
+
+
+UCommonActivatableWidgetContainerBase* UOrionUILibrary::GetLayerWidget(const UObject* WorldContextObject, FGameplayTag LayerName)
+{
+	UWorld* World = GEngine ? GEngine->GetWorldFromContextObjectChecked(WorldContextObject) : nullptr;
+	UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
+	if (GameInstance)
+	{
+		UOrionUIManagerSubsystem* UIManager = GameInstance->GetSubsystem<UOrionUIManagerSubsystem>();
+		if (UIManager && UIManager->PrimaryLayout)
+		{
+			return UIManager->PrimaryLayout->GetLayerWidget(LayerName);
+		}
+	}
+		
+	
+	return nullptr;
+    
+}
+
+UCommonActivatableWidget* UOrionUILibrary::GetActiveWidgetFromLayer(const UObject* WorldContextObject, FGameplayTag LayerName)
+{
+	UCommonActivatableWidgetContainerBase* WidgetContainer = GetLayerWidget(WorldContextObject, LayerName);
+	if (WidgetContainer)
+	{
+		return WidgetContainer->GetActiveWidget();
+	}
+	return nullptr;
 }

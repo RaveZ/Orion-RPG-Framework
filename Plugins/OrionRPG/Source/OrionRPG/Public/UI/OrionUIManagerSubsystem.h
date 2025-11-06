@@ -6,6 +6,7 @@
 #include "NativeGameplayTags.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "Widgets/CommonActivatableWidgetContainer.h" 
 #include "Framework/Application/NavigationConfig.h"
 #include "OrionUIManagerSubsystem.generated.h"
 
@@ -73,16 +74,22 @@ class ORIONRPG_API UOrionUILibrary : public UBlueprintFunctionLibrary
 
 public:
 
-	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "Global UI Extensions")
+	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "OrionLibrary|UI")
 	static FName SuspendInputForPlayer(APlayerController* PlayerController, FName SuspendReason);
 
 	static FName SuspendInputForPlayer(ULocalPlayer* LocalPlayer, FName SuspendReason);
 
-	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "Global UI Extensions")
+	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "OrionLibrary|UI")
 	static void ResumeInputForPlayer(APlayerController* PlayerController, FName SuspendToken);
 
 	static void ResumeInputForPlayer(ULocalPlayer* LocalPlayer, FName SuspendToken);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, BlueprintCosmetic, Category = "OrionLibrary|UI", meta = (WorldContext = "WorldContextObject"))
+	static UCommonActivatableWidgetContainerBase* GetLayerWidget(const UObject* WorldContextObject, UPARAM(meta = (Categories = "UI.Layer")) FGameplayTag LayerName);
+
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, BlueprintCosmetic, Category = "OrionLibrary|UI", meta = (WorldContext = "WorldContextObject"))
+	static class UCommonActivatableWidget* GetActiveWidgetFromLayer(const UObject* WorldContextObject, UPARAM(meta = (Categories = "UI.Layer")) FGameplayTag LayerName);
 private:
 	static int32 InputSuspensions;
 };
