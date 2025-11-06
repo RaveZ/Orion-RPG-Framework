@@ -156,6 +156,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
 	TObjectPtr<UOrionInventoryNode_ItemDefinition> ItemDefinition;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item", Instanced)
+	TObjectPtr<UOrionInventoryItemFragment> DropItemFragment;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
 	TArray<TObjectPtr<UOrionInventoryItemFragment>> Fragments;
 
@@ -170,7 +173,7 @@ public:
 
 };
 
-/** Quest Data To Be Saved */
+/** Inventory  Data To Be Saved */
 USTRUCT()
 struct FOrionInventoryItemSaveData
 {

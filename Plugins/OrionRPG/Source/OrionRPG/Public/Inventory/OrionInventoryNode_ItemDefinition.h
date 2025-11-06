@@ -43,13 +43,21 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TSoftClassPtr<AActor> PickupActorClass;
 
+	/**Override for drop item fragment in case for different behavior*/
+	UPROPERTY(EditAnywhere, Category = "Fragments", Instanced)
+	TObjectPtr<UOrionInventoryItemFragment> DropItemFragmentOverride;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Fragments")
+	TObjectPtr<UOrionInventoryItemFragment> DropItemFragment;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fragments", Instanced)
 	TArray<TObjectPtr<UOrionInventoryItemFragment>> Fragments;
+
 
 public:
 	void LoadPrerequisites();
 	const UOrionInventoryItemFragment* FindFragmentByClass(TSubclassOf<UOrionInventoryItemFragment> FragmentClass) const;
-
+	UOrionInventoryItemFragment* GetDropItemFragment();
 
 public:
 #if WITH_EDITOR

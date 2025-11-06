@@ -11,8 +11,8 @@ class UOrionInventoryItemInstance;
 //////////////////////////////////////////////////////////////////////
 
 // Represents a fragment of an item definition
-UCLASS(MinimalAPI, DefaultToInstanced, EditInlineNew, Abstract)
-class UOrionInventoryItemFragment : public UObject
+UCLASS(Abstract, Blueprintable, BlueprintType, DefaultToInstanced, EditInlineNew)
+class ORIONRPG_API UOrionInventoryItemFragment : public UObject
 {
 	GENERATED_BODY()
 
@@ -20,12 +20,39 @@ public:
 	UOrionInventoryItemFragment();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment)
-	bool bIsMenuAction;
+	bool bHasMenuAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment, meta = (EditCondition = "bHasMenuAction == true", HideEditConditionToggle, EditConditionHides))
 	FText ActionDisplayName;
 
-	virtual void OnInstanceCreated(UOrionInventoryItemInstance* Instance) const {}
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment, meta = (EditCondition = "bHasMenuAction == true", HideEditConditionToggle, EditConditionHides))
+	UTexture2D* ActionIcon;
+
+
+	UPROPERTY(BlueprintReadOnly, Category = Fragment)
+	TObjectPtr<UOrionInventoryItemInstance> OwningItemInstance;
+
+public:
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, DisplayName = "Can Execute Action", Category = Fragment)
+	bool K2_CanExecuteAction() const;
+
+	virtual bool K2_CanExecuteAction_Implementation() const;
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, DisplayName = "Execute Action", Category = Fragment)
+	void K2_ExecuteAction();
+
+	virtual void K2_ExecuteAction_Implementation();
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, DisplayName = "Get Action Display Name", Category = Fragment)
+	FText K2_GetActionDisplayName() const;
+
+	virtual FText K2_GetActionDisplayName_Implementation() const;
+
+	virtual void OnInstanceCreated(UOrionInventoryItemInstance* Instance) { OwningItemInstance = Instance; }
+
+	// Allows the Object to get a valid UWorld from it's outer.
+	virtual UWorld* GetWorld() const override;
 };
 
 

@@ -40,6 +40,10 @@ void UOrionInventoryComponent::BeginPlay()
 	Super::BeginPlay();
 	//Set Dependency
 	OwningController = GetOwningController();
+	if (InventoryDB)
+	{
+		InventoryDB->Initialize(this);
+	}
 	MaxWeight = DefaultMaxInventoryWeight;
 
 	//console command

@@ -8,6 +8,7 @@
 #include "Inventory/OrionInventoryGraph.h"
 #include "Inventory/OrionInventoryNode.h"
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
+#include "Inventory/OrionInventoryItemFragment.h"
 
 
 UOrionInventoryEdGraph::UOrionInventoryEdGraph()
@@ -55,6 +56,8 @@ void UOrionInventoryEdGraph::UpdateAsset(bool bForce)
 
 
 	UOrionInventoryGraph* InventoryGraph = GetOrionInventoryGraph();
+
+	InventoryGraph->InitalizeAsset();
 
 	Clear();
 
@@ -115,10 +118,17 @@ void UOrionInventoryEdGraph::UpdateAllSubnodeDependencies()
 				for (int32 iAux = 0; iAux < InventoryEdNode->InventoryItems.Num(); iAux++)
 				{
 					InventoryEdNode->InventoryItems[iAux]->ParentNode = InventoryEdNode;
-					if (UOrionInventoryNode_ItemDefinition* ItemInstance = Cast<UOrionInventoryNode_ItemDefinition>(InventoryEdNode->InventoryItems[iAux]->NodeInstance))
+					if (UOrionInventoryNode_ItemDefinition* ItemDefinition = Cast<UOrionInventoryNode_ItemDefinition>(InventoryEdNode->InventoryItems[iAux]->NodeInstance))
 					{
-						InventoryGraph->ItemDefinitions.Add(ItemInstance->Tag, ItemInstance);
-						ItemInstance->Rename(nullptr, InventoryGraph, REN_DontCreateRedirectors | REN_DoNotDirty);
+						InventoryGraph->ItemDefinitions.Add(ItemDefinition->Tag, ItemDefinition);
+						ItemDefinition->Rename(nullptr, InventoryGraph, REN_DontCreateRedirectors | REN_DoNotDirty);
+						for (auto& ItemFragment : ItemDefinition->Fragments)
+						{
+							if (ItemFragment)
+							{
+								ItemFragment->Rename(nullptr, InventoryGraph, REN_DontCreateRedirectors | REN_DoNotDirty);
+							}
+						}
 					}
 				}
 

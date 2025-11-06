@@ -8,6 +8,7 @@
 #include "OrionInventoryGraph.generated.h"
 
 class UOrionInventoryComponent;
+class UOrionInventoryItemFragment;
 class UOrionInventoryNode;
 class APlayerController;
 class APawn;
@@ -23,6 +24,13 @@ public:
 	/** AssetID */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OrionInventory")
 		FName ID;
+
+	UPROPERTY(BlueprintReadOnly, Category = "OrionInventory")
+		TSubclassOf<UOrionInventoryItemFragment> DefaultDropItemFragmentClass;
+
+	/**Default drop item fragment for each item for this graph*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", Instanced)
+		TObjectPtr<UOrionInventoryItemFragment> DefaultDropItemFragment;
 
 	UPROPERTY(BlueprintReadWrite, Category = "OrionInventory")
 		TObjectPtr<APlayerController> OwningController;
@@ -42,16 +50,20 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "OrionInventory")
 		TMap<FGameplayTag, TObjectPtr<class UOrionInventoryNode_ItemDefinition>> ItemDefinitions;
 
+	bool bAssetInitialized;
 
 public:
 	virtual bool Initialize(UOrionInventoryComponent* InitializingComp);
 	virtual void Deinitialize();
 	virtual UWorld* GetWorld() const override;
+	virtual void PostInitProperties() override;
 
 	UFUNCTION(BlueprintCallable, Category = "OrionInventory")
 	void BeginNode(UOrionInventoryNode* InNode, bool bLaunchEventOnLoad = false); 
 
 	void ClearGraph();
+
+	void InitalizeAsset();
 	
 	UFUNCTION(BlueprintCallable, Category = "OrionInventory")
 	APlayerController* GetOwningController();

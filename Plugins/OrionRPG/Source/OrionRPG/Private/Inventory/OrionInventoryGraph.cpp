@@ -4,6 +4,9 @@
 #include "Inventory/OrionInventoryGraph.h"
 #include "Inventory/OrionInventoryComponent.h"
 #include "Inventory/OrionInventoryNode.h"
+#include "Inventory/OrionInventoryItemFragment.h"
+#include "UObject/ConstructorHelpers.h"
+#include "UObject/UObjectGlobals.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 
@@ -11,6 +14,12 @@
 
 UOrionInventoryGraph::UOrionInventoryGraph()
 {
+	bAssetInitialized = false;
+	auto DropItemFragmentFinder = ConstructorHelpers::FClassFinder <UOrionInventoryItemFragment>(TEXT("OrionInventoryItemFragment'/OrionRPG/Blueprint/Inventory/DefaultFragments/DroppableFragment.DroppableFragment_C'"));
+	if (DropItemFragmentFinder.Succeeded())
+	{
+		DefaultDropItemFragmentClass = DropItemFragmentFinder.Class;
+	}
 } 
 
 UOrionInventoryGraph::~UOrionInventoryGraph()
@@ -29,7 +38,7 @@ bool UOrionInventoryGraph::Initialize(UOrionInventoryComponent* InitializingComp
 		}
 		OwningController = InitializingComp->GetOwningController();
 		OrionInventoryComponent = InitializingComp;
-		NodeMap.Empty();
+		//NodeMap.Empty();
 		for (auto& Node : AllNodes)
 		{
 			if (Node)
@@ -37,7 +46,7 @@ bool UOrionInventoryGraph::Initialize(UOrionInventoryComponent* InitializingComp
 				Node->OrionInventoryGraph = this;
 				Node->OwningController = InitializingComp->GetOwningController();
 				Node->OrionInventoryComponent = InitializingComp;
-				NodeMap.Emplace(Node->ID, Node);
+				//NodeMap.Emplace(Node->ID, Node);
 			}
 		}
 	}
@@ -63,6 +72,12 @@ UWorld* UOrionInventoryGraph::GetWorld() const
 	return nullptr;
 }
 
+void UOrionInventoryGraph::PostInitProperties()
+{
+	Super::PostInitProperties();
+	
+}
+
 void UOrionInventoryGraph::BeginNode(UOrionInventoryNode* InNode, bool bLaunchEventOnLoad)
 {
 }
@@ -73,6 +88,18 @@ void UOrionInventoryGraph::ClearGraph()
 	RootNodes.Empty();
 	NodeMap.Empty();
 	ItemDefinitions.Empty();
+}
+
+void UOrionInventoryGraph::InitalizeAsset()
+{
+	if (!bAssetInitialized)
+	{
+		if (DefaultDropItemFragmentClass && !DefaultDropItemFragment)
+		{
+			DefaultDropItemFragment = NewObject<UOrionInventoryItemFragment>(this, DefaultDropItemFragmentClass, NAME_None, RF_Transactional);
+		}
+		bAssetInitialized = true;
+	}
 }
 
 APlayerController* UOrionInventoryGraph::GetOwningController()

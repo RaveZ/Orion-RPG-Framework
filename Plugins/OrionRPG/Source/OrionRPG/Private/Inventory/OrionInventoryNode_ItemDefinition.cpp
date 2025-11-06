@@ -3,6 +3,7 @@
 
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Inventory/OrionInventoryItemFragment.h"
+#include "Inventory/OrionInventoryGraph.h"
 #include "Engine/Texture2D.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -25,6 +26,8 @@ UOrionInventoryNode_ItemDefinition::UOrionInventoryNode_ItemDefinition()
 
 void UOrionInventoryNode_ItemDefinition::LoadPrerequisites()
 {
+	TObjectPtr<UOrionInventoryItemFragment> InNewDropItemFragmentTemplate = DropItemFragmentOverride ? DropItemFragmentOverride : GetOwningOrionInventoryGraph()->DefaultDropItemFragment;
+	DropItemFragment = InNewDropItemFragmentTemplate ? Cast<UOrionInventoryItemFragment>(StaticDuplicateObject(InNewDropItemFragmentTemplate, this, NAME_None, RF_Transactional)) : nullptr;
 	PickupActorClass.LoadSynchronous();
 }
 
@@ -42,6 +45,11 @@ const UOrionInventoryItemFragment* UOrionInventoryNode_ItemDefinition::FindFragm
 	}
 
 	return nullptr;
+}
+
+UOrionInventoryItemFragment* UOrionInventoryNode_ItemDefinition::GetDropItemFragment()
+{
+	return DropItemFragment;
 }
 
 #if WITH_EDITOR

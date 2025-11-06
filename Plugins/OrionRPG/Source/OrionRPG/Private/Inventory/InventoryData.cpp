@@ -99,6 +99,10 @@ UOrionInventoryItemInstance* FOrionInventoryList::AddEntry(UOrionInventoryNode_I
 			Fragment->OnInstanceCreated(NewEntry.ItemInstance);
 		}
 	}
+	if (ItemDef->DropItemFragment)
+	{
+		ItemDef->DropItemFragment->OnInstanceCreated(NewEntry.ItemInstance);
+	}
 	Result = NewEntry.ItemInstance;
 
 	MarkItemDirty(NewEntry);
