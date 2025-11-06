@@ -42,3 +42,10 @@ enum class EOrionInteractionMode : uint8
 	Instant	UMETA(DisplayName = "Instant"),
 	Hold	UMETA(DisplayName = "Hold")
 };
+
+UENUM(BlueprintType)
+enum class EOrionInteractionWidgetType : uint8
+{
+	E_WorldSpace	UMETA(DisplayName = "World Space"),
+	E_ScreenSpace	UMETA(DisplayName = "Screen Space")
+};
