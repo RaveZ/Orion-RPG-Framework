@@ -106,6 +106,7 @@ FItemInstanceData UOrionInventoryItemInstance::GetItemInstanceData() const
 		InstanceData.Icon = InItemDefinition->Icon;
 		InstanceData.StackCount = TotalStackCount;
 		InstanceData.MaxStackCount = InItemDefinition->MaxStackCount;
+		InstanceData.Weight = InItemDefinition->Weight;
 		InstanceData.ItemDefinition = InItemDefinition;
 		InstanceData.DropItemFragment = InItemDefinition->GetDropItemFragment();
 		InstanceData.Fragments = InItemDefinition->Fragments;

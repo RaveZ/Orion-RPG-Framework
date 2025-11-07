@@ -30,7 +30,6 @@ UOrionInventoryComponent::UOrionInventoryComponent(const FObjectInitializer& Obj
 {
 	SetIsReplicatedByDefault(true);
 	bReplicateUsingRegisteredSubObjectList = true;
-	DefaultMaxInventoryWeight = 100.0f;
 	CurrentWeight = 0;
 	bInitializingSaveGame = false;
 }
@@ -43,8 +42,8 @@ void UOrionInventoryComponent::BeginPlay()
 	if (InventoryDB)
 	{
 		InventoryDB->Initialize(this);
+		MaxWeight = InventoryDB->DefaultMaxInventoryWeight;
 	}
-	MaxWeight = DefaultMaxInventoryWeight;
 
 	//console command
 	IConsoleManager::Get().RegisterConsoleCommand(
@@ -189,12 +188,6 @@ void UOrionInventoryComponent::Server_DropItem_Implementation(FGameplayTag ItemT
 
 UOrionInventoryNode_ItemDefinition* UOrionInventoryComponent::FindItemDefinition(FGameplayTag ItemTag)
 {
-	if (!ItemTag.MatchesTag(TAG_Item))
-	{
-		UE_LOG(LogTemp, Error, TEXT("Fail to find item. Invalid item Tag (%s)!"), *ItemTag.ToString());
-		return nullptr;
-	}
-
 	if(InventoryDB)
 	{
 		return InventoryDB->ItemDefinitions.FindRef(ItemTag);
@@ -304,6 +297,11 @@ TArray<UOrionInventoryItemInstance*> UOrionInventoryComponent::GetAllItems() con
 	return InventoryList.GetAllItems();
 }
 
+void UOrionInventoryComponent::AssignItemIndex(UOrionInventoryItemInstance* ItemInstance, int32 TileIndex)
+{
+	InventoryList.AssignItemIndex(ItemInstance, TileIndex);
+}
+
 UOrionInventoryItemInstance* UOrionInventoryComponent::GetItemInstanceByTag(FGameplayTag ItemTag)
 {
 	return InventoryList.FindFirstItemByTag(ItemTag);
@@ -360,41 +358,48 @@ APawn* UOrionInventoryComponent::GetOwningPawn() const
 FOrionInventorySaveData UOrionInventoryComponent::GetSaveGameData()
 {
 	FOrionInventorySaveData InventorySaveData;
-	for (const auto& ItemInstance : GetAllItems())
-	{
-		if (ItemInstance && ItemInstance->GetItemDef())
+	TArray<UOrionInventoryItemInstance*> AllItems = GetAllItems();
+	InventorySaveData.SavedInventoryItems.SetNum(AllItems.Num());
+    for (int32 i = 0; i < AllItems.Num(); ++i)
+    {
+		if (AllItems.IsValidIndex(i))
 		{
-			FOrionInventoryItemSaveData ItemSaveData;
-			ItemSaveData.ItemTag = ItemInstance->GetItemDef()->Tag;
-			ItemSaveData.TotalStackCount = ItemInstance->GetTotalStackCount();
+			auto ItemInstance = AllItems[i];
+			if (ItemInstance && ItemInstance->GetItemDef())
+			{
+				FOrionInventoryItemSaveData ItemSaveData;
+				ItemSaveData.ItemTag = ItemInstance->GetItemDef()->Tag;
+				ItemSaveData.TotalStackCount = ItemInstance->GetTotalStackCount();
 
-			InventorySaveData.SavedInventoryItems.Add(ItemSaveData);
+				InventorySaveData.SavedInventoryItems[i] = ItemSaveData;
+			}
 		}
-	}
+		
+    }
 	
 	InventorySaveData.MaxWeight = MaxWeight;
 	return InventorySaveData;
 }
 
-void UOrionInventoryComponent::InitializeFromSaveGame(FOrionInventorySaveData& InventorySaveData)
+void UOrionInventoryComponent::InitializeFromSaveGame(const FOrionInventorySaveData& InventorySaveData)
 {
+	if (GetRole() != ROLE_Authority)
+	{
+		Server_InitializeFromSaveGame(InventorySaveData);
+		return;
+	}
 	//Reset Inventory List
 	bInitializingSaveGame = true;
 	InventoryList.Reset();
-
-	for(int i = 0; i < InventorySaveData.SavedInventoryItems.Num(); i++)
-	{
-		if(InventorySaveData.SavedInventoryItems.IsValidIndex(i))
-		{
-			FOrionInventoryItemSaveData& ItemSaveData = InventorySaveData.SavedInventoryItems[i];
-			int32 Remainder;
-			FItemInstanceData ItemData;
-			AddItem(Remainder, ItemData, ItemSaveData.ItemTag, ItemSaveData.TotalStackCount);
-		}
-	}
+	InventoryList.InitializeFromSaveGame(InventorySaveData);
 	
 	bInitializingSaveGame = false;
 
+}
+
+void UOrionInventoryComponent::Server_InitializeFromSaveGame_Implementation(const FOrionInventorySaveData& InventorySaveData)
+{
+	InitializeFromSaveGame(InventorySaveData);
 }
 
 
@@ -458,6 +463,30 @@ void UOrionInventoryComponent::ReadyForReplication()
 			}
 		}
 	}
+}
+
+float UOrionInventoryComponent::GetCurrentWeight()
+{
+	TArray<UOrionInventoryItemInstance*> AllItems = GetAllItems();
+	float OutWeight = 0;
+
+	for (int i = 0; i < AllItems.Num(); i++)
+	{
+		if (AllItems.IsValidIndex(i))
+		{
+			UOrionInventoryItemInstance* ItemInstance = AllItems[i];
+			if (ItemInstance)
+			{
+				OutWeight += (ItemInstance->GetTotalStackCount() * ItemInstance->GetItemInstanceData().Weight);
+			}
+		}
+	}
+	return OutWeight;
+}
+
+float UOrionInventoryComponent::GetMaxWeight()
+{
+	return MaxWeight;
 }
 
 

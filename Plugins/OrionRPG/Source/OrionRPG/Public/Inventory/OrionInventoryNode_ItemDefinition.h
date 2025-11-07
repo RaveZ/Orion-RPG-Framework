@@ -22,25 +22,25 @@ class ORIONRPG_API UOrionInventoryNode_ItemDefinition : public UOrionInventoryNo
 public:
 	UOrionInventoryNode_ItemDefinition();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Categories = "Item"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Categories = "Item"), Category = "Inventory")
 	FGameplayTag Tag;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
 	FText DisplayName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
 	FText Description;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TObjectPtr<UTexture2D> Icon;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (UIMin = "1"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (UIMin = "1"), Category = "Inventory")
 	int32 MaxStackCount;
 
-	UPROPERTY(EditAnywhere, meta = (Units = "Kilograms", UIMin = "0"))
+	UPROPERTY(EditAnywhere, meta = (Units = "Kilograms", UIMin = "0"), Category = "Inventory")
 	float Weight;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TSoftClassPtr<AActor> PickupActorClass;
 
 	/**Override for drop item fragment in case for different behavior*/

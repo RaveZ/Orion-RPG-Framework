@@ -52,7 +52,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Inventory)
 	bool HasStatTag(FGameplayTag Tag) const;
 
-	UFUNCTION(BlueprintCallable, BlueprintPure = false, meta = (DeterminesOutputType = FragmentClass))
+	UFUNCTION(BlueprintCallable, BlueprintPure = false, meta = (DeterminesOutputType = FragmentClass), Category = Inventory)
 	const UOrionInventoryItemFragment* FindFragmentByClass(TSubclassOf<UOrionInventoryItemFragment> FragmentClass) const;
 
 	UFUNCTION(BlueprintPure, Category = Inventory)
@@ -66,6 +66,8 @@ private:
 
 
 	friend struct FLyraInventoryList;
+
+public:
 
 private:
 	UPROPERTY(Replicated)

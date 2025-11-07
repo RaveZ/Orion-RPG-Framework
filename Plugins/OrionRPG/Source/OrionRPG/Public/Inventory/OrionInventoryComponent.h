@@ -42,9 +42,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "InventoryComponent")
 		TObjectPtr<APlayerController> OwningController;
 
-	/**Max Weight for this inventory*/
-	UPROPERTY(EditAnywhere, meta = (Units = "Kilograms", UIMin = "0"), Category = "InventoryComponent")
-		float DefaultMaxInventoryWeight;
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FInventoryItemSignature OnItemAdded;
@@ -72,10 +69,10 @@ private:
 	UPROPERTY(Replicated)
 	FOrionInventoryList InventoryList;
 
-	/**Current Capacity for this inventory*/
+	/**Max weight for this inventory*/
 	float MaxWeight;
 
-	/**Current Capacity for this inventory*/
+	/**Current weight for this inventory*/
 	float CurrentWeight;
 
 protected:
@@ -88,6 +85,12 @@ protected:
 	//~End of UObject interface
 
 public:
+	UFUNCTION(BlueprintPure , Category = "InventoryComponent")
+	float GetCurrentWeight();
+
+	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
+	float GetMaxWeight();
+
 	/**
 	 * Add Item to Inventory
 	 *
@@ -152,6 +155,9 @@ public:
 	TArray<UOrionInventoryItemInstance*> GetAllItems() const;
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	void AssignItemIndex(UOrionInventoryItemInstance* ItemInstance, int32 TileIndex);
+
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
 	UOrionInventoryNode_ItemDefinition* FindItemDefinition(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
 
 	/**
@@ -190,7 +196,11 @@ public:
 	FOrionInventorySaveData GetSaveGameData();
 
 	UFUNCTION()
-	void InitializeFromSaveGame(FOrionInventorySaveData& InventorySaveData);
+	void InitializeFromSaveGame(const FOrionInventorySaveData& InventorySaveData);
+
+    UFUNCTION(Server, Reliable, WithValidation)
+    void Server_InitializeFromSaveGame(const FOrionInventorySaveData& InventorySaveData);
+    bool Server_InitializeFromSaveGame_Validate(const FOrionInventorySaveData& InventorySaveData) { return true; }
 
 	bool bInitializingSaveGame;
 

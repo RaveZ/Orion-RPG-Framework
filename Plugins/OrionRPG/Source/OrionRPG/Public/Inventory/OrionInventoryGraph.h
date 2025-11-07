@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "Inventory/InventoryData.h"
 #include "Containers/Map.h"
 #include "OrionInventoryGraph.generated.h"
 
@@ -24,6 +25,19 @@ public:
 	/** AssetID */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OrionInventory")
 		FName ID;
+
+	UPROPERTY(EditAnywhere, Category = "OrionInventory")
+		EOrionInventoryType InventoryType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta = (ClampMin = "4", ClampMax = "10", UIMin = "5", UIMax = "10", EditCondition = "InventoryType == EOrionInventoryType::E_GridBased", HideEditConditionToggle, EditConditionHides))
+		int32 GridCountX;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta = (ClampMin = "4", ClampMax = "10", UIMin = "5", UIMax = "10", EditCondition = "InventoryType == EOrionInventoryType::E_GridBased", HideEditConditionToggle, EditConditionHides))
+		int32 GridCountY;
+
+	/**Max Weight for this inventory*/
+	UPROPERTY(EditAnywhere, meta = (Units = "Kilograms", UIMin = "0", EditCondition = "InventoryType == EOrionInventoryType::E_WeightBased", HideEditConditionToggle, EditConditionHides), Category = "OrionInventory")
+		float DefaultMaxInventoryWeight;
 
 	UPROPERTY(BlueprintReadOnly, Category = "OrionInventory")
 		TSubclassOf<UOrionInventoryItemFragment> DefaultDropItemFragmentClass;

@@ -18,6 +18,17 @@ class UOrionInteractionTargetComponent;
 //Gameplay Tags
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item);
 
+UENUM(BlueprintType)
+enum class EOrionInventoryType : uint8
+{
+	/**Weight based inventory, using metric kg as max capacity*/
+	E_WeightBased	UMETA(DisplayName = "Weight Based Inventory"),
+	/**
+	* Grid based inventory, using grid count as max capacity.
+	* Usually being used for spatial inventory.
+	*/
+	E_GridBased		UMETA(DisplayName = "Grid Based Inventory"),
+};
 
 USTRUCT(BlueprintType)
 struct FOrionInventoryEntry : public FFastArraySerializerItem
@@ -64,9 +75,11 @@ public:
 	}
 
 	void AddEntry(UOrionInventoryItemInstance* ItemInstance);
+	void AssignItemIndex(UOrionInventoryItemInstance* ItemInstance, int32 TileIndex);
 	UOrionInventoryItemInstance* AddEntry(UOrionInventoryNode_ItemDefinition* ItemDef);
 	void RemoveEntry(UOrionInventoryItemInstance* ItemToRemove);
 	void Reset();
+	void InitializeFromSaveGame(const struct FOrionInventorySaveData& InventorySaveData);
 	UOrionInventoryItemInstance* FindFirstItemByTag(const FGameplayTag& ItemTag);
 
 private:
@@ -86,47 +99,6 @@ struct TStructOpsTypeTraits<FOrionInventoryList> : public TStructOpsTypeTraitsBa
 	enum { WithNetDeltaSerializer = true };
 };
 
-USTRUCT(BlueprintType)
-struct FInventoryItemDefinition
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Categories = "Inventory.Item"))
-	FGameplayTag Tag;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FText DisplayName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	FText Description;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TObjectPtr<UTexture2D> Icon;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	int32 MaxCount;
-
-	UPROPERTY(EditAnywhere, meta = (Units = "Kilograms", UIMin = "0"))
-	float Weight;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	TSoftClassPtr<AActor> ActorClass;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fragments", Instanced)
-	TArray<TObjectPtr<UOrionInventoryItemFragment>> Fragments;
-
-public:
-	FInventoryItemDefinition()
-	{
-		Tag = TAG_Item;
-		Weight = 0.0f;
-		Icon = nullptr;
-		MaxCount = 1;
-		ActorClass = nullptr;
-	}
-
-};
 
 
 USTRUCT(BlueprintType)
@@ -135,31 +107,34 @@ struct FItemInstanceData
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	FGameplayTag Tag;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	FText DisplayName;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	FText Description;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TObjectPtr<UTexture2D> Icon;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	int32 StackCount;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	int32 MaxStackCount;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
+	UPROPERTY(EditAnywhere, meta = (Units = "Kilograms", UIMin = "0"), Category = "Inventory")
+	float Weight;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TObjectPtr<UOrionInventoryNode_ItemDefinition> ItemDefinition;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Item", Instanced)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory", Instanced)
 	TObjectPtr<UOrionInventoryItemFragment> DropItemFragment;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Item")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TArray<TObjectPtr<UOrionInventoryItemFragment>> Fragments;
 
 public:
@@ -185,6 +160,8 @@ public:
 	UPROPERTY(SaveGame)
 	int32 TotalStackCount;
 
+	UPROPERTY(SaveGame)
+	int32 TileIndex;
 
 public:
 	FOrionInventoryItemSaveData()

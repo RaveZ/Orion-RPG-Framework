@@ -75,6 +75,15 @@ public:
 	static bool GetItemData(const UObject* WorldContextObject, FItemInstanceData& OutItemData, AActor* InOptionalInstigator, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
 
 
+	/**
+	 * Assign Item Index
+	 *
+	 */
+	UFUNCTION(BlueprintCallable , Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static void AssignItemIndex(const UObject* WorldContextObject, UOrionInventoryItemInstance* ItemInstance, int32 TileIndex);
+
+
+
 
 
 };

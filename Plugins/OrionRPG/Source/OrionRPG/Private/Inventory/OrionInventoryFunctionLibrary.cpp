@@ -55,6 +55,16 @@ const UOrionInventoryItemFragment* UOrionInventoryFunctionLibrary::FindItemDefin
     return nullptr;
 }
 
+void UOrionInventoryFunctionLibrary::AssignItemIndex(const UObject* WorldContextObject, UOrionInventoryItemInstance* ItemInstance, int32 TileIndex)
+{
+    UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);
+
+    if (InventoryComp)
+    {
+		InventoryComp->AssignItemIndex(ItemInstance, TileIndex);
+    }
+}
+
 
 void UOrionInventoryFunctionLibrary::AddInventoryItem(const UObject* WorldContextObject, int32& StackRemainder, FItemInstanceData& OutItemData, AActor* InOptionalInstigator, FGameplayTag ItemTag, int32 StackCount)
 {

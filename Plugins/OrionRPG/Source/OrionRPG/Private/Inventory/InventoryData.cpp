@@ -5,6 +5,7 @@
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Inventory/OrionInventoryItemInstance.h"
 #include "Inventory/OrionInventoryItemFragment.h"
+#include "OrionSaveGame.h"
 #include "OrionRPG.h"
 
 //Gameplay Tags
@@ -61,20 +62,37 @@ TArray<UOrionInventoryItemInstance*> FOrionInventoryList::GetAllItems() const
 {
 
 	TArray<UOrionInventoryItemInstance*> Results;
-	Results.Reserve(Entries.Num());
-	for (const FOrionInventoryEntry& Entry : Entries)
+	Results.SetNum(Entries.Num());
+	for (int32 i = 0; i < Entries.Num(); i++)
 	{
-		if (Entry.ItemInstance != nullptr) //@TODO: Would prefer to not deal with this here and hide it further?
-		{
-			Results.Add(Entry.ItemInstance);
-		}
+		Results[i] = Entries[i].ItemInstance;
 	}
+
+	//Results.Reserve(Entries.Num());
+	//for (const FOrionInventoryEntry& Entry : Entries)
+	//{
+	//	if (Entry.ItemInstance != nullptr) //@TODO: Would prefer to not deal with this here and hide it further?
+	//	{
+	//		Results.Add(Entry.ItemInstance);
+	//	}
+	//}
 	return Results;
 }
 
 void FOrionInventoryList::AddEntry(UOrionInventoryItemInstance* ItemInstance)
 {
 	unimplemented();
+}
+
+void FOrionInventoryList::AssignItemIndex(UOrionInventoryItemInstance* ItemInstance, int32 TileIndex)
+{
+	if (Entries.Num() <= TileIndex)
+	{
+		Entries.SetNum(TileIndex+1);
+	}
+	FOrionInventoryEntry& NewEntry = Entries[TileIndex];
+	NewEntry.ItemInstance = ItemInstance;
+	
 }
 
 UOrionInventoryItemInstance* FOrionInventoryList::AddEntry(UOrionInventoryNode_ItemDefinition* ItemDef)
@@ -86,9 +104,19 @@ UOrionInventoryItemInstance* FOrionInventoryList::AddEntry(UOrionInventoryNode_I
 
 	AActor* OwningActor = OwnerComponent->GetOwner();
 	check(OwningActor->HasAuthority());
+	// Find first empty slot
+	int32 EmptyIndex = INDEX_NONE;
+	for (int32 i = 0; i < Entries.Num(); ++i)
+	{
+		if (Entries[i].ItemInstance == nullptr)
+		{
+			EmptyIndex = i;
+			break;
+		}
+	}
 
+	FOrionInventoryEntry& NewEntry = EmptyIndex != INDEX_NONE ? Entries[EmptyIndex] : Entries.AddDefaulted_GetRef();
 
-	FOrionInventoryEntry& NewEntry = Entries.AddDefaulted_GetRef();
 	NewEntry.ItemInstance = NewObject<UOrionInventoryItemInstance>(OwnerComponent->GetOwner());
 	NewEntry.ItemInstance->SetItemDef(ItemDef);
 	ItemDef->LoadPrerequisites();
@@ -117,7 +145,7 @@ void FOrionInventoryList::RemoveEntry(UOrionInventoryItemInstance* ItemToRemove)
 		FOrionInventoryEntry& Entry = *EntryIt;
 		if (Entry.ItemInstance == ItemToRemove)
 		{
-			EntryIt.RemoveCurrent();
+			Entry.ItemInstance = nullptr;
 			MarkArrayDirty();
 		}
 	}
@@ -130,6 +158,49 @@ void FOrionInventoryList::Reset()
 		EntryIt.RemoveCurrent();
 	}
 	MarkArrayDirty();
+}
+
+void FOrionInventoryList::InitializeFromSaveGame(const FOrionInventorySaveData& InventorySaveData)
+{
+	check(OwnerComponent);
+
+	AActor* OwningActor = OwnerComponent->GetOwner();
+	check(OwningActor->HasAuthority());
+
+	UOrionInventoryComponent* InvComponent = Cast<UOrionInventoryComponent>(OwnerComponent);
+
+	Entries.SetNum(InventorySaveData.SavedInventoryItems.Num());
+	for (int i = 0; i < InventorySaveData.SavedInventoryItems.Num(); i++)
+	{
+		if (InventorySaveData.SavedInventoryItems.IsValidIndex(i))
+		{
+			const FOrionInventoryItemSaveData& ItemSaveData = InventorySaveData.SavedInventoryItems[i];
+			UOrionInventoryNode_ItemDefinition* ItemDef = InvComponent->FindItemDefinition(ItemSaveData.ItemTag);
+
+			if (ItemDef)
+			{
+				FOrionInventoryEntry& NewEntry = Entries[i];
+				NewEntry.ItemInstance = NewObject<UOrionInventoryItemInstance>(OwnerComponent->GetOwner());
+				NewEntry.ItemInstance->SetItemDef(ItemDef);
+				NewEntry.ItemInstance->SetTotalStackCount(ItemSaveData.TotalStackCount);
+				
+				ItemDef->LoadPrerequisites();
+				for (UOrionInventoryItemFragment* Fragment : ItemDef->Fragments)
+				{
+					if (Fragment != nullptr)
+					{
+						Fragment->OnInstanceCreated(NewEntry.ItemInstance);
+					}
+				}
+				if (ItemDef->DropItemFragment)
+				{
+					ItemDef->DropItemFragment->OnInstanceCreated(NewEntry.ItemInstance);
+				}
+			}
+		}
+	}
+	
+
 }
 
 UOrionInventoryItemInstance* FOrionInventoryList::FindFirstItemByTag(const FGameplayTag& ItemTag)
