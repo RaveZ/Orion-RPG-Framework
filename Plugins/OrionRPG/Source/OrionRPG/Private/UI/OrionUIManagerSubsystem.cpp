@@ -5,6 +5,7 @@
 #include "CommonActivatableWidget.h"
 #include "UI/OrionPrimaryGameLayout.h"
 #include "CommonInputSubsystem.h"
+#include "Engine.h"
 #include "Engine/GameInstance.h"	
 #include "GameFramework/PlayerController.h"
 #include "Engine/LocalPlayer.h"
