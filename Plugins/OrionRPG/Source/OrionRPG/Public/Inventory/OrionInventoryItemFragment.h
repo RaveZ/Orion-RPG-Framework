@@ -59,7 +59,7 @@ public:
 //////////////////////////////////////////////////////////////////////
 
 // Equippable item fragment
-UCLASS(meta = (DisplayName="Equippable Item Fragment"))
+UCLASS(meta = (DisplayName="Equippable Fragment"))
 class UOrionInventoryFragment_EquippableItem : public UOrionInventoryItemFragment
 {
 	GENERATED_BODY()
@@ -82,7 +82,7 @@ public:
 //////////////////////////////////////////////////////////////////////
 
 // Consumable item fragment
-UCLASS(meta = (DisplayName = "Consumable Item Fragment"))
+UCLASS(meta = (DisplayName = "Consumable Fragment"))
 class UOrionInventoryFragment_ConsumableItem : public UOrionInventoryItemFragment
 {
 	GENERATED_BODY()
@@ -90,6 +90,36 @@ class UOrionInventoryFragment_ConsumableItem : public UOrionInventoryItemFragmen
 public:
 	UOrionInventoryFragment_ConsumableItem();
 
+};
+
+
+//////////////////////////////////////////////////////////////////////
+
+// Examine item fragment
+UCLASS(meta = (DisplayName = "Examine Item Fragment"))
+class UOrionInventoryFragment_ExamineItem : public UOrionInventoryItemFragment
+{
+	GENERATED_BODY()
+
+public:
+	UOrionInventoryFragment_ExamineItem();
+
+	virtual void K2_ExecuteAction_Implementation() override;
+};
+
+
+//////////////////////////////////////////////////////////////////////
+
+// Drop item fragment
+UCLASS(meta = (DisplayName = "Drop Item Fragment"))
+class UOrionInventoryFragment_DropItem : public UOrionInventoryItemFragment
+{
+	GENERATED_BODY()
+
+public:
+	UOrionInventoryFragment_DropItem();
+
+	virtual void K2_ExecuteAction_Implementation() override;
 };
 
 

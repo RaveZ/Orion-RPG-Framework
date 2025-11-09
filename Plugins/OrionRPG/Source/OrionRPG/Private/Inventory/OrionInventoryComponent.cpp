@@ -89,7 +89,7 @@ void UOrionInventoryComponent::AddItem(int32& StackRemainder, FItemInstanceData&
 		return;
 	}
 
-	if (!ItemTag.MatchesTag(TAG_Item))
+	if (!IsValidItemTag(ItemTag))
 	{
 		UE_LOG(LogTemp, Error, TEXT("Fail to add item. Invalid item Tag (%s)!"), *ItemTag.ToString());
 		return;
@@ -160,7 +160,7 @@ void UOrionInventoryComponent::DropItem(FItemInstanceData& OutItemData, FGamepla
 		return;
 	}
 
-	if (!ItemTag.MatchesTag(TAG_Item))
+	if (!IsValidItemTag(ItemTag))
 	{
 		UE_LOG(LogTemp, Error, TEXT("Fail to drop item. Invalid item Tag (%s)!"), *ItemTag.ToString());
 		return;
@@ -188,6 +188,10 @@ void UOrionInventoryComponent::Server_DropItem_Implementation(FGameplayTag ItemT
 
 UOrionInventoryNode_ItemDefinition* UOrionInventoryComponent::FindItemDefinition(FGameplayTag ItemTag)
 {
+	if(!IsValidItemTag(ItemTag))
+	{
+		return nullptr;
+	}
 	if(InventoryDB)
 	{
 		return InventoryDB->ItemDefinitions.FindRef(ItemTag);
@@ -237,7 +241,7 @@ void UOrionInventoryComponent::ConsumeItem(FItemInstanceData& OutItemData, FGame
 		return;
 	}
 
-	if (!ItemTag.MatchesTag(TAG_Item))
+	if (!IsValidItemTag(ItemTag))
 	{
 		UE_LOG(LogTemp, Error, TEXT("Fail to consume item. Invalid item Tag (%s)!"), *ItemTag.ToString());
 		return;
@@ -354,6 +358,29 @@ APawn* UOrionInventoryComponent::GetOwningPawn() const
 	return nullptr;
 }
 
+void UOrionInventoryComponent::ExamineItem(FGameplayTag ItemTag)
+{
+	UOrionInventoryItemInstance* FoundItem = InventoryList.FindFirstItemByTag(ItemTag);
+	
+	if (FoundItem)
+	{
+		ExamineItemInstance(FoundItem);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Fail to examine item. Item not found!"));
+	}
+}
+
+void UOrionInventoryComponent::ExamineItemInstance(UOrionInventoryItemInstance* ItemInstance)
+{
+	if (!ItemInstance)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Fail to examine item. ItemInstance is null!"));
+		return;
+	}
+
+}
 
 FOrionInventorySaveData UOrionInventoryComponent::GetSaveGameData()
 {

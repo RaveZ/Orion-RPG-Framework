@@ -2,6 +2,9 @@
 
 
 #include "Inventory/OrionInventoryItemFragment.h"
+#include "Inventory/OrionInventoryComponent.h"
+#include "Inventory/OrionInventoryFunctionLibrary.h"
+#include "Engine/World.h"
 
 
 #define LOCTEXT_NAMESPACE "OrionInventoryItemFragment"
@@ -11,6 +14,8 @@
 // Item fragment
 UOrionInventoryItemFragment::UOrionInventoryItemFragment()
 {
+	bHasMenuAction = true;
+	ActionDisplayName = FText::FromString("Action");
 }
 
 
@@ -58,6 +63,7 @@ UWorld* UOrionInventoryItemFragment::GetWorld() const
 // Equippable item fragment
 UOrionInventoryFragment_EquippableItem::UOrionInventoryFragment_EquippableItem()
 {
+	ActionDisplayName = FText::FromString("Equip");
 
 }
 
@@ -66,8 +72,50 @@ UOrionInventoryFragment_EquippableItem::UOrionInventoryFragment_EquippableItem()
 // Consumable item fragment
 UOrionInventoryFragment_ConsumableItem::UOrionInventoryFragment_ConsumableItem()
 {
+	ActionDisplayName = FText::FromString("Consume");
+}
+
+//////////////////////////////////////////////////////////////////////
+
+// Examine item fragment
+UOrionInventoryFragment_ExamineItem::UOrionInventoryFragment_ExamineItem()
+{
+	ActionDisplayName = FText::FromString("Examine");
+}
+
+void UOrionInventoryFragment_ExamineItem::K2_ExecuteAction_Implementation()
+{
+	if (UWorld* World =  GetWorld())
+	{
+		UOrionInventoryComponent* InvComp = UOrionInventoryFunctionLibrary::GetInventoryComponent(World);
+		if (InvComp)
+		{
+			InvComp->ExamineItemInstance(OwningItemInstance);
+		}
+	}
 }
 
 
-#undef LOCTEXT_NAMESPACE
+//////////////////////////////////////////////////////////////////////
 
+// Drop item fragment
+UOrionInventoryFragment_DropItem::UOrionInventoryFragment_DropItem()
+{
+	ActionDisplayName = FText::FromString("Drop Item");
+}
+
+void UOrionInventoryFragment_DropItem::K2_ExecuteAction_Implementation()
+{
+	if (UWorld* World =  GetWorld())
+	{
+		UOrionInventoryComponent* InvComp = UOrionInventoryFunctionLibrary::GetInventoryComponent(World);
+		if (InvComp)
+		{
+			InvComp->Server_DropItemInstance(OwningItemInstance, 1);
+		}
+	}
+}
+
+
+
+#undef LOCTEXT_NAMESPACE

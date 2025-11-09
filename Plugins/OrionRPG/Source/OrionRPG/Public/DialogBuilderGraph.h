@@ -31,7 +31,7 @@ public:
 		FName ID;
 
 	/** Your Player Name*/
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Configuration|Player")
+	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Configuration|Player")
 		FText PlayerName;
 
 	UPROPERTY(EditAnywhere, Category = "Configuration|Player", meta = (InlineEditConditionToggle))

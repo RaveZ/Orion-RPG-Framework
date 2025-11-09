@@ -184,12 +184,24 @@ public:
 	/**
 	 * Returns the Component Owner Role
 	 */
-	UFUNCTION(BlueprintPure, Category = Interactor)
+	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
 	FORCEINLINE ENetRole GetRole() const
 	{
 		return IsValid(GetOwner()) ? GetOwner()->GetLocalRole() : ENetRole::ROLE_None;
 	};
 
+	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
+	FORCEINLINE bool IsValidItemTag(FGameplayTag ItemTag) const
+	{
+		return ItemTag.MatchesTag(TAG_Item) && ItemTag != FGameplayTag::EmptyTag;
+	};
+
+
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	void ExamineItem(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
+
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	void ExamineItemInstance(UOrionInventoryItemInstance* ItemInstance);
 
 public:
 	UFUNCTION()

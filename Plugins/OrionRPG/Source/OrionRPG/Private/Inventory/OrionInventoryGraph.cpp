@@ -19,11 +19,7 @@ UOrionInventoryGraph::UOrionInventoryGraph()
 	DefaultMaxInventoryWeight = 100.0f;
 	GridCountX = 8;
 	GridCountY = 11;
-	auto DropItemFragmentFinder = ConstructorHelpers::FClassFinder <UOrionInventoryItemFragment>(TEXT("OrionInventoryItemFragment'/OrionRPG/Blueprint/Inventory/DefaultFragments/DroppableFragment.DroppableFragment_C'"));
-	if (DropItemFragmentFinder.Succeeded())
-	{
-		DefaultDropItemFragmentClass = DropItemFragmentFinder.Class;
-	}
+	
 } 
 
 UOrionInventoryGraph::~UOrionInventoryGraph()
@@ -98,10 +94,8 @@ void UOrionInventoryGraph::InitalizeAsset()
 {
 	if (!bAssetInitialized)
 	{
-		if (DefaultDropItemFragmentClass && !DefaultDropItemFragment)
-		{
-			DefaultDropItemFragment = NewObject<UOrionInventoryItemFragment>(this, DefaultDropItemFragmentClass, NAME_None, RF_Transactional);
-		}
+		DefaultDropItemFragment = NewObject<UOrionInventoryFragment_DropItem>(this);
+		
 		bAssetInitialized = true;
 	}
 }

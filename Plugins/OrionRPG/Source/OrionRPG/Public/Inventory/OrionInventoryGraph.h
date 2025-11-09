@@ -39,12 +39,9 @@ public:
 	UPROPERTY(EditAnywhere, meta = (Units = "Kilograms", UIMin = "0", EditCondition = "InventoryType == EOrionInventoryType::E_WeightBased", HideEditConditionToggle, EditConditionHides), Category = "OrionInventory")
 		float DefaultMaxInventoryWeight;
 
-	UPROPERTY(BlueprintReadOnly, Category = "OrionInventory")
-		TSubclassOf<UOrionInventoryItemFragment> DefaultDropItemFragmentClass;
-
 	/**Default drop item fragment for each item for this graph*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", Instanced)
-		TObjectPtr<UOrionInventoryItemFragment> DefaultDropItemFragment;
+		TObjectPtr<class UOrionInventoryFragment_DropItem> DefaultDropItemFragment;
 
 	UPROPERTY(BlueprintReadWrite, Category = "OrionInventory")
 		TObjectPtr<APlayerController> OwningController;
