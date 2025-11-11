@@ -60,6 +60,9 @@ public:
 public:
 	UPROPERTY(BlueprintReadOnly, Category = "UI Subsystem")
 	TObjectPtr<UOrionPrimaryGameLayout> PrimaryLayout;
+
+	UPROPERTY(BlueprintReadWrite, Category = "UI Subsystem")
+	TObjectPtr<class UUserWidget> DraggedWidget;
 private:
 	TSharedRef<FOrionNavigationConfig> OrionNavigationConfig;
 };
