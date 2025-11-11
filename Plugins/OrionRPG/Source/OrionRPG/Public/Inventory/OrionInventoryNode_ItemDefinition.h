@@ -22,6 +22,9 @@ class ORIONRPG_API UOrionInventoryNode_ItemDefinition : public UOrionInventoryNo
 public:
 	UOrionInventoryNode_ItemDefinition();
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory", meta = (UIMin = "1"))
+	FIntPoint GridSize{ 1, 1 };
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Categories = "Item"), Category = "Inventory")
 	FGameplayTag Tag;
 
@@ -57,6 +60,7 @@ public:
 	void LoadPrerequisites();
 	const UOrionInventoryItemFragment* FindFragmentByClass(TSubclassOf<UOrionInventoryItemFragment> FragmentClass) const;
 	UOrionInventoryItemFragment* GetDropItemFragment();
+	TSoftClassPtr<AActor> GetPickupActorClass();
 
 public:
 #if WITH_EDITOR

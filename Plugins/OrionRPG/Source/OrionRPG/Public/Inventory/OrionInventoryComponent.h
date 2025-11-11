@@ -21,6 +21,7 @@ struct FInventoryItem;
 //Inventory Delegate
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInventorySignature);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemSignature, UOrionInventoryItemInstance*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInventoryExamineItem, UOrionInventoryItemInstance*, Item, TSoftClassPtr<AActor>, ActorToExamine);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInventoryItemStackChange, UOrionInventoryItemInstance*, Item, int32, CurrentStackCount, int32, MaxStackCount);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryMaxWeightChanged, float, InMaxWeight);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryEncumberedStateChanged, bool, bEncumbered);
@@ -42,6 +43,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "InventoryComponent")
 		TObjectPtr<APlayerController> OwningController;
 
+	UPROPERTY(BlueprintReadOnly, Category = "InventoryComponent")
+		TObjectPtr<AActor> ItemViewerActor;
+
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FInventoryItemSignature OnItemAdded;
@@ -62,6 +66,8 @@ public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FInventoryEncumberedStateChanged OnEncumberedStateChanged;
 
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
+		FInventoryExamineItem OnExamineItem;
 
 public:
 
@@ -198,10 +204,10 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
-	void ExamineItem(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
+	void ExamineItem(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag(), TSoftClassPtr<AActor> ActorToExamine = nullptr);
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
-	void ExamineItemInstance(UOrionInventoryItemInstance* ItemInstance);
+	void ExamineItemInstance(UOrionInventoryItemInstance* ItemInstance = nullptr, TSoftClassPtr<AActor> ActorToExamine = nullptr);
 
 public:
 	UFUNCTION()

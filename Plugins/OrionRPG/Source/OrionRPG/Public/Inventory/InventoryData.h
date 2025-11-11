@@ -6,6 +6,7 @@
 #include "UObject/NoExportTypes.h"
 #include "Net/Serialization/FastArraySerializer.h"
 #include "NativeGameplayTags.h"
+#include "Engine/Texture2D.h"
 #include "InventoryData.generated.h"
 
 class UOrionInventoryNode_ItemDefinition;

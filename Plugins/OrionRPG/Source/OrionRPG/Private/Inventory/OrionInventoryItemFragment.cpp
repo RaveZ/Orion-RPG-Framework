@@ -2,8 +2,12 @@
 
 
 #include "Inventory/OrionInventoryItemFragment.h"
+#include "Inventory/OrionInventoryItemInstance.h"
+#include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Inventory/OrionInventoryComponent.h"
 #include "Inventory/OrionInventoryFunctionLibrary.h"
+#include "Engine/StreamableManager.h"
+#include "Engine/AssetManager.h"
 #include "Engine/World.h"
 
 
@@ -83,17 +87,21 @@ UOrionInventoryFragment_ExamineItem::UOrionInventoryFragment_ExamineItem()
 	ActionDisplayName = FText::FromString("Examine");
 }
 
+
 void UOrionInventoryFragment_ExamineItem::K2_ExecuteAction_Implementation()
 {
-	if (UWorld* World =  GetWorld())
+	// Use ActorToExamine if set, otherwise fallback to pickup actor class
+	if (UWorld* World = GetWorld())
 	{
 		UOrionInventoryComponent* InvComp = UOrionInventoryFunctionLibrary::GetInventoryComponent(World);
 		if (InvComp)
 		{
-			InvComp->ExamineItemInstance(OwningItemInstance);
+			InvComp->ExamineItemInstance(OwningItemInstance, ActorToExamine);
 		}
 	}
+
 }
+	
 
 
 //////////////////////////////////////////////////////////////////////

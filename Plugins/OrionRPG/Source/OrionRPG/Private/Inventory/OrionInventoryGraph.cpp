@@ -49,6 +49,9 @@ bool UOrionInventoryGraph::Initialize(UOrionInventoryComponent* InitializingComp
 				//NodeMap.Emplace(Node->ID, Node);
 			}
 		}
+
+		//Load prerequisites
+		DefaultPickupActorClass.LoadSynchronous();
 	}
 	return false;
 }

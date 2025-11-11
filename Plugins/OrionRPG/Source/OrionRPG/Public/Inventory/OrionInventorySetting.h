@@ -17,6 +17,19 @@ class ORIONRPG_API UOrionInventorySetting : public UObject
 	virtual ~UOrionInventorySetting();
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting")
+	TSubclassOf<class AActor> ItemViewerActorClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting")
+	FVector ItemViewerLocation;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting")
+	TSubclassOf<class AActor> CharacterDisplayActorClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting")
+	FVector CharacterDisplayLocation;
+
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor ItemContainerColor;
 

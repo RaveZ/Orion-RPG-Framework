@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Inventory/InventoryData.h"
 #include "NativeGameplayTags.h"
+#include "Engine/Texture2D.h"
 #include "OrionInventoryItemFragment.generated.h"
 
 class UOrionInventoryItemInstance;
@@ -26,7 +27,7 @@ public:
 	FText ActionDisplayName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment, meta = (EditCondition = "bHasMenuAction == true", HideEditConditionToggle, EditConditionHides))
-	UTexture2D* ActionIcon;
+	TObjectPtr<UTexture2D> ActionIcon;
 
 
 	UPROPERTY(BlueprintReadOnly, Category = Fragment)
@@ -103,6 +104,9 @@ class UOrionInventoryFragment_ExamineItem : public UOrionInventoryItemFragment
 
 public:
 	UOrionInventoryFragment_ExamineItem();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment)
+	TSoftClassPtr<AActor> ActorToExamine;
 
 	virtual void K2_ExecuteAction_Implementation() override;
 };

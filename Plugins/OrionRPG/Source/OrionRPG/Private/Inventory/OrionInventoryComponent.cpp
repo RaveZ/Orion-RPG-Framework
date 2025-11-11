@@ -2,7 +2,9 @@
 
 
 #include "Inventory/OrionInventoryComponent.h"
+#include "Inventory/OrionInventorySetting.h"
 #include "Inventory/OrionInventoryItemInstance.h"
+#include "Inventory/OrionInventoryItemFragment.h"
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
@@ -38,11 +40,24 @@ void UOrionInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
 	//Set Dependency
+	UWorld* World = GetWorld();
 	OwningController = GetOwningController();
 	if (InventoryDB)
 	{
 		InventoryDB->Initialize(this);
 		MaxWeight = InventoryDB->DefaultMaxInventoryWeight;
+	}
+
+
+	if (World)
+	{
+		TSubclassOf<AActor> ItemViewerClass = GetMutableDefault<UOrionInventorySetting>()->ItemViewerActorClass;
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = GetOwner();
+		SpawnParams.Instigator = GetOwningPawn();
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		ItemViewerActor = World->SpawnActor<AActor>(ItemViewerClass, GetMutableDefault<UOrionInventorySetting>()->ItemViewerLocation, FRotator::ZeroRotator, SpawnParams);
+		
 	}
 
 	//console command
@@ -358,13 +373,13 @@ APawn* UOrionInventoryComponent::GetOwningPawn() const
 	return nullptr;
 }
 
-void UOrionInventoryComponent::ExamineItem(FGameplayTag ItemTag)
+void UOrionInventoryComponent::ExamineItem(FGameplayTag ItemTag, TSoftClassPtr<AActor> ActorToExamine)
 {
 	UOrionInventoryItemInstance* FoundItem = InventoryList.FindFirstItemByTag(ItemTag);
 	
 	if (FoundItem)
 	{
-		ExamineItemInstance(FoundItem);
+		ExamineItemInstance(FoundItem, ActorToExamine);
 	}
 	else
 	{
@@ -372,15 +387,20 @@ void UOrionInventoryComponent::ExamineItem(FGameplayTag ItemTag)
 	}
 }
 
-void UOrionInventoryComponent::ExamineItemInstance(UOrionInventoryItemInstance* ItemInstance)
+void UOrionInventoryComponent::ExamineItemInstance(UOrionInventoryItemInstance* ItemInstance, TSoftClassPtr<AActor> ActorToExamine)
 {
-	if (!ItemInstance)
+	if (!ActorToExamine && !ItemInstance)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Fail to examine item. ItemInstance is null!"));
 		return;
 	}
 
+	TSoftClassPtr<AActor> InActorClass = ActorToExamine ? ActorToExamine : ItemInstance->GetItemDef()->GetPickupActorClass();
+
+	OnExamineItem.Broadcast(ItemInstance, InActorClass);
+
 }
+
+
 
 FOrionInventorySaveData UOrionInventoryComponent::GetSaveGameData()
 {

@@ -52,6 +52,11 @@ UOrionInventoryItemFragment* UOrionInventoryNode_ItemDefinition::GetDropItemFrag
 	return DropItemFragment;
 }
 
+TSoftClassPtr<AActor> UOrionInventoryNode_ItemDefinition::GetPickupActorClass()
+{
+	return PickupActorClass ? PickupActorClass : GetOwningOrionInventoryGraph()->DefaultPickupActorClass;
+}
+
 #if WITH_EDITOR
 FText UOrionInventoryNode_ItemDefinition::GetNodeTitle() const
 {
