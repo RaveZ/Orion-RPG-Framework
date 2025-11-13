@@ -53,5 +53,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Interaction")
 	EOrionInteractionWidgetType InteractionWidgetType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Interaction", noclear)
+	TSubclassOf<class UCommonTextStyle> InteractTextStyle;
 };
 
