@@ -35,6 +35,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta = (ClampMin = "4", ClampMax = "10", UIMin = "5", UIMax = "10", EditCondition = "InventoryType == EOrionInventoryType::E_GridBased", HideEditConditionToggle, EditConditionHides))
 		int32 GridCountY;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta = (ClampMin = "50", ClampMax = "100", UIMin = "50", UIMax = "100"))
+		float GridSize;
+
 	/**Max Weight for this inventory*/
 	UPROPERTY(EditAnywhere, meta = (Units = "Kilograms", UIMin = "0", EditCondition = "InventoryType == EOrionInventoryType::E_WeightBased", HideEditConditionToggle, EditConditionHides), Category = "OrionInventory")
 		float DefaultMaxInventoryWeight;

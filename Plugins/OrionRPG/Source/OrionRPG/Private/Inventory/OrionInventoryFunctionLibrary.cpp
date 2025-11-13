@@ -46,6 +46,16 @@ UOrionInventoryComponent* UOrionInventoryFunctionLibrary::GetInventoryComponentF
     return nullptr;
 }
 
+UOrionInventoryGraph* UOrionInventoryFunctionLibrary::GetInventoryDB(const UObject* WorldContextObject)
+{
+    UOrionInventoryComponent* InvComp = GetInventoryComponent(WorldContextObject);
+    if (InvComp)
+    {
+		return InvComp->InventoryDB;
+    }
+    return nullptr;
+}
+
 const UOrionInventoryItemFragment* UOrionInventoryFunctionLibrary::FindItemDefinitionFragment(TSubclassOf<UOrionInventoryNode_ItemDefinition> ItemDef, TSubclassOf<UOrionInventoryItemFragment> FragmentClass)
 {
     if ((ItemDef != nullptr) && (FragmentClass != nullptr))

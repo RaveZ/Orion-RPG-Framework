@@ -26,6 +26,7 @@ protected:
 	// UCommonButtonBase interface
 	virtual void UpdateInputActionWidget() override;
 	virtual void OnInputMethodChanged(ECommonInputType CurrentInputType) override;
+	virtual void NativeOnHovered() override;
 	// End of UCommonButtonBase interface
 
 	void RefreshButtonText();
@@ -39,11 +40,15 @@ protected:
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "On Update Hold Data")
 	void K2_OnUpdateHoldData();
 	
-	UFUNCTION(BlueprintCallable, Category = "OrionRPG|CommonButton")
+	UFUNCTION(BlueprintCallable, Category = "OrionRPG|UI")
 	void SetHoldData(float InHoldTime, float InHoldRollbackTime);
 
 	/**Current Common Button will always override the hold data using this function, so us k2_OnUpdateHoldData -> then Set Hold Data Manually*/
 	virtual void UpdateHoldData(ECommonInputType CurrentInputType) override;
+
+	UFUNCTION(BlueprintCallable, Category = "OrionRPG|UI")
+	void SetZOrder(int32 InZOrder);
+
 private:
 	UPROPERTY(EditAnywhere, Category = "Button", meta = (InlineEditConditionToggle))
 	uint8 bOverride_ButtonText : 1;
