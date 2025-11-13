@@ -2,6 +2,7 @@
 
 #include "OrionSetting.h"
 #include "Blueprint/UserWidget.h"
+#include "CommonTextBlock.h"
 #include "UObject/ConstructorHelpers.h"
 #include "OrionSaveGame.h"
 
@@ -31,6 +32,12 @@ UOrionSetting::UOrionSetting()
 		InteractInput.RowName = FName("Interact");
 	}
 	InteractionWidgetType = EOrionInteractionWidgetType::E_WorldSpace;
+	auto InteractTextStyleFinder = ConstructorHelpers::FClassFinder<UCommonTextStyle>(TEXT("/OrionRPG/CommonUI/Style/TextStyle_Orion_InteractionText.TextStyle_Orion_InteractionText_C"));
+	if (InteractTextStyleFinder.Succeeded())
+	{
+		InteractTextStyle = InteractTextStyleFinder.Class;
+	}
+
 }
 
 UOrionSetting::~UOrionSetting()
