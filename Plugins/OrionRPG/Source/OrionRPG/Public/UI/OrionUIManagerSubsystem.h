@@ -61,8 +61,12 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "UI Subsystem")
 	TObjectPtr<UOrionPrimaryGameLayout> PrimaryLayout;
 
-	UPROPERTY(BlueprintReadWrite, Category = "UI Subsystem")
-	TObjectPtr<class UUserWidget> DraggedWidget;
+	UPROPERTY(BlueprintReadWrite, Category = "UI Subsystem|Inventory")
+	TObjectPtr<class UOrionGridItem> DraggedItem;
+
+	UPROPERTY(BlueprintReadWrite, Category = "UI Subsystem|Inventory")
+	TArray<TObjectPtr<class UOrionGridSlot>> ActiveSlots;
+
 private:
 	TSharedRef<FOrionNavigationConfig> OrionNavigationConfig;
 };
@@ -76,7 +80,6 @@ class ORIONRPG_API UOrionUILibrary : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
-
 	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "OrionLibrary|UI")
 	static FName SuspendInputForPlayer(APlayerController* PlayerController, FName SuspendReason);
 
@@ -93,6 +96,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, BlueprintCosmetic, Category = "OrionLibrary|UI", meta = (WorldContext = "WorldContextObject"))
 	static class UCommonActivatableWidget* GetActiveWidgetFromLayer(const UObject* WorldContextObject, UPARAM(meta = (Categories = "UI.Layer")) FGameplayTag LayerName);
+
+
+	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "OrionLibrary|UI", meta = (WorldContext = "WorldContextObject"))
+	static void RegisterActiveSlots(const UObject* WorldContextObject, TArray<class UOrionGridSlot*> InSlots);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, BlueprintCosmetic, Category = "OrionLibrary|UI", meta = (WorldContext = "WorldContextObject"))
+	static TArray<class UOrionGridSlot*> GetActiveSlots(const UObject* WorldContextObject);
 private:
 	static int32 InputSuspensions;
 };
