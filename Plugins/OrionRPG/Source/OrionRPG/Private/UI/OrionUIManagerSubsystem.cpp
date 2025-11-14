@@ -93,37 +93,6 @@ void UOrionUILibrary::ResumeInputForPlayer(ULocalPlayer* LocalPlayer, FName Susp
 	}
 }
 
-void UOrionUILibrary::RegisterActiveSlots(const UObject* WorldContextObject, TArray<class UOrionGridSlot*> InSlots)
-{
-	UWorld* World = GEngine ? GEngine->GetWorldFromContextObjectChecked(WorldContextObject) : nullptr;
-	UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
-	if (GameInstance)
-	{
-		UOrionUIManagerSubsystem* UIManager = GameInstance->GetSubsystem<UOrionUIManagerSubsystem>();
-		if (UIManager)
-		{
-			UIManager->ActiveSlots.Empty();
-			UIManager->ActiveSlots.Append(InSlots);
-		}
-	}
-}
-
-TArray<UOrionGridSlot*> UOrionUILibrary::GetActiveSlots(const UObject* WorldContextObject)
-{
-	TArray<UOrionGridSlot*> OutSlots;
-	UWorld* World = GEngine ? GEngine->GetWorldFromContextObjectChecked(WorldContextObject) : nullptr;
-	UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
-	if (GameInstance)
-	{
-		UOrionUIManagerSubsystem* UIManager = GameInstance->GetSubsystem<UOrionUIManagerSubsystem>();
-		if (UIManager)
-		{
-			OutSlots = UIManager->ActiveSlots;
-		}
-	}
-	return OutSlots;
-}
-
 
 
 UCommonActivatableWidgetContainerBase* UOrionUILibrary::GetLayerWidget(const UObject* WorldContextObject, FGameplayTag LayerName)

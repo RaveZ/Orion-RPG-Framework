@@ -34,6 +34,8 @@ public:
 	virtual void NativePreConstruct() override;
 	// End of UUserWidget interface
 
+	UFUNCTION(BlueprintCallable, Category = "OrionRPG|UI")
+	int32 GetIndexFromPosition(int32 PosX, int32 PosY, int32 Columns);
 	
 };
 
@@ -81,8 +83,6 @@ class UOrionGridItem : public UOrionGridBase
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(BlueprintReadWrite, Category = "UI")
-	TArray<TObjectPtr<UOrionGridSlot>> OccupiedSlots;
 	
 	UPROPERTY(BlueprintReadWrite, Category = "UI")
 	TObjectPtr<UOrionInventoryItemInstance> ItemInstance;
@@ -103,5 +103,9 @@ public:
 	void SetItemInstance(UOrionInventoryItemInstance* InItemInstance, bool bUpdateItemIndex);
 
 	void SetItemInstance_Implementation(UOrionInventoryItemInstance* InItemInstance, bool bUpdateItemIndex = true);
+
+	UFUNCTION(BlueprintCallable, Category = "OrionRPG|UI")
+	void UpdateItemSize(UOrionInventoryItemInstance* InItemInstance);
+
 
 };

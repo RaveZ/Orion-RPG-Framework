@@ -98,11 +98,7 @@ public:
 	static class UCommonActivatableWidget* GetActiveWidgetFromLayer(const UObject* WorldContextObject, UPARAM(meta = (Categories = "UI.Layer")) FGameplayTag LayerName);
 
 
-	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "OrionLibrary|UI", meta = (WorldContext = "WorldContextObject"))
-	static void RegisterActiveSlots(const UObject* WorldContextObject, TArray<class UOrionGridSlot*> InSlots);
-
-	UFUNCTION(BlueprintCallable, BlueprintPure, BlueprintCosmetic, Category = "OrionLibrary|UI", meta = (WorldContext = "WorldContextObject"))
-	static TArray<class UOrionGridSlot*> GetActiveSlots(const UObject* WorldContextObject);
+	
 private:
 	static int32 InputSuspensions;
 };

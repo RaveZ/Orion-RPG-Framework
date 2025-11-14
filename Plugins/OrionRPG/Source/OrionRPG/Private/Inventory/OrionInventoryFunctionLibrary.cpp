@@ -4,10 +4,16 @@
 #include "Inventory/OrionInventoryFunctionLibrary.h"
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Inventory/OrionInventoryItemInstance.h"
+#include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "OrionRPG.h"
 #include "Inventory/OrionInventoryComponent.h"
+#include "Inventory/OrionInventoryGraph.h"
 #include "Kismet/GameplayStatics.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "UI/OrionUIManagerSubsystem.h"
+#include "UI/Foundation/OrionGridBase.h"
+#include "Engine/GameInstance.h"
+
 
 UOrionInventoryComponent* UOrionInventoryFunctionLibrary::GetInventoryComponent(const UObject* WorldContextObject)
 {
@@ -107,3 +113,62 @@ bool UOrionInventoryFunctionLibrary::GetItemData(const UObject* WorldContextObje
 
     return false;
 }
+
+void UOrionInventoryFunctionLibrary::RegisterActiveSlots(const UObject* WorldContextObject, TArray<class UOrionGridSlot*> InSlots)
+{
+    UWorld* World = GEngine ? GEngine->GetWorldFromContextObjectChecked(WorldContextObject) : nullptr;
+    UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
+    if (GameInstance)
+    {
+        UOrionUIManagerSubsystem* UIManager = GameInstance->GetSubsystem<UOrionUIManagerSubsystem>();
+        if (UIManager)
+        {
+            UIManager->ActiveSlots = InSlots;
+        }
+    }
+}
+
+TArray<UOrionGridSlot*> UOrionInventoryFunctionLibrary::GetActiveSlots(const UObject* WorldContextObject)
+{
+    TArray<UOrionGridSlot*> OutSlots;
+    UWorld* World = GEngine ? GEngine->GetWorldFromContextObjectChecked(WorldContextObject) : nullptr;
+    UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
+    if (GameInstance)
+    {
+        UOrionUIManagerSubsystem* UIManager = GameInstance->GetSubsystem<UOrionUIManagerSubsystem>();
+        if (UIManager)
+        {
+            OutSlots = UIManager->ActiveSlots;
+        }
+    }
+    return OutSlots;
+}
+
+void UOrionInventoryFunctionLibrary::AssignGridItemToSlots(const UObject* WorldContextObject, UOrionGridItem* InGridItem, int32 StartingIndex)
+{
+    if (InGridItem == nullptr) return;
+
+    UOrionInventoryGraph* InventoryDB = GetInventoryDB(WorldContextObject);
+    UOrionInventoryItemInstance* ItemInstance = InGridItem->ItemInstance;
+    TArray<UOrionGridSlot*> ActiveSlots = GetActiveSlots(WorldContextObject);
+    if (InventoryDB && ItemInstance)
+    {
+        int32 Row = InventoryDB->GridCountY;
+        int32 Col = InventoryDB->GridCountX;
+        FIntPoint ItemSize = ItemInstance->GetItemDef()->GridSize;
+        
+        for (int32 Y = 0; Y < ItemSize.Y; Y++)
+        {
+            for (int32 X = 0; X < ItemSize.X; X++)
+            {
+                int32 SlotIndex = StartingIndex + (Y * Col) + X;
+                //UE_LOG(LogTemp, Log, TEXT("Assigning GridItem to SlotIndex: %d"), SlotIndex);
+                if (ActiveSlots.IsValidIndex(SlotIndex))
+                {
+                    ActiveSlots[SlotIndex]->SetGridItem(InGridItem);
+                }
+            }
+        }
+    }
+}
+
