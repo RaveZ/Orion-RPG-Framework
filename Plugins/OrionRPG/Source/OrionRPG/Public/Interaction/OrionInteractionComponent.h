@@ -41,8 +41,9 @@ public:
 	/**
 	* Give notification based on configured netmode
 	* E_Server		: Default, will notify only in server side
-	* E_OwnerOnly	: Notify client only for interaction result
 	* E_All			: Using multicast to notify interaction result
+	* 
+	* For client only notification, use the event with prefix local_ instead
 	*/
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Interaction")
 	EOrionInteractionNetMode InteractionNetMode;
