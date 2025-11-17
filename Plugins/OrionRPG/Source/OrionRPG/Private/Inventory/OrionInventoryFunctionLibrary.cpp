@@ -4,7 +4,6 @@
 #include "Inventory/OrionInventoryFunctionLibrary.h"
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Inventory/OrionInventoryItemInstance.h"
-#include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "OrionRPG.h"
 #include "Inventory/OrionInventoryComponent.h"
 #include "Inventory/OrionInventoryGraph.h"
@@ -12,6 +11,7 @@
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "UI/OrionUIManagerSubsystem.h"
 #include "UI/Foundation/OrionGridBase.h"
+#include "UI/Foundation/OrionGridContainerBase.h"
 #include "Engine/GameInstance.h"
 
 
@@ -148,13 +148,14 @@ void UOrionInventoryFunctionLibrary::AssignGridItemToSlots(const UObject* WorldC
 {
     if (InGridItem == nullptr) return;
 
-    UOrionInventoryGraph* InventoryDB = GetInventoryDB(WorldContextObject);
     UOrionInventoryItemInstance* ItemInstance = InGridItem->ItemInstance;
-    TArray<UOrionGridSlot*> ActiveSlots = GetActiveSlots(WorldContextObject);
-    if (InventoryDB && ItemInstance)
+    TArray<UOrionGridSlot*> ActiveSlots = InGridItem->OwningGridContainer->GridSlots;
+    UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);
+
+    if (InventoryComp && ItemInstance)
     {
-        int32 Row = InventoryDB->GridCountY;
-        int32 Col = InventoryDB->GridCountX;
+        int32 Row = InventoryComp->GetCurrentGridDimension().Y;
+        int32 Col = InventoryComp->GetCurrentGridDimension().X;
         FIntPoint ItemSize = ItemInstance->GetItemDef()->GridSize;
         
         for (int32 Y = 0; Y < ItemSize.Y; Y++)

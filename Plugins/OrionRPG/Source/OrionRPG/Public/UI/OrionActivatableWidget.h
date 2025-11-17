@@ -30,7 +30,7 @@ public:
 DECLARE_DYNAMIC_DELEGATE_OneParam(FInputActionExecutedDelegate, FName, ActionName);
 
 // An activatable widget that automatically drives the desired input config when activated
-UCLASS(Abstract, Blueprintable, meta = (DisableNativeTick))
+UCLASS(Abstract, BlueprintType, Blueprintable, meta = (DisableNativeTick))
 class UOrionActivatableWidget : public UCommonActivatableWidget
 {
 	GENERATED_BODY()

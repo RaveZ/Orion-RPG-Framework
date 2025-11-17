@@ -93,6 +93,17 @@ void UOrionUILibrary::ResumeInputForPlayer(ULocalPlayer* LocalPlayer, FName Susp
 	}
 }
 
+UOrionUIManagerSubsystem* UOrionUILibrary::GetOrionUISubsystem(const UObject* WorldContextObject)
+{
+	UWorld* World = GEngine ? GEngine->GetWorldFromContextObjectChecked(WorldContextObject) : nullptr;
+	UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
+	if (GameInstance)
+	{
+		return GameInstance->GetSubsystem<UOrionUIManagerSubsystem>();
+	}
+	return nullptr;
+}
+
 
 
 UCommonActivatableWidgetContainerBase* UOrionUILibrary::GetLayerWidget(const UObject* WorldContextObject, FGameplayTag LayerName)

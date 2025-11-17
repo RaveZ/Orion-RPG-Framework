@@ -18,6 +18,18 @@ UOrionInventorySetting::UOrionInventorySetting()
 		CharacterDisplayActorClass = CharacterDisplayFinder.Class;
 	}
 
+	auto GridSlotWidgetFinder = ConstructorHelpers::FClassFinder<AActor>(TEXT("/OrionRPG/Widgets/Inventory/WBP_InventoryGridItem.WBP_InventoryGridSlot_C"));
+	if (GridSlotWidgetFinder.Succeeded())
+	{
+		DefaultGridSlotWidget = GridSlotWidgetFinder.Class;
+	}
+
+	auto GridItemWidgetFinder = ConstructorHelpers::FClassFinder<AActor>(TEXT("/OrionRPG/Widgets/Inventory/WBP_InventoryGridItem.WBP_InventoryGridItem_C"));
+	if (GridItemWidgetFinder.Succeeded())
+	{
+		DefaultGridItemWidget = GridItemWidgetFinder.Class;
+	}
+
 	ItemViewerLocation = FVector(0.f, 0.f, 1000000.f);
 	CharacterDisplayLocation = FVector(1000.f, 0.f, 1000000.f);
 

@@ -46,6 +46,7 @@ void UOrionInventoryComponent::BeginPlay()
 	{
 		InventoryDB->Initialize(this);
 		MaxWeight = InventoryDB->DefaultMaxInventoryWeight;
+		CurrentGridDimension = InventoryDB->DefaultGridDimension;
 	}
 
 
@@ -534,6 +535,11 @@ float UOrionInventoryComponent::GetCurrentWeight()
 float UOrionInventoryComponent::GetMaxWeight()
 {
 	return MaxWeight;
+}
+
+FIntPoint UOrionInventoryComponent::GetCurrentGridDimension()
+{
+	return CurrentGridDimension;
 }
 
 

@@ -17,8 +17,15 @@ class ORIONRPG_API UOrionInventorySetting : public UObject
 	virtual ~UOrionInventorySetting();
 
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting", noclear)
+	TSubclassOf<class UOrionGridSlot> DefaultGridSlotWidget;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting", noclear)
+	TSubclassOf<class UOrionGridItem> DefaultGridItemWidget;
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting")
 	TSubclassOf<class AActor> ItemViewerActorClass;
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting")
 	FVector ItemViewerLocation;

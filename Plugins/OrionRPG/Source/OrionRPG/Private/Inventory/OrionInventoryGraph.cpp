@@ -17,8 +17,7 @@ UOrionInventoryGraph::UOrionInventoryGraph()
 	bAssetInitialized = false;
 	InventoryType = EOrionInventoryType::E_WeightBased;
 	DefaultMaxInventoryWeight = 100.0f;
-	GridCountX = 8;
-	GridCountY = 11;
+	DefaultGridDimension = FIntPoint(5, 5);
 	GridSize = 75.0f;
 	
 } 

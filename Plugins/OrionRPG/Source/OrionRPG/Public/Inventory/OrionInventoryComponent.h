@@ -81,6 +81,8 @@ private:
 	/**Current weight for this inventory*/
 	float CurrentWeight;
 
+	FIntPoint CurrentGridDimension;
+
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
@@ -96,6 +98,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
 	float GetMaxWeight();
+
+	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
+	FIntPoint GetCurrentGridDimension();
 
 	/**
 	 * Add Item to Inventory

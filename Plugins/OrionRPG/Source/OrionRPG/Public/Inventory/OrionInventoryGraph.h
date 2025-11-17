@@ -29,11 +29,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "OrionInventory")
 		EOrionInventoryType InventoryType;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta = (ClampMin = "4", ClampMax = "10", UIMin = "5", UIMax = "10", EditCondition = "InventoryType == EOrionInventoryType::E_GridBased", HideEditConditionToggle, EditConditionHides))
-		int32 GridCountX;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta = (ClampMin = "1", ClampMax = "100", UIMin = "1", UIMax = "100", EditCondition = "InventoryType == EOrionInventoryType::E_GridBased", HideEditConditionToggle, EditConditionHides))
+		FIntPoint DefaultGridDimension;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta = (ClampMin = "4", ClampMax = "10", UIMin = "5", UIMax = "10", EditCondition = "InventoryType == EOrionInventoryType::E_GridBased", HideEditConditionToggle, EditConditionHides))
-		int32 GridCountY;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta = (ClampMin = "50", ClampMax = "100", UIMin = "50", UIMax = "100"))
 		float GridSize;

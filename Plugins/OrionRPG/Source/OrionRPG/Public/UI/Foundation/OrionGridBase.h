@@ -11,6 +11,7 @@ struct FFrame;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGridItemRemoved);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGridItemChanged, UOrionInventoryItemInstance*, ItemInstance);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAddItemToSlot, UOrionInventoryItemInstance*, ItemInstance, int32, GridIndex);
 
 
 //////////////////////////////////////////////////////////////////////
@@ -23,6 +24,9 @@ class UOrionGridBase : public UOrionButtonBase
 
 public:
 	UPROPERTY(BlueprintReadWrite, Category = "UI")
+	TObjectPtr<class UOrionGridContainerBase> OwningGridContainer;
+
+	UPROPERTY(BlueprintReadWrite, Category = "UI")
 	int32 GridIndex;
 
 	UPROPERTY(BlueprintReadWrite, Category = "UI")
@@ -33,6 +37,9 @@ public:
 	// UUserWidget interface
 	virtual void NativePreConstruct() override;
 	// End of UUserWidget interface
+
+	UFUNCTION(BlueprintCallable, Category = "OrionRPG|UI")
+	virtual void InitializeGrid(class UOrionGridContainerBase* InGridContainer);
 
 	UFUNCTION(BlueprintCallable, Category = "OrionRPG|UI")
 	int32 GetIndexFromPosition(int32 PosX, int32 PosY, int32 Columns);
@@ -51,6 +58,9 @@ class UOrionGridSlot : public UOrionGridBase
 public:
 	UPROPERTY(BlueprintReadWrite, Category = "UI")
 	TObjectPtr<UOrionGridItem> GridItem;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "UI")
+	FOnAddItemToSlot OnAddItemToSlot;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OrionRPG|UI")
 	void SetGridItem(UOrionGridItem* InGridItem);
@@ -72,6 +82,8 @@ public:
 	// UUserWidget interface
 	virtual void NativePreConstruct() override;
 	// End of UUserWidget interface
+
+	virtual void InitializeGrid(class UOrionGridContainerBase* InGridContainer) override;
 };
 
 
@@ -87,9 +99,14 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "UI")
 	TObjectPtr<UOrionInventoryItemInstance> ItemInstance;
 
+	UPROPERTY(BlueprintReadWrite, Category = "UI")
+	FIntPoint ItemDimension;
+
+	UPROPERTY(BlueprintReadWrite, Category = "UI")
+	FVector2D DragTargetPosition;
+
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "UI")
 	FOnGridItemRemoved OnItemRemoved;
-
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "UI")
 	FOnGridItemChanged OnItemChanged;
@@ -97,7 +114,10 @@ public:
 public:
 	// UUserWidget interface
 	virtual void NativePreConstruct() override;
+	virtual void NativeConstruct() override;
 	// End of UUserWidget interface
+
+	virtual void InitializeGrid(class UOrionGridContainerBase* InGridContainer) override;
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category="OrionRPG|UI")
 	void SetItemInstance(UOrionInventoryItemInstance* InItemInstance, bool bUpdateItemIndex);
@@ -107,5 +127,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OrionRPG|UI")
 	void UpdateItemSize(UOrionInventoryItemInstance* InItemInstance);
 
+	UFUNCTION(BlueprintCallable, Category = "OrionRPG|UI")
+	bool IsValidSlot(UOrionGridSlot* InOtherSlot);
 
 };

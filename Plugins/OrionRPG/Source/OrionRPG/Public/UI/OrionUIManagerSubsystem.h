@@ -97,6 +97,8 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, BlueprintCosmetic, Category = "OrionLibrary|UI", meta = (WorldContext = "WorldContextObject"))
 	static class UCommonActivatableWidget* GetActiveWidgetFromLayer(const UObject* WorldContextObject, UPARAM(meta = (Categories = "UI.Layer")) FGameplayTag LayerName);
 
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|UI", meta = (WorldContext = "WorldContextObject"))
+	static UOrionUIManagerSubsystem* GetOrionUISubsystem(const UObject* WorldContextObject);
 
 	
 private:
