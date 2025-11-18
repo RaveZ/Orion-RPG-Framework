@@ -65,6 +65,7 @@ struct FOrionInventoryList : public FFastArraySerializer
 	TArray<UOrionInventoryItemInstance*> GetAllItems() const;
 
 public:
+	void Initialize(UOrionInventoryComponent* InOwnerComponent);
 	// FFastArraySerializer contract
 	void PreReplicatedRemove(const TArrayView<int32> RemovedIndices, int32 FinalSize);
 	void PostReplicatedAdd(const TArrayView<int32> AddedIndices, int32 FinalSize);
@@ -82,6 +83,10 @@ public:
 	void Reset();
 	void InitializeFromSaveGame(const struct FOrionInventorySaveData& InventorySaveData);
 	UOrionInventoryItemInstance* FindFirstItemByTag(const FGameplayTag& ItemTag);
+	void UpdateGrid(FIntPoint OldDimension, FIntPoint NewDimension);
+	TArray<bool> GetOccupiedList();
+
+	bool IsValidSlot(UOrionInventoryNode_ItemDefinition* ItemDef, int32 SlotIndex);
 
 private:
 	friend UOrionInventoryComponent;

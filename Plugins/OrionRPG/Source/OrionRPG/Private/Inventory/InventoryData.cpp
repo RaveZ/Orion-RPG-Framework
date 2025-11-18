@@ -2,6 +2,7 @@
 
 #include "Inventory/InventoryData.h"
 #include "Inventory/OrionInventoryComponent.h"
+#include "Inventory/OrionInventoryGraph.h"
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Inventory/OrionInventoryItemInstance.h"
 #include "Inventory/OrionInventoryItemFragment.h"
@@ -57,10 +58,140 @@ void FOrionInventoryList::PostReplicatedAdd(const TArrayView<int32> AddedIndices
 	}
 }
 
+void FOrionInventoryList::UpdateGrid(FIntPoint OldDimension, FIntPoint NewDimension)
+{
+	UOrionInventoryComponent* InventoryComponent = Cast<UOrionInventoryComponent>(OwnerComponent);
+
+	if (OldDimension == NewDimension) return;
+
+	if (InventoryComponent)
+	{
+		int32 Row = InventoryComponent->GetCurrentGridDimension().Y;
+		int32 Col = InventoryComponent->GetCurrentGridDimension().X;
+		int32 ChangedColumn = NewDimension.X - OldDimension.X;
+
+		TArray<FOrionInventoryEntry> NewEntries;
+
+		if (ChangedColumn > 0)
+		{
+			NewEntries.SetNum(NewDimension.X * NewDimension.Y);
+			TArray<UOrionInventoryItemInstance*> IgnoredItem;
+
+			for (int32 i = Entries.Num() - 1; i >= 0; --i)
+			{
+				int32 CurrentColumn = i % OldDimension.X;
+
+				if (i < OldDimension.X - 1)
+				{
+					NewEntries[i] = Entries[i];
+					IgnoredItem.AddUnique(Entries[i].ItemInstance);
+					continue;
+				}
+
+				if (IgnoredItem.Contains(Entries[i].ItemInstance))
+				{
+					//if contain item from ignored columns, skip the process
+					continue;
+				}
+
+				int32 NewIndex = i + ChangedColumn;
+				NewEntries[NewIndex] = Entries[i];
+			}
+			Entries = NewEntries;
+			MarkArrayDirty();
+		}
+	}
+	
+}
+
+TArray<bool> FOrionInventoryList::GetOccupiedList()
+{
+	UOrionInventoryComponent* InventoryComp = Cast<UOrionInventoryComponent>(OwnerComponent);
+
+	
+	TArray<bool> OccupiedList;
+	OccupiedList.SetNum(Entries.Num());
+	for (int32 i = 0; i < Entries.Num(); i++)
+	{
+		if (Entries[i].ItemInstance)
+		{
+			if (InventoryComp)
+			{
+				int32 Row = InventoryComp->GetCurrentGridDimension().Y;
+				int32 Col = InventoryComp->GetCurrentGridDimension().X;
+				FIntPoint ItemSize = Entries[i].ItemInstance->GetItemDef()->GridSize;
+
+				for (int32 Y = 0; Y < ItemSize.Y; Y++)
+				{
+					for (int32 X = 0; X < ItemSize.X; X++)
+					{
+						int32 SlotIndex = i + (Y * Col) + X;
+						if (OccupiedList.IsValidIndex(SlotIndex))
+						{
+							OccupiedList[SlotIndex] = true;
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	return OccupiedList;
+}
+
+bool FOrionInventoryList::IsValidSlot(UOrionInventoryNode_ItemDefinition* ItemDef, int32 SlotIndex)
+{
+	bool bValid = true;
+	TArray<bool> OccupiedList = GetOccupiedList();
+	UOrionInventoryComponent* InventoryComp = Cast<UOrionInventoryComponent>(OwnerComponent);
+	if (InventoryComp && ItemDef)
+	{
+		int32 Row = InventoryComp->GetCurrentGridDimension().Y;
+		int32 Col = InventoryComp->GetCurrentGridDimension().X;
+		FIntPoint ItemSize = ItemDef->GridSize;
+		int32 StartingIndex = SlotIndex;
+		for (int32 Y = 0; Y < ItemSize.Y; Y++)
+		{
+			for (int32 X = 0; X < ItemSize.X; X++)
+			{
+				int32 InIndex = StartingIndex + (Y * Col) + X;
+				int32 SlotX = (StartingIndex % Col) + X;
+				int32 SlotY = (StartingIndex / Col) + Y;
+				if (SlotX >= Col || SlotY >= Row)
+				{
+					bValid = false;
+					break;
+				}
+				if (!Entries.IsValidIndex(InIndex))
+				{
+					bValid = false;
+					break;
+				}
+				if (OccupiedList[InIndex] == true)
+				{
+					bValid = false;
+					break;
+				}
+			}
+		}
+	}
+	return bValid;
+}
+
+void FOrionInventoryList::Initialize(UOrionInventoryComponent* InOwnerComponent)
+{
+	OwnerComponent = InOwnerComponent;
+	UOrionInventoryGraph* InventoryGraph = InOwnerComponent->InventoryDB;
+	if (InventoryGraph && InventoryGraph->InventoryType == EOrionInventoryType::E_GridBased)
+	{
+		FIntPoint GridDimension = InOwnerComponent->InventoryDB->DefaultGridDimension;
+		Entries.SetNum(GridDimension.X * GridDimension.Y);
+	}
+}
+
 
 TArray<UOrionInventoryItemInstance*> FOrionInventoryList::GetAllItems() const
 {
-
 	TArray<UOrionInventoryItemInstance*> Results;
 	Results.SetNum(Entries.Num());
 	for (int32 i = 0; i < Entries.Num(); i++)
@@ -88,16 +219,17 @@ void FOrionInventoryList::AssignItemIndex(UOrionInventoryItemInstance* ItemInsta
 {
 	if (Entries.Num() <= TileIndex)
 	{
-		Entries.SetNum(TileIndex+1);
+		Entries.SetNum(TileIndex + 1);
 	}
 	FOrionInventoryEntry& NewEntry = Entries[TileIndex];
 	NewEntry.ItemInstance = ItemInstance;
+
 	
 }
 
 UOrionInventoryItemInstance* FOrionInventoryList::AddEntry(UOrionInventoryNode_ItemDefinition* ItemDef)
 {
-	UOrionInventoryItemInstance* Result = nullptr;
+	UOrionInventoryItemInstance* NewItemInstance = nullptr;
 
 	check(ItemDef != nullptr);
 	check(OwnerComponent);
@@ -106,36 +238,41 @@ UOrionInventoryItemInstance* FOrionInventoryList::AddEntry(UOrionInventoryNode_I
 	check(OwningActor->HasAuthority());
 	// Find first empty slot
 	int32 EmptyIndex = INDEX_NONE;
-	for (int32 i = 0; i < Entries.Num(); ++i)
+	TArray<bool> OccupiedList = GetOccupiedList();
+	for (int32 i = 0; i < OccupiedList.Num(); ++i)
 	{
-		if (Entries[i].ItemInstance == nullptr)
+		if (OccupiedList[i] == false) // if slot index is not occupied
 		{
-			EmptyIndex = i;
-			break;
+			if (IsValidSlot(ItemDef, i))
+			{
+				EmptyIndex = i;
+				break;
+			}
 		}
 	}
 
-	FOrionInventoryEntry& NewEntry = EmptyIndex != INDEX_NONE ? Entries[EmptyIndex] : Entries.AddDefaulted_GetRef();
-
-	NewEntry.ItemInstance = NewObject<UOrionInventoryItemInstance>(OwnerComponent->GetOwner());
-	NewEntry.ItemInstance->SetItemDef(ItemDef);
+	//FOrionInventoryEntry& NewEntry = EmptyIndex != INDEX_NONE ? Entries[EmptyIndex] : Entries.AddDefaulted_GetRef();
+	NewItemInstance = NewObject<UOrionInventoryItemInstance>(OwnerComponent->GetOwner());
+	NewItemInstance->SetItemDef(ItemDef);
 	ItemDef->LoadPrerequisites();
 	for (UOrionInventoryItemFragment* Fragment : ItemDef->Fragments)
 	{
 		if (Fragment != nullptr)
 		{
-			Fragment->OnInstanceCreated(NewEntry.ItemInstance);
+			Fragment->OnInstanceCreated(NewItemInstance);
 		}
 	}
 	if (ItemDef->DropItemFragment)
 	{
-		ItemDef->DropItemFragment->OnInstanceCreated(NewEntry.ItemInstance);
+		ItemDef->DropItemFragment->OnInstanceCreated(NewItemInstance);
 	}
-	Result = NewEntry.ItemInstance;
 
-	MarkItemDirty(NewEntry);
+	EmptyIndex = EmptyIndex != INDEX_NONE ? EmptyIndex : Entries.Num();
+	AssignItemIndex(NewItemInstance, EmptyIndex);
 
-	return Result;
+	MarkItemDirty(Entries[EmptyIndex]);
+
+	return NewItemInstance;
 }
 
 void FOrionInventoryList::RemoveEntry(UOrionInventoryItemInstance* ItemToRemove)
@@ -146,9 +283,9 @@ void FOrionInventoryList::RemoveEntry(UOrionInventoryItemInstance* ItemToRemove)
 		if (Entry.ItemInstance == ItemToRemove)
 		{
 			Entry.ItemInstance = nullptr;
-			MarkArrayDirty();
 		}
 	}
+	MarkArrayDirty();
 }
 
 void FOrionInventoryList::Reset()
@@ -183,7 +320,7 @@ void FOrionInventoryList::InitializeFromSaveGame(const FOrionInventorySaveData& 
 				NewEntry.ItemInstance = NewObject<UOrionInventoryItemInstance>(OwnerComponent->GetOwner());
 				NewEntry.ItemInstance->SetItemDef(ItemDef);
 				NewEntry.ItemInstance->SetTotalStackCount(ItemSaveData.TotalStackCount);
-				
+
 				ItemDef->LoadPrerequisites();
 				for (UOrionInventoryItemFragment* Fragment : ItemDef->Fragments)
 				{
@@ -200,6 +337,7 @@ void FOrionInventoryList::InitializeFromSaveGame(const FOrionInventorySaveData& 
 		}
 	}
 	
+	
 
 }
 
@@ -211,3 +349,4 @@ UOrionInventoryItemInstance* FOrionInventoryList::FindFirstItemByTag(const FGame
 		});
 	return FoundItem ? FoundItem->ItemInstance : nullptr;
 }
+

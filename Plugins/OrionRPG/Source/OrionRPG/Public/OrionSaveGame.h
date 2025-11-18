@@ -134,6 +134,9 @@ public:
 	float MaxWeight;
 
 	UPROPERTY(VisibleAnywhere, Category = InventorySaveData)
+	FIntPoint GridDimension;
+
+	UPROPERTY(VisibleAnywhere, Category = InventorySaveData)
 	TArray<FOrionInventoryItemSaveData> SavedInventoryItems;
 
 

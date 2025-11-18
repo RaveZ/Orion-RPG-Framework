@@ -28,7 +28,6 @@
 
 UOrionInventoryComponent::UOrionInventoryComponent(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
-	, InventoryList(this)
 {
 	SetIsReplicatedByDefault(true);
 	bReplicateUsingRegisteredSubObjectList = true;
@@ -36,9 +35,12 @@ UOrionInventoryComponent::UOrionInventoryComponent(const FObjectInitializer& Obj
 	bInitializingSaveGame = false;
 }
 
+
 void UOrionInventoryComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	InitializeDelegate();
+	InventoryList.Initialize(this);
 	//Set Dependency
 	UWorld* World = GetWorld();
 	OwningController = GetOwningController();
@@ -79,6 +81,20 @@ void UOrionInventoryComponent::BeginPlay()
 		TEXT("[ItemTag] Drop inventory item"),
 		FConsoleCommandWithArgsDelegate::CreateUObject(this, &ThisClass::execDropItem),
 		ECVF_Default);
+}
+
+void UOrionInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	OnGridDimensionChanged.RemoveDynamic(this, &ThisClass::GridDimensionChanged);
+}
+
+void UOrionInventoryComponent::InitializeDelegate()
+{
+	OnGridDimensionChanged.RemoveDynamic(this, &ThisClass::GridDimensionChanged);
+
+	OnGridDimensionChanged.AddDynamic(this, &ThisClass::GridDimensionChanged);
 }
 
 
@@ -310,11 +326,41 @@ void UOrionInventoryComponent::Server_ConsumeItem_Implementation(FGameplayTag It
 {
 	FItemInstanceData ItemData;
 	ConsumeItem(ItemData, ItemTag, StackCount);
+
+}
+
+void UOrionInventoryComponent::SetInventoryMaxWeight(float InNewMaxWeight)
+{
+	if (MaxWeight == InNewMaxWeight)
+	{
+		return;
+	}
+
+	MaxWeight = FMath::Max(0, InNewMaxWeight);
+	OnMaxWeightChanged.Broadcast(MaxWeight);
+}
+
+void UOrionInventoryComponent::SetInventoryGridDimension(FIntPoint InNewDimension)
+{
+	FIntPoint OldDimension = CurrentGridDimension;
+	if (CurrentGridDimension == InNewDimension)
+	{
+		return;
+	}
+	CurrentGridDimension = InNewDimension;
+	InventoryList.UpdateGrid(OldDimension, CurrentGridDimension);
+	OnGridDimensionChanged.Broadcast(OldDimension, CurrentGridDimension);
 }
 
 TArray<UOrionInventoryItemInstance*> UOrionInventoryComponent::GetAllItems() const
 {
 	return InventoryList.GetAllItems();
+}
+
+
+bool UOrionInventoryComponent::IsValidSlot(UOrionInventoryNode_ItemDefinition* ItemDef, int32 SlotIndex)
+{
+	return InventoryList.IsValidSlot(ItemDef, SlotIndex);
 }
 
 void UOrionInventoryComponent::AssignItemIndex(UOrionInventoryItemInstance* ItemInstance, int32 TileIndex)
@@ -340,16 +386,7 @@ bool UOrionInventoryComponent::GetItemData(FItemInstanceData& OutItemData, FGame
 }
 
 
-void UOrionInventoryComponent::SetInventoryMaxWeight(float InNewMaxWeight)
-{
-	if(MaxWeight == InNewMaxWeight)
-	{
-		return;
-	}
 
-	MaxWeight = FMath::Max(0, InNewMaxWeight);
-	OnMaxWeightChanged.Broadcast(MaxWeight);
-}
 
 APawn* UOrionInventoryComponent::GetOwningPawn() const
 {
@@ -426,6 +463,8 @@ FOrionInventorySaveData UOrionInventoryComponent::GetSaveGameData()
     }
 	
 	InventorySaveData.MaxWeight = MaxWeight;
+	InventorySaveData.GridDimension = CurrentGridDimension;
+
 	return InventorySaveData;
 }
 
@@ -440,6 +479,9 @@ void UOrionInventoryComponent::InitializeFromSaveGame(const FOrionInventorySaveD
 	bInitializingSaveGame = true;
 	InventoryList.Reset();
 	InventoryList.InitializeFromSaveGame(InventorySaveData);
+
+	MaxWeight = InventorySaveData.MaxWeight;
+	CurrentGridDimension = InventorySaveData.GridDimension;
 	
 	bInitializingSaveGame = false;
 
@@ -515,7 +557,12 @@ void UOrionInventoryComponent::ReadyForReplication()
 
 float UOrionInventoryComponent::GetCurrentWeight()
 {
-	TArray<UOrionInventoryItemInstance*> AllItems = GetAllItems();
+	TArray<UOrionInventoryItemInstance*> AllItems;
+	for (auto& Item : GetAllItems())
+	{
+		AllItems.AddUnique(Item);
+	}
+
 	float OutWeight = 0;
 
 	for (int i = 0; i < AllItems.Num(); i++)
@@ -540,6 +587,10 @@ float UOrionInventoryComponent::GetMaxWeight()
 FIntPoint UOrionInventoryComponent::GetCurrentGridDimension()
 {
 	return CurrentGridDimension;
+}
+
+void UOrionInventoryComponent::GridDimensionChanged(FIntPoint OldDimension, FIntPoint NewDimension)
+{
 }
 
 

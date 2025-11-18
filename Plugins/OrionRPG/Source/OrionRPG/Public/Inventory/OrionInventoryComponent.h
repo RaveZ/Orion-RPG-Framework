@@ -22,6 +22,7 @@ struct FInventoryItem;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInventorySignature);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemSignature, UOrionInventoryItemInstance*, Item);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInventoryExamineItem, UOrionInventoryItemInstance*, Item, TSoftClassPtr<AActor>, ActorToExamine);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInventoryGridDimensionChanged, FIntPoint, InOldDimension, FIntPoint, InNewDimension);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInventoryItemStackChange, UOrionInventoryItemInstance*, Item, int32, CurrentStackCount, int32, MaxStackCount);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryMaxWeightChanged, float, InMaxWeight);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryEncumberedStateChanged, bool, bEncumbered);
@@ -64,13 +65,18 @@ public:
 		FInventoryMaxWeightChanged OnMaxWeightChanged;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
+	FInventoryGridDimensionChanged OnGridDimensionChanged;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FInventoryEncumberedStateChanged OnEncumberedStateChanged;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FInventoryExamineItem OnExamineItem;
 
 public:
-
+	UFUNCTION()
+	virtual void GridDimensionChanged(FIntPoint OldDimension, FIntPoint NewDimension);
+	 
 private:
 	UPROPERTY(Replicated)
 	FOrionInventoryList InventoryList;
@@ -86,6 +92,9 @@ private:
 protected:
 	// Called when the game starts
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	void InitializeDelegate();
 
 	//~UObject interface
 	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
@@ -162,6 +171,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
 	void SetInventoryMaxWeight(float InNewMaxWeight);
 
+	/**
+	 * Set inventory Grid dimension,
+	 *
+	 */
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	void SetInventoryGridDimension(FIntPoint InNewDimension);
+
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent", BlueprintPure = false)
 	TArray<UOrionInventoryItemInstance*> GetAllItems() const;
 
@@ -191,6 +207,9 @@ public:
 	 */
 	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
 	bool GetItemData(FItemInstanceData& OutItemData, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
+
+
+	bool IsValidSlot(class UOrionInventoryNode_ItemDefinition* ItemDef, int32 SlotIndex);
 
 	/**
 	 * Returns the Component Owner Role
