@@ -86,12 +86,8 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
-	static void RegisterActiveSlots(const UObject* WorldContextObject, TArray<class UOrionGridSlot*> InSlots);
+	static void AssignGridItemToSlots(const UObject* WorldContextObject, class UOrionGridItem* InGridItem, int32 StartingIndex);
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
-	static TArray<class UOrionGridSlot*> GetActiveSlots(const UObject* WorldContextObject);
-
-
-	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
-	static void AssignGridItemToSlots(const UObject* WorldContextObject, class UOrionGridItem* InGridItem, int32 StartingIndex);
+	static EOrionInventoryType GetInventoryType(const UObject* WorldContextObject);
 };

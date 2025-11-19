@@ -343,8 +343,12 @@ void UOrionInventoryComponent::SetInventoryMaxWeight(float InNewMaxWeight)
 void UOrionInventoryComponent::SetInventoryGridDimension(FIntPoint InNewDimension)
 {
 	FIntPoint OldDimension = CurrentGridDimension;
-	if (CurrentGridDimension == InNewDimension)
+	if (CurrentGridDimension == InNewDimension ||
+		InNewDimension.X < CurrentGridDimension.X ||
+		InNewDimension.Y < CurrentGridDimension.Y)
 	{
+		UE_LOG(LogTemp, Log, TEXT("Set inventory grid dimension failed, new dimension may be the same or smaller. \n Old: (%d, %d), New: (%d, %d)"),
+			OldDimension.X, OldDimension.Y, InNewDimension.X, InNewDimension.Y);
 		return;
 	}
 	CurrentGridDimension = InNewDimension;

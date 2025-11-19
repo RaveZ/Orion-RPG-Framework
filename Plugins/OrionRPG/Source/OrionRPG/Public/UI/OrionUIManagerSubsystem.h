@@ -64,9 +64,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "UI Subsystem|Inventory")
 	TObjectPtr<class UOrionGridItem> DraggedItem;
 
-	UPROPERTY(BlueprintReadWrite, Category = "UI Subsystem|Inventory")
-	TArray<TObjectPtr<class UOrionGridSlot>> ActiveSlots;
-
 private:
 	TSharedRef<FOrionNavigationConfig> OrionNavigationConfig;
 };

@@ -66,40 +66,31 @@ void FOrionInventoryList::UpdateGrid(FIntPoint OldDimension, FIntPoint NewDimens
 
 	if (InventoryComponent)
 	{
-		int32 Row = InventoryComponent->GetCurrentGridDimension().Y;
-		int32 Col = InventoryComponent->GetCurrentGridDimension().X;
-		int32 ChangedColumn = NewDimension.X - OldDimension.X;
+		int32 OldRows = OldDimension.Y;
+		int32 OldCols = OldDimension.X;
+		int32 NewRows = NewDimension.Y;
+		int32 NewCols = NewDimension.X;
 
 		TArray<FOrionInventoryEntry> NewEntries;
+		NewEntries.SetNum(NewCols * NewRows);
 
-		if (ChangedColumn > 0)
+		// Shift items to new grid, preserving their relative positions as much as possible
+		for (int32 i = 0; i < Entries.Num(); ++i)
 		{
-			NewEntries.SetNum(NewDimension.X * NewDimension.Y);
-			TArray<UOrionInventoryItemInstance*> IgnoredItem;
+			int32 OldRow = i / OldCols;
+			int32 OldCol = i % OldCols;
 
-			for (int32 i = Entries.Num() - 1; i >= 0; --i)
+			// If the item fits in the new grid, copy it to the same position
+			if (OldRow < NewRows && OldCol < NewCols)
 			{
-				int32 CurrentColumn = i % OldDimension.X;
-
-				if (i < OldDimension.X - 1)
-				{
-					NewEntries[i] = Entries[i];
-					IgnoredItem.AddUnique(Entries[i].ItemInstance);
-					continue;
-				}
-
-				if (IgnoredItem.Contains(Entries[i].ItemInstance))
-				{
-					//if contain item from ignored columns, skip the process
-					continue;
-				}
-
-				int32 NewIndex = i + ChangedColumn;
+				int32 NewIndex = OldRow * NewCols + OldCol;
 				NewEntries[NewIndex] = Entries[i];
 			}
-			Entries = NewEntries;
-			MarkArrayDirty();
+			// Otherwise, item is dropped (could be handled differently if needed)
 		}
+
+		Entries = NewEntries;
+		MarkArrayDirty();
 	}
 	
 }
@@ -187,6 +178,7 @@ void FOrionInventoryList::Initialize(UOrionInventoryComponent* InOwnerComponent)
 		FIntPoint GridDimension = InOwnerComponent->InventoryDB->DefaultGridDimension;
 		Entries.SetNum(GridDimension.X * GridDimension.Y);
 	}
+	MarkArrayDirty();
 }
 
 
@@ -199,14 +191,6 @@ TArray<UOrionInventoryItemInstance*> FOrionInventoryList::GetAllItems() const
 		Results[i] = Entries[i].ItemInstance;
 	}
 
-	//Results.Reserve(Entries.Num());
-	//for (const FOrionInventoryEntry& Entry : Entries)
-	//{
-	//	if (Entry.ItemInstance != nullptr) //@TODO: Would prefer to not deal with this here and hide it further?
-	//	{
-	//		Results.Add(Entry.ItemInstance);
-	//	}
-	//}
 	return Results;
 }
 
@@ -236,6 +220,10 @@ UOrionInventoryItemInstance* FOrionInventoryList::AddEntry(UOrionInventoryNode_I
 
 	AActor* OwningActor = OwnerComponent->GetOwner();
 	check(OwningActor->HasAuthority());
+
+	UOrionInventoryGraph* InventoryGraph = OwnerComponent->InventoryDB;
+	check(InventoryGraph);
+
 	// Find first empty slot
 	int32 EmptyIndex = INDEX_NONE;
 	TArray<bool> OccupiedList = GetOccupiedList();
@@ -249,6 +237,22 @@ UOrionInventoryItemInstance* FOrionInventoryList::AddEntry(UOrionInventoryNode_I
 				break;
 			}
 		}
+	}
+
+	switch (InventoryGraph->InventoryType)
+	{
+		case EOrionInventoryType::E_GridBased:
+			if (EmptyIndex == INDEX_NONE)
+			{
+				OwnerComponent->OnNoRoomForItem.Broadcast(ItemDef);
+				return nullptr;
+			}
+			break;
+		case EOrionInventoryType::E_WeightBased:
+			EmptyIndex = EmptyIndex != INDEX_NONE ? EmptyIndex : Entries.Num();
+			break;
+		default:
+			break;
 	}
 
 	//FOrionInventoryEntry& NewEntry = EmptyIndex != INDEX_NONE ? Entries[EmptyIndex] : Entries.AddDefaulted_GetRef();
@@ -267,7 +271,6 @@ UOrionInventoryItemInstance* FOrionInventoryList::AddEntry(UOrionInventoryNode_I
 		ItemDef->DropItemFragment->OnInstanceCreated(NewItemInstance);
 	}
 
-	EmptyIndex = EmptyIndex != INDEX_NONE ? EmptyIndex : Entries.Num();
 	AssignItemIndex(NewItemInstance, EmptyIndex);
 
 	MarkItemDirty(Entries[EmptyIndex]);

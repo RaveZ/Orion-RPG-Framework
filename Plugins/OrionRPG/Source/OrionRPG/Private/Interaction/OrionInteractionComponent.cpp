@@ -256,7 +256,7 @@ void UOrionInteractionComponent::Client_NotifyInteraction_Implementation(EOrionI
 	
 }
 
-void UOrionInteractionComponent::Client_NotifyInteractionTarget_Implementation(EOrionInteractionResult NewInteractionResult)
+void UOrionInteractionComponent::Client_NotifyInteractionTarget_Implementation(EOrionInteractionResult NewInteractionResult)         
 {
 	if (IsValid(CurrentInteractionTarget) &&
 		CurrentInteractionTarget->InteractionNetMode == EOrionInteractionNetMode::E_OwnerOnly)

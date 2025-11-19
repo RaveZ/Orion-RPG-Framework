@@ -29,16 +29,21 @@ public:
 	UPROPERTY(EditAnywhere, Category = "OrionInventory")
 		EOrionInventoryType InventoryType;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta = (ClampMin = "1", ClampMax = "100", UIMin = "1", UIMax = "100", EditCondition = "InventoryType == EOrionInventoryType::E_GridBased", HideEditConditionToggle, EditConditionHides))
+	/**Max Weight for this inventory*/
+	UPROPERTY(EditAnywhere, meta = (Units = "Kilograms", UIMin = "0", EditCondition = "InventoryType == EOrionInventoryType::E_WeightBased", HideEditConditionToggle, EditConditionHides), Category = "OrionInventory")
+		float DefaultMaxInventoryWeight;
+
+	/**
+	* Default grid dimension for this inventory
+	* if using weight based inventory, only use the X as column
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta = (ClampMin = "1", ClampMax = "100", UIMin = "1", UIMax = "100"))
 		FIntPoint DefaultGridDimension;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta = (ClampMin = "50", ClampMax = "100", UIMin = "50", UIMax = "100"))
 		float GridSize;
 
-	/**Max Weight for this inventory*/
-	UPROPERTY(EditAnywhere, meta = (Units = "Kilograms", UIMin = "0", EditCondition = "InventoryType == EOrionInventoryType::E_WeightBased", HideEditConditionToggle, EditConditionHides), Category = "OrionInventory")
-		float DefaultMaxInventoryWeight;
 
 	/**Default drop item fragment for each item for this graph*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", Instanced)

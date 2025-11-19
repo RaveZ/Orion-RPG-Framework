@@ -13,6 +13,7 @@
 #include "UI/Foundation/OrionGridBase.h"
 #include "UI/Foundation/OrionGridContainerBase.h"
 #include "Engine/GameInstance.h"
+#include "GameFramework/Pawn.h"
 
 
 UOrionInventoryComponent* UOrionInventoryFunctionLibrary::GetInventoryComponent(const UObject* WorldContextObject)
@@ -114,36 +115,6 @@ bool UOrionInventoryFunctionLibrary::GetItemData(const UObject* WorldContextObje
     return false;
 }
 
-void UOrionInventoryFunctionLibrary::RegisterActiveSlots(const UObject* WorldContextObject, TArray<class UOrionGridSlot*> InSlots)
-{
-    UWorld* World = GEngine ? GEngine->GetWorldFromContextObjectChecked(WorldContextObject) : nullptr;
-    UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
-    if (GameInstance)
-    {
-        UOrionUIManagerSubsystem* UIManager = GameInstance->GetSubsystem<UOrionUIManagerSubsystem>();
-        if (UIManager)
-        {
-            UIManager->ActiveSlots = InSlots;
-        }
-    }
-}
-
-TArray<UOrionGridSlot*> UOrionInventoryFunctionLibrary::GetActiveSlots(const UObject* WorldContextObject)
-{
-    TArray<UOrionGridSlot*> OutSlots;
-    UWorld* World = GEngine ? GEngine->GetWorldFromContextObjectChecked(WorldContextObject) : nullptr;
-    UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
-    if (GameInstance)
-    {
-        UOrionUIManagerSubsystem* UIManager = GameInstance->GetSubsystem<UOrionUIManagerSubsystem>();
-        if (UIManager)
-        {
-            OutSlots = UIManager->ActiveSlots;
-        }
-    }
-    return OutSlots;
-}
-
 void UOrionInventoryFunctionLibrary::AssignGridItemToSlots(const UObject* WorldContextObject, UOrionGridItem* InGridItem, int32 StartingIndex)
 {
     if (InGridItem == nullptr) return;
@@ -171,5 +142,17 @@ void UOrionInventoryFunctionLibrary::AssignGridItemToSlots(const UObject* WorldC
             }
         }
     }
+}
+
+EOrionInventoryType UOrionInventoryFunctionLibrary::GetInventoryType(const UObject* WorldContextObject)
+{
+
+    UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);
+
+    if (InventoryComp && InventoryComp->InventoryDB)
+    {
+		return InventoryComp->InventoryDB->InventoryType;
+    }
+    return EOrionInventoryType();
 }
 

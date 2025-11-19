@@ -5,7 +5,6 @@
 #include "CommonActivatableWidget.h"
 #include "UI/OrionPrimaryGameLayout.h"
 #include "CommonInputSubsystem.h"
-#include "Engine.h"
 #include "Engine/GameInstance.h"	
 #include "GameFramework/PlayerController.h"
 #include "Engine/LocalPlayer.h"
@@ -95,7 +94,7 @@ void UOrionUILibrary::ResumeInputForPlayer(ULocalPlayer* LocalPlayer, FName Susp
 
 UOrionUIManagerSubsystem* UOrionUILibrary::GetOrionUISubsystem(const UObject* WorldContextObject)
 {
-	UWorld* World = GEngine ? GEngine->GetWorldFromContextObjectChecked(WorldContextObject) : nullptr;
+	UWorld* World = WorldContextObject->GetWorld();
 	UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
 	if (GameInstance)
 	{
@@ -108,7 +107,7 @@ UOrionUIManagerSubsystem* UOrionUILibrary::GetOrionUISubsystem(const UObject* Wo
 
 UCommonActivatableWidgetContainerBase* UOrionUILibrary::GetLayerWidget(const UObject* WorldContextObject, FGameplayTag LayerName)
 {
-	UWorld* World = GEngine ? GEngine->GetWorldFromContextObjectChecked(WorldContextObject) : nullptr;
+	UWorld* World = WorldContextObject->GetWorld();
 	UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
 	if (GameInstance)
 	{

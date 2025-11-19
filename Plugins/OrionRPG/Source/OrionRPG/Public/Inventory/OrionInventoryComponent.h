@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
 #include "Inventory/InventoryData.h"
 #include "Components/ActorComponent.h"
 #include "OrionSaveGame.h"
@@ -21,6 +22,7 @@ struct FInventoryItem;
 //Inventory Delegate
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInventorySignature);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemSignature, UOrionInventoryItemInstance*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryNoRoomForItem, UOrionInventoryNode_ItemDefinition*, InItemDefinition);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInventoryExamineItem, UOrionInventoryItemInstance*, Item, TSoftClassPtr<AActor>, ActorToExamine);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInventoryGridDimensionChanged, FIntPoint, InOldDimension, FIntPoint, InNewDimension);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInventoryItemStackChange, UOrionInventoryItemInstance*, Item, int32, CurrentStackCount, int32, MaxStackCount);
@@ -66,6 +68,9 @@ public:
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 	FInventoryGridDimensionChanged OnGridDimensionChanged;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
+	FInventoryNoRoomForItem OnNoRoomForItem;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FInventoryEncumberedStateChanged OnEncumberedStateChanged;
