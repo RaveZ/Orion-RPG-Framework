@@ -35,7 +35,6 @@ public:
 
 	/**
 	* Default grid dimension for this inventory
-	* if using weight based inventory, only use the X as column
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta = (ClampMin = "1", ClampMax = "100", UIMin = "1", UIMax = "100"))
 		FIntPoint DefaultGridDimension;

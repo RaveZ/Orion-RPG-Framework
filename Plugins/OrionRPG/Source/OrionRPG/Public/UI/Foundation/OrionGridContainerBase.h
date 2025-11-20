@@ -31,6 +31,9 @@ public:
 	int32 CurrentFocusedGridIndex;
 
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Detail")
+	TArray<TObjectPtr<class UOrionInventoryItemInstance>> CachedItems;
+
 	UPROPERTY(BlueprintReadWrite, Category = "UI")
 	int32 Rows;
 

@@ -33,6 +33,7 @@ UOrionInventoryComponent::UOrionInventoryComponent(const FObjectInitializer& Obj
 	bReplicateUsingRegisteredSubObjectList = true;
 	CurrentWeight = 0;
 	bInitializingSaveGame = false;
+	CurrentGridDimension = FIntPoint(1, 1);
 }
 
 
@@ -367,6 +368,21 @@ bool UOrionInventoryComponent::IsValidSlot(UOrionInventoryNode_ItemDefinition* I
 	return InventoryList.IsValidSlot(ItemDef, SlotIndex);
 }
 
+void UOrionInventoryComponent::SetEntries(TArray<UOrionInventoryItemInstance*> InItemList)
+{
+	TArray<UOrionInventoryItemInstance*> CurrentItemList = GetAllItems();
+	for (int32 i = 0; i < CurrentItemList.Num(); ++i)
+	{
+		if (InItemList.IsValidIndex(i))
+		{
+			if (CurrentItemList[i] == InItemList[i]) continue;
+			
+			InventoryList.AssignItemIndex(InItemList[i], i);
+		}
+	}
+
+}
+
 void UOrionInventoryComponent::AssignItemIndex(UOrionInventoryItemInstance* ItemInstance, int32 TileIndex)
 {
 	InventoryList.AssignItemIndex(ItemInstance, TileIndex);
@@ -590,7 +606,11 @@ float UOrionInventoryComponent::GetMaxWeight()
 
 FIntPoint UOrionInventoryComponent::GetCurrentGridDimension()
 {
-	return CurrentGridDimension;
+	FIntPoint OutDimension;
+    OutDimension.X = CurrentGridDimension.X;
+    int32 ItemMaxColumn = CurrentGridDimension.X > 0 ? FMath::CeilToInt(static_cast<float>(GetAllItems().Num()) / static_cast<float>(CurrentGridDimension.X)) : CurrentGridDimension.Y;
+	OutDimension.Y = InventoryDB ? InventoryDB->InventoryType == EOrionInventoryType::E_GridBased ? CurrentGridDimension.Y : FMath::Max(ItemMaxColumn, CurrentGridDimension.Y) : ItemMaxColumn;
+	return OutDimension;
 }
 
 void UOrionInventoryComponent::GridDimensionChanged(FIntPoint OldDimension, FIntPoint NewDimension)

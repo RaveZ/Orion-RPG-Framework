@@ -186,6 +186,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent", BlueprintPure = false)
 	TArray<UOrionInventoryItemInstance*> GetAllItems() const;
 
+
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent", BlueprintPure = false)
+	void SetEntries(TArray<UOrionInventoryItemInstance*> InItemList);
+
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
 	void AssignItemIndex(UOrionInventoryItemInstance* ItemInstance, int32 TileIndex);
 

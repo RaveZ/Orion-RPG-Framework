@@ -105,6 +105,7 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "UI")
 	FVector2D DragTargetPosition;
 
+
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "UI")
 	FOnGridItemRemoved OnItemRemoved;
 
@@ -124,10 +125,23 @@ public:
 
 	void SetItemInstance_Implementation(UOrionInventoryItemInstance* InItemInstance, bool bUpdateItemIndex = true);
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OrionRPG|UI")
+	void ValidateDragPosition(UOrionGridSlot* InOtherSlot);
+
+	void ValidateDragPosition_Implementation(UOrionGridSlot* InOtherSlot);
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OrionRPG|UI")
+	void CreateDragItem();
+
+	void CreateDragItem_Implementation();
+
 	UFUNCTION(BlueprintCallable, Category = "OrionRPG|UI")
 	void UpdateItemSize(UOrionInventoryItemInstance* InItemInstance);
 
-	UFUNCTION(BlueprintCallable, Category = "OrionRPG|UI")
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionRPG|UI")
 	bool IsValidSlot(UOrionGridSlot* InOtherSlot);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionRPG|UI")
+	bool CanSwapItem(UOrionGridItem*& GridItemToSwap, UOrionGridSlot* InOtherSlot);
 
 };

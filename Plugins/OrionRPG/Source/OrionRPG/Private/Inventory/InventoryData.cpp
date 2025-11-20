@@ -201,13 +201,16 @@ void FOrionInventoryList::AddEntry(UOrionInventoryItemInstance* ItemInstance)
 
 void FOrionInventoryList::AssignItemIndex(UOrionInventoryItemInstance* ItemInstance, int32 TileIndex)
 {
-	if (Entries.Num() <= TileIndex)
+	FIntPoint ItemSize = ItemInstance ? ItemInstance->GetItemDef()->GridSize : FIntPoint(1,1);
+	int32 MaxTileIndex = TileIndex + ItemSize.X * ItemSize.Y - 1;
+	if (Entries.Num() <= MaxTileIndex)
 	{
-		Entries.SetNum(TileIndex + 1);
+		Entries.SetNum(MaxTileIndex + 1);
 	}
 	FOrionInventoryEntry& NewEntry = Entries[TileIndex];
 	NewEntry.ItemInstance = ItemInstance;
 
+	MarkItemDirty(NewEntry);
 	
 }
 
@@ -245,17 +248,22 @@ UOrionInventoryItemInstance* FOrionInventoryList::AddEntry(UOrionInventoryNode_I
 			if (EmptyIndex == INDEX_NONE)
 			{
 				OwnerComponent->OnNoRoomForItem.Broadcast(ItemDef);
+				UE_LOG(LogTemp, Warning, TEXT("No room for item: %s"), *ItemDef->GetName());
 				return nullptr;
 			}
 			break;
 		case EOrionInventoryType::E_WeightBased:
 			EmptyIndex = EmptyIndex != INDEX_NONE ? EmptyIndex : Entries.Num();
+			if (ItemDef->GridSize.X > OwnerComponent->GetCurrentGridDimension().X)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("Item %s too large for inventory (GridSize.X: %d, InventoryCols: %d) \n Please adjust inventory max row to fit the item."), *ItemDef->Tag.GetTagName().ToString(), ItemDef->GridSize.X, OwnerComponent->GetCurrentGridDimension().X);
+				return nullptr;
+			}
 			break;
 		default:
 			break;
 	}
 
-	//FOrionInventoryEntry& NewEntry = EmptyIndex != INDEX_NONE ? Entries[EmptyIndex] : Entries.AddDefaulted_GetRef();
 	NewItemInstance = NewObject<UOrionInventoryItemInstance>(OwnerComponent->GetOwner());
 	NewItemInstance->SetItemDef(ItemDef);
 	ItemDef->LoadPrerequisites();
@@ -274,6 +282,7 @@ UOrionInventoryItemInstance* FOrionInventoryList::AddEntry(UOrionInventoryNode_I
 	AssignItemIndex(NewItemInstance, EmptyIndex);
 
 	MarkItemDirty(Entries[EmptyIndex]);
+
 
 	return NewItemInstance;
 }

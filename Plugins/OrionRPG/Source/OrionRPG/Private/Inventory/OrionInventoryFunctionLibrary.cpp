@@ -144,9 +144,10 @@ void UOrionInventoryFunctionLibrary::AssignGridItemToSlots(const UObject* WorldC
     }
 }
 
+
+
 EOrionInventoryType UOrionInventoryFunctionLibrary::GetInventoryType(const UObject* WorldContextObject)
 {
-
     UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);
 
     if (InventoryComp && InventoryComp->InventoryDB)
@@ -154,5 +155,19 @@ EOrionInventoryType UOrionInventoryFunctionLibrary::GetInventoryType(const UObje
 		return InventoryComp->InventoryDB->InventoryType;
     }
     return EOrionInventoryType();
+}
+
+TArray<UOrionInventoryItemInstance*> UOrionInventoryFunctionLibrary::GetAllInventoryItem(const UObject* WorldContextObject)
+{
+    TArray<UOrionInventoryItemInstance*> OutResult;
+
+    UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);
+
+    if (InventoryComp)
+    {
+        OutResult = InventoryComp->GetAllItems();
+    }
+
+    return OutResult;
 }
 

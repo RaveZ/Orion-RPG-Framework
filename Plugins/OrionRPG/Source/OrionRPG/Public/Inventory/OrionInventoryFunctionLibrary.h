@@ -90,4 +90,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
 	static EOrionInventoryType GetInventoryType(const UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static TArray<UOrionInventoryItemInstance*> GetAllInventoryItem(const UObject* WorldContextObject);
 };

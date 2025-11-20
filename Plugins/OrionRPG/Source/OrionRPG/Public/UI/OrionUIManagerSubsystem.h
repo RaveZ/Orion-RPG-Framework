@@ -44,6 +44,7 @@ public:
 
 class UOrionPrimaryGameLayout;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOrionDragItemSignature, class UOrionGridItem*, DraggedItem);
 UCLASS()
 class ORIONRPG_API UOrionUIManagerSubsystem : public UGameInstanceSubsystem
 {
@@ -63,6 +64,15 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "UI Subsystem|Inventory")
 	TObjectPtr<class UOrionGridItem> DraggedItem;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "UI Subsystem|Inventory")
+	FOrionDragItemSignature OnDragItem;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "UI Subsystem|Inventory")
+	FOrionDragItemSignature OnCancelDrag;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "UI Subsystem|Inventory")
+	FOrionDragItemSignature OnDragItemCompleted;
 
 private:
 	TSharedRef<FOrionNavigationConfig> OrionNavigationConfig;

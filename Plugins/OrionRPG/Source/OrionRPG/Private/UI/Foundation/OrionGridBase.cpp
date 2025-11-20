@@ -56,7 +56,7 @@ void UOrionGridSlot::SetGridItem_Implementation(UOrionGridItem* InGridItem)
 	}
 
 	GridItem = InGridItem;
-	
+
 	if (GridItem)
 	{
 		GridItem->OnItemRemoved.AddDynamic(this, &UOrionGridSlot::HandleGridItemRemoved);
@@ -90,7 +90,7 @@ void UOrionGridItem::NativePreConstruct()
 void UOrionGridItem::NativeConstruct()
 {
 	Super::NativeConstruct();
-	
+
 
 	//DragTargetPosition = UWidgetLayoutLibrary::GetMousePositionOnViewport(this);
 }
@@ -108,8 +108,9 @@ void UOrionGridItem::SetItemInstance_Implementation(UOrionInventoryItemInstance*
 
 	ItemInstance = InItemInstance;
 
-	
-	if (bUpdateItemIndex)
+	UOrionUIManagerSubsystem* UISubsystem = UOrionUILibrary::GetOrionUISubsystem(this);
+
+	if (bUpdateItemIndex && UISubsystem->DraggedItem != this)
 	{
 		UOrionInventoryFunctionLibrary::AssignItemIndex(this, InItemInstance, GridIndex);
 	}
@@ -124,6 +125,14 @@ void UOrionGridItem::SetItemInstance_Implementation(UOrionInventoryItemInstance*
 		OnItemChanged.Broadcast(InItemInstance);
 		UpdateItemSize(InItemInstance);
 	}
+}
+
+void UOrionGridItem::ValidateDragPosition_Implementation(UOrionGridSlot* InOtherSlot)
+{
+}
+
+void UOrionGridItem::CreateDragItem_Implementation()
+{
 }
 
 void UOrionGridItem::UpdateItemSize(UOrionInventoryItemInstance* InItemInstance)
@@ -154,7 +163,7 @@ bool UOrionGridItem::IsValidSlot(UOrionGridSlot* InOtherSlot)
 	bool bValid = true;
 	UOrionInventoryComponent* InventoryComp = UOrionInventoryFunctionLibrary::GetInventoryComponent(this);
 	TArray<UOrionGridSlot*> ActiveSlots = InOtherSlot->OwningGridContainer->GridSlots;
-	if (InventoryComp && InOtherSlot)
+	if (InventoryComp && InOtherSlot && ItemInstance)
 	{
 		int32 Row = InventoryComp->GetCurrentGridDimension().Y;
 		int32 Col = InventoryComp->GetCurrentGridDimension().X;
@@ -186,6 +195,68 @@ bool UOrionGridItem::IsValidSlot(UOrionGridSlot* InOtherSlot)
 			}
 		}
 	}
+	else
+	{
+		bValid = false;
+	}
 	return bValid;
+}
+
+bool UOrionGridItem::CanSwapItem(UOrionGridItem*& GridItemToSwap, UOrionGridSlot* InOtherSlot)
+{
+	bool bCanSwap = true;
+	TArray<UOrionGridItem*> OccupiedGridItems;
+
+	UOrionInventoryComponent* InventoryComp = UOrionInventoryFunctionLibrary::GetInventoryComponent(this);
+	TArray<UOrionGridSlot*> ActiveSlots = InOtherSlot->OwningGridContainer->GridSlots;
+	if (InventoryComp && InOtherSlot)
+	{
+		int32 Row = InventoryComp->GetCurrentGridDimension().Y;
+		int32 Col = InventoryComp->GetCurrentGridDimension().X;
+		FIntPoint ItemSize = ItemInstance->GetItemDef()->GridSize;
+		int32 StartingIndex = InOtherSlot->GridIndex;
+		for (int32 Y = 0; Y < ItemSize.Y; Y++)
+		{
+			for (int32 X = 0; X < ItemSize.X; X++)
+			{
+				int32 SlotIndex = StartingIndex + (Y * Col) + X;
+				int32 SlotX = (StartingIndex % Col) + X;
+				int32 SlotY = (StartingIndex / Col) + Y;
+				if (SlotX >= Col || SlotY >= Row)
+				{
+					bCanSwap = false;
+					break;
+				}
+				if (!ActiveSlots.IsValidIndex(SlotIndex))
+				{
+					bCanSwap = false;
+					break;
+				}
+
+
+				if (ActiveSlots[SlotIndex]->GridItem &&
+					ActiveSlots[SlotIndex]->GridItem->ItemInstance != ItemInstance)
+				{
+					OccupiedGridItems.AddUnique(ActiveSlots[SlotIndex]->GridItem);
+				}
+			}
+		}
+	}
+	else
+	{
+		bCanSwap = false;
+	}
+
+	if (OccupiedGridItems.Num() > 1)
+	{
+		bCanSwap = false;
+	}
+
+	if (bCanSwap && OccupiedGridItems.IsValidIndex(0))
+	{
+		GridItemToSwap = OccupiedGridItems[0];
+	}
+
+	return bCanSwap;
 }
 
