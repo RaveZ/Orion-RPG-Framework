@@ -32,6 +32,11 @@ int32 UOrionGridBase::GetIndexFromPosition(int32 PosX, int32 PosY, int32 Columns
 	return PosX + (PosY * Columns);
 }
 
+void UOrionGridBase::FocusGrid_Implementation()
+{
+	OnFocusGrid.Broadcast(this);
+}
+
 //////////////////////////////////////////////////////////////////////
 
 // Orion Grid Slot
@@ -108,10 +113,17 @@ void UOrionGridItem::SetItemInstance_Implementation(UOrionInventoryItemInstance*
 
 	ItemInstance = InItemInstance;
 
+	
+
 	UOrionUIManagerSubsystem* UISubsystem = UOrionUILibrary::GetOrionUISubsystem(this);
 
 	if (bUpdateItemIndex && UISubsystem->DraggedItem != this)
 	{
+		UE_LOG(LogTemp, Log, TEXT("UOrionGridItem::SetItemInstance_Implementation - This: %s, ItemInstance: %s, ItemTag: %s"),
+			*GetName(),
+			ItemInstance ? *ItemInstance->GetName() : TEXT("nullptr"),
+			ItemInstance && ItemInstance->GetItemDef() ? *ItemInstance->GetItemDef()->Tag.ToString() : TEXT("nullptr")
+		);
 		UOrionInventoryFunctionLibrary::AssignItemIndex(this, InItemInstance, GridIndex);
 	}
 

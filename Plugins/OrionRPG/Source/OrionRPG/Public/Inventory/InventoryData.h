@@ -76,6 +76,7 @@ public:
 		return FastArrayDeltaSerialize<FOrionInventoryEntry, FOrionInventoryList>(Entries, DeltaParams, *this);
 	}
 
+	void SetEntries(TArray<UOrionInventoryItemInstance*> InItemList);
 	void AddEntry(UOrionInventoryItemInstance* ItemInstance);
 	void AssignItemIndex(UOrionInventoryItemInstance* ItemInstance, int32 TileIndex);
 	UOrionInventoryItemInstance* AddEntry(UOrionInventoryNode_ItemDefinition* ItemDef);

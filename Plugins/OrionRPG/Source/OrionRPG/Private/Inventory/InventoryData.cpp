@@ -181,6 +181,22 @@ void FOrionInventoryList::Initialize(UOrionInventoryComponent* InOwnerComponent)
 	MarkArrayDirty();
 }
 
+void FOrionInventoryList::SetEntries(TArray<UOrionInventoryItemInstance*> InItemList)
+{
+	TArray<UOrionInventoryItemInstance*> CurrentItemList = GetAllItems();
+	Entries.SetNum(InItemList.Num());
+	for (int32 i = 0; i < CurrentItemList.Num(); ++i)
+	{
+		if (InItemList.IsValidIndex(i))
+		{
+			if (CurrentItemList[i] == InItemList[i]) continue;
+			Entries[i].ItemInstance = InItemList[i];
+		}
+	}
+	MarkArrayDirty();
+	return;
+}
+
 
 TArray<UOrionInventoryItemInstance*> FOrionInventoryList::GetAllItems() const
 {

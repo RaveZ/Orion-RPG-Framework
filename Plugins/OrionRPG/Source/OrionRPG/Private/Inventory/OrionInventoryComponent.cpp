@@ -370,16 +370,8 @@ bool UOrionInventoryComponent::IsValidSlot(UOrionInventoryNode_ItemDefinition* I
 
 void UOrionInventoryComponent::SetEntries(TArray<UOrionInventoryItemInstance*> InItemList)
 {
-	TArray<UOrionInventoryItemInstance*> CurrentItemList = GetAllItems();
-	for (int32 i = 0; i < CurrentItemList.Num(); ++i)
-	{
-		if (InItemList.IsValidIndex(i))
-		{
-			if (CurrentItemList[i] == InItemList[i]) continue;
-			
-			InventoryList.AssignItemIndex(InItemList[i], i);
-		}
-	}
+	InventoryList.SetEntries(InItemList);	
+	
 
 }
 

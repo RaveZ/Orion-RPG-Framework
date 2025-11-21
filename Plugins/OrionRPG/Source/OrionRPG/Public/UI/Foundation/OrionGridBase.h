@@ -10,6 +10,7 @@ class UOrionInventoryItemInstance;
 struct FFrame;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGridItemRemoved);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFocusGrid, UOrionGridBase*, FocusedGrid);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGridItemChanged, UOrionInventoryItemInstance*, ItemInstance);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAddItemToSlot, UOrionInventoryItemInstance*, ItemInstance, int32, GridIndex);
 
@@ -32,7 +33,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "UI")
 	float GridSize;
 
-	
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "UI")
+	FOnFocusGrid OnFocusGrid;
+
 public:
 	// UUserWidget interface
 	virtual void NativePreConstruct() override;
@@ -43,7 +46,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "OrionRPG|UI")
 	int32 GetIndexFromPosition(int32 PosX, int32 PosY, int32 Columns);
-	
+
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OrionRPG|UI")
+	void FocusGrid();
+
+	void FocusGrid_Implementation();
 };
 
 
