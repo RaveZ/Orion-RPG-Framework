@@ -103,7 +103,7 @@ public:
 	TArray<struct FEditedDocumentInfo> LastEditedDocuments;
 
 	/** Whether or not this blueprint is newly created, and hasn't been opened in an editor yet */
-	UPROPERTY(/*transient*/ BlueprintReadOnly, Category = "OrionInventoryGraph")
+	UPROPERTY(/*transient*/ BlueprintReadOnly, Category = "OrionInventory")
 	bool bIsNewlyCreated = true;
 
 

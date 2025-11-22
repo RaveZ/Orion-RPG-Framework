@@ -2,22 +2,12 @@
 
 
 #include "Inventory/OrionInventorySetting.h"
+#include "Inventory/OrionActorViewer.h"
+#include "UI/Foundation/OrionGridBase.h"
 #include "UObject/ConstructorHelpers.h"
 
 UOrionInventorySetting::UOrionInventorySetting()
 {
-	auto ItemViewerFinder = ConstructorHelpers::FClassFinder<AActor>(TEXT("/OrionRPG/Blueprint/Inventory/BP_InventoryItemViewer.BP_InventoryItemViewer_C"));
-	if (ItemViewerFinder.Succeeded())
-	{
-		ItemViewerActorClass = ItemViewerFinder.Class;
-	}
-
-	auto CharacterDisplayFinder = ConstructorHelpers::FClassFinder<AActor>(TEXT("/OrionRPG/Blueprint/Inventory/BP_InventoryCharacterDisplay.BP_InventoryCharacterDisplay_C"));
-	if (CharacterDisplayFinder.Succeeded())
-	{
-		CharacterDisplayActorClass = CharacterDisplayFinder.Class;
-	}
-
 	auto GridSlotWidgetFinder = ConstructorHelpers::FClassFinder<AActor>(TEXT("/OrionRPG/Widgets/Inventory/WBP_InventoryGridItem.WBP_InventoryGridSlot_C"));
 	if (GridSlotWidgetFinder.Succeeded())
 	{
@@ -30,8 +20,23 @@ UOrionInventorySetting::UOrionInventorySetting()
 		DefaultGridItemWidget = GridItemWidgetFinder.Class;
 	}
 
+	auto ItemViewerFinder = ConstructorHelpers::FClassFinder<AOrionActorViewer>(TEXT("/OrionRPG/Blueprint/Inventory/BP_ItemViewer.BP_ItemViewer_C"));
+	if (ItemViewerFinder.Succeeded())
+	{
+		ItemViewerClass = ItemViewerFinder.Class;
+	}
+
+	auto CharacterViewerFinder = ConstructorHelpers::FClassFinder<AOrionActorViewer>(TEXT("/OrionRPG/Blueprint/Inventory/BP_CharacterViewer.BP_CharacterViewer_C"));
+	if (CharacterViewerFinder.Succeeded())
+	{
+		CharacterViewerClass = CharacterViewerFinder.Class;
+	}
+
+
+	
+
 	ItemViewerLocation = FVector(0.f, 0.f, 1000000.f);
-	CharacterDisplayLocation = FVector(1000.f, 0.f, 1000000.f);
+	CharacterViewerLocation = FVector(10000.f, 0.f, 1000000.f);
 
 	ItemContainerColor = FLinearColor(0.07f, 0.07f, 0.07f);
 	bCanRenameNode = true;

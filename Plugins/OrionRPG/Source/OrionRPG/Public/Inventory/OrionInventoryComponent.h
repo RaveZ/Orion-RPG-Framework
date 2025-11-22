@@ -9,6 +9,7 @@
 #include "OrionSaveGame.h"
 #include "OrionInventoryComponent.generated.h"
 
+class AOrionActorViewer;
 class UOrionInventoryGraph;
 class UOrionInventoryNode_ItemDefinition;
 class UOrionInventoryItemInstance;
@@ -47,7 +48,13 @@ public:
 		TObjectPtr<APlayerController> OwningController;
 
 	UPROPERTY(BlueprintReadOnly, Category = "InventoryComponent")
-		TObjectPtr<AActor> ItemViewerActor;
+		TObjectPtr<AOrionActorViewer> ItemViewer;
+
+	UPROPERTY(BlueprintReadOnly, Category = "InventoryComponent")
+		TObjectPtr<AOrionActorViewer> CharacterViewer;
+
+	UPROPERTY(BlueprintReadOnly, Category = "InventoryComponent")
+		TObjectPtr< UOrionInventoryItemInstance> ExaminedItem;
 
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")

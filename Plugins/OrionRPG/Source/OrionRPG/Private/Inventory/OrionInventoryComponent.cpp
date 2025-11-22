@@ -3,6 +3,7 @@
 
 #include "Inventory/OrionInventoryComponent.h"
 #include "Inventory/OrionInventorySetting.h"
+#include "Inventory/OrionActorViewer.h"
 #include "Inventory/OrionInventoryItemInstance.h"
 #include "Inventory/OrionInventoryItemFragment.h"
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
@@ -55,13 +56,19 @@ void UOrionInventoryComponent::BeginPlay()
 
 	if (World)
 	{
-		TSubclassOf<AActor> ItemViewerClass = GetMutableDefault<UOrionInventorySetting>()->ItemViewerActorClass;
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Owner = GetOwner();
 		SpawnParams.Instigator = GetOwningPawn();
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		ItemViewerActor = World->SpawnActor<AActor>(ItemViewerClass, GetMutableDefault<UOrionInventorySetting>()->ItemViewerLocation, FRotator::ZeroRotator, SpawnParams);
+
+		//Actor viewer
+		TSubclassOf<AOrionActorViewer> ItemViewerClass = GetMutableDefault<UOrionInventorySetting>()->ItemViewerClass;
+		ItemViewer = World->SpawnActor<AOrionActorViewer>(ItemViewerClass, GetMutableDefault<UOrionInventorySetting>()->ItemViewerLocation, FRotator::ZeroRotator, SpawnParams);
 		
+		//Character viewer
+		TSubclassOf<AOrionActorViewer> CharacterViewerClass = GetMutableDefault<UOrionInventorySetting>()->CharacterViewerClass;
+		CharacterViewer = World->SpawnActor<AOrionActorViewer>(CharacterViewerClass, GetMutableDefault<UOrionInventorySetting>()->CharacterViewerLocation, FRotator::ZeroRotator, SpawnParams);
+
 	}
 
 	//console command
@@ -429,6 +436,7 @@ void UOrionInventoryComponent::ExamineItem(FGameplayTag ItemTag, TSoftClassPtr<A
 	
 	if (FoundItem)
 	{
+		ExaminedItem = FoundItem;
 		ExamineItemInstance(FoundItem, ActorToExamine);
 	}
 	else

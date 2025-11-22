@@ -6,7 +6,7 @@
 #include "UObject/NoExportTypes.h"
 #include "OrionInventorySetting.generated.h"
 
-
+class UOrionActorViewer;
 
 UCLASS(config = Engine, defaultconfig)
 class ORIONRPG_API UOrionInventorySetting : public UObject
@@ -24,7 +24,7 @@ public:
 	TSubclassOf<class UOrionGridItem> DefaultGridItemWidget;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting")
-	TSubclassOf<class AActor> ItemViewerActorClass;
+	TSubclassOf<class AOrionActorViewer> ItemViewerClass;
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting")
@@ -32,10 +32,10 @@ public:
 
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting")
-	TSubclassOf<class AActor> CharacterDisplayActorClass;
+	TSubclassOf<class AOrionActorViewer> CharacterViewerClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting")
-	FVector CharacterDisplayLocation;
+	FVector CharacterViewerLocation;
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor ItemContainerColor;
