@@ -24,7 +24,7 @@ struct FInventoryItem;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInventorySignature);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemSignature, UOrionInventoryItemInstance*, Item);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryNoRoomForItem, UOrionInventoryNode_ItemDefinition*, InItemDefinition);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInventoryExamineItem, UOrionInventoryItemInstance*, Item, TSoftClassPtr<AActor>, ActorToExamine);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInventoryInspectItem, UOrionInventoryItemInstance*, Item, TSoftClassPtr<AActor>, ActorToInspect);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInventoryGridDimensionChanged, FIntPoint, InOldDimension, FIntPoint, InNewDimension);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInventoryItemStackChange, UOrionInventoryItemInstance*, Item, int32, CurrentStackCount, int32, MaxStackCount);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryMaxWeightChanged, float, InMaxWeight);
@@ -54,7 +54,7 @@ public:
 		TObjectPtr<AOrionActorViewer> CharacterViewer;
 
 	UPROPERTY(BlueprintReadOnly, Category = "InventoryComponent")
-		TObjectPtr< UOrionInventoryItemInstance> ExaminedItem;
+		TObjectPtr< UOrionInventoryItemInstance> InspectdItem;
 
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
@@ -83,7 +83,7 @@ public:
 		FInventoryEncumberedStateChanged OnEncumberedStateChanged;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
-		FInventoryExamineItem OnExamineItem;
+		FInventoryInspectItem OnInspectItem;
 
 public:
 	UFUNCTION()
@@ -244,10 +244,10 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
-	void ExamineItem(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag(), TSoftClassPtr<AActor> ActorToExamine = nullptr);
+	void InspectItem(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag(), TSoftClassPtr<AActor> ActorToInspect = nullptr);
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
-	void ExamineItemInstance(UOrionInventoryItemInstance* ItemInstance = nullptr, TSoftClassPtr<AActor> ActorToExamine = nullptr);
+	void InspectItemInstance(UOrionInventoryItemInstance* ItemInstance = nullptr, TSoftClassPtr<AActor> ActorToInspect = nullptr);
 
 public:
 	UFUNCTION()

@@ -81,22 +81,22 @@ UOrionInventoryFragment_ConsumableItem::UOrionInventoryFragment_ConsumableItem()
 
 //////////////////////////////////////////////////////////////////////
 
-// Examine item fragment
-UOrionInventoryFragment_ExamineItem::UOrionInventoryFragment_ExamineItem()
+// Inspect item fragment
+UOrionInventoryFragment_InspectItem::UOrionInventoryFragment_InspectItem()
 {
-	ActionDisplayName = FText::FromString("Examine");
+	ActionDisplayName = FText::FromString("Inspect");
 }
 
 
-void UOrionInventoryFragment_ExamineItem::K2_ExecuteAction_Implementation()
+void UOrionInventoryFragment_InspectItem::K2_ExecuteAction_Implementation()
 {
-	// Use ActorToExamine if set, otherwise fallback to pickup actor class
+	// Use ActorToInspect if set, otherwise fallback to pickup actor class
 	if (UWorld* World = GetWorld())
 	{
 		UOrionInventoryComponent* InvComp = UOrionInventoryFunctionLibrary::GetInventoryComponent(World);
 		if (InvComp)
 		{
-			InvComp->ExamineItemInstance(OwningItemInstance, ActorToExamine);
+			InvComp->InspectItemInstance(OwningItemInstance, ActorToInspect);
 		}
 	}
 

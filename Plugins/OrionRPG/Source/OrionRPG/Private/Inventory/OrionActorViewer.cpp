@@ -5,6 +5,7 @@
 
 AOrionActorViewer::AOrionActorViewer()
 {
+	DefaultFOV = 25.f;
 	MinFOV = 25.f;
 	MaxFOV = 50.f;
 	
@@ -13,7 +14,7 @@ AOrionActorViewer::AOrionActorViewer()
 void AOrionActorViewer::BeginPlay()
 {
 	Super::BeginPlay();
-	CurrentFOV = MinFOV;
+	CurrentFOV = DefaultFOV;
 
 }
 
@@ -22,5 +23,9 @@ void AOrionActorViewer::Zoom_Implementation(float Delta)
 }
 
 void AOrionActorViewer::Rotate_Implementation(float DeltaX, float DeltaY, float Sensitivity)
+{
+}
+
+void AOrionActorViewer::ResetViewer_Implementation()
 {
 }

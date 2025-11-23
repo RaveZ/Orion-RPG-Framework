@@ -14,6 +14,12 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Inventory")
 	float CurrentFOV;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Inventory")
+	FRotator CurrentRotation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	float DefaultFOV;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	float MinFOV;
 
@@ -34,4 +40,10 @@ public:
 	void Rotate(float DeltaX, float DeltaY, float Sensitivity);
 
 	void Rotate_Implementation(float DeltaX, float DeltaY, float Sensitivity);
+
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Inventory")
+	void ResetViewer();
+
+	void ResetViewer_Implementation();
 };

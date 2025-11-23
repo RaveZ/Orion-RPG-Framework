@@ -96,17 +96,17 @@ public:
 
 //////////////////////////////////////////////////////////////////////
 
-// Examine item fragment
-UCLASS(meta = (DisplayName = "Examine Item Fragment"))
-class UOrionInventoryFragment_ExamineItem : public UOrionInventoryItemFragment
+// Inspect item fragment
+UCLASS(meta = (DisplayName = "Inspectable Fragment"))
+class UOrionInventoryFragment_InspectItem : public UOrionInventoryItemFragment
 {
 	GENERATED_BODY()
 
 public:
-	UOrionInventoryFragment_ExamineItem();
+	UOrionInventoryFragment_InspectItem();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment)
-	TSoftClassPtr<AActor> ActorToExamine;
+	TSoftClassPtr<AActor> ActorToInspect;
 
 	virtual void K2_ExecuteAction_Implementation() override;
 };

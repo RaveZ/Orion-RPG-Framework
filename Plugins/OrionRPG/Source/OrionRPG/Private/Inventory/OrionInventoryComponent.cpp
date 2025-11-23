@@ -430,31 +430,31 @@ APawn* UOrionInventoryComponent::GetOwningPawn() const
 	return nullptr;
 }
 
-void UOrionInventoryComponent::ExamineItem(FGameplayTag ItemTag, TSoftClassPtr<AActor> ActorToExamine)
+void UOrionInventoryComponent::InspectItem(FGameplayTag ItemTag, TSoftClassPtr<AActor> ActorToInspect)
 {
 	UOrionInventoryItemInstance* FoundItem = InventoryList.FindFirstItemByTag(ItemTag);
 	
 	if (FoundItem)
 	{
-		ExaminedItem = FoundItem;
-		ExamineItemInstance(FoundItem, ActorToExamine);
+		InspectdItem = FoundItem;
+		InspectItemInstance(FoundItem, ActorToInspect);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Fail to examine item. Item not found!"));
+		UE_LOG(LogTemp, Warning, TEXT("Fail to Inspect item. Item not found!"));
 	}
 }
 
-void UOrionInventoryComponent::ExamineItemInstance(UOrionInventoryItemInstance* ItemInstance, TSoftClassPtr<AActor> ActorToExamine)
+void UOrionInventoryComponent::InspectItemInstance(UOrionInventoryItemInstance* ItemInstance, TSoftClassPtr<AActor> ActorToInspect)
 {
-	if (!ActorToExamine && !ItemInstance)
+	if (!ActorToInspect && !ItemInstance)
 	{
 		return;
 	}
 
-	TSoftClassPtr<AActor> InActorClass = ActorToExamine ? ActorToExamine : ItemInstance->GetItemDef()->GetPickupActorClass();
+	TSoftClassPtr<AActor> InActorClass = ActorToInspect ? ActorToInspect : ItemInstance->GetItemDef()->GetPickupActorClass();
 
-	OnExamineItem.Broadcast(ItemInstance, InActorClass);
+	OnInspectItem.Broadcast(ItemInstance, InActorClass);
 
 }
 
