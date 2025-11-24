@@ -274,6 +274,10 @@ protected:
 	void CreateNewInventoryItem();
 	bool CanCreateInventoryItem() const;
 
+
+	void CreateNewItemFragment();
+	bool CanCreateNewItemFragment() const;
+
 	void CreateNewInventoryEvent();
 	bool CanCreateInventoryEvent() const;
 	

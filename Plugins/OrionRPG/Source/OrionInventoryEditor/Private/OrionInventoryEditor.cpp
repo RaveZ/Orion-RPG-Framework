@@ -3,7 +3,7 @@
 
 #include "OrionInventoryEditor.h"
 #include "OrionInventoryEditorModule.h"
-#include "Decorator/OrionDecorator.h"
+#include "Inventory/OrionInventoryItemFragment.h"
 #include "EngineGlobals.h"
 #include "Editor/EditorEngine.h"
 #include "Editor.h"
@@ -286,6 +286,11 @@ void FOrionInventoryEditor::BindCommands()
 	ToolkitCommands->MapAction(FOrionInventory_EditorCommands::Get().AddInventoryItem,
 		FExecuteAction::CreateSP(this, &FOrionInventoryEditor::CreateNewInventoryItem),
 		FCanExecuteAction::CreateSP(this, &FOrionInventoryEditor::CanCreateInventoryItem)
+	);
+
+	ToolkitCommands->MapAction(FOrionInventory_EditorCommands::Get().NewInventoryFragment,
+		FExecuteAction::CreateSP(this, &FOrionInventoryEditor::CreateNewItemFragment),
+		FCanExecuteAction::CreateSP(this, &FOrionInventoryEditor::CanCreateNewItemFragment)
 	);
 
 	ToolkitCommands->MapAction(FOrionInventory_EditorCommands::Get().InventorySetting,
@@ -1545,22 +1550,37 @@ bool FOrionInventoryEditor::CanCreateInventoryItem() const
 {
 	return true;
 }
+
+void FOrionInventoryEditor::CreateNewItemFragment()
+{
+	HandleNewNodeClassPicked(UOrionInventoryItemFragment::StaticClass());
+}
+
+bool FOrionInventoryEditor::CanCreateNewItemFragment() const
+{
+	return true;
+}
+
 void FOrionInventoryEditor::CreateNewInventoryEvent()
 {
 	HandleNewNodeClassPicked(UOrionEvent::StaticClass());
 }
+
 bool FOrionInventoryEditor::CanCreateInventoryEvent() const
 {
 	return true;
 }
+
 void FOrionInventoryEditor::OpenInventorySetting()
 {
 	PropertyWidget->SetObject(GetOrionInventoryGraph());
 }
+
 bool FOrionInventoryEditor::CanOpenInventorySetting() const
 {
 	return true;
 }
+
 void FOrionInventoryEditor::OnRenameNode()
 {
 	TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor();
@@ -1578,6 +1598,7 @@ void FOrionInventoryEditor::OnRenameNode()
 		}
 	}
 }
+
 bool FOrionInventoryEditor::CanRenameNodes() const
 {
 	if (GetFocusedGraph())

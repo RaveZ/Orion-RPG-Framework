@@ -40,7 +40,22 @@ void FOrionInventoryEditorToolbar::FillInventorySystemToolbar(FToolBarBuilder& T
 	}
 	ToolbarBuilder.EndSection();
 
-	
+
+	ToolbarBuilder.BeginSection("Inventory System");
+	{
+		const FText NewFragmentLabel = LOCTEXT("NewFragment_Label", "New Item Fragment");
+		const FText NewFragmentTooltip = LOCTEXT("NewFragment_ToolTip", "Create a new inventory item fragment blueprint from a base class");
+		const FSlateIcon NewFragmentIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.CustomFragment_16x");
+
+
+		ToolbarBuilder.AddToolBarButton(FOrionInventory_EditorCommands::Get().NewInventoryFragment,
+			NAME_None,
+			NewFragmentLabel,
+			NewFragmentTooltip,
+			NewFragmentIcon
+		);
+	}
+	ToolbarBuilder.EndSection();
 }
 
 

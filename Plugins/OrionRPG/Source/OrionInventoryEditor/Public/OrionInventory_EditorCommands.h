@@ -25,8 +25,7 @@ public:
 	TSharedPtr< FUICommandInfo > AddNewInventoryGraph;
 	
 	//Toolbar
-	TSharedPtr<FUICommandInfo> NewInventoryDecorator;
-	TSharedPtr<FUICommandInfo> NewInventoryEvent;
+	TSharedPtr<FUICommandInfo> NewInventoryFragment;
 	TSharedPtr<FUICommandInfo> InventorySetting;
 	TSharedPtr<FUICommandInfo> AddInventoryItem;
 };
