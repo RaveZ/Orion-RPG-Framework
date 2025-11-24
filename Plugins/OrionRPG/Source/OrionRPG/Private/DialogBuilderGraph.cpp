@@ -65,6 +65,13 @@ bool UDialogBuilderGraph::Initialize(UDialogComponent* InitializingComp)
 				Node->DialogGraph = this;
 				Node->OwningController = InitializingComp->GetOwningController();
 				Node->DialogComponent = InitializingComp;
+				for (auto& Event : Node->Events)
+				{
+					if (Event)
+					{
+						Event->BeginSetup(DialogComponent->GetOwningController(), GetOwningPawn());
+					}
+				}
 				NodeMap.Emplace(Node->ID, Node);
 			}
 		}
