@@ -7,6 +7,9 @@
 #include "Types/SlateEnums.h"
 #include "OrionGridContainerBase.generated.h"
 
+class UOrionGridSlot;
+class UOrionGridItem;
+class UOrionInventoryItemInstance;
 
 // Grid container base class
 UCLASS(Abstract, Blueprintable, meta = (DisableNativeTick))
@@ -43,11 +46,16 @@ public:
 public:
 	// UUserWidget interface
 	virtual void NativePreConstruct() override;
+	virtual void NativeOnAddedToFocusPath(const FFocusEvent& InFocusEvent);
 	// End of UUserWidget interface
 
 	UFUNCTION(BlueprintCallable, Category = "OrionRPG|UI")
 	UWidget* DetermineGridNavigation(EUINavigation InNavigation);
 
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OrionRPG|UI")
+	void CreateDragItem(UOrionInventoryItemInstance* InItemInstance, int32 FromIndex);
+
+	void CreateDragItem_Implementation(UOrionInventoryItemInstance* InItemInstance, int32 FromIndex);
 
 public:
 };

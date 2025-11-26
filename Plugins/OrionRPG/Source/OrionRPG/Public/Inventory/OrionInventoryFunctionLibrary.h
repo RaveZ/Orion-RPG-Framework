@@ -88,6 +88,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
 	static void AssignGridItemToSlots(const UObject* WorldContextObject, class UOrionGridItem* InGridItem, int32 StartingIndex);
 
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static void CreateDragItem(const UObject* WorldContextObject, class UOrionInventoryItemInstance* InItemInstance, int32 FromIndex);
+
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
 	static EOrionInventoryType GetInventoryType(const UObject* WorldContextObject);
 

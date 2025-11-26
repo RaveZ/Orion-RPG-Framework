@@ -144,6 +144,15 @@ void UOrionInventoryFunctionLibrary::AssignGridItemToSlots(const UObject* WorldC
     }
 }
 
+void UOrionInventoryFunctionLibrary::CreateDragItem(const UObject* WorldContextObject, UOrionInventoryItemInstance* InItemInstance, int32 FromIndex)
+{
+    UOrionUIManagerSubsystem* UISubsystem = UOrionUILibrary::GetOrionUISubsystem(WorldContextObject);
+    if (UISubsystem && UISubsystem->CurrentFocusedGridContainer)
+    {
+        UISubsystem->CurrentFocusedGridContainer->CreateDragItem(InItemInstance, FromIndex);
+    }
+}
+
 
 
 EOrionInventoryType UOrionInventoryFunctionLibrary::GetInventoryType(const UObject* WorldContextObject)

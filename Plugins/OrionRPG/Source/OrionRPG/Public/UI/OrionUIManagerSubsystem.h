@@ -43,6 +43,7 @@ public:
 };
 
 class UOrionPrimaryGameLayout;
+class UOrionGridContainerBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOrionDragItemSignature, class UOrionGridItem*, DraggedItem);
 UCLASS()
@@ -62,6 +63,9 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "UI Subsystem")
 	TObjectPtr<UOrionPrimaryGameLayout> PrimaryLayout;
 
+	UPROPERTY(BlueprintReadOnly, Category = "UI Subsystem")
+	TObjectPtr<UOrionGridContainerBase> CurrentFocusedGridContainer;
+
 	UPROPERTY(BlueprintReadWrite, Category = "UI Subsystem|Inventory")
 	TObjectPtr<class UOrionGridItem> DraggedItem;
 
@@ -69,10 +73,11 @@ public:
 	FOrionDragItemSignature OnDragItem;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "UI Subsystem|Inventory")
-	FOrionDragItemSignature OnCancelDrag;
+	FOrionDragItemSignature OnCancelDragItem;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "UI Subsystem|Inventory")
 	FOrionDragItemSignature OnDragItemCompleted;
+
 
 private:
 	TSharedRef<FOrionNavigationConfig> OrionNavigationConfig;
@@ -106,6 +111,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|UI", meta = (WorldContext = "WorldContextObject"))
 	static UOrionUIManagerSubsystem* GetOrionUISubsystem(const UObject* WorldContextObject);
+
 
 	
 private:

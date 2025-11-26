@@ -30,7 +30,6 @@ void FOrionInventoryEditorToolbar::FillInventorySystemToolbar(FToolBarBuilder& T
 		const FText InventorySettingTooltip = LOCTEXT("InventorySetting_ToolTip", "Access Inventory Default Info");
 		const FSlateIcon InventorySettingIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "ProjectSettings.TabIcon");
 
-
 		ToolbarBuilder.AddToolBarButton(FOrionInventory_EditorCommands::Get().InventorySetting,
 			NAME_None,
 			InventorySettingLabel,
@@ -40,12 +39,11 @@ void FOrionInventoryEditorToolbar::FillInventorySystemToolbar(FToolBarBuilder& T
 	}
 	ToolbarBuilder.EndSection();
 
-
 	ToolbarBuilder.BeginSection("Inventory System");
 	{
 		const FText NewFragmentLabel = LOCTEXT("NewFragment_Label", "New Item Fragment");
 		const FText NewFragmentTooltip = LOCTEXT("NewFragment_ToolTip", "Create a new inventory item fragment blueprint from a base class");
-		const FSlateIcon NewFragmentIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.CustomFragment_16x");
+		const FSlateIcon NewFragmentIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.ArrayPinIcon");
 
 
 		ToolbarBuilder.AddToolBarButton(FOrionInventory_EditorCommands::Get().NewInventoryFragment,
@@ -57,7 +55,5 @@ void FOrionInventoryEditorToolbar::FillInventorySystemToolbar(FToolBarBuilder& T
 	}
 	ToolbarBuilder.EndSection();
 }
-
-
 
 #undef LOCTEXT_NAMESPACE

@@ -13,6 +13,13 @@ void UOrionGridContainerBase::NativePreConstruct()
 	Super::NativePreConstruct();
 }
 
+void UOrionGridContainerBase::NativeOnAddedToFocusPath(const FFocusEvent& InFocusEvent)
+{
+	Super::NativeOnAddedToFocusPath(InFocusEvent);
+	UOrionUIManagerSubsystem* UISubsystem = UOrionUILibrary::GetOrionUISubsystem(this);
+	UISubsystem->CurrentFocusedGridContainer = this;
+}
+
 UWidget* UOrionGridContainerBase::DetermineGridNavigation(EUINavigation InNavigation)
 {
 	UOrionUIManagerSubsystem* UIManager = UOrionUILibrary::GetOrionUISubsystem(this);
@@ -42,6 +49,10 @@ UWidget* UOrionGridContainerBase::DetermineGridNavigation(EUINavigation InNaviga
 	}
 
 	return Cast<UWidget>(GridSlots[NextGridIndex]);
+}
+
+void UOrionGridContainerBase::CreateDragItem_Implementation(UOrionInventoryItemInstance* InItemInstance, int32 FromIndex)
+{
 }
 
 #undef LOCTEXT_NAMESPACE
