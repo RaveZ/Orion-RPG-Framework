@@ -2,9 +2,9 @@
 setlocal enabledelayedexpansion
 
 :: Define the base paths for your project and plugin
-set "PLUGIN_BASE_PATH=E:\Unreal Engine\OrionRPG"
-set "PACKAGE_BASE_PATH=C:\ALPHA\Build\OrionRPG-Plugin"
-set "ENGINE_BASE_PATH=E:\Unreal Engine"
+set "PLUGIN_BASE_PATH=D:\Work\Orion-RPG-Framework\Plugins\OrionRPG"
+set "PACKAGE_BASE_PATH=D:\Work\Build"
+set "ENGINE_BASE_PATH=D:\Work"
 
 :: Define the Unreal Engine versions to build for
 set "UE_VERSIONS=UE_5.6 UE_5.5 UE_5.4 UE_5.3"
