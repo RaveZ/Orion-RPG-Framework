@@ -9,6 +9,7 @@
 #include "Editor.h"
 #include "UnrealEdGlobals.h"
 #include "Event/OrionEvent.h"
+#include "DialogCameraShot.h"
 #include "BlueprintEditor.h"
 #include "UObject/ObjectSaveContext.h"
 #include "GraphEditorActions.h"
@@ -291,6 +292,11 @@ void FDialogBuilderEditor::BindCommands()
 		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanCreateDialogEvent)
 	); 
 	
+	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().NewDialogCameraShot,
+		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::CreateNewDialogCameraShot),
+		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanCreateDialogCameraShot)
+	);
+
 	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().DialogSetting,
 		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::OpenDialogSetting),
 		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanOpenDialogSetting)
@@ -335,6 +341,9 @@ void FDialogBuilderEditor::CreateCommandList()
 		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::OpenDialogSetting),
 		FCanExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CanOpenDialogSetting));
 
+	GraphEditorCommands->MapAction(FDialogBuilder_EditorCommands::Get().NewDialogCameraShot,
+		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CreateNewDialogCameraShot),
+		FCanExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CanCreateDialogCameraShot));
 
 	GraphEditorCommands->MapAction(FGenericCommands::Get().SelectAll,
 		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::SelectAllNodes),
@@ -1523,6 +1532,14 @@ void FDialogBuilderEditor::CreateNewDialogEvent()
 	HandleNewNodeClassPicked(UOrionEvent::StaticClass());
 }
 bool FDialogBuilderEditor::CanCreateDialogEvent() const
+{
+	return true;
+}
+void FDialogBuilderEditor::CreateNewDialogCameraShot()
+{
+	HandleNewNodeClassPicked(UDialogCameraShot::StaticClass());
+}
+bool FDialogBuilderEditor::CanCreateDialogCameraShot() const
 {
 	return true;
 }

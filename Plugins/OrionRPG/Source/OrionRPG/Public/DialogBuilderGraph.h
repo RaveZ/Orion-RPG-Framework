@@ -81,8 +81,32 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 		TSubclassOf<class UCameraShakeBase> DialogCameraShake;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
-	class USoundAttenuation* DialogSoundAttenuation;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
+		bool bBlendCameraOnDialogEnd;
+
+	/**time taken to blend*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (EditCondition = "bBlendCameraOnDialogEnd == true", HideEditConditionToggle, EditConditionHides))
+		float BlendTime;
+
+	/** Cubic, Linear etc functions for blending*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (EditCondition = "bBlendCameraOnDialogEnd == true", HideEditConditionToggle, EditConditionHides))
+		TEnumAsByte<EViewTargetBlendFunction> BlendFunc;
+
+	/**Exponent, used by certain blend functions to control the shape of the curve. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (EditCondition = "bBlendCameraOnDialogEnd == true", HideEditConditionToggle, EditConditionHides))
+		float BlendExp;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Camera")
+		bool bUseDialogCameraFade;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Camera", meta = (EditCondition = "bUseDialogCameraFade == true", HideEditConditionToggle, EditConditionHides))
+		float FadeDuration;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Camera", meta = (EditCondition = "bUseDialogCameraFade == true", HideEditConditionToggle, EditConditionHides))
+		FLinearColor FadeColor;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Audio", meta = (EditCondition = "bUseDialogCameraFade == true", HideEditConditionToggle, EditConditionHides))
+		class USoundAttenuation* DialogSoundAttenuation;
 	
 
 
@@ -150,6 +174,8 @@ public:
 	virtual bool Initialize(UDialogComponent* InitializingComp);
 	virtual void Deinitialize();
 	virtual UWorld* GetWorld() const override;
+
+	void StartFromRoot();
 
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void BeginNode(UDialogBuilderNode* InNode, bool bLaunchEventOnLoad = false);

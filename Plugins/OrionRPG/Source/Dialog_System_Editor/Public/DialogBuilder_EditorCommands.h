@@ -27,5 +27,6 @@ public:
 	//Toolbar
 	TSharedPtr<FUICommandInfo> NewDialogDecorator;
 	TSharedPtr<FUICommandInfo> NewDialogEvent;
+	TSharedPtr<FUICommandInfo> NewDialogCameraShot;
 	TSharedPtr<FUICommandInfo> DialogSetting;
 };

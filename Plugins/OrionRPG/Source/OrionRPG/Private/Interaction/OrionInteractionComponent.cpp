@@ -476,10 +476,8 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 
 void UOrionInteractionComponent::DetectAvailableInteractionTargets()
 {
-	if (!bIsInteractionEnabled)
-	{
-		return;
-	}
+	if (!bIsInteractionEnabled) return;
+	if (!GetOwningPawn()) return;
 
 	FVector TraceStart;
 	FRotator Rotation;
