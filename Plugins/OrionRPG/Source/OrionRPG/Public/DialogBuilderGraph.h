@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "Containers/Map.h"
 #include "DialogData.h"
+#include "Camera/PlayerCameraManager.h"
 #include "DialogBuilderGraph.generated.h"
 
 class UDialogComponent;
