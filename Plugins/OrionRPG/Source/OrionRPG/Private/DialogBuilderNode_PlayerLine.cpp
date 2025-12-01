@@ -15,7 +15,6 @@ UDialogBuilderNode_PlayerLine::UDialogBuilderNode_PlayerLine()
 
 void UDialogBuilderNode_PlayerLine::BeginNode()
 {
-	Super::BeginNode();
 	ParticipantInfo.ParticipantTag = TAG_Dialog_Participant_Player;
 	ParticipantInfo.ParticipantName = GetOwningDialogGraph()->PlayerName;
 	ParticipantInfo.DefaultShot = GetOwningDialogGraph()->DefaultPlayerShot;

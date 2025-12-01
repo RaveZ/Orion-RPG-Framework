@@ -56,6 +56,22 @@ void FDialogBuilderEditorToolbar::FillDialogSystemToolbar(FToolBarBuilder& Toolb
 
 	ToolbarBuilder.BeginSection("Dialog System");
 	{
+		const FText DialogShotLabel = LOCTEXT("DialogShot_Label", "New Dialog Camera Shot");
+		const FText DialogShotTooltip = LOCTEXT("DialogShot_ToolTip", "Create a new Dialog Camera Shot Blueprint from a base class");
+		const FSlateIcon DialogShotIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "Sequencer.LockCamera");
+
+
+		ToolbarBuilder.AddToolBarButton(FDialogBuilder_EditorCommands::Get().NewDialogCameraShot,
+			NAME_None,
+			DialogShotLabel,
+			DialogShotTooltip,
+			DialogShotIcon
+		);
+	}
+	ToolbarBuilder.EndSection();
+
+	ToolbarBuilder.BeginSection("Dialog System");
+	{
 		const FText DialogSettingLabel = LOCTEXT("DialogSetting_Label", "Dialog Default Info");
 		const FText DialogSettingTooltip = LOCTEXT("DialogSetting_ToolTip", "Access Dialog Default Info");
 		const FSlateIcon DialogSettingIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "ProjectSettings.TabIcon");

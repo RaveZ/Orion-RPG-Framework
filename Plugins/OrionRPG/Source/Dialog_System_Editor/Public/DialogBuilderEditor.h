@@ -278,6 +278,9 @@ protected:
 
 	void CreateNewDialogEvent();
 	bool CanCreateDialogEvent() const;
+
+	void CreateNewDialogCameraShot();
+	bool CanCreateDialogCameraShot() const;
 	
 	void OpenDialogSetting();
 	bool CanOpenDialogSetting() const;

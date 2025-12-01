@@ -37,6 +37,13 @@ UDialogBuilderGraph::UDialogBuilderGraph()
 	bAutoAdvanceDialogLine = false;
 	bLockPlayerMovement = true;
 	bCanInterruptDialog = false;
+	bUseDialogCameraFade = false;
+	FadeDuration = 0.25f;
+	FadeColor = FLinearColor::Black;
+
+	BlendTime = 1.25f;
+	BlendFunc = VTBlend_Cubic;
+	BlendExp = 2.0f;
 }
 
 UDialogBuilderGraph::~UDialogBuilderGraph()
@@ -96,11 +103,11 @@ bool UDialogBuilderGraph::Initialize(UDialogComponent* InitializingComp)
 				OwningController->ClientStartCameraShake(DialogCameraShake);
 			}
 		}
+		bAutoAdvanceDialogLine = bLockPlayerMovement ? bAutoAdvanceDialogLine : true; // if dialog is free movement, force auto advance dialog line -> true
+		bUseDialogCameraFade = bLockPlayerMovement ? bUseDialogCameraFade : false;
+		
 
-		if (!bLockPlayerMovement)
-		{
-			bAutoAdvanceDialogLine = true;
-		}
+		
 	}
 	return false;
 }
@@ -124,6 +131,14 @@ UWorld* UDialogBuilderGraph::GetWorld() const
 	}
 
 	return nullptr;
+}
+
+void UDialogBuilderGraph::StartFromRoot()
+{
+	if (RootNodes.IsValidIndex(0))
+	{
+		BeginNode(RootNodes[0]);
+	}
 }
 
 void UDialogBuilderGraph::BeginNode(UDialogBuilderNode* InNode, bool bLaunchEventOnLoad)
@@ -171,7 +186,7 @@ void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialo
 		}
 		else
 		{
-			DialogAudio = UGameplayStatics::SpawnSound2D(DialogComponent, InDialogLine->DialogLineData.DialogSound);
+			DialogAudio = UGameplayStatics::SpawnSound2D(this, InDialogLine->DialogLineData.DialogSound);
 		}
 	}
 
@@ -495,6 +510,7 @@ void UDialogBuilderGraph::StopCurrentDialogLine()
 		DialogAudio->OnAudioFinished.RemoveAll(this);
 		DialogAudio->Stop();
 		DialogAudio->DestroyComponent();
+		DialogAudio = nullptr;
 	}
 
 	UDialogBuilderNode_DialogLine* CurrentDialogLine = Cast<UDialogBuilderNode_DialogLine>(CurrentNode);
@@ -529,6 +545,7 @@ void UDialogBuilderGraph::EndDialog()
         }
 	}
 	
+	
 	//clear shot and sequence
 	if (DialogSequencer)
 	{
@@ -542,7 +559,21 @@ void UDialogBuilderGraph::EndDialog()
 
 	if (Cinecam.IsValid())
 	{
-		Cinecam->Destroy();
+		if (bBlendCameraOnDialogEnd)
+		{
+			OwningController->SetViewTargetWithBlend(
+				GetOwningPawn(),
+				BlendTime,
+				BlendFunc,
+				BlendExp,
+				true // bLockOutgoing
+			);
+			Cinecam->SetLifeSpan(BlendTime);
+		}
+		else
+		{
+			Cinecam->Destroy();
+		}
 		Cinecam = nullptr;
 	}
 
@@ -559,6 +590,7 @@ void UDialogBuilderGraph::EndDialog()
 
 	StopCurrentDialogLine();
 	GetDialogComponent()->OnEndDialog.Broadcast(this);
+	GetWorld()->GetTimerManager().ClearTimer(DialogLineTimer);
 }
 
 void UDialogBuilderGraph::DetermineAdvanceDialogRule(UDialogBuilderNode_DialogLine* InDialogLine)
