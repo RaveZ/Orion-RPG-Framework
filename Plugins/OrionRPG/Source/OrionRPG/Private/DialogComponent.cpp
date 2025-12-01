@@ -16,6 +16,7 @@
 #include "DialogData.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "GameFramework/Pawn.h"
+#include "TimerManager.h"
 #include "GameFramework/PlayerController.h"
 
 

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Camera/PlayerCameraManager.h"
 #include "Components/ActorComponent.h"
 #include "DialogComponent.generated.h"
 
