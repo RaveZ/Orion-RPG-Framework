@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 :: Define the base paths for your project and plugin
-set "PLUGIN_BASE_PATH=D:\Work\Orion-RPG-Framework\Plugins\OrionRPG"
+set "PLUGIN_BASE_PATH=D:\Work\Orion-RPG-Build\Plugins\OrionRPG"
 set "PACKAGE_BASE_PATH=D:\Work\Build"
 set "ENGINE_BASE_PATH=D:\Work"
 
