@@ -64,6 +64,10 @@ bool UOrionInventoryItemInstance::HasStatTag(FGameplayTag Tag) const
 void UOrionInventoryItemInstance::SetItemDef(UOrionInventoryNode_ItemDefinition* InDef)
 {
 	ItemDef = InDef;
+	if (ItemDef)
+	{
+		ItemDef->LoadPrerequisites();
+	}
 }
 
 bool UOrionInventoryItemInstance::HasRoomForItem() const

@@ -284,7 +284,6 @@ UOrionInventoryItemInstance* FOrionInventoryList::AddEntry(UOrionInventoryNode_I
 
 	NewItemInstance = NewObject<UOrionInventoryItemInstance>(OwnerComponent->GetOwner());
 	NewItemInstance->SetItemDef(ItemDef);
-	ItemDef->LoadPrerequisites();
 	for (UOrionInventoryItemFragment* Fragment : ItemDef->Fragments)
 	{
 		if (Fragment != nullptr)
@@ -351,7 +350,6 @@ void FOrionInventoryList::InitializeFromSaveGame(const FOrionInventorySaveData& 
 				NewEntry.ItemInstance->SetItemDef(ItemDef);
 				NewEntry.ItemInstance->SetTotalStackCount(ItemSaveData.TotalStackCount);
 
-				ItemDef->LoadPrerequisites();
 				for (UOrionInventoryItemFragment* Fragment : ItemDef->Fragments)
 				{
 					if (Fragment != nullptr)

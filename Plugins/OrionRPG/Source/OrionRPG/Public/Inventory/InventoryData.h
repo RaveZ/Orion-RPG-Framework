@@ -189,7 +189,35 @@ struct TStructOpsTypeTraits<FOrionEquipmentList> : public TStructOpsTypeTraitsBa
 };
 
 
+class UOrionEquipmentInstance;
+//////////////////////////////////////////////////////////////////////
 
+// Equipment Instance Data
+USTRUCT(BlueprintType)
+struct FEquipmentDefinition
+{
+	GENERATED_BODY()
+
+public:
+
+	FEquipmentDefinition()
+	{
+	}
+
+	// Class to spawn
+	UPROPERTY(EditDefaultsOnly, Category = Equipment)
+	TSubclassOf<UOrionEquipmentInstance> InstanceType;
+
+	UPROPERTY(EditAnywhere, Category = Equipment)
+	TSubclassOf<AActor> ActorToSpawn;
+
+	UPROPERTY(EditAnywhere, Category = Equipment)
+	FName AttachSocket;
+
+	UPROPERTY(EditAnywhere, Category = Equipment)
+	FTransform AttachTransform;
+
+};
 //////////////////////////////////////////////////////////////////////
 
 // Item Instance Data
