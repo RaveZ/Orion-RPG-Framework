@@ -9,7 +9,9 @@
 #include "OrionSaveGame.h"
 #include "OrionRPG.h"
 
-//Gameplay Tags
+//////////////////////////////////////////////////////////////////////
+
+// Gameplay Tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Item, "Item");
 
 //////////////////////////////////////////////////////////////////////
@@ -378,3 +380,28 @@ UOrionInventoryItemInstance* FOrionInventoryList::FindFirstItemByTag(const FGame
 	return FoundItem ? FoundItem->ItemInstance : nullptr;
 }
 
+
+//////////////////////////////////////////////////////////////////////
+// 
+// FOrionEquippedItemEntry
+FString FOrionEquippedItemEntry::GetDebugString() const
+{
+	return FString();
+}
+
+
+//////////////////////////////////////////////////////////////////////
+// 
+// FOrionEquippedItemEntry
+
+void FOrionEquipmentList::PreReplicatedRemove(const TArrayView<int32> RemovedIndices, int32 FinalSize)
+{
+}
+
+void FOrionEquipmentList::PostReplicatedAdd(const TArrayView<int32> AddedIndices, int32 FinalSize)
+{
+}
+
+void FOrionEquipmentList::PostReplicatedChange(const TArrayView<int32> ChangedIndices, int32 FinalSize)
+{
+}

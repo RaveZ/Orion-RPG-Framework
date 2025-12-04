@@ -16,7 +16,10 @@ class UOrionInventoryComponent;
 class UOrionInteractionTargetComponent;
 
 
-//Gameplay Tags
+
+//////////////////////////////////////////////////////////////////////
+
+// Gameplay Tags
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item);
 
 UENUM(BlueprintType)
@@ -31,10 +34,13 @@ enum class EOrionInventoryType : uint8
 	E_GridBased		UMETA(DisplayName = "Grid Based Inventory"),
 };
 
+//////////////////////////////////////////////////////////////////////
+// 
+// FOrionInventoryEntry
 USTRUCT(BlueprintType)
 struct FOrionInventoryEntry : public FFastArraySerializerItem
 {
-    GENERATED_USTRUCT_BODY()
+    GENERATED_BODY()
 	FOrionInventoryEntry() {}
 	FString GetDebugString() const;
 
@@ -46,11 +52,13 @@ private:
 	TObjectPtr<UOrionInventoryItemInstance> ItemInstance = nullptr;
 };
 
-/** List of inventory items */
+//////////////////////////////////////////////////////////////////////
+// 
+// FOrionInventoryList
 USTRUCT(BlueprintType)
 struct FOrionInventoryList : public FFastArraySerializer
 {
-	GENERATED_USTRUCT_BODY()
+	GENERATED_BODY()
 
 	FOrionInventoryList() 
 		: OwnerComponent(nullptr) 
@@ -108,6 +116,83 @@ struct TStructOpsTypeTraits<FOrionInventoryList> : public TStructOpsTypeTraitsBa
 
 
 
+//////////////////////////////////////////////////////////////////////
+// 
+// FOrionEquippedItemEntry
+USTRUCT(BlueprintType)
+struct FOrionEquippedItemEntry : public FFastArraySerializerItem
+{
+	GENERATED_BODY()
+	FOrionEquippedItemEntry() {}
+	FString GetDebugString() const;
+
+private:
+	friend struct FOrionEquipmentList;
+	friend UOrionInventoryComponent;
+
+	UPROPERTY()
+	TObjectPtr<UOrionInventoryItemInstance> ItemInstance = nullptr;
+};
+
+
+//////////////////////////////////////////////////////////////////////
+// 
+// FOrionEquippedItemEntry
+USTRUCT(BlueprintType)
+struct FOrionEquipmentList : public FFastArraySerializer
+{
+
+	GENERATED_BODY()
+
+	FOrionEquipmentList()
+		: OwnerComponent(nullptr)
+	{
+	}
+	FOrionEquipmentList(UOrionInventoryComponent* InOwnerComponent)
+		: OwnerComponent(InOwnerComponent)
+	{
+	}
+
+public:
+	//~FFastArraySerializer contract
+	void PreReplicatedRemove(const TArrayView<int32> RemovedIndices, int32 FinalSize);
+	void PostReplicatedAdd(const TArrayView<int32> AddedIndices, int32 FinalSize);
+	void PostReplicatedChange(const TArrayView<int32> ChangedIndices, int32 FinalSize);
+	//~End of FFastArraySerializer contract
+
+	bool NetDeltaSerialize(FNetDeltaSerializeInfo& DeltaParms)
+	{
+		return FFastArraySerializer::FastArrayDeltaSerialize<FOrionEquippedItemEntry, FOrionEquipmentList>(Entries, DeltaParms, *this);
+	}
+
+	//ULyraEquipmentInstance* AddEntry(TSubclassOf<ULyraEquipmentDefinition> EquipmentDefinition);
+	//void RemoveEntry(ULyraEquipmentInstance* Instance);
+
+private:
+	//ULyraAbilitySystemComponent* GetAbilitySystemComponent() const;
+
+	friend UOrionInventoryComponent;
+
+private:
+	// Replicated list of equipment entries
+	UPROPERTY()
+	TArray<FOrionEquippedItemEntry> Entries;
+
+	UPROPERTY(NotReplicated)
+	TObjectPtr<UOrionInventoryComponent> OwnerComponent;
+};
+
+template<>
+struct TStructOpsTypeTraits<FOrionEquipmentList> : public TStructOpsTypeTraitsBase2<FOrionEquipmentList>
+{
+	enum { WithNetDeltaSerializer = true };
+};
+
+
+
+//////////////////////////////////////////////////////////////////////
+
+// Item Instance Data
 USTRUCT(BlueprintType)
 struct FItemInstanceData
 {
@@ -155,7 +240,9 @@ public:
 
 };
 
-/** Inventory  Data To Be Saved */
+//////////////////////////////////////////////////////////////////////
+
+// Inventory Save Data
 USTRUCT()
 struct FOrionInventoryItemSaveData
 {
