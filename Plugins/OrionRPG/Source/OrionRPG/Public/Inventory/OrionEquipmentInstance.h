@@ -8,7 +8,7 @@
 class AActor;
 class APawn;
 struct FFrame;
-struct FLyraEquipmentActorToSpawn;
+struct FOrionEquipmentActorData;
 
 /**
  * UOrionEquipmentInstance
@@ -42,7 +42,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = Equipment)
 	TArray<AActor*> GetSpawnedActors() const { return SpawnedActors; }
 
-	virtual void SpawnEquipmentActors(const TArray<FLyraEquipmentActorToSpawn>& ActorsToSpawn);
+	virtual void SpawnEquipmentActors(const TArray<FOrionEquipmentActorData>& ActorsToSpawn);
 	virtual void DestroyEquipmentActors();
 
 	virtual void OnEquipped();

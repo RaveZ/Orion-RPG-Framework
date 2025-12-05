@@ -7,12 +7,15 @@
 #include "Net/Serialization/FastArraySerializer.h"
 #include "NativeGameplayTags.h"
 #include "Engine/Texture2D.h"
+#include "AbilitySystem/AbilityData.h"
 #include "InventoryData.generated.h"
 
 class UOrionInventoryNode_ItemDefinition;
 class UOrionInventoryItemInstance;
+class UOrionEquipmentInstance;
 class UOrionInventoryItemFragment;
 class UOrionInventoryComponent;
+class UOrionAbilitySystemComponent;
 class UOrionInteractionTargetComponent;
 
 
@@ -130,8 +133,19 @@ private:
 	friend struct FOrionEquipmentList;
 	friend UOrionInventoryComponent;
 
+	// The equipment class that got equipped
 	UPROPERTY()
-	TObjectPtr<UOrionInventoryItemInstance> ItemInstance = nullptr;
+	FOrionEquipmentDefinition EquipmentDefinition;
+
+	UPROPERTY()
+	FGameplayTag EquipmentTag;
+
+	UPROPERTY()
+	TObjectPtr<UOrionEquipmentInstance> Instance = nullptr;
+
+	// Authority-only list of granted handles
+	UPROPERTY(NotReplicated)
+	FOrionGrantedHandlesData GrantedHandles;
 };
 
 
@@ -165,11 +179,11 @@ public:
 		return FFastArraySerializer::FastArrayDeltaSerialize<FOrionEquippedItemEntry, FOrionEquipmentList>(Entries, DeltaParms, *this);
 	}
 
-	//ULyraEquipmentInstance* AddEntry(TSubclassOf<ULyraEquipmentDefinition> EquipmentDefinition);
-	//void RemoveEntry(ULyraEquipmentInstance* Instance);
+	UOrionEquipmentInstance* AddEntry(FOrionEquipmentDefinition EquipmentDefinition);
+	void RemoveEntry(UOrionEquipmentInstance* Instance);
 
 private:
-	//ULyraAbilitySystemComponent* GetAbilitySystemComponent() const;
+	UOrionAbilitySystemComponent* GetAbilitySystemComponent() const;
 
 	friend UOrionInventoryComponent;
 
@@ -188,25 +202,17 @@ struct TStructOpsTypeTraits<FOrionEquipmentList> : public TStructOpsTypeTraitsBa
 	enum { WithNetDeltaSerializer = true };
 };
 
-
-class UOrionEquipmentInstance;
 //////////////////////////////////////////////////////////////////////
 
-// Equipment Instance Data
-USTRUCT(BlueprintType)
-struct FEquipmentDefinition
+// Equipment Actor Data
+USTRUCT()
+struct FOrionEquipmentActorData
 {
 	GENERATED_BODY()
 
-public:
-
-	FEquipmentDefinition()
+	FOrionEquipmentActorData()
 	{
 	}
-
-	// Class to spawn
-	UPROPERTY(EditDefaultsOnly, Category = Equipment)
-	TSubclassOf<UOrionEquipmentInstance> InstanceType;
 
 	UPROPERTY(EditAnywhere, Category = Equipment)
 	TSubclassOf<AActor> ActorToSpawn;
@@ -216,8 +222,8 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = Equipment)
 	FTransform AttachTransform;
-
 };
+
 //////////////////////////////////////////////////////////////////////
 
 // Item Instance Data

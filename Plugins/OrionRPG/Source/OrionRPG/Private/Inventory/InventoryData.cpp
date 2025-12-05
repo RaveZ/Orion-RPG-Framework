@@ -5,7 +5,10 @@
 #include "Inventory/OrionInventoryGraph.h"
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Inventory/OrionInventoryItemInstance.h"
+#include "Inventory/OrionEquipmentInstance.h"
 #include "Inventory/OrionInventoryItemFragment.h"
+#include "AbilitySystem/OrionAbilitySystemComponent.h"
+#include "AbilitySystemGlobals.h"
 #include "OrionSaveGame.h"
 #include "OrionRPG.h"
 
@@ -394,12 +397,96 @@ FString FOrionEquippedItemEntry::GetDebugString() const
 
 void FOrionEquipmentList::PreReplicatedRemove(const TArrayView<int32> RemovedIndices, int32 FinalSize)
 {
+	for (int32 Index : RemovedIndices)
+	{
+		const FOrionEquippedItemEntry& Entry = Entries[Index];
+		if (Entry.Instance != nullptr)
+		{
+			Entry.Instance->OnUnequipped();
+		}
+	}
 }
 
 void FOrionEquipmentList::PostReplicatedAdd(const TArrayView<int32> AddedIndices, int32 FinalSize)
 {
+	for (int32 Index : AddedIndices)
+	{
+		const FOrionEquippedItemEntry& Entry = Entries[Index];
+		if (Entry.Instance != nullptr)
+		{
+			Entry.Instance->OnEquipped();
+		}
+	}
 }
 
 void FOrionEquipmentList::PostReplicatedChange(const TArrayView<int32> ChangedIndices, int32 FinalSize)
 {
+
 }
+
+UOrionEquipmentInstance* FOrionEquipmentList::AddEntry(FOrionEquipmentDefinition EquipmentDefinition)
+{
+	UOrionEquipmentInstance* Result = nullptr;
+
+	check(OwnerComponent);
+	check(OwnerComponent->GetOwner()->HasAuthority());
+
+	TSubclassOf<UOrionEquipmentInstance> InstanceType = EquipmentDefinition.InstanceType;
+	if (InstanceType == nullptr)
+	{
+		InstanceType = UOrionEquipmentInstance::StaticClass();
+	}
+
+	FOrionEquippedItemEntry& NewEntry = Entries.AddDefaulted_GetRef();
+	//NewEntry.EquipmentDefinition = EquipmentDefinition;
+	NewEntry.Instance = NewObject<UOrionEquipmentInstance>(OwnerComponent->GetOwner(), InstanceType);  //@TODO: Using the actor instead of component as the outer due to UE-127172
+	Result = NewEntry.Instance;
+
+	if (UOrionAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		for (const TObjectPtr<const UOrionAbilitySet>& AbilitySet : EquipmentDefinition.AbilitySetsToGrant)
+		{
+			AbilitySet->GiveToAbilitySystem(ASC, /*inout*/ &NewEntry.GrantedHandles, Result);
+		}
+	}
+	else
+	{
+		//@TODO: Warning logging?
+	}
+
+	Result->SpawnEquipmentActors(EquipmentDefinition.ActorsToSpawn);
+
+
+	MarkItemDirty(NewEntry);
+
+	return Result;
+}
+
+void FOrionEquipmentList::RemoveEntry(UOrionEquipmentInstance* Instance)
+{
+	for (auto EntryIt = Entries.CreateIterator(); EntryIt; ++EntryIt)
+	{
+		FOrionEquippedItemEntry& Entry = *EntryIt;
+		if (Entry.Instance == Instance)
+		{
+			if (UOrionAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+			{
+				Entry.GrantedHandles.TakeFromAbilitySystem(ASC);
+			}
+
+			Instance->DestroyEquipmentActors();
+
+
+			EntryIt.RemoveCurrent();
+			MarkArrayDirty();
+		}
+	}
+}
+
+UOrionAbilitySystemComponent* FOrionEquipmentList::GetAbilitySystemComponent() const
+{
+	check(OwnerComponent);
+	AActor* OwningActor = OwnerComponent->GetOwner();
+	return Cast<UOrionAbilitySystemComponent>(UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OwningActor));
+}
+

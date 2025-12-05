@@ -96,7 +96,7 @@ public:
 	void AddGameplayEffectHandle(const FActiveGameplayEffectHandle& Handle);
 	void AddAttributeSet(UAttributeSet* Set);
 
-	void TakeFromAbilitySystem(UOrionAbilitySystemComponent* OrionASC);
+	void TakeFromAbilitySystem(UAbilitySystemComponent* OrionASC);
 
 protected:
 
@@ -130,7 +130,7 @@ public:
 
 	// Grants the ability set to the specified ability system component.
 	// The returned handles can be used later to take away anything that was granted.
-	void GiveToAbilitySystem(UOrionAbilitySystemComponent* OrionASC, FOrionAbilitySet_GrantedHandles* OutGrantedHandles, UObject* SourceObject = nullptr) const;
+	void GiveToAbilitySystem(UAbilitySystemComponent* OrionASC, FOrionGrantedHandlesData* OutGrantedHandles, UObject* SourceObject = nullptr) const;
 
 protected:
 

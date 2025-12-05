@@ -37,7 +37,7 @@ void UOrionInventoryItemInstance::RegisterReplicationFragments(UE::Net::FFragmen
 	using namespace UE::Net;
 
 	// Build descriptors and allocate PropertyReplicationFragments for this object
-	//FReplicationFragmentUtil::CreateAndRegisterFragmentsForObject(this, Context, RegistrationFlags);
+	FReplicationFragmentUtil::CreateAndRegisterFragmentsForObject(this, Context, RegistrationFlags);
 }
 #endif // UE_WITH_IRIS
 

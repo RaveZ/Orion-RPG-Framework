@@ -4,7 +4,7 @@
 #include "Inventory/OrionEquipmentInstance.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
-#include "LyraEquipmentDefinition.h"
+#include "Inventory/InventoryData.h"
 #include "Net/UnrealNetwork.h"
 
 #if UE_WITH_IRIS
@@ -70,7 +70,7 @@ APawn* UOrionEquipmentInstance::GetTypedPawn(TSubclassOf<APawn> PawnType) const
 	return Result;
 }
 
-void UOrionEquipmentInstance::SpawnEquipmentActors(const TArray<FLyraEquipmentActorToSpawn>& ActorsToSpawn)
+void UOrionEquipmentInstance::SpawnEquipmentActors(const TArray<FOrionEquipmentActorData>& ActorsToSpawn)
 {
 	if (APawn* OwningPawn = GetPawn())
 	{
@@ -80,7 +80,7 @@ void UOrionEquipmentInstance::SpawnEquipmentActors(const TArray<FLyraEquipmentAc
 			AttachTarget = Char->GetMesh();
 		}
 
-		for (const FLyraEquipmentActorToSpawn& SpawnInfo : ActorsToSpawn)
+		for (const FOrionEquipmentActorData& SpawnInfo : ActorsToSpawn)
 		{
 			AActor* NewActor = GetWorld()->SpawnActorDeferred<AActor>(SpawnInfo.ActorToSpawn, FTransform::Identity, OwningPawn);
 			NewActor->FinishSpawning(FTransform::Identity, /*bIsDefaultTransform=*/ true);
