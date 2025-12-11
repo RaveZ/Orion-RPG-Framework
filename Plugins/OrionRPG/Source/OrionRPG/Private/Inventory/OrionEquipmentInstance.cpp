@@ -5,6 +5,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
 #include "Inventory/InventoryData.h"
+#include "Engine/StreamableManager.h"
+#include "Engine/AssetManager.h"
 #include "Net/UnrealNetwork.h"
 
 #if UE_WITH_IRIS
@@ -82,12 +84,47 @@ void UOrionEquipmentInstance::SpawnEquipmentActors(const TArray<FOrionEquipmentA
 
 		for (const FOrionEquipmentActorData& SpawnInfo : ActorsToSpawn)
 		{
-			AActor* NewActor = GetWorld()->SpawnActorDeferred<AActor>(SpawnInfo.ActorToSpawn, FTransform::Identity, OwningPawn);
-			NewActor->FinishSpawning(FTransform::Identity, /*bIsDefaultTransform=*/ true);
-			NewActor->SetActorRelativeTransform(SpawnInfo.AttachTransform);
-			NewActor->AttachToComponent(AttachTarget, FAttachmentTransformRules::KeepRelativeTransform, SpawnInfo.AttachSocket);
+			const FSoftObjectPath SoftPath = SpawnInfo.ActorToSpawn.ToSoftObjectPath();
+			if (!SoftPath.IsValid())
+			{
+				continue;
+			}
 
-			SpawnedActors.Add(NewActor);
+#if WITH_EDITOR || UE_BUILD_SHIPPING || UE_BUILD_TEST
+			FOrionEquipmentActorData SpawnInfoCopy = SpawnInfo;
+			FStreamableDelegate Delegate = FStreamableDelegate::CreateLambda([this, SoftPath, OwningPawn, AttachTarget, SpawnInfoCopy]()
+			{
+				UObject* LoadedObj = SoftPath.ResolveObject();
+				if (!LoadedObj)
+				{
+					LoadedObj = SoftPath.TryLoad();
+				}
+
+				UClass* LoadedClass = Cast<UClass>(LoadedObj);
+				if (!LoadedClass)
+				{
+					return;
+				}
+
+				if (!GetWorld() || !OwningPawn)
+				{
+					return;
+				}
+
+				AActor* NewActor = GetWorld()->SpawnActorDeferred<AActor>(LoadedClass, FTransform::Identity, OwningPawn);
+				if (NewActor)
+				{
+					NewActor->FinishSpawning(FTransform::Identity, /*bIsDefaultTransform=*/ true);
+					NewActor->SetActorRelativeTransform(SpawnInfoCopy.AttachTransform);
+					NewActor->AttachToComponent(AttachTarget, FAttachmentTransformRules::KeepRelativeTransform, SpawnInfoCopy.AttachSocket);
+
+					SpawnedActors.Add(NewActor);
+				}
+			});
+
+			// Request async load via AssetManager's StreamableManager
+			UAssetManager::GetStreamableManager().RequestAsyncLoad(SoftPath, Delegate);
+#endif
 		}
 	}
 }
@@ -106,11 +143,13 @@ void UOrionEquipmentInstance::DestroyEquipmentActors()
 void UOrionEquipmentInstance::OnEquipped()
 {
 	K2_OnEquipped();
+	OnEquippedDelegate.Broadcast();
 }
 
 void UOrionEquipmentInstance::OnUnequipped()
 {
 	K2_OnUnequipped();
+	OnUnequippedDelegate.Broadcast();
 }
 
 void UOrionEquipmentInstance::OnRep_Instigator()

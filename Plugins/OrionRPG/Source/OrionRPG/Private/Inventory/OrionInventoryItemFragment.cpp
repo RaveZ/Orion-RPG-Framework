@@ -62,14 +62,7 @@ UWorld* UOrionInventoryItemFragment::GetWorld() const
 
 	return nullptr;
 }
-//////////////////////////////////////////////////////////////////////
 
-// Equippable item fragment
-UOrionInventoryFragment_EquippableItem::UOrionInventoryFragment_EquippableItem()
-{
-	ActionDisplayName = FText::FromString("Equip");
-
-}
 
 //////////////////////////////////////////////////////////////////////
 

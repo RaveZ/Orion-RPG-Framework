@@ -24,6 +24,8 @@ class UOrionInteractionTargetComponent;
 
 // Gameplay Tags
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Tag_Equipment_Slot);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(Tag_Equipment_Slot_Head);
 
 UENUM(BlueprintType)
 enum class EOrionInventoryType : uint8
@@ -117,6 +119,54 @@ struct TStructOpsTypeTraits<FOrionInventoryList> : public TStructOpsTypeTraitsBa
 	enum { WithNetDeltaSerializer = true };
 };
 
+//////////////////////////////////////////////////////////////////////
+
+// Equipment Actor Data
+USTRUCT(BlueprintType)
+struct FOrionEquipmentActorData
+{
+	GENERATED_BODY()
+
+	FOrionEquipmentActorData()
+	{
+	}
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment)
+	TSoftClassPtr<AActor> ActorToSpawn;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment)
+	FName AttachSocket;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment)
+	FTransform AttachTransform;
+};
+
+//////////////////////////////////////////////////////////////////////
+
+// Equipment Definition
+USTRUCT(BlueprintType)
+struct FOrionEquipmentDefinition
+{
+	GENERATED_BODY()
+
+	FOrionEquipmentDefinition();
+
+	//Which equipment slot to assign to
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment, meta=(Categories="Equipment.Slot"))
+	FGameplayTag EquipSlot;
+
+	// Class to spawn
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment)
+	TSubclassOf<UOrionEquipmentInstance> InstanceType;
+
+	// Gameplay ability sets to grant when this is equipped
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment)
+	TArray<TObjectPtr<const UOrionAbilitySet>> AbilitySetsToGrant;
+
+	// Actors to spawn on the pawn when this is equipped
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment)
+	TArray<FOrionEquipmentActorData> ActorsToSpawn;
+};
 
 
 //////////////////////////////////////////////////////////////////////
@@ -133,12 +183,13 @@ private:
 	friend struct FOrionEquipmentList;
 	friend UOrionInventoryComponent;
 
+	UPROPERTY()
+	FGameplayTag Slot;
+	
 	// The equipment class that got equipped
 	UPROPERTY()
 	FOrionEquipmentDefinition EquipmentDefinition;
 
-	UPROPERTY()
-	FGameplayTag EquipmentTag;
 
 	UPROPERTY()
 	TObjectPtr<UOrionEquipmentInstance> Instance = nullptr;
@@ -168,6 +219,7 @@ struct FOrionEquipmentList : public FFastArraySerializer
 	}
 
 public:
+	void Initialize(UOrionInventoryComponent* InOwnerComponent);
 	//~FFastArraySerializer contract
 	void PreReplicatedRemove(const TArrayView<int32> RemovedIndices, int32 FinalSize);
 	void PostReplicatedAdd(const TArrayView<int32> AddedIndices, int32 FinalSize);
@@ -180,10 +232,15 @@ public:
 	}
 
 	UOrionEquipmentInstance* AddEntry(FOrionEquipmentDefinition EquipmentDefinition);
+	UOrionEquipmentInstance* SetEntry(FOrionEquipmentDefinition EquipmentDefinition);
+	UOrionEquipmentInstance* CreateEquipmentInstance(FOrionEquippedItemEntry& InEntry, FOrionEquipmentDefinition EquipmentDefinition);
 	void RemoveEntry(UOrionEquipmentInstance* Instance);
 
+	FOrionEquippedItemEntry& FindFirstEntryBySlot(bool& bFound, FGameplayTag SlotTag);
+	UOrionEquipmentInstance* FindFirstEquipmentBySlot(const FGameplayTag& SlotTag);
+		
 private:
-	UOrionAbilitySystemComponent* GetAbilitySystemComponent() const;
+	UOrionAbilitySystemComponent* GetAbilitySystemComponent() const; 
 
 	friend UOrionInventoryComponent;
 
@@ -202,27 +259,6 @@ struct TStructOpsTypeTraits<FOrionEquipmentList> : public TStructOpsTypeTraitsBa
 	enum { WithNetDeltaSerializer = true };
 };
 
-//////////////////////////////////////////////////////////////////////
-
-// Equipment Actor Data
-USTRUCT()
-struct FOrionEquipmentActorData
-{
-	GENERATED_BODY()
-
-	FOrionEquipmentActorData()
-	{
-	}
-
-	UPROPERTY(EditAnywhere, Category = Equipment)
-	TSubclassOf<AActor> ActorToSpawn;
-
-	UPROPERTY(EditAnywhere, Category = Equipment)
-	FName AttachSocket;
-
-	UPROPERTY(EditAnywhere, Category = Equipment)
-	FTransform AttachTransform;
-};
 
 //////////////////////////////////////////////////////////////////////
 
@@ -292,7 +328,7 @@ public:
 	int32 TileIndex;
 
 public:
-	FOrionInventoryItemSaveData()
+	FOrionInventoryItemSaveData()      
 	{
 		ItemTag = FGameplayTag::EmptyTag;
 		TotalStackCount = 0;

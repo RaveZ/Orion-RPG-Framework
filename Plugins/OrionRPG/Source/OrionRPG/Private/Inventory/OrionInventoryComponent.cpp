@@ -5,6 +5,7 @@
 #include "Inventory/OrionInventorySetting.h"
 #include "Inventory/OrionActorViewer.h"
 #include "Inventory/OrionInventoryItemInstance.h"
+#include "Inventory/OrionEquipmentInstance.h"
 #include "Inventory/OrionInventoryItemFragment.h"
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Decorator/OrionDecorator.h"
@@ -31,6 +32,7 @@ UOrionInventoryComponent::UOrionInventoryComponent(const FObjectInitializer& Obj
 	: Super(ObjectInitializer)
 {
 	SetIsReplicatedByDefault(true);
+	bWantsInitializeComponent = true;
 	bReplicateUsingRegisteredSubObjectList = true;
 	CurrentWeight = 0;
 	bInitializingSaveGame = false;
@@ -43,6 +45,7 @@ void UOrionInventoryComponent::BeginPlay()
 	Super::BeginPlay();
 	InitializeDelegate();
 	InventoryList.Initialize(this);
+	EquipmentList.Initialize(this);
 	//Set Dependency
 	UWorld* World = GetWorld();
 	OwningController = GetOwningController();
@@ -98,6 +101,29 @@ void UOrionInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	OnGridDimensionChanged.RemoveDynamic(this, &ThisClass::GridDimensionChanged);
 }
 
+void UOrionInventoryComponent::InitializeComponent()
+{
+	Super::InitializeComponent();
+}
+
+void UOrionInventoryComponent::UninitializeComponent()
+{
+	TArray<UOrionEquipmentInstance*> AllEquipmentInstances;
+
+	// gathering all instances before removal to avoid side effects affecting the equipment list iterator	
+	for (const FOrionEquippedItemEntry& Entry : EquipmentList.Entries)
+	{
+		AllEquipmentInstances.Add(Entry.Instance);
+	}
+
+	for (UOrionEquipmentInstance* EquipInstance : AllEquipmentInstances)
+	{
+		UnequipItem(EquipInstance);
+	}
+
+	Super::UninitializeComponent();
+}
+
 void UOrionInventoryComponent::InitializeDelegate()
 {
 	OnGridDimensionChanged.RemoveDynamic(this, &ThisClass::GridDimensionChanged);
@@ -106,11 +132,13 @@ void UOrionInventoryComponent::InitializeDelegate()
 }
 
 
+
 void UOrionInventoryComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ThisClass, InventoryList);
+	DOREPLIFETIME(ThisClass, EquipmentList);
 }
 
 
@@ -458,7 +486,80 @@ void UOrionInventoryComponent::InspectItemInstance(UOrionInventoryItemInstance* 
 
 }
 
+UOrionEquipmentInstance* UOrionInventoryComponent::EquipItem(FOrionEquipmentDefinition EquipmentDefinition)
+{
+	if (EquipmentDefinition.EquipSlot == FGameplayTag::EmptyTag)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Fail to add item. Invalid Equipment Slot Tag"));
+		return nullptr;
+	}
+	
+	UOrionEquipmentInstance* Result = nullptr;
+	if (GetRole() != ROLE_Authority)
+	{
+		Server_EquipItem(EquipmentDefinition);
+		return nullptr;
+	}
 
+	
+	Result = EquipmentList.SetEntry(EquipmentDefinition);
+	if (Result != nullptr)
+	{
+		Result->OnEquipped();
+
+		if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
+		{
+			AddReplicatedSubObject(Result);
+		}
+	}
+	
+	return Result;
+}
+
+void UOrionInventoryComponent::Server_EquipItem_Implementation(FOrionEquipmentDefinition EquipmentDefinition)
+{
+	EquipItem(EquipmentDefinition);
+}
+
+
+
+void UOrionInventoryComponent::UnequipItemFromSlot(FGameplayTag InEquipSlot)
+{
+	if (InEquipSlot == FGameplayTag::EmptyTag)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Fail to add item. Invalid Equipment Slot Tag"));
+	}
+	UOrionEquipmentInstance* EquipmentInstance = EquipmentList.FindFirstEquipmentBySlot(InEquipSlot);
+
+	if (EquipmentInstance)
+	{
+		UnequipItem(EquipmentInstance);
+	}
+}
+
+void UOrionInventoryComponent::UnequipItem(UOrionEquipmentInstance* EquipmentInstance)
+{
+	if (GetRole() != ROLE_Authority)
+	{
+		Server_UnequipItem(EquipmentInstance);
+		return;
+	}
+	if (EquipmentInstance != nullptr)
+	{
+		if (IsUsingRegisteredSubObjectList())
+		{
+			RemoveReplicatedSubObject(EquipmentInstance);
+		}
+
+		EquipmentInstance->OnUnequipped();
+		EquipmentList.RemoveEntry(EquipmentInstance);
+	}
+}
+
+void UOrionInventoryComponent::Server_UnequipItem_Implementation(UOrionEquipmentInstance* EquipmentInstance)
+{
+	UnequipItem(EquipmentInstance);
+}
 
 FOrionInventorySaveData UOrionInventoryComponent::GetSaveGameData()
 {
@@ -553,6 +654,16 @@ bool UOrionInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutB
 		}
 	}
 
+	for (FOrionEquippedItemEntry& Entry : EquipmentList.Entries)
+	{
+		UOrionEquipmentInstance* Instance = Entry.Instance;
+
+		if (IsValid(Instance))
+		{
+			WroteSomething |= Channel->ReplicateSubobject(Instance, *Bunch, *RepFlags);
+		}
+	}
+
 	return WroteSomething;
 }
 
@@ -566,6 +677,19 @@ void UOrionInventoryComponent::ReadyForReplication()
 		for (const FOrionInventoryEntry& Entry : InventoryList.Entries)
 		{
 			UOrionInventoryItemInstance* Instance = Entry.ItemInstance;
+
+			if (IsValid(Instance))
+			{
+				AddReplicatedSubObject(Instance);
+			}
+		}
+	}
+	// Register existing OrionEquipmentInstances
+	if (IsUsingRegisteredSubObjectList())
+	{
+		for (const FOrionEquippedItemEntry& Entry : EquipmentList.Entries)
+		{
+			UOrionEquipmentInstance* Instance = Entry.Instance;
 
 			if (IsValid(Instance))
 			{

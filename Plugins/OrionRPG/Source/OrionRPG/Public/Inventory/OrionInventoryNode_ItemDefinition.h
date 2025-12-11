@@ -14,7 +14,7 @@ class UOrionInventoryItemFragment;
 /**
  * UOrionInventoryNode_ItemDefinition
  */
-UCLASS(Blueprintable, Const)
+UCLASS(Blueprintable, Const, AutoExpandCategories = "Fragments")
 class ORIONRPG_API UOrionInventoryNode_ItemDefinition : public UOrionInventoryNode
 {
 	GENERATED_BODY()
@@ -46,7 +46,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
 	TSoftClassPtr<AActor> PickupActorClass;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fragments", Instanced)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fragments", Instanced, meta = (FullyExpand = true))
 	TArray<TObjectPtr<UOrionInventoryItemFragment>> Fragments;
 
 	/**Override for drop item fragment in case for different behavior*/

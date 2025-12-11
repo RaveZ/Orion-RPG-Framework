@@ -3,6 +3,7 @@
 
 #include "Inventory/OrionInventoryItemInstance.h"
 #include "Inventory/OrionInventoryItemFragment.h"
+#include "Inventory/OrionEquipmentInstance.h"
 
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Net/UnrealNetwork.h"
@@ -85,6 +86,35 @@ void UOrionInventoryItemInstance::SetTotalStackCount(int32 Count)
 	{
 		TotalStackCount = Count;
 	}
+}
+
+void UOrionInventoryItemInstance::SetEquippedItemInstance(UOrionEquipmentInstance* InEquipmentInstance)
+{
+	EquippedItemInstance = InEquipmentInstance;
+	if (EquippedItemInstance)
+	{
+		TWeakObjectPtr<UOrionInventoryItemInstance> WeakThis = this;
+		
+		EquippedItemInstance->OnUnequippedDelegate.AddLambda(
+			[this, WeakThis]()
+			{
+				if (WeakThis.IsValid())
+				{
+					EquippedItemInstance->OnUnequippedDelegate.Clear();
+					EquippedItemInstance = nullptr;
+
+				}
+			}
+		);
+		
+
+	}
+}
+
+
+bool UOrionInventoryItemInstance::IsEquipped()
+{
+	return EquippedItemInstance != nullptr;
 }
 
 const UOrionInventoryItemFragment* UOrionInventoryItemInstance::FindFragmentByClass(TSubclassOf<UOrionInventoryItemFragment> FragmentClass) const

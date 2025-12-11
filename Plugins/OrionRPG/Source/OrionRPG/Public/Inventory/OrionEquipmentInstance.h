@@ -10,6 +10,7 @@ class APawn;
 struct FFrame;
 struct FOrionEquipmentActorData;
 
+DECLARE_MULTICAST_DELEGATE(FOrionEquipSignature);
 /**
  * UOrionEquipmentInstance
  *
@@ -48,6 +49,8 @@ public:
 	virtual void OnEquipped();
 	virtual void OnUnequipped();
 
+	FOrionEquipSignature OnEquippedDelegate;
+	FOrionEquipSignature OnUnequippedDelegate;
 protected:
 #if UE_WITH_IRIS
 	/** Register all replication fragments */

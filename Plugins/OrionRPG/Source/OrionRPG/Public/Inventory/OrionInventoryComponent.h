@@ -13,6 +13,7 @@ class AOrionActorViewer;
 class UOrionInventoryGraph;
 class UOrionInventoryNode_ItemDefinition;
 class UOrionInventoryItemInstance;
+class UOrionEquipmentInstance;
 class APlayerController;
 struct FNetDeltaSerializeInfo;
 struct FReplicationFlags;
@@ -93,6 +94,9 @@ private:
 	UPROPERTY(Replicated)
 	FOrionInventoryList InventoryList;
 
+	UPROPERTY(Replicated)
+	FOrionEquipmentList EquipmentList;
+
 	/**Max weight for this inventory*/
 	float MaxWeight;
 
@@ -110,9 +114,13 @@ protected:
 
 	//~UObject interface
 	virtual bool ReplicateSubobjects(class UActorChannel* Channel, class FOutBunch* Bunch, FReplicationFlags* RepFlags) override;
-	virtual void ReadyForReplication() override;
 	//~End of UObject interface
+	//~UActorComponent interface
 
+	virtual void InitializeComponent() override;
+	virtual void UninitializeComponent() override;
+	virtual void ReadyForReplication() override;
+	//~End of UActorComponent interface
 public:
 	UFUNCTION(BlueprintPure , Category = "InventoryComponent")
 	float GetCurrentWeight();
@@ -235,20 +243,42 @@ public:
 	{
 		return IsValid(GetOwner()) ? GetOwner()->GetLocalRole() : ENetRole::ROLE_None;
 	};
-
+	///
 	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
 	FORCEINLINE bool IsValidItemTag(FGameplayTag ItemTag) const
 	{
 		return ItemTag.MatchesTag(TAG_Item) && ItemTag != FGameplayTag::EmptyTag;
 	};
 
-
+	/// <summary>
+	/// Inspect Item
+	/// </summary>
+	/// <param name="ItemTag"></param>
+	/// <param name="ActorToInspect"></param>
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
 	void InspectItem(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag(), TSoftClassPtr<AActor> ActorToInspect = nullptr);
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
 	void InspectItemInstance(UOrionInventoryItemInstance* ItemInstance = nullptr, TSoftClassPtr<AActor> ActorToInspect = nullptr);
 
+
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	UOrionEquipmentInstance* EquipItem(FOrionEquipmentDefinition EquipmentDefinition);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_EquipItem(FOrionEquipmentDefinition EquipmentDefinition);
+	bool Server_EquipItem_Validate(FOrionEquipmentDefinition EquipmentDefinition) { return true; };
+
+
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	void UnequipItemFromSlot(UPARAM(meta = (Categories = "Equipment.Slot")) FGameplayTag InEquipSlot);
+
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	void UnequipItem(UOrionEquipmentInstance* EquipmentInstance);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_UnequipItem(UOrionEquipmentInstance* EquipmentInstance);
+	bool Server_UnequipItem_Validate(UOrionEquipmentInstance* EquipmentInstance) { return true; };
 public:
 	UFUNCTION()
 	FOrionInventorySaveData GetSaveGameData();

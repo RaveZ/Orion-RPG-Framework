@@ -16,6 +16,8 @@
 
 // Gameplay Tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Item, "Item");
+UE_DEFINE_GAMEPLAY_TAG(Tag_Equipment_Slot, "Equipment.Slot");
+UE_DEFINE_GAMEPLAY_TAG(Tag_Equipment_Slot_Head, "Equipment.Slot.Head");
 
 //////////////////////////////////////////////////////////////////////
 // FOrionInventoryEntry
@@ -395,6 +397,25 @@ FString FOrionEquippedItemEntry::GetDebugString() const
 // 
 // FOrionEquippedItemEntry
 
+void FOrionEquipmentList::Initialize(UOrionInventoryComponent* InOwnerComponent)
+{
+	OwnerComponent = InOwnerComponent;
+	UOrionInventoryGraph* InventoryGraph = InOwnerComponent->InventoryDB;
+	if (InventoryGraph)
+	{
+		for (auto& Slot : InventoryGraph->EquipmentDefaultSlots)
+		{
+			if (Slot == FGameplayTag::EmptyTag) continue;
+
+			FOrionEquippedItemEntry& NewEntry = Entries.AddDefaulted_GetRef();
+			NewEntry.Slot = Slot;
+
+			MarkItemDirty(NewEntry);
+			
+		}
+	}
+}
+
 void FOrionEquipmentList::PreReplicatedRemove(const TArrayView<int32> RemovedIndices, int32 FinalSize)
 {
 	for (int32 Index : RemovedIndices)
@@ -431,33 +452,37 @@ UOrionEquipmentInstance* FOrionEquipmentList::AddEntry(FOrionEquipmentDefinition
 	check(OwnerComponent);
 	check(OwnerComponent->GetOwner()->HasAuthority());
 
-	TSubclassOf<UOrionEquipmentInstance> InstanceType = EquipmentDefinition.InstanceType;
-	if (InstanceType == nullptr)
-	{
-		InstanceType = UOrionEquipmentInstance::StaticClass();
-	}
-
 	FOrionEquippedItemEntry& NewEntry = Entries.AddDefaulted_GetRef();
-	//NewEntry.EquipmentDefinition = EquipmentDefinition;
-	NewEntry.Instance = NewObject<UOrionEquipmentInstance>(OwnerComponent->GetOwner(), InstanceType);  //@TODO: Using the actor instead of component as the outer due to UE-127172
-	Result = NewEntry.Instance;
-
-	if (UOrionAbilitySystemComponent* ASC = GetAbilitySystemComponent())
-	{
-		for (const TObjectPtr<const UOrionAbilitySet>& AbilitySet : EquipmentDefinition.AbilitySetsToGrant)
-		{
-			AbilitySet->GiveToAbilitySystem(ASC, /*inout*/ &NewEntry.GrantedHandles, Result);
-		}
-	}
-	else
-	{
-		//@TODO: Warning logging?
-	}
-
-	Result->SpawnEquipmentActors(EquipmentDefinition.ActorsToSpawn);
-
+	Result = CreateEquipmentInstance(NewEntry, EquipmentDefinition);
 
 	MarkItemDirty(NewEntry);
+
+	return Result;
+}
+
+UOrionEquipmentInstance* FOrionEquipmentList::SetEntry(FOrionEquipmentDefinition EquipmentDefinition)
+{
+	UOrionEquipmentInstance* Result = nullptr;
+	if (EquipmentDefinition.EquipSlot == FGameplayTag::EmptyTag) return nullptr;
+
+	check(OwnerComponent);
+	check(OwnerComponent->GetOwner()->HasAuthority());
+
+	bool bEntryFound = false;
+	FOrionEquippedItemEntry& FoundEntry = FindFirstEntryBySlot(bEntryFound, EquipmentDefinition.EquipSlot);
+	
+	if (bEntryFound)
+	{
+		//Unequip first if instance valid
+		if (FoundEntry.Instance)
+		{
+			OwnerComponent->UnequipItem(FoundEntry.Instance);
+			
+		}
+		Result = CreateEquipmentInstance(FoundEntry, EquipmentDefinition);
+
+		MarkItemDirty(FoundEntry);
+	}
 
 	return Result;
 }
@@ -476,11 +501,60 @@ void FOrionEquipmentList::RemoveEntry(UOrionEquipmentInstance* Instance)
 
 			Instance->DestroyEquipmentActors();
 
-
-			EntryIt.RemoveCurrent();
-			MarkArrayDirty();
+			MarkItemDirty(Entry);
 		}
 	}
+}
+
+
+UOrionEquipmentInstance* FOrionEquipmentList::CreateEquipmentInstance(FOrionEquippedItemEntry& InEntry, FOrionEquipmentDefinition EquipmentDefinition)
+{
+	UOrionEquipmentInstance* Result = nullptr;
+	TSubclassOf<UOrionEquipmentInstance> InstanceType = EquipmentDefinition.InstanceType;
+	if (InstanceType == nullptr)
+	{
+		InstanceType = UOrionEquipmentInstance::StaticClass();
+	}
+	InEntry.EquipmentDefinition = EquipmentDefinition;
+	InEntry.Instance = NewObject<UOrionEquipmentInstance>(OwnerComponent->GetOwningPawn(), InstanceType);
+
+	Result = InEntry.Instance;
+
+	if (UOrionAbilitySystemComponent* ASC = GetAbilitySystemComponent())
+	{
+		for (const TObjectPtr<const UOrionAbilitySet>& AbilitySet : EquipmentDefinition.AbilitySetsToGrant)
+		{
+			AbilitySet->GiveToAbilitySystem(ASC, /*inout*/ &InEntry.GrantedHandles, Result);
+		}
+	}
+	Result->SpawnEquipmentActors(EquipmentDefinition.ActorsToSpawn);
+
+	return Result;
+}
+
+FOrionEquippedItemEntry& FOrionEquipmentList::FindFirstEntryBySlot(bool& bFound, FGameplayTag SlotTag)
+{
+	bFound = false;
+	for (auto& Entry : Entries)
+	{
+		if (Entry.Slot == SlotTag)
+		{
+			bFound = true;
+			return Entry;
+		}
+	}
+
+	static FOrionEquippedItemEntry EmptyEntry;
+	return EmptyEntry;
+}
+
+UOrionEquipmentInstance* FOrionEquipmentList::FindFirstEquipmentBySlot(const FGameplayTag& SlotTag)
+{
+	auto* FoundItem = Entries.FindByPredicate([Slot = SlotTag](const FOrionEquippedItemEntry& Entry)
+		{
+			return IsValid(Entry.Instance);
+		});
+	return FoundItem ? FoundItem->Instance : nullptr;
 }
 
 UOrionAbilitySystemComponent* FOrionEquipmentList::GetAbilitySystemComponent() const
@@ -490,3 +564,8 @@ UOrionAbilitySystemComponent* FOrionEquipmentList::GetAbilitySystemComponent() c
 	return Cast<UOrionAbilitySystemComponent>(UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OwningActor));
 }
 
+FOrionEquipmentDefinition::FOrionEquipmentDefinition()
+{
+	InstanceType = UOrionEquipmentInstance::StaticClass();
+	EquipSlot = Tag_Equipment_Slot;
+}

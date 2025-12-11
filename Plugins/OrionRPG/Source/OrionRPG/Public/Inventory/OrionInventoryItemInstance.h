@@ -11,9 +11,10 @@
 
 class UOrionInventoryNode_ItemDefinition;
 class UOrionInventoryItemFragment;
+class UOrionEquipmentInstance;
 
 UCLASS(BlueprintType)
-class ORIONRPG_API UOrionInventoryItemInstance : public UOrionInventoryNode
+class ORIONRPG_API UOrionInventoryItemInstance : public UObject
 {
 	GENERATED_BODY()
 
@@ -36,6 +37,12 @@ public:
 	void SetTotalStackCount(int32 Count);
 
 public:
+	UFUNCTION(BlueprintCallable, Category = Inventory)
+	void SetEquippedItemInstance(UOrionEquipmentInstance* InEquipmentInstance);
+
+	UFUNCTION(BlueprintPure, BlueprintCallable, Category = Inventory)
+	bool IsEquipped();
+
 	// Adds a specified number of stacks to the tag (does nothing if StackCount is below 1)
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category = Inventory)
 	void AddStatTagStack(FGameplayTag Tag, int32 StackCount);
@@ -68,8 +75,15 @@ private:
 	friend struct FLyraInventoryList;
 
 public:
+	/// <summary>
+	/// Associated Equipment Instance
+	/// </summary>
+	UPROPERTY(BlueprintReadOnly, Category = Inventory)
+	TObjectPtr<UOrionEquipmentInstance> EquippedItemInstance;
 
 private:
+
+
 	UPROPERTY(Replicated)
 	int32 TotalStackCount{0};
 

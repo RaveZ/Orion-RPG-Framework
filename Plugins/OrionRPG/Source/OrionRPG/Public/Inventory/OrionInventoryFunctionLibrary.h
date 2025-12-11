@@ -9,6 +9,7 @@
 #include "OrionInventoryFunctionLibrary.generated.h"
 
 class UOrionInventoryItemFragment;
+class UOrionEquipmentInstance;
 class UOrionInventoryNode_ItemDefinition;
 
 UCLASS()
@@ -96,4 +97,14 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
 	static TArray<UOrionInventoryItemInstance*> GetAllInventoryItem(const UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static UOrionEquipmentInstance* EquipItem(const UObject* WorldContextObject, FOrionEquipmentDefinition EquipmentDefinition);
+
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static void UnequipItem(const UObject* WorldContextObject, UOrionEquipmentInstance* EquipmentInstance);
+
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static void UnequipItemFromSlot(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Equipment.Slot")) FGameplayTag InEquipSlot);
+
 };

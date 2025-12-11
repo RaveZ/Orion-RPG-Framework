@@ -180,3 +180,34 @@ TArray<UOrionInventoryItemInstance*> UOrionInventoryFunctionLibrary::GetAllInven
     return OutResult;
 }
 
+UOrionEquipmentInstance* UOrionInventoryFunctionLibrary::EquipItem(const UObject* WorldContextObject, FOrionEquipmentDefinition EquipmentDefinition)
+{
+    UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);
+
+    if (InventoryComp)
+    {
+		return InventoryComp->EquipItem(EquipmentDefinition);
+    }
+    return nullptr;
+}
+
+void UOrionInventoryFunctionLibrary::UnequipItem(const UObject* WorldContextObject, UOrionEquipmentInstance* EquipmentInstance)
+{
+    UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);
+
+    if (InventoryComp)
+    {
+		InventoryComp->UnequipItem(EquipmentInstance);
+    }
+}
+
+void UOrionInventoryFunctionLibrary::UnequipItemFromSlot(const UObject* WorldContextObject, FGameplayTag InEquipSlot)
+{
+    UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);
+
+    if (InventoryComp)
+    {
+        InventoryComp->UnequipItemFromSlot(InEquipSlot);
+    }
+}
+

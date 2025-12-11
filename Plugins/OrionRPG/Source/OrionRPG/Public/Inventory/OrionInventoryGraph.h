@@ -43,6 +43,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta = (ClampMin = "50", ClampMax = "100", UIMin = "50", UIMax = "100"))
 		float GridSize;
 
+	/// <summary>
+	/// Equipment default slots
+	/// </summary>
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta=(Categories="Equipment.Slot"))
+		TArray<FGameplayTag> EquipmentDefaultSlots;
 
 	/**Default drop item fragment for each item for this graph*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", Instanced)

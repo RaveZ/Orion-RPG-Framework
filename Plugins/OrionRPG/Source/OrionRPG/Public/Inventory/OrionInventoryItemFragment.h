@@ -26,10 +26,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment, meta = (EditCondition = "bHasMenuAction == true", HideEditConditionToggle, EditConditionHides))
 	FText ActionDisplayName;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment, meta = (EditCondition = "bHasMenuAction == true", HideEditConditionToggle, EditConditionHides))
-	TObjectPtr<UTexture2D> ActionIcon;
-
-
 	UPROPERTY(BlueprintReadOnly, Category = Fragment)
 	TObjectPtr<UOrionInventoryItemInstance> OwningItemInstance;
 
@@ -54,29 +50,6 @@ public:
 
 	// Allows the Object to get a valid UWorld from it's outer.
 	virtual UWorld* GetWorld() const override;
-};
-
-
-//////////////////////////////////////////////////////////////////////
-
-// Equippable item fragment
-UCLASS(meta = (DisplayName="Equippable Fragment"))
-class UOrionInventoryFragment_EquippableItem : public UOrionInventoryItemFragment
-{
-	GENERATED_BODY()
-
-public:
-	UOrionInventoryFragment_EquippableItem();
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment)
-	TSoftClassPtr<AActor> ActorToSpawn;
-
-	/**Which socket to attach this equipment*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment)
-	FName AttachSocket;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment)
-	FTransform AttachTransform;
 };
 
 
