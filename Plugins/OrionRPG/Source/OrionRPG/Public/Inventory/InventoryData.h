@@ -24,8 +24,17 @@ class UOrionInteractionTargetComponent;
 
 // Gameplay Tags
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(Tag_Equipment_Slot);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(Tag_Equipment_Slot_Head);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Head);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Chest);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Legs);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Feet);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Hands);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_RightHandWeapon);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_LeftHandWeapon);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Accessory1);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Accessory2);
+
 
 UENUM(BlueprintType)
 enum class EOrionInventoryType : uint8
