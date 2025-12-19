@@ -7,7 +7,7 @@ set "PACKAGE_BASE_PATH=D:\Work\Build"
 set "ENGINE_BASE_PATH=D:\Work"
 
 :: Define the Unreal Engine versions to build for
-set "UE_VERSIONS=UE_5.6 UE_5.5 UE_5.4 UE_5.3"
+set "UE_VERSIONS=UE_5.7 UE_5.6 UE_5.5 UE_5.4 UE_5.3"
 
 echo.
 echo Starting multi-version plugin build for OrionRPG...
