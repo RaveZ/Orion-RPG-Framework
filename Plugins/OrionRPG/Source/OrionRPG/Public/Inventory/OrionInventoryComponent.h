@@ -31,6 +31,9 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInventoryItemStackChange, UOrion
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryMaxWeightChanged, float, InMaxWeight);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryEncumberedStateChanged, bool, bEncumbered);
 
+//Equipment Delegate
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEquipmentSignature, UOrionEquipmentInstance*, EquipmentInstance);
+
 UCLASS(meta=(BlueprintSpawnableComponent), BlueprintType, Blueprintable, HideDropdown, ClassGroup = "OrionRPG", DisplayName = "Orion Inventory Component")
 class ORIONRPG_API UOrionInventoryComponent : public UActorComponent
 {
@@ -85,6 +88,12 @@ public:
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FInventoryInspectItem OnInspectItem;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
+		FEquipmentSignature OnItemEquipped;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
+		FEquipmentSignature OnItemUnequipped;
 
 public:
 	UFUNCTION()
@@ -263,6 +272,12 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	UOrionEquipmentInstance* EquipItemFromInstance(UOrionInventoryItemInstance* ItemInstance);
+
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	UOrionEquipmentInstance* EquipItemFromTag(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
+
+
 	UOrionEquipmentInstance* EquipItem(FOrionEquipmentDefinition EquipmentDefinition);
 
 	UFUNCTION(Server, Reliable, WithValidation)
@@ -279,6 +294,10 @@ public:
 	UFUNCTION(Server, Reliable, WithValidation)
 	void Server_UnequipItem(UOrionEquipmentInstance* EquipmentInstance);
 	bool Server_UnequipItem_Validate(UOrionEquipmentInstance* EquipmentInstance) { return true; };
+
+
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent", BlueprintPure = false)
+	TArray<UOrionEquipmentInstance*> GetAllEquippedItems() const;
 public:
 	UFUNCTION()
 	FOrionInventorySaveData GetSaveGameData();

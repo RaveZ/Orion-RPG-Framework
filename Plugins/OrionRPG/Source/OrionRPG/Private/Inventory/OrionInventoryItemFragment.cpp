@@ -72,6 +72,35 @@ UOrionInventoryFragment_ConsumableItem::UOrionInventoryFragment_ConsumableItem()
 	ActionDisplayName = FText::FromString("Consume");
 }
 
+
+//////////////////////////////////////////////////////////////////////
+
+// Equippable fragment
+UOrionInventoryFragment_EquippableItem::UOrionInventoryFragment_EquippableItem()
+{
+	ActionDisplayName = FText::FromString("Equip");
+}
+
+FText UOrionInventoryFragment_EquippableItem::K2_GetActionDisplayName_Implementation() const
+{
+	return OwningItemInstance->IsEquipped() ? FText::FromString("Unequip") : FText::FromString("Equip");
+}
+
+void UOrionInventoryFragment_EquippableItem::K2_ExecuteAction_Implementation()
+{
+	UWorld* World = GetWorld();
+	UOrionInventoryComponent* InvComp = World ? UOrionInventoryFunctionLibrary::GetInventoryComponent(World) : nullptr;
+	if (InvComp && OwningItemInstance->IsEquipped())
+	{
+		InvComp->UnequipItem(OwningItemInstance->EquippedItemInstance);
+	}
+	else
+	{
+		InvComp->EquipItemFromInstance(OwningItemInstance);
+
+	}
+}
+
 //////////////////////////////////////////////////////////////////////
 
 // Inspect item fragment
@@ -120,3 +149,4 @@ void UOrionInventoryFragment_DropItem::K2_ExecuteAction_Implementation()
 
 
 #undef LOCTEXT_NAMESPACE
+

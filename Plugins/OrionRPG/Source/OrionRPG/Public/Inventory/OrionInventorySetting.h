@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/NoExportTypes.h"
+#include "Templates/SubclassOf.h"
 #include "OrionInventorySetting.generated.h"
 
 class UOrionActorViewer;
@@ -17,11 +18,6 @@ class ORIONRPG_API UOrionInventorySetting : public UObject
 	virtual ~UOrionInventorySetting();
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting", noclear)
-	TSubclassOf<class UOrionGridSlot> DefaultGridSlotWidget;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting", noclear)
-	TSubclassOf<class UOrionGridItem> DefaultGridItemWidget;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting")
 	TSubclassOf<class AOrionActorViewer> ItemViewerClass;

@@ -69,6 +69,27 @@ public:
 
 //////////////////////////////////////////////////////////////////////
 
+// Equippable fragment
+UCLASS(meta = (DisplayName = "Equippable Fragment"))
+class UOrionInventoryFragment_EquippableItem : public UOrionInventoryItemFragment
+{
+	GENERATED_BODY()
+
+public:
+	UOrionInventoryFragment_EquippableItem();
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment)
+	FOrionEquipmentDefinition EquipmentDefinition;
+
+	virtual FText K2_GetActionDisplayName_Implementation() const override;
+
+	virtual void K2_ExecuteAction_Implementation() override;
+
+};
+
+//////////////////////////////////////////////////////////////////////
+
 // Inspect item fragment
 UCLASS(meta = (DisplayName = "Inspectable Fragment"))
 class UOrionInventoryFragment_InspectItem : public UOrionInventoryItemFragment

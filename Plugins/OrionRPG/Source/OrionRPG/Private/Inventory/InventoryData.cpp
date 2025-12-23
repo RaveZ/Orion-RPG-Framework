@@ -345,7 +345,7 @@ void FOrionInventoryList::InitializeFromSaveGame(const FOrionInventorySaveData& 
 
 	AActor* OwningActor = OwnerComponent->GetOwner();
 	check(OwningActor->HasAuthority());
-
+	
 	UOrionInventoryComponent* InvComponent = Cast<UOrionInventoryComponent>(OwnerComponent);
 
 	Entries.SetNum(InventorySaveData.SavedInventoryItems.Num());
@@ -373,6 +373,12 @@ void FOrionInventoryList::InitializeFromSaveGame(const FOrionInventorySaveData& 
 				if (ItemDef->DropItemFragment)
 				{
 					ItemDef->DropItemFragment->OnInstanceCreated(NewEntry.ItemInstance);
+				}
+
+				//Equipment
+				if (ItemSaveData.bIsEquipped)
+				{
+					OwnerComponent->EquipItemFromInstance(NewEntry.ItemInstance);
 				}
 			}
 		}
@@ -468,6 +474,30 @@ UOrionEquipmentInstance* FOrionEquipmentList::AddEntry(FOrionEquipmentDefinition
 	return Result;
 }
 
+
+void FOrionEquipmentList::Reset()
+{
+	for (auto EntryIt = Entries.CreateIterator(); EntryIt; ++EntryIt)
+	{
+		if(EntryIt->Instance)
+		{
+			RemoveEntry(EntryIt->Instance);
+		}
+	}
+}
+
+TArray<UOrionEquipmentInstance*> FOrionEquipmentList::GetAllEquippedItems() const
+{
+	TArray<UOrionEquipmentInstance*> Results;
+	Results.SetNum(Entries.Num());
+	for (int32 i = 0; i < Entries.Num(); i++)
+	{
+		Results[i] = Entries[i].Instance;
+	}
+
+	return Results;
+}
+
 UOrionEquipmentInstance* FOrionEquipmentList::SetEntry(FOrionEquipmentDefinition EquipmentDefinition)
 {
 	UOrionEquipmentInstance* Result = nullptr;
@@ -508,8 +538,6 @@ void FOrionEquipmentList::RemoveEntry(UOrionEquipmentInstance* Instance)
 			}
 
 			Instance->DestroyEquipmentActors();
-
-			MarkItemDirty(Entry);
 		}
 	}
 }
@@ -523,10 +551,10 @@ UOrionEquipmentInstance* FOrionEquipmentList::CreateEquipmentInstance(FOrionEqui
 	{
 		InstanceType = UOrionEquipmentInstance::StaticClass();
 	}
-	InEntry.EquipmentDefinition = EquipmentDefinition;
 	InEntry.Instance = NewObject<UOrionEquipmentInstance>(OwnerComponent->GetOwningPawn(), InstanceType);
 
 	Result = InEntry.Instance;
+	Result->SetEquipmentDef(EquipmentDefinition);
 
 	if (UOrionAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{
@@ -535,7 +563,7 @@ UOrionEquipmentInstance* FOrionEquipmentList::CreateEquipmentInstance(FOrionEqui
 			AbilitySet->GiveToAbilitySystem(ASC, /*inout*/ &InEntry.GrantedHandles, Result);
 		}
 	}
-	Result->SpawnEquipmentActors(EquipmentDefinition.ActorsToSpawn);
+	Result->SpawnEquipmentActors(EquipmentDefinition.ActorsToSpawn, OwnerComponent->GetOwningPawn());
 
 	return Result;
 }

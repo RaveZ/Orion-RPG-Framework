@@ -4,7 +4,6 @@
 #include "Inventory/OrionEquipmentInstance.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/Character.h"
-#include "Inventory/InventoryData.h"
 #include "Engine/StreamableManager.h"
 #include "Engine/AssetManager.h"
 #include "Net/UnrealNetwork.h"
@@ -42,6 +41,7 @@ void UOrionEquipmentInstance::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 
 	DOREPLIFETIME(ThisClass, Instigator);
 	DOREPLIFETIME(ThisClass, SpawnedActors);
+	DOREPLIFETIME(ThisClass, EquipmentDef);
 }
 
 #if UE_WITH_IRIS
@@ -72,27 +72,25 @@ APawn* UOrionEquipmentInstance::GetTypedPawn(TSubclassOf<APawn> PawnType) const
 	return Result;
 }
 
-void UOrionEquipmentInstance::SpawnEquipmentActors(const TArray<FOrionEquipmentActorData>& ActorsToSpawn)
+void UOrionEquipmentInstance::SpawnEquipmentActors(const TArray<FOrionEquipmentActorData>& ActorsToSpawn, APawn* InPawn)
 {
-	if (APawn* OwningPawn = GetPawn())
+	USceneComponent* AttachTarget = InPawn->GetRootComponent();
+	if (ACharacter* Char = Cast<ACharacter>(InPawn))
 	{
-		USceneComponent* AttachTarget = OwningPawn->GetRootComponent();
-		if (ACharacter* Char = Cast<ACharacter>(OwningPawn))
+		AttachTarget = Char->GetMesh();
+	}
+
+	for (const FOrionEquipmentActorData& SpawnInfo : ActorsToSpawn)
+	{
+		const FSoftObjectPath SoftPath = SpawnInfo.ActorToSpawn.ToSoftObjectPath();
+		if (!SoftPath.IsValid())
 		{
-			AttachTarget = Char->GetMesh();
+			continue;
 		}
 
-		for (const FOrionEquipmentActorData& SpawnInfo : ActorsToSpawn)
-		{
-			const FSoftObjectPath SoftPath = SpawnInfo.ActorToSpawn.ToSoftObjectPath();
-			if (!SoftPath.IsValid())
-			{
-				continue;
-			}
-
 #if WITH_EDITOR || UE_BUILD_SHIPPING || UE_BUILD_TEST
-			FOrionEquipmentActorData SpawnInfoCopy = SpawnInfo;
-			FStreamableDelegate Delegate = FStreamableDelegate::CreateLambda([this, SoftPath, OwningPawn, AttachTarget, SpawnInfoCopy]()
+		FOrionEquipmentActorData SpawnInfoCopy = SpawnInfo;
+		FStreamableDelegate Delegate = FStreamableDelegate::CreateLambda([this, SoftPath, InPawn, AttachTarget, SpawnInfoCopy]()
 			{
 				UObject* LoadedObj = SoftPath.ResolveObject();
 				if (!LoadedObj)
@@ -106,27 +104,28 @@ void UOrionEquipmentInstance::SpawnEquipmentActors(const TArray<FOrionEquipmentA
 					return;
 				}
 
-				if (!GetWorld() || !OwningPawn)
+				if (!GetWorld() || !InPawn)
 				{
 					return;
 				}
 
-				AActor* NewActor = GetWorld()->SpawnActorDeferred<AActor>(LoadedClass, FTransform::Identity, OwningPawn);
+				AActor* NewActor = GetWorld()->SpawnActorDeferred<AActor>(LoadedClass, FTransform::Identity, InPawn);
 				if (NewActor)
 				{
 					NewActor->FinishSpawning(FTransform::Identity, /*bIsDefaultTransform=*/ true);
 					NewActor->SetActorRelativeTransform(SpawnInfoCopy.AttachTransform);
 					NewActor->AttachToComponent(AttachTarget, FAttachmentTransformRules::KeepRelativeTransform, SpawnInfoCopy.AttachSocket);
+					OnEquipmentActorSpawned.Broadcast(NewActor);
 
 					SpawnedActors.Add(NewActor);
 				}
 			});
 
-			// Request async load via AssetManager's StreamableManager
-			UAssetManager::GetStreamableManager().RequestAsyncLoad(SoftPath, Delegate);
+		// Request async load via AssetManager's StreamableManager
+		UAssetManager::GetStreamableManager().RequestAsyncLoad(SoftPath, Delegate);
 #endif
-		}
 	}
+	
 }
 
 void UOrionEquipmentInstance::DestroyEquipmentActors()
@@ -150,6 +149,11 @@ void UOrionEquipmentInstance::OnUnequipped()
 {
 	K2_OnUnequipped();
 	OnUnequippedDelegate.Broadcast();
+}
+
+void UOrionEquipmentInstance::SetEquipmentDef(FOrionEquipmentDefinition& InDef)
+{
+	EquipmentDef = InDef;	
 }
 
 void UOrionEquipmentInstance::OnRep_Instigator()

@@ -486,6 +486,34 @@ void UOrionInventoryComponent::InspectItemInstance(UOrionInventoryItemInstance* 
 
 }
 
+UOrionEquipmentInstance* UOrionInventoryComponent::EquipItemFromInstance(UOrionInventoryItemInstance* ItemInstance)
+{
+	if (ItemInstance)
+	{
+		const UOrionInventoryFragment_EquippableItem* EquippableFragment = Cast<UOrionInventoryFragment_EquippableItem>(ItemInstance->FindFragmentByClass(UOrionInventoryFragment_EquippableItem::StaticClass()));
+		if (EquippableFragment)
+		{
+			UOrionEquipmentInstance* Result = EquipItem(EquippableFragment->EquipmentDefinition);
+			if (Result)
+			{
+				ItemInstance->SetEquippedItemInstance(Result);
+			}
+		}
+		
+	}
+	return nullptr;
+}
+
+UOrionEquipmentInstance* UOrionInventoryComponent::EquipItemFromTag(FGameplayTag ItemTag)
+{
+	UOrionInventoryItemInstance* ItemInstance = InventoryList.FindFirstItemByTag(ItemTag);
+	if (ItemInstance)
+	{
+		return EquipItemFromInstance(ItemInstance);
+	}
+	return nullptr;
+}
+
 UOrionEquipmentInstance* UOrionInventoryComponent::EquipItem(FOrionEquipmentDefinition EquipmentDefinition)
 {
 	if (EquipmentDefinition.EquipSlot == FGameplayTag::EmptyTag)
@@ -506,6 +534,7 @@ UOrionEquipmentInstance* UOrionInventoryComponent::EquipItem(FOrionEquipmentDefi
 	if (Result != nullptr)
 	{
 		Result->OnEquipped();
+		OnItemEquipped.Broadcast(Result);
 
 		if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
 		{
@@ -522,7 +551,7 @@ void UOrionInventoryComponent::Server_EquipItem_Implementation(FOrionEquipmentDe
 }
 
 
-
+ 
 void UOrionInventoryComponent::UnequipItemFromSlot(FGameplayTag InEquipSlot)
 {
 	if (InEquipSlot == FGameplayTag::EmptyTag)
@@ -552,6 +581,7 @@ void UOrionInventoryComponent::UnequipItem(UOrionEquipmentInstance* EquipmentIns
 		}
 
 		EquipmentInstance->OnUnequipped();
+		OnItemUnequipped.Broadcast(EquipmentInstance);
 		EquipmentList.RemoveEntry(EquipmentInstance);
 	}
 }
@@ -561,9 +591,16 @@ void UOrionInventoryComponent::Server_UnequipItem_Implementation(UOrionEquipment
 	UnequipItem(EquipmentInstance);
 }
 
+TArray<UOrionEquipmentInstance*> UOrionInventoryComponent::GetAllEquippedItems() const
+{
+	return EquipmentList.GetAllEquippedItems();
+}
+
 FOrionInventorySaveData UOrionInventoryComponent::GetSaveGameData()
 {
 	FOrionInventorySaveData InventorySaveData;
+
+	//Save Inventory Items
 	TArray<UOrionInventoryItemInstance*> AllItems = GetAllItems();
 	InventorySaveData.SavedInventoryItems.SetNum(AllItems.Num());
     for (int32 i = 0; i < AllItems.Num(); ++i)
@@ -576,12 +613,13 @@ FOrionInventorySaveData UOrionInventoryComponent::GetSaveGameData()
 				FOrionInventoryItemSaveData ItemSaveData;
 				ItemSaveData.ItemTag = ItemInstance->GetItemDef()->Tag;
 				ItemSaveData.TotalStackCount = ItemInstance->GetTotalStackCount();
+				ItemSaveData.bIsEquipped = ItemInstance->IsEquipped();
 
 				InventorySaveData.SavedInventoryItems[i] = ItemSaveData;
 			}
 		}
-		
     }
+
 	
 	InventorySaveData.MaxWeight = MaxWeight;
 	InventorySaveData.GridDimension = CurrentGridDimension;
@@ -599,7 +637,9 @@ void UOrionInventoryComponent::InitializeFromSaveGame(const FOrionInventorySaveD
 	//Reset Inventory List
 	bInitializingSaveGame = true;
 	InventoryList.Reset();
+	EquipmentList.Reset();
 	InventoryList.InitializeFromSaveGame(InventorySaveData);
+
 
 	MaxWeight = InventorySaveData.MaxWeight;
 	CurrentGridDimension = InventorySaveData.GridDimension;

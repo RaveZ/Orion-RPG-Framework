@@ -194,10 +194,6 @@ private:
 
 	UPROPERTY()
 	FGameplayTag Slot;
-	
-	// The equipment class that got equipped
-	UPROPERTY()
-	FOrionEquipmentDefinition EquipmentDefinition;
 
 
 	UPROPERTY()
@@ -227,6 +223,8 @@ struct FOrionEquipmentList : public FFastArraySerializer
 	{
 	}
 
+	TArray<UOrionEquipmentInstance*> GetAllEquippedItems() const;
+
 public:
 	void Initialize(UOrionInventoryComponent* InOwnerComponent);
 	//~FFastArraySerializer contract
@@ -248,6 +246,7 @@ public:
 	FOrionEquippedItemEntry& FindFirstEntryBySlot(bool& bFound, FGameplayTag SlotTag);
 	UOrionEquipmentInstance* FindFirstEquipmentBySlot(const FGameplayTag& SlotTag);
 		
+	void Reset();
 private:
 	UOrionAbilitySystemComponent* GetAbilitySystemComponent() const; 
 
@@ -331,6 +330,9 @@ public:
 	FGameplayTag ItemTag;
 
 	UPROPERTY(SaveGame)
+	bool bIsEquipped;
+
+	UPROPERTY(SaveGame)
 	int32 TotalStackCount;
 
 	UPROPERTY(SaveGame)
@@ -339,6 +341,7 @@ public:
 public:
 	FOrionInventoryItemSaveData()      
 	{
+		bIsEquipped = false;
 		ItemTag = FGameplayTag::EmptyTag;
 		TotalStackCount = 0;
 	}
