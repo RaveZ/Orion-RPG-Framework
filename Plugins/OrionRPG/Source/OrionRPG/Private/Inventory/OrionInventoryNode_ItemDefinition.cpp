@@ -26,9 +26,8 @@ UOrionInventoryNode_ItemDefinition::UOrionInventoryNode_ItemDefinition()
 
 void UOrionInventoryNode_ItemDefinition::LoadPrerequisites()
 {
-	TObjectPtr<UOrionInventoryItemFragment> InNewDropItemFragmentTemplate = DropItemFragmentOverride ? DropItemFragmentOverride : GetOwningOrionInventoryGraph()->DefaultDropItemFragment;
-	DropItemFragment = InNewDropItemFragmentTemplate ? Cast<UOrionInventoryItemFragment>(StaticDuplicateObject(InNewDropItemFragmentTemplate, this, NAME_None, RF_Transactional)) : nullptr;
-	PickupActorClass.LoadSynchronous();
+	TObjectPtr<UOrionInventoryFragment_DropItem> InNewDropItemFragmentTemplate = DropItemFragmentOverride ? DropItemFragmentOverride : GetOwningOrionInventoryGraph()->DefaultDropItemFragment;
+	DropItemFragment = InNewDropItemFragmentTemplate && bCanDropItem ? Cast<UOrionInventoryFragment_DropItem>(StaticDuplicateObject(InNewDropItemFragmentTemplate, this, NAME_None, RF_Transactional)) : nullptr;
 }
 
 const UOrionInventoryItemFragment* UOrionInventoryNode_ItemDefinition::FindFragmentByClass(TSubclassOf<UOrionInventoryItemFragment> FragmentClass) const
@@ -47,14 +46,9 @@ const UOrionInventoryItemFragment* UOrionInventoryNode_ItemDefinition::FindFragm
 	return nullptr;
 }
 
-UOrionInventoryItemFragment* UOrionInventoryNode_ItemDefinition::GetDropItemFragment()
+UOrionInventoryFragment_DropItem* UOrionInventoryNode_ItemDefinition::GetDropItemFragment()
 {
 	return DropItemFragment;
-}
-
-TSoftClassPtr<AActor> UOrionInventoryNode_ItemDefinition::GetPickupActorClass()
-{
-	return PickupActorClass ? PickupActorClass : GetOwningOrionInventoryGraph()->DefaultPickupActorClass;
 }
 
 #if WITH_EDITOR

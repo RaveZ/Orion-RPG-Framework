@@ -6,6 +6,7 @@
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Inventory/OrionInventoryComponent.h"
 #include "Inventory/OrionInventoryFunctionLibrary.h"
+#include "Inventory/OrionPickupActor.h"
 #include "Engine/StreamableManager.h"
 #include "Engine/AssetManager.h"
 #include "Engine/World.h"
@@ -132,6 +133,12 @@ void UOrionInventoryFragment_InspectItem::K2_ExecuteAction_Implementation()
 UOrionInventoryFragment_DropItem::UOrionInventoryFragment_DropItem()
 {
 	ActionDisplayName = FText::FromString("Drop Item");
+
+	auto PickupActorFinder = ConstructorHelpers::FClassFinder<AOrionPickupActor>(TEXT("/OrionRPG/Blueprint/Inventory/BP_PickupItem.BP_PickupItem_C"));
+	if (PickupActorFinder.Succeeded())
+	{
+		PickupActorClass = PickupActorFinder.Class;
+	}
 }
 
 void UOrionInventoryFragment_DropItem::K2_ExecuteAction_Implementation()

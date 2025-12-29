@@ -177,6 +177,28 @@ struct FOrionEquipmentDefinition
 	TArray<FOrionEquipmentActorData> ActorsToSpawn;
 };
 
+//////////////////////////////////////////////////////////////////////
+
+// Pickup Definition
+USTRUCT(BlueprintType)
+struct FOrionPickupDefinition
+{
+	GENERATED_BODY()
+
+	FOrionPickupDefinition()
+	{
+		Count = 1;
+	}
+public:
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pickup, meta = (Categories = "Item"))
+	FGameplayTag ItemTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pickup)
+	int32 Count;
+
+};
+
 
 //////////////////////////////////////////////////////////////////////
 // 
@@ -238,8 +260,8 @@ public:
 		return FFastArraySerializer::FastArrayDeltaSerialize<FOrionEquippedItemEntry, FOrionEquipmentList>(Entries, DeltaParms, *this);
 	}
 
-	UOrionEquipmentInstance* AddEntry(FOrionEquipmentDefinition EquipmentDefinition);
-	UOrionEquipmentInstance* SetEntry(FOrionEquipmentDefinition EquipmentDefinition);
+	UOrionEquipmentInstance* AddEntry(FOrionEquipmentDefinition EquipmentDefinition);//add new entry
+	UOrionEquipmentInstance* SetEntry(FOrionEquipmentDefinition EquipmentDefinition);//set existing entry
 	UOrionEquipmentInstance* CreateEquipmentInstance(FOrionEquippedItemEntry& InEntry, FOrionEquipmentDefinition EquipmentDefinition);
 	void RemoveEntry(UOrionEquipmentInstance* Instance);
 

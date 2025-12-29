@@ -43,24 +43,24 @@ public:
 	UPROPERTY(EditAnywhere, meta = (Units = "Kilograms", UIMin = "0"), Category = "Inventory")
 	float Weight;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
-	TSoftClassPtr<AActor> PickupActorClass;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fragments", Instanced, meta = (FullyExpand = true))
 	TArray<TObjectPtr<UOrionInventoryItemFragment>> Fragments;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragments", meta = (InlineEditConditionToggle))
+	bool bCanDropItem = true;
+
 	/**Override for drop item fragment in case for different behavior*/
-	UPROPERTY(EditAnywhere, Category = "Fragments", Instanced)
+	UPROPERTY(EditAnywhere, Category = "Fragments", Instanced, meta = (EditCondition = "bCanDropItem"))
 	TObjectPtr<class UOrionInventoryFragment_DropItem> DropItemFragmentOverride;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Fragments")
-	TObjectPtr<UOrionInventoryItemFragment> DropItemFragment;
+	TObjectPtr<UOrionInventoryFragment_DropItem> DropItemFragment;
 
 public:
 	void LoadPrerequisites();
 	const UOrionInventoryItemFragment* FindFragmentByClass(TSubclassOf<UOrionInventoryItemFragment> FragmentClass) const;
-	UOrionInventoryItemFragment* GetDropItemFragment();
-	TSoftClassPtr<AActor> GetPickupActorClass();
+	UOrionInventoryFragment_DropItem* GetDropItemFragment();
 
 public:
 #if WITH_EDITOR

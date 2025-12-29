@@ -58,7 +58,7 @@ public:
 		TObjectPtr<AOrionActorViewer> CharacterViewer;
 
 	UPROPERTY(BlueprintReadOnly, Category = "InventoryComponent")
-		TObjectPtr< UOrionInventoryItemInstance> InspectdItem;
+		TObjectPtr< UOrionInventoryItemInstance> InspectedItem;
 
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
@@ -173,6 +173,8 @@ public:
 
 	UFUNCTION(Server, Reliable, BlueprintCallable, Category = "InventoryComponent", meta = (DisplayName="Drop Item Instance"))
 	void Server_DropItemInstance(UOrionInventoryItemInstance* ItemInstance, int32 StackCount);
+
+	void SpawnDroppedItem(TSoftClassPtr<class AOrionPickupActor> PickupActorClass, FGameplayTag ItemTag, int32 StackCount);
 
 	/**
 	 * Consume item from Inventory

@@ -53,9 +53,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", Instanced)
 		TObjectPtr<class UOrionInventoryFragment_DropItem> DefaultDropItemFragment;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
-		TSoftClassPtr<AActor> DefaultPickupActorClass;
-
 	UPROPERTY(BlueprintReadWrite, Category = "OrionInventory")
 		TObjectPtr<APlayerController> OwningController;
 

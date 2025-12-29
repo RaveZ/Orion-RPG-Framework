@@ -40,6 +40,7 @@ void UOrionInventoryItemInstance::RegisterReplicationFragments(UE::Net::FFragmen
 	// Build descriptors and allocate PropertyReplicationFragments for this object
 	FReplicationFragmentUtil::CreateAndRegisterFragmentsForObject(this, Context, RegistrationFlags);
 }
+
 #endif // UE_WITH_IRIS
 
 void UOrionInventoryItemInstance::AddStatTagStack(FGameplayTag Tag, int32 StackCount)
@@ -90,7 +91,14 @@ void UOrionInventoryItemInstance::SetTotalStackCount(int32 Count)
 
 void UOrionInventoryItemInstance::SetEquippedItemInstance(UOrionEquipmentInstance* InEquipmentInstance)
 {
+	if(InEquipmentInstance == EquippedItemInstance)
+	{
+		return;
+	}
+
 	EquippedItemInstance = InEquipmentInstance;
+	OnEquippedStateChanged.Broadcast();
+
 	if (EquippedItemInstance)
 	{
 		TWeakObjectPtr<UOrionInventoryItemInstance> WeakThis = this;
@@ -102,7 +110,7 @@ void UOrionInventoryItemInstance::SetEquippedItemInstance(UOrionEquipmentInstanc
 				{
 					EquippedItemInstance->OnUnequippedDelegate.Clear();
 					EquippedItemInstance = nullptr;
-
+					OnEquippedStateChanged.Broadcast();
 				}
 			}
 		);

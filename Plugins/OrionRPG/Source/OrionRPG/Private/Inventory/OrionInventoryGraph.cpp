@@ -54,8 +54,6 @@ bool UOrionInventoryGraph::Initialize(UOrionInventoryComponent* InitializingComp
 			}
 		}
 
-		//Load prerequisites
-		DefaultPickupActorClass.LoadSynchronous();
 	}
 	return false;
 }

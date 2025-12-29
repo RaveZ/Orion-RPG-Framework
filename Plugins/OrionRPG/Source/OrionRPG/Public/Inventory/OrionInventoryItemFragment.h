@@ -8,6 +8,7 @@
 #include "Engine/Texture2D.h"
 #include "OrionInventoryItemFragment.generated.h"
 
+class AOrionPickupActor;
 class UOrionInventoryItemInstance;
 //////////////////////////////////////////////////////////////////////
 
@@ -116,6 +117,9 @@ class UOrionInventoryFragment_DropItem : public UOrionInventoryItemFragment
 
 public:
 	UOrionInventoryFragment_DropItem();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment)
+	TSoftClassPtr<AOrionPickupActor> PickupActorClass;
 
 	virtual void K2_ExecuteAction_Implementation() override;
 };

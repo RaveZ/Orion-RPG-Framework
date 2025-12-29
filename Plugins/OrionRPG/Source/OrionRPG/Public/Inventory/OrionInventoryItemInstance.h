@@ -13,6 +13,8 @@ class UOrionInventoryNode_ItemDefinition;
 class UOrionInventoryItemFragment;
 class UOrionEquipmentInstance;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FItemSignature);
+
 UCLASS(BlueprintType)
 class ORIONRPG_API UOrionInventoryItemInstance : public UObject
 {
@@ -73,6 +75,10 @@ private:
 
 
 	friend struct FLyraInventoryList;
+
+public:
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = Inventory)
+	FItemSignature OnEquippedStateChanged;
 
 public:
 	/// <summary>

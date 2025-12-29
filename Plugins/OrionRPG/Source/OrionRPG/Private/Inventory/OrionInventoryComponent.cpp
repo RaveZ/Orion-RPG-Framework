@@ -3,11 +3,13 @@
 
 #include "Inventory/OrionInventoryComponent.h"
 #include "Inventory/OrionInventorySetting.h"
+#include "Inventory/OrionPickupActor.h"
 #include "Inventory/OrionActorViewer.h"
 #include "Inventory/OrionInventoryItemInstance.h"
 #include "Inventory/OrionEquipmentInstance.h"
 #include "Inventory/OrionInventoryItemFragment.h"
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
+#include "Interaction/OrionInteractionComponent.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
 #include "Inventory/InventoryData.h"
@@ -21,6 +23,8 @@
 #include "Net/UnrealNetwork.h"
 #include "NativeGameplayTags.h"
 #include "Engine/ActorChannel.h"
+#include "Engine/StreamableManager.h"
+#include "Engine/AssetManager.h"
 #include "Engine/World.h"
 
 
@@ -277,6 +281,11 @@ void UOrionInventoryComponent::Server_DropItemInstance_Implementation(UOrionInve
 		return;
 	}
 
+	if(ItemInstance->IsEquipped())
+	{
+		UnequipItem(ItemInstance->EquippedItemInstance);
+	}
+
 	const int32 NewStackCount = ItemInstance->GetTotalStackCount() - FMath::Abs(StackCount);
 	ItemInstance->SetTotalStackCount(NewStackCount);
 	
@@ -287,19 +296,100 @@ void UOrionInventoryComponent::Server_DropItemInstance_Implementation(UOrionInve
 		{
 			RemoveReplicatedSubObject(ItemInstance);
 		}
+		
 		OnItemRemoved.Broadcast(ItemInstance);
 	}
 	else
 	{
 		OnItemStackChanged.Broadcast(ItemInstance, NewStackCount, ItemInstance->GetItemDef()->MaxStackCount);
 	}
+	
+	const UOrionInventoryFragment_DropItem* DropItemFragment = ItemInstance->GetItemDef()->DropItemFragment;
+	if (DropItemFragment && DropItemFragment->PickupActorClass)
+	{
+		SpawnDroppedItem(DropItemFragment->PickupActorClass, ItemInstance->GetItemDef()->Tag, StackCount);
+	}
+
 	UE_LOG(LogTemp, Log, TEXT("Drop Item: %s | Tag: %s, StackCount: %d/%d\n"), *ItemInstance->GetItemDef()->DisplayName.ToString(), *ItemInstance->GetItemDef()->Tag.ToString(), ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
 
 
-
-	//TODO: Spawn dropped item in the world
-
 }
+
+
+void UOrionInventoryComponent::SpawnDroppedItem(TSoftClassPtr<AOrionPickupActor> PickupActorClass, FGameplayTag ItemTag, int32 StackCount)
+{
+	const APawn* InPawn = GetOwningPawn();
+	const FSoftObjectPath SoftPath = PickupActorClass.ToSoftObjectPath();
+	if (!SoftPath.IsValid())
+	{
+		return;
+	}
+
+	
+
+	// Create a delegate that will be called when the pickup actor class is loaded
+	FStreamableDelegate Delegate = FStreamableDelegate::CreateLambda([this, SoftPath, InPawn, ItemTag, StackCount]()
+		{
+			// Resolve or load the class synchronously if necessary
+			UObject* LoadedObj = SoftPath.ResolveObject();
+			if (!LoadedObj)
+			{
+				LoadedObj = SoftPath.TryLoad();
+			}
+
+			UClass* LoadedClass = Cast<UClass>(LoadedObj);
+			if (!LoadedClass)
+			{
+				return;
+			}
+
+			UWorld* World = GetWorld();
+			if (!World || !InPawn)
+			{
+				return;
+			}
+
+			const FVector PawnLocation = InPawn->GetActorLocation();
+			const FVector Forward = InPawn->GetActorForwardVector();
+			FVector SpawnOrigin = PawnLocation + Forward * 100.0f + FVector(0.0f, 0.0f, 50.0f);
+
+			// Perform a downward line trace from above SpawnOrigin to find the ground
+			FHitResult Hit;
+			const FVector TraceStart = SpawnOrigin + FVector(0.0f, 0.0f, 200.0f);
+			const FVector TraceEnd = SpawnOrigin - FVector(0.0f, 0.0f, 1000.0f);
+			FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(SpawnDroppedItemTrace), true);
+			QueryParams.AddIgnoredActor(const_cast<APawn*>(InPawn));
+			bool bHit = World->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, QueryParams);
+
+			// If we hit something, place the spawn location on the surface with a small offset to avoid clipping
+			FVector SpawnLocation = bHit ? (Hit.ImpactPoint + Hit.ImpactNormal * 5.0f) : SpawnOrigin;
+
+			const FRotator SpawnRotation = FRotator::ZeroRotator;
+
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = GetOwner();
+			SpawnParams.Instigator = const_cast<APawn*>(InPawn);
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+			// Only spawn on the authority (server). 
+			if (GetOwner() && (GetOwner()->GetLocalRole() < ROLE_Authority))
+			{
+				return;
+			}
+
+			AActor* SpawnedActor = World->SpawnActor<AActor>(LoadedClass, SpawnLocation, SpawnRotation, SpawnParams);
+			if (!SpawnedActor)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("SpawnDroppedItem: Failed to spawn actor for path %s"), *SoftPath.ToString());
+				return;
+			}
+
+		});
+
+	// Request async load via AssetManager's StreamableManager
+	UAssetManager::GetStreamableManager().RequestAsyncLoad(SoftPath, Delegate);
+}
+
 
 void UOrionInventoryComponent::ConsumeItem(FItemInstanceData& OutItemData, FGameplayTag ItemTag, int32 StackCount)
 {
@@ -464,7 +554,7 @@ void UOrionInventoryComponent::InspectItem(FGameplayTag ItemTag, TSoftClassPtr<A
 	
 	if (FoundItem)
 	{
-		InspectdItem = FoundItem;
+		InspectedItem = FoundItem;
 		InspectItemInstance(FoundItem, ActorToInspect);
 	}
 	else
@@ -480,7 +570,7 @@ void UOrionInventoryComponent::InspectItemInstance(UOrionInventoryItemInstance* 
 		return;
 	}
 
-	TSoftClassPtr<AActor> InActorClass = ActorToInspect ? ActorToInspect : ItemInstance->GetItemDef()->GetPickupActorClass();
+	TSoftClassPtr<AActor> InActorClass = ActorToInspect ? ActorToInspect : nullptr;
 
 	OnInspectItem.Broadcast(ItemInstance, InActorClass);
 
@@ -835,3 +925,5 @@ void UOrionInventoryComponent::execDropItem(const TArray<FString>& ItemTag)
 
 
 #undef LOCTEXT_NAMESPACE
+
+
