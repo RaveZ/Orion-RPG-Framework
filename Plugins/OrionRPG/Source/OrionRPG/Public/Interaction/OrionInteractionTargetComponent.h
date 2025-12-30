@@ -71,6 +71,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable")
 	FGameplayTag Tag;
 
+	UPROPERTY(EditAnywhere, Category = "Configuration|Player", meta = (InlineEditConditionToggle))
+	bool bShowActionDisplayText;
+
+	/**
+	* Override action display text on this interaction target. default is "Interact".
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable", DisplayName ="Action Display Text (override)", meta = (EditCondition = "bShowActionDisplayText"))
+	FText ActionDisplayText;
+
+
 	/**
 	* Can only interact when facing this target.
 	*/
@@ -145,6 +155,12 @@ public:
 
 	UFUNCTION(Category = "Interactable")
 	bool DecoratorConditionMet() const;
+
+
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OrionDecorator")
+	FText GetActionDisplayText() const;
+
+	virtual FText GetActionDisplayText_Implementation() const;
 
 	/**
 	 * Handles Interaction Notification Based on Config

@@ -56,5 +56,12 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Interaction", noclear)
 	TSubclassOf<class UCommonTextStyle> InteractTextStyle;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Interaction")
+	bool bShowActionDisplayText;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Interaction", meta = (EditCondition = "bShowActionDisplayText == true", HideEditConditionToggle, EditConditionHides))
+	FText DefaultActionDisplayText;
+
 };
 

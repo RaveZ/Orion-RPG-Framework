@@ -37,7 +37,8 @@ UOrionSetting::UOrionSetting()
 	{
 		InteractTextStyle = InteractTextStyleFinder.Class;
 	}
-
+	bShowActionDisplayText = true;
+	DefaultActionDisplayText = FText::FromString("Interact");
 }
 
 UOrionSetting::~UOrionSetting()

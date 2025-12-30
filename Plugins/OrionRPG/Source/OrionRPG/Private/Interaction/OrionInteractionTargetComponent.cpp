@@ -3,6 +3,7 @@
 #include "Interaction/OrionInteractionTargetComponent.h"
 #include "Interaction/OrionInteractionFunctionLibrary.h"
 #include "Interaction/OrionInteractionComponent.h"
+#include "OrionSetting.h"
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "TimerManager.h"
@@ -19,6 +20,7 @@ UOrionInteractionTargetComponent::UOrionInteractionTargetComponent()
 	CurrentInteractor = nullptr;
 	CurrentProgress = 0.0f;
 	bAutoActivate = true;
+	bShowActionDisplayText = true;
 	SetIsReplicatedByDefault(true);
 	//SetComponentTickEnabled(false);
 }
@@ -84,6 +86,14 @@ bool UOrionInteractionTargetComponent::DecoratorConditionMet() const
 		
 	}
 	return SumConditionMet >= InteractConditions.Num();
+}
+
+FText UOrionInteractionTargetComponent::GetActionDisplayText_Implementation() const
+{
+	UOrionSetting* OrionSetting = GetMutableDefault<UOrionSetting>();
+	FText ActionText = !ActionDisplayText.IsEmpty() ? ActionDisplayText : FText::FromString("Interact");
+
+	return OrionSetting->bShowActionDisplayText && bShowActionDisplayText? ActionText : FText();
 }
 
 
