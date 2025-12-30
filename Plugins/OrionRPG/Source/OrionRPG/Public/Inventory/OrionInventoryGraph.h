@@ -26,7 +26,7 @@ public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "OrionInventory")
 		FName ID;
 
-	UPROPERTY(EditAnywhere, Category = "OrionInventory")
+	UPROPERTY(Category = "OrionInventory")
 		EOrionInventoryType InventoryType;
 
 	/**Max Weight for this inventory*/

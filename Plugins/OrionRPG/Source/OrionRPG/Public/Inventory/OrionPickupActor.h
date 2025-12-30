@@ -32,7 +32,7 @@ protected:
 /**
  * Interaction target component - pickupable
  */
-UCLASS(meta = (BlueprintSpawnableComponent), Blueprintable, HideDropdown, ClassGroup = "OrionRPG", DisplayName = "Orion Interaction Target - Pickup Item")
+UCLASS(meta = (BlueprintSpawnableComponent), Blueprintable, HideDropdown, ClassGroup = "OrionRPG", DisplayName = "Orion Interaction Target - Pickup Item", AutoExpandCategories = "Interactable|Pickup")
 class UOrionInteractionTargetComponent_PickupItem : public UOrionInteractionTargetComponent
 {
 	GENERATED_BODY()
@@ -40,7 +40,7 @@ class UOrionInteractionTargetComponent_PickupItem : public UOrionInteractionTarg
 public:
 	UOrionInteractionTargetComponent_PickupItem();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Pickup")
 	TArray<FOrionPickupDefinition> PickupDefinitions;
 
 public:
