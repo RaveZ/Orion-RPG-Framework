@@ -6,8 +6,9 @@
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Inventory/OrionInventoryComponent.h"
 #include "Inventory/OrionInventoryFunctionLibrary.h"
-#include "Inventory/OrionPickupActor.h"
+#include "Inventory/OrionItemPickup.h"
 #include "Engine/StreamableManager.h"
+#include "Inventory/OrionInventorySetting.h"
 #include "Engine/AssetManager.h"
 #include "Engine/World.h"
 
@@ -133,12 +134,13 @@ void UOrionInventoryFragment_InspectItem::K2_ExecuteAction_Implementation()
 UOrionInventoryFragment_DropItem::UOrionInventoryFragment_DropItem()
 {
 	ActionDisplayName = FText::FromString("Drop Item");
+	DropItemBehavior = EDropItemBehavior::E_DropAsPickupable;
 
-	auto PickupActorFinder = ConstructorHelpers::FClassFinder<AOrionPickupActor>(TEXT("/OrionRPG/Blueprint/Inventory/BP_PickupItem.BP_PickupItem_C"));
-	if (PickupActorFinder.Succeeded())
-	{
-		PickupActorClass = PickupActorFinder.Class;
-	}
+	UOrionInventorySetting* InventorySetting = GetMutableDefault<UOrionInventorySetting>();
+
+	PickupActorClass = InventorySetting->DefaultPickupActorClass;
+	
+	LootableActorClass = InventorySetting->DefaultLootableActorClass;
 }
 
 void UOrionInventoryFragment_DropItem::K2_ExecuteAction_Implementation()

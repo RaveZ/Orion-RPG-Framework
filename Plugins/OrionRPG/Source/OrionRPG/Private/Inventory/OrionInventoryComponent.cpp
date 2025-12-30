@@ -3,7 +3,7 @@
 
 #include "Inventory/OrionInventoryComponent.h"
 #include "Inventory/OrionInventorySetting.h"
-#include "Inventory/OrionPickupActor.h"
+#include "Inventory/OrionItemPickup.h"
 #include "Inventory/OrionActorViewer.h"
 #include "Inventory/OrionInventoryItemInstance.h"
 #include "Inventory/OrionEquipmentInstance.h"
@@ -307,7 +307,15 @@ void UOrionInventoryComponent::Server_DropItemInstance_Implementation(UOrionInve
 	const UOrionInventoryFragment_DropItem* DropItemFragment = ItemInstance->GetItemDef()->DropItemFragment;
 	if (DropItemFragment && DropItemFragment->PickupActorClass)
 	{
-		SpawnDroppedItem(DropItemFragment->PickupActorClass, ItemInstance->GetItemDef()->Tag, StackCount);
+		switch(DropItemFragment->DropItemBehavior)
+		{
+			case EDropItemBehavior::E_DropAsPickupable:
+				SpawnDroppedItem(DropItemFragment->PickupActorClass, ItemInstance->GetItemDef()->Tag, StackCount);
+				break;
+			case EDropItemBehavior::E_DropAsLootable:
+				SpawnDroppedItem(DropItemFragment->LootableActorClass, ItemInstance->GetItemDef()->Tag, StackCount);
+				break;
+		}
 	}
 
 	UE_LOG(LogTemp, Log, TEXT("Drop Item: %s | Tag: %s, StackCount: %d/%d\n"), *ItemInstance->GetItemDef()->DisplayName.ToString(), *ItemInstance->GetItemDef()->Tag.ToString(), ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
@@ -316,7 +324,7 @@ void UOrionInventoryComponent::Server_DropItemInstance_Implementation(UOrionInve
 }
 
 
-void UOrionInventoryComponent::SpawnDroppedItem(TSoftClassPtr<AOrionPickupActor> PickupActorClass, FGameplayTag ItemTag, int32 StackCount)
+void UOrionInventoryComponent::SpawnDroppedItem(TSoftClassPtr<AActor> PickupActorClass, FGameplayTag ItemTag, int32 StackCount)
 {
 	const APawn* InPawn = GetOwningPawn();
 	const FSoftObjectPath SoftPath = PickupActorClass.ToSoftObjectPath();

@@ -7,6 +7,8 @@
 #include "Templates/SubclassOf.h"
 #include "OrionInventorySetting.generated.h"
 
+class AOrionLootable;
+class AOrionItemPickup;
 class UOrionActorViewer;
 
 UCLASS(config = Engine, defaultconfig)
@@ -32,6 +34,13 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting")
 	FVector CharacterViewerLocation;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting")
+	TSoftClassPtr<AOrionLootable> DefaultLootableActorClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Inventory Setting")
+	TSoftClassPtr<AOrionItemPickup> DefaultPickupActorClass;
 
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor ItemContainerColor;

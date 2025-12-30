@@ -35,6 +35,17 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_LeftHandWeapon);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Accessory1);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Accessory2);
 
+UENUM(BlueprintType)
+enum class EDropItemBehavior : uint8
+{
+	/**Drop the item as pickupable*/
+	E_DropAsPickupable	UMETA(DisplayName = "Drop as Pickupable"),
+	/**
+	* Drop the item as lootable container.
+	*/
+	E_DropAsLootable		UMETA(DisplayName = "Drop as Lootable"),
+};
+
 
 UENUM(BlueprintType)
 enum class EOrionInventoryType : uint8

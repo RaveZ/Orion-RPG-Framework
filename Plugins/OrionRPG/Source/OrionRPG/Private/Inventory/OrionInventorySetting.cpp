@@ -3,6 +3,7 @@
 
 #include "Inventory/OrionInventorySetting.h"
 #include "Inventory/OrionActorViewer.h"
+#include "Inventory/OrionItemPickup.h"
 #include "UI/Foundation/OrionGridBase.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -22,6 +23,16 @@ UOrionInventorySetting::UOrionInventorySetting()
 	}
 
 
+	auto PickupActorFinder = ConstructorHelpers::FClassFinder<AOrionLootable>(TEXT("/OrionRPG/Blueprint/Inventory/BP_PickupItem.BP_PickupItem_C"));
+	if (PickupActorFinder.Succeeded())
+	{
+		DefaultPickupActorClass = PickupActorFinder.Class;
+	} 
+	auto LootableActorFinder = ConstructorHelpers::FClassFinder<AOrionLootable>(TEXT("/OrionRPG/Blueprint/Inventory/BP_LootableItem.BP_LootableItem_C"));
+	if (LootableActorFinder.Succeeded())
+	{
+		DefaultLootableActorClass = LootableActorFinder.Class;
+	}
 	
 
 	ItemViewerLocation = FVector(0.f, 0.f, 1000000.f);

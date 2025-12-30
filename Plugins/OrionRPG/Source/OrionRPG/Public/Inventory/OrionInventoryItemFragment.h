@@ -8,7 +8,8 @@
 #include "Engine/Texture2D.h"
 #include "OrionInventoryItemFragment.generated.h"
 
-class AOrionPickupActor;
+class AOrionLootable;
+class AOrionItemPickup;
 class UOrionInventoryItemInstance;
 //////////////////////////////////////////////////////////////////////
 
@@ -119,7 +120,13 @@ public:
 	UOrionInventoryFragment_DropItem();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment)
-	TSoftClassPtr<AOrionPickupActor> PickupActorClass;
+	EDropItemBehavior DropItemBehavior;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment, meta = (EditCondition = "DropItemBehavior == EDropItemBehavior::E_DropAsLootable", HideEditConditionToggle, EditConditionHides))
+	TSoftClassPtr<AOrionLootable> LootableActorClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Fragment, meta = (EditCondition = "DropItemBehavior == EDropItemBehavior::E_DropAsPickupable", HideEditConditionToggle, EditConditionHides))
+	TSoftClassPtr<AOrionItemPickup> PickupActorClass;
 
 	virtual void K2_ExecuteAction_Implementation() override;
 };
