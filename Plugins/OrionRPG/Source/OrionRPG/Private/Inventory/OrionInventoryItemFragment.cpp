@@ -123,7 +123,6 @@ void UOrionInventoryFragment_InspectItem::K2_ExecuteAction_Implementation()
 			InvComp->InspectItemInstance(OwningItemInstance, ActorToInspect);
 		}
 	}
-
 }
 	
 

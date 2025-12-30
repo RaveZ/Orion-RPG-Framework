@@ -313,7 +313,18 @@ void UOrionInventoryComponent::Server_DropItemInstance_Implementation(UOrionInve
 				SpawnDroppedItem(DropItemFragment->PickupActorClass, ItemInstance->GetItemDef()->Tag, StackCount);
 				break;
 			case EDropItemBehavior::E_DropAsLootable:
-				SpawnDroppedItem(DropItemFragment->LootableActorClass, ItemInstance->GetItemDef()->Tag, StackCount);
+				if (CurrentDroppedItem && CurrentDroppedItem->GetDistanceTo(GetOwningPawn()) < 200.0f)
+				{
+					FOrionPickupDefinition PickupDef;
+					PickupDef.ItemTag = ItemInstance->GetItemDef()->Tag;
+					PickupDef.Count = StackCount;
+					CurrentDroppedItem->InteractionTargetComp->AddItemToContainer(PickupDef);
+					break;
+				}
+				else
+				{
+					SpawnDroppedItem(DropItemFragment->LootableActorClass, ItemInstance->GetItemDef()->Tag, StackCount);
+				}
 				break;
 		}
 	}
@@ -386,11 +397,21 @@ void UOrionInventoryComponent::SpawnDroppedItem(TSoftClassPtr<AActor> PickupActo
 			}
 
 			AActor* SpawnedActor = World->SpawnActor<AActor>(LoadedClass, SpawnLocation, SpawnRotation, SpawnParams);
-			if (!SpawnedActor)
+
+			FOrionPickupDefinition PickupDef;
+			PickupDef.ItemTag = ItemTag;
+			PickupDef.Count = StackCount;
+
+			if(AOrionLootable* LootableItem = Cast<AOrionLootable>(SpawnedActor))
 			{
-				UE_LOG(LogTemp, Warning, TEXT("SpawnDroppedItem: Failed to spawn actor for path %s"), *SoftPath.ToString());
-				return;
+				CurrentDroppedItem = LootableItem;
+				LootableItem->InteractionTargetComp->AddItemToContainer(PickupDef);
 			}
+			else if (AOrionItemPickup* ItemPickup = Cast<AOrionItemPickup>(SpawnedActor))
+			{
+				ItemPickup->InteractionTargetComp->SetItem(PickupDef);
+			}
+			
 
 		});
 

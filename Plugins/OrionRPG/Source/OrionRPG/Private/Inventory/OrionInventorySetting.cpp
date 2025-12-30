@@ -23,7 +23,7 @@ UOrionInventorySetting::UOrionInventorySetting()
 	}
 
 
-	auto PickupActorFinder = ConstructorHelpers::FClassFinder<AOrionLootable>(TEXT("/OrionRPG/Blueprint/Inventory/BP_PickupItem.BP_PickupItem_C"));
+	auto PickupActorFinder = ConstructorHelpers::FClassFinder<AOrionItemPickup>(TEXT("/OrionRPG/Blueprint/Inventory/BP_PickupItem.BP_PickupItem_C"));
 	if (PickupActorFinder.Succeeded())
 	{
 		DefaultPickupActorClass = PickupActorFinder.Class;

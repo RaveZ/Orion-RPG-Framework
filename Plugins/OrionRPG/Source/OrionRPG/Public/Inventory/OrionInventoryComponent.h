@@ -10,6 +10,7 @@
 #include "OrionInventoryComponent.generated.h"
 
 class AOrionActorViewer;
+class AOrionLootable;
 class UOrionInventoryGraph;
 class UOrionInventoryNode_ItemDefinition;
 class UOrionInventoryItemInstance;
@@ -113,6 +114,9 @@ private:
 	float CurrentWeight;
 
 	FIntPoint CurrentGridDimension;
+
+	UPROPERTY()
+	TObjectPtr<AOrionLootable> CurrentDroppedItem;
 
 protected:
 	// Called when the game starts

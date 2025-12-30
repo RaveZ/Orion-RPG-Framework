@@ -54,7 +54,13 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Interactable")
 	FOrionInteractionTargetSignature Local_OnCompleted;
 
+public:
+	UFUNCTION(BlueprintNativeEvent, Category = "Interactable")
+	void OnLocalCompleted(AActor* Interactor, UOrionInteractionTargetComponent* Component);
 
+	virtual void OnLocalCompleted_Implementation(AActor* Interactor, UOrionInteractionTargetComponent* Component);
+
+public:
 	/**
 	* Give notification based on configured netmode
 	* E_Server		: Default, will notify only in server side
@@ -145,7 +151,7 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "Interactable")
-	void EndInteraction(bool bCompleted);
+	virtual void EndInteraction(bool bCompleted);
 
 	UFUNCTION(BlueprintPure, Category = "Interactable")
 	bool IsInteractionInProgress() const;
@@ -157,7 +163,7 @@ public:
 	bool DecoratorConditionMet() const;
 
 
-	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "OrionDecorator")
+	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Interactable")
 	FText GetActionDisplayText() const;
 
 	virtual FText GetActionDisplayText_Implementation() const;

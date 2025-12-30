@@ -43,9 +43,13 @@ public:
 	UOrionInteractionTargetComponent_LootItem();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Loot Item")
-	TArray<FOrionPickupDefinition> ItemDefinitions;
+	TArray<FOrionPickupDefinition> ContainedItems;
 
+	void AddItemToContainer(FOrionPickupDefinition& InPickupDefinition);
+	virtual void OnLocalCompleted_Implementation(AActor* Interactor, UOrionInteractionTargetComponent* Component) override;
 
+protected:
+	virtual void BeginPlay() override;
 
 };
 
@@ -87,9 +91,12 @@ public:
 	UOrionInteractionTargetComponent_PickupItem();
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Pickup Item")
-	FOrionPickupDefinition ItemDefinition;
+	FOrionPickupDefinition ContainedItem;
 
-	
+	void SetItem(FOrionPickupDefinition& InPickupDefinition);
+	virtual void OnLocalCompleted_Implementation(AActor* Interactor, UOrionInteractionTargetComponent* Component) override;
 
+protected:
+	virtual void BeginPlay() override;
 };
 
