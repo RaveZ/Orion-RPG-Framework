@@ -11,6 +11,9 @@
  */
 AOrionLootable::AOrionLootable()
 {
+	bReplicates = true;
+	SetReplicateMovement(true);
+
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComponent);
 	Mesh->SetSimulatePhysics(true);
@@ -20,6 +23,8 @@ AOrionLootable::AOrionLootable()
 
 	InteractionTargetComp = CreateDefaultSubobject<UOrionInteractionTargetComponent_LootItem>(TEXT("InteractionTargetComp - Loot Item"));
 	InteractionTargetComp->SetupAttachment(Mesh);
+
+
 
 }
 
@@ -55,6 +60,7 @@ void UOrionInteractionTargetComponent_LootItem::AddItemToContainer(FOrionPickupD
 void UOrionInteractionTargetComponent_LootItem::OnLocalCompleted_Implementation(AActor* Interactor, UOrionInteractionTargetComponent* Component)
 {
 	Super::OnLocalCompleted_Implementation(Interactor, Component);
+	UOrionInventoryFunctionLibrary::LootItemFromActor(this, GetOwner(), Interactor);
 }
 
 
@@ -64,6 +70,9 @@ void UOrionInteractionTargetComponent_LootItem::OnLocalCompleted_Implementation(
  */
 AOrionItemPickup::AOrionItemPickup()
 {
+	bReplicates = true;
+	SetReplicateMovement(true);
+
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(RootComponent);
 	Mesh->SetSimulatePhysics(true);

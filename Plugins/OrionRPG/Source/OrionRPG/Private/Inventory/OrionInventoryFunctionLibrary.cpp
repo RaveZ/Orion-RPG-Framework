@@ -201,6 +201,28 @@ void UOrionInventoryFunctionLibrary::UnequipItem(const UObject* WorldContextObje
     }
 }
 
+void UOrionInventoryFunctionLibrary::LootItemFromActor(const UObject* WorldContextObject, AActor* InActor, AActor* InOptionalInstigator)
+{
+    UOrionInventoryComponent* InventoryComp = InOptionalInstigator ? GetInventoryComponentFromTarget(InOptionalInstigator) : GetInventoryComponent(WorldContextObject);
+
+    if (InventoryComp)
+    {
+		InventoryComp->LootItemFromActor(InActor);
+    }
+}
+
+UOrionInventoryNode_ItemDefinition* UOrionInventoryFunctionLibrary::FindItemDefinitionByTag(const UObject* WorldContextObject, FGameplayTag ItemTag)
+{
+    UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);
+
+    if (InventoryComp)
+    {
+        return InventoryComp->FindItemDefinition(ItemTag);
+    }
+
+	return nullptr;
+}
+
 void UOrionInventoryFunctionLibrary::UnequipItemFromSlot(const UObject* WorldContextObject, FGameplayTag InEquipSlot)
 {
     UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);

@@ -107,4 +107,10 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
 	static void UnequipItemFromSlot(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Equipment.Slot")) FGameplayTag InEquipSlot);
 
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static void LootItemFromActor(const UObject* WorldContextObject, AActor* InActor, AActor* InOptionalInstigator);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static UOrionInventoryNode_ItemDefinition* FindItemDefinitionByTag(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
+
 };

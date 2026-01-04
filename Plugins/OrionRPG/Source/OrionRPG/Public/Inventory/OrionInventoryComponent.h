@@ -31,6 +31,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInventoryGridDimensionChanged, FIn
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInventoryItemStackChange, UOrionInventoryItemInstance*, Item, int32, CurrentStackCount, int32, MaxStackCount);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryMaxWeightChanged, float, InMaxWeight);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryEncumberedStateChanged, bool, bEncumbered);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryOnLootItem, UOrionInteractionTargetComponent_LootItem*, InLootComponent);
+
 
 //Equipment Delegate
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEquipmentSignature, UOrionEquipmentInstance*, EquipmentInstance);
@@ -95,6 +97,11 @@ public:
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FEquipmentSignature OnItemUnequipped;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
+		FInventoryOnLootItem OnLootItem;
+
+	
 
 public:
 	UFUNCTION()
@@ -277,6 +284,10 @@ public:
 	void InspectItemInstance(UOrionInventoryItemInstance* ItemInstance = nullptr, TSoftClassPtr<AActor> ActorToInspect = nullptr);
 
 
+	/////////////////////////////////////////////////////////////////////////////////////
+	//EQUIPMENT
+	/////////////////////////////////////////////////////////////////////////////////////
+	
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
 	UOrionEquipmentInstance* EquipItemFromInstance(UOrionInventoryItemInstance* ItemInstance);
 
@@ -304,6 +315,18 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent", BlueprintPure = false)
 	TArray<UOrionEquipmentInstance*> GetAllEquippedItems() const;
+
+
+	/////////////////////////////////////////////////////////////////////////////////////
+	//Loot Item
+	/////////////////////////////////////////////////////////////////////////////////////
+
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	void LootItemFromActor(AActor* InActor);
+
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	void LootItem(class UOrionInteractionTargetComponent_LootItem* InLootComponent);
+
 public:
 	UFUNCTION()
 	FOrionInventorySaveData GetSaveGameData();

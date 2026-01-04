@@ -71,6 +71,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "OrionInventory")
 		TMap<FGameplayTag, TObjectPtr<class UOrionInventoryNode_ItemDefinition>> ItemDefinitions;
 
+
+	UPROPERTY(/*transient*/ BlueprintReadOnly, Category = "OrionInventory")
 	bool bAssetInitialized;
 
 public:

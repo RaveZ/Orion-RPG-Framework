@@ -715,6 +715,26 @@ TArray<UOrionEquipmentInstance*> UOrionInventoryComponent::GetAllEquippedItems()
 	return EquipmentList.GetAllEquippedItems();
 }
 
+void UOrionInventoryComponent::LootItemFromActor(AActor* InActor)
+{
+	if (InActor)
+	{
+		UOrionInteractionTargetComponent_LootItem* LootComponent = InActor->FindComponentByClass<UOrionInteractionTargetComponent_LootItem>();
+		if (LootComponent)
+		{
+			LootItem(LootComponent);
+		}
+	}
+}
+
+void UOrionInventoryComponent::LootItem(UOrionInteractionTargetComponent_LootItem* InLootComponent)
+{
+	if (InLootComponent)
+	{
+		OnLootItem.Broadcast(InLootComponent);
+	}
+}
+
 FOrionInventorySaveData UOrionInventoryComponent::GetSaveGameData()
 {
 	FOrionInventorySaveData InventorySaveData;
