@@ -1,6 +1,7 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #include "UI/Foundation/OrionButtonBase.h"
+#include "Components/CanvasPanelSlot.h"
 #include "CommonActionWidget.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(OrionButtonBase)
@@ -11,6 +12,7 @@ void UOrionButtonBase::NativePreConstruct()
 
 	UpdateButtonStyle();
 	RefreshButtonText();
+	bIsFocused = false;
 }
 
 void UOrionButtonBase::UpdateInputActionWidget()
@@ -69,3 +71,28 @@ void UOrionButtonBase::OnInputMethodChanged(ECommonInputType CurrentInputType)
 	UpdateButtonStyle();
 }
 
+void UOrionButtonBase::NativeOnHovered()
+{
+	Super::NativeOnHovered();
+	SetFocus();
+}
+
+void UOrionButtonBase::NativeOnAddedToFocusPath(const FFocusEvent& InFocusEvent)
+{
+	Super::NativeOnAddedToFocusPath(InFocusEvent);
+	bIsFocused = true;
+}
+
+void UOrionButtonBase::NativeOnRemovedFromFocusPath(const FFocusEvent& InFocusEvent)
+{
+	Super::NativeOnRemovedFromFocusPath(InFocusEvent);
+	bIsFocused = false;
+}
+
+void UOrionButtonBase::SetZOrder(int32 InZOrder)
+{
+	if (UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(Slot))
+	{
+		CanvasSlot->SetZOrder(InZOrder);
+	}
+}

@@ -43,6 +43,7 @@ public:
 };
 
 class UOrionPrimaryGameLayout;
+class UOrionGridContainerBase;
 
 UCLASS()
 class ORIONRPG_API UOrionUIManagerSubsystem : public UGameInstanceSubsystem
@@ -60,6 +61,8 @@ public:
 public:
 	UPROPERTY(BlueprintReadOnly, Category = "UI Subsystem")
 	TObjectPtr<UOrionPrimaryGameLayout> PrimaryLayout;
+
+
 private:
 	TSharedRef<FOrionNavigationConfig> OrionNavigationConfig;
 };
@@ -73,7 +76,6 @@ class ORIONRPG_API UOrionUILibrary : public UBlueprintFunctionLibrary
 	GENERATED_BODY()
 
 public:
-
 	UFUNCTION(BlueprintCallable, BlueprintCosmetic, Category = "OrionLibrary|UI")
 	static FName SuspendInputForPlayer(APlayerController* PlayerController, FName SuspendReason);
 
@@ -90,6 +92,14 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, BlueprintCosmetic, Category = "OrionLibrary|UI", meta = (WorldContext = "WorldContextObject"))
 	static class UCommonActivatableWidget* GetActiveWidgetFromLayer(const UObject* WorldContextObject, UPARAM(meta = (Categories = "UI.Layer")) FGameplayTag LayerName);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|UI", meta = (WorldContext = "WorldContextObject"))
+	static UOrionUIManagerSubsystem* GetOrionUISubsystem(const UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|UI")
+	static UWidget* GetFocusedWidget();
+	
+	
 private:
 	static int32 InputSuspensions;
 };
