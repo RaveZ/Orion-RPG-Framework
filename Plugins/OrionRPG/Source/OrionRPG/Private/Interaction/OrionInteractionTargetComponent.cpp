@@ -46,6 +46,9 @@ void UOrionInteractionTargetComponent::BeginPlay()
 			Event->BeginSetup(PC, Pawn);
 		}
 	}
+
+	//Bind Delegate
+	Local_OnCompleted.AddDynamic(this, &ThisClass::OnLocalCompleted);
 	
 }
 
@@ -287,4 +290,9 @@ void UOrionInteractionTargetComponent::CallInteractionResult(EOrionInteractionRe
 	default:
 		break;
 	}
+}
+
+void UOrionInteractionTargetComponent::OnLocalCompleted_Implementation(AActor* Interactor, UOrionInteractionTargetComponent* Component)
+{
+
 }
