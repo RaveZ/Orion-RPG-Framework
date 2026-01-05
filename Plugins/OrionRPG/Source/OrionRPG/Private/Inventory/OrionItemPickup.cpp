@@ -18,6 +18,7 @@ AOrionLootable::AOrionLootable()
 	Mesh->SetupAttachment(RootComponent);
 	Mesh->SetSimulatePhysics(true);
 	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	Mesh->SetRenderCustomDepth(true);
 	Mesh->SetCustomDepthStencilValue(255);
 
