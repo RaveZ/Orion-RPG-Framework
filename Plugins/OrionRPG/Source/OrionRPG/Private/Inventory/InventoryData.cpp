@@ -16,16 +16,16 @@
 
 // Gameplay Tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Item, "Item");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot, "Equipment.Slot");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Head, "Equipment.Slot.Head");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Chest, "Equipment.Slot.Chest");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Legs, "Equipment.Slot.Legs");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Feet, "Equipment.Slot.Feet");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Hands, "Equipment.Slot.Hands");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_RightHandWeapon, "Equipment.Slot.RightHandWeapon");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_LeftHandWeapon, "Equipment.Slot.LeftHandWeapon");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Accessory1, "Equipment.Slot.Accessory1");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Equipment_Slot_Accessory2, "Equipment.Slot.Accessory2");
+UE_DEFINE_GAMEPLAY_TAG(TAG_EquipSlot, "Item.Equipment");
+UE_DEFINE_GAMEPLAY_TAG(TAG_EquipSlot_Head, "EquipSlot.Head");
+UE_DEFINE_GAMEPLAY_TAG(TAG_EquipSlot_Chest, "EquipSlot.Chest");
+UE_DEFINE_GAMEPLAY_TAG(TAG_EquipSlot_Legs, "EquipSlot.Legs");
+UE_DEFINE_GAMEPLAY_TAG(TAG_EquipSlot_Feet, "EquipSlot.Feet");
+UE_DEFINE_GAMEPLAY_TAG(TAG_EquipSlot_Hands, "EquipSlot.Hands");
+UE_DEFINE_GAMEPLAY_TAG(TAG_EquipSlot_RightHandWeapon, "EquipSlot.RightHandWeapon");
+UE_DEFINE_GAMEPLAY_TAG(TAG_EquipSlot_LeftHandWeapon, "EquipSlot.LeftHandWeapon");
+UE_DEFINE_GAMEPLAY_TAG(TAG_EquipSlot_Accessory1, "EquipSlot.Accessory1");
+UE_DEFINE_GAMEPLAY_TAG(TAG_EquipSlot_Accessory2, "EquipSlot.Accessory2");
 
 //////////////////////////////////////////////////////////////////////
 // FOrionInventoryEntry
@@ -603,5 +603,5 @@ UOrionAbilitySystemComponent* FOrionEquipmentList::GetAbilitySystemComponent() c
 FOrionEquipmentDefinition::FOrionEquipmentDefinition()
 {
 	InstanceType = UOrionEquipmentInstance::StaticClass();
-	EquipSlot = TAG_Equipment_Slot;
+	EquipSlot = TAG_EquipSlot;
 }

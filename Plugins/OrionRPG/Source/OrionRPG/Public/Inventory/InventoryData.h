@@ -24,16 +24,16 @@ class UOrionInteractionTargetComponent;
 
 // Gameplay Tags
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Head);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Chest);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Legs);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Feet);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Hands);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_RightHandWeapon);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_LeftHandWeapon);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Accessory1);
-UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Equipment_Slot_Accessory2);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Equipment);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EquipSlot_Head);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EquipSlot_Chest);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EquipSlot_Legs);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EquipSlot_Feet);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EquipSlot_Hands);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EquipSlot_RightHandWeapon);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EquipSlot_LeftHandWeapon);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EquipSlot_Accessory1);
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EquipSlot_Accessory2);
 
 UENUM(BlueprintType)
 enum class EDropItemBehavior : uint8
@@ -172,7 +172,7 @@ struct FOrionEquipmentDefinition
 	FOrionEquipmentDefinition();
 
 	//Which equipment slot to assign to
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment, meta=(Categories="Equipment.Slot"))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment, meta=(Categories="EquipSlot"))
 	FGameplayTag EquipSlot;
 
 	// Class to spawn

@@ -303,7 +303,7 @@ public:
 
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
-	void UnequipItemFromSlot(UPARAM(meta = (Categories = "Equipment.Slot")) FGameplayTag InEquipSlot);
+	void UnequipItemFromSlot(UPARAM(meta = (Categories = "EquipSlot")) FGameplayTag InEquipSlot);
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
 	void UnequipItem(UOrionEquipmentInstance* EquipmentInstance);

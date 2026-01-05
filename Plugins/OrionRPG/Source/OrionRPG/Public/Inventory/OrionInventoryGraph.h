@@ -46,7 +46,7 @@ public:
 	/// <summary>
 	/// Equipment default slots
 	/// </summary>
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta=(Categories="Equipment.Slot"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta=(Categories="EquipSlot"))
 		TArray<FGameplayTag> EquipmentDefaultSlots;
 
 	/**Default drop item fragment for each item for this graph*/

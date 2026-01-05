@@ -26,7 +26,6 @@ AOrionLootable::AOrionLootable()
 	InteractionTargetComp->SetupAttachment(Mesh);
 
 
-
 }
 
 void AOrionLootable::Tick(float DeltaTime)
@@ -45,6 +44,8 @@ void AOrionLootable::BeginPlay()
 UOrionInteractionTargetComponent_LootItem::UOrionInteractionTargetComponent_LootItem()
 {
 	ActionDisplayText = FText::FromString("Loot");
+
+	bShouldDestroyActor = false;
 }
 
 void UOrionInteractionTargetComponent_LootItem::BeginPlay()
@@ -56,12 +57,70 @@ void UOrionInteractionTargetComponent_LootItem::BeginPlay()
 void UOrionInteractionTargetComponent_LootItem::AddItemToContainer(FOrionPickupDefinition& InPickupDefinition)
 {
 	ContainedItems.Add(InPickupDefinition);
+
+	if (!IsActive()) Activate();
 }
 
 void UOrionInteractionTargetComponent_LootItem::OnLocalCompleted_Implementation(AActor* Interactor, UOrionInteractionTargetComponent* Component)
 {
 	Super::OnLocalCompleted_Implementation(Interactor, Component);
 	UOrionInventoryFunctionLibrary::LootItemFromActor(this, GetOwner(), Interactor);
+}
+
+void UOrionInteractionTargetComponent_LootItem::TakeAllItems(AActor* Interactor)
+{
+	// Iterate backwards to allow safe removal while iterating
+	for (int32 Index = ContainedItems.Num() - 1; Index >= 0; --Index)
+	{
+		FOrionPickupDefinition OutPickup;
+		TakeItem(OutPickup, Interactor, 0);
+	}
+
+	EvaluateItemList();
+}
+
+void UOrionInteractionTargetComponent_LootItem::TakeItem(FOrionPickupDefinition& OutDef, AActor* Interactor, int32 ItemIndex)
+{
+	if (!ContainedItems.IsValidIndex(ItemIndex)) return;
+
+	int32 Remainder = 0;
+	FItemInstanceData ItemData;
+
+	FOrionPickupDefinition& Pickup = ContainedItems[ItemIndex];
+	// Try to add the entire stack into the interactor's inventory
+	UOrionInventoryFunctionLibrary::AddInventoryItem(this, Remainder, ItemData, Interactor, Pickup.ItemTag, Pickup.Count);
+	if (Remainder <= 0)
+	{
+		// Fully transferred -> remove from container
+		ContainedItems.RemoveAt(ItemIndex);
+	}
+	else
+	{
+		// Partially transferred -> update remaining count
+		Pickup.Count = Remainder;
+		OutDef = Pickup;
+	}
+	EvaluateItemList();
+}
+
+void UOrionInteractionTargetComponent_LootItem::EvaluateItemList()
+{
+	// If nothing remains in the lootable, destroy its owner actor
+	if (ContainedItems.Num() == 0)
+	{
+		if (bShouldDestroyActor)
+		{
+			AActor* OwnerActor = GetOwner();
+			if (OwnerActor)
+			{
+				OwnerActor->Destroy();
+			}
+		}
+		else
+		{
+			Deactivate();
+		}
+	}
 }
 
 
@@ -101,6 +160,8 @@ void AOrionItemPickup::BeginPlay()
 UOrionInteractionTargetComponent_PickupItem::UOrionInteractionTargetComponent_PickupItem()
 {
 	ActionDisplayText = FText::FromString("Pickup");
+
+	bShouldDestroyActor = true;
 }
 
 void UOrionInteractionTargetComponent_PickupItem::BeginPlay()
@@ -133,10 +194,17 @@ void UOrionInteractionTargetComponent_PickupItem::OnLocalCompleted_Implementatio
 
 	if(Remainder <= 0)
 	{
-		AActor* OwnerActor = GetOwner();
-		if(OwnerActor)
+		if (bShouldDestroyActor)
 		{
-			OwnerActor->Destroy();
+			AActor* OwnerActor = GetOwner();
+			if (OwnerActor)
+			{
+				OwnerActor->Destroy();
+			}
+		}
+		else
+		{
+			Deactivate();
 		}
 	}
 	else

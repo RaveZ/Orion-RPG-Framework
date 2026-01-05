@@ -20,15 +20,15 @@ UOrionInventoryGraph::UOrionInventoryGraph()
 	DefaultGridDimension = FIntPoint(5, 5);
 	GridSize = 75.0f;
 	EquipmentDefaultSlots = {
-		TAG_Equipment_Slot_Head,
-		TAG_Equipment_Slot_Chest,
-		TAG_Equipment_Slot_Hands,
-		TAG_Equipment_Slot_Legs,
-		TAG_Equipment_Slot_Feet,
-		TAG_Equipment_Slot_LeftHandWeapon,
-		TAG_Equipment_Slot_RightHandWeapon,
-		TAG_Equipment_Slot_Accessory1,
-		TAG_Equipment_Slot_Accessory2,
+		TAG_EquipSlot_Head,
+		TAG_EquipSlot_Chest,
+		TAG_EquipSlot_Hands,
+		TAG_EquipSlot_Legs,
+		TAG_EquipSlot_Feet,
+		TAG_EquipSlot_LeftHandWeapon,
+		TAG_EquipSlot_RightHandWeapon,
+		TAG_EquipSlot_Accessory1,
+		TAG_EquipSlot_Accessory2,
 	};
 	
 } 

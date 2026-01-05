@@ -48,6 +48,22 @@ public:
 	void AddItemToContainer(FOrionPickupDefinition& InPickupDefinition);
 	virtual void OnLocalCompleted_Implementation(AActor* Interactor, UOrionInteractionTargetComponent* Component) override;
 
+	UFUNCTION(BlueprintCallable, Category = "Interactable|Loot Item")
+	void TakeAllItems(AActor* Interactor);
+
+	UFUNCTION(BlueprintCallable, Category = "Interactable|Loot Item")
+	void TakeItem(FOrionPickupDefinition& OutDef, AActor* Interactor, int32 ItemIndex);
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Interactable|Loot Item")
+	bool HasAnyItem() { return !ContainedItems.IsEmpty(); }
+
+	UFUNCTION(BlueprintCallable, Category = "Interactable|Loot Item")
+	void EvaluateItemList();
+
+	/*Destroy actor when no contained item left. otherwise, just deactivate the interaction target*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Loot Item")
+	bool bShouldDestroyActor;
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -92,6 +108,10 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Pickup Item")
 	FOrionPickupDefinition ContainedItem;
+
+	/*Destroy actor when no contained item left. otherwise, just deactivate the interaction target*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Loot Item")
+	bool bShouldDestroyActor;
 
 	void SetItem(FOrionPickupDefinition& InPickupDefinition);
 	virtual void OnLocalCompleted_Implementation(AActor* Interactor, UOrionInteractionTargetComponent* Component) override;
