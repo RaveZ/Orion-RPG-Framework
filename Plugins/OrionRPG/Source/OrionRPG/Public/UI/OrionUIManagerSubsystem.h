@@ -112,7 +112,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|UI", meta = (WorldContext = "WorldContextObject"))
 	static UOrionUIManagerSubsystem* GetOrionUISubsystem(const UObject* WorldContextObject);
 
-
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|UI")
+	static UWidget* GetFocusedWidget();
+	
 	
 private:
 	static int32 InputSuspensions;

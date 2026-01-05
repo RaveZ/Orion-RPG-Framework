@@ -132,3 +132,24 @@ UCommonActivatableWidget* UOrionUILibrary::GetActiveWidgetFromLayer(const UObjec
 	}
 	return nullptr;
 }
+
+UWidget* UOrionUILibrary::GetFocusedWidget()
+{
+	TSharedPtr<SWidget> FocusedSlateWidget = FSlateApplication::Get().GetUserFocusedWidget(0);
+	if (!FocusedSlateWidget.IsValid())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No focused Slate widget found"));
+		return nullptr;
+	}
+	for (TObjectIterator<UWidget> Itr; Itr; ++Itr)
+	{
+		UWidget* CandidateUMGWidget = *Itr;
+		if (CandidateUMGWidget->GetCachedWidget() == FocusedSlateWidget)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Focused UMG widget found: %s"), *CandidateUMGWidget->GetName());
+			return CandidateUMGWidget;
+		}
+	}
+	UE_LOG(LogTemp, Warning, TEXT("No focused UMG widget found"));
+	return nullptr;
+}

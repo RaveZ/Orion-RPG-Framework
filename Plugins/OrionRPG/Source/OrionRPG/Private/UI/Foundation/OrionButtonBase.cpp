@@ -12,6 +12,7 @@ void UOrionButtonBase::NativePreConstruct()
 
 	UpdateButtonStyle();
 	RefreshButtonText();
+	bIsFocused = false;
 }
 
 void UOrionButtonBase::UpdateInputActionWidget()
@@ -74,6 +75,18 @@ void UOrionButtonBase::NativeOnHovered()
 {
 	Super::NativeOnHovered();
 	SetFocus();
+}
+
+void UOrionButtonBase::NativeOnAddedToFocusPath(const FFocusEvent& InFocusEvent)
+{
+	Super::NativeOnAddedToFocusPath(InFocusEvent);
+	bIsFocused = true;
+}
+
+void UOrionButtonBase::NativeOnRemovedFromFocusPath(const FFocusEvent& InFocusEvent)
+{
+	Super::NativeOnRemovedFromFocusPath(InFocusEvent);
+	bIsFocused = false;
 }
 
 void UOrionButtonBase::SetZOrder(int32 InZOrder)
