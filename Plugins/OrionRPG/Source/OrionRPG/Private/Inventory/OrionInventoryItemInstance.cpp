@@ -156,6 +156,17 @@ FItemInstanceData UOrionInventoryItemInstance::GetItemInstanceData() const
 	return InstanceData;
 }
 
+TArray<UOrionInventoryItemFragment*> UOrionInventoryItemInstance::GetAllFragments()
+{
+	TArray<UOrionInventoryItemFragment*> OutResult;
+	if (ItemDef)
+	{
+		OutResult.Append(ItemDef->Fragments);
+		OutResult.Add(ItemDef->GetDropItemFragment());
+	}
+	return OutResult;
+}
+
 
 
 

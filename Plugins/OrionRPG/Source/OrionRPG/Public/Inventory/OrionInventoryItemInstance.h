@@ -67,6 +67,11 @@ public:
 	UFUNCTION(BlueprintPure, Category = Inventory)
 	FItemInstanceData GetItemInstanceData() const;
 
+
+	// Returns true if there is at least one stack of the specified tag
+	UFUNCTION(BlueprintCallable, Category = Inventory)
+	TArray<UOrionInventoryItemFragment*> GetAllFragments();
+
 private:
 #if UE_WITH_IRIS
 	/** Register all replication fragments */
