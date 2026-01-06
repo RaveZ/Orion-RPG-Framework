@@ -256,7 +256,7 @@ void UOrionInteractionComponent::Client_NotifyInteraction_Implementation(EOrionI
 	
 }
 
-void UOrionInteractionComponent::Client_NotifyInteractionTarget_Implementation(EOrionInteractionResult NewInteractionResult)
+void UOrionInteractionComponent::Client_NotifyInteractionTarget_Implementation(EOrionInteractionResult NewInteractionResult)         
 {
 	if (IsValid(CurrentInteractionTarget))
 	{
@@ -372,6 +372,9 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 					if (Hit.GetActor()->IsPendingKillPending())
 						continue;
 
+					if (!TargetInteractable->IsActive())
+						continue;
+
 					if (Hit.GetActor()->IsHidden())
 						continue;
 
@@ -433,21 +436,23 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 			GetWorld()->LineTraceSingleByChannel(HitResult, TraceStart, TraceEnd, InteractionTraceChannel, CollisionQueryParams);
 			InteractionhitResults.Add(HitResult);
 
-			if ((InteractionhitResults.IsValidIndex(0) && 
-				InteractionhitResults[0].bBlockingHit && 
-				InteractionhitResults[0].GetActor()  && 
-				!InteractionhitResults[0].GetActor()->IsPendingKillPending()) || 
-				!InteractionhitResults[0].GetActor()->IsHidden())
-			{
-				if (UOrionInteractionTargetComponent* TargetInteractable = InteractionhitResults[0].GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>())
-				{
-					bool bInteractableIsNotSelf = TargetInteractable->GetOwner() != GetOwningPawn();
-					if (bInteractableIsNotSelf)
-					{
-						return TargetInteractable;
-					}
-				}
+			if (!InteractionhitResults.IsValidIndex(0)) return nullptr;
+			if (!InteractionhitResults[0].GetActor()) return nullptr;
 
+			if (UOrionInteractionTargetComponent* TargetInteractable = InteractionhitResults[0].GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>())
+			{
+				if (InteractionhitResults[0].GetActor()->IsPendingKillPending()) return nullptr;
+
+				if (InteractionhitResults[0].GetActor()->IsHidden()) return nullptr;
+
+				if (!TargetInteractable->IsActive()) return nullptr;
+
+				
+				bool bInteractableIsNotSelf = TargetInteractable->GetOwner() != GetOwningPawn();
+				if (bInteractableIsNotSelf)
+				{
+					return TargetInteractable;
+				}
 			}
 	#if WITH_EDITOR
 			if (bDebugTrace)
@@ -505,6 +510,9 @@ void UOrionInteractionComponent::DetectAvailableInteractionTargets()
 				continue;
 
 			if (Hit.GetActor()->IsHidden())
+				continue;
+
+			if (!TargetInteractable->IsActive())
 				continue;
 
 			bool bInteractableIsNotSelf = TargetInteractable->GetOwner() != GetOwningPawn();
