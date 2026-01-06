@@ -14,7 +14,7 @@ class UOrionInventoryNode;
 class APlayerController;
 class APawn;
 
-UCLASS(Blueprintable, BlueprintType)
+UCLASS(Blueprintable, BlueprintType, AutoExpandCategories = "OrionInventory|Equipment, OrionInventory|Currency")
 class ORIONRPG_API UOrionInventoryGraph : public UObject
 {
 	GENERATED_BODY()
@@ -46,8 +46,14 @@ public:
 	/// <summary>
 	/// Equipment default slots
 	/// </summary>
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta=(Categories="EquipSlot"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory|Equipment", meta=(Categories="EquipSlot"))
 		TArray<FGameplayTag> EquipmentDefaultSlots;
+
+	/// <summary>
+	/// Currency Database
+	/// </summary>
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory|Currency", NoClear)
+	TArray<FOrionCurrencyData> CurrencyDatas;
 
 	/**Default drop item fragment for each item for this graph*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", Instanced)

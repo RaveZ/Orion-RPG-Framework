@@ -25,6 +25,7 @@ class UOrionInteractionTargetComponent;
 // Gameplay Tags
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Item_Equipment);
+
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EquipSlot_Head);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EquipSlot_Chest);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EquipSlot_Legs);
@@ -34,6 +35,8 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EquipSlot_RightHandWeapon);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EquipSlot_LeftHandWeapon);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EquipSlot_Accessory1);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_EquipSlot_Accessory2);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Currency_Gold);
 
 UENUM(BlueprintType)
 enum class EDropItemBehavior : uint8
@@ -351,6 +354,32 @@ public:
 
 };
 
+//////////////////////////////////////////////////////////////////////
+
+// Currency Data
+USTRUCT(BlueprintType)
+struct FOrionCurrencyData
+{
+	GENERATED_BODY()
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory", meta=(Categories="Currency"))
+	FGameplayTag CurrencyTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
+	FText CurrencyName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory")
+	TSoftObjectPtr<UTexture2D> Icon;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Inventory")
+	int32 Value;
+
+public:
+	FOrionCurrencyData()
+	{
+		Value = 0;
+	}
+};
 //////////////////////////////////////////////////////////////////////
 
 // Inventory Save Data

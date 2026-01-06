@@ -113,4 +113,10 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
 	static UOrionInventoryNode_ItemDefinition* FindItemDefinitionByTag(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
 
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static bool GetCurrency(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Currency"))FGameplayTag InCurrencyTag, FOrionCurrencyData& OutCurrency, AActor* InOptionalInstigator);
+
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static bool AddCurrency(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Currency"))FGameplayTag InCurrencyTag, int32 Value, FOrionCurrencyData& OutCurrency, AActor* InOptionalInstigator);
+
 };

@@ -30,6 +30,16 @@ UOrionInventoryGraph::UOrionInventoryGraph()
 		TAG_EquipSlot_Accessory1,
 		TAG_EquipSlot_Accessory2,
 	};
+
+	FOrionCurrencyData DefaultCurrencyData;
+	DefaultCurrencyData.CurrencyTag = TAG_Currency_Gold;
+	DefaultCurrencyData.CurrencyName = FText::FromString("Gold");
+	auto CurrencyIconObj = ConstructorHelpers::FObjectFinder<UTexture2D>(TEXT("Texture2D'/OrionRPG/Widgets/Assets/GoldIcon.GoldIcon'"));
+	if (CurrencyIconObj.Succeeded())
+	{
+		DefaultCurrencyData.Icon = CurrencyIconObj.Object;
+	}
+	CurrencyDatas.Add(DefaultCurrencyData);
 	
 } 
 

@@ -211,6 +211,28 @@ void UOrionInventoryFunctionLibrary::LootItemFromActor(const UObject* WorldConte
     }
 }
 
+bool UOrionInventoryFunctionLibrary::GetCurrency(const UObject* WorldContextObject, FGameplayTag InCurrencyTag, FOrionCurrencyData& OutCurrency, AActor* InOptionalInstigator)
+{
+    UOrionInventoryComponent* InventoryComp = InOptionalInstigator ? GetInventoryComponentFromTarget(InOptionalInstigator) : GetInventoryComponent(WorldContextObject);
+
+    if (InventoryComp)
+    {
+		return InventoryComp->GetCurrency(InCurrencyTag, OutCurrency);
+    }
+    return false;
+}
+
+bool UOrionInventoryFunctionLibrary::AddCurrency(const UObject* WorldContextObject, FGameplayTag InCurrencyTag, int32 Value, FOrionCurrencyData& OutCurrency, AActor* InOptionalInstigator)
+{
+    UOrionInventoryComponent* InventoryComp = InOptionalInstigator ? GetInventoryComponentFromTarget(InOptionalInstigator) : GetInventoryComponent(WorldContextObject);
+
+    if (InventoryComp)
+    {
+        return InventoryComp->AddCurrency(InCurrencyTag, Value, OutCurrency);
+    }
+    return false;
+}
+
 UOrionInventoryNode_ItemDefinition* UOrionInventoryFunctionLibrary::FindItemDefinitionByTag(const UObject* WorldContextObject, FGameplayTag ItemTag)
 {
     UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);

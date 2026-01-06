@@ -32,6 +32,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInventoryItemStackChange, UOrion
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryMaxWeightChanged, float, InMaxWeight);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryEncumberedStateChanged, bool, bEncumbered);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryOnLootItem, UOrionInteractionTargetComponent_LootItem*, InLootComponent);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnCurrencyDataChanged, FOrionCurrencyData, InCurrencyData);
 
 
 //Equipment Delegate
@@ -62,6 +63,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "InventoryComponent")
 		TObjectPtr< UOrionInventoryItemInstance> InspectedItem;
+
+	UPROPERTY(BlueprintReadOnly, Category = "InventoryComponent")
+		TArray<FOrionCurrencyData> CurrencyList;
 
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
@@ -101,7 +105,9 @@ public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FInventoryOnLootItem OnLootItem;
 
-	
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
+		FOnCurrencyDataChanged OnCurrencyDataChanged;
 
 public:
 	UFUNCTION()
@@ -326,6 +332,16 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
 	void LootItem(class UOrionInteractionTargetComponent_LootItem* InLootComponent);
+
+	/////////////////////////////////////////////////////////////////////////////////////
+	//Currency 
+	/////////////////////////////////////////////////////////////////////////////////////
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	bool AddCurrency(UPARAM(meta = (Categories = "Currency"))FGameplayTag InCurrencyTag, int32 Value, FOrionCurrencyData& OutCurrency);
+
+	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
+	bool GetCurrency(UPARAM(meta = (Categories = "Currency"))FGameplayTag InCurrencyTag, FOrionCurrencyData& OutCurrency);
+
 
 public:
 	UFUNCTION()

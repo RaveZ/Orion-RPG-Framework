@@ -58,6 +58,7 @@ void UOrionInventoryComponent::BeginPlay()
 		InventoryDB->Initialize(this);
 		MaxWeight = InventoryDB->DefaultMaxInventoryWeight;
 		CurrentGridDimension = InventoryDB->DefaultGridDimension;
+		CurrencyList = InventoryDB->CurrencyDatas;
 	}
 
 
@@ -734,6 +735,37 @@ void UOrionInventoryComponent::LootItem(UOrionInteractionTargetComponent_LootIte
 		OnLootItem.Broadcast(InLootComponent);
 	}
 }
+
+bool UOrionInventoryComponent::AddCurrency(FGameplayTag InCurrencyTag, int32 Value, FOrionCurrencyData& OutCurrency)
+{
+	for (auto& CurrencyData : CurrencyList)
+	{
+		if (CurrencyData.CurrencyTag == InCurrencyTag)
+		{
+			CurrencyData.Value = FMath::Clamp(CurrencyData.Value + Value, 0, INT32_MAX);
+			OutCurrency = CurrencyData;
+			OnCurrencyDataChanged.Broadcast(CurrencyData);
+			return true;
+		}
+	}
+	return false;
+}
+
+
+
+bool UOrionInventoryComponent::GetCurrency(FGameplayTag InCurrencyTag, FOrionCurrencyData& OutCurrency)
+{
+	for (auto& CurrencyData : CurrencyList)
+	{
+		if (CurrencyData.CurrencyTag == InCurrencyTag)
+		{
+			OutCurrency = CurrencyData;
+			return true;
+		}
+	}
+	return false;
+}
+
 
 FOrionInventorySaveData UOrionInventoryComponent::GetSaveGameData()
 {

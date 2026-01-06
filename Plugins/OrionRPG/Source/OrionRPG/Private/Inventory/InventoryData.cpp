@@ -17,6 +17,7 @@
 // Gameplay Tags
 UE_DEFINE_GAMEPLAY_TAG(TAG_Item, "Item");
 UE_DEFINE_GAMEPLAY_TAG(TAG_EquipSlot, "Item.Equipment");
+
 UE_DEFINE_GAMEPLAY_TAG(TAG_EquipSlot_Head, "EquipSlot.Head");
 UE_DEFINE_GAMEPLAY_TAG(TAG_EquipSlot_Chest, "EquipSlot.Chest");
 UE_DEFINE_GAMEPLAY_TAG(TAG_EquipSlot_Legs, "EquipSlot.Legs");
@@ -27,13 +28,15 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_EquipSlot_LeftHandWeapon, "EquipSlot.LeftHandWeapon")
 UE_DEFINE_GAMEPLAY_TAG(TAG_EquipSlot_Accessory1, "EquipSlot.Accessory1");
 UE_DEFINE_GAMEPLAY_TAG(TAG_EquipSlot_Accessory2, "EquipSlot.Accessory2");
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_Currency_Gold, "Currency.Gold");
+
 //////////////////////////////////////////////////////////////////////
 // FOrionInventoryEntry
 
 FString FOrionInventoryEntry::GetDebugString() const
 {
 	/*TSubclassOf<UOrionInventoryItemDefinition> ItemDef;
-	if (Instance != nullptr)
+	if (Instance != nullptr) 
 	{
 		ItemDef = Instance->GetItemDef();
 	}
