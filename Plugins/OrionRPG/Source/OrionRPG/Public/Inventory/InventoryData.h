@@ -205,10 +205,10 @@ struct FOrionPickupDefinition
 	}
 public:
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pickup, meta = (Categories = "Item"))
+	UPROPERTY(SaveGame, EditAnywhere, BlueprintReadWrite, Category = Pickup, meta = (Categories = "Item"))
 	FGameplayTag ItemTag;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Pickup)
+	UPROPERTY(SaveGame, EditAnywhere, BlueprintReadWrite, Category = Pickup)
 	int32 Count;
 
 };

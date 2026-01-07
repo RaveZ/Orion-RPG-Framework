@@ -399,6 +399,14 @@ void UOrionInventoryComponent::SpawnDroppedItem(TSoftClassPtr<AActor> PickupActo
 
 			AActor* SpawnedActor = World->SpawnActor<AActor>(LoadedClass, SpawnLocation, SpawnRotation, SpawnParams);
 
+			TArray<UPrimitiveComponent*> Components;
+			SpawnedActor->GetComponents(Components, true);
+			for (auto& PrimitiveComponent : Components)
+			{
+				PrimitiveComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+			}
+				
+
 			FOrionPickupDefinition PickupDef;
 			PickupDef.ItemTag = ItemTag;
 			PickupDef.Count = StackCount;
@@ -794,6 +802,7 @@ FOrionInventorySaveData UOrionInventoryComponent::GetSaveGameData()
 	
 	InventorySaveData.MaxWeight = MaxWeight;
 	InventorySaveData.GridDimension = CurrentGridDimension;
+	InventorySaveData.SavedCurrencies = CurrencyList;
 
 	return InventorySaveData;
 }
@@ -814,6 +823,7 @@ void UOrionInventoryComponent::InitializeFromSaveGame(const FOrionInventorySaveD
 
 	MaxWeight = InventorySaveData.MaxWeight;
 	CurrentGridDimension = InventorySaveData.GridDimension;
+	CurrencyList = InventorySaveData.SavedCurrencies;
 	
 	bInitializingSaveGame = false;
 

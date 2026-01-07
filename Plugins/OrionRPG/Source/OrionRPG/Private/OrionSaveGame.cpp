@@ -119,19 +119,8 @@ void UOrionSaveGame::HandlePreSave()
 
 	for (AActor* Actor : SaveGameActors)
 	{
-		CachedActors.AddUnique(Actor);
-		FOrionActorSaveData ActorData;
-		ActorData.ActorName = Actor->GetFName();
-
-		FMemoryWriter MyMemoryWriter(ActorData.ByteData);
-
-		FObjectAndNameAsStringProxyArchive Ar(MyMemoryWriter, true);
-
-		Ar.ArIsSaveGame = true;
-		Ar.ArNoDelta = true;
-		Actor->Serialize(Ar);
-
-		SavedActors.Add(ActorData);
+		IOrionSaveGameInterface::Execute_OnPreSave(Actor);
+		SaveActor(Actor);
 	}
 
 
@@ -238,7 +227,7 @@ void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
 				if (FoundActor)
 				{
 					FMemoryReader MyMemoryReader(ActorData.ByteData);
-
+					FoundActor->SetActorTransform(ActorData.ActorTransform);
 					FObjectAndNameAsStringProxyArchive Ar(MyMemoryReader, true);
 					Ar.ArNoDelta = true;
 					Ar.ArIsSaveGame = true;
@@ -281,7 +270,9 @@ void UOrionSaveGame::SaveActor(AActor* Actor)
 		CachedActors.AddUnique(Actor);
 		FOrionActorSaveData ActorData;
 		ActorData.ActorName = Actor->GetFName();
+		ActorData.ActorTransform = Actor->GetActorTransform();
 
+		
 		FMemoryWriter MyMemoryWriter(ActorData.ByteData);
 
 		FObjectAndNameAsStringProxyArchive Ar(MyMemoryWriter, true);

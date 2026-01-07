@@ -27,6 +27,7 @@ public:
 };
 
 
+
 USTRUCT(BlueprintType)
 struct FOrionPlayInfoSaveData
 {
@@ -139,6 +140,9 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = InventorySaveData)
 	TArray<FOrionInventoryItemSaveData> SavedInventoryItems;
 
+	UPROPERTY(VisibleAnywhere, Category = InventorySaveData)
+	TArray<FOrionCurrencyData> SavedCurrencies;
+
 
 };
 
@@ -206,6 +210,9 @@ class ORIONRPG_API IOrionSaveGameInterface
 	GENERATED_BODY()
 
 public:
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnPreSave();
 
 	UFUNCTION(BlueprintNativeEvent)
 	void OnSaved();

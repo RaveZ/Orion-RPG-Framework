@@ -3,6 +3,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "OrionSaveGame.h"
 #include "Inventory/InventoryData.h"
 #include "Interaction/OrionInteractionTargetComponent.h"
 #include "OrionItemPickup.generated.h"
@@ -11,7 +12,7 @@
  * Orion Lootable Actor
  */
 UCLASS(Blueprintable, BlueprintType, Abstract)
-class ORIONRPG_API AOrionLootable : public AActor
+class ORIONRPG_API AOrionLootable : public AActor, public IOrionSaveGameInterface
 {
     GENERATED_BODY()
 
@@ -22,12 +23,21 @@ public:
 	UPROPERTY(EditAnywhere)
 	UOrionInteractionTargetComponent_LootItem* InteractionTargetComp;
 
+	UPROPERTY(SaveGame, BlueprintReadOnly, Category = "Lootable")
+	TArray<FOrionPickupDefinition> ContainedItems;
+
 public:
 	AOrionLootable();
 
 	virtual void Tick(float DeltaTime) override;
 protected:
 	virtual void BeginPlay() override;
+
+	//IOrionSaveGameInterface
+	virtual void OnPreSave_Implementation() override;
+	virtual void OnSaved_Implementation() override;
+	virtual void OnLoaded_Implementation() override;
+	//end IOrionSaveGameInterface
 
 };
 
@@ -74,7 +84,7 @@ protected:
  * Orion Item Pickup Actor
  */
 UCLASS(Blueprintable, BlueprintType, Abstract)
-class ORIONRPG_API AOrionItemPickup : public AActor
+class ORIONRPG_API AOrionItemPickup : public AActor, public IOrionSaveGameInterface
 {
 	GENERATED_BODY()
 
@@ -85,12 +95,22 @@ public:
 	UPROPERTY(EditAnywhere)
 	UOrionInteractionTargetComponent_PickupItem* InteractionTargetComp;
 
+
+	UPROPERTY(SaveGame, BlueprintReadOnly, Category = "ItemPickup")
+	FOrionPickupDefinition ContainedItem;
+
 public:
 	AOrionItemPickup();
 
 	virtual void Tick(float DeltaTime) override;
 protected:
 	virtual void BeginPlay() override;
+
+	//IOrionSaveGameInterface
+	virtual void OnPreSave_Implementation() override;
+	virtual void OnSaved_Implementation() override;
+	virtual void OnLoaded_Implementation() override;
+	//End IOrionSaveGameInterface
 
 };
 

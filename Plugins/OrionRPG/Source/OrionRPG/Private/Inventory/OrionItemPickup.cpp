@@ -18,7 +18,6 @@ AOrionLootable::AOrionLootable()
 	Mesh->SetupAttachment(RootComponent);
 	Mesh->SetSimulatePhysics(true);
 	Mesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	Mesh->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
 	Mesh->SetRenderCustomDepth(true);
 	Mesh->SetCustomDepthStencilValue(255);
 
@@ -36,6 +35,20 @@ void AOrionLootable::Tick(float DeltaTime)
 void AOrionLootable::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void AOrionLootable::OnPreSave_Implementation()
+{
+	ContainedItems = InteractionTargetComp->ContainedItems;
+}
+
+void AOrionLootable::OnSaved_Implementation()
+{
+}
+
+void AOrionLootable::OnLoaded_Implementation()
+{
+	InteractionTargetComp->ContainedItems = ContainedItems;
 }
 
 /**
@@ -152,6 +165,20 @@ void AOrionItemPickup::Tick(float DeltaTime)
 void AOrionItemPickup::BeginPlay()
 {
 	Super::BeginPlay();
+}
+
+void AOrionItemPickup::OnPreSave_Implementation()
+{
+	ContainedItem = InteractionTargetComp->ContainedItem;
+}
+
+void AOrionItemPickup::OnSaved_Implementation()
+{
+}
+
+void AOrionItemPickup::OnLoaded_Implementation()
+{
+	InteractionTargetComp->SetItem(ContainedItem);
 }
 
 /**
