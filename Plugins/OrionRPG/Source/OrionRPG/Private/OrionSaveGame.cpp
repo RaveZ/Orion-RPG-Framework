@@ -25,8 +25,8 @@ void UOrionSaveGame::ResetToDefault()
 {
 	PlayInfoData = FOrionPlayInfoSaveData();
 	PlayerData = FOrionPlayerSaveData();
-	SavedActors.Reset();
-
+	QuestData = FOrionQuestSaveData();
+	SavedActors.Empty();
 
 	Super::ResetToDefault();
 }
@@ -57,21 +57,8 @@ void UOrionSaveGame::HandlePreSave()
 		PlayInfoData.LastPlayDateTime = CurrentDateTime;
 		PlayInfoData.TotalPlayTimeSeconds = Duration.GetTotalSeconds();
 
-		FString MapName = World->GetMapName();
-		MapName.RemoveFromStart(World->StreamingLevelsPrefix);
 
-		FString MapPath;
-		const FString PathName = World->GetPathName();
-		{
-			int32 TokenIndex = INDEX_NONE;
-
-			if (PathName.FindLastChar(TEXT('/'), TokenIndex))
-			{
-				MapPath = PathName.LeftChop(PathName.Len() - TokenIndex);
-			}
-		}
-
-		PlayInfoData.MapURL = FString::Printf(TEXT("%s/%s"), *MapPath, *MapName);
+		PlayInfoData.MapURL = GetCurrentMapURL();
 
 
 		if (OrionSetting->bSaveDataLayer)
@@ -92,9 +79,11 @@ void UOrionSaveGame::HandlePreSave()
 
 	//Quest Data
 	{
-		UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(PC);
-		check(QuestComp)
-		QuestData = QuestComp->GetSaveGameData();
+		UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(PC);
+		if (QuestComp)
+		{
+			QuestData = QuestComp->GetSaveGameData();
+		}
 	}
 
 	CachedActors.Empty();
@@ -102,23 +91,37 @@ void UOrionSaveGame::HandlePreSave()
 	TArray<AActor*> SaveGameActors;
 	UGameplayStatics::GetAllActorsWithInterface(World, UOrionSaveGameInterface::StaticClass(), SaveGameActors);
 
+	// Build TMap<FName, AActor*> for fast lookup
+	TMap<FName, AActor*> ActorMap;
 	for (AActor* Actor : SaveGameActors)
 	{
-		CachedActors.AddUnique(Actor);
-		FOrionActorSaveData ActorData;
-		ActorData.ActorName = Actor->GetFName();
-
-		FMemoryWriter MyMemoryWriter(ActorData.ByteData);
-
-		FObjectAndNameAsStringProxyArchive Ar(MyMemoryWriter, true);
-
-		Ar.ArIsSaveGame = true;
-		Ar.ArNoDelta = true;
-		Actor->Serialize(Ar);
-
-		SavedActors.Add(ActorData);
+		if (Actor)
+		{
+			ActorMap.Add(Actor->GetFName(), Actor);
+		}
 	}
 
+	TArray<FOrionActorSaveData> SavedActorArray;
+
+	SavedActors.GenerateValueArray(SavedActorArray);
+
+	//ensure to remove saved actor that are destroyed and spawned
+	for (int32 i = 0; i < SavedActorArray.Num(); ++i)
+	{
+		const FOrionActorSaveData& ActorData = SavedActorArray[i];
+
+		AActor* FoundActor = ActorMap.FindRef(ActorData.ActorName);
+		if(!FoundActor && !ActorData.bNetStartup && ActorData.MapURL.Equals(GetCurrentMapURL(), ESearchCase::IgnoreCase))
+		{
+			SavedActors.Remove(ActorData.ActorName);
+		}
+	}
+
+	//Save the actors
+	for (AActor* Actor : SaveGameActors)
+	{
+		SaveActor(Actor);
+	}
 
 }
 
@@ -159,17 +162,7 @@ void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
 			APawn* PlayerChar = PC->GetPawn<APawn>();
 			check(PlayerChar);
 
-			FString MapName = World->GetMapName();
-			MapName.RemoveFromStart(World->StreamingLevelsPrefix);
-
-			FString MapPath;
-			const FString PathName = World->GetPathName();
-			int32 TokenIndex = INDEX_NONE;
-			if (PathName.FindLastChar(TEXT('/'), TokenIndex))
-			{
-				MapPath = PathName.LeftChop(PathName.Len() - TokenIndex);
-			}
-			FString CurrentMapURL = FString::Printf(TEXT("%s/%s"), *MapPath, *MapName);
+			FString CurrentMapURL = GetCurrentMapURL();
 
 			// Compare with saved URL
 			UE_LOG(LogTemp, Log, TEXT("CurrentMapURL: %s, PlayInfoData.MapURL: %s"), *CurrentMapURL, *PlayInfoData.MapURL);
@@ -203,6 +196,8 @@ void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
 
 		//ACTOR DATA
 		{
+
+
 			TArray<AActor*> SaveGameActors;
 			UGameplayStatics::GetAllActorsWithInterface(World, UOrionSaveGameInterface::StaticClass(), SaveGameActors);
 
@@ -216,14 +211,42 @@ void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
 				}
 			}
 
-            for (int32 i = 0; i < SavedActors.Num(); ++i)
+			TArray<FOrionActorSaveData> SavedActorArray;
+
+			SavedActors.GenerateValueArray(SavedActorArray);
+
+            for (int32 i = 0; i < SavedActorArray.Num(); ++i)
             {
-				const FOrionActorSaveData& ActorData = SavedActors[i];
+				const FOrionActorSaveData& ActorData = SavedActorArray[i];
+
 				AActor* FoundActor = ActorMap.FindRef(ActorData.ActorName);
+
+				if (!FoundActor && !ActorData.bNetStartup)
+				{
+					FString CurrentMapURL = GetCurrentMapURL();
+					bool bShouldSpawn = CurrentMapURL.Equals(ActorData.MapURL, ESearchCase::IgnoreCase);
+
+					if (bShouldSpawn)
+					{
+						FActorSpawnParameters SpawnParams;
+						SpawnParams.Name = ActorData.ActorName;
+						SpawnParams.NameMode = FActorSpawnParameters::ESpawnActorNameMode::Required_ReturnNull;
+						SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+						if (ActorData.ActorClass == nullptr)
+						{
+							continue;
+						}
+						FoundActor = World->SpawnActor<AActor>(ActorData.ActorClass, ActorData.ActorTransform, SpawnParams);
+						if (FoundActor)
+						{
+							ActorMap.Add(ActorData.ActorName, FoundActor);
+						}
+					}
+				}
 				if (FoundActor)
 				{
 					FMemoryReader MyMemoryReader(ActorData.ByteData);
-
+					FoundActor->SetActorTransform(ActorData.ActorTransform);
 					FObjectAndNameAsStringProxyArchive Ar(MyMemoryReader, true);
 					Ar.ArNoDelta = true;
 					Ar.ArIsSaveGame = true;
@@ -235,25 +258,52 @@ void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
             }
 		}
 
+	
 		// QUEST
 		{
-			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponent(PC);
-			check(QuestComp)
+			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(PC);
+			if (QuestComp)
+			{
 				QuestComp->InitializeFromSaveGame(QuestData);
+			}
 		}
+
 	}
 
 
 	
 }
 
+FString UOrionSaveGame::GetCurrentMapURL()
+{
+	UWorld* World = OwningPlayer->GetWorld();
+	FString MapName = World->GetMapName();
+	MapName.RemoveFromStart(World->StreamingLevelsPrefix);
+
+	FString MapPath;
+	const FString PathName = World->GetPathName();
+	int32 TokenIndex = INDEX_NONE;
+	if (PathName.FindLastChar(TEXT('/'), TokenIndex))
+	{
+		MapPath = PathName.LeftChop(PathName.Len() - TokenIndex);
+	}
+	return FString::Printf(TEXT("%s/%s"), *MapPath, *MapName);
+}
+
 void UOrionSaveGame::SaveActor(AActor* Actor)
 {
 	if (Actor && Actor->Implements<UOrionSaveGameInterface>())
 	{
+		IOrionSaveGameInterface::Execute_OnPreSave(Actor);
 		CachedActors.AddUnique(Actor);
+
 		FOrionActorSaveData ActorData;
 		ActorData.ActorName = Actor->GetFName();
+		ActorData.ActorTransform = Actor->GetActorTransform();
+		ActorData.MapURL = GetCurrentMapURL();
+		ActorData.bNetStartup = Actor->bNetStartup;
+		ActorData.ActorClass = Actor->GetClass();
+	
 
 		FMemoryWriter MyMemoryWriter(ActorData.ByteData);
 
@@ -263,6 +313,14 @@ void UOrionSaveGame::SaveActor(AActor* Actor)
 		Ar.ArNoDelta = true;
 		Actor->Serialize(Ar);
 
-		SavedActors.Add(ActorData);
+		SavedActors.Emplace(Actor->GetFName(), ActorData);
 	}
+
+	
+}
+
+void UOrionSaveGame::RemoveSavedActor(AActor* Actor)
+{
+	if (!Actor) return;
+	SavedActors.Remove(Actor->GetFName());
 }

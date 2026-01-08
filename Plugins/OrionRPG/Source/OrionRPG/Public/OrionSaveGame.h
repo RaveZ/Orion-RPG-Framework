@@ -16,6 +16,15 @@ struct FOrionActorSaveData
 
 public:
 	UPROPERTY()
+	bool bNetStartup = false;
+
+	UPROPERTY()
+	FString MapURL;
+
+	UPROPERTY()
+	TSubclassOf<AActor> ActorClass;
+
+	UPROPERTY()
 	FName ActorName;
 
 	UPROPERTY()
@@ -24,6 +33,7 @@ public:
 	UPROPERTY()
 	TArray<uint8> ByteData;
 };
+
 
 
 USTRUCT(BlueprintType)
@@ -134,12 +144,15 @@ public:
 
 	virtual void HandleLoadGame(UWorld* World, bool bFromLoadGame);
 
+	FString GetCurrentMapURL();
+
 public:
 	UPROPERTY()
-	TArray<FOrionActorSaveData> SavedActors;
+	TMap<FName, FOrionActorSaveData> SavedActors;
 
 	UPROPERTY()
 	FOrionQuestSaveData QuestData;
+
 
 	UPROPERTY()
 	FOrionPlayerSaveData PlayerData;
@@ -155,6 +168,9 @@ private:
 public:
 	UFUNCTION(BlueprintCallable, Category = "Orion|SaveGame")
 	void SaveActor(AActor* Actor);
+
+	UFUNCTION(BlueprintCallable, Category = "Orion|SaveGame")
+	void RemoveSavedActor(AActor* Actor);
 public:
 	FORCEINLINE bool IsSavingGame()
 	{
@@ -180,6 +196,9 @@ class ORIONRPG_API IOrionSaveGameInterface
 	GENERATED_BODY()
 
 public:
+
+	UFUNCTION(BlueprintNativeEvent)
+	void OnPreSave();
 
 	UFUNCTION(BlueprintNativeEvent)
 	void OnSaved();

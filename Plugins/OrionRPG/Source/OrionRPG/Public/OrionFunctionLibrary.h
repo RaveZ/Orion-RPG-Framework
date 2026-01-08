@@ -37,6 +37,13 @@ public:
 	static void SaveActorData(const UObject* WorldContextObject, AActor* ActorToSave);
 
 	/**
+	* Remove specific actor data to current save slot
+	*
+	*/
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Save", meta = (WorldContext = "WorldContextObject"))
+	static void RemoveSavedActorData(const UObject* WorldContextObject, AActor* InActor);
+
+	/**
 	* Save actor data to specific save slot
 	*
 	*/
