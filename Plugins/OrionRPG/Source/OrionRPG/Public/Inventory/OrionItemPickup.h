@@ -130,11 +130,14 @@ public:
 	FOrionPickupDefinition ContainedItem;
 
 	/*Destroy actor when no contained item left. otherwise, just deactivate the interaction target*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Loot Item")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Pickup Item")
 	bool bShouldDestroyActor;
 
 	void SetItem(FOrionPickupDefinition& InPickupDefinition);
 	virtual void OnLocalCompleted_Implementation(AActor* Interactor, UOrionInteractionTargetComponent* Component) override;
+
+	UFUNCTION(BlueprintCallable, Category = "Interactable|Pickup Item")
+	void EvaluatePickup();
 
 protected:
 	virtual void BeginPlay() override;

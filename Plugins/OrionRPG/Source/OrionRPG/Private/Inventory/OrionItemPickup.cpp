@@ -1,6 +1,8 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #include "Inventory/OrionItemPickup.h"
+#include "OrionFunctionLibrary.h"
+#include "OrionSaveGame.h"
 #include "Inventory/OrionInventoryFunctionLibrary.h"
 #include "Inventory/OrionInventoryGraph.h"
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
@@ -49,6 +51,8 @@ void AOrionLootable::OnSaved_Implementation()
 void AOrionLootable::OnLoaded_Implementation()
 {
 	InteractionTargetComp->ContainedItems = ContainedItems;
+
+	InteractionTargetComp->EvaluateItemList();
 }
 
 /**
@@ -71,8 +75,9 @@ void UOrionInteractionTargetComponent_LootItem::AddItemToContainer(FOrionPickupD
 {
 	ContainedItems.Add(InPickupDefinition);
 
-	if (!IsActive()) Activate();
+	EvaluateItemList();
 }
+
 
 void UOrionInteractionTargetComponent_LootItem::OnLocalCompleted_Implementation(AActor* Interactor, UOrionInteractionTargetComponent* Component)
 {
@@ -119,13 +124,16 @@ void UOrionInteractionTargetComponent_LootItem::TakeItem(FOrionPickupDefinition&
 void UOrionInteractionTargetComponent_LootItem::EvaluateItemList()
 {
 	// If nothing remains in the lootable, destroy its owner actor
-	if (ContainedItems.Num() == 0)
+	if (ContainedItems.IsEmpty())
 	{
 		if (bShouldDestroyActor)
 		{
 			AActor* OwnerActor = GetOwner();
 			if (OwnerActor)
 			{
+				if (OwnerActor->bNetStartup) UOrionFunctionLibrary::SaveActorData(this, OwnerActor);
+				else UOrionFunctionLibrary::RemoveSavedActorData(this, OwnerActor);
+
 				OwnerActor->Destroy();
 			}
 		}
@@ -133,6 +141,10 @@ void UOrionInteractionTargetComponent_LootItem::EvaluateItemList()
 		{
 			Deactivate();
 		}
+	}
+	else
+	{
+		if (!IsActive()) Activate();
 	}
 }
 
@@ -205,7 +217,8 @@ void UOrionInteractionTargetComponent_PickupItem::SetItem(FOrionPickupDefinition
 	{
 		ActionDisplayText = FText::FromString("Pickup " + ItemDef->DisplayName.ToString());
 	}
-	ContainedItem = InPickupDefinition;	
+	ContainedItem = InPickupDefinition;
+	EvaluatePickup();
 }
 
 
@@ -221,11 +234,27 @@ void UOrionInteractionTargetComponent_PickupItem::OnLocalCompleted_Implementatio
 
 	if(Remainder <= 0)
 	{
+		ContainedItem = FOrionPickupDefinition();
+		EvaluatePickup();
+	}
+	else
+	{
+		ContainedItem.Count = Remainder;
+	}
+
+}
+
+void UOrionInteractionTargetComponent_PickupItem::EvaluatePickup()
+{
+	if (!ContainedItem.ItemTag.IsValid())
+	{
 		if (bShouldDestroyActor)
 		{
 			AActor* OwnerActor = GetOwner();
 			if (OwnerActor)
 			{
+				if (OwnerActor->bNetStartup) UOrionFunctionLibrary::SaveActorData(this, OwnerActor);
+				else UOrionFunctionLibrary::RemoveSavedActorData(this, OwnerActor);
 				OwnerActor->Destroy();
 			}
 		}
@@ -236,6 +265,6 @@ void UOrionInteractionTargetComponent_PickupItem::OnLocalCompleted_Implementatio
 	}
 	else
 	{
-		ContainedItem.Count = Remainder;
+		if (!IsActive()) Activate();
 	}
 }

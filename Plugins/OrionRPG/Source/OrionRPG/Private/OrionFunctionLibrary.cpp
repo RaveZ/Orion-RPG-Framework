@@ -47,6 +47,18 @@ void UOrionFunctionLibrary::SaveActorData(const UObject* WorldContextObject, AAc
 	}
 }
 
+void UOrionFunctionLibrary::RemoveSavedActorData(const UObject* WorldContextObject, AActor* InActor)
+{
+	if (!InActor) return;
+
+	UOrionSaveGame* SaveGameObject = UOrionFunctionLibrary::GetCurrentSaveGameObject(WorldContextObject);
+
+	if (SaveGameObject)
+	{
+		SaveGameObject->RemoveSavedActor(InActor);
+	}
+}
+
 void UOrionFunctionLibrary::SaveActorDataToSlot(const UObject* WorldContextObject, int slot, AActor* ActorToSave)
 {
 	if (!ActorToSave) return;
