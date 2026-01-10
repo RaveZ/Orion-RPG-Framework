@@ -2,6 +2,8 @@
 
 #include "Inventory/OrionItemPickup.h"
 #include "OrionFunctionLibrary.h"
+#include "Interaction/OrionInteractionTargetComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "OrionSaveGame.h"
 #include "Inventory/OrionInventoryFunctionLibrary.h"
 #include "Inventory/OrionInventoryGraph.h"

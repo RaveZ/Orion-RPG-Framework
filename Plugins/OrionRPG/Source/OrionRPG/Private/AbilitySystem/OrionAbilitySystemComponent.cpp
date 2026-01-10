@@ -1,6 +1,7 @@
 ﻿// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #include "AbilitySystem/OrionAbilitySystemcomponent.h"
+#include "Engine/World.h"
 #include "AbilitySystem/OrionGlobalAbilitySystem.h"
 
 UOrionAbilitySystemComponent::UOrionAbilitySystemComponent(const FObjectInitializer& ObjectInitializer)

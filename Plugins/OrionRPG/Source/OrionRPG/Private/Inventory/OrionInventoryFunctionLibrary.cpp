@@ -12,6 +12,7 @@
 #include "UI/OrionUIManagerSubsystem.h"
 #include "UI/Foundation/OrionGridBase.h"
 #include "UI/Foundation/OrionGridContainerBase.h"
+#include "SparseVolumeTexture/ISparseVolumeTextureStreamingManager.h"
 #include "Engine/GameInstance.h"
 #include "GameFramework/Pawn.h"
 
