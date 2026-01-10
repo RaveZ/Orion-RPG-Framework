@@ -17,10 +17,10 @@ class ORIONRPG_API AOrionLootable : public AActor, public IOrionSaveGameInterfac
     GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Lootable")
 	UStaticMeshComponent* Mesh;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "Lootable")
 	UOrionInteractionTargetComponent_LootItem* InteractionTargetComp;
 
 	UPROPERTY(SaveGame, BlueprintReadOnly, Category = "Lootable")
@@ -89,10 +89,10 @@ class ORIONRPG_API AOrionItemPickup : public AActor, public IOrionSaveGameInterf
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "ItemPickup")
 	UStaticMeshComponent* Mesh;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, Category = "ItemPickup")
 	UOrionInteractionTargetComponent_PickupItem* InteractionTargetComp;
 
 

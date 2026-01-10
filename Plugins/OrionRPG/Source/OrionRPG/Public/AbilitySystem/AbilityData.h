@@ -29,15 +29,15 @@ struct FOrionGameplayAbilityData
 public:
 
 	// Gameplay ability to grant.
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "AbilityData")
 	TSubclassOf<UGameplayAbility> Ability = nullptr;
 
 	// Level of ability to grant.
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "AbilityData")
 	int32 AbilityLevel = 1;
 
 	// Tag used to process input for the ability.
-	UPROPERTY(EditDefaultsOnly, Meta = (Categories = "InputTag"))
+	UPROPERTY(EditDefaultsOnly, Category = "AbilityData", Meta = (Categories = "InputTag"))
 	FGameplayTag InputTag;
 };
 
@@ -55,11 +55,11 @@ struct FOrionGameplayEffectData
 public:
 
 	// Gameplay effect to grant.
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "GameplayEffectData")
 	TSubclassOf<UGameplayEffect> GameplayEffect = nullptr;
 
 	// Level of gameplay effect to grant.
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "GameplayEffectData")
 	float EffectLevel = 1.0f;
 };
 
@@ -75,7 +75,7 @@ struct FOrionAttributeSetData
 
 public:
 	// Gameplay effect to grant.
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, Category = "AttributeSetData")
 	TSubclassOf<UAttributeSet> AttributeSet;
 
 };
