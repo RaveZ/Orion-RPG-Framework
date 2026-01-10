@@ -7,6 +7,7 @@
 #include "CommonInputSubsystem.h"
 #include "Engine/GameInstance.h"	
 #include "GameFramework/PlayerController.h"
+#include "UObject/UObjectIterator.h"
 #include "Engine/LocalPlayer.h"
 #include "Framework/Application/SlateApplication.h"
 

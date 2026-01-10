@@ -2,6 +2,8 @@
 
 #include "AbilitySystem/OrionAbilitySystemcomponent.h"
 #include "Engine/World.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
 #include "AbilitySystem/OrionGlobalAbilitySystem.h"
 
 UOrionAbilitySystemComponent::UOrionAbilitySystemComponent(const FObjectInitializer& ObjectInitializer)

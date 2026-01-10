@@ -9,6 +9,8 @@
 #include "Inventory/OrionInventoryItemFragment.h"
 #include "AbilitySystem/OrionAbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
 #include "OrionSaveGame.h"
 #include "OrionRPG.h"
 
