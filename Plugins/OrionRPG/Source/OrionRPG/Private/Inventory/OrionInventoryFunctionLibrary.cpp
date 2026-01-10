@@ -12,8 +12,8 @@
 #include "UI/OrionUIManagerSubsystem.h"
 #include "UI/Foundation/OrionGridBase.h"
 #include "UI/Foundation/OrionGridContainerBase.h"
-#include "SparseVolumeTexture/ISparseVolumeTextureStreamingManager.h"
 #include "Engine/GameInstance.h"
+#include "ContentStreaming.h"
 #include "GameFramework/Pawn.h"
 
 
@@ -212,6 +212,16 @@ void UOrionInventoryFunctionLibrary::LootItemFromActor(const UObject* WorldConte
     }
 }
 
+void UOrionInventoryFunctionLibrary::AddViewOriginToStreaming(const FVector& ViewOrigin, float ScreenWidth, float FOV, float BoostFactor, bool bOverrideLocation, float Duration, AActor* ActorToBoost)
+{
+    IStreamingManager::Get().AddViewInformation(ViewOrigin,
+        ScreenWidth,
+        ScreenWidth / FMath::Tan(FMath::DegreesToRadians(FOV * 0.5f)),
+        BoostFactor,
+        bOverrideLocation,
+        Duration,
+        ActorToBoost);
+}
 
 bool UOrionInventoryFunctionLibrary::GetCurrency(const UObject* WorldContextObject, FGameplayTag InCurrencyTag, FOrionCurrencyData& OutCurrency, AActor* InOptionalInstigator)
 {

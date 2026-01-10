@@ -608,9 +608,8 @@ void UOrionInventoryComponent::InspectItemInstance(UOrionInventoryItemInstance* 
 		return;
 	}
 
-	TSoftClassPtr<AActor> InActorClass = ActorToInspect ? ActorToInspect : nullptr;
 
-	OnInspectItem.Broadcast(ItemInstance, InActorClass);
+	OnInspectItem.Broadcast(ItemInstance, ActorToInspect);
 
 }
 

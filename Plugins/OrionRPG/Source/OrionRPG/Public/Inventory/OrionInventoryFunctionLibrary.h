@@ -119,4 +119,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
 	static bool AddCurrency(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Currency"))FGameplayTag InCurrencyTag, int32 Value, FOrionCurrencyData& OutCurrency, AActor* InOptionalInstigator);
 	
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory")
+	static void AddViewOriginToStreaming(const FVector& ViewOrigin,
+		float ScreenWidth,
+		float FOV,
+		float BoostFactor = 1.0f,
+		bool bOverrideLocation = false,
+		float Duration = 0.0f,
+		AActor* ActorToBoost = nullptr);
 };
