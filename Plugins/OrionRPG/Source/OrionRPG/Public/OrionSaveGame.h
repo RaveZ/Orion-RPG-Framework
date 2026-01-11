@@ -6,6 +6,7 @@
 #include "GameFramework/SaveGame.h"
 #include "Quest.h"
 #include "QuestData.h"
+#include "GameFramework/Actor.h"
 #include "UObject/Interface.h"
 #include "OrionSaveGame.generated.h"
 
