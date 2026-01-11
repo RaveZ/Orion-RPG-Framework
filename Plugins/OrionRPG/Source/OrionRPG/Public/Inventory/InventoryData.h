@@ -174,6 +174,9 @@ struct FOrionEquipmentDefinition
 
 	FOrionEquipmentDefinition();
 
+	UPROPERTY(BlueprintReadWrite, Category = Equipment, meta = (Categories = "Item"))
+	FGameplayTag OwningItem;
+
 	//Which equipment slot to assign to
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment, meta=(Categories="EquipSlot"))
 	FGameplayTag EquipSlot;

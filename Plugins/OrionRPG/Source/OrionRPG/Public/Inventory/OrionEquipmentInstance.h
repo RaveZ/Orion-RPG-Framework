@@ -8,6 +8,7 @@
 
 class AActor;
 class APawn;
+class UOrionInventoryItemInstance;
 struct FFrame;
 struct FOrionEquipmentDefinition;
 struct FOrionEquipmentActorData;
@@ -37,8 +38,13 @@ public:
 
 	void SetInstigator(UObject* InInstigator) { Instigator = InInstigator; }
 
+	void SetOwningItemInstance(UOrionInventoryItemInstance* InItemInstance) { OwningItemInstance = InItemInstance; }
+
 	UFUNCTION(BlueprintPure, Category = Equipment)
 	APawn* GetPawn() const;
+
+	UFUNCTION(BlueprintPure, Category = Equipment)
+	UOrionInventoryItemInstance* GetOwningItemInstance() const;
 
 	UFUNCTION(BlueprintPure, Category = Equipment, meta = (DeterminesOutputType = PawnType))
 	APawn* GetTypedPawn(TSubclassOf<APawn> PawnType) const;
@@ -82,6 +88,9 @@ private:
 	void OnRep_Instigator();
 
 private:
+	UPROPERTY(Replicated)
+	TObjectPtr<UOrionInventoryItemInstance> OwningItemInstance;
+
 	UPROPERTY(ReplicatedUsing = OnRep_Instigator)
 	TObjectPtr<UObject> Instigator;
 

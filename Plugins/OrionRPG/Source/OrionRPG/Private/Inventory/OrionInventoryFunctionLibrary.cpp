@@ -73,6 +73,18 @@ const UOrionInventoryItemFragment* UOrionInventoryFunctionLibrary::FindItemDefin
     return nullptr;
 }
 
+UOrionInventoryItemInstance* UOrionInventoryFunctionLibrary::GetItemInstanceByTag(const UObject* WorldContextObject, AActor* InOptionalInstigator, FGameplayTag ItemTag)
+{
+    UOrionInventoryComponent* InventoryComp = InOptionalInstigator ? GetInventoryComponentFromTarget(InOptionalInstigator) : GetInventoryComponent(WorldContextObject);
+
+    if (InventoryComp)
+    {
+        return InventoryComp->GetItemInstanceByTag(ItemTag);
+    }
+
+    return nullptr;
+}
+
 void UOrionInventoryFunctionLibrary::AssignItemIndex(const UObject* WorldContextObject, UOrionInventoryItemInstance* ItemInstance, int32 TileIndex)
 {
     UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);
@@ -179,6 +191,27 @@ TArray<UOrionInventoryItemInstance*> UOrionInventoryFunctionLibrary::GetAllInven
     }
 
     return OutResult;
+}
+
+bool UOrionInventoryFunctionLibrary::GetEquippedItemFromSlot(const UObject* WorldContextObject, UOrionInventoryItemInstance*& OutItemInstance, UOrionEquipmentInstance*& OutEquipInstance, FGameplayTag InEquipSlot)
+{
+	UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);
+    if (InventoryComp)
+    {
+        return InventoryComp->GetEquippedItemFromSlot(OutItemInstance, OutEquipInstance, InEquipSlot);
+	}
+    return false;
+}
+
+UOrionEquipmentInstance* UOrionInventoryFunctionLibrary::EquipItemFromTag(const UObject* WorldContextObject, FGameplayTag ItemTag)
+{
+    UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);
+
+    if (InventoryComp)
+    {
+        return InventoryComp->EquipItemFromTag(ItemTag);
+    }
+    return nullptr;
 }
 
 UOrionEquipmentInstance* UOrionInventoryFunctionLibrary::EquipItem(const UObject* WorldContextObject, FOrionEquipmentDefinition EquipmentDefinition)

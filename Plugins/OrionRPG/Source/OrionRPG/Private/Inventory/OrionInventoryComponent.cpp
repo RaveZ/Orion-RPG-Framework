@@ -181,7 +181,7 @@ void UOrionInventoryComponent::AddItem(int32& StackRemainder, FItemInstanceData&
 		}
 		InitialStackCount = ItemInstance->GetTotalStackCount();
 		ItemInstance->SetTotalStackCount(ItemInstance->GetTotalStackCount() + FMath::Abs(StackCount));
-		OnItemStackChanged.Broadcast(ItemInstance, ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
+		OnItemStackChanged.Broadcast(ItemInstance, ItemInstance->GetItemInstanceData());
 	}
 	else
 	{
@@ -196,11 +196,7 @@ void UOrionInventoryComponent::AddItem(int32& StackRemainder, FItemInstanceData&
 				this->AddReplicatedSubObject(ItemInstance);
 				InitialStackCount = ItemInstance->GetTotalStackCount();
 				ItemInstance->SetTotalStackCount(ItemInstance->GetTotalStackCount() + FMath::Abs(StackCount));
-				AActor* OwnerActor = this->GetOwner();
-				if (OwnerActor && (OwnerActor->GetNetMode() == NM_ListenServer || OwnerActor->GetNetMode() == NM_Standalone))
-				{
-					OnItemAdded.Broadcast(ItemInstance);
-				}
+				
 			}
 		}
 	}
@@ -211,7 +207,12 @@ void UOrionInventoryComponent::AddItem(int32& StackRemainder, FItemInstanceData&
 
 		OutItemData = ItemInstance->GetItemInstanceData();
 		StackRemainder = StackCount - FMath::Clamp(StackCount, 0, RoomLeft);
-		
+
+		AActor* OwnerActor = this->GetOwner();
+		if (OwnerActor && (OwnerActor->GetNetMode() == NM_ListenServer || OwnerActor->GetNetMode() == NM_Standalone))
+		{
+			OnItemAdded.Broadcast(ItemInstance, OutItemData);
+		}
 		UE_LOG(LogTemp, Log, TEXT("Item Added: %s | Tag: %s, StackCount: %d/%d\n"), *ItemInstance->GetItemDef()->DisplayName.ToString(), *ItemInstance->GetItemDef()->Tag.ToString(), ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
 	}
 }
@@ -298,11 +299,11 @@ void UOrionInventoryComponent::Server_DropItemInstance_Implementation(UOrionInve
 			RemoveReplicatedSubObject(ItemInstance);
 		}
 		
-		OnItemRemoved.Broadcast(ItemInstance);
+		OnItemRemoved.Broadcast(ItemInstance, ItemInstance->GetItemInstanceData());
 	}
 	else
 	{
-		OnItemStackChanged.Broadcast(ItemInstance, NewStackCount, ItemInstance->GetItemDef()->MaxStackCount);
+		OnItemStackChanged.Broadcast(ItemInstance, ItemInstance->GetItemInstanceData());
 	}
 	
 	const UOrionInventoryFragment_DropItem* DropItemFragment = ItemInstance->GetItemDef()->DropItemFragment;
@@ -474,11 +475,11 @@ void UOrionInventoryComponent::Server_ConsumeItemInstance_Implementation(UOrionI
 		{
 			RemoveReplicatedSubObject(ItemInstance);
 		}
-		OnItemConsumed.Broadcast(ItemInstance);
+		OnItemConsumed.Broadcast(ItemInstance, ItemInstance->GetItemInstanceData());
 	}
 	else
 	{
-		OnItemStackChanged.Broadcast(ItemInstance, NewStackCount, ItemInstance->GetItemDef()->MaxStackCount);
+		OnItemStackChanged.Broadcast(ItemInstance, ItemInstance->GetItemInstanceData());
 	}
 	UE_LOG(LogTemp, Log, TEXT("Consume Item: %s | Tag: %s, StackCount: %d/%d\n"), *ItemInstance->GetItemDef()->DisplayName.ToString(), *ItemInstance->GetItemDef()->Tag.ToString(), ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
 
@@ -613,6 +614,18 @@ void UOrionInventoryComponent::InspectItemInstance(UOrionInventoryItemInstance* 
 
 }
 
+bool UOrionInventoryComponent::GetEquippedItemFromSlot(UOrionInventoryItemInstance*& OutItemInstance, UOrionEquipmentInstance*& OutEquipInstance, FGameplayTag InEquipSlot)
+{
+	UOrionEquipmentInstance* EquipmentInstance = EquipmentList.FindFirstEquipmentBySlot(InEquipSlot);
+	if(EquipmentInstance)
+	{
+		OutEquipInstance = EquipmentInstance;
+		OutItemInstance = EquipmentInstance->GetOwningItemInstance();
+		return true;
+	}
+	return false;
+}
+
 UOrionEquipmentInstance* UOrionInventoryComponent::EquipItemFromInstance(UOrionInventoryItemInstance* ItemInstance)
 {
 	if (ItemInstance)
@@ -620,7 +633,9 @@ UOrionEquipmentInstance* UOrionInventoryComponent::EquipItemFromInstance(UOrionI
 		const UOrionInventoryFragment_EquippableItem* EquippableFragment = Cast<UOrionInventoryFragment_EquippableItem>(ItemInstance->FindFragmentByClass(UOrionInventoryFragment_EquippableItem::StaticClass()));
 		if (EquippableFragment)
 		{
-			UOrionEquipmentInstance* Result = EquipItem(EquippableFragment->EquipmentDefinition);
+			FOrionEquipmentDefinition InEquipDef = EquippableFragment->EquipmentDefinition;
+			InEquipDef.OwningItem = ItemInstance->GetItemInstanceData().Tag;
+			UOrionEquipmentInstance* Result = EquipItem(InEquipDef);
 			if (Result)
 			{
 				ItemInstance->SetEquippedItemInstance(Result);

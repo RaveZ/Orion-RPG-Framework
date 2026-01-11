@@ -17,8 +17,8 @@ UOrionInventoryGraph::UOrionInventoryGraph()
 	bAssetInitialized = false;
 	InventoryType = EOrionInventoryType::E_WeightBased;
 	DefaultMaxInventoryWeight = 100.0f;
-	DefaultGridDimension = FIntPoint(5, 5);
-	GridSize = 75.0f;
+	DefaultGridDimension = FIntPoint(6, 10);
+	GridSize = 100.0f;
 	EquipmentDefaultSlots = {
 		TAG_EquipSlot_Head,
 		TAG_EquipSlot_Chest,

@@ -193,8 +193,8 @@ void SGraphNode_OrionInventoryNode::Construct(const FArguments& InArgs, UOrionIn
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 {
-	SubNodeHeight = 115.f;
-	SubNodeWidth = 105.f;
+	SubNodeHeight = 165.f;
+	SubNodeWidth = 155.f;
 	
 	bDragMarkerVisible = false;
 	InputPins.Empty();
@@ -230,6 +230,20 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 		{
 			ItemBrush->SetResourceObject(LoadedTexture);
 			ItemBrush->DrawAs = ESlateBrushDrawType::Image;
+		}
+	}
+
+	// Compute desired image size preserving aspect ratio (max size 60x60)
+	const float MaxDisplaySize = 140.0f;
+	FVector2D ItemImageSize(MaxDisplaySize, MaxDisplaySize);
+	if (LoadedTexture)
+	{
+		const int32 TexW = LoadedTexture->GetSizeX();
+		const int32 TexH = LoadedTexture->GetSizeY();
+		if (TexW > 0 && TexH > 0)
+		{
+			const float Scale = FMath::Min(MaxDisplaySize / (float)TexW, MaxDisplaySize / (float)TexH);
+			ItemImageSize = FVector2D(FMath::Max(1.0f, TexW * Scale), FMath::Max(1.0f, TexH * Scale));
 		}
 	}
 
@@ -419,11 +433,11 @@ void SGraphNode_OrionInventoryNode::UpdateGraphNode()
 													+ SOverlay::Slot()
 													.HAlign(HAlign_Center)
 													.VAlign(VAlign_Center)
-													.Padding(4.0f, 4.0f, 4.0f, 12.0f)
+													.Padding(2.0f, 2.0f, 2.0f, 6.0f)
 													[
 														SNew(SImage)
 														.Image(ItemBrush)
-														.DesiredSizeOverride(FVector2d(60.f, 60.f))
+														.DesiredSizeOverride(ItemImageSize)
 													]
 													+ SOverlay::Slot()
 													.HAlign(HAlign_Center)

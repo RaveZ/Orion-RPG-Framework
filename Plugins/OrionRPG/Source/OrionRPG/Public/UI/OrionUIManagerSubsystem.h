@@ -22,10 +22,10 @@ public:
 	FOrionNavigationConfig() {
 		KeyEventRules.Reset();
 		//WASD causing the the enhanced input not working the first time playing. need to find a way to register and unregister whenever system try to open menu.
-		/*KeyEventRules.Emplace(EKeys::A, EUINavigation::Left);
+		KeyEventRules.Emplace(EKeys::A, EUINavigation::Left);
 		KeyEventRules.Emplace(EKeys::D, EUINavigation::Right);
 		KeyEventRules.Emplace(EKeys::W, EUINavigation::Up);
-		KeyEventRules.Emplace(EKeys::S, EUINavigation::Down);*/
+		KeyEventRules.Emplace(EKeys::S, EUINavigation::Down);
 		KeyEventRules.Emplace(EKeys::Left, EUINavigation::Left);
 		KeyEventRules.Emplace(EKeys::Right, EUINavigation::Right);
 		KeyEventRules.Emplace(EKeys::Up, EUINavigation::Up);

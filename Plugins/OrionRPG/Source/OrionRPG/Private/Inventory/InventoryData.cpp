@@ -58,7 +58,7 @@ void FOrionInventoryList::PreReplicatedRemove(const TArrayView<int32> RemovedInd
 	{
 		for (int32 Index : RemovedIndices)
 		{
-			InvComponent->OnItemRemoved.Broadcast(Entries[Index].ItemInstance);
+			//InvComponent->OnItemRemoved.Broadcast(Entries[Index].ItemInstance);
 		}
 	}
 	
@@ -73,7 +73,7 @@ void FOrionInventoryList::PostReplicatedAdd(const TArrayView<int32> AddedIndices
 	{
 		for (int32 Index : AddedIndices)
 		{
-			InvComponent->OnItemAdded.Broadcast(Entries[Index].ItemInstance);
+			//InvComponent->OnItemAdded.Broadcast(Entries[Index].ItemInstance);
 		}
 	}
 }
@@ -289,12 +289,27 @@ UOrionInventoryItemInstance* FOrionInventoryList::AddEntry(UOrionInventoryNode_I
 			}
 			break;
 		case EOrionInventoryType::E_WeightBased:
-			EmptyIndex = EmptyIndex != INDEX_NONE ? EmptyIndex : Entries.Num();
 			if (ItemDef->GridSize.X > OwnerComponent->GetCurrentGridDimension().X)
 			{
 				UE_LOG(LogTemp, Warning, TEXT("Item %s too large for inventory (GridSize.X: %d, InventoryCols: %d) \n Please adjust inventory max row to fit the item."), *ItemDef->Tag.GetTagName().ToString(), ItemDef->GridSize.X, OwnerComponent->GetCurrentGridDimension().X);
 				return nullptr;
 			}
+			if (EmptyIndex == INDEX_NONE)
+			{
+				bool bFoundIndex = false;
+				int32 TestIndex = Entries.Num();
+				FIntPoint ItemSize = ItemDef ? ItemDef->GridSize : FIntPoint(1, 1);
+				int32 MaxTileIndex = TestIndex + ((ItemSize.X * ItemSize.Y) * 2);
+
+				Entries.SetNum(MaxTileIndex);
+				while (!bFoundIndex && TestIndex <= 100)
+				{
+					bFoundIndex = IsValidSlot(ItemDef, TestIndex);
+					EmptyIndex = TestIndex;
+					TestIndex++;
+				}
+			}
+			
 			break;
 		default:
 			break;
@@ -560,6 +575,9 @@ UOrionEquipmentInstance* FOrionEquipmentList::CreateEquipmentInstance(FOrionEqui
 
 	Result = InEntry.Instance;
 	Result->SetEquipmentDef(EquipmentDefinition);
+
+	UOrionInventoryItemInstance* OwningItemInstance = OwnerComponent->GetItemInstanceByTag(EquipmentDefinition.OwningItem);
+	Result->SetOwningItemInstance(OwningItemInstance);
 
 	if (UOrionAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 	{

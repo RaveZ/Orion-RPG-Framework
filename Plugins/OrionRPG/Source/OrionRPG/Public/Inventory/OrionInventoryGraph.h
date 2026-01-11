@@ -40,7 +40,7 @@ public:
 		FIntPoint DefaultGridDimension;
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta = (ClampMin = "50", ClampMax = "100", UIMin = "50", UIMax = "100"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "OrionInventory", meta = (ClampMin = "50", ClampMax = "200", UIMin = "50", UIMax = "200"))
 		float GridSize;
 
 	/// <summary>

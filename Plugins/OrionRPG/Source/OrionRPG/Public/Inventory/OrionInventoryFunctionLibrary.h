@@ -77,6 +77,8 @@ public:
 	UFUNCTION(BlueprintPure, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
 	static bool GetItemData(const UObject* WorldContextObject, FItemInstanceData& OutItemData, AActor* InOptionalInstigator, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
 
+	UFUNCTION(BlueprintPure, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static UOrionInventoryItemInstance* GetItemInstanceByTag(const UObject* WorldContextObject, AActor* InOptionalInstigator, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
 
 	/**
 	 * Assign Item Index
@@ -97,6 +99,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
 	static TArray<UOrionInventoryItemInstance*> GetAllInventoryItem(const UObject* WorldContextObject);
+
+	UFUNCTION(BlueprintPure, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static bool GetEquippedItemFromSlot(const UObject* WorldContextObject, UOrionInventoryItemInstance*& OutItemInstance, UOrionEquipmentInstance*& OutEquipInstance, UPARAM(meta = (Categories = "EquipSlot")) FGameplayTag InEquipSlot);
+
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static UOrionEquipmentInstance* EquipItemFromTag(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag);
 
 	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
 	static UOrionEquipmentInstance* EquipItem(const UObject* WorldContextObject, FOrionEquipmentDefinition EquipmentDefinition);

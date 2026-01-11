@@ -39,6 +39,7 @@ void UOrionEquipmentInstance::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
+	DOREPLIFETIME(ThisClass, OwningItemInstance);
 	DOREPLIFETIME(ThisClass, Instigator);
 	DOREPLIFETIME(ThisClass, SpawnedActors);
 	DOREPLIFETIME(ThisClass, EquipmentDef);
@@ -57,6 +58,11 @@ void UOrionEquipmentInstance::RegisterReplicationFragments(UE::Net::FFragmentReg
 APawn* UOrionEquipmentInstance::GetPawn() const
 {
 	return Cast<APawn>(GetOuter());
+}
+
+UOrionInventoryItemInstance* UOrionEquipmentInstance::GetOwningItemInstance() const
+{
+	return OwningItemInstance;
 }
 
 APawn* UOrionEquipmentInstance::GetTypedPawn(TSubclassOf<APawn> PawnType) const

@@ -24,11 +24,10 @@ struct FInventoryItem;
 
 //Inventory Delegate
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInventorySignature);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryItemSignature, UOrionInventoryItemInstance*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInventoryItemSignature, UOrionInventoryItemInstance*, Item, FItemInstanceData, ItemData);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryNoRoomForItem, UOrionInventoryNode_ItemDefinition*, InItemDefinition);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInventoryInspectItem, UOrionInventoryItemInstance*, Item, TSoftClassPtr<AActor>, ActorToInspect);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInventoryGridDimensionChanged, FIntPoint, InOldDimension, FIntPoint, InNewDimension);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInventoryItemStackChange, UOrionInventoryItemInstance*, Item, int32, CurrentStackCount, int32, MaxStackCount);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryMaxWeightChanged, float, InMaxWeight);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryEncumberedStateChanged, bool, bEncumbered);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryOnLootItem, UOrionInteractionTargetComponent_LootItem*, InLootComponent);
@@ -77,9 +76,8 @@ public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FInventoryItemSignature OnItemConsumed;
 
-
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
-	FInventoryItemStackChange OnItemStackChanged;
+		FInventoryItemSignature OnItemStackChanged;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FInventoryMaxWeightChanged OnMaxWeightChanged;
@@ -293,7 +291,9 @@ public:
 	/////////////////////////////////////////////////////////////////////////////////////
 	//EQUIPMENT
 	/////////////////////////////////////////////////////////////////////////////////////
-	
+	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
+	bool GetEquippedItemFromSlot(UOrionInventoryItemInstance*& OutItemInstance, UOrionEquipmentInstance*& OutEquipInstance, UPARAM(meta = (Categories = "EquipSlot")) FGameplayTag InEquipSlot);
+
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
 	UOrionEquipmentInstance* EquipItemFromInstance(UOrionInventoryItemInstance* ItemInstance);
 
