@@ -67,6 +67,12 @@ public:
 		bool bLockPlayerMovement;
 
 	/**
+	* Keep participant position after the dialog ends
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration|Dialog")
+		bool bKeepPosition;
+
+	/**
 	* Can this dialog be interrupted by another dialog (if another dialog is triggered while this one is active)
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration|Dialog", meta = (DisplayName = "Can Interrupt this Dialog"))
