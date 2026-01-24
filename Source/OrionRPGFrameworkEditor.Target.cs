@@ -8,8 +8,8 @@ public class OrionRPGFrameworkEditorTarget : TargetRules
 	public OrionRPGFrameworkEditorTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Editor;
-		DefaultBuildSettings = BuildSettingsVersion.V5;
-        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_6;
+		DefaultBuildSettings = BuildSettingsVersion.V6;
+        IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_7;
         ExtraModuleNames.AddRange( new string[] { "OrionRPGFramework" } );
 	}
 }
