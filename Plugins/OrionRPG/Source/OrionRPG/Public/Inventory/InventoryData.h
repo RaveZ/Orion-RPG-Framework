@@ -352,6 +352,7 @@ public:
 		Icon = nullptr;
 		MaxStackCount = 0;
 		StackCount = 0;
+		Weight = 0.0f;
 	}
 
 
@@ -409,5 +410,6 @@ public:
 		bIsEquipped = false;
 		ItemTag = FGameplayTag::EmptyTag;
 		TotalStackCount = 0;
+		TileIndex = 0;
 	}
 };

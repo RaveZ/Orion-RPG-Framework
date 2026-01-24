@@ -193,7 +193,7 @@ void FOrionInventoryList::Initialize(UOrionInventoryComponent* InOwnerComponent)
 {
 	OwnerComponent = InOwnerComponent;
 	UOrionInventoryGraph* InventoryGraph = InOwnerComponent->InventoryDB;
-	if (InventoryGraph && InventoryGraph->InventoryType == EOrionInventoryType::E_GridBased)
+	if (InventoryGraph)
 	{
 		FIntPoint GridDimension = InOwnerComponent->InventoryDB->DefaultGridDimension;
 		Entries.SetNum(GridDimension.X * GridDimension.Y);
@@ -237,8 +237,10 @@ void FOrionInventoryList::AddEntry(UOrionInventoryItemInstance* ItemInstance)
 
 void FOrionInventoryList::AssignItemIndex(UOrionInventoryItemInstance* ItemInstance, int32 TileIndex)
 {
+	int32 Row = OwnerComponent->GetCurrentGridDimension().Y;
+	int32 Col = OwnerComponent->GetCurrentGridDimension().X;
 	FIntPoint ItemSize = ItemInstance ? ItemInstance->GetItemDef()->GridSize : FIntPoint(1,1);
-	int32 MaxTileIndex = TileIndex + ItemSize.X * ItemSize.Y - 1;
+	int32 MaxTileIndex = TileIndex/Col*Col + ((ItemSize.Y ) * Col);
 	if (Entries.Num() <= MaxTileIndex)
 	{
 		Entries.SetNum(MaxTileIndex + 1);
@@ -297,16 +299,19 @@ UOrionInventoryItemInstance* FOrionInventoryList::AddEntry(UOrionInventoryNode_I
 			if (EmptyIndex == INDEX_NONE)
 			{
 				bool bFoundIndex = false;
+				int32 Row = OwnerComponent->GetCurrentGridDimension().Y;
+				int32 Col = OwnerComponent->GetCurrentGridDimension().X;
 				int32 TestIndex = Entries.Num();
 				FIntPoint ItemSize = ItemDef ? ItemDef->GridSize : FIntPoint(1, 1);
-				int32 MaxTileIndex = TestIndex + ((ItemSize.X * ItemSize.Y) * 2);
 
-				Entries.SetNum(MaxTileIndex);
-				while (!bFoundIndex && TestIndex <= 100)
+				//Entries.SetNum(MaxTileIndex);
+				if (IsValidSlot(ItemDef, TestIndex))
 				{
-					bFoundIndex = IsValidSlot(ItemDef, TestIndex);
 					EmptyIndex = TestIndex;
-					TestIndex++;
+				}
+				else
+				{
+					EmptyIndex = (TestIndex / Col) * Col;
 				}
 			}
 			

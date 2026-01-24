@@ -153,7 +153,12 @@ public:
 	UPROPERTY(VisibleAnywhere, Category = InventorySaveData)
 	TArray<FOrionCurrencyData> SavedCurrencies;
 
+	FOrionInventorySaveData()
+	{
+		MaxWeight = 0.0f;
+		GridDimension = FIntPoint(0, 0);
 
+	}
 };
 
 
