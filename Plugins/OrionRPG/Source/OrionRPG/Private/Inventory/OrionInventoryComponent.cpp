@@ -723,8 +723,8 @@ void UOrionInventoryComponent::UnequipItem(UOrionEquipmentInstance* EquipmentIns
 		}
 
 		EquipmentInstance->OnUnequipped();
-		OnItemUnequipped.Broadcast(EquipmentInstance);
 		EquipmentList.RemoveEntry(EquipmentInstance);
+		OnItemUnequipped.Broadcast(EquipmentInstance);
 	}
 }
 

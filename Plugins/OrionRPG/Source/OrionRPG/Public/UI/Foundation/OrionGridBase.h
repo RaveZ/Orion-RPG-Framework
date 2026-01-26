@@ -36,6 +36,9 @@ public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "UI")
 	FOnFocusGrid OnFocusGrid;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "UI")
+	FIntPoint ItemDimension;
+
 public:
 	// UUserWidget interface
 	virtual void NativePreConstruct() override;
@@ -107,8 +110,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "UI")
 	TObjectPtr<UOrionInventoryItemInstance> ItemInstance;
 
-	UPROPERTY(BlueprintReadWrite, Category = "UI")
-	FIntPoint ItemDimension;
 
 	UPROPERTY(BlueprintReadWrite, Category = "UI")
 	FVector2D DragTargetPosition;

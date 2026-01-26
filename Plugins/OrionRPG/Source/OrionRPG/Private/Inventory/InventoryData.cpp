@@ -561,7 +561,7 @@ void FOrionEquipmentList::RemoveEntry(UOrionEquipmentInstance* Instance)
 			{
 				Entry.GrantedHandles.TakeFromAbilitySystem(ASC);
 			}
-
+			Entry.Instance->SetOwningItemInstance(nullptr);
 			Instance->DestroyEquipmentActors();
 		}
 	}
@@ -616,7 +616,7 @@ UOrionEquipmentInstance* FOrionEquipmentList::FindFirstEquipmentBySlot(const FGa
 {
 	auto* FoundItem = Entries.FindByPredicate([Slot = SlotTag](const FOrionEquippedItemEntry& Entry)
 		{
-			return IsValid(Entry.Instance);
+			return IsValid(Entry.Instance) && Entry.Slot.MatchesTagExact(Slot);
 		});
 	return FoundItem ? FoundItem->Instance : nullptr;
 }
