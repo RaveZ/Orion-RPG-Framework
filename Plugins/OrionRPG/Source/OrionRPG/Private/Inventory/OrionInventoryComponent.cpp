@@ -639,6 +639,7 @@ UOrionEquipmentInstance* UOrionInventoryComponent::EquipItemFromInstance(UOrionI
 			if (Result)
 			{
 				ItemInstance->SetEquippedItemInstance(Result);
+				return Result;
 			}
 		}
 		

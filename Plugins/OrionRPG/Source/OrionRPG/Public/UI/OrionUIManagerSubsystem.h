@@ -78,6 +78,13 @@ public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "UI Subsystem|Inventory")
 	FOrionDragItemSignature OnDragItemCompleted;
 
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "UI Subsystem|Inventory")
+	FOrionDragItemSignature OnSwapItem;
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "UI Subsystem|Inventory")
+	void CancelDragItem();
+
 
 private:
 	TSharedRef<FOrionNavigationConfig> OrionNavigationConfig;

@@ -193,6 +193,17 @@ TArray<UOrionInventoryItemInstance*> UOrionInventoryFunctionLibrary::GetAllInven
     return OutResult;
 }
 
+UOrionEquipmentInstance* UOrionInventoryFunctionLibrary::EquipItemFromInstance(const UObject* WorldContextObject, AActor* InOptionalInstigator, UOrionInventoryItemInstance* ItemInstance)
+{
+    UOrionInventoryComponent* InventoryComp = InOptionalInstigator ? GetInventoryComponentFromTarget(InOptionalInstigator) : GetInventoryComponent(WorldContextObject);
+
+    if (InventoryComp)
+    {
+		return InventoryComp->EquipItemFromInstance(ItemInstance);
+    }
+    return nullptr;
+}
+
 bool UOrionInventoryFunctionLibrary::GetEquippedItemFromSlot(const UObject* WorldContextObject, UOrionInventoryItemInstance*& OutItemInstance, UOrionEquipmentInstance*& OutEquipInstance, FGameplayTag InEquipSlot)
 {
 	UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);
@@ -203,9 +214,9 @@ bool UOrionInventoryFunctionLibrary::GetEquippedItemFromSlot(const UObject* Worl
     return false;
 }
 
-UOrionEquipmentInstance* UOrionInventoryFunctionLibrary::EquipItemFromTag(const UObject* WorldContextObject, FGameplayTag ItemTag)
+UOrionEquipmentInstance* UOrionInventoryFunctionLibrary::EquipItemFromTag(const UObject* WorldContextObject, AActor* InOptionalInstigator, FGameplayTag ItemTag)
 {
-    UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);
+    UOrionInventoryComponent* InventoryComp = InOptionalInstigator ? GetInventoryComponentFromTarget(InOptionalInstigator) : GetInventoryComponent(WorldContextObject);
 
     if (InventoryComp)
     {

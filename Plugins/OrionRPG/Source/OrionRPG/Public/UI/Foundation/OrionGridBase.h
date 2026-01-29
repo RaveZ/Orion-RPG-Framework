@@ -144,6 +144,9 @@ public:
 
 	void CreateDragItem_Implementation();
 
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable, Category = "OrionRPG|UI")
+	void HighlightValidDragItem(bool bValid);
+
 	UFUNCTION(BlueprintCallable, Category = "OrionRPG|UI")
 	void UpdateItemSize(UOrionInventoryItemInstance* InItemInstance);
 

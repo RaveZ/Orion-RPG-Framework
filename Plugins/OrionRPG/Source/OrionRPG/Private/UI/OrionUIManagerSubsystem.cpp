@@ -4,6 +4,8 @@
 #include "UI/OrionUIManagerSubsystem.h"
 #include "CommonActivatableWidget.h"
 #include "UI/OrionPrimaryGameLayout.h"
+#include "UI/Foundation/OrionGridContainerBase.h"
+#include "UI/Foundation/OrionGridBase.h"
 #include "CommonInputSubsystem.h"
 #include "Engine/GameInstance.h"	
 #include "GameFramework/PlayerController.h"
@@ -48,6 +50,22 @@ bool UOrionUIManagerSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 	}
 
 	return false;
+}
+
+void UOrionUIManagerSubsystem::CancelDragItem()
+{
+	if (DraggedItem)
+	{
+		OnCancelDragItem.Broadcast(DraggedItem);
+		DraggedItem->RemoveFromParent();
+		DraggedItem = nullptr;
+	}
+
+	if (CurrentFocusedGridContainer && CurrentFocusedGridContainer->CurrentFocusedGrid)
+	{
+		CurrentFocusedGridContainer->CurrentFocusedGrid->FocusGrid();
+	}
+	
 }
 
 FName UOrionUILibrary::SuspendInputForPlayer(APlayerController* PlayerController, FName SuspendReason)
