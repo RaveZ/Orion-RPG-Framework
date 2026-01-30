@@ -121,6 +121,17 @@ void UOrionEquipmentInstance::SpawnEquipmentActors(const TArray<FOrionEquipmentA
 					NewActor->FinishSpawning(FTransform::Identity, /*bIsDefaultTransform=*/ true);
 					NewActor->SetActorRelativeTransform(SpawnInfoCopy.AttachTransform);
 					NewActor->AttachToComponent(AttachTarget, FAttachmentTransformRules::KeepRelativeTransform, SpawnInfoCopy.AttachSocket);
+
+					if (SpawnInfoCopy.bSetLeaderComponent)
+					{
+						USkeletalMeshComponent* LeaderSkelMeshComp = Cast<USkeletalMeshComponent>(AttachTarget);
+						USkeletalMeshComponent* SkelMeshComp = NewActor->FindComponentByClass<USkeletalMeshComponent>();
+						if (LeaderSkelMeshComp && SkelMeshComp)
+						{
+							SkelMeshComp->SetLeaderPoseComponent(Cast<USkeletalMeshComponent>(AttachTarget));
+						}
+					}
+					
 					OnEquipmentActorSpawned.Broadcast(NewActor);
 
 					SpawnedActors.Add(NewActor);

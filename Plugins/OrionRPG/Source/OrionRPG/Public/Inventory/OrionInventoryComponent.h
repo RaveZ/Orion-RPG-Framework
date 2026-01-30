@@ -24,6 +24,7 @@ struct FInventoryItem;
 
 //Inventory Delegate
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FInventorySignature);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FInventoryItemAdded, UOrionInventoryItemInstance*, Item, FItemInstanceData, ItemData, int, AddedCount);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInventoryItemSignature, UOrionInventoryItemInstance*, Item, FItemInstanceData, ItemData);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FInventoryNoRoomForItem, UOrionInventoryNode_ItemDefinition*, InItemDefinition);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FInventoryInspectItem, UOrionInventoryItemInstance*, Item, TSoftClassPtr<AActor>, ActorToInspect);
@@ -68,7 +69,7 @@ public:
 
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
-		FInventoryItemSignature OnItemAdded;
+	FInventoryItemAdded OnItemAdded;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FInventoryItemSignature OnItemRemoved;

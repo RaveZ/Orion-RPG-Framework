@@ -206,12 +206,14 @@ void UOrionInventoryComponent::AddItem(int32& StackRemainder, FItemInstanceData&
 		int32 RoomLeft = ItemInstance->GetItemDef()->MaxStackCount - InitialStackCount;
 
 		OutItemData = ItemInstance->GetItemInstanceData();
-		StackRemainder = StackCount - FMath::Clamp(StackCount, 0, RoomLeft);
+		StackRemainder = FMath::Max(0,StackCount - FMath::Clamp(StackCount, 0, RoomLeft));
+		int32 AddedStack = StackCount - StackRemainder;
+
 
 		AActor* OwnerActor = this->GetOwner();
 		if (OwnerActor && (OwnerActor->GetNetMode() == NM_ListenServer || OwnerActor->GetNetMode() == NM_Standalone))
 		{
-			OnItemAdded.Broadcast(ItemInstance, OutItemData);
+			OnItemAdded.Broadcast(ItemInstance, OutItemData, AddedStack);
 		}
 		UE_LOG(LogTemp, Log, TEXT("Item Added: %s | Tag: %s, StackCount: %d/%d\n"), *ItemInstance->GetItemDef()->DisplayName.ToString(), *ItemInstance->GetItemDef()->Tag.ToString(), ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
 	}

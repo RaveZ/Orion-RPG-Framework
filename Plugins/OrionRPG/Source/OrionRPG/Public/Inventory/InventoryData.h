@@ -152,6 +152,7 @@ struct FOrionEquipmentActorData
 
 	FOrionEquipmentActorData()
 	{
+		bSetLeaderComponent = false;
 	}
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment)
@@ -162,6 +163,9 @@ struct FOrionEquipmentActorData
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment)
 	FTransform AttachTransform;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment)
+	bool bSetLeaderComponent;
 };
 
 //////////////////////////////////////////////////////////////////////
