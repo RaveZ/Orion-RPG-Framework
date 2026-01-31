@@ -589,14 +589,14 @@ APawn* UOrionInventoryComponent::GetOwningPawn() const
 	return nullptr;
 }
 
-void UOrionInventoryComponent::InspectItem(FGameplayTag ItemTag, TSoftClassPtr<AActor> ActorToInspect)
+void UOrionInventoryComponent::InspectItem(FGameplayTag ItemTag)
 {
 	UOrionInventoryItemInstance* FoundItem = InventoryList.FindFirstItemByTag(ItemTag);
 	
 	if (FoundItem)
 	{
 		InspectedItem = FoundItem;
-		InspectItemInstance(FoundItem, ActorToInspect);
+		InspectItemInstance(FoundItem);
 	}
 	else
 	{
@@ -604,15 +604,20 @@ void UOrionInventoryComponent::InspectItem(FGameplayTag ItemTag, TSoftClassPtr<A
 	}
 }
 
-void UOrionInventoryComponent::InspectItemInstance(UOrionInventoryItemInstance* ItemInstance, TSoftClassPtr<AActor> ActorToInspect)
+void UOrionInventoryComponent::InspectItemInstance(UOrionInventoryItemInstance* ItemInstance)
 {
-	if (!ActorToInspect && !ItemInstance)
+	if (!ItemInstance)
 	{
 		return;
 	}
 
+	const UOrionInventoryFragment_InspectItem* InspectItemFragment = Cast< UOrionInventoryFragment_InspectItem>(ItemInstance->FindFragmentByClass(UOrionInventoryFragment_InspectItem::StaticClass()));
 
-	OnInspectItem.Broadcast(ItemInstance, ActorToInspect);
+	if (InspectItemFragment)
+	{
+		OnInspectItem.Broadcast(ItemInstance, InspectItemFragment->ActorToInspect);
+	}
+
 
 }
 

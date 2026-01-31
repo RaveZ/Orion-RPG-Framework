@@ -162,9 +162,9 @@ void UOrionInventoryFunctionLibrary::CreateDragItem(const UObject* WorldContextO
     UOrionUIManagerSubsystem* UISubsystem = UOrionUILibrary::GetOrionUISubsystem(WorldContextObject);
     if (UISubsystem && UISubsystem->CurrentFocusedGridContainer)
     {
-        UISubsystem->CurrentFocusedGridContainer->CreateDragItem(InItemInstance, FromIndex);
-    }
-}
+            UISubsystem->CurrentFocusedGridContainer->CreateDragItem(InItemInstance, FromIndex);
+        }
+    }   
 
 
 
@@ -191,6 +191,26 @@ TArray<UOrionInventoryItemInstance*> UOrionInventoryFunctionLibrary::GetAllInven
     }
 
     return OutResult;
+}
+
+void UOrionInventoryFunctionLibrary::InspectItem(const UObject* WorldContextObject, FGameplayTag ItemTag)
+{
+    UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);
+
+    if (InventoryComp)
+    {
+		InventoryComp->InspectItem(ItemTag);
+    }
+}
+
+void UOrionInventoryFunctionLibrary::InspectItemInstance(const UObject* WorldContextObject, UOrionInventoryItemInstance* ItemInstance)
+{
+    UOrionInventoryComponent* InventoryComp = GetInventoryComponent(WorldContextObject);
+
+    if (InventoryComp)
+    {
+        InventoryComp->InspectItemInstance(ItemInstance);
+    }
 }
 
 UOrionEquipmentInstance* UOrionInventoryFunctionLibrary::EquipItemFromInstance(const UObject* WorldContextObject, AActor* InOptionalInstigator, UOrionInventoryItemInstance* ItemInstance)

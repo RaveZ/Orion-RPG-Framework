@@ -44,7 +44,7 @@ public:
 	float Weight;
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fragments", Instanced, meta = (FullyExpand = true))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Fragments", Instanced, meta = (FullyExpand = true), NoClear)
 	TArray<TObjectPtr<UOrionInventoryItemFragment>> Fragments;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Fragments", meta = (InlineEditConditionToggle))

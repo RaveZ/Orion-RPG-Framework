@@ -104,6 +104,12 @@ public:
 	static bool GetEquippedItemFromSlot(const UObject* WorldContextObject, UOrionInventoryItemInstance*& OutItemInstance, UOrionEquipmentInstance*& OutEquipInstance, UPARAM(meta = (Categories = "EquipSlot")) FGameplayTag InEquipSlot);
 
 	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static void InspectItem(const UObject* WorldContextObject, UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag());
+
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
+	static void InspectItemInstance(const UObject* WorldContextObject, UOrionInventoryItemInstance* ItemInstance);
+
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))
 	static UOrionEquipmentInstance* EquipItemFromInstance(const UObject* WorldContextObject, AActor* InOptionalInstigator, UOrionInventoryItemInstance* ItemInstance);
 
 	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Inventory", meta = (WorldContext = "WorldContextObject"))

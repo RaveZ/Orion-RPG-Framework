@@ -283,10 +283,10 @@ public:
 	/// <param name="ItemTag"></param>
 	/// <param name="ActorToInspect"></param>
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
-	void InspectItem(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag(), TSoftClassPtr<AActor> ActorToInspect = nullptr);
+	void InspectItem(UPARAM(meta = (Categories = "Item")) FGameplayTag ItemTag = FGameplayTag());
 
 	UFUNCTION(BlueprintCallable, Category = "InventoryComponent")
-	void InspectItemInstance(UOrionInventoryItemInstance* ItemInstance = nullptr, TSoftClassPtr<AActor> ActorToInspect = nullptr);
+	void InspectItemInstance(UOrionInventoryItemInstance* ItemInstance = nullptr);
 
 
 	/////////////////////////////////////////////////////////////////////////////////////

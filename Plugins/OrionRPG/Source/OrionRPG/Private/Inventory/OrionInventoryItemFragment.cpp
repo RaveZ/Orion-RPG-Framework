@@ -120,7 +120,7 @@ void UOrionInventoryFragment_InspectItem::K2_ExecuteAction_Implementation()
 		UOrionInventoryComponent* InvComp = UOrionInventoryFunctionLibrary::GetInventoryComponent(World);
 		if (InvComp)
 		{
-			InvComp->InspectItemInstance(OwningItemInstance, ActorToInspect);
+			InvComp->InspectItemInstance(OwningItemInstance);
 		}
 	}
 }
