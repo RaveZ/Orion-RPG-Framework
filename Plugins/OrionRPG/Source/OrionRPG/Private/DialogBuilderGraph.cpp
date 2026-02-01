@@ -33,6 +33,7 @@
 UDialogBuilderGraph::UDialogBuilderGraph()
 {
 	bAutoRotateParticipant = false;
+	bKeepPosition = false;
 	DefaultBoneToTrack = FName("head");
 	bAutoAdvanceDialogLine = false;
 	bLockPlayerMovement = true;
@@ -534,15 +535,19 @@ void UDialogBuilderGraph::EndDialog()
 
 	if (bLockPlayerMovement)
 	{
-        //Send all participants back to their initial transforms
-        for (const TPair<FGameplayTag, TObjectPtr<AActor>>& Pair : CachedParticipants)
-        {
-            FGameplayTag ParticipantTag = Pair.Key;
-            AActor* ParticipantActor = Pair.Value;
-            FTransform ParticipantInitialTransform = ParticipantInfoMap.FindRef(ParticipantTag).InitialTransform;
+		if (bKeepPosition)
+		{
+			//Send all participants back to their initial transforms
+			for (const TPair<FGameplayTag, TObjectPtr<AActor>>& Pair : CachedParticipants)
+			{
+				FGameplayTag ParticipantTag = Pair.Key;
+				AActor* ParticipantActor = Pair.Value;
+				FTransform ParticipantInitialTransform = ParticipantInfoMap.FindRef(ParticipantTag).InitialTransform;
 
-            ParticipantActor->SetActorTransform(ParticipantInitialTransform);
-        }
+				ParticipantActor->SetActorTransform(ParticipantInitialTransform);
+			}
+		}
+        
 	}
 	
 	
