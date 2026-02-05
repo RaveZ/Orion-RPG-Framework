@@ -334,7 +334,7 @@ void UOrionInteractionComponent::UpdateInteractionTrace()
 
 UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrace()
 {
-	if (!bIsInteractionEnabled)
+	if (!bIsInteractionEnabled || !GetOwningPawn())
 	{
 		return nullptr;
 	}

@@ -42,6 +42,8 @@ public:
 public:
 	// UUserWidget interface
 	virtual void NativePreConstruct() override;
+	virtual void NativeOnAddedToFocusPath(const FFocusEvent& InFocusEvent) override;
+	virtual void NativeOnRemovedFromFocusPath(const FFocusEvent& InFocusEvent) override;
 	// End of UUserWidget interface
 
 	UFUNCTION(BlueprintCallable, Category = "OrionRPG|UI")

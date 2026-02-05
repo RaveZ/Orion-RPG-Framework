@@ -50,7 +50,7 @@ public:
 	APawn* GetTypedPawn(TSubclassOf<APawn> PawnType) const;
 
 	UFUNCTION(BlueprintPure, Category = Equipment)
-	TArray<AActor*> GetSpawnedActors() const { return SpawnedActors; }
+	TArray<FOrionEquipmentActorData> GetSpawnedActorDatas() const { return SpawnedActorDatas; }
 
 	UFUNCTION(BlueprintCallable, Category = Equipment)
 	virtual void SpawnEquipmentActors(const TArray<FOrionEquipmentActorData>& ActorsToSpawn, APawn* InPawn);
@@ -87,6 +87,9 @@ private:
 	UFUNCTION()
 	void OnRep_Instigator();
 
+	UFUNCTION()
+	void OnRep_SpawnedActorDatas();
+
 private:
 	UPROPERTY(Replicated)
 	TObjectPtr<UOrionInventoryItemInstance> OwningItemInstance;
@@ -94,8 +97,8 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_Instigator)
 	TObjectPtr<UObject> Instigator;
 
-	UPROPERTY(Replicated)
-	TArray<TObjectPtr<AActor>> SpawnedActors;
+	UPROPERTY(ReplicatedUsing = OnRep_SpawnedActorDatas)
+	TArray<FOrionEquipmentActorData> SpawnedActorDatas;
 
 	UPROPERTY(Replicated)
 	FOrionEquipmentDefinition EquipmentDef;

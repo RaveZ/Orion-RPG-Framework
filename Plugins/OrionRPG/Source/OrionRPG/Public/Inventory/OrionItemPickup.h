@@ -52,17 +52,20 @@ class UOrionInteractionTargetComponent_LootItem : public UOrionInteractionTarget
 public:
 	UOrionInteractionTargetComponent_LootItem();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Loot Item")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Interactable|Loot Item")
 	TArray<FOrionPickupDefinition> ContainedItems;
 
 	void AddItemToContainer(FOrionPickupDefinition& InPickupDefinition);
-	virtual void OnLocalCompleted_Implementation(AActor* Interactor, UOrionInteractionTargetComponent* Component) override;
 
 	UFUNCTION(BlueprintCallable, Category = "Interactable|Loot Item")
 	void TakeAllItems(AActor* Interactor);
 
 	UFUNCTION(BlueprintCallable, Category = "Interactable|Loot Item")
-	void TakeItem(FOrionPickupDefinition& OutDef, AActor* Interactor, int32 ItemIndex);
+	void TakeItem(FOrionPickupDefinition& OutDef, bool& bSuccess, AActor* Interactor, int32 ItemIndex);
+
+	UFUNCTION(Server, Reliable)
+	void Server_TakeItem(FOrionPickupDefinition& OutDef, bool& bSuccess, AActor* Interactor, int32 ItemIndex);
+	bool Server_TakeItem_Validate() { return true; };
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Interactable|Loot Item")
 	bool HasAnyItem() { return !ContainedItems.IsEmpty(); }
@@ -76,7 +79,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
 
 
@@ -110,6 +113,7 @@ protected:
 	virtual void OnPreSave_Implementation() override;
 	virtual void OnSaved_Implementation() override;
 	virtual void OnLoaded_Implementation() override;
+
 	//End IOrionSaveGameInterface
 
 };
@@ -126,7 +130,7 @@ class UOrionInteractionTargetComponent_PickupItem : public UOrionInteractionTarg
 public:
 	UOrionInteractionTargetComponent_PickupItem();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Pickup Item")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Interactable|Pickup Item")
 	FOrionPickupDefinition ContainedItem;
 
 	/*Destroy actor when no contained item left. otherwise, just deactivate the interaction target*/
@@ -141,5 +145,6 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
 

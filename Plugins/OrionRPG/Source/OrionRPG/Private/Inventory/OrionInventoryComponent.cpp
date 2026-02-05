@@ -69,14 +69,17 @@ void UOrionInventoryComponent::BeginPlay()
 		SpawnParams.Instigator = GetOwningPawn();
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
-		//Actor viewer
-		TSubclassOf<AOrionActorViewer> ItemViewerClass = GetMutableDefault<UOrionInventorySetting>()->ItemViewerClass;
-		ItemViewer = World->SpawnActor<AOrionActorViewer>(ItemViewerClass, GetMutableDefault<UOrionInventorySetting>()->ItemViewerLocation, FRotator::ZeroRotator, SpawnParams);
-		
-		//Character viewer
-		TSubclassOf<AOrionActorViewer> CharacterViewerClass = GetMutableDefault<UOrionInventorySetting>()->CharacterViewerClass;
-		CharacterViewer = World->SpawnActor<AOrionActorViewer>(CharacterViewerClass, GetMutableDefault<UOrionInventorySetting>()->CharacterViewerLocation, FRotator::ZeroRotator, SpawnParams);
+		if (IsRemoteOrServer())
+		{
+			//Actor viewer
+			TSubclassOf<AOrionActorViewer> ItemViewerClass = GetMutableDefault<UOrionInventorySetting>()->ItemViewerClass;
+			ItemViewer = World->SpawnActor<AOrionActorViewer>(ItemViewerClass, GetMutableDefault<UOrionInventorySetting>()->ItemViewerLocation, FRotator::ZeroRotator, SpawnParams);
 
+			//Character viewer
+			TSubclassOf<AOrionActorViewer> CharacterViewerClass = GetMutableDefault<UOrionInventorySetting>()->CharacterViewerClass;
+			CharacterViewer = World->SpawnActor<AOrionActorViewer>(CharacterViewerClass, GetMutableDefault<UOrionInventorySetting>()->CharacterViewerLocation, FRotator::ZeroRotator, SpawnParams);
+		}
+		
 	}
 
 	//console command
@@ -196,7 +199,7 @@ void UOrionInventoryComponent::AddItem(int32& StackRemainder, FItemInstanceData&
 				this->AddReplicatedSubObject(ItemInstance);
 				InitialStackCount = ItemInstance->GetTotalStackCount();
 				ItemInstance->SetTotalStackCount(ItemInstance->GetTotalStackCount() + FMath::Abs(StackCount));
-				
+
 			}
 		}
 	}
@@ -206,19 +209,25 @@ void UOrionInventoryComponent::AddItem(int32& StackRemainder, FItemInstanceData&
 		int32 RoomLeft = ItemInstance->GetItemDef()->MaxStackCount - InitialStackCount;
 
 		OutItemData = ItemInstance->GetItemInstanceData();
-		StackRemainder = FMath::Max(0,StackCount - FMath::Clamp(StackCount, 0, RoomLeft));
+		StackRemainder = FMath::Max(0, StackCount - FMath::Clamp(StackCount, 0, RoomLeft));
 		int32 AddedStack = StackCount - StackRemainder;
 
-
-		AActor* OwnerActor = this->GetOwner();
-		if (OwnerActor && (OwnerActor->GetNetMode() == NM_ListenServer || OwnerActor->GetNetMode() == NM_Standalone))
+		if (GetOwner()->GetNetMode() == NM_ListenServer || GetOwner()->GetNetMode() == NM_Standalone)
 		{
 			OnItemAdded.Broadcast(ItemInstance, OutItemData, AddedStack);
 		}
+		
+		if(GetOwner()->GetRemoteRole() == ROLE_AutonomousProxy)Client_OnItemAdded(ItemInstance, OutItemData, AddedStack);
+		
 		UE_LOG(LogTemp, Log, TEXT("Item Added: %s | Tag: %s, StackCount: %d/%d\n"), *ItemInstance->GetItemDef()->DisplayName.ToString(), *ItemInstance->GetItemDef()->Tag.ToString(), ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
 	}
 }
 
+
+void UOrionInventoryComponent::Client_OnItemAdded_Implementation(UOrionInventoryItemInstance* Item, FItemInstanceData ItemData, int AddedCount)
+{
+	OnItemAdded.Broadcast(Item, ItemData, AddedCount);
+}
 
 
 void UOrionInventoryComponent::Server_AddItem_Implementation(FGameplayTag ItemTag, int32 StackCount)

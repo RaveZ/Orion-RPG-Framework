@@ -9,6 +9,7 @@
 #include "Inventory/OrionInventoryGraph.h"
 #include "Inventory/OrionInventoryNode_ItemDefinition.h"
 #include "Engine/World.h"
+#include "Net/UnrealNetwork.h"
 
 /**
  * Orion Lootable Actor
@@ -67,6 +68,13 @@ UOrionInteractionTargetComponent_LootItem::UOrionInteractionTargetComponent_Loot
 	bShouldDestroyActor = false;
 }
 
+void UOrionInteractionTargetComponent_LootItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ThisClass, ContainedItems);
+}
+
 void UOrionInteractionTargetComponent_LootItem::BeginPlay()
 {
 	Super::BeginPlay();
@@ -80,29 +88,26 @@ void UOrionInteractionTargetComponent_LootItem::AddItemToContainer(FOrionPickupD
 	EvaluateItemList();
 }
 
-
-void UOrionInteractionTargetComponent_LootItem::OnLocalCompleted_Implementation(AActor* Interactor, UOrionInteractionTargetComponent* Component)
-{
-	Super::OnLocalCompleted_Implementation(Interactor, Component);
-	UOrionInventoryFunctionLibrary::LootItemFromActor(this, GetOwner(), Interactor);
-}
-
 void UOrionInteractionTargetComponent_LootItem::TakeAllItems(AActor* Interactor)
 {
-	// Iterate backwards to allow safe removal while iterating
+	int32 IndexToTake = 0;
 	for (int32 Index = ContainedItems.Num() - 1; Index >= 0; --Index)
 	{
 		FOrionPickupDefinition OutPickup;
-		TakeItem(OutPickup, Interactor, 0);
+		IndexToTake = TakeItem(OutPickup, Interactor, IndexToTake) ? IndexToTake : IndexToTake + 1;
 	}
 
 	EvaluateItemList();
 }
 
-void UOrionInteractionTargetComponent_LootItem::TakeItem(FOrionPickupDefinition& OutDef, AActor* Interactor, int32 ItemIndex)
+void UOrionInteractionTargetComponent_LootItem::TakeItem(FOrionPickupDefinition& OutDef, bool& bSuccess, AActor* Interactor, int32 ItemIndex)
 {
-	if (!ContainedItems.IsValidIndex(ItemIndex)) return;
-
+	if(!GetOwner()->HasAuthority())
+	{
+		Server_TakeItem(OutDef, Interactor, ItemIndex);
+	}
+	if (!ContainedItems.IsValidIndex(ItemIndex)) return 
+	bool bSuccess = false;
 	int32 Remainder = 0;
 	FItemInstanceData ItemData;
 
@@ -111,8 +116,8 @@ void UOrionInteractionTargetComponent_LootItem::TakeItem(FOrionPickupDefinition&
 	UOrionInventoryFunctionLibrary::AddInventoryItem(this, Remainder, ItemData, Interactor, Pickup.ItemTag, Pickup.Count);
 	if (Remainder <= 0)
 	{
-		// Fully transferred -> remove from container
 		ContainedItems.RemoveAt(ItemIndex);
+		bSuccess = true;
 	}
 	else
 	{
@@ -121,6 +126,14 @@ void UOrionInteractionTargetComponent_LootItem::TakeItem(FOrionPickupDefinition&
 		OutDef = Pickup;
 	}
 	EvaluateItemList();
+	
+	return bSuccess;
+}
+
+void UOrionInteractionTargetComponent_LootItem::Server_TakeItem_Implementation(FOrionPickupDefinition& OutDef, bool& bSuccess, Actor* Interactor, int32 ItemIndex)
+{
+	FOrionPickupDefinition OutPickup;
+	TakeItem(OutPickup, Interactor, ItemIndex);
 }
 
 void UOrionInteractionTargetComponent_LootItem::EvaluateItemList()
@@ -203,6 +216,14 @@ UOrionInteractionTargetComponent_PickupItem::UOrionInteractionTargetComponent_Pi
 	ActionDisplayText = FText::FromString("Pickup");
 
 	bShouldDestroyActor = true;
+}
+
+
+void UOrionInteractionTargetComponent_PickupItem::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ThisClass, ContainedItem);
 }
 
 void UOrionInteractionTargetComponent_PickupItem::BeginPlay()

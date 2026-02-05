@@ -44,6 +44,7 @@ public:
 
 class UOrionPrimaryGameLayout;
 class UOrionGridContainerBase;
+class UOrionGridBase;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOrionDragItemSignature, class UOrionGridItem*, DraggedItem);
 UCLASS()
@@ -58,6 +59,7 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
+	bool Tick(float DeltaSeconds);
 
 public:
 	UPROPERTY(BlueprintReadOnly, Category = "UI Subsystem")
@@ -65,6 +67,13 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "UI Subsystem")
 	TObjectPtr<UOrionGridContainerBase> CurrentFocusedGridContainer;
+
+	UPROPERTY(BlueprintReadOnly, Category = "UI Subsystem")
+	TObjectPtr<UOrionGridBase> CurrentFocusedGrid;
+
+	//Last Grid Slot Placement to swap item with
+	UPROPERTY(BlueprintReadWrite, Category = "UI Subsystem|Inventory")
+	TObjectPtr<class UOrionGridSlot> GridSlotToSwap;
 
 	UPROPERTY(BlueprintReadWrite, Category = "UI Subsystem|Inventory")
 	TObjectPtr<class UOrionGridItem> DraggedItem;

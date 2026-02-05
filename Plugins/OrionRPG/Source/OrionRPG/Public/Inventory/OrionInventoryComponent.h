@@ -71,6 +71,9 @@ public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 	FInventoryItemAdded OnItemAdded;
 
+	UFUNCTION(Client, Reliable)
+	void Client_OnItemAdded(UOrionInventoryItemInstance* Item, FItemInstanceData ItemData, int AddedCount);
+
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "InventoryComponent")
 		FInventoryItemSignature OnItemRemoved;
 
@@ -156,6 +159,22 @@ public:
 	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
 	FIntPoint GetCurrentGridDimension();
 
+	/**
+	 * Returns the Component Owner Role
+	 */
+	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
+	FORCEINLINE ENetRole GetRole() const
+	{
+		return IsValid(GetOwner()) ? GetOwner()->GetLocalRole() : ENetRole::ROLE_None;
+	};
+
+	UFUNCTION()
+	FORCEINLINE bool IsRemoteOrServer() const
+	{
+		return GetNetMode() == NM_Client && GetRole() != ROLE_AutonomousProxy ? false : true;
+	}
+
+public:
 	/**
 	 * Add Item to Inventory
 	 *
@@ -262,14 +281,6 @@ public:
 
 	bool IsValidSlot(class UOrionInventoryNode_ItemDefinition* ItemDef, int32 SlotIndex);
 
-	/**
-	 * Returns the Component Owner Role
-	 */
-	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
-	FORCEINLINE ENetRole GetRole() const
-	{
-		return IsValid(GetOwner()) ? GetOwner()->GetLocalRole() : ENetRole::ROLE_None;
-	};
 	///
 	UFUNCTION(BlueprintPure, Category = "InventoryComponent")
 	FORCEINLINE bool IsValidItemTag(FGameplayTag ItemTag) const

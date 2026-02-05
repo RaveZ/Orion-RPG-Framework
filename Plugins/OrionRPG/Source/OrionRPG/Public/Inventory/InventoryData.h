@@ -155,6 +155,10 @@ struct FOrionEquipmentActorData
 		bSetLeaderComponent = false;
 	}
 
+public:
+	UPROPERTY(BlueprintReadOnly, Category = Equipment)
+	TObjectPtr<AActor> SpawnedActor;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment)
 	TSoftClassPtr<AActor> ActorToSpawn;
 

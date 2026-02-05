@@ -22,6 +22,26 @@ void UOrionGridBase::NativePreConstruct()
 	Super::NativePreConstruct();
 }
 
+void UOrionGridBase::NativeOnAddedToFocusPath(const FFocusEvent& InFocusEvent)
+{
+	Super::NativeOnAddedToFocusPath(InFocusEvent);
+	UOrionUIManagerSubsystem* UISubsystem = UOrionUILibrary::GetOrionUISubsystem(this);
+	if (UISubsystem)
+	{
+		UISubsystem->CurrentFocusedGrid = this;
+	}
+}
+
+void UOrionGridBase::NativeOnRemovedFromFocusPath(const FFocusEvent& InFocusEvent)
+{
+	Super::NativeOnRemovedFromFocusPath(InFocusEvent);
+	UOrionUIManagerSubsystem* UISubsystem = UOrionUILibrary::GetOrionUISubsystem(this);
+	if (UISubsystem)
+	{
+		UISubsystem->CurrentFocusedGrid = nullptr;
+	}
+}
+
 void UOrionGridBase::InitializeGrid(UOrionGridContainerBase* InGridContainer)
 {
 	OwningGridContainer = InGridContainer;

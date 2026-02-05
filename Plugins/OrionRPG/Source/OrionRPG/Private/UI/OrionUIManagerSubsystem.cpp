@@ -11,6 +11,7 @@
 #include "GameFramework/PlayerController.h"
 #include "UObject/UObjectIterator.h"
 #include "Engine/LocalPlayer.h"
+#include "Blueprint/SlateBlueprintLibrary.h"
 #include "Framework/Application/SlateApplication.h"
 
 int32 UOrionUILibrary::InputSuspensions = 0;
@@ -31,12 +32,69 @@ void UOrionUIManagerSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
 	FSlateApplication::Get().SetNavigationConfig(OrionNavigationConfig);
+	FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateUObject(this, &UOrionUIManagerSubsystem::Tick));
 }
 
 void UOrionUIManagerSubsystem::Deinitialize()
 {
 	Super::Deinitialize();
 }
+
+bool UOrionUIManagerSubsystem::Tick(float DeltaSeconds)
+{
+	// Get cursor position in desktop (absolute) coordinates
+	FVector2D CursorPos = FSlateApplication::Get().GetCursorPos();
+
+	// Try to get the mouse position in viewport coordinates (0..ViewportSize)
+	FVector2D ViewportMousePos(0.0f, 0.0f);
+	bool bHaveViewportMouse = false;
+	if (UWorld* World = GetWorld())
+	{
+		APlayerController* PC = World->GetFirstPlayerController();
+		if (PC)
+		{
+			float MX = 0.0f, MY = 0.0f;
+			if (PC->GetMousePosition(MX, MY))
+			{
+				ViewportMousePos = FVector2D(MX, MY);
+				bHaveViewportMouse = true;
+			}
+		}
+	}
+
+	if (DraggedItem)
+	{
+		bool bGridFollowMouse = true;
+		if (CurrentFocusedGrid)
+		{
+			const FGeometry& GridGeometry = CurrentFocusedGrid->GetCachedGeometry();
+			if (GridGeometry.IsUnderLocation(CursorPos))
+			{
+				bGridFollowMouse = false;
+				FVector2D PixelPos;
+				FVector2D ViewportPos;
+				USlateBlueprintLibrary::LocalToViewport(this, GridGeometry, FVector2D(0.0f, 0.0f), PixelPos, ViewportPos);
+				//DraggedItem->DragTargetPosition = PixelPos;
+			}
+		}
+
+		if (bGridFollowMouse)
+		{
+			if (bHaveViewportMouse)
+			{
+				DraggedItem->DragTargetPosition = ViewportMousePos;
+			}
+			else
+			{
+				DraggedItem->DragTargetPosition = CursorPos;
+			}
+		}
+
+	}
+
+	return true;
+}
+
 
 bool UOrionUIManagerSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {

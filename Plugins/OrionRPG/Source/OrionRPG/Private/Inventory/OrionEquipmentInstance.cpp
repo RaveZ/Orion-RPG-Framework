@@ -41,7 +41,7 @@ void UOrionEquipmentInstance::GetLifetimeReplicatedProps(TArray<FLifetimePropert
 
 	DOREPLIFETIME(ThisClass, OwningItemInstance);
 	DOREPLIFETIME(ThisClass, Instigator);
-	DOREPLIFETIME(ThisClass, SpawnedActors);
+	DOREPLIFETIME(ThisClass, SpawnedActorDatas);
 	DOREPLIFETIME(ThisClass, EquipmentDef);
 }
 
@@ -133,9 +133,12 @@ void UOrionEquipmentInstance::SpawnEquipmentActors(const TArray<FOrionEquipmentA
 					}
 					
 					OnEquipmentActorSpawned.Broadcast(NewActor);
+					FOrionEquipmentActorData NewActorData = SpawnInfoCopy;
+					NewActorData.SpawnedActor = NewActor;
 
-					SpawnedActors.Add(NewActor);
+					SpawnedActorDatas.Add(NewActorData);
 				}
+
 			});
 
 		// Request async load via AssetManager's StreamableManager
@@ -147,13 +150,14 @@ void UOrionEquipmentInstance::SpawnEquipmentActors(const TArray<FOrionEquipmentA
 
 void UOrionEquipmentInstance::DestroyEquipmentActors()
 {
-	for (AActor* Actor : SpawnedActors)
+	for (const FOrionEquipmentActorData& SpawnInfo : SpawnedActorDatas)
 	{
-		if (Actor)
+		if(SpawnInfo.SpawnedActor)
 		{
-			Actor->Destroy();
+			SpawnInfo.SpawnedActor->Destroy();
 		}
 	}
+	SpawnedActorDatas.Empty();
 }
 
 void UOrionEquipmentInstance::OnEquipped()
@@ -175,6 +179,49 @@ void UOrionEquipmentInstance::SetEquipmentDef(FOrionEquipmentDefinition& InDef)
 
 void UOrionEquipmentInstance::OnRep_Instigator()
 {
+}
+
+void UOrionEquipmentInstance::OnRep_SpawnedActorDatas()
+{
+	APawn* Pawn = GetPawn();
+	if (!Pawn)
+	{
+		return;
+	}
+
+	USkeletalMeshComponent* LeaderSkelMeshComp = nullptr;
+	if (ACharacter* Char = Cast<ACharacter>(Pawn))
+	{
+		LeaderSkelMeshComp = Char->GetMesh();
+	}
+	else
+	{
+		USceneComponent* RootComp = Pawn->GetRootComponent();
+		LeaderSkelMeshComp = Cast<USkeletalMeshComponent>(RootComp);
+	}
+
+	if (!LeaderSkelMeshComp)
+	{
+		return;
+	}
+
+	for (const FOrionEquipmentActorData& SpawnInfo : SpawnedActorDatas)
+	{
+		if (!SpawnInfo.SpawnedActor)
+		{
+			continue;
+		}
+
+		if(SpawnInfo.bSetLeaderComponent)
+		{
+			USkeletalMeshComponent* SkelMeshComp = SpawnInfo.SpawnedActor->FindComponentByClass<USkeletalMeshComponent>();
+			if (SkelMeshComp)
+			{
+				SkelMeshComp->SetLeaderPoseComponent(LeaderSkelMeshComp);
+			}
+		}
+
+	}
 }
 
 
