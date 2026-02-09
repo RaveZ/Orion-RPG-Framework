@@ -61,11 +61,8 @@ public:
 	void TakeAllItems(AActor* Interactor);
 
 	UFUNCTION(BlueprintCallable, Category = "Interactable|Loot Item")
-	void TakeItem(FOrionPickupDefinition& OutDef, bool& bSuccess, AActor* Interactor, int32 ItemIndex);
+	void TakeItem(FOrionPickupDefinition& OutDef, AActor* Interactor, int32 ItemIndex);
 
-	UFUNCTION(Server, Reliable)
-	void Server_TakeItem(FOrionPickupDefinition& OutDef, bool& bSuccess, AActor* Interactor, int32 ItemIndex);
-	bool Server_TakeItem_Validate() { return true; };
 
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Interactable|Loot Item")
 	bool HasAnyItem() { return !ContainedItems.IsEmpty(); }

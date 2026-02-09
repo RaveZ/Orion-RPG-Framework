@@ -90,24 +90,18 @@ void UOrionInteractionTargetComponent_LootItem::AddItemToContainer(FOrionPickupD
 
 void UOrionInteractionTargetComponent_LootItem::TakeAllItems(AActor* Interactor)
 {
-	int32 IndexToTake = 0;
 	for (int32 Index = ContainedItems.Num() - 1; Index >= 0; --Index)
 	{
 		FOrionPickupDefinition OutPickup;
-		IndexToTake = TakeItem(OutPickup, Interactor, IndexToTake) ? IndexToTake : IndexToTake + 1;
+		TakeItem(OutPickup, Interactor, Index);
 	}
 
-	EvaluateItemList();
+	//EvaluateItemList();
 }
 
-void UOrionInteractionTargetComponent_LootItem::TakeItem(FOrionPickupDefinition& OutDef, bool& bSuccess, AActor* Interactor, int32 ItemIndex)
+void UOrionInteractionTargetComponent_LootItem::TakeItem(FOrionPickupDefinition& OutDef, AActor* Interactor, int32 ItemIndex)
 {
-	if(!GetOwner()->HasAuthority())
-	{
-		Server_TakeItem(OutDef, Interactor, ItemIndex);
-	}
-	if (!ContainedItems.IsValidIndex(ItemIndex)) return 
-	bool bSuccess = false;
+	if (!ContainedItems.IsValidIndex(ItemIndex)) return;
 	int32 Remainder = 0;
 	FItemInstanceData ItemData;
 
@@ -117,7 +111,6 @@ void UOrionInteractionTargetComponent_LootItem::TakeItem(FOrionPickupDefinition&
 	if (Remainder <= 0)
 	{
 		ContainedItems.RemoveAt(ItemIndex);
-		bSuccess = true;
 	}
 	else
 	{
@@ -127,14 +120,8 @@ void UOrionInteractionTargetComponent_LootItem::TakeItem(FOrionPickupDefinition&
 	}
 	EvaluateItemList();
 	
-	return bSuccess;
 }
 
-void UOrionInteractionTargetComponent_LootItem::Server_TakeItem_Implementation(FOrionPickupDefinition& OutDef, bool& bSuccess, Actor* Interactor, int32 ItemIndex)
-{
-	FOrionPickupDefinition OutPickup;
-	TakeItem(OutPickup, Interactor, ItemIndex);
-}
 
 void UOrionInteractionTargetComponent_LootItem::EvaluateItemList()
 {
