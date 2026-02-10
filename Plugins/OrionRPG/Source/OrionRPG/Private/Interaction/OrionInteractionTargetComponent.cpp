@@ -152,7 +152,6 @@ void UOrionInteractionTargetComponent::EndInteraction(bool bCompleted)
 		
 		
 		NotifyInteraction(EOrionInteractionResult::E_Completed, CurrentInteractor);
-		
 	}
 	else
 	{
