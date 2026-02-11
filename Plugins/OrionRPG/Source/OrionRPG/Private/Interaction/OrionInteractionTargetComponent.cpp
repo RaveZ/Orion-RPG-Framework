@@ -226,6 +226,7 @@ void UOrionInteractionTargetComponent::NotifyInteraction(EOrionInteractionResult
 	{
 		case EOrionInteractionNetMode::E_Server:
 			CallInteractionResult(NewInteractionResult, InInteractor);
+			break;
 		case EOrionInteractionNetMode::E_All:
 			Multicast_NotifyInteraction(NewInteractionResult, InInteractor);
 			break;
