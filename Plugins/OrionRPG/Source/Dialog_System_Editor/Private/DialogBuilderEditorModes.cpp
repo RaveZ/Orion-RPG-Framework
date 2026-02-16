@@ -4,10 +4,6 @@
 
 #include "DialogBuilderEditor.h"
 #include "DialogBuilderEditorToolbar.h"
-#include "BehaviorTreeEditor.h"
-#include "BehaviorTreeEditorTabFactories.h"
-#include "BehaviorTreeEditorTabs.h"
-#include "BehaviorTreeEditorToolbar.h"
 #include "Framework/Docking/TabManager.h"
 #include "Misc/AssertionMacros.h"
 #include "Types/SlateEnums.h"
@@ -22,9 +18,9 @@ FDialogBuilderEditorApplicationMode::FDialogBuilderEditorApplicationMode(TShared
 {
 	DialogEditor = InDialogBuilderEditor;
 
-	/*DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBehaviorTreeDetailsSummoner(InDialogBuilderEditor)));
+	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBehaviorTreeDetailsSummoner(InDialogBuilderEditor)));
 	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBehaviorTreeSearchSummoner(InDialogBuilderEditor)));
-	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBlackboardSummoner(InDialogBuilderEditor)));*/
+	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBlackboardSummoner(InDialogBuilderEditor)));
 
 	TabLayout = FTabManager::NewLayout( "Standalone_BehaviorTree_Layout_v2" )
 	->AddArea
@@ -66,7 +62,7 @@ FDialogBuilderEditorApplicationMode::FDialogBuilderEditorApplicationMode(TShared
 
 void FDialogBuilderEditorApplicationMode::RegisterTabFactories(TSharedPtr<FTabManager> InTabManager)
 {
-	check(BehaviorTreeEditor.IsValid());
+	check(DialogEditor.IsValid());
 	TSharedPtr<FDialogBuilderEditor> BehaviorTreeEditorPtr = DialogEditor.Pin();
 	
 	BehaviorTreeEditorPtr->RegisterToolbarTab(InTabManager.ToSharedRef());
@@ -81,7 +77,7 @@ void FDialogBuilderEditorApplicationMode::PreDeactivateMode()
 {
 	FApplicationMode::PreDeactivateMode();
 
-	check(BehaviorTreeEditor.IsValid());
+	check(DialogEditor.IsValid());
 	TSharedPtr<FDialogBuilderEditor> BehaviorTreeEditorPtr = DialogEditor.Pin();
 	
 	BehaviorTreeEditorPtr->SaveEditedObjectState();
@@ -151,9 +147,8 @@ void FDialogBuilderSequencerApplicationMode::RegisterTabFactories(TSharedPtr<FTa
 void FDialogBuilderSequencerApplicationMode::PostActivateMode()
 {
 	// Reopen any documents that were open when the BT was last saved
-	check(BehaviorTreeEditor.IsValid());
+	check(DialogEditor.IsValid());
 	TSharedPtr<FDialogBuilderEditor> BehaviorTreeEditorPtr = DialogEditor.Pin();
-//	BehaviorTreeEditorPtr->StartEditingDefaults();
 
 	FApplicationMode::PostActivateMode();
 }
