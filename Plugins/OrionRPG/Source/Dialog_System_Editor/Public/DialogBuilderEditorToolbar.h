@@ -2,7 +2,6 @@
 
 #pragma once
 
-#include "Templates/SharedPointer.h"
 #include "CoreMinimal.h"
 
 class FDialogBuilderEditor;
@@ -13,16 +12,14 @@ class DIALOG_SYSTEM_EDITOR_API FDialogBuilderEditorToolbar : public TSharedFromT
 {
 public:
 	FDialogBuilderEditorToolbar(TSharedPtr<FDialogBuilderEditor> InDialogBuilderEditor)
-		: DialogBuilderEditor(InDialogBuilderEditor) {}
+		: DialogSystemEditor(InDialogBuilderEditor) {}
 
-	void AddModesToolbar(TSharedPtr<FExtender> Extender);
 	void AddDialogSystemToolbar(TSharedPtr<FExtender> Extender);
 
 private:
-	void FillModesToolbar(FToolBarBuilder& ToolbarBuilder);
 	void FillDialogSystemToolbar(FToolBarBuilder& ToolbarBuilder);
 
 protected:
 	/** Pointer back to the blueprint editor tool that owns us */
-	TWeakPtr<FDialogBuilderEditor> DialogBuilderEditor;
+	TWeakPtr<FDialogBuilderEditor> DialogSystemEditor;
 };

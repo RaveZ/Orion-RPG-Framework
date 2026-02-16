@@ -199,19 +199,6 @@ public:
 	 */
 	UEdGraph* GetFocusedGraph() const;
 
-	/** Check whether the dialog editor mode can be accessed*/
-	bool CanAccessDialogEditorMode() const;
-
-	/** Check whether the dialog sequencer mode can be accessed*/
-	bool CanAccessDialogSequencerMode() const;
-
-	/**
-	 * Get the localized text to display for the specified mode
-	 * @param	InMode	The mode to display
-	 * @return the localized text representation of the mode
-	 */
-	static FText GetLocalizedMode(FName InMode);
-
 	/** Returns the currently selected node if there is a single node selected (if there are multiple nodes selected or none selected, it will return nullptr) */
 	UEdGraphNode* GetSingleSelectedNode() const;
 
@@ -358,12 +345,6 @@ protected:
 	/** The command list for this editor */
 	TSharedPtr<FUICommandList> GraphEditorCommands;
 
-public:
-	/** Modes in mode switcher */
-	static const FName DialogEditorMode;
-	static const FName DialogSequencerMode;
 
-	static FText DialogEditorModeText;
-	static FText DialogSequencerModeText;
 
 };
