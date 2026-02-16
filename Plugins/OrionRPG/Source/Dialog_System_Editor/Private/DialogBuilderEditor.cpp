@@ -41,6 +41,12 @@
 
 #define LOCTEXT_NAMESPACE "DialogBuilderEditor"
 
+const FName FDialogBuilderEditor::DialogEditorMode(TEXT("DialogEditor"));
+const FName FDialogBuilderEditor::DialogSequencerMode(TEXT("DialogSequencer"));
+
+FText FDialogBuilderEditor::DialogEditorModeText(LOCTEXT("DialogEditorMode", "Dialog Editor"));
+FText FDialogBuilderEditor::DialogSequencerModeText(LOCTEXT("DialogSequencerMode", "Dialog Sequencer"));
+
 const FName FDialogBuilderEditorTabs::MyDialogDetailID(TEXT("MyDialogDetail"));
 const FName FDialogBuilderEditorTabs::DialogBuilderPropertyID(TEXT("DialogBuilderProperty"));
 const FName FDialogBuilderEditorTabs::ViewportID(TEXT("Viewport"));
@@ -144,12 +150,12 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 				->Split
 				(
 					FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
-					->Split
+					/*->Split
 					(
 						FTabManager::NewStack()
 						->SetSizeCoefficient(0.2f)
 						->AddTab(FDialogBuilderEditorTabs::MyDialogDetailID, ETabState::OpenedTab)
-					)
+					)*/
 					->Split
 					(
 						FTabManager::NewStack()
@@ -820,6 +826,32 @@ UEdGraph* FDialogBuilderEditor::GetFocusedGraph() const
 		}
 	}
 	return nullptr;
+}
+
+bool FDialogBuilderEditor::CanAccessDialogEditorMode() const
+{
+	return true;
+}
+
+bool FDialogBuilderEditor::CanAccessDialogSequencerMode() const
+{
+	return true;
+}
+
+FText FDialogBuilderEditor::GetLocalizedMode(FName InMode)
+{
+	static TMap< FName, FText > LocModes;
+
+	if (LocModes.Num() == 0)
+	{
+		LocModes.Add(DialogEditorMode, DialogEditorModeText);
+		LocModes.Add(DialogSequencerMode,DialogSequencerModeText);
+	}
+
+	check(InMode != NAME_None);
+	const FText* OutDesc = LocModes.Find(InMode);
+	check(OutDesc);
+	return *OutDesc;
 }
 
 UEdGraphNode* FDialogBuilderEditor::GetSingleSelectedNode() const
