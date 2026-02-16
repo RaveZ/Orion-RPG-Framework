@@ -5,22 +5,93 @@
 #include "DialogBuilder_EditorCommands.h"
 #include "DialogBuilder_EditorStyle.h"
 #include "DialogBuilderEditor.h"
+#include "Delegates/Delegate.h"
+#include "Framework/Commands/UIAction.h"
+#include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "Framework/MultiBox/MultiBoxExtender.h"
+#include "Framework/SlateDelegates.h"
+#include "Internationalization/Internationalization.h"
+#include "Internationalization/Text.h"
+#include "Layout/Margin.h"
+#include "Math/Vector2D.h"
+#include "Misc/AssertionMacros.h"
+#include "Misc/Attribute.h"
+#include "Styling/AppStyle.h"
+#include "Textures/SlateIcon.h"
+#include "UObject/NameTypes.h"
+#include "UObject/UnrealNames.h"
+#include "Widgets/DeclarativeSyntaxSupport.h"
+#include "Widgets/Input/SComboButton.h"
+#include "Widgets/Layout/SBorder.h"
+#include "Widgets/Layout/SSpacer.h"
+#include "Widgets/Text/STextBlock.h"
+#include "WorkflowOrientedApp/SModeWidget.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderEditorToolbar"
+
+
+void FDialogBuilderEditorToolbar::AddModesToolbar(TSharedPtr<FExtender> Extender)
+{
+	check(DialogBuilderEditor.IsValid());
+	TSharedPtr<FDialogBuilderEditor> DialogBuilderEditorPtr = DialogBuilderEditor.Pin();
+
+	Extender->AddToolBarExtension(
+		"Asset",
+		EExtensionHook::After,
+		DialogBuilderEditorPtr->GetToolkitCommands(),
+		FToolBarExtensionDelegate::CreateSP(this, &FDialogBuilderEditorToolbar::FillModesToolbar));
+}
+
+void FDialogBuilderEditorToolbar::FillModesToolbar(FToolBarBuilder& ToolbarBuilder)
+{
+	check(DialogBuilderEditor.IsValid());
+	TSharedPtr<FDialogBuilderEditor> DialogBuilderEditorPtr = DialogBuilderEditor.Pin();
+
+	TAttribute<FName> GetActiveMode(DialogBuilderEditorPtr.ToSharedRef(), &FDialogBuilderEditor::GetCurrentMode);
+	FOnModeChangeRequested SetActiveMode = FOnModeChangeRequested::CreateSP(DialogBuilderEditorPtr.ToSharedRef(), &FDialogBuilderEditor::SetCurrentMode);
+
+	// Left side padding
+	DialogBuilderEditorPtr->AddToolbarWidget(SNew(SSpacer).Size(FVector2D(4.0f, 1.0f)));
+
+	DialogBuilderEditorPtr->AddToolbarWidget(
+		SNew(SModeWidget, FDialogBuilderEditor::GetLocalizedMode(FDialogBuilderEditor::DialogEditorMode), FDialogBuilderEditor::DialogEditorMode)
+		.OnGetActiveMode(GetActiveMode)
+		.OnSetActiveMode(SetActiveMode)
+		.CanBeSelected(DialogBuilderEditorPtr.Get(), &FDialogBuilderEditor::CanAccessDialogEditorMode)
+		.ToolTipText(LOCTEXT("DialogEditorModeButtonTooltip", "Switch to Dialog Editor Mode"))
+		.IconImage(FAppStyle::GetBrush("BTEditor.SwitchToBehaviorTreeMode"))
+	);
+
+	DialogBuilderEditorPtr->AddToolbarWidget(SNew(SSpacer).Size(FVector2D(10.0f, 1.0f)));
+
+	DialogBuilderEditorPtr->AddToolbarWidget(
+		SNew(SModeWidget, FDialogBuilderEditor::GetLocalizedMode(FDialogBuilderEditor::DialogSequencerMode), FDialogBuilderEditor::DialogSequencerMode)
+		.OnGetActiveMode(GetActiveMode)
+		.OnSetActiveMode(SetActiveMode)
+		.CanBeSelected(DialogBuilderEditorPtr.Get(), &FDialogBuilderEditor::CanAccessDialogSequencerMode)
+		.ToolTipText(LOCTEXT("DialogSequencerModeButtonTooltip", "Switch to Dialog Sequencer Mode"))
+		.IconImage(FAppStyle::GetBrush("BTEditor.SwitchToBlackboardMode"))
+	);
+
+	// Right side padding
+	DialogBuilderEditorPtr->AddToolbarWidget(SNew(SSpacer).Size(FVector2D(10.0f, 1.0f)));
+
+}
+
 void FDialogBuilderEditorToolbar::AddDialogSystemToolbar(TSharedPtr<FExtender> Extender)
 {
-	check(DialogSystemEditor.IsValid());
-	TSharedPtr<FDialogBuilderEditor> DialogSystemEditorPtr = DialogSystemEditor.Pin();
+	check(DialogBuilderEditor.IsValid());
+	TSharedPtr<FDialogBuilderEditor> DialogBuilderEditorPtr = DialogBuilderEditor.Pin();
 	
 	TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
-	ToolbarExtender->AddToolBarExtension("Asset", EExtensionHook::After, DialogSystemEditorPtr->GetToolkitCommands(), FToolBarExtensionDelegate::CreateSP(this, &FDialogBuilderEditorToolbar::FillDialogSystemToolbar));
-	DialogSystemEditorPtr->AddToolbarExtender(ToolbarExtender);
+	ToolbarExtender->AddToolBarExtension("Asset", EExtensionHook::After, DialogBuilderEditorPtr->GetToolkitCommands(), FToolBarExtensionDelegate::CreateSP(this, &FDialogBuilderEditorToolbar::FillDialogSystemToolbar));
+	DialogBuilderEditorPtr->AddToolbarExtender(ToolbarExtender);
 }
 
 void FDialogBuilderEditorToolbar::FillDialogSystemToolbar(FToolBarBuilder& ToolbarBuilder)
 {
-	check(DialogSystemEditor.IsValid());
-	TSharedPtr<FDialogBuilderEditor> DialogSystemEditorPtr = DialogSystemEditor.Pin();
+	check(DialogBuilderEditor.IsValid());
+	TSharedPtr<FDialogBuilderEditor> DialogBuilderEditorPtr = DialogBuilderEditor.Pin();
 
 	ToolbarBuilder.BeginSection("Dialog System");
 	{
