@@ -9,7 +9,8 @@ public class OrionRPGFrameworkTarget : TargetRules
 	{
 		Type = TargetType.Game;
 		DefaultBuildSettings = BuildSettingsVersion.V5;
+        bOverrideBuildEnvironment = true;
 
-		ExtraModuleNames.AddRange( new string[] { "OrionRPGFramework" } );
+        ExtraModuleNames.AddRange( new string[] { "OrionRPGFramework" } );
 	}
 }
