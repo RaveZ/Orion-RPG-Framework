@@ -18,39 +18,33 @@ FDialogBuilderEditorApplicationMode::FDialogBuilderEditorApplicationMode(TShared
 {
 	DialogEditor = InDialogBuilderEditor;
 
-	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBehaviorTreeDetailsSummoner(InDialogBuilderEditor)));
+	/*DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBehaviorTreeDetailsSummoner(InDialogBuilderEditor)));
 	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBehaviorTreeSearchSummoner(InDialogBuilderEditor)));
-	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBlackboardSummoner(InDialogBuilderEditor)));
+	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBlackboardSummoner(InDialogBuilderEditor)));*/
 
-	TabLayout = FTabManager::NewLayout( "Standalone_BehaviorTree_Layout_v2" )
+
+	TabLayout = FTabManager::NewLayout( "Standalone_DialogEditor_Layout_v2" )
 	->AddArea
 	(
-		FTabManager::NewPrimaryArea() ->SetOrientation(Orient_Vertical)
+		FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
 		->Split
 		(
-			FTabManager::NewSplitter() ->SetOrientation(Orient_Horizontal)
+			FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)
 			->Split
 			(
 				FTabManager::NewStack()
 				->SetSizeCoefficient(0.7f)
-				->AddTab(FDialogBuilderEditorTabs::GraphEditorID, ETabState::ClosedTab)
+				->AddTab("Document", ETabState::ClosedTab)
 			)
 			->Split
 			(
-				FTabManager::NewSplitter() ->SetOrientation(Orient_Vertical)
+				FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)
 				->SetSizeCoefficient(0.3f)
 				->Split
 				(
 					FTabManager::NewStack()
 					->SetSizeCoefficient(0.6f)
-					->AddTab(FDialogBuilderEditorTabs::GraphDetailsID, ETabState::OpenedTab)
-					->AddTab(FDialogBuilderEditorTabs::SearchID, ETabState::ClosedTab)
-				)
-				->Split
-				(
-					FTabManager::NewStack()
-					->SetSizeCoefficient(0.4f)
-					->AddTab(FDialogBuilderEditorTabs::BlackboardID, ETabState::OpenedTab)
+					->AddTab(FDialogBuilderEditorTabs::DialogBuilderPropertyID, ETabState::OpenedTab)
 				)
 			)
 		)
@@ -63,12 +57,12 @@ FDialogBuilderEditorApplicationMode::FDialogBuilderEditorApplicationMode(TShared
 void FDialogBuilderEditorApplicationMode::RegisterTabFactories(TSharedPtr<FTabManager> InTabManager)
 {
 	check(DialogEditor.IsValid());
-	TSharedPtr<FDialogBuilderEditor> BehaviorTreeEditorPtr = DialogEditor.Pin();
+	TSharedPtr<FDialogBuilderEditor> DialogEditorPtr = DialogEditor.Pin();
 	
-	BehaviorTreeEditorPtr->RegisterToolbarTab(InTabManager.ToSharedRef());
+	DialogEditorPtr->RegisterToolbarTab(InTabManager.ToSharedRef());
 
 	// Mode-specific setup
-	BehaviorTreeEditorPtr->PushTabFactories(DialogBuilderEditorTabFactories);
+	DialogEditorPtr->PushTabFactories(DialogBuilderEditorTabFactories);
 
 	FApplicationMode::RegisterTabFactories(InTabManager);
 }
@@ -78,17 +72,17 @@ void FDialogBuilderEditorApplicationMode::PreDeactivateMode()
 	FApplicationMode::PreDeactivateMode();
 
 	check(DialogEditor.IsValid());
-	TSharedPtr<FDialogBuilderEditor> BehaviorTreeEditorPtr = DialogEditor.Pin();
+	TSharedPtr<FDialogBuilderEditor> DialogEditorPtr = DialogEditor.Pin();
 	
-	BehaviorTreeEditorPtr->SaveEditedObjectState();
+	DialogEditorPtr->SaveEditedObjectState();
 }
 
 void FDialogBuilderEditorApplicationMode::PostActivateMode()
 {
 	// Reopen any documents that were open when the blueprint was last saved
-	check(BehaviorTreeEditor.IsValid());
-	TSharedPtr<FDialogBuilderEditor> BehaviorTreeEditorPtr = DialogEditor.Pin();
-	BehaviorTreeEditorPtr->RestoreBehaviorTree();
+	check(DialogEditor.IsValid());
+	TSharedPtr<FDialogBuilderEditor> DialogEditorPtr = DialogEditor.Pin();
+	DialogEditorPtr->RestoreDialogEditor();
 
 	FApplicationMode::PostActivateMode();
 }
@@ -101,32 +95,52 @@ void FDialogBuilderEditorApplicationMode::PostActivateMode()
 #define LOCTEXT_NAMESPACE "BlackboardApplicationMode"
 
 FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(TSharedPtr<class FDialogBuilderEditor> InDialogBuilderEditor)
-	: FApplicationMode(FDialogBuilderEditor::BlackboardMode, FDialogBuilderEditor::GetLocalizedMode)
+	: FApplicationMode(FDialogBuilderEditor::DialogSequencerMode, FDialogBuilderEditor::GetLocalizedMode)
 {
 	DialogEditor = InDialogBuilderEditor;
 	
-	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBlackboardEditorSummoner(InDialogBuilderEditor)));
-	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBlackboardDetailsSummoner(InDialogBuilderEditor)));
+	/*DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBlackboardEditorSummoner(InDialogBuilderEditor)));
+	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBlackboardDetailsSummoner(InDialogBuilderEditor)));*/
 
-	TabLayout = FTabManager::NewLayout( "Standalone_BlackboardEditor_Layout_v2" )
-	->AddArea
-	(
-		FTabManager::NewPrimaryArea() ->SetOrientation(Orient_Vertical)
-		->Split
+	TabLayout = FTabManager::NewLayout("Standalone_DialogSequencer_Layout_v2")
+		->AddArea
 		(
-			FTabManager::NewSplitter() ->SetOrientation(Orient_Horizontal)
+			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
+#if ENGINE_MAJOR_VERSION < 5
 			->Split
 			(
 				FTabManager::NewStack()
-				->AddTab(FDialogBuilderEditorTabs::BlackboardEditorID, ETabState::OpenedTab)
+				->SetSizeCoefficient(0.1f)
+				->AddTab(GetToolbarTabId(), ETabState::OpenedTab)->SetHideTabWell(true)
 			)
+#endif // #if ENGINE_MAJOR_VERSION < 5
 			->Split
 			(
-				FTabManager::NewStack()
-				->AddTab(FDialogBuilderEditorTabs::BlackboardDetailsID, ETabState::OpenedTab)
+				FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
+				->Split
+				(
+					FTabManager::NewStack()
+					->SetSizeCoefficient(0.2f)
+					->AddTab(FDialogBuilderEditorTabs::MyDialogDetailID, ETabState::OpenedTab)
+				)
+				->Split
+				(
+					FTabManager::NewStack()
+					->SetSizeCoefficient(0.55f)
+					->AddTab("Document", ETabState::ClosedTab)
+				)
+				->Split
+				(
+					FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)->SetSizeCoefficient(0.25f)
+					->Split
+					(
+						FTabManager::NewStack()
+						->SetSizeCoefficient(0.55f)
+						->AddTab(FDialogBuilderEditorTabs::DialogBuilderPropertyID, ETabState::OpenedTab)
+					)
+				)
 			)
-		)
-	);
+		);
 
 	InDialogBuilderEditor->GetToolbarBuilder()->AddModesToolbar(ToolbarExtender);
 }
@@ -134,12 +148,12 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 void FDialogBuilderSequencerApplicationMode::RegisterTabFactories(TSharedPtr<FTabManager> InTabManager)
 {
 	check(DialogEditor.IsValid());
-	TSharedPtr<FDialogBuilderEditor> BehaviorTreeEditorPtr = DialogEditor.Pin();
+	TSharedPtr<FDialogBuilderEditor> DialogEditorPtr = DialogEditor.Pin();
 	
-	BehaviorTreeEditorPtr->RegisterToolbarTab(InTabManager.ToSharedRef());
+	DialogEditorPtr->RegisterToolbarTab(InTabManager.ToSharedRef());
 
 	// Mode-specific setup
-	BehaviorTreeEditorPtr->PushTabFactories(BlackboardTabFactories);
+	DialogEditorPtr->PushTabFactories(DialogSequencerTabFactories);
 
 	FApplicationMode::RegisterTabFactories(InTabManager);
 }
@@ -148,7 +162,7 @@ void FDialogBuilderSequencerApplicationMode::PostActivateMode()
 {
 	// Reopen any documents that were open when the BT was last saved
 	check(DialogEditor.IsValid());
-	TSharedPtr<FDialogBuilderEditor> BehaviorTreeEditorPtr = DialogEditor.Pin();
+	TSharedPtr<FDialogBuilderEditor> DialogEditorPtr = DialogEditor.Pin();
 
 	FApplicationMode::PostActivateMode();
 }

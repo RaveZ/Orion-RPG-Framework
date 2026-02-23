@@ -28,7 +28,10 @@ static const FName Dialog_System_EditorTabName("Dialog_System_Editor");
 TSharedPtr<FSlateStyleSet> FDialog_System_EditorModule::CustomAssetsEditorSlateStyle;
 
 void FDialog_System_EditorModule::StartupModule()
-{	
+{
+	MenuExtensibilityManager = MakeShareable(new FExtensibilityManager);
+	ToolBarExtensibilityManager = MakeShareable(new FExtensibilityManager);
+
 	// Register the PropertyEditors
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	RegisterObjectCustomizations();
@@ -50,6 +53,9 @@ void FDialog_System_EditorModule::StartupModule()
 
 void FDialog_System_EditorModule::ShutdownModule()
 {
+	MenuExtensibilityManager.Reset();
+	ToolBarExtensibilityManager.Reset();
+
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
 	if (GraphPanelNodeFactory_DialogEditor.IsValid())

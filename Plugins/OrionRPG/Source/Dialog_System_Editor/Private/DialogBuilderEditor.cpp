@@ -3,6 +3,11 @@
 
 #include "DialogBuilderEditor.h"
 #include "DialogBuilderNode_Root.h"
+#include "DialogBuilderEditorToolbar.h"
+#include "DialogBuilder_EditorCommands.h"
+#include "DialogBuilderEdGraph.h"
+#include "DialogBuilderEdNode.h"
+#include "DialogBuilderEditorModes.h"
 #include "Decorator/OrionDecorator.h"
 #include "EngineGlobals.h"
 #include "Editor/EditorEngine.h"
@@ -14,10 +19,6 @@
 #include "UObject/ObjectSaveContext.h"
 #include "GraphEditorActions.h"
 #include "Framework/Commands/GenericCommands.h"
-#include "DialogBuilderEditorToolbar.h"
-#include "DialogBuilder_EditorCommands.h"
-#include "DialogBuilderEdGraph.h"
-#include "DialogBuilderEdNode.h"
 #include "Kismet2/KismetEditorUtilities.h"
 #include "K2Node.h"
 #include "GraphEditAction.h"
@@ -129,56 +130,26 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 
 		TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
 
-		ToolbarBuilder->AddDialogSystemToolbar(ToolbarExtender);
+		//ToolbarBuilder->AddDialogSystemToolbar(ToolbarExtender);
 
 		BindCommands();
 		CreateInternalWidgets();
-
-		// Layout
-		const TSharedRef<FTabManager::FLayout> StandaloneDefaultLayout = FTabManager::NewLayout("Standalone_DialogBuilderEditor_Layout_v1")
-			->AddArea
-			(
-				FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
-#if ENGINE_MAJOR_VERSION < 5
-				->Split
-				(
-					FTabManager::NewStack()
-					->SetSizeCoefficient(0.1f)
-					->AddTab(GetToolbarTabId(), ETabState::OpenedTab)->SetHideTabWell(true)
-				)
-#endif // #if ENGINE_MAJOR_VERSION < 5
-				->Split
-				(
-					FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
-					/*->Split
-					(
-						FTabManager::NewStack()
-						->SetSizeCoefficient(0.2f)
-						->AddTab(FDialogBuilderEditorTabs::MyDialogDetailID, ETabState::OpenedTab)
-					)*/
-					->Split
-					(
-						FTabManager::NewStack()
-						->SetSizeCoefficient(0.55f)
-						->AddTab("Document", ETabState::ClosedTab)
-					)
-					->Split
-					(
-						FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)->SetSizeCoefficient(0.25f)
-						->Split
-						(
-							FTabManager::NewStack()
-							->SetSizeCoefficient(0.55f)
-							->AddTab(FDialogBuilderEditorTabs::DialogBuilderPropertyID, ETabState::OpenedTab)
-						)
-					)
-				)
-			);
-
 		const bool bCreateDefaultStandaloneMenu = true;
 		const bool bCreateDefaultToolbar = true;
-		InitAssetEditor(Mode, InitToolkitHost, DialogBuilderEditorAppName, StandaloneDefaultLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, EditingDialogGraph, false);
+		InitAssetEditor(Mode, InitToolkitHost, DialogBuilderEditorAppName, FTabManager::FLayout::NullLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, ObjectsToEdit);
 
+		FDialog_System_EditorModule& DialogBuilderEditorModule = FModuleManager::LoadModuleChecked<FDialog_System_EditorModule>("Dialog_System_Editor");
+		AddMenuExtender(DialogBuilderEditorModule.GetMenuExtensibilityManager()->GetAllExtenders(GetToolkitCommands(), GetEditingObjects()));
+		AddToolbarExtender(DialogBuilderEditorModule.GetToolBarExtensibilityManager()->GetAllExtenders(GetToolkitCommands(), GetEditingObjects()));
+
+		AddApplicationMode(DialogEditorMode, MakeShareable(new FDialogBuilderEditorApplicationMode(SharedThis(this))));
+		AddApplicationMode(DialogSequencerMode, MakeShareable(new FDialogBuilderSequencerApplicationMode(SharedThis(this))));
+
+
+		if (DialogGraphToEdit != nullptr)
+		{
+			SetCurrentMode(DialogEditorMode);
+		}
 
 		if (EditingDialogGraph && EditingDialogGraph->bIsNewlyCreated)
 		{
@@ -586,6 +557,56 @@ FString FDialogBuilderEditor::GetReferencerName() const
 UDialogBuilderGraph* FDialogBuilderEditor::GetDialogBuilderGraph() const
 {
 	return EditingDialogGraph;
+}
+
+void FDialogBuilderEditor::RestoreDialogEditor()
+{
+	// Update dialog asset data based on saved graph to have correct data in editor
+	TWeakObjectPtr< UEdGraph > FocusedGraphPtr = GetFocusedGraph();
+	UDialogBuilderEdGraph* MyGraph = Cast<UDialogBuilderEdGraph>(FocusedGraphPtr.Get());
+	const bool bNewGraph = MyGraph == NULL;
+	if (MyGraph == NULL)
+	{
+		/*const TSubclassOf<UEdGraphSchema> SchemaClass = GetDefault<UDialogBuilderEdGraph>(GraphClass)->Schema;
+		check(SchemaClass);
+		BehaviorTree->BTGraph = FBlueprintEditorUtils::CreateNewGraph(BehaviorTree, GraphName, GraphClass, SchemaClass);
+		MyGraph = Cast<UBehaviorTreeGraph>(BehaviorTree->BTGraph);
+
+		const UEdGraphSchema* Schema = MyGraph->GetSchema();
+		Schema->CreateDefaultNodesForGraph(*MyGraph);
+
+		MyGraph->OnCreated();*/
+	}
+	else
+	{
+		//MyGraph->OnLoaded();
+	}
+
+	//MyGraph->Initialize();
+
+	TSharedRef<FTabPayload_UObject> Payload = FTabPayload_UObject::Make(MyGraph);
+	TSharedPtr<SDockTab> DocumentTab = DocumentManager->OpenDocument(Payload, bNewGraph ? FDocumentTracker::OpenNewDocument : FDocumentTracker::RestorePreviousDocument);
+
+	if (EditingDialogGraph->LastEditedDocuments.Num() > 0)
+	{
+		TSharedRef<SGraphEditor> GraphEditor = StaticCastSharedRef<SGraphEditor>(DocumentTab->GetContent());
+		GraphEditor->SetViewLocation(EditingDialogGraph->LastEditedDocuments[0].SavedViewOffset, EditingDialogGraph->LastEditedDocuments[0].SavedZoomAmount);
+	}
+
+	const bool bIncreaseVersionNum = false;
+
+	//MyGraph->UpdateAsset();
+	
+
+}
+
+void FDialogBuilderEditor::SaveEditedObjectState()
+{
+	// Clear currently edited documents
+	EditingDialogGraph->LastEditedDocuments.Empty();
+
+	// Ask all open documents to save their state, which will update LastEditedDocuments
+	DocumentManager->SaveAllState();
 }
 
 bool FDialogBuilderEditor::NewDocument_IsVisibleForType(ECreatedDialogDocumentType GraphType) const
@@ -1022,6 +1043,87 @@ void FDialogBuilderEditor::CreateInternalWidgets()
 
 
 	this->MyDialogWidget = SNew(SMyDialog, SharedThis(this));
+}
+
+
+TSharedRef<SWidget> FDialogBuilderEditor::SpawnProperties()
+{
+	return
+		SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		.HAlign(HAlign_Fill)
+		[
+			PropertyWidget.ToSharedRef()
+		];
+		/*+ SVerticalBox::Slot()
+		.AutoHeight()
+		.HAlign(HAlign_Left)
+		.VAlign(VAlign_Top)
+		[
+			SNew(SVerticalBox)
+				+ SVerticalBox::Slot()
+				.HAlign(HAlign_Fill)
+				.Padding(0.0f, 5.0f)
+				[
+					SNew(SBorder)
+						.BorderBackgroundColor(BehaviorTreeColors::NodeBody::InjectedSubNode)
+						.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
+						.Visibility(this, &FBehaviorTreeEditor::GetInjectedNodeVisibility)
+						.Padding(FMargin(5.0f))
+						[
+							SNew(STextBlock)
+								.Text(LOCTEXT("InjectedNode", "Node is injected by subtree and can't be edited"))
+						]
+				]
+			+ SVerticalBox::Slot()
+				.HAlign(HAlign_Fill)
+				.Padding(0.0f, 5.0f)
+				[
+					SNew(SBorder)
+						.BorderBackgroundColor(BehaviorTreeColors::NodeBody::InjectedSubNode)
+						.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
+						.Visibility(this, &FBehaviorTreeEditor::GetRootLevelNodeVisibility)
+						.Padding(FMargin(5.0f))
+						[
+							SNew(STextBlock)
+								.Text(RootNodeNoteText)
+						]
+				]
+			+ SVerticalBox::Slot()
+				.HAlign(HAlign_Fill)
+				.Padding(0.0f, 5.0f)
+				[
+					SNew(SBorder)
+						.BorderBackgroundColor(BehaviorTreeColors::NodeBorder::HighlightAbortRange0)
+						.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
+						.Visibility(this, &FBehaviorTreeEditor::GetRangeLowerVisibility)
+						.Padding(FMargin(5.0f))
+						[
+							SNew(STextBlock)
+								.Text(FText::Format(LOCTEXT("AbortModeHighlight", "Nodes aborted by mode: {0}"), LOCTEXT("AbortPriorityLower", "Lower Priority")))
+						]
+				]
+			+ SVerticalBox::Slot()
+				.HAlign(HAlign_Fill)
+				.Padding(0.0f, 5.0f)
+				[
+					SNew(SBorder)
+						.BorderBackgroundColor(BehaviorTreeColors::NodeBorder::HighlightAbortRange1)
+						.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
+						.Visibility(this, &FBehaviorTreeEditor::GetRangeSelfVisibility)
+						.Padding(FMargin(5.0f))
+						[
+							SNew(STextBlock)
+								.Text(FText::Format(LOCTEXT("AbortModeHighlight", "Nodes aborted by mode: {0}"), LOCTEXT("AbortPrioritySelf", "Self")))
+						]
+				]
+		];*/
+}
+
+TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogList()
+{
+	return MyDialogWidget.ToSharedRef();
 }
 
 TSharedRef<SGraphEditor> FDialogBuilderEditor::CreateGraphEditorWidget(TSharedRef<class FTabInfo> InTabInfo, UEdGraph* InGraph)

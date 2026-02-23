@@ -124,6 +124,13 @@ public:
 	// End of IDialogEditor
 
 
+	//Tabs
+	/** Spawns the tab with the update graph inside */
+	TSharedRef<SWidget> SpawnProperties();
+
+	/** Spawns the dialog list tab*/
+	TSharedRef<SWidget> SpawnDialogList();
+
 	//Toolbar
 	void UpdateToolbar();
 	TSharedPtr<class FDialogBuilderEditorToolbar> GetToolbarBuilder() { return ToolbarBuilder; }
@@ -137,6 +144,12 @@ public:
 
 	/** Returns a pointer to the Dialog graph object we are currently editing, as long as we are editing exactly one */
 	virtual UDialogBuilderGraph* GetDialogBuilderGraph() const;
+
+	/** Restores the dialog graph we were editing or creates a new one if none is available */
+	void RestoreDialogEditor();
+
+	/** Save the graph state for later editing */
+	void SaveEditedObjectState();
 
 	// Type of new document/graph being created by a menu item
 	enum ECreatedDialogDocumentType
