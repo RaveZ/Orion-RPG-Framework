@@ -28,6 +28,9 @@ struct FDialogBuilderEditorTabs
 	static const FName DialogBuilderPropertyID;
 	static const FName ViewportID;
 	static const FName DialogBuilderEditorSettingsID;
+	static const FName DialogSequencerTabID;
+	static const FName DialogSequencerViewportID;
+
 };
 
 

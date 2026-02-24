@@ -52,6 +52,8 @@ const FName FDialogBuilderEditorTabs::MyDialogDetailID(TEXT("MyDialogDetail"));
 const FName FDialogBuilderEditorTabs::DialogBuilderPropertyID(TEXT("DialogBuilderProperty"));
 const FName FDialogBuilderEditorTabs::ViewportID(TEXT("Viewport"));
 const FName FDialogBuilderEditorTabs::DialogBuilderEditorSettingsID(TEXT("DialogBuilderEditorSettings"));
+const FName FDialogBuilderEditorTabs::DialogSequencerTabID(TEXT("DialogSequencerTab"));
+const FName FDialogBuilderEditorTabs::DialogSequencerViewportID(TEXT("DialogSequencerViewport"));
 
 const FName DialogBuilderEditorAppName = FName(TEXT("DialogBuilderEditorApp"));
 
@@ -562,41 +564,28 @@ UDialogBuilderGraph* FDialogBuilderEditor::GetDialogBuilderGraph() const
 void FDialogBuilderEditor::RestoreDialogEditor()
 {
 	// Update dialog asset data based on saved graph to have correct data in editor
-	TWeakObjectPtr< UEdGraph > FocusedGraphPtr = GetFocusedGraph();
+	TWeakObjectPtr< UEdGraph > FocusedGraphPtr = EditingDialogGraph->DialogGraphPages.Num() > 0 ? EditingDialogGraph->DialogGraphPages[0] : nullptr;
 	UDialogBuilderEdGraph* MyGraph = Cast<UDialogBuilderEdGraph>(FocusedGraphPtr.Get());
 	const bool bNewGraph = MyGraph == NULL;
-	if (MyGraph == NULL)
-	{
-		/*const TSubclassOf<UEdGraphSchema> SchemaClass = GetDefault<UDialogBuilderEdGraph>(GraphClass)->Schema;
-		check(SchemaClass);
-		BehaviorTree->BTGraph = FBlueprintEditorUtils::CreateNewGraph(BehaviorTree, GraphName, GraphClass, SchemaClass);
-		MyGraph = Cast<UBehaviorTreeGraph>(BehaviorTree->BTGraph);
-
-		const UEdGraphSchema* Schema = MyGraph->GetSchema();
-		Schema->CreateDefaultNodesForGraph(*MyGraph);
-
-		MyGraph->OnCreated();*/
-	}
-	else
-	{
-		//MyGraph->OnLoaded();
-	}
-
-	//MyGraph->Initialize();
 
 	TSharedRef<FTabPayload_UObject> Payload = FTabPayload_UObject::Make(MyGraph);
 	TSharedPtr<SDockTab> DocumentTab = DocumentManager->OpenDocument(Payload, bNewGraph ? FDocumentTracker::OpenNewDocument : FDocumentTracker::RestorePreviousDocument);
 
-	if (EditingDialogGraph->LastEditedDocuments.Num() > 0)
-	{
-		TSharedRef<SGraphEditor> GraphEditor = StaticCastSharedRef<SGraphEditor>(DocumentTab->GetContent());
-		GraphEditor->SetViewLocation(EditingDialogGraph->LastEditedDocuments[0].SavedViewOffset, EditingDialogGraph->LastEditedDocuments[0].SavedZoomAmount);
-	}
-
-	const bool bIncreaseVersionNum = false;
-
-	//MyGraph->UpdateAsset();
+		
 	
+
+	if (EditingDialogGraph->LastEditedDocuments.Num() > 0 && DocumentTab.IsValid())
+	{
+		TSharedPtr<SWidget> Content = DocumentTab->GetContent();
+		if (Content.IsValid())
+		{
+			TSharedRef<SGraphEditor> GraphEditor = StaticCastSharedRef<SGraphEditor>(Content.ToSharedRef());
+			GraphEditor->SetViewLocation(
+				EditingDialogGraph->LastEditedDocuments[0].SavedViewOffset,
+				EditingDialogGraph->LastEditedDocuments[0].SavedZoomAmount
+			);
+		}
+	}
 
 }
 
@@ -1038,7 +1027,7 @@ void FDialogBuilderEditor::CreateInternalWidgets()
 	DetailsViewArgs.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Hide;	
 
 	PropertyWidget = PropertyModule.CreateDetailView(DetailsViewArgs);
-	PropertyWidget->SetObject( NULL );
+	PropertyWidget->SetObject( EditingDialogGraph );
 	PropertyWidget->OnFinishedChangingProperties().AddSP(this, &FDialogBuilderEditor::OnFinishedChangingProperties);
 
 

@@ -4,6 +4,7 @@
 
 #include "DialogBuilderEditor.h"
 #include "DialogBuilderEditorToolbar.h"
+#include "DialogBuilderEditorTabFactories.h"
 #include "Framework/Docking/TabManager.h"
 #include "Misc/AssertionMacros.h"
 #include "Types/SlateEnums.h"
@@ -18,9 +19,9 @@ FDialogBuilderEditorApplicationMode::FDialogBuilderEditorApplicationMode(TShared
 {
 	DialogEditor = InDialogBuilderEditor;
 
-	/*DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBehaviorTreeDetailsSummoner(InDialogBuilderEditor)));
-	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBehaviorTreeSearchSummoner(InDialogBuilderEditor)));
-	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBlackboardSummoner(InDialogBuilderEditor)));*/
+	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FDialogEditorDetailsSummoner(InDialogBuilderEditor)));
+	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FDialogEditorListSummoner(InDialogBuilderEditor)));
+	//DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBlackboardSummoner(InDialogBuilderEditor)));
 
 
 	TabLayout = FTabManager::NewLayout( "Standalone_DialogEditor_Layout_v2" )
@@ -33,13 +34,20 @@ FDialogBuilderEditorApplicationMode::FDialogBuilderEditorApplicationMode(TShared
 			->Split
 			(
 				FTabManager::NewStack()
+				->SetSizeCoefficient(0.2f)
+				->AddTab(FDialogBuilderEditorTabs::MyDialogDetailID, ETabState::ClosedTab)
+			)
+			->Split
+			(
+				FTabManager::NewStack()
 				->SetSizeCoefficient(0.7f)
 				->AddTab("Document", ETabState::ClosedTab)
+				->SetHideTabWell(true)
 			)
 			->Split
 			(
 				FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)
-				->SetSizeCoefficient(0.3f)
+				->SetSizeCoefficient(0.2f)
 				->Split
 				(
 					FTabManager::NewStack()
@@ -117,12 +125,6 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 			->Split
 			(
 				FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
-				->Split
-				(
-					FTabManager::NewStack()
-					->SetSizeCoefficient(0.2f)
-					->AddTab(FDialogBuilderEditorTabs::MyDialogDetailID, ETabState::OpenedTab)
-				)
 				->Split
 				(
 					FTabManager::NewStack()

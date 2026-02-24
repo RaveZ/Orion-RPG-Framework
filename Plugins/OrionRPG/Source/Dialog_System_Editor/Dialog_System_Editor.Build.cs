@@ -62,6 +62,11 @@ public class Dialog_System_Editor : ModuleRules
 				"SlateCore", 
 				"AIGraph",
 				"UMG",
+				"Sequencer",
+				"MovieScene",
+				"MovieSceneTracks",
+				"LevelSequence",
+				"LevelSequenceEditor",
    }
 			);
 		

@@ -68,55 +68,6 @@ FText FDialogEditorListSummoner::GetTabToolTipText(const FWorkflowTabSpawnInfo& 
 	return LOCTEXT("DialogListTabTooltip", "Show the dialog list");
 }
 
-FDialogGraphEditorSummoner::FDialogGraphEditorSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr, FOnCreateGraphEditorWidget CreateGraphEditorWidgetCallback)
-	: FDocumentTabFactoryForObjects<UEdGraph>("Document", InDialogEditorPtr)
-	, DialogEditorPtr(InDialogEditorPtr)
-	, OnCreateGraphEditorWidget(CreateGraphEditorWidgetCallback)
-{
-}
-
-void FDialogGraphEditorSummoner::OnTabActivated(TSharedPtr<SDockTab> Tab) const
-{
-	check(DialogEditorPtr.IsValid());
-	TSharedRef<SGraphEditor> GraphEditor = StaticCastSharedRef<SGraphEditor>(Tab->GetContent());
-	DialogEditorPtr.Pin()->OnGraphEditorFocused(GraphEditor);
-}
-
-void FDialogGraphEditorSummoner::OnTabRefreshed(TSharedPtr<SDockTab> Tab) const
-{
-	TSharedRef<SGraphEditor> GraphEditor = StaticCastSharedRef<SGraphEditor>(Tab->GetContent());
-	GraphEditor->NotifyGraphChanged();
-}
-
-TAttribute<FText> FDialogGraphEditorSummoner::ConstructTabNameForObject(UEdGraph* DocumentID) const
-{
-	return TAttribute<FText>( FText::FromString( DocumentID->GetName() ) );
-}
-
-TSharedRef<SWidget> FDialogGraphEditorSummoner::CreateTabBodyForObject(const FWorkflowTabSpawnInfo& Info, UEdGraph* DocumentID) const
-{
-	return OnCreateGraphEditorWidget.Execute(DocumentID);
-}
-
-const FSlateBrush* FDialogGraphEditorSummoner::GetTabIconForObject(const FWorkflowTabSpawnInfo& Info, UEdGraph* DocumentID) const
-{
-	return FAppStyle::Get().GetBrush("BTEditor.BehaviorTree");
-}
-
-void FDialogGraphEditorSummoner::SaveState(TSharedPtr<SDockTab> Tab, TSharedPtr<FTabPayload> Payload) const
-{
-	check(DialogEditorPtr.IsValid());
-	check(DialogEditorPtr.Pin()->GetDialogBuilderGraph());
-
-	TSharedRef<SGraphEditor> GraphEditor = StaticCastSharedRef<SGraphEditor>(Tab->GetContent());
-
-	FVector2f ViewLocation;
-	float ZoomAmount;
-	GraphEditor->GetViewLocation(ViewLocation, ZoomAmount);
-
-	UEdGraph* Graph = FTabPayload_UObject::CastChecked<UEdGraph>(Payload);
-	DialogEditorPtr.Pin()->GetDialogBuilderGraph()->LastEditedDocuments.Add(FEditedDocumentInfo(Graph, ViewLocation, ZoomAmount));
-}
 
 #undef LOCTEXT_NAMESPACE
 
