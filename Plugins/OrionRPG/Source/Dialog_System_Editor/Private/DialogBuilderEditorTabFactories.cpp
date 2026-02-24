@@ -69,5 +69,29 @@ FText FDialogEditorListSummoner::GetTabToolTipText(const FWorkflowTabSpawnInfo& 
 }
 
 
+FDialogSequencerTabSummoner::FDialogSequencerTabSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr)
+	: FWorkflowTabFactory(FDialogBuilderEditorTabs::DialogSequencerTabID, InDialogEditorPtr)
+	, DialogEditorPtr(InDialogEditorPtr)
+{
+	TabLabel = LOCTEXT("DialogSequencerTabLabel", "Dialog Sequencer");
+	TabIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Cinematics");
+
+	bIsSingleton = true;
+
+	ViewMenuDescription = LOCTEXT("DialogSequencerTabView", "Dialog Sequencer");
+	ViewMenuTooltip = LOCTEXT("DialogSequencerTabView_ToolTip", "Show the dialog sequencer tab");
+}
+
+TSharedRef<SWidget> FDialogSequencerTabSummoner::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
+{
+	return DialogEditorPtr.Pin()->SpawnDialogSequencerTab();
+}
+
+FText FDialogSequencerTabSummoner::GetTabToolTipText(const FWorkflowTabSpawnInfo& Info) const
+{
+	return LOCTEXT("DialogSequencerTabToolTip", "Show the dialog sequencer tab");
+}
+
+
 #undef LOCTEXT_NAMESPACE
 

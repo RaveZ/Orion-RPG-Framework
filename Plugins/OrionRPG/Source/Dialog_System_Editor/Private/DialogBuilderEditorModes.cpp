@@ -21,7 +21,6 @@ FDialogBuilderEditorApplicationMode::FDialogBuilderEditorApplicationMode(TShared
 
 	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FDialogEditorDetailsSummoner(InDialogBuilderEditor)));
 	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FDialogEditorListSummoner(InDialogBuilderEditor)));
-	//DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBlackboardSummoner(InDialogBuilderEditor)));
 
 
 	TabLayout = FTabManager::NewLayout( "Standalone_DialogEditor_Layout_v2" )
@@ -107,21 +106,13 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 {
 	DialogEditor = InDialogBuilderEditor;
 	
-	/*DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBlackboardEditorSummoner(InDialogBuilderEditor)));
-	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBlackboardDetailsSummoner(InDialogBuilderEditor)));*/
+	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogSequencerTabSummoner(InDialogBuilderEditor)));
+	//DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBlackboardDetailsSummoner(InDialogBuilderEditor)));
 
 	TabLayout = FTabManager::NewLayout("Standalone_DialogSequencer_Layout_v2")
 		->AddArea
 		(
 			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
-#if ENGINE_MAJOR_VERSION < 5
-			->Split
-			(
-				FTabManager::NewStack()
-				->SetSizeCoefficient(0.1f)
-				->AddTab(GetToolbarTabId(), ETabState::OpenedTab)->SetHideTabWell(true)
-			)
-#endif // #if ENGINE_MAJOR_VERSION < 5
 			->Split
 			(
 				FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
@@ -141,6 +132,13 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 						->AddTab(FDialogBuilderEditorTabs::DialogBuilderPropertyID, ETabState::OpenedTab)
 					)
 				)
+			)
+			->Split
+			(
+				FTabManager::NewStack()
+				->SetSizeCoefficient(0.3f)
+				->AddTab(FDialogBuilderEditorTabs::DialogSequencerTabID, ETabState::OpenedTab)
+				->SetHideTabWell(true)
 			)
 		);
 

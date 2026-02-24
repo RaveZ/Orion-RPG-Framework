@@ -16,6 +16,7 @@ class SWidget;
 struct FSlateBrush;
 
 
+//Dialog Editor Tab Factories
 struct FDialogEditorDetailsSummoner : public FWorkflowTabFactory
 {
 public:
@@ -32,6 +33,20 @@ struct FDialogEditorListSummoner : public FWorkflowTabFactory
 {
 public:
 	FDialogEditorListSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr);
+
+	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override;
+	virtual FText GetTabToolTipText(const FWorkflowTabSpawnInfo& Info) const override;
+
+protected:
+	TWeakPtr<class FDialogBuilderEditor> DialogEditorPtr;
+};
+
+
+//Dialog Sequencer Tab Factories
+struct FDialogSequencerTabSummoner : public FWorkflowTabFactory
+{
+public:
+	FDialogSequencerTabSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr);
 
 	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override;
 	virtual FText GetTabToolTipText(const FWorkflowTabSpawnInfo& Info) const override;

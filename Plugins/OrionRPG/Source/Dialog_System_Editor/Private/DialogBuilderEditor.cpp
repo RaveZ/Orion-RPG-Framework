@@ -38,6 +38,11 @@
 #include "WorkflowOrientedApp/WorkflowCentricApplication.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Widgets/Notifications/SNotificationList.h"
+#include "ISequencer.h"
+#include "ISequencerModule.h"
+#include "LevelSequence.h"
+#include "Widgets/Docking/SDockTab.h"
+#include "Widgets/SNullWidget.h"
 #include <Kismet2/KismetEditorUtilities.h>
 
 #define LOCTEXT_NAMESPACE "DialogBuilderEditor"
@@ -219,6 +224,12 @@ void FDialogBuilderEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 		.SetDisplayName(LOCTEXT("DetailsTab", "Property"))
 		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
+
+	InTabManager->RegisterTabSpawner(FDialogBuilderEditorTabs::DialogSequencerTabID, FOnSpawnTab::CreateSP(this, &FDialogBuilderEditor::SpawnTab_Sequencer))
+		.SetDisplayName(LOCTEXT("DialogSequencerTab", "Sequencer"))
+		.SetGroup(WorkspaceMenuCategoryRef)
+		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Cinematics"));
+
 }
 
 void FDialogBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
@@ -229,6 +240,7 @@ void FDialogBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& 
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::ViewportID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogBuilderPropertyID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogBuilderEditorSettingsID);
+	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogSequencerTabID);
 }
 
 void FDialogBuilderEditor::PostUndo(bool bSuccess)
@@ -446,6 +458,43 @@ void FDialogBuilderEditor::RefreshInspector()
 
 void FDialogBuilderEditor::AddToSelection(UEdGraphNode* InNode)
 {
+}
+
+//Sequencer
+void FDialogBuilderEditor::EnsureSequencerCreated()
+{
+	if (Sequencer.IsValid())
+	{
+		return;
+	}
+
+	if (!EditingLevelSequence)
+	{
+		EditingLevelSequence = NewObject<ULevelSequence>(GetTransientPackage(), NAME_None, RF_Transient);
+	}
+
+	ISequencerModule& SequencerModule = FModuleManager::LoadModuleChecked<ISequencerModule>("Sequencer");
+
+	FSequencerInitParams InitParams;
+	InitParams.RootSequence = EditingLevelSequence;
+	InitParams.bEditWithinLevelEditor = false;
+
+	Sequencer = SequencerModule.CreateSequencer(InitParams);
+}
+
+TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_Sequencer(const FSpawnTabArgs& Args)
+{
+	check(Args.GetTabId() == FDialogBuilderEditorTabs::DialogSequencerTabID);
+
+	EnsureSequencerCreated();
+
+	return SNew(SDockTab)
+		.Label(LOCTEXT("DialogSequencerTab_Title", "Sequencer"))
+		[
+			Sequencer.IsValid()
+				? Sequencer->GetSequencerWidget()
+				: SNullWidget::NullWidget
+		];
 }
 
 void FDialogBuilderEditor::JumpToHyperlink(const UObject* ObjectReference, bool bRedialogRename)
@@ -1113,6 +1162,19 @@ TSharedRef<SWidget> FDialogBuilderEditor::SpawnProperties()
 TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogList()
 {
 	return MyDialogWidget.ToSharedRef();
+}
+
+TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogSequencerTab()
+{
+	EnsureSequencerCreated();
+
+	return SNew(SDockTab)
+		.Label(LOCTEXT("DialogSequencerTab_Title", "Sequencer"))
+		[
+			Sequencer.IsValid()
+				? Sequencer->GetSequencerWidget()
+				: SNullWidget::NullWidget
+		];
 }
 
 TSharedRef<SGraphEditor> FDialogBuilderEditor::CreateGraphEditorWidget(TSharedRef<class FTabInfo> InTabInfo, UEdGraph* InGraph)

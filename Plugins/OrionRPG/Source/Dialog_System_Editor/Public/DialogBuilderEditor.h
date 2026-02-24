@@ -8,7 +8,10 @@
 #include "Dialog_System_Editor.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
 #include "DialogBuilderGraph.h"
+#include "Templates/SharedPointer.h"
 
+class ISequencer;
+class ULevelSequence;
 class SMyDialog;
 
 namespace DialogSectionID
@@ -133,6 +136,9 @@ public:
 
 	/** Spawns the dialog list tab*/
 	TSharedRef<SWidget> SpawnDialogList();
+
+	/** Spawns the dialog list tab*/
+	TSharedRef<SWidget> SpawnDialogSequencerTab();
 
 	//Toolbar
 	void UpdateToolbar();
@@ -263,6 +269,7 @@ protected:
 	TSharedRef<SDockTab> SpawnTab_Details(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_EditorSettings(const FSpawnTabArgs& Args); 
 	TSharedRef<SDockTab> SpawnTab_MyDialog(const FSpawnTabArgs& Args);
+	TSharedRef<SDockTab> SpawnTab_Sequencer(const FSpawnTabArgs& Args);
 	
 	void CreateInternalWidgets();
 
@@ -320,7 +327,8 @@ protected:
 	bool CanCreateComment() const;
 	void OnCreateComment();
 
-
+	//Sequencer
+	void EnsureSequencerCreated();
 
 	//////////////////////////////////////////////////////////////////////////
 	// graph editor event
@@ -373,6 +381,9 @@ protected:
 
 	/** The command list for this editor */
 	TSharedPtr<FUICommandList> GraphEditorCommands;
+
+	TSharedPtr<ISequencer> Sequencer;
+	TObjectPtr<ULevelSequence> EditingLevelSequence = nullptr;
 
 public:
 	/** Modes in mode switcher */
