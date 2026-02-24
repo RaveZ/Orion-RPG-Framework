@@ -43,6 +43,7 @@
 #include "LevelSequence.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/SNullWidget.h"
+#include "MovieSceneSpawnRegister.h"
 #include <Kismet2/KismetEditorUtilities.h>
 
 #define LOCTEXT_NAMESPACE "DialogBuilderEditor"
@@ -470,12 +471,25 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 
 	if (!EditingLevelSequence)
 	{
-		EditingLevelSequence = NewObject<ULevelSequence>(GetTransientPackage(), NAME_None, RF_Transient);
+		EditingLevelSequence = NewObject<ULevelSequence>(GetTransientPackage());
+		MovieScene = NewObject<UMovieScene>(EditingLevelSequence, FName("DialogMovieScene"), RF_Transactional);
+		MovieScene->SetDisplayRate(FFrameRate(30, 1));
+		EditingLevelSequence->MovieScene = MovieScene;
+	}
+	
+	
+	ISequencerModule& SequencerModule = FModuleManager::LoadModuleChecked<ISequencerModule>("Sequencer");
+	
+	FSequencerViewParams ViewParams(TEXT("DialogSequenceSettings"));
+	{
+		ViewParams.UniqueName = "DialogSequenceEditor";
+		//ViewParams.OnGetAddMenuContent = OnGetSequencerAddMenuContent;
+		//ViewParams.OnGetPlaybackSpeeds = ISequencer::FOnGetPlaybackSpeeds::CreateRaw(this, &FContextualAnimViewModel::GetPlaybackSpeeds);
 	}
 
-	ISequencerModule& SequencerModule = FModuleManager::LoadModuleChecked<ISequencerModule>("Sequencer");
-
 	FSequencerInitParams InitParams;
+	InitParams.ViewParams = ViewParams;
+	InitParams.ToolkitHost = GetToolkitHost();
 	InitParams.RootSequence = EditingLevelSequence;
 	InitParams.bEditWithinLevelEditor = false;
 
@@ -1168,8 +1182,10 @@ TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogSequencerTab()
 {
 	EnsureSequencerCreated();
 
-	return SNew(SDockTab)
-		.Label(LOCTEXT("DialogSequencerTab_Title", "Sequencer"))
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		.HAlign(HAlign_Fill)
 		[
 			Sequencer.IsValid()
 				? Sequencer->GetSequencerWidget()

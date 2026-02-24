@@ -107,7 +107,7 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 	DialogEditor = InDialogBuilderEditor;
 	
 	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogSequencerTabSummoner(InDialogBuilderEditor)));
-	//DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FBlackboardDetailsSummoner(InDialogBuilderEditor)));
+	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogEditorDetailsSummoner(InDialogBuilderEditor)));
 
 	TabLayout = FTabManager::NewLayout("Standalone_DialogSequencer_Layout_v2")
 		->AddArea

@@ -383,6 +383,9 @@ protected:
 	TSharedPtr<FUICommandList> GraphEditorCommands;
 
 	TSharedPtr<ISequencer> Sequencer;
+
+	/** MovieScene for displaying this scene asset in the sequencer time line. */
+	TObjectPtr<UMovieScene> MovieScene;
 	TObjectPtr<ULevelSequence> EditingLevelSequence = nullptr;
 
 public:
