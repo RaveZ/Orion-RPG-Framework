@@ -44,6 +44,8 @@
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/SNullWidget.h"
 #include "MovieSceneSpawnRegister.h"
+#include "AdvancedPreviewScene.h"
+#include "SDialogPreviewViewport.h"
 #include <Kismet2/KismetEditorUtilities.h>
 
 #define LOCTEXT_NAMESPACE "DialogBuilderEditor"
@@ -231,6 +233,11 @@ void FDialogBuilderEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Cinematics"));
 
+	InTabManager->RegisterTabSpawner(FDialogBuilderEditorTabs::DialogSequencerViewportID, FOnSpawnTab::CreateSP(this, &FDialogBuilderEditor::SpawnTab_SequencerViewport))
+		.SetDisplayName(LOCTEXT("DialogSequencerViewportTab", "Viewport"))
+		.SetGroup(WorkspaceMenuCategoryRef)
+		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Viewports"));
+
 }
 
 void FDialogBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
@@ -242,6 +249,7 @@ void FDialogBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& 
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogBuilderPropertyID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogBuilderEditorSettingsID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogSequencerTabID);
+	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogSequencerViewportID);
 }
 
 void FDialogBuilderEditor::PostUndo(bool bSuccess)
@@ -507,6 +515,19 @@ TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_Sequencer(const FSpawnTabArg
 		[
 			Sequencer.IsValid()
 				? Sequencer->GetSequencerWidget()
+				: SNullWidget::NullWidget
+		];
+}
+
+TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_SequencerViewport(const FSpawnTabArgs& Args)
+{
+	check(Args.GetTabId() == FDialogBuilderEditorTabs::DialogSequencerViewportID);
+
+	return SNew(SDockTab)
+		.Label(LOCTEXT("DialogSequencerViewport_Title", "Viewport"))
+		[
+			SequencerViewportWidget.IsValid()
+				? SequencerViewportWidget.ToSharedRef()
 				: SNullWidget::NullWidget
 		];
 }
@@ -1082,6 +1103,7 @@ TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_MyDialog(const FSpawnTabArgs
 
 void FDialogBuilderEditor::CreateInternalWidgets()
 {
+	//create details view
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 
 	FDetailsViewArgs DetailsViewArgs;
@@ -1095,6 +1117,18 @@ void FDialogBuilderEditor::CreateInternalWidgets()
 
 
 	this->MyDialogWidget = SNew(SMyDialog, SharedThis(this));
+
+	//create viewport
+	if (!PreviewScene.IsValid())
+	{
+		PreviewScene = MakeShared<FAdvancedPreviewScene>(FPreviewScene::ConstructionValues());
+	}
+
+	if (!SequencerViewportWidget.IsValid())
+	{
+		SequencerViewportWidget = SNew(SDialogPreviewViewport, SharedThis(this), PreviewScene.ToSharedRef());
+		SequencerViewportWidget->SetUseLevelWorld(ViewportWorldMode == EDialogViewportWorldMode::CurrentLevel);
+	}
 }
 
 
@@ -1189,6 +1223,19 @@ TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogSequencerTab()
 		[
 			Sequencer.IsValid()
 				? Sequencer->GetSequencerWidget()
+				: SNullWidget::NullWidget
+		];
+}
+
+TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogSequencerViewportTab()
+{
+	return SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		.HAlign(HAlign_Fill)
+		[
+			SequencerViewportWidget.IsValid()
+				? SequencerViewportWidget.ToSharedRef()
 				: SNullWidget::NullWidget
 		];
 }
@@ -1802,6 +1849,21 @@ void FDialogBuilderEditor::OnCreateComment()
 			Action->PerformAction(EdGraph, nullptr, FVector2D());
 #endif
 		}
+	}
+}
+
+void FDialogBuilderEditor::SetViewportWorldMode(EDialogViewportWorldMode NewMode)
+{
+	if (ViewportWorldMode == NewMode)
+	{
+		return;
+	}
+
+	ViewportWorldMode = NewMode;
+
+	if (SequencerViewportWidget.IsValid())
+	{
+		SequencerViewportWidget->SetUseLevelWorld(ViewportWorldMode == EDialogViewportWorldMode::CurrentLevel);
 	}
 }
 

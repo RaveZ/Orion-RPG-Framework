@@ -10,6 +10,8 @@
 #include "DialogBuilderGraph.h"
 #include "Templates/SharedPointer.h"
 
+class FAdvancedPreviewScene;
+class SDialogPreviewViewport;
 class ISequencer;
 class ULevelSequence;
 class SMyDialog;
@@ -22,6 +24,12 @@ namespace DialogSectionID
 		DIALOGLIST,	// Dialog Graph
 		//Add More to populate the section
 	};
+};
+
+enum class EDialogViewportWorldMode : uint8
+{
+	PreviewScene,
+	CurrentLevel
 };
 
 struct FDialogBuilderEditorTabs
@@ -139,6 +147,10 @@ public:
 
 	/** Spawns the dialog list tab*/
 	TSharedRef<SWidget> SpawnDialogSequencerTab();
+	
+	/** Spawns the dialog list tab*/
+	TSharedRef<SWidget> SpawnDialogSequencerViewportTab();
+
 
 	//Toolbar
 	void UpdateToolbar();
@@ -247,6 +259,11 @@ public:
 	bool IsGraphInCurrentDialogGraph(const UEdGraph* InGraph) const;
 
 
+	//viewport
+
+	void SetViewportWorldMode(EDialogViewportWorldMode NewMode);
+	bool IsViewportWorldMode(EDialogViewportWorldMode Mode) const { return ViewportWorldMode == Mode; }
+
 	//Getter
 	TSharedPtr<SMyDialog> GetMyDialogWidget() const { return MyDialogWidget; }
 
@@ -270,6 +287,7 @@ protected:
 	TSharedRef<SDockTab> SpawnTab_EditorSettings(const FSpawnTabArgs& Args); 
 	TSharedRef<SDockTab> SpawnTab_MyDialog(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_Sequencer(const FSpawnTabArgs& Args);
+	TSharedRef<SDockTab> SpawnTab_SequencerViewport(const FSpawnTabArgs& Args);
 	
 	void CreateInternalWidgets();
 
@@ -327,6 +345,8 @@ protected:
 	bool CanCreateComment() const;
 	void OnCreateComment();
 
+
+
 	//Sequencer
 	void EnsureSequencerCreated();
 
@@ -366,7 +386,6 @@ protected:
 	/** Factory that spawns graph editors; used to look up all tabs spawned by it. */
 	TWeakPtr<FDocumentTabFactory> DialogEditorTabFactoryPtr;
 
-
 	UDialogBuilderGraph* EditingDialogGraph;
 
 
@@ -381,6 +400,12 @@ protected:
 
 	/** The command list for this editor */
 	TSharedPtr<FUICommandList> GraphEditorCommands;
+
+
+	EDialogViewportWorldMode ViewportWorldMode = EDialogViewportWorldMode::PreviewScene;
+
+	TSharedPtr<FAdvancedPreviewScene> PreviewScene;
+	TSharedPtr<SDialogPreviewViewport> SequencerViewportWidget;
 
 	TSharedPtr<ISequencer> Sequencer;
 

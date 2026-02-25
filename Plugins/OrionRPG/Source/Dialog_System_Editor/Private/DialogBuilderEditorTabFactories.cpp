@@ -93,5 +93,26 @@ FText FDialogSequencerTabSummoner::GetTabToolTipText(const FWorkflowTabSpawnInfo
 }
 
 
+FDialogSequencerViewportSummoner::FDialogSequencerViewportSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr)
+	: FWorkflowTabFactory(FDialogBuilderEditorTabs::DialogSequencerViewportID, InDialogEditorPtr)
+	, DialogEditorPtr(InDialogEditorPtr)
+{
+	TabLabel = LOCTEXT("DialogSequencerViewportTabLabel", "Dialog Sequencer Viewport");
+	TabIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Viewports");
+	bIsSingleton = true;
+	ViewMenuDescription = LOCTEXT("DialogSequencerViewportTabView", "Dialog Sequencer Viewport");
+	ViewMenuTooltip = LOCTEXT("DialogSequencerViewportTabView_ToolTip", "Show the dialog sequencer viewport tab");
+}
+
+TSharedRef<SWidget> FDialogSequencerViewportSummoner::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
+{
+	return DialogEditorPtr.Pin()->SpawnDialogSequencerViewportTab();
+}
+
+FText FDialogSequencerViewportSummoner::GetTabToolTipText(const FWorkflowTabSpawnInfo& Info) const
+{
+	return LOCTEXT("DialogSequencerViewportTabToolTip", "Show the dialog sequencer viewport tab");
+}
+
 #undef LOCTEXT_NAMESPACE
 

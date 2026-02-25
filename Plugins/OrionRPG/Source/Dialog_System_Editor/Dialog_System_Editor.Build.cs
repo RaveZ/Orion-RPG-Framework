@@ -67,6 +67,7 @@ public class Dialog_System_Editor : ModuleRules
 				"MovieSceneTracks",
 				"LevelSequence",
 				"LevelSequenceEditor",
+                "AdvancedPreviewScene"
    }
 			);
 		

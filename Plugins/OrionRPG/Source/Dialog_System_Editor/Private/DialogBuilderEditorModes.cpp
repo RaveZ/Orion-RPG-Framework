@@ -108,6 +108,8 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 	
 	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogSequencerTabSummoner(InDialogBuilderEditor)));
 	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogEditorDetailsSummoner(InDialogBuilderEditor)));
+	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogSequencerViewportSummoner(InDialogBuilderEditor)));
+	
 
 	TabLayout = FTabManager::NewLayout("Standalone_DialogSequencer_Layout_v2")
 		->AddArea
@@ -115,31 +117,37 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 			FTabManager::NewPrimaryArea()->SetOrientation(Orient_Vertical)
 			->Split
 			(
-				FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)->SetSizeCoefficient(0.9f)
+				FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)
 				->Split
 				(
-					FTabManager::NewStack()
-					->SetSizeCoefficient(0.55f)
-					->AddTab("Document", ETabState::ClosedTab)
-				)
-				->Split
-				(
-					FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)->SetSizeCoefficient(0.25f)
+					FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)
 					->Split
 					(
 						FTabManager::NewStack()
-						->SetSizeCoefficient(0.55f)
+						->SetSizeCoefficient(0.7f)
+						->SetHideTabWell(true)
+						->AddTab(FDialogBuilderEditorTabs::DialogSequencerViewportID, ETabState::OpenedTab)
+					)
+					->Split
+					(
+						FTabManager::NewStack()
+						->SetSizeCoefficient(0.3f)
+						->SetHideTabWell(true)
+						->AddTab(FDialogBuilderEditorTabs::DialogSequencerTabID, ETabState::OpenedTab)
+					)
+				)
+				->Split
+				(
+					FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)
+					->SetSizeCoefficient(0.3f)
+					->Split
+					(
+						FTabManager::NewStack()
 						->AddTab(FDialogBuilderEditorTabs::DialogBuilderPropertyID, ETabState::OpenedTab)
 					)
 				)
 			)
-			->Split
-			(
-				FTabManager::NewStack()
-				->SetSizeCoefficient(0.3f)
-				->AddTab(FDialogBuilderEditorTabs::DialogSequencerTabID, ETabState::OpenedTab)
-				->SetHideTabWell(true)
-			)
+			
 		);
 
 	InDialogBuilderEditor->GetToolbarBuilder()->AddModesToolbar(ToolbarExtender);
