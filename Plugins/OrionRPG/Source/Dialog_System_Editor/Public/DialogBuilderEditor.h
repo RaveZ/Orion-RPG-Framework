@@ -349,6 +349,10 @@ protected:
 
 	//Sequencer
 	void EnsureSequencerCreated();
+	UObject* GetPlaybackContext() const;
+	void BindPreviewActorToSequencer();
+	void EnsurePreviewActorSpawned();
+
 
 	//////////////////////////////////////////////////////////////////////////
 	// graph editor event
@@ -408,6 +412,7 @@ protected:
 	TSharedPtr<SDialogPreviewViewport> SequencerViewportWidget;
 
 	TSharedPtr<ISequencer> Sequencer;
+	TWeakObjectPtr<AActor> PreviewActor;
 
 	/** MovieScene for displaying this scene asset in the sequencer time line. */
 	TObjectPtr<UMovieScene> MovieScene;

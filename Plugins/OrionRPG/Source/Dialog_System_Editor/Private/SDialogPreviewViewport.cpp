@@ -170,8 +170,8 @@ TSharedPtr<SWidget> SDialogPreviewViewport::BuildViewportToolbar()
 			UUnrealEdViewportToolbarContext* const ContextObject =
 				UE::UnrealEd::CreateViewportToolbarDefaultContext(SharedThis(this));
 
-			//ContextObject->AssetEditorToolkit = AssetEditorToolkitPtr;
-			//ContextObject->PreviewSettingsTabId = FPersonaTabs::AdvancedPreviewSceneSettingsID;
+			ContextObject->AssetEditorToolkit = AssetEditorToolkitPtr;
+			ContextObject->PreviewSettingsTabId = FName("AdvancedPreviewTab");// FPersonaTabs::AdvancedPreviewSceneSettingsID;
 
 			ViewportToolbarContext.AddObject(ContextObject);
 		}
@@ -184,6 +184,7 @@ TSharedPtr<SWidget> SDialogPreviewViewport::BuildViewportToolbar()
 			//ViewportToolbarContext.AddObject(ContextObject);
 		}
 
+		AssetEditorToolkitPtr.Pin()->InitToolMenuContext(ViewportToolbarContext);
 		// Give the asset editor a chance to extend the context.
 		/*if (TSharedPtr<SAnimationEditorViewportTabBody> Tab = TabBodyPtr.Pin())
 		{

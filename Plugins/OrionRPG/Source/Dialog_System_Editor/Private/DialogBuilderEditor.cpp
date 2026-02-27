@@ -46,6 +46,9 @@
 #include "MovieSceneSpawnRegister.h"
 #include "AdvancedPreviewScene.h"
 #include "SDialogPreviewViewport.h"
+#include "Engine/StaticMeshActor.h"
+#include "Components/StaticMeshComponent.h"
+#include "UObject/SoftObjectPath.h"
 #include <Kismet2/KismetEditorUtilities.h>
 
 #define LOCTEXT_NAMESPACE "DialogBuilderEditor"
@@ -280,6 +283,109 @@ void FDialogBuilderEditor::PostRedo(bool bSuccess)
 	}
 }
 
+static FGuid FindOrAddPossessableForObject(UMovieScene* InMovieScene, const UObject* InObject)
+{
+	if (!InMovieScene || !InObject)
+	{
+		return FGuid();
+	}
+
+	// Try to find an existing possessable by name (simple heuristic).
+	const FString TargetName = InObject->GetName();
+	for (int32 Index = 0; Index < InMovieScene->GetPossessableCount(); ++Index)
+	{
+		const FMovieScenePossessable& Possessable = InMovieScene->GetPossessable(Index);
+		if (Possessable.GetName() == TargetName)
+		{
+			return Possessable.GetGuid();
+		}
+	}
+
+	// Otherwise add a new one.
+	return InMovieScene->AddPossessable(TargetName, InObject->GetClass());
+}
+
+void FDialogBuilderEditor::EnsurePreviewActorSpawned()
+{
+	if (!PreviewScene.IsValid())
+	{
+		return;
+	}
+
+	UWorld* PreviewWorld = PreviewScene->GetWorld();
+	if (!PreviewWorld)
+	{
+		return;
+	}
+
+	// If we already spawned one and it is still valid, keep it.
+	if (PreviewActor.IsValid())
+	{
+		return;
+	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnParams.ObjectFlags |= RF_Transient;
+
+	// Pick something visible by default. Replace `AStaticMeshActor` with your own actor class if desired.
+	AStaticMeshActor* NewActor = PreviewWorld->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FTransform::Identity, SpawnParams);
+	if (!NewActor)
+	{
+		return;
+	}
+
+	NewActor->SetActorLabel(TEXT("DialogPreviewActor"));
+
+	// Make sure it renders.
+	if (UStaticMeshComponent* SMC = NewActor->GetStaticMeshComponent())
+	{
+		SMC->SetMobility(EComponentMobility::Movable);
+
+		// Optional: assign Engine basic cube so it's visible without extra setup.
+		UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+		if (CubeMesh)
+		{
+			SMC->SetStaticMesh(CubeMesh);
+		}
+	}
+
+	PreviewActor = NewActor;
+}
+
+void FDialogBuilderEditor::BindPreviewActorToSequencer()
+{
+	if (!Sequencer.IsValid() || !EditingLevelSequence || !MovieScene)
+	{
+		return;
+	}
+
+	EnsurePreviewActorSpawned();
+
+	AActor* ActorToBind = PreviewActor.Get();
+	if (!ActorToBind)
+	{
+		return;
+	}
+
+	UMovieScene* Scene = EditingLevelSequence->GetMovieScene();
+	if (!Scene)
+	{
+		return;
+	}
+
+	const FGuid PossessableGuid = FindOrAddPossessableForObject(Scene, ActorToBind);
+	if (!PossessableGuid.IsValid())
+	{
+		return;
+	}
+
+	// Bind possessable GUID -> the spawned preview actor.
+	EditingLevelSequence->BindPossessableObject(PossessableGuid, *ActorToBind, ActorToBind->GetWorld());
+
+	// Let Sequencer know its internals should refresh.
+	Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
+}
 void FDialogBuilderEditor::BindCommands()
 {
 	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().NewDialogDecorator,
@@ -496,12 +602,44 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 	}
 
 	FSequencerInitParams InitParams;
-	InitParams.ViewParams = ViewParams;
-	InitParams.ToolkitHost = GetToolkitHost();
-	InitParams.RootSequence = EditingLevelSequence;
-	InitParams.bEditWithinLevelEditor = false;
+	{
+		InitParams.ViewParams = ViewParams;
+		InitParams.ToolkitHost = GetToolkitHost();
+		InitParams.RootSequence = EditingLevelSequence;
+		InitParams.bEditWithinLevelEditor = false;
+		InitParams.PlaybackContext.Bind(this, &FDialogBuilderEditor::GetPlaybackContext);
+	}
 
 	Sequencer = SequencerModule.CreateSequencer(InitParams);
+	BindPreviewActorToSequencer();
+}
+
+UObject* FDialogBuilderEditor::GetPlaybackContext() const
+{
+	if (PreviewScene.IsValid())
+	{
+		if (UWorld* PreviewWorld = PreviewScene->GetWorld())
+		{
+			return PreviewWorld;
+		}
+	}
+	if (GEditor)
+	{
+		// Editor world (works for editor tools and sequencer playback context)
+		if (UWorld* EditorWorld = GEditor->GetEditorWorldContext().World())
+		{
+			return EditorWorld;
+		}
+
+		// PIE world when playing/simulating
+		if (GEditor->PlayWorld)
+		{
+			return GEditor->PlayWorld;
+		}
+	}
+
+	// Last resort fallback (may be null depending on context)
+	return GWorld;
 }
 
 TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_Sequencer(const FSpawnTabArgs& Args)
@@ -1688,7 +1826,6 @@ void FDialogBuilderEditor::PasteNodesHere(UEdGraph* DestinationGraph, const FVec
 
 	}
 
-	
 }
 
 
@@ -1890,7 +2027,7 @@ void FDialogBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& Ne
 		else
 		{
 			PropertyWidget->SetObjects(Selection);
-		}
+			}
 	}
 	else
 	{
