@@ -259,6 +259,13 @@ public:
 	bool IsGraphInCurrentDialogGraph(const UEdGraph* InGraph) const;
 
 
+	//Sequencer
+	void OpenSequencerForSequence(ULevelSequence* InSequence);
+	void EnsureSequencerCreated();
+	UObject* GetPlaybackContext() const;
+	void BindPreviewActorToSequencer();
+	void EnsurePreviewActorSpawned();
+
 	//scene viewport
 	void SetViewportWorldMode(EDialogViewportWorldMode NewMode);
 	bool IsViewportWorldMode(EDialogViewportWorldMode Mode) const { return ViewportWorldMode == Mode; }
@@ -347,11 +354,6 @@ protected:
 
 
 
-	//Sequencer
-	void EnsureSequencerCreated();
-	UObject* GetPlaybackContext() const;
-	void BindPreviewActorToSequencer();
-	void EnsurePreviewActorSpawned();
 
 
 	//////////////////////////////////////////////////////////////////////////

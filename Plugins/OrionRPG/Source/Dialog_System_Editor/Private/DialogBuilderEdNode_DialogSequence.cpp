@@ -66,6 +66,7 @@ void UDialogBuilderEdNode_DialogSequence::PostPlacedNewNode()
 	UDialogBuilderNode_DialogSequence* DialogSequenceNode = Cast<UDialogBuilderNode_DialogSequence>(NodeInstance);
 	if (DialogSequenceNode )
 	{
+		DialogSequenceNode->EnsureSequenceCreated();
 	}
 	GetGraph()->NotifyGraphChanged();
 }

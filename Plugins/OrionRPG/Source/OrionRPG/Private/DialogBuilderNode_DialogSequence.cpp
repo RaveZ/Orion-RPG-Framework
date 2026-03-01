@@ -19,6 +19,7 @@
 
 UDialogBuilderNode_DialogSequence::UDialogBuilderNode_DialogSequence()
 {
+	
 }
 
 void UDialogBuilderNode_DialogSequence::BeginNode()
@@ -31,6 +32,17 @@ void UDialogBuilderNode_DialogSequence::EvaluateNextNode()
 {
 	
 	Super::EvaluateNextNode();
+}
+
+void UDialogBuilderNode_DialogSequence::EnsureSequenceCreated()
+{
+	if (!LevelSequence)
+	{
+		Modify();
+		LevelSequence = NewObject<ULevelSequence>(this, NAME_None, RF_Transactional);
+		LevelSequence->MovieScene = NewObject<UMovieScene>(LevelSequence, FName("DialogMovieScene"), RF_Transactional);
+		LevelSequence->MovieScene->SetDisplayRate(FFrameRate(30, 1));
+	}
 }
 
 

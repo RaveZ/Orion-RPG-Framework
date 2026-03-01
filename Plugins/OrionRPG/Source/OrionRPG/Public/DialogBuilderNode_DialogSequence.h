@@ -25,11 +25,18 @@ public:
 	
 	virtual void EvaluateNextNode() override;
 
+	void EnsureSequenceCreated();
+
 
 public:
 	virtual void Serialize(FArchive& Ar) override;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sequence")
+	TObjectPtr<ULevelSequence> LevelSequence = nullptr;
 
+#if WITH_EDITORONLY_DATA
+	TWeakPtr<ISequencer> Sequencer;
+#endif
 public:
 #if WITH_EDITOR
 

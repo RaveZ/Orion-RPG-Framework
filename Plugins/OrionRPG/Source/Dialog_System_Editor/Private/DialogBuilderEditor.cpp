@@ -8,6 +8,8 @@
 #include "DialogBuilderEdGraph.h"
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderEditorModes.h"
+#include "DialogBuilderEdNode.h"
+#include "DialogBuilderNode_DialogSequence.h"
 #include "Decorator/OrionDecorator.h"
 #include "EngineGlobals.h"
 #include "Editor/EditorEngine.h"
@@ -576,6 +578,24 @@ void FDialogBuilderEditor::AddToSelection(UEdGraphNode* InNode)
 }
 
 //Sequencer
+void FDialogBuilderEditor::OpenSequencerForSequence(ULevelSequence* InSequence)
+{
+	if (!InSequence)
+	{
+		return;
+	}
+
+	EditingLevelSequence = InSequence;
+
+	Sequencer.Reset();
+
+	EnsureSequencerCreated();
+
+	// Switch to sequencer mode and bring up the tabs
+	SetCurrentMode(DialogSequencerMode);
+
+}
+
 void FDialogBuilderEditor::EnsureSequencerCreated()
 {
 	if (Sequencer.IsValid())
@@ -585,12 +605,8 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 
 	if (!EditingLevelSequence)
 	{
-		EditingLevelSequence = NewObject<ULevelSequence>(GetTransientPackage());
-		MovieScene = NewObject<UMovieScene>(EditingLevelSequence, FName("DialogMovieScene"), RF_Transactional);
-		MovieScene->SetDisplayRate(FFrameRate(30, 1));
-		EditingLevelSequence->MovieScene = MovieScene;
+		return;
 	}
-	
 	
 	ISequencerModule& SequencerModule = FModuleManager::LoadModuleChecked<ISequencerModule>("Sequencer");
 	
@@ -2048,6 +2064,15 @@ void FDialogBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& Ne
 void FDialogBuilderEditor::OnNodeDoubleClicked(UEdGraphNode* Node)
 {
 	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(Node);
+
+	if(UDialogBuilderNode_DialogSequence* DialogSequenceNode = Cast<UDialogBuilderNode_DialogSequence>(DialogEdNode ? DialogEdNode->NodeInstance : nullptr))
+	{
+
+		OpenSequencerForSequence(DialogSequenceNode->LevelSequence);
+	}
+
+	
+
 
 	if (DialogEdNode && 
 		DialogEdNode->NodeInstance->GetClass()->HasAnyClassFlags(CLASS_CompiledFromBlueprint))
