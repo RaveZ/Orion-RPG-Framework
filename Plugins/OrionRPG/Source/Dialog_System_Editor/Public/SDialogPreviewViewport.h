@@ -5,7 +5,6 @@
 
 class FAdvancedPreviewScene;
 class FEditorViewportClient;
-class FUICommandList;
 class FDialogBuilderEditor;
 
 class SDialogPreviewViewport : public SEditorViewport
@@ -22,10 +21,9 @@ protected:
 	virtual TSharedRef<FEditorViewportClient> MakeEditorViewportClient() override;
 	virtual TSharedPtr<SWidget> BuildViewportToolbar() override;
 
+
 private:
 	TWeakPtr<FDialogBuilderEditor> Editor;
-
-	// The asset editor we are embedded in
 	TWeakPtr<class FAssetEditorToolkit> AssetEditorToolkitPtr;
 
 	TSharedPtr<FAdvancedPreviewScene> PreviewScene;

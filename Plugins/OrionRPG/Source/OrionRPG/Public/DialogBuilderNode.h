@@ -56,6 +56,21 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "DialogBuilderNode")
 		bool bVisited;
 
+	UPROPERTY()
+	bool bIsSelector = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Choice Selection", meta = (EditCondition = "bIsSelector == true", HideEditConditionToggle, EditConditionHides))
+	TObjectPtr<UDialogCameraShot> SelectingChoiceShotOverride;
+	/**
+	* Entering selection mode will have it's time limit setting.
+	* Selection will have no time limit by default
+	**/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Choice Selection", meta = (EditCondition = "bIsSelector == true", HideEditConditionToggle, EditConditionHides))
+	ESelectionTimeLimit SelectionTimeLimit;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Choice Selection", meta = (EditCondition = "bIsSelector == true && SelectionTimeLimit == ESelectionTimeLimit::E_HasTimeLimit", HideEditConditionToggle, EditConditionHides))
+	float TimeLimit;
+
 	UPROPERTY(BlueprintReadWrite, Category = "DialogBuilderNode")
 	TObjectPtr<APlayerController> OwningController;
 

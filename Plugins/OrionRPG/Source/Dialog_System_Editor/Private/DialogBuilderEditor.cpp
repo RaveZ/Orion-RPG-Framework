@@ -2004,6 +2004,16 @@ void FDialogBuilderEditor::SetViewportWorldMode(EDialogViewportWorldMode NewMode
 	}
 }
 
+void FDialogBuilderEditor::SetDetailsObject(UObject* InObject)
+{
+	if (!PropertyWidget.IsValid())
+	{
+		return;
+	}
+
+	PropertyWidget->SetObject(InObject);
+}
+
 void FDialogBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& NewSelection)
 {
 	TArray<UObject*> Selection = FDialogBuilderEditorUtils::GetSelectionForPropertyEditor(NewSelection);

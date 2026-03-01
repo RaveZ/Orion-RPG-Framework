@@ -143,7 +143,15 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 					->Split
 					(
 						FTabManager::NewStack()
+						->SetSizeCoefficient(0.7f)
 						->AddTab(FDialogBuilderEditorTabs::DialogBuilderPropertyID, ETabState::OpenedTab)
+					)
+					->Split
+					(
+						FTabManager::NewStack()
+						->SetSizeCoefficient(0.3f)
+						->AddTab("Document", ETabState::ClosedTab)
+						->SetHideTabWell(true)
 					)
 				)
 			)
@@ -166,11 +174,21 @@ void FDialogBuilderSequencerApplicationMode::RegisterTabFactories(TSharedPtr<FTa
 	FApplicationMode::RegisterTabFactories(InTabManager);
 }
 
-void FDialogBuilderSequencerApplicationMode::PostActivateMode()
+void FDialogBuilderSequencerApplicationMode::PreDeactivateMode()
 {
-	// Reopen any documents that were open when the BT was last saved
+	FApplicationMode::PreDeactivateMode();
+
 	check(DialogEditor.IsValid());
 	TSharedPtr<FDialogBuilderEditor> DialogEditorPtr = DialogEditor.Pin();
+
+	DialogEditorPtr->SaveEditedObjectState();
+}
+
+void FDialogBuilderSequencerApplicationMode::PostActivateMode()
+{
+	check(DialogEditor.IsValid());
+	TSharedPtr<FDialogBuilderEditor> DialogEditorPtr = DialogEditor.Pin();
+	DialogEditorPtr->RestoreDialogEditor();
 
 	FApplicationMode::PostActivateMode();
 }

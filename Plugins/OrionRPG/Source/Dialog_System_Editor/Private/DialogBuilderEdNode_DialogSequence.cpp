@@ -3,7 +3,7 @@
 
 #include "DialogBuilderEdNode_DialogSequence.h"
 #include "DialogBuilderEdNode_PlayerChoice.h"
-#include "DialogBuilderNode_DialogLine.h"
+#include "DialogBuilderNode_DialogSequence.h"
 #include "DialogBuilderSetting.h"
 #include "DialogBuilderNode.h"
 
@@ -35,22 +35,16 @@ FText UDialogBuilderEdNode_DialogSequence::GetNodeTitle(ENodeTitleType::Type Tit
 
 FLinearColor UDialogBuilderEdNode_DialogSequence::GetBackgroundColor() const
 {
-
-	const UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance);
-	if (DialogLineNode)
-	{
-		return DialogLineNode->ParticipantInfo.NodeColor;
-	}
 	return GetDefault<UDialogBuilderSetting>()->DialogLineNodeColor;
 }
 
 FText UDialogBuilderEdNode_DialogSequence::GetTooltipText() const
 {
-	const UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance);
-	if (DialogLineNode)
+	const UDialogBuilderNode_DialogSequence* DialogSequenceNode = Cast<UDialogBuilderNode_DialogSequence>(NodeInstance);
+	if (DialogSequenceNode)
 	{
 		return FText::Format(FText::FromString(TEXT("Dialog Line Node\n{0}")),
-			NSLOCTEXT("DialogBuilderEditor", "SpeakerNodeScopeTooltip", "This Node contain the data for participant lines.\n**Right click the node to start adding a subnodes."));
+			NSLOCTEXT("DialogBuilderEditor", "SpeakerNodeScopeTooltip", "This Node contain the sequencer tailored for dialog"));
 	}
 
 	return Super::GetTooltipText();
@@ -59,11 +53,9 @@ FText UDialogBuilderEdNode_DialogSequence::GetTooltipText() const
 void UDialogBuilderEdNode_DialogSequence::PostPasteNode()
 {
 	Super::PostPasteNode();
-	UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance);
-	if (DialogLineNode)
+	UDialogBuilderNode_DialogSequence* DialogSequenceNode = Cast<UDialogBuilderNode_DialogSequence>(NodeInstance);
+	if (DialogSequenceNode)
 	{
-		DialogLineNode->OnSharedParticipantChanged.Clear();
-		DialogLineNode->OnSharedParticipantChanged.AddDynamic(this, &UDialogBuilderEdNode_DialogSequence::OnSharedParticipantChanged);
 	}
 	GetGraph()->NotifyGraphChanged();
 }
@@ -71,20 +63,18 @@ void UDialogBuilderEdNode_DialogSequence::PostPasteNode()
 void UDialogBuilderEdNode_DialogSequence::PostPlacedNewNode()
 {
 	Super::PostPlacedNewNode();
-	UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance);
-	if (DialogLineNode )
+	UDialogBuilderNode_DialogSequence* DialogSequenceNode = Cast<UDialogBuilderNode_DialogSequence>(NodeInstance);
+	if (DialogSequenceNode )
 	{
-		DialogLineNode->OnSharedParticipantChanged.Clear();
-		DialogLineNode->OnSharedParticipantChanged.AddDynamic(this, &UDialogBuilderEdNode_DialogSequence::OnSharedParticipantChanged);
 	}
 	GetGraph()->NotifyGraphChanged();
 }
 
 void UDialogBuilderEdNode_DialogSequence::NodeConnectionListChanged()
 {
-	UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance);
+	UDialogBuilderNode_DialogSequence* DialogSequenceNode = Cast<UDialogBuilderNode_DialogSequence>(NodeInstance);
 
-	if (!DialogLineNode)
+	if (!DialogSequenceNode)
 		return;
 
 	for (int PinIdx = 0; PinIdx < Pins.Num(); ++PinIdx)
@@ -99,14 +89,14 @@ void UDialogBuilderEdNode_DialogSequence::NodeConnectionListChanged()
 			UDialogBuilderNode* ChildNode = nullptr;
 			if (UDialogBuilderEdNode_PlayerChoice* PlayerOptionEdNode_Child = Cast<UDialogBuilderEdNode_PlayerChoice>(Pin->LinkedTo[0]->GetOwningNode()))
 			{
-				DialogLineNode->bIsSelector = true;
+				DialogSequenceNode->bIsSelector = true;
 				return;
 			}
 
 		}
 	}
 
-	DialogLineNode->bIsSelector = false;
+	DialogSequenceNode->bIsSelector = false;
 }
 
 void UDialogBuilderEdNode_DialogSequence::GetNodeContextMenuActions(UToolMenu* Menu, UGraphNodeContextMenuContext* Context) const
@@ -122,10 +112,8 @@ void UDialogBuilderEdNode_DialogSequence::OnSharedParticipantChanged()
 
 void UDialogBuilderEdNode_DialogSequence::OnPackageMarkedDirty(UPackage* ModifiedPackage, bool bWasDirty)
 {
-	UDialogBuilderNode_DialogLine* DialogLineNode = Cast<UDialogBuilderNode_DialogLine>(NodeInstance);
-	if (DialogLineNode)
+	UDialogBuilderNode_DialogSequence* DialogSequenceNode = Cast<UDialogBuilderNode_DialogSequence>(NodeInstance);
+	if (DialogSequenceNode)
 	{
-		DialogLineNode->OnSharedParticipantChanged.Clear();
-		DialogLineNode->OnSharedParticipantChanged.AddDynamic(this, &UDialogBuilderEdNode_DialogSequence::OnSharedParticipantChanged);
 	}
 }

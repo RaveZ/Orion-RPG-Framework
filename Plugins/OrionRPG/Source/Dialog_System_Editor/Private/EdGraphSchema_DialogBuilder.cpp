@@ -12,6 +12,7 @@
 #include "DialogBuilderEditorUtils.h"
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderEdNode_DialogLine.h"
+#include "DialogBuilderEdNode_DialogSequence.h"
 #include "DialogBuilderEdNode_PlayerLine.h"
 #include "DialogBuilderEdNode_RerouteNode.h"
 #include "DialogBuilderEdNode_PlayerChoice.h"
@@ -26,6 +27,7 @@
 #include "DialogBuilderNode_RerouteNode.h"
 #include "DialogBuilderNode_PlayerChoice.h"
 #include "DialogBuilderNode_DialogLine.h"
+#include "DialogBuilderNode_DialogSequence.h"
 #include "DialogBuilderNode_PlayerLine.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
@@ -265,8 +267,10 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 	const bool bNoChild = ContextMenuBuilder.FromPin && ContextMenuBuilder.FromPin->LinkedTo.IsEmpty();
 	const bool bChildIsRerouteNode = ContextMenuBuilder.FromPin && ContextMenuBuilder.FromPin->LinkedTo.IsValidIndex(0) && Cast<UDialogBuilderEdNode_RerouteNode>(ContextMenuBuilder.FromPin->LinkedTo[0]->GetOwningNode());
 	const bool bChildIsDialogLine = ContextMenuBuilder.FromPin && ContextMenuBuilder.FromPin->LinkedTo.IsValidIndex(0) && (Cast<UDialogBuilderEdNode_DialogLine>(ContextMenuBuilder.FromPin->LinkedTo[0]->GetOwningNode()) || Cast<UDialogBuilderEdNode_PlayerLine>(ContextMenuBuilder.FromPin->LinkedTo[0]->GetOwningNode()));
+	const bool bChildIsDialogSequence = ContextMenuBuilder.FromPin && ContextMenuBuilder.FromPin->LinkedTo.IsValidIndex(0) && Cast<UDialogBuilderEdNode_DialogSequence>(ContextMenuBuilder.FromPin->LinkedTo[0]->GetOwningNode());
 	const bool bChildIsPlayerChoice = ContextMenuBuilder.FromPin && ContextMenuBuilder.FromPin->LinkedTo.IsValidIndex(0) && Cast<UDialogBuilderEdNode_PlayerChoice>(ContextMenuBuilder.FromPin->LinkedTo[0]->GetOwningNode());
-	const bool bAllowDialogLine = bNoParent || bNoChild || bChildIsDialogLine || bChildIsRerouteNode;
+	const bool bAllowDialogLine = bNoParent || bNoChild || bChildIsDialogLine || bChildIsDialogSequence || bChildIsRerouteNode;
+	const bool bAllowDialogSequence = bNoParent || bNoChild || bChildIsDialogLine || bChildIsDialogSequence || bChildIsRerouteNode;
 	const bool bAllowRerouteNode = bNoParent || bNoChild;
 	const bool bAllowPlayerChoice = bNoParent || bNoChild || bChildIsPlayerChoice;
 
@@ -301,9 +305,28 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 
 		ContextMenuBuilder.Append(DialogLineBuilder);
 	}
+
+	//Dialog Sequemce Node
+	if (bAllowDialogSequence)
+	{
+		FCategorizedGraphActionListBuilder DialogSequenceBuilder(TEXT("Dialog Sequence"));
+
+		UClass* DialogSequenceEdNodeClass = UDialogBuilderEdNode_DialogSequence::StaticClass();
+		UClass* DialogSequenceNodeClass = UDialogBuilderNode_DialogSequence::StaticClass();
+
+		TSharedPtr<FAssetSchemaAction_DialogSystem_NewNode> AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(DialogSequenceBuilder, FText::GetEmpty(), LOCTEXT("DialogSystemGraphNodeAction", "Add Dialog Sequence..."), LOCTEXT("DialogSystemGraphNodeTooltip", "Create Dialog Sequence Node."));
+		UDialogBuilderEdNode* OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, DialogSequenceEdNodeClass);
+		FGraphNodeClassData DialogLineClassData = FGraphNodeClassData(DialogSequenceNodeClass, "DialogSequenceClassData");
+		OpNode->ClassData = DialogLineClassData;
+		AddOpAction->NodeTemplate = OpNode;
+		OpNode->NodeInstance = NewObject<UObject>(DialogGraph, DialogSequenceNodeClass);
+		OpNode->NodeInstance->SetFlags(RF_Transactional);
+
+		ContextMenuBuilder.Append(DialogSequenceBuilder);
+	}
 	
 
-
+	//Reroute Node
 	FCategorizedGraphActionListBuilder RerouteNodeBuilder(TEXT("Reroute Node"));
 	if (bAllowRerouteNode)
 	{
@@ -468,6 +491,7 @@ const FPinConnectionResponse UEdGraphSchema_DialogBuilder::CanCreateConnection(c
 
 	const bool bNodeAHasNoChild = A && A->LinkedTo.IsEmpty();
 	const bool bNodeAIsDialogLine = Cast<UDialogBuilderEdNode_DialogLine>(A->GetOwningNode()) || Cast<UDialogBuilderEdNode_PlayerLine>(A->GetOwningNode()) ? true : false;
+	const bool bNodeAIsDialogSequence = Cast<UDialogBuilderEdNode_DialogSequence>(A->GetOwningNode()) ? true : false;
 	const bool bNodeAIsRerouteNode = Cast<UDialogBuilderEdNode_RerouteNode>(A->GetOwningNode()) ? true : false;
 	const bool bNodeAIsPlayerOption = Cast<UDialogBuilderEdNode_PlayerChoice>(A->GetOwningNode()) ? true : false;
 	const bool bNodeAChildrenHasDialogLine = A && A->LinkedTo.IsValidIndex(0) && Cast<UDialogBuilderEdNode_DialogLine>(A->LinkedTo[0]->GetOwningNode());
@@ -475,6 +499,7 @@ const FPinConnectionResponse UEdGraphSchema_DialogBuilder::CanCreateConnection(c
 
 	const bool bNodeBHasNoChild = B && B->LinkedTo.IsEmpty();
 	const bool bNodeBIsDialogLine = Cast<UDialogBuilderEdNode_DialogLine>(B->GetOwningNode()) || Cast<UDialogBuilderEdNode_PlayerLine>(B->GetOwningNode()) ? true : false;
+	const bool bNodeBIsDialogSequence = Cast<UDialogBuilderEdNode_DialogSequence>(B->GetOwningNode()) ? true : false;
 	const bool bNodeBIsRerouteNode = Cast<UDialogBuilderEdNode_RerouteNode>(B->GetOwningNode()) ? true : false;
 	const bool bNodeBIsPlayerOption = Cast<UDialogBuilderEdNode_PlayerChoice>(B->GetOwningNode()) ? true : false;
 
@@ -511,12 +536,12 @@ const FPinConnectionResponse UEdGraphSchema_DialogBuilder::CanCreateConnection(c
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Invalid Node Connections"));
 	}
 
-	if ((bNodeAIsDialogLine || bNodeAIsPlayerOption) && bNodeAChildrenHasDialogLine && bNodeBIsPlayerOption)
+	if ((bNodeAIsDialogLine || bNodeAIsDialogSequence || bNodeAIsPlayerOption) && bNodeAChildrenHasDialogLine && bNodeBIsPlayerOption)
 	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Invalid Node Connections, Only the same type children node can make connections"));
 	}
 
-	if ((bNodeAIsDialogLine || bNodeAIsPlayerOption) && bNodeAChildrenHasPlayerOption && bNodeBIsDialogLine)
+	if ((bNodeAIsDialogLine || bNodeAIsDialogSequence|| bNodeAIsPlayerOption) && bNodeAChildrenHasPlayerOption && bNodeBIsDialogLine)
 	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Invalid Node Connections, Only the same type children node can make connections"));
 	}

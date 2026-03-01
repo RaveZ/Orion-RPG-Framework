@@ -30,6 +30,7 @@ public:
 	FDialogBuilderSequencerApplicationMode(TSharedPtr<class FDialogBuilderEditor> InDialogBuilderEditor);
 
 	virtual void RegisterTabFactories(TSharedPtr<class FTabManager> InTabManager) override;
+	virtual void PreDeactivateMode() override;
 	virtual void PostActivateMode() override;
 
 protected:

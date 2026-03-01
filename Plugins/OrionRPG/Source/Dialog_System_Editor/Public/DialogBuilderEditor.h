@@ -259,10 +259,10 @@ public:
 	bool IsGraphInCurrentDialogGraph(const UEdGraph* InGraph) const;
 
 
-	//viewport
-
+	//scene viewport
 	void SetViewportWorldMode(EDialogViewportWorldMode NewMode);
 	bool IsViewportWorldMode(EDialogViewportWorldMode Mode) const { return ViewportWorldMode == Mode; }
+	void SetDetailsObject(UObject* InObject);
 
 	//Getter
 	TSharedPtr<SMyDialog> GetMyDialogWidget() const { return MyDialogWidget; }
