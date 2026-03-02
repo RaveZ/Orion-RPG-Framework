@@ -181,14 +181,12 @@ void FDialogBuilderSequencerApplicationMode::PreDeactivateMode()
 	check(DialogEditor.IsValid());
 	TSharedPtr<FDialogBuilderEditor> DialogEditorPtr = DialogEditor.Pin();
 
-	//DialogEditorPtr->SaveEditedObjectState();
 }
 
 void FDialogBuilderSequencerApplicationMode::PostActivateMode()
 {
 	check(DialogEditor.IsValid());
 	TSharedPtr<FDialogBuilderEditor> DialogEditorPtr = DialogEditor.Pin();
-	//DialogEditorPtr->RestoreDialogEditor();
 
 	FApplicationMode::PostActivateMode();
 }

@@ -243,7 +243,10 @@ private:
 		}
 
 		// Update details panel in your toolkit
-		Editor->SetDetailsObject(ObjectForDetails);
+		if (TSharedPtr<FDialogBuilderEditor> EditorPinned = Editor.Pin())
+		{
+			EditorPinned->SetDetailsObject(ObjectForDetails);
+		}
 
 		// ------- Selection (drives outline) -------
 		if (GEditor)
@@ -271,7 +274,7 @@ private:
 	}
 
 private:
-	TSharedRef<FDialogBuilderEditor> Editor;
+	TWeakPtr<class FDialogBuilderEditor> Editor;
 	UE::Widget::EWidgetMode WidgetMode = UE::Widget::WM_Translate;
 };
 
