@@ -51,8 +51,8 @@ public:
 	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime);
 	virtual FReply OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent);
 
-	/** Accessor for getting the current selection as a Dialog graph */
-	FAssetSchemaAction_DialogSystemGraph* SelectionAsGraph() const;
+	/** Accessor for getting the current selection as a participant */
+	FAssetSchemaAction_Participant* SelectionAsParticipant() const;
 
 	/** Accessor the blueprint object from the main editor */
 	UDialogBuilderGraph* GetDialogBuilderGraph() const { return DialogBuilderGraph; }
@@ -132,6 +132,9 @@ private:
 	bool CanCopy() const;
 	void OnCut();
 	bool CanCut() const;
+
+	//Participant commands
+	void CreateNewParticipant();
 
 	/** Helper function to delete a graph in the MyBlueprint window */
 	void OnDeleteGraph(UEdGraph* InGraph);

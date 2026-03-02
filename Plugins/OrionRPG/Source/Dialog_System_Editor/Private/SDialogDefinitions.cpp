@@ -85,11 +85,11 @@ void SDialogDefinitions::Construct(const FArguments& InArgs, TWeakPtr<FDialogBui
 
 		ToolbarBuilderWidget = SNullWidget::NullWidget;
 
-		/*CommandList->MapAction(FGenericCommands::Get().Rename,
+		CommandList->MapAction(FGenericCommands::Get().Rename,
 			FExecuteAction::CreateSP(this, &SDialogDefinitions::OnRequestRenameOnActionNode),
-			FCanExecuteAction::CreateSP(this, &SDialogDefinitions::CanRequestRenameOnActionNode));*/
+			FCanExecuteAction::CreateSP(this, &SDialogDefinitions::CanRequestRenameOnActionNode));
 
-		/*CommandList->MapAction(FGenericCommands::Get().Copy,
+		CommandList->MapAction(FGenericCommands::Get().Copy,
 			FExecuteAction::CreateSP(this, &SDialogDefinitions::OnCopy),
 			FCanExecuteAction::CreateSP(this, &SDialogDefinitions::CanCopy));
 
@@ -100,7 +100,7 @@ void SDialogDefinitions::Construct(const FArguments& InArgs, TWeakPtr<FDialogBui
 		CommandList->MapAction(FGenericCommands::Get().Paste,
 			FExecuteAction::CreateSP(this, &SDialogDefinitions::OnPasteGeneric),
 			FCanExecuteAction(), FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &SDialogDefinitions::CanPasteGeneric));*/
+			FIsActionButtonVisible::CreateSP(this, &SDialogDefinitions::CanPasteGeneric));
 
 	}
 	else
@@ -222,9 +222,9 @@ template<class SchemaActionType> SchemaActionType* SelectionAsType(const TShared
 	return Selection;
 }
 
-FAssetSchemaAction_DialogSystemGraph* SDialogDefinitions::SelectionAsGraph() const
+FAssetSchemaAction_Participant* SDialogDefinitions::SelectionAsParticipant() const
 {
-	return SelectionAsType<FAssetSchemaAction_DialogSystemGraph>(GraphActionMenu);
+	return SelectionAsType<FAssetSchemaAction_Participant>(GraphActionMenu);
 }
 void SDialogDefinitions::OnRequestRenameOnActionNode()
 {
@@ -301,18 +301,16 @@ void SDialogDefinitions::CollectAllActions(FGraphActionListBuilderBase& OutAllAc
 
 	if (DialogSystemEditor.IsValid())
 	{
-		// Grab ubergraph pages
-		for (int32 i = 0; i < DialogSystemObj->DialogGraphPages.Num(); i++)
+		// Grab participants
+		for (int32 i = 0; i < DialogSystemObj->Participants.Num(); i++)
 		{
-			UEdGraph* Graph = DialogSystemObj->DialogGraphPages[i];
-			check(Graph);
+			UDialogParticipant* DialogParticipant = DialogSystemObj->Participants[i];
 
-			FGraphDisplayInfo DisplayInfo;
-			Graph->GetSchema()->GetGraphDisplayInformation(*Graph, DisplayInfo);
+			if (!DialogParticipant) continue;
 
-			TSharedPtr<FAssetSchemaAction_DialogSystemGraph> NeUbergraphAction = MakeShareable(new FAssetSchemaAction_DialogSystemGraph(FText::GetEmpty(), DisplayInfo.PlainName, DisplayInfo.Tooltip, 2, DialogSectionID::PARTICIPANTS));
-			NeUbergraphAction->FuncName = Graph->GetFName();
-			NeUbergraphAction->EdGraph = Graph;
+			TSharedPtr<FAssetSchemaAction_Participant> NeUbergraphAction = MakeShareable(new FAssetSchemaAction_Participant(FText::GetEmpty(), FText::GetEmpty(), FText::GetEmpty(), 2, DialogSectionID::PARTICIPANTS));
+			NeUbergraphAction->FuncName = DialogParticipant->GetFName();
+			NeUbergraphAction->Participant = DialogParticipant;
 			OutAllActions.AddAction(NeUbergraphAction);
 		}
 	}
@@ -335,18 +333,16 @@ void SDialogDefinitions::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchema
 	TSharedPtr<FEdGraphSchemaAction> InAction(InActions.Num() > 0 ? InActions[0] : NULL);
 	if (InAction.IsValid())
 	{
-		FAssetSchemaAction_DialogSystemGraph* GraphAction = (FAssetSchemaAction_DialogSystemGraph*)InAction.Get();
-		DialogEditorPtr.Pin()->FocusedEdGraph = GraphAction->EdGraph;
+		FAssetSchemaAction_Participant* GraphAction = (FAssetSchemaAction_Participant*)InAction.Get();
 
-		if (GraphAction->EdGraph)
+		UDialogParticipant* DialogParticipant = GraphAction->Participant;
+		TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
+		if (DialogEditor && DialogParticipant)
 		{
-			TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
+			DialogEditor->PropertyWidget->SetObject(DialogParticipant);
 
-			if (UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(DialogEditor->FocusedEdGraph))
-			{
-				DialogEditor->PropertyWidget->SetObject(DialogGraph->OwningDialog);
-			}
 		}
+		
 	}
 }
 
@@ -374,30 +370,22 @@ void SDialogDefinitions::OnActionDoubleClicked(const TArray<TSharedPtr<FEdGraphS
 void SDialogDefinitions::ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction)
 {
 	// Force it to open in a new document if shift is pressed
-	const bool bIsShiftPressed = FSlateApplication::Get().GetModifierKeys().IsShiftDown();
-	FDocumentTracker::EOpenDocumentCause OpenMode = bIsShiftPressed ? FDocumentTracker::ForceOpenNewDocument : FDocumentTracker::OpenNewDocument;
-
-	UDialogBuilderGraph* DialogSystemObj = DialogEditorPtr.Pin()->GetDialogBuilderGraph();
+	
 	if (InAction.IsValid())
 	{
-		if (InAction->GetTypeId() == FAssetSchemaAction_DialogSystemGraph::StaticGetTypeId())
+		FAssetSchemaAction_Participant* GraphAction = (FAssetSchemaAction_Participant*)InAction.Get();
+
+		UDialogParticipant* DialogParticipant = GraphAction->Participant;
+		TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
+		if (DialogEditor && DialogParticipant)
 		{
-			FAssetSchemaAction_DialogSystemGraph* GraphAction = (FAssetSchemaAction_DialogSystemGraph*)InAction.Get();
-			DialogEditorPtr.Pin()->FocusedEdGraph = GraphAction->EdGraph;
+			DialogEditor->PropertyWidget->SetObject(DialogParticipant);
 
-			if (GraphAction->EdGraph)
-			{
-				DialogEditorPtr.Pin()->JumpToHyperlink(GraphAction->EdGraph);
-
-				TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
-
-				if (UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(DialogEditor->CurrentGraphWidget->GetCurrentGraph()))
-				{
-					DialogEditor->PropertyWidget->SetObject(DialogGraph->OwningDialog);
-				}
-			}
 		}
+
 	}
+
+	
 }
 
 TSharedPtr<SWidget> SDialogDefinitions::OnContextMenuOpening()
@@ -415,12 +403,12 @@ TSharedPtr<SWidget> SDialogDefinitions::OnContextMenuOpening()
 	{
 		MenuBuilder.BeginSection("BasicOperations");
 		{
-			MenuBuilder.AddMenuEntry(FDialogDefinitionsCommands::Get().OpenGraph);
+			/*MenuBuilder.AddMenuEntry(FDialogDefinitionsCommands::Get().OpenGraph);
 			MenuBuilder.AddMenuEntry(FDialogDefinitionsCommands::Get().OpenGraphInNewTab);
 			MenuBuilder.AddMenuEntry(FDialogDefinitionsCommands::Get().OpenExternalGraph);
 			MenuBuilder.AddMenuEntry(FDialogDefinitionsCommands::Get().FocusNode);
-			MenuBuilder.AddMenuEntry(FDialogDefinitionsCommands::Get().FocusNodeInNewTab);
-			MenuBuilder.AddMenuEntry(FGenericCommands::Get().Rename, NAME_None, LOCTEXT("Rename", "Rename"), LOCTEXT("Rename_Tooltip", "Rename Dialog"));
+			MenuBuilder.AddMenuEntry(FDialogDefinitionsCommands::Get().FocusNodeInNewTab);*/
+			MenuBuilder.AddMenuEntry(FGenericCommands::Get().Rename, NAME_None, LOCTEXT("Rename", "Rename"), LOCTEXT("Rename_Tooltip", "Rename Participant"));
 			MenuBuilder.AddMenuEntry(FGenericCommands::Get().Cut);
 			MenuBuilder.AddMenuEntry(FGenericCommands::Get().Copy);
 			MenuBuilder.AddMenuEntry(FGenericCommands::Get().Duplicate);
@@ -428,7 +416,7 @@ TSharedPtr<SWidget> SDialogDefinitions::OnContextMenuOpening()
 		}
 		MenuBuilder.EndSection();
 
-		FAssetSchemaAction_DialogSystemGraph* Graph = SelectionAsGraph();
+		FAssetSchemaAction_Participant* Graph = SelectionAsParticipant();
 
 		//if (Var && BlueprintEditorPtr.IsValid() && FBlueprintEditorUtils::DoesSupportEventGraphs(GetBlueprintObj()))
 		//{
@@ -562,7 +550,8 @@ FReply SDialogDefinitions::OnAddButtonClickedOnSection(int32 InSectionID)
 	switch (InSectionID)
 	{
 	case DialogSectionID::PARTICIPANTS:
-		CommandList->ExecuteAction(FDialogBuilder_EditorCommands::Get().AddNewDialogGraph.ToSharedRef());
+		CreateNewParticipant();
+		//CommandList->ExecuteAction(FDialogBuilder_EditorCommands::Get().AddNewDialogGraph.ToSharedRef());
 		break;
 	case DialogSectionID::PROPS:
 		break;
@@ -609,23 +598,22 @@ void SDialogDefinitions::OnFocusNodeInNewTab()
 }
 void SDialogDefinitions::OnDeleteEntry()
 {
-	if (FAssetSchemaAction_DialogSystemGraph* GraphAction = SelectionAsGraph())
+	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
+	check(DialogGraph);
+
+	if (FAssetSchemaAction_Participant* ParticipantAction = SelectionAsParticipant())
 	{
-		OnDeleteGraph(GraphAction->EdGraph);
+		DialogGraph->Participants.Remove(ParticipantAction->Participant);
+
 	}
 
 	Refresh();
-	//BlueprintEditorPtr.Pin()->GetInspector()->ShowDetailsForObjects(TArray<UObject*>());
 
 }
 
 bool SDialogDefinitions::CanDeleteEntry() const
 {
-	/*if (FAssetSchemaAction_DialogSystemGraph* GraphAction = SelectionAsGraph())
-	{
-		return (GraphAction->EdGraph ? GraphAction->EdGraph->bAllowDeletion : false);
-	}*/
-	return false;
+	return true;
 }
 
 bool SDialogDefinitions::CanRequestRenameOnActionNode() const
@@ -671,6 +659,20 @@ bool SDialogDefinitions::CanCut() const
 	return false;
 }
 
+void SDialogDefinitions::CreateNewParticipant()
+{
+	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
+	if (DialogGraph)
+	{
+		UDialogParticipant* NewParticipant = NewObject<UDialogParticipant>(DialogGraph, NAME_None, RF_Transactional);
+		DialogGraph->Participants.Add(NewParticipant);
+
+		DialogGraph->Modify();
+
+		Refresh();
+	}
+}
+
 void SDialogDefinitions::OnDeleteGraph(UEdGraph* InGraph)
 {
 	if (InGraph && InGraph->bAllowDeletion)
@@ -714,16 +716,6 @@ void SDialogDefinitions::OnDeleteGraph(UEdGraph* InGraph)
 void SDialogDefinitions::OpenGraph(FDocumentTracker::EOpenDocumentCause InCause, bool bOpenExternalGraphInNewEditor)
 {
 	UEdGraph* GraphToOpen = nullptr;
-
-	if (FAssetSchemaAction_DialogSystemGraph* GraphAction = SelectionAsGraph())
-	{
-		GraphToOpen = GraphAction->EdGraph;
-		// If we have no graph then this is an interface event, so focus on the event graph
-		/*if (!GraphToOpen)
-		{
-			GraphToOpen = FDialogBuilderEditorUtils::FindDialogGraph(GetDialogBuilderGraph());
-		}*/
-	}
 
 	if (GraphToOpen)
 	{

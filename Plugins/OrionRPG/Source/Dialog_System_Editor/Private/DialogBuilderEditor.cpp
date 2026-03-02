@@ -309,10 +309,18 @@ static FGuid FindOrAddPossessableForObject(UMovieScene* InMovieScene, const UObj
 
 void FDialogBuilderEditor::EnsurePreviewActorSpawned()
 {
-	if (!PreviewScene.IsValid())
+	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
+	check(DialogGraph);
+	/*if (!PreviewScene.IsValid())
+	{
+		return;
+	}*/
+
+	if (PreviewParticipantActors.Num() == DialogGraph->Participants.Num())
 	{
 		return;
 	}
+
 
 	UWorld* PreviewWorld = PreviewScene->GetWorld();
 	if (!PreviewWorld)
@@ -320,47 +328,47 @@ void FDialogBuilderEditor::EnsurePreviewActorSpawned()
 		return;
 	}
 
-	// If we already spawned one and it is still valid, keep it.
-	if (PreviewActor.IsValid())
+	PreviewParticipantActors.Reserve(DialogGraph->Participants.Num());
+
+	for (int32 i = 0; i < DialogGraph->Participants.Num(); i++)
 	{
-		return;
+		UDialogParticipant* DialogParticipant = DialogGraph->Participants[i];
+		if (DialogParticipant)
+		{
+			TSubclassOf<AActor> ParticipantClass = DialogParticipant->ParticipantInfo.ParticipantToSpawn;
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+			SpawnParams.ObjectFlags |= RF_Transient;
+			AActor* NewActor = PreviewWorld->SpawnActor<AActor>(ParticipantClass, FTransform::Identity, SpawnParams);
+			PreviewParticipantActors[i] = NewActor;
+		}
+
 	}
 
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	SpawnParams.ObjectFlags |= RF_Transient;
 
-	// Pick something visible by default. Replace `AStaticMeshActor` with your own actor class if desired.
-	AStaticMeshActor* NewActor = PreviewWorld->SpawnActor<AStaticMeshActor>(AStaticMeshActor::StaticClass(), FTransform::Identity, SpawnParams);
-	if (!NewActor)
-	{
-		return;
-	}
-
-	NewActor->SetActorLabel(TEXT("DialogPreviewActor"));
 
 	// Make sure it renders.
-	if (UStaticMeshComponent* SMC = NewActor->GetStaticMeshComponent())
-	{
-		SMC->SetMobility(EComponentMobility::Movable);
+	//if (UStaticMeshComponent* SMC = NewActor->GetStaticMeshComponent())
+	//{
+	//	SMC->SetMobility(EComponentMobility::Movable);
 
-		// Optional: assign Engine basic cube so it's visible without extra setup.
-		UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
-		if (CubeMesh)
-		{
-			SMC->SetStaticMesh(CubeMesh);
-		}
-	}
+	//	// Optional: assign Engine basic cube so it's visible without extra setup.
+	//	UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
+	//	if (CubeMesh)
+	//	{
+	//		SMC->SetStaticMesh(CubeMesh);
+	//	}
+	//}
 
-	PreviewActor = NewActor;
+	//PreviewActor = NewActor;
 }
 
 void FDialogBuilderEditor::BindPreviewActorToSequencer()
 {
-	if (!Sequencer.IsValid() || !EditingLevelSequence || !MovieScene)
+	/*if (!Sequencer.IsValid() || !EditingLevelSequence || !MovieScene)
 	{
 		return;
-	}
+	}*/
 
 	EnsurePreviewActorSpawned();
 

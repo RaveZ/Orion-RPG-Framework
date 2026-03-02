@@ -417,6 +417,7 @@ protected:
 
 	TSharedPtr<ISequencer> Sequencer;
 	TWeakObjectPtr<AActor> PreviewActor;
+	TArray<TWeakObjectPtr<AActor>> PreviewParticipantActors;
 
 	/** MovieScene for displaying this scene asset in the sequencer time line. */
 	TObjectPtr<UMovieScene> MovieScene;

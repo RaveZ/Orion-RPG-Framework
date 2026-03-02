@@ -9,6 +9,7 @@
 
 UDialogParticipant::UDialogParticipant()
 {
+	ParticipantInfo.ParticipantSetup = EParticipantSetup::E_SpawnParticipant;
 }
 
 #undef LOCTEXT_NAMESPACE

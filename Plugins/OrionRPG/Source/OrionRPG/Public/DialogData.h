@@ -140,11 +140,17 @@ public:
 	TObjectPtr<UDialogCameraShot> DefaultShot;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog", meta = (NoResetToDefault))
-	FLinearColor NodeColor = FLinearColor(0.3f, 0.3f, 0.3f);
+	FLinearColor NodeColor;
 
 	/**participant initial transforms, used to get participant back in this transfrom when dialog ended*/
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 	FTransform InitialTransform;
 
+public:
+	FParticipantInfo()
+	{
+		ParticipantName = FText::FromString("Participant");
+		NodeColor = FLinearColor(0.3f, 0.3f, 0.3f);
+	}
 };
 

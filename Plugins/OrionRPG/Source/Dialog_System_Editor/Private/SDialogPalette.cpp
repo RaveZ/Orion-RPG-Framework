@@ -155,10 +155,12 @@ FText SDialogPaletteItem::GetDisplayText() const
 	if (MenuDescriptionCache.IsOutOfDate(DialogSchema))
 	{
 		TSharedPtr< FEdGraphSchemaAction > GraphAction = ActionPtr.Pin();
-		FAssetSchemaAction_DialogSystemGraph* DialogGraphAction = (FAssetSchemaAction_DialogSystemGraph*)GraphAction.Get();
-		if (UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(DialogGraphAction->EdGraph))
+		FAssetSchemaAction_Participant* DialogGraphAction = (FAssetSchemaAction_Participant*)GraphAction.Get();
+		if (UDialogParticipant* DialogParticipant = Cast<UDialogParticipant>(DialogGraphAction->Participant))
 		{
-			MenuDescriptionCache.SetCachedText(FText::FromString("Dialog Graph"), DialogSchema);
+			FText ParticipantName = DialogParticipant->ParticipantInfo.ParticipantName;
+			FText FinalParticipantName = ParticipantName.IsEmpty() ? FText::FromString("Participant") : ParticipantName;
+			MenuDescriptionCache.SetCachedText(ParticipantName, DialogSchema);
 		}
 	}
 
@@ -171,7 +173,7 @@ bool SDialogPaletteItem::OnNameTextVerifyChanged(const FText& InNewText, FText& 
 
 	FName OriginalName;
 
-	FAssetSchemaAction_DialogSystemGraph* DialogGraphAction = (FAssetSchemaAction_DialogSystemGraph*)ActionPtr.Pin().Get();
+	FAssetSchemaAction_Participant* DialogGraphAction = (FAssetSchemaAction_Participant*)ActionPtr.Pin().Get();
 	
 
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
@@ -196,7 +198,7 @@ void SDialogPaletteItem::OnNameTextCommitted(const FText& NewText, ETextCommit::
   const FName NewName = *NewNameString;  
   FName OriginalName;  
 
-  FAssetSchemaAction_DialogSystemGraph* DialogGraphAction = (FAssetSchemaAction_DialogSystemGraph*)ActionPtr.Pin().Get();  
+  FAssetSchemaAction_Participant* DialogGraphAction = (FAssetSchemaAction_Participant*)ActionPtr.Pin().Get();  
 
   DialogEditorPtr.Pin()->GetDialogDefinitionsWidget()->Refresh();  
 
