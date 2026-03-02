@@ -198,7 +198,7 @@ void SDialogPaletteItem::OnNameTextCommitted(const FText& NewText, ETextCommit::
 
   FAssetSchemaAction_DialogSystemGraph* DialogGraphAction = (FAssetSchemaAction_DialogSystemGraph*)ActionPtr.Pin().Get();  
 
-  DialogEditorPtr.Pin()->GetMyDialogWidget()->Refresh();  
+  DialogEditorPtr.Pin()->GetDialogDefinitionsWidget()->Refresh();  
 
   DialogEditorPtr.Pin()->GetDialogBuilderGraph()->Modify();  
 }

@@ -922,12 +922,12 @@ void FDialogBuilderEditor::CloseDocumentTab(const UObject* DocumentID)
 
 void FDialogBuilderEditor::RenameNewlyAddedAction(FName InActionName)
 {
-	if (MyDialogWidget.IsValid())
+	if (DialogDefinitionsWidget.IsValid())
 	{
 		// Force a refresh immediately, the item has to be present in the list for the rename redialogs to be successful.
-		MyDialogWidget->Refresh();
-		MyDialogWidget->SelectItemByName(InActionName, ESelectInfo::OnMouseClick);
-		MyDialogWidget->OnRequestRenameOnActionNode();
+		DialogDefinitionsWidget->Refresh();
+		DialogDefinitionsWidget->SelectItemByName(InActionName, ESelectInfo::OnMouseClick);
+		DialogDefinitionsWidget->OnRequestRenameOnActionNode();
 	}
 }
 
@@ -1119,7 +1119,7 @@ void FDialogBuilderEditor::OnGraphEditorFocused(const TSharedRef<class SGraphEdi
 	//FocusInspectorOnGraphSelection(SelectedNodes, /*bForceRefresh=*/ true);
 
 	// During undo, garbage graphs can be temporarily brought into focus, ensure that before a refresh of the MyBlueprint window that the graph is owned by a Blueprint
-	if (CurrentGraphWidget.IsValid() && MyDialogWidget.IsValid())
+	if (CurrentGraphWidget.IsValid() && DialogDefinitionsWidget.IsValid())
 	{
 		// The focused graph can be garbage as well
 		TWeakObjectPtr< UEdGraph > FocusedGraphPtr = CurrentGraphWidget->GetCurrentGraph();
@@ -1131,7 +1131,7 @@ void FDialogBuilderEditor::OnGraphEditorFocused(const TSharedRef<class SGraphEdi
 			{
 				DialogEdGraph->SEditorGraph = CurrentGraphWidget.Get();
 			}
-			MyDialogWidget->Refresh();
+			DialogDefinitionsWidget->Refresh();
 		}
 	}
 
@@ -1251,7 +1251,7 @@ TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_MyDialog(const FSpawnTabArgs
 #endif // #if ENGINE_MAJOR_VERSION < 5
 		.Label(LOCTEXT("MyDialog_Title", "My Dialog"))
 		[
-			MyDialogWidget.ToSharedRef()
+			DialogDefinitionsWidget.ToSharedRef()
 		];
 }
 
@@ -1270,7 +1270,7 @@ void FDialogBuilderEditor::CreateInternalWidgets()
 	PropertyWidget->OnFinishedChangingProperties().AddSP(this, &FDialogBuilderEditor::OnFinishedChangingProperties);
 
 
-	this->MyDialogWidget = SNew(SMyDialog, SharedThis(this));
+	this->DialogDefinitionsWidget = SNew(SMyDialog, SharedThis(this));
 
 	//create viewport
 	if (!PreviewScene.IsValid())
@@ -1363,7 +1363,7 @@ TSharedRef<SWidget> FDialogBuilderEditor::SpawnProperties()
 
 TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogList()
 {
-	return MyDialogWidget.ToSharedRef();
+	return DialogDefinitionsWidget.ToSharedRef();
 }
 
 TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogSequencerTab()

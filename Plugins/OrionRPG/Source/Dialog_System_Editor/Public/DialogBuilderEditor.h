@@ -272,7 +272,7 @@ public:
 	void SetDetailsObject(UObject* InObject);
 
 	//Getter
-	TSharedPtr<SMyDialog> GetMyDialogWidget() const { return MyDialogWidget; }
+	TSharedPtr<SMyDialog> GetDialogDefinitionsWidget() const { return DialogDefinitionsWidget; }
 
 
 	FGraphAppearanceInfo GetGraphAppearance() const;
@@ -402,7 +402,7 @@ protected:
 	FDelegateHandle OnPackageSavedDelegateHandle;
 
 	TSharedPtr<class IDetailsView> EditorSettingsWidget;
-	TSharedPtr<class SMyDialog> MyDialogWidget;
+	TSharedPtr<class SMyDialog> DialogDefinitionsWidget;
 
 	/** The command list for this editor */
 	TSharedPtr<FUICommandList> GraphEditorCommands;
