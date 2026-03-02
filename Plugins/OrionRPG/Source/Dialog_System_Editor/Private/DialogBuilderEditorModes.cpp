@@ -20,7 +20,6 @@ FDialogBuilderEditorApplicationMode::FDialogBuilderEditorApplicationMode(TShared
 	DialogEditor = InDialogBuilderEditor;
 
 	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FDialogEditorDetailsSummoner(InDialogBuilderEditor)));
-	DialogBuilderEditorTabFactories.RegisterFactory(MakeShareable(new FDialogEditorListSummoner(InDialogBuilderEditor)));
 
 
 	TabLayout = FTabManager::NewLayout( "Standalone_DialogEditor_Layout_v2" )
@@ -34,7 +33,7 @@ FDialogBuilderEditorApplicationMode::FDialogBuilderEditorApplicationMode(TShared
 			(
 				FTabManager::NewStack()
 				->SetSizeCoefficient(0.2f)
-				->AddTab(FDialogBuilderEditorTabs::MyDialogDetailID, ETabState::ClosedTab)
+				->AddTab(FDialogBuilderEditorTabs::DialogDefinitionsID, ETabState::ClosedTab)
 			)
 			->Split
 			(
@@ -107,8 +106,9 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 	DialogEditor = InDialogBuilderEditor;
 	
 	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogSequencerTabSummoner(InDialogBuilderEditor)));
-	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogEditorDetailsSummoner(InDialogBuilderEditor)));
 	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogSequencerViewportSummoner(InDialogBuilderEditor)));
+	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogEditorDetailsSummoner(InDialogBuilderEditor)));
+	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new DialogDefinitionsSummoner(InDialogBuilderEditor)));
 	
 
 	TabLayout = FTabManager::NewLayout("Standalone_DialogSequencer_Layout_v2")
@@ -143,15 +143,14 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 					->Split
 					(
 						FTabManager::NewStack()
-						->SetSizeCoefficient(0.7f)
+						->SetSizeCoefficient(0.6f)
 						->AddTab(FDialogBuilderEditorTabs::DialogBuilderPropertyID, ETabState::OpenedTab)
 					)
 					->Split
 					(
 						FTabManager::NewStack()
-						->SetSizeCoefficient(0.3f)
-						->AddTab("Document", ETabState::ClosedTab)
-						->SetHideTabWell(true)
+						->SetSizeCoefficient(0.4f)
+						->AddTab(FDialogBuilderEditorTabs::DialogDefinitionsID, ETabState::OpenedTab)
 					)
 				)
 			)

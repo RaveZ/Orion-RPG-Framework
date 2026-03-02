@@ -1,7 +1,7 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
-#include "SMyDialog.h"
+#include "SDialogDefinitions.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "GraphEditorActions.h"
 #include "SGraphActionMenu.h"
@@ -16,9 +16,9 @@
 #include "SDialogPalette.h"
 
 
-#define LOCTEXT_NAMESPACE "MyDialog"
+#define LOCTEXT_NAMESPACE "DialogDefinitions"
 
-void FMyDialogCommands::RegisterCommands()
+void FDialogDefinitionsCommands::RegisterCommands()
 {
 	UI_COMMAND(OpenGraph, "Open Graph", "Opens up this function, macro, or event graph's graph panel up.", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(OpenGraphInNewTab, "Open in New Tab", "Opens up this function, macro, or event graph's graph panel up in a new tab. Hold down Ctrl and double click for shortcut.", EUserInterfaceActionType::Button, FInputChord());
@@ -29,7 +29,7 @@ void FMyDialogCommands::RegisterCommands()
 }
 
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
-void SMyDialog::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEditor> InDialogEditor, const UDialogBuilderGraph* InDialogSystemGraph)
+void SDialogDefinitions::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEditor> InDialogEditor, const UDialogBuilderGraph* InDialogSystemGraph)
 {
 	bNeedsRefresh = false;
 	bShowReplicatedVariablesOnly = false;
@@ -47,60 +47,60 @@ void SMyDialog::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEdito
 
 		CommandList->Append(InDialogEditor.Pin()->GetToolkitCommands());
 
-		CommandList->MapAction(FMyDialogCommands::Get().OpenGraph,
-			FExecuteAction::CreateSP(this, &SMyDialog::OnOpenGraph),
+		CommandList->MapAction(FDialogDefinitionsCommands::Get().OpenGraph,
+			FExecuteAction::CreateSP(this, &SDialogDefinitions::OnOpenGraph),
 			FCanExecuteAction(), FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &SMyDialog::CanOpenGraph));
+			FIsActionButtonVisible::CreateSP(this, &SDialogDefinitions::CanOpenGraph));
 
-		CommandList->MapAction(FMyDialogCommands::Get().OpenGraphInNewTab,
-			FExecuteAction::CreateSP(this, &SMyDialog::OnOpenGraphInNewTab),
+		CommandList->MapAction(FDialogDefinitionsCommands::Get().OpenGraphInNewTab,
+			FExecuteAction::CreateSP(this, &SDialogDefinitions::OnOpenGraphInNewTab),
 			FCanExecuteAction(), FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &SMyDialog::CanOpenGraph));
+			FIsActionButtonVisible::CreateSP(this, &SDialogDefinitions::CanOpenGraph));
 
-		CommandList->MapAction(FMyDialogCommands::Get().OpenExternalGraph,
-			FExecuteAction::CreateSP(this, &SMyDialog::OnOpenExternalGraph),
+		CommandList->MapAction(FDialogDefinitionsCommands::Get().OpenExternalGraph,
+			FExecuteAction::CreateSP(this, &SDialogDefinitions::OnOpenExternalGraph),
 			FCanExecuteAction(), FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &SMyDialog::CanOpenExternalGraph));
+			FIsActionButtonVisible::CreateSP(this, &SDialogDefinitions::CanOpenExternalGraph));
 
-		CommandList->MapAction(FMyDialogCommands::Get().FocusNode,
-			FExecuteAction::CreateSP(this, &SMyDialog::OnFocusNode),
+		CommandList->MapAction(FDialogDefinitionsCommands::Get().FocusNode,
+			FExecuteAction::CreateSP(this, &SDialogDefinitions::OnFocusNode),
 			FCanExecuteAction(), FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &SMyDialog::CanFocusOnNode));
+			FIsActionButtonVisible::CreateSP(this, &SDialogDefinitions::CanFocusOnNode));
 
-		CommandList->MapAction(FMyDialogCommands::Get().FocusNodeInNewTab,
-			FExecuteAction::CreateSP(this, &SMyDialog::OnFocusNodeInNewTab),
+		CommandList->MapAction(FDialogDefinitionsCommands::Get().FocusNodeInNewTab,
+			FExecuteAction::CreateSP(this, &SDialogDefinitions::OnFocusNodeInNewTab),
 			FCanExecuteAction(), FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &SMyDialog::CanFocusOnNode));
+			FIsActionButtonVisible::CreateSP(this, &SDialogDefinitions::CanFocusOnNode));
 
 
-		CommandList->MapAction(FMyDialogCommands::Get().DeleteEntry,
-			FExecuteAction::CreateSP(this, &SMyDialog::OnDeleteEntry),
-			FCanExecuteAction::CreateSP(this, &SMyDialog::CanDeleteEntry));
+		CommandList->MapAction(FDialogDefinitionsCommands::Get().DeleteEntry,
+			FExecuteAction::CreateSP(this, &SDialogDefinitions::OnDeleteEntry),
+			FCanExecuteAction::CreateSP(this, &SDialogDefinitions::CanDeleteEntry));
 
 		CommandList->MapAction(FGenericCommands::Get().Duplicate,
-			FExecuteAction::CreateSP(this, &SMyDialog::OnDuplicateAction),
-			FCanExecuteAction::CreateSP(this, &SMyDialog::CanDuplicateAction),
+			FExecuteAction::CreateSP(this, &SDialogDefinitions::OnDuplicateAction),
+			FCanExecuteAction::CreateSP(this, &SDialogDefinitions::CanDuplicateAction),
 			FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &SMyDialog::IsDuplicateActionVisible));
+			FIsActionButtonVisible::CreateSP(this, &SDialogDefinitions::IsDuplicateActionVisible));
 
 		ToolbarBuilderWidget = SNullWidget::NullWidget;
 
 		CommandList->MapAction(FGenericCommands::Get().Rename,
-			FExecuteAction::CreateSP(this, &SMyDialog::OnRequestRenameOnActionNode),
-			FCanExecuteAction::CreateSP(this, &SMyDialog::CanRequestRenameOnActionNode));
+			FExecuteAction::CreateSP(this, &SDialogDefinitions::OnRequestRenameOnActionNode),
+			FCanExecuteAction::CreateSP(this, &SDialogDefinitions::CanRequestRenameOnActionNode));
 
 		CommandList->MapAction(FGenericCommands::Get().Copy,
-			FExecuteAction::CreateSP(this, &SMyDialog::OnCopy),
-			FCanExecuteAction::CreateSP(this, &SMyDialog::CanCopy));
+			FExecuteAction::CreateSP(this, &SDialogDefinitions::OnCopy),
+			FCanExecuteAction::CreateSP(this, &SDialogDefinitions::CanCopy));
 
 		CommandList->MapAction(FGenericCommands::Get().Cut,
-			FExecuteAction::CreateSP(this, &SMyDialog::OnCut),
-			FCanExecuteAction::CreateSP(this, &SMyDialog::CanCut));
+			FExecuteAction::CreateSP(this, &SDialogDefinitions::OnCut),
+			FCanExecuteAction::CreateSP(this, &SDialogDefinitions::CanCut));
 
 		CommandList->MapAction(FGenericCommands::Get().Paste,
-			FExecuteAction::CreateSP(this, &SMyDialog::OnPasteGeneric),
+			FExecuteAction::CreateSP(this, &SDialogDefinitions::OnPasteGeneric),
 			FCanExecuteAction(), FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &SMyDialog::CanPasteGeneric));
+			FIsActionButtonVisible::CreateSP(this, &SDialogDefinitions::CanPasteGeneric));
 
 	}
 	else
@@ -113,24 +113,24 @@ void SMyDialog::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEdito
 
 
 	SAssignNew(FilterBox, SSearchBox)
-		.OnTextChanged(this, &SMyDialog::OnFilterTextChanged);
+		.OnTextChanged(this, &SDialogDefinitions::OnFilterTextChanged);
 
 	// create the main action list piece of this widget
 	SAssignNew(GraphActionMenu, SGraphActionMenu, false)
-		.OnGetFilterText(this, &SMyDialog::GetFilterText)
-		.OnCreateWidgetForAction(this, &SMyDialog::OnCreateWidgetForAction)
-		.OnCollectAllActions(this, &SMyDialog::CollectAllActions)
-		.OnCollectStaticSections(this, &SMyDialog::CollectStaticSections)
-		.OnActionDragged(this, &SMyDialog::OnActionDragged)
-		.OnCategoryDragged(this, &SMyDialog::OnCategoryDragged)
-		.OnActionSelected(this, &SMyDialog::OnGlobalActionSelected)
-		.OnActionDoubleClicked(this, &SMyDialog::OnActionDoubleClicked)
-		.OnContextMenuOpening(this, &SMyDialog::OnContextMenuOpening)
-		.OnCategoryTextCommitted(this, &SMyDialog::OnCategoryNameCommitted)
-		.OnCanRenameSelectedAction(this, &SMyDialog::CanRequestRenameOnActionNode)
-		.OnGetSectionTitle(this, &SMyDialog::OnGetSectionTitle)
-		.OnGetSectionWidget(this, &SMyDialog::OnGetSectionWidget)
-		.OnActionMatchesName(this, &SMyDialog::HandleActionMatchesName)
+		.OnGetFilterText(this, &SDialogDefinitions::GetFilterText)
+		.OnCreateWidgetForAction(this, &SDialogDefinitions::OnCreateWidgetForAction)
+		.OnCollectAllActions(this, &SDialogDefinitions::CollectAllActions)
+		.OnCollectStaticSections(this, &SDialogDefinitions::CollectStaticSections)
+		.OnActionDragged(this, &SDialogDefinitions::OnActionDragged)
+		.OnCategoryDragged(this, &SDialogDefinitions::OnCategoryDragged)
+		.OnActionSelected(this, &SDialogDefinitions::OnGlobalActionSelected)
+		.OnActionDoubleClicked(this, &SDialogDefinitions::OnActionDoubleClicked)
+		.OnContextMenuOpening(this, &SDialogDefinitions::OnContextMenuOpening)
+		.OnCategoryTextCommitted(this, &SDialogDefinitions::OnCategoryNameCommitted)
+		.OnCanRenameSelectedAction(this, &SDialogDefinitions::CanRequestRenameOnActionNode)
+		.OnGetSectionTitle(this, &SDialogDefinitions::OnGetSectionTitle)
+		.OnGetSectionWidget(this, &SDialogDefinitions::OnGetSectionWidget)
+		.OnActionMatchesName(this, &SDialogDefinitions::HandleActionMatchesName)
 		.AlphaSortItems(false)
 		.UseSectionStyling(true);
 
@@ -144,7 +144,7 @@ void SMyDialog::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEdito
 				SNew(SBorder)
 					.Padding(4.0f)
 					.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-					.AddMetaData<FTagMetaData>(FTagMetaData(TEXT("MyDialogPanel")))
+					.AddMetaData<FTagMetaData>(FTagMetaData(TEXT("DialogDefinitionsPanel")))
 					[
 						SNew(SVerticalBox)
 
@@ -175,15 +175,15 @@ void SMyDialog::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEdito
 
 	GraphActionMenu->SetSectionExpansion(ExpandedSections);
 
-	FCoreUObjectDelegates::OnObjectPropertyChanged.AddRaw(this, &SMyDialog::OnObjectPropertyChanged);
+	FCoreUObjectDelegates::OnObjectPropertyChanged.AddRaw(this, &SDialogDefinitions::OnObjectPropertyChanged);
 
 }
 
-SMyDialog::~SMyDialog()
+SDialogDefinitions::~SDialogDefinitions()
 {
 	FCoreUObjectDelegates::OnObjectPropertyChanged.RemoveAll(this);
 }
-void SMyDialog::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
+void SDialogDefinitions::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
 	SCompoundWidget::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
 
@@ -193,7 +193,7 @@ void SMyDialog::Tick(const FGeometry& AllottedGeometry, const double InCurrentTi
 	}
 }
 
-FReply SMyDialog::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent)
+FReply SDialogDefinitions::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent)
 {
 	if (CommandList.IsValid() && CommandList->ProcessCommandBindings(InKeyEvent))
 	{
@@ -221,11 +221,11 @@ template<class SchemaActionType> SchemaActionType* SelectionAsType(const TShared
 	return Selection;
 }
 
-FAssetSchemaAction_DialogSystemGraph* SMyDialog::SelectionAsGraph() const
+FAssetSchemaAction_DialogSystemGraph* SDialogDefinitions::SelectionAsGraph() const
 {
 	return SelectionAsType<FAssetSchemaAction_DialogSystemGraph>(GraphActionMenu);
 }
-void SMyDialog::OnRequestRenameOnActionNode()
+void SDialogDefinitions::OnRequestRenameOnActionNode()
 {
 	// Attempt to rename in both menus, only one of them will have anything selected
 	GraphActionMenu->OnRequestRenameOnActionNode();
@@ -234,14 +234,14 @@ void SMyDialog::OnRequestRenameOnActionNode()
 
 	}
 }
-void SMyDialog::OnPasteGeneric()
+void SDialogDefinitions::OnPasteGeneric()
 {
 }
-bool SMyDialog::CanPasteGeneric()
+bool SDialogDefinitions::CanPasteGeneric()
 {
 	return false;
 }
-void SMyDialog::Refresh()
+void SDialogDefinitions::Refresh()
 {
 	bNeedsRefresh = false;
 
@@ -251,12 +251,12 @@ void SMyDialog::Refresh()
 	GraphActionMenu->RefreshAllActions(/*bPreserveExpansion=*/ true);
 }
 
-bool SMyDialog::SelectionIsCategory() const
+bool SDialogDefinitions::SelectionIsCategory() const
 {
 	return !SelectionHasContextMenu();
 }
 
-void SMyDialog::SelectItemByName(const FName& ItemName, ESelectInfo::Type SelectInfo, int32 SectionId, bool bIsCategory)
+void SDialogDefinitions::SelectItemByName(const FName& ItemName, ESelectInfo::Type SelectInfo, int32 SectionId, bool bIsCategory)
 {
 	// Check if the graph action menu is being told to clear
 	if (ItemName == NAME_None)
@@ -278,18 +278,18 @@ void SMyDialog::SelectItemByName(const FName& ItemName, ESelectInfo::Type Select
 	}
 }
 
-void SMyDialog::ClearGraphActionMenuSelection()
+void SDialogDefinitions::ClearGraphActionMenuSelection()
 {
 	GraphActionMenu->SelectItemByName(NAME_None);
 }
 
 
-TSharedRef<SWidget> SMyDialog::OnCreateWidgetForAction(FCreateWidgetForActionData* const InCreateData)
+TSharedRef<SWidget> SDialogDefinitions::OnCreateWidgetForAction(FCreateWidgetForActionData* const InCreateData)
 {
 	return DialogEditorPtr.IsValid() ? SNew(SDialogPaletteItem, InCreateData, DialogEditorPtr.Pin()) : SNew(SDialogPaletteItem, InCreateData, GetDialogBuilderGraph());
 }
 
-void SMyDialog::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
+void SDialogDefinitions::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 {
 	UDialogBuilderGraph* DialogSystemObj = GetDialogBuilderGraph();
 	check(DialogSystemObj);
@@ -316,19 +316,19 @@ void SMyDialog::CollectAllActions(FGraphActionListBuilderBase& OutAllActions)
 		}
 	}
 }
-void SMyDialog::CollectStaticSections(TArray<int32>& StaticSectionIDs)
+void SDialogDefinitions::CollectStaticSections(TArray<int32>& StaticSectionIDs)
 {
 	StaticSectionIDs.Add(DialogSectionID::DIALOGLIST);
 }
-FReply SMyDialog::OnActionDragged(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions, const FPointerEvent& MouseEvent)
+FReply SDialogDefinitions::OnActionDragged(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions, const FPointerEvent& MouseEvent)
 {
 	return FReply::Handled();
 }
-FReply SMyDialog::OnCategoryDragged(const FText& InCategory, const FPointerEvent& MouseEvent)
+FReply SDialogDefinitions::OnCategoryDragged(const FText& InCategory, const FPointerEvent& MouseEvent)
 {
 	return FReply::Handled();
 }
-void SMyDialog::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions)
+void SDialogDefinitions::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions)
 {
 	TSharedPtr<FEdGraphSchemaAction> InAction(InActions.Num() > 0 ? InActions[0] : NULL);
 	if (InAction.IsValid())
@@ -348,7 +348,7 @@ void SMyDialog::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>&
 	}
 }
 
-void SMyDialog::OnGlobalActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions, ESelectInfo::Type InSelectionType)
+void SDialogDefinitions::OnGlobalActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions, ESelectInfo::Type InSelectionType)
 {
 	if (InSelectionType == ESelectInfo::OnMouseClick || InSelectionType == ESelectInfo::OnKeyPress || InSelectionType == ESelectInfo::OnNavigation || InActions.Num() == 0)
 	{
@@ -357,7 +357,7 @@ void SMyDialog::OnGlobalActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAct
 	}
 }
 
-void SMyDialog::OnActionDoubleClicked(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions)
+void SDialogDefinitions::OnActionDoubleClicked(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions)
 {
 	if (!DialogEditorPtr.IsValid())
 	{
@@ -369,7 +369,7 @@ void SMyDialog::OnActionDoubleClicked(const TArray<TSharedPtr<FEdGraphSchemaActi
 
 }
 
-void SMyDialog::ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction)
+void SDialogDefinitions::ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction)
 {
 	// Force it to open in a new document if shift is pressed
 	const bool bIsShiftPressed = FSlateApplication::Get().GetModifierKeys().IsShiftDown();
@@ -398,7 +398,7 @@ void SMyDialog::ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction)
 	}
 }
 
-TSharedPtr<SWidget> SMyDialog::OnContextMenuOpening()
+TSharedPtr<SWidget> SDialogDefinitions::OnContextMenuOpening()
 {
 	if (!DialogEditorPtr.IsValid())
 	{
@@ -413,16 +413,16 @@ TSharedPtr<SWidget> SMyDialog::OnContextMenuOpening()
 	{
 		MenuBuilder.BeginSection("BasicOperations");
 		{
-			MenuBuilder.AddMenuEntry(FMyDialogCommands::Get().OpenGraph);
-			MenuBuilder.AddMenuEntry(FMyDialogCommands::Get().OpenGraphInNewTab);
-			MenuBuilder.AddMenuEntry(FMyDialogCommands::Get().OpenExternalGraph);
-			MenuBuilder.AddMenuEntry(FMyDialogCommands::Get().FocusNode);
-			MenuBuilder.AddMenuEntry(FMyDialogCommands::Get().FocusNodeInNewTab);
+			MenuBuilder.AddMenuEntry(FDialogDefinitionsCommands::Get().OpenGraph);
+			MenuBuilder.AddMenuEntry(FDialogDefinitionsCommands::Get().OpenGraphInNewTab);
+			MenuBuilder.AddMenuEntry(FDialogDefinitionsCommands::Get().OpenExternalGraph);
+			MenuBuilder.AddMenuEntry(FDialogDefinitionsCommands::Get().FocusNode);
+			MenuBuilder.AddMenuEntry(FDialogDefinitionsCommands::Get().FocusNodeInNewTab);
 			MenuBuilder.AddMenuEntry(FGenericCommands::Get().Rename, NAME_None, LOCTEXT("Rename", "Rename"), LOCTEXT("Rename_Tooltip", "Rename Dialog"));
 			MenuBuilder.AddMenuEntry(FGenericCommands::Get().Cut);
 			MenuBuilder.AddMenuEntry(FGenericCommands::Get().Copy);
 			MenuBuilder.AddMenuEntry(FGenericCommands::Get().Duplicate);
-			MenuBuilder.AddMenuEntry(FMyDialogCommands::Get().DeleteEntry);
+			MenuBuilder.AddMenuEntry(FDialogDefinitionsCommands::Get().DeleteEntry);
 		}
 		MenuBuilder.EndSection();
 
@@ -459,7 +459,7 @@ TSharedPtr<SWidget> SMyDialog::OnContextMenuOpening()
 
 	return MenuBuilder.MakeWidget();
 }
-void SMyDialog::BuildAddNewMenu(FMenuBuilder& MenuBuilder)
+void SDialogDefinitions::BuildAddNewMenu(FMenuBuilder& MenuBuilder)
 {
 	MenuBuilder.BeginSection("AddNewItem", LOCTEXT("AddOperations", "Add New"));
 
@@ -470,13 +470,13 @@ void SMyDialog::BuildAddNewMenu(FMenuBuilder& MenuBuilder)
 	}
 	MenuBuilder.EndSection();
 }
-TSharedRef<SWidget> SMyDialog::CreateAddToSectionButton(int32 InSectionID, TWeakPtr<SWidget> WeakRowWidget, FText AddNewText, FName MetaDataTag)
+TSharedRef<SWidget> SDialogDefinitions::CreateAddToSectionButton(int32 InSectionID, TWeakPtr<SWidget> WeakRowWidget, FText AddNewText, FName MetaDataTag)
 {
 	return
 		SNew(SButton)
 		.ButtonStyle(FAppStyle::Get(), "SimpleButton")
-		.OnClicked(this, &SMyDialog::OnAddButtonClickedOnSection, InSectionID)
-		.IsEnabled(this, &SMyDialog::CanAddNewElementToSection, InSectionID)
+		.OnClicked(this, &SDialogDefinitions::OnAddButtonClickedOnSection, InSectionID)
+		.IsEnabled(this, &SDialogDefinitions::CanAddNewElementToSection, InSectionID)
 		.ContentPadding(FMargin(1, 0))
 		.AddMetaData<FTagMetaData>(FTagMetaData(MetaDataTag))
 		.ToolTipText(AddNewText)
@@ -486,7 +486,7 @@ TSharedRef<SWidget> SMyDialog::CreateAddToSectionButton(int32 InSectionID, TWeak
 				.ColorAndOpacity(FSlateColor::UseForeground())
 		];
 }
-void SMyDialog::OnCategoryNameCommitted(const FText& InNewText, ETextCommit::Type InTextCommit, TWeakPtr<struct FGraphActionNode> InAction)
+void SDialogDefinitions::OnCategoryNameCommitted(const FText& InNewText, ETextCommit::Type InTextCommit, TWeakPtr<struct FGraphActionNode> InAction)
 {
 	// Remove excess whitespace and prevent categories with just spaces
 	FText CategoryName = FText::TrimPrecedingAndTrailing(InNewText);
@@ -504,12 +504,12 @@ void SMyDialog::OnCategoryNameCommitted(const FText& InNewText, ETextCommit::Typ
 		SelectItemByName(FName(*CategoryName.ToString()), ESelectInfo::OnMouseClick, InAction.Pin()->SectionID, true);
 	}
 }
-bool SMyDialog::CanRequestRenameOnActionNode(TWeakPtr<struct FGraphActionNode> InSelectedNode) const
+bool SDialogDefinitions::CanRequestRenameOnActionNode(TWeakPtr<struct FGraphActionNode> InSelectedNode) const
 {
 	return false;
 }
 
-FText SMyDialog::OnGetSectionTitle(int32 InSectionID)
+FText SDialogDefinitions::OnGetSectionTitle(int32 InSectionID)
 {
 	FText SeperatorTitle;
 	/* Setup an appropriate name for the section for this node */
@@ -526,7 +526,7 @@ FText SMyDialog::OnGetSectionTitle(int32 InSectionID)
 	
 	return SeperatorTitle;
 }
-TSharedRef<SWidget> SMyDialog::OnGetSectionWidget(TSharedRef<SWidget> RowWidget, int32 InSectionID)
+TSharedRef<SWidget> SDialogDefinitions::OnGetSectionWidget(TSharedRef<SWidget> RowWidget, int32 InSectionID)
 {
 	TWeakPtr<SWidget> WeakRowWidget = RowWidget;
 
@@ -545,7 +545,7 @@ TSharedRef<SWidget> SMyDialog::OnGetSectionWidget(TSharedRef<SWidget> RowWidget,
 
 	return CreateAddToSectionButton(InSectionID, WeakRowWidget, AddNewText, MetaDataTag);
 }
-FReply SMyDialog::OnAddButtonClickedOnSection(int32 InSectionID)
+FReply SDialogDefinitions::OnAddButtonClickedOnSection(int32 InSectionID)
 {
 	TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
 
@@ -558,46 +558,46 @@ FReply SMyDialog::OnAddButtonClickedOnSection(int32 InSectionID)
 
 	return FReply::Handled();
 }
-bool SMyDialog::CanAddNewElementToSection(int32 InSectionID) const
+bool SDialogDefinitions::CanAddNewElementToSection(int32 InSectionID) const
 {
 	return false;
 	// true if we want to add new graph section
 	//return true;
 }
-bool SMyDialog::HandleActionMatchesName(FEdGraphSchemaAction* InAction, const FName& InName) const
+bool SDialogDefinitions::HandleActionMatchesName(FEdGraphSchemaAction* InAction, const FName& InName) const
 {
 	return false;
 }
-void SMyDialog::OnOpenGraph()
+void SDialogDefinitions::OnOpenGraph()
 {
 	OpenGraph(FDocumentTracker::OpenNewDocument);
 }
-void SMyDialog::OnOpenGraphInNewTab()
+void SDialogDefinitions::OnOpenGraphInNewTab()
 {
 	OpenGraph(FDocumentTracker::ForceOpenNewDocument);
 }
-void SMyDialog::OnOpenExternalGraph()
+void SDialogDefinitions::OnOpenExternalGraph()
 {
 }
-bool SMyDialog::CanOpenGraph() const
+bool SDialogDefinitions::CanOpenGraph() const
 {
 	return true;
 }
-bool SMyDialog::CanOpenExternalGraph() const
+bool SDialogDefinitions::CanOpenExternalGraph() const
 {
 	return false;
 }
-bool SMyDialog::CanFocusOnNode() const
+bool SDialogDefinitions::CanFocusOnNode() const
 {
 	return false;
 }
-void SMyDialog::OnFocusNode()
+void SDialogDefinitions::OnFocusNode()
 {
 }
-void SMyDialog::OnFocusNodeInNewTab()
+void SDialogDefinitions::OnFocusNodeInNewTab()
 {
 }
-void SMyDialog::OnDeleteEntry()
+void SDialogDefinitions::OnDeleteEntry()
 {
 	if (FAssetSchemaAction_DialogSystemGraph* GraphAction = SelectionAsGraph())
 	{
@@ -609,7 +609,7 @@ void SMyDialog::OnDeleteEntry()
 
 }
 
-bool SMyDialog::CanDeleteEntry() const
+bool SDialogDefinitions::CanDeleteEntry() const
 {
 	/*if (FAssetSchemaAction_DialogSystemGraph* GraphAction = SelectionAsGraph())
 	{
@@ -618,7 +618,7 @@ bool SMyDialog::CanDeleteEntry() const
 	return false;
 }
 
-bool SMyDialog::CanRequestRenameOnActionNode() const
+bool SDialogDefinitions::CanRequestRenameOnActionNode() const
 {
 	TArray<TSharedPtr<FEdGraphSchemaAction> > SelectedActions;
 	GraphActionMenu->GetSelectedActions(SelectedActions);
@@ -631,37 +631,37 @@ bool SMyDialog::CanRequestRenameOnActionNode() const
 	return false;
 }
 
-bool SMyDialog::IsDuplicateActionVisible() const
+bool SDialogDefinitions::IsDuplicateActionVisible() const
 {
 	return false;
 }
-bool SMyDialog::CanDuplicateAction() const
+bool SDialogDefinitions::CanDuplicateAction() const
 {
 	return false;
 }
-void SMyDialog::OnDuplicateAction()
+void SDialogDefinitions::OnDuplicateAction()
 {
 }
 
 
 
-void SMyDialog::OnCopy()
+void SDialogDefinitions::OnCopy()
 {
 	
 }
-bool SMyDialog::CanCopy() const
+bool SDialogDefinitions::CanCopy() const
 {
 	return false;
 }
-void SMyDialog::OnCut()
+void SDialogDefinitions::OnCut()
 {
 }
-bool SMyDialog::CanCut() const
+bool SDialogDefinitions::CanCut() const
 {
 	return false;
 }
 
-void SMyDialog::OnDeleteGraph(UEdGraph* InGraph)
+void SDialogDefinitions::OnDeleteGraph(UEdGraph* InGraph)
 {
 	if (InGraph && InGraph->bAllowDeletion)
 	{
@@ -701,7 +701,7 @@ void SMyDialog::OnDeleteGraph(UEdGraph* InGraph)
 	}
 }
 
-void SMyDialog::OpenGraph(FDocumentTracker::EOpenDocumentCause InCause, bool bOpenExternalGraphInNewEditor)
+void SDialogDefinitions::OpenGraph(FDocumentTracker::EOpenDocumentCause InCause, bool bOpenExternalGraphInNewEditor)
 {
 	UEdGraph* GraphToOpen = nullptr;
 
@@ -728,14 +728,14 @@ void SMyDialog::OpenGraph(FDocumentTracker::EOpenDocumentCause InCause, bool bOp
 	}
 }
 
-bool SMyDialog::SelectionHasContextMenu() const
+bool SDialogDefinitions::SelectionHasContextMenu() const
 {
 	TArray<TSharedPtr<FEdGraphSchemaAction> > SelectedActions;
 	GraphActionMenu->GetSelectedActions(SelectedActions);
 	return SelectedActions.Num() > 0;
 }
 
-void SMyDialog::OnObjectPropertyChanged(UObject* InObject, FPropertyChangedEvent& InPropertyChangedEvent)
+void SDialogDefinitions::OnObjectPropertyChanged(UObject* InObject, FPropertyChangedEvent& InPropertyChangedEvent)
 {
 	if (InObject == DialogBuilderGraph && (InPropertyChangedEvent.ChangeType != EPropertyChangeType::ValueSet && InPropertyChangedEvent.ChangeType != EPropertyChangeType::ArrayClear))
 	{
@@ -743,10 +743,10 @@ void SMyDialog::OnObjectPropertyChanged(UObject* InObject, FPropertyChangedEvent
 	}
 }
 
-void SMyDialog::OnFilterTextChanged(const FText& InFilterText)
+void SDialogDefinitions::OnFilterTextChanged(const FText& InFilterText)
 {
 }
-FText SMyDialog::GetFilterText() const
+FText SDialogDefinitions::GetFilterText() const
 {
 	return FText();
 }

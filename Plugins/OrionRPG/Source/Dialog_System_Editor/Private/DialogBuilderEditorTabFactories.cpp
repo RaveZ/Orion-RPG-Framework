@@ -45,27 +45,27 @@ FText FDialogEditorDetailsSummoner::GetTabToolTipText(const FWorkflowTabSpawnInf
 	return LOCTEXT("DialogEditorDetailsTabTooltip", "The dialog editor details tab allows editing of the properties of dialog nodes");
 }
 
-FDialogEditorListSummoner::FDialogEditorListSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr)
-	: FWorkflowTabFactory(FDialogBuilderEditorTabs::MyDialogDetailID, InDialogEditorPtr)
+DialogDefinitionsSummoner::DialogDefinitionsSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr)
+	: FWorkflowTabFactory(FDialogBuilderEditorTabs::DialogDefinitionsID, InDialogEditorPtr)
 	, DialogEditorPtr(InDialogEditorPtr)
 {
-	TabLabel = LOCTEXT("DialogListLabel", "Dialog List");
+	TabLabel = LOCTEXT("DialogDefinitionsLabel", "Dialog Definitions");
 	TabIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "Kismet.Tabs.FindResults");
 
 	bIsSingleton = true;
 
-	ViewMenuDescription = LOCTEXT("DialogListView", "Dialog List");
-	ViewMenuTooltip = LOCTEXT("DialogListView_ToolTip", "Show the dialog list");
+	ViewMenuDescription = LOCTEXT("DialogDefinitionsView", "Dialog Definitions");
+	ViewMenuTooltip = LOCTEXT("DialogDefinitionsView_ToolTip", "Show the dialog Definitions");
 }
 
-TSharedRef<SWidget> FDialogEditorListSummoner::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
+TSharedRef<SWidget> DialogDefinitionsSummoner::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
 {
-	return DialogEditorPtr.Pin()->SpawnDialogList();
+	return DialogEditorPtr.Pin()->SpawnDialogDefinitions();
 }
 
-FText FDialogEditorListSummoner::GetTabToolTipText(const FWorkflowTabSpawnInfo& Info) const
+FText DialogDefinitionsSummoner::GetTabToolTipText(const FWorkflowTabSpawnInfo& Info) const
 {
-	return LOCTEXT("DialogListTabTooltip", "Show the dialog list");
+	return LOCTEXT("DialogDefinitionsTabTooltip", "Show the dialog Definitions");
 }
 
 

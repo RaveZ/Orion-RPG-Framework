@@ -5,7 +5,7 @@
 #include "DialogBuilder_EditorStyle.h"
 #include "SlateOptMacros.h"	
 #include "TutorialMetaData.h"
-#include "SMyDialog.h"
+#include "SDialogDefinitions.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 #include "EdGraphSchema_DialogBuilder.h"
 #include "DialogBuilderEdGraph.h"

@@ -31,7 +31,7 @@
 #include "DialogBuilderEditorUtils.h"
 #include "DialogBuilderFactory.h"
 #include "Kismet2/BlueprintEditorUtils.h"
-#include "SMyDialog.h"
+#include "SDialogDefinitions.h"
 #include "Dialog_System_Editor.h"
 #include "ContentBrowserModule.h"
 #include "ContentBrowserFrontEndFilterExtension.h"
@@ -61,7 +61,7 @@ const FName FDialogBuilderEditor::DialogSequencerMode(TEXT("DialogSequencer"));
 FText FDialogBuilderEditor::DialogEditorModeText(LOCTEXT("DialogEditorMode", "Dialog Editor"));
 FText FDialogBuilderEditor::DialogSequencerModeText(LOCTEXT("DialogSequencerMode", "Dialog Sequencer"));
 
-const FName FDialogBuilderEditorTabs::MyDialogDetailID(TEXT("MyDialogDetail"));
+const FName FDialogBuilderEditorTabs::DialogDefinitionsID(TEXT("DialogDefinitions"));
 const FName FDialogBuilderEditorTabs::DialogBuilderPropertyID(TEXT("DialogBuilderProperty"));
 const FName FDialogBuilderEditorTabs::ViewportID(TEXT("Viewport"));
 const FName FDialogBuilderEditorTabs::DialogBuilderEditorSettingsID(TEXT("DialogBuilderEditorSettings"));
@@ -140,7 +140,7 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 	{
 		FGenericCommands::Register();
 		FGraphEditorCommands::Register();
-		FMyDialogCommands::Register();
+		FDialogDefinitionsCommands::Register();
 		FDialogBuilder_EditorCommands::Register();
 
 		TSharedPtr<FExtender> ToolbarExtender = MakeShareable(new FExtender);
@@ -218,7 +218,7 @@ void FDialogBuilderEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 
 	FAssetEditorToolkit::RegisterTabSpawners(InTabManager);
 
-	InTabManager->RegisterTabSpawner(FDialogBuilderEditorTabs::MyDialogDetailID, FOnSpawnTab::CreateSP(this, &FDialogBuilderEditor::SpawnTab_MyDialog))
+	InTabManager->RegisterTabSpawner(FDialogBuilderEditorTabs::DialogDefinitionsID, FOnSpawnTab::CreateSP(this, &FDialogBuilderEditor::SpawnTab_DialogDefinitions))
 		.SetDisplayName(LOCTEXT("Dialog Details", "My Dialog"))
 		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
@@ -249,7 +249,7 @@ void FDialogBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& 
 {
 	FAssetEditorToolkit::UnregisterTabSpawners(InTabManager);
 
-	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::MyDialogDetailID);
+	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogDefinitionsID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::ViewportID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogBuilderPropertyID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogBuilderEditorSettingsID);
@@ -565,7 +565,7 @@ void FDialogBuilderEditor::RefreshEditors()
 	
 }
 
-void FDialogBuilderEditor::RefreshMyDialog()
+void FDialogBuilderEditor::RefreshDialogDefinitions()
 {
 }
 
@@ -1241,15 +1241,15 @@ TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_EditorSettings(const FSpawnT
 		];
 }
 
-TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_MyDialog(const FSpawnTabArgs& Args)
+TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_DialogDefinitions(const FSpawnTabArgs& Args)
 {
-	check(Args.GetTabId() == FDialogBuilderEditorTabs::MyDialogDetailID);
+	check(Args.GetTabId() == FDialogBuilderEditorTabs::DialogDefinitionsID);
 
 	return SNew(SDockTab)
 #if ENGINE_MAJOR_VERSION < 5
 		.Icon(FAppStyle::GetBrush("LevelEditor.Tabs.Details"))
 #endif // #if ENGINE_MAJOR_VERSION < 5
-		.Label(LOCTEXT("MyDialog_Title", "My Dialog"))
+		.Label(LOCTEXT("DialogDefinitions_Title", "My Dialog"))
 		[
 			DialogDefinitionsWidget.ToSharedRef()
 		];
@@ -1270,7 +1270,7 @@ void FDialogBuilderEditor::CreateInternalWidgets()
 	PropertyWidget->OnFinishedChangingProperties().AddSP(this, &FDialogBuilderEditor::OnFinishedChangingProperties);
 
 
-	this->DialogDefinitionsWidget = SNew(SMyDialog, SharedThis(this));
+	this->DialogDefinitionsWidget = SNew(SDialogDefinitions, SharedThis(this));
 
 	//create viewport
 	if (!PreviewScene.IsValid())
@@ -1361,7 +1361,7 @@ TSharedRef<SWidget> FDialogBuilderEditor::SpawnProperties()
 		];*/
 }
 
-TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogList()
+TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogDefinitions()
 {
 	return DialogDefinitionsWidget.ToSharedRef();
 }

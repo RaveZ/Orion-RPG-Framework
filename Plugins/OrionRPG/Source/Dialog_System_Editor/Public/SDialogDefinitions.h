@@ -14,12 +14,12 @@ class SKismetInspector;
 class SSearchBox;
 struct FGraphActionSort;
 
-class FMyDialogCommands : public TCommands<FMyDialogCommands>
+class FDialogDefinitionsCommands : public TCommands<FDialogDefinitionsCommands>
 {
 public:
 	/** Constructor */
-	FMyDialogCommands()
-		: TCommands<FMyDialogCommands>(TEXT("MyDialog"), NSLOCTEXT("Contexts", "My Dialog", "My Dialog"), NAME_None, FAppStyle::GetAppStyleSetName())
+	FDialogDefinitionsCommands()
+		: TCommands<FDialogDefinitionsCommands>(TEXT("DialogDefinitions"), NSLOCTEXT("Contexts", "My Dialog", "My Dialog"), NAME_None, FAppStyle::GetAppStyleSetName())
 	{
 	}
 
@@ -36,16 +36,16 @@ public:
 };
 
 
-class DIALOG_SYSTEM_EDITOR_API SMyDialog : public SCompoundWidget
+class DIALOG_SYSTEM_EDITOR_API SDialogDefinitions : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SMyDialog)
+	SLATE_BEGIN_ARGS(SDialogDefinitions)
 	{}
 	SLATE_END_ARGS()
 
 	/** Constructs this widget with InArgs */
 	void Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEditor> InDialogEditor, const UDialogBuilderGraph* InDialogSystemGraph = nullptr);
-	~SMyDialog();
+	~SDialogDefinitions();
 
 	/* SWidget interface */
 	virtual void Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime);

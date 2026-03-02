@@ -14,7 +14,7 @@ class FAdvancedPreviewScene;
 class SDialogPreviewViewport;
 class ISequencer;
 class ULevelSequence;
-class SMyDialog;
+class SDialogDefinitions;
 
 namespace DialogSectionID
 {
@@ -35,7 +35,7 @@ enum class EDialogViewportWorldMode : uint8
 struct FDialogBuilderEditorTabs
 {
 	// Tab identifiers
-	static const FName MyDialogDetailID;
+	static const FName DialogDefinitionsID;
 	static const FName DialogBuilderPropertyID;
 	static const FName ViewportID;
 	static const FName DialogBuilderEditorSettingsID;
@@ -65,7 +65,7 @@ public:
 
 	virtual void RefreshEditors() = 0;
 
-	virtual void RefreshMyDialog() = 0;
+	virtual void RefreshDialogDefinitions() = 0;
 
 	virtual void RefreshInspector() = 0;
 
@@ -127,7 +127,7 @@ public:
 	
 	//IDialogEditor
 	virtual void RefreshEditors() override;
-	virtual void RefreshMyDialog();
+	virtual void RefreshDialogDefinitions();
 	virtual void RefreshInspector();
 	virtual void AddToSelection(UEdGraphNode* InNode) override;
 	virtual void JumpToHyperlink(const UObject* ObjectReference, bool bRedialogRename = false) override;
@@ -143,7 +143,7 @@ public:
 	TSharedRef<SWidget> SpawnProperties();
 
 	/** Spawns the dialog list tab*/
-	TSharedRef<SWidget> SpawnDialogList();
+	TSharedRef<SWidget> SpawnDialogDefinitions();
 
 	/** Spawns the dialog list tab*/
 	TSharedRef<SWidget> SpawnDialogSequencerTab();
@@ -272,7 +272,7 @@ public:
 	void SetDetailsObject(UObject* InObject);
 
 	//Getter
-	TSharedPtr<SMyDialog> GetDialogDefinitionsWidget() const { return DialogDefinitionsWidget; }
+	TSharedPtr<SDialogDefinitions> GetDialogDefinitionsWidget() const { return DialogDefinitionsWidget; }
 
 
 	FGraphAppearanceInfo GetGraphAppearance() const;
@@ -292,7 +292,7 @@ protected:
 	TSharedRef<SDockTab> SpawnTab_Viewport(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_Details(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_EditorSettings(const FSpawnTabArgs& Args); 
-	TSharedRef<SDockTab> SpawnTab_MyDialog(const FSpawnTabArgs& Args);
+	TSharedRef<SDockTab> SpawnTab_DialogDefinitions(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_Sequencer(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_SequencerViewport(const FSpawnTabArgs& Args);
 	
@@ -402,7 +402,7 @@ protected:
 	FDelegateHandle OnPackageSavedDelegateHandle;
 
 	TSharedPtr<class IDetailsView> EditorSettingsWidget;
-	TSharedPtr<class SMyDialog> DialogDefinitionsWidget;
+	TSharedPtr<class SDialogDefinitions> DialogDefinitionsWidget;
 
 	/** The command list for this editor */
 	TSharedPtr<FUICommandList> GraphEditorCommands;
