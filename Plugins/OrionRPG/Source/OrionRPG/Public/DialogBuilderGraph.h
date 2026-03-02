@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "Containers/Map.h"
 #include "DialogData.h"
+#include "DialogParticipant.h"
 #include "Camera/PlayerCameraManager.h"
 #include "DialogBuilderGraph.generated.h"
 
@@ -126,6 +127,9 @@ public:
 	/** List of All Visited Node IDs in Sequence*/
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 		TArray<FName> VisitedNodeIDs;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog")
+		TArray<TObjectPtr<class UDialogParticipant>> Participants;
 
 	/** List of all participant Info in this dialog*/
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")

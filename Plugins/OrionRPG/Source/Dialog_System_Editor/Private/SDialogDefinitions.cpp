@@ -85,11 +85,11 @@ void SDialogDefinitions::Construct(const FArguments& InArgs, TWeakPtr<FDialogBui
 
 		ToolbarBuilderWidget = SNullWidget::NullWidget;
 
-		CommandList->MapAction(FGenericCommands::Get().Rename,
+		/*CommandList->MapAction(FGenericCommands::Get().Rename,
 			FExecuteAction::CreateSP(this, &SDialogDefinitions::OnRequestRenameOnActionNode),
-			FCanExecuteAction::CreateSP(this, &SDialogDefinitions::CanRequestRenameOnActionNode));
+			FCanExecuteAction::CreateSP(this, &SDialogDefinitions::CanRequestRenameOnActionNode));*/
 
-		CommandList->MapAction(FGenericCommands::Get().Copy,
+		/*CommandList->MapAction(FGenericCommands::Get().Copy,
 			FExecuteAction::CreateSP(this, &SDialogDefinitions::OnCopy),
 			FCanExecuteAction::CreateSP(this, &SDialogDefinitions::CanCopy));
 
@@ -100,7 +100,7 @@ void SDialogDefinitions::Construct(const FArguments& InArgs, TWeakPtr<FDialogBui
 		CommandList->MapAction(FGenericCommands::Get().Paste,
 			FExecuteAction::CreateSP(this, &SDialogDefinitions::OnPasteGeneric),
 			FCanExecuteAction(), FIsActionChecked(),
-			FIsActionButtonVisible::CreateSP(this, &SDialogDefinitions::CanPasteGeneric));
+			FIsActionButtonVisible::CreateSP(this, &SDialogDefinitions::CanPasteGeneric));*/
 
 	}
 	else
