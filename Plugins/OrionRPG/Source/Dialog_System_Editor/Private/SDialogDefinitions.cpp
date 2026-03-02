@@ -171,7 +171,8 @@ void SDialogDefinitions::Construct(const FArguments& InArgs, TWeakPtr<FDialogBui
 	}
 
 	TMap<int32, bool> ExpandedSections;
-	ExpandedSections.Add(DialogSectionID::DIALOGLIST, true);
+	ExpandedSections.Add(DialogSectionID::PARTICIPANTS, true);
+	ExpandedSections.Add(DialogSectionID::PROPS, true);
 
 	GraphActionMenu->SetSectionExpansion(ExpandedSections);
 
@@ -309,7 +310,7 @@ void SDialogDefinitions::CollectAllActions(FGraphActionListBuilderBase& OutAllAc
 			FGraphDisplayInfo DisplayInfo;
 			Graph->GetSchema()->GetGraphDisplayInformation(*Graph, DisplayInfo);
 
-			TSharedPtr<FAssetSchemaAction_DialogSystemGraph> NeUbergraphAction = MakeShareable(new FAssetSchemaAction_DialogSystemGraph(FText::GetEmpty(), DisplayInfo.PlainName, DisplayInfo.Tooltip, 2, DialogSectionID::DIALOGLIST));
+			TSharedPtr<FAssetSchemaAction_DialogSystemGraph> NeUbergraphAction = MakeShareable(new FAssetSchemaAction_DialogSystemGraph(FText::GetEmpty(), DisplayInfo.PlainName, DisplayInfo.Tooltip, 2, DialogSectionID::PARTICIPANTS));
 			NeUbergraphAction->FuncName = Graph->GetFName();
 			NeUbergraphAction->EdGraph = Graph;
 			OutAllActions.AddAction(NeUbergraphAction);
@@ -318,7 +319,8 @@ void SDialogDefinitions::CollectAllActions(FGraphActionListBuilderBase& OutAllAc
 }
 void SDialogDefinitions::CollectStaticSections(TArray<int32>& StaticSectionIDs)
 {
-	StaticSectionIDs.Add(DialogSectionID::DIALOGLIST);
+	StaticSectionIDs.Add(DialogSectionID::PARTICIPANTS);
+	StaticSectionIDs.Add(DialogSectionID::PROPS);
 }
 FReply SDialogDefinitions::OnActionDragged(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions, const FPointerEvent& MouseEvent)
 {
@@ -515,12 +517,16 @@ FText SDialogDefinitions::OnGetSectionTitle(int32 InSectionID)
 	/* Setup an appropriate name for the section for this node */
 	switch (InSectionID)
 	{
-	case DialogSectionID::DIALOGLIST:
-		SeperatorTitle = NSLOCTEXT("GraphActionNode", "Dialog Graph", "Dialog Graph");
+	case DialogSectionID::PARTICIPANTS:
+		SeperatorTitle = NSLOCTEXT("GraphActionNode", "Participants", "Participants");
 		break; 
-	default:
+	case DialogSectionID::PROPS:
+		SeperatorTitle = NSLOCTEXT("GraphActionNode", "Props", "Props");
+		break;
 	case DialogSectionID::NONE:
 		SeperatorTitle = FText::GetEmpty();
+		break;
+	default:
 		break;
 	}
 	
@@ -535,9 +541,13 @@ TSharedRef<SWidget> SDialogDefinitions::OnGetSectionWidget(TSharedRef<SWidget> R
 
 	switch (InSectionID)
 	{
-	case DialogSectionID::DIALOGLIST:
-		AddNewText = LOCTEXT("AddNewDialogGraph", "New Dialog Graph");
-		MetaDataTag = TEXT("AddNewGraph");
+	case DialogSectionID::PARTICIPANTS:
+		AddNewText = LOCTEXT("AddNewParticipant", "New Dialog Participant");
+		MetaDataTag = TEXT("AddNewParticipant");
+		break;
+	case DialogSectionID::PROPS:
+		AddNewText = LOCTEXT("AddNewProps", "New Props");
+		MetaDataTag = TEXT("AddNewProps");
 		break;
 	default:
 		return SNullWidget::NullWidget;
@@ -551,8 +561,10 @@ FReply SDialogDefinitions::OnAddButtonClickedOnSection(int32 InSectionID)
 
 	switch (InSectionID)
 	{
-	case DialogSectionID::DIALOGLIST:
+	case DialogSectionID::PARTICIPANTS:
 		CommandList->ExecuteAction(FDialogBuilder_EditorCommands::Get().AddNewDialogGraph.ToSharedRef());
+		break;
+	case DialogSectionID::PROPS:
 		break;
 	}
 
@@ -560,9 +572,7 @@ FReply SDialogDefinitions::OnAddButtonClickedOnSection(int32 InSectionID)
 }
 bool SDialogDefinitions::CanAddNewElementToSection(int32 InSectionID) const
 {
-	return false;
-	// true if we want to add new graph section
-	//return true;
+	return true;
 }
 bool SDialogDefinitions::HandleActionMatchesName(FEdGraphSchemaAction* InAction, const FName& InName) const
 {

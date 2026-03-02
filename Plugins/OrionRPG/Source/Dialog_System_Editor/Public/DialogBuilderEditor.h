@@ -21,7 +21,9 @@ namespace DialogSectionID
 	enum Type
 	{
 		NONE = 0,
-		DIALOGLIST,	// Dialog Graph
+		PARTICIPANTS,	// Participants
+		PROPS,			// Props actor 
+		LIGHTS,			// Lights
 		//Add More to populate the section
 	};
 };
