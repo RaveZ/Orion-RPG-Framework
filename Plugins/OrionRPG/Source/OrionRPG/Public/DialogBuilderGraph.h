@@ -6,7 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "Containers/Map.h"
 #include "DialogData.h"
-#include "DialogParticipant.h"
+#include "DialogDefinition.h"
 #include "Camera/PlayerCameraManager.h"
 #include "DialogBuilderGraph.generated.h"
 

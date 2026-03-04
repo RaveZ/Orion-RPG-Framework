@@ -117,6 +117,7 @@ public:
 	// End of FEditorUndoClient
 
 	// FAssetEditorToolkit
+	virtual const FSlateBrush* GetDefaultTabIcon() const override;
 	virtual FName GetToolkitFName() const override;
 	virtual FText GetBaseToolkitName() const override;
 	virtual FText GetToolkitName() const override;
@@ -266,7 +267,7 @@ public:
 	void EnsureSequencerCreated();
 	UObject* GetPlaybackContext() const;
 	void BindPreviewActorToSequencer();
-	void EnsurePreviewActorSpawned();
+	void UpdateDialogDefinitions();
 
 	//scene viewport
 	void SetViewportWorldMode(EDialogViewportWorldMode NewMode);

@@ -206,6 +206,8 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 
 	RegenerateMenusAndToolbars();
 	RebuildDialogBuilderGraphPages();
+
+	UpdateDialogDefinitions();
 }
 
 
@@ -307,60 +309,50 @@ static FGuid FindOrAddPossessableForObject(UMovieScene* InMovieScene, const UObj
 	return InMovieScene->AddPossessable(TargetName, InObject->GetClass());
 }
 
-void FDialogBuilderEditor::EnsurePreviewActorSpawned()
+void FDialogBuilderEditor::UpdateDialogDefinitions()
 {
 	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
 	check(DialogGraph);
-	/*if (!PreviewScene.IsValid())
-	{
-		return;
-	}*/
-
-	if (PreviewParticipantActors.Num() == DialogGraph->Participants.Num())
-	{
-		return;
-	}
-
 
 	UWorld* PreviewWorld = PreviewScene->GetWorld();
-	if (!PreviewWorld)
-	{
-		return;
-	}
+	if (!PreviewWorld) return;
 
-	PreviewParticipantActors.Reserve(DialogGraph->Participants.Num());
+	PreviewParticipantActors.SetNumZeroed(DialogGraph->Participants.Num());
 
-	for (int32 i = 0; i < DialogGraph->Participants.Num(); i++)
+	for (int32 i = 0; i < DialogGraph->Participants.Num(); ++i)
 	{
 		UDialogParticipant* DialogParticipant = DialogGraph->Participants[i];
-		if (DialogParticipant)
+		if (!DialogParticipant)
 		{
-			TSubclassOf<AActor> ParticipantClass = DialogParticipant->ParticipantInfo.ParticipantToSpawn;
-			FActorSpawnParameters SpawnParams;
-			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-			SpawnParams.ObjectFlags |= RF_Transient;
-			AActor* NewActor = PreviewWorld->SpawnActor<AActor>(ParticipantClass, FTransform::Identity, SpawnParams);
-			PreviewParticipantActors[i] = NewActor;
+			continue;
 		}
 
+		const FParticipantInfo& ParticipantInfo = DialogParticipant->ParticipantInfo;
+		TSubclassOf<AActor> ParticipantClass = ParticipantInfo.ParticipantToSpawn;
+
+		if (!ParticipantClass)
+		{
+			if (PreviewParticipantActors[i].IsValid())
+			{
+				PreviewParticipantActors[i]->Destroy();
+				PreviewParticipantActors[i] = nullptr;
+			}
+			continue;
+		}
+
+		if (PreviewParticipantActors[i].IsValid() && PreviewParticipantActors[i]->IsA(ParticipantClass))
+		{
+			PreviewParticipantActors[i]->SetActorTransform(ParticipantInfo.ParticipantTransform);
+			continue;
+		}
+
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		SpawnParams.ObjectFlags |= RF_Transient;
+
+		AActor* NewActor = PreviewWorld->SpawnActor<AActor>(ParticipantClass, ParticipantInfo.ParticipantTransform, SpawnParams);
+		PreviewParticipantActors[i] = NewActor;
 	}
-
-
-
-	// Make sure it renders.
-	//if (UStaticMeshComponent* SMC = NewActor->GetStaticMeshComponent())
-	//{
-	//	SMC->SetMobility(EComponentMobility::Movable);
-
-	//	// Optional: assign Engine basic cube so it's visible without extra setup.
-	//	UStaticMesh* CubeMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube"));
-	//	if (CubeMesh)
-	//	{
-	//		SMC->SetStaticMesh(CubeMesh);
-	//	}
-	//}
-
-	//PreviewActor = NewActor;
 }
 
 void FDialogBuilderEditor::BindPreviewActorToSequencer()
@@ -370,7 +362,7 @@ void FDialogBuilderEditor::BindPreviewActorToSequencer()
 		return;
 	}*/
 
-	EnsurePreviewActorSpawned();
+	UpdateDialogDefinitions();
 
 	AActor* ActorToBind = PreviewActor.Get();
 	if (!ActorToBind)
@@ -520,6 +512,11 @@ FGraphPanelSelectionSet FDialogBuilderEditor::GetSelectedNodes() const
 	return CurrentSelection;
 }
 
+const FSlateBrush* FDialogBuilderEditor::GetDefaultTabIcon() const
+{
+	return FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.DialogNode");
+}
+
 FName FDialogBuilderEditor::GetToolkitFName() const
 {
 	return FName("FDialogGraphEditor");
@@ -538,7 +535,7 @@ FText FDialogBuilderEditor::GetToolkitName() const
 	FFormatNamedArguments Args;
 	Args.Add(TEXT("DialogGraphName"), FText::FromString(EditingDialogGraph->GetName()));
 	Args.Add(TEXT("DirtyState"), bDirtyState ? FText::FromString(TEXT("*")) : FText::GetEmpty());
-	return FText::Format(LOCTEXT("DialogGraphEditorToolkitName", "{DialogGraphName}{DirtyState}"), Args);
+	return FText::Format(LOCTEXT("DialogGraphEditorToolkitName", "{DialogGraphName}"), Args);
 }
 
 FText FDialogBuilderEditor::GetToolkitToolTipText() const
@@ -548,7 +545,7 @@ FText FDialogBuilderEditor::GetToolkitToolTipText() const
 
 FLinearColor FDialogBuilderEditor::GetWorldCentricTabColorScale() const
 {
-	return FLinearColor::Blue;
+	return FLinearColor::White;
 }
 
 FString FDialogBuilderEditor::GetWorldCentricTabPrefix() const
@@ -632,9 +629,18 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		InitParams.RootSequence = EditingLevelSequence;
 		InitParams.bEditWithinLevelEditor = false;
 		InitParams.PlaybackContext.Bind(this, &FDialogBuilderEditor::GetPlaybackContext);
+
+		InitParams.HostCapabilities.bSupportsCurveEditor = true;
+		InitParams.HostCapabilities.bSupportsSaveMovieSceneAsset = true;
+		InitParams.HostCapabilities.bSupportsRecording = true;
+		InitParams.HostCapabilities.bSupportsRenderMovie = true;
+		InitParams.HostCapabilities.bSupportsAddFromContentBrowser = true;
+		InitParams.HostCapabilities.bSupportsSidebar = true;
+		InitParams.HostCapabilities.bSupportsViewportSelectability = true;
 	}
 
 	Sequencer = SequencerModule.CreateSequencer(InitParams);
+
 	BindPreviewActorToSequencer();
 }
 

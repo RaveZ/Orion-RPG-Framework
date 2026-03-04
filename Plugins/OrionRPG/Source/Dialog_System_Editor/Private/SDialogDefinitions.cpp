@@ -551,7 +551,6 @@ FReply SDialogDefinitions::OnAddButtonClickedOnSection(int32 InSectionID)
 	{
 	case DialogSectionID::PARTICIPANTS:
 		CreateNewParticipant();
-		//CommandList->ExecuteAction(FDialogBuilder_EditorCommands::Get().AddNewDialogGraph.ToSharedRef());
 		break;
 	case DialogSectionID::PROPS:
 		break;
