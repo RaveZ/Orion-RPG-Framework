@@ -226,6 +226,10 @@ FAssetSchemaAction_Participant* SDialogDefinitions::SelectionAsParticipant() con
 {
 	return SelectionAsType<FAssetSchemaAction_Participant>(GraphActionMenu);
 }
+FAssetSchemaAction_Prop* SDialogDefinitions::SelectionAsProp() const
+{
+	return SelectionAsType<FAssetSchemaAction_Prop>(GraphActionMenu);
+}
 void SDialogDefinitions::OnRequestRenameOnActionNode()
 {
 	// Attempt to rename in both menus, only one of them will have anything selected
@@ -313,6 +317,17 @@ void SDialogDefinitions::CollectAllActions(FGraphActionListBuilderBase& OutAllAc
 			NeUbergraphAction->Participant = DialogParticipant;
 			OutAllActions.AddAction(NeUbergraphAction);
 		}
+
+		//Grab props
+		for (int32 i = 0; i < DialogSystemObj->Props.Num(); i++)
+		{
+			UDialogProp* DialogProp = DialogSystemObj->Props[i];
+			if (!DialogProp) continue;
+			TSharedPtr<FAssetSchemaAction_Prop> NeUbergraphAction = MakeShareable(new FAssetSchemaAction_Prop(FText::GetEmpty(), FText::GetEmpty(), FText::GetEmpty(), 2, DialogSectionID::PROPS));
+			NeUbergraphAction->FuncName = DialogProp->GetFName();
+			NeUbergraphAction->Prop = DialogProp;
+			OutAllActions.AddAction(NeUbergraphAction);
+		}
 	}
 }
 void SDialogDefinitions::CollectStaticSections(TArray<int32>& StaticSectionIDs)
@@ -330,17 +345,26 @@ FReply SDialogDefinitions::OnCategoryDragged(const FText& InCategory, const FPoi
 }
 void SDialogDefinitions::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions)
 {
+	TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
 	TSharedPtr<FEdGraphSchemaAction> InAction(InActions.Num() > 0 ? InActions[0] : NULL);
 	if (InAction.IsValid())
 	{
-		FAssetSchemaAction_Participant* GraphAction = (FAssetSchemaAction_Participant*)InAction.Get();
+		//Participant
+		FAssetSchemaAction_Participant* ParticipantAction = (FAssetSchemaAction_Participant*)InAction.Get();
 
-		UDialogParticipant* DialogParticipant = GraphAction->Participant;
-		TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
+		UDialogParticipant* DialogParticipant = ParticipantAction->Participant;
 		if (DialogEditor && DialogParticipant)
 		{
 			DialogEditor->PropertyWidget->SetObject(DialogParticipant);
+		}
+		
+		//Prop
+		FAssetSchemaAction_Prop* PropAction = (FAssetSchemaAction_Prop*)InAction.Get();
 
+		UDialogProp* DialogProp = PropAction->Prop;
+		if (DialogEditor && DialogProp)
+		{
+			DialogEditor->PropertyWidget->SetObject(DialogProp);
 		}
 		
 	}
@@ -351,7 +375,6 @@ void SDialogDefinitions::OnGlobalActionSelected(const TArray<TSharedPtr<FEdGraph
 	if (InSelectionType == ESelectInfo::OnMouseClick || InSelectionType == ESelectInfo::OnKeyPress || InSelectionType == ESelectInfo::OnNavigation || InActions.Num() == 0)
 	{
 		OnActionSelected(InActions);
-
 	}
 }
 
@@ -369,23 +392,29 @@ void SDialogDefinitions::OnActionDoubleClicked(const TArray<TSharedPtr<FEdGraphS
 
 void SDialogDefinitions::ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction)
 {
-	// Force it to open in a new document if shift is pressed
+	TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
 	
 	if (InAction.IsValid())
 	{
-		FAssetSchemaAction_Participant* GraphAction = (FAssetSchemaAction_Participant*)InAction.Get();
+		//Participant
+		FAssetSchemaAction_Participant* ParticipantAction = (FAssetSchemaAction_Participant*)InAction.Get();
 
-		UDialogParticipant* DialogParticipant = GraphAction->Participant;
-		TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
+		UDialogParticipant* DialogParticipant = ParticipantAction->Participant;
 		if (DialogEditor && DialogParticipant)
 		{
 			DialogEditor->PropertyWidget->SetObject(DialogParticipant);
+		}
 
+		//Prop
+		FAssetSchemaAction_Prop* PropAction = (FAssetSchemaAction_Prop*)InAction.Get();
+
+		UDialogProp* DialogProp = PropAction->Prop;
+		if (DialogEditor && DialogProp)
+		{
+			DialogEditor->PropertyWidget->SetObject(DialogProp);
 		}
 
 	}
-
-	
 }
 
 TSharedPtr<SWidget> SDialogDefinitions::OnContextMenuOpening()
@@ -451,7 +480,7 @@ TSharedPtr<SWidget> SDialogDefinitions::OnContextMenuOpening()
 }
 void SDialogDefinitions::BuildAddNewMenu(FMenuBuilder& MenuBuilder)
 {
-	MenuBuilder.BeginSection("AddNewItem", LOCTEXT("AddOperations", "Add New"));
+	MenuBuilder.BeginSection("AddNew", LOCTEXT("AddOperations", "Add New"));
 
 	if (UDialogBuilderGraph* CurrentBlueprint = GetDialogBuilderGraph())
 	{
@@ -553,6 +582,7 @@ FReply SDialogDefinitions::OnAddButtonClickedOnSection(int32 InSectionID)
 		CreateNewParticipant();
 		break;
 	case DialogSectionID::PROPS:
+		CreateNewProp();
 		break;
 	}
 
@@ -603,6 +633,12 @@ void SDialogDefinitions::OnDeleteEntry()
 	if (FAssetSchemaAction_Participant* ParticipantAction = SelectionAsParticipant())
 	{
 		DialogGraph->Participants.Remove(ParticipantAction->Participant);
+
+	}
+
+	if (FAssetSchemaAction_Prop* PropAction = SelectionAsProp())
+	{
+		DialogGraph->Props.Remove(PropAction->Prop);
 
 	}
 
@@ -665,6 +701,20 @@ void SDialogDefinitions::CreateNewParticipant()
 	{
 		UDialogParticipant* NewParticipant = NewObject<UDialogParticipant>(DialogGraph, NAME_None, RF_Transactional);
 		DialogGraph->Participants.Add(NewParticipant);
+
+		DialogGraph->Modify();
+
+		Refresh();
+	}
+}
+
+void SDialogDefinitions::CreateNewProp()
+{
+	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
+	if (DialogGraph)
+	{
+		UDialogProp* NewProp = NewObject<UDialogProp>(DialogGraph, NAME_None, RF_Transactional);
+		DialogGraph->Props.Add(NewProp);
 
 		DialogGraph->Modify();
 

@@ -54,6 +54,9 @@ public:
 	/** Accessor for getting the current selection as a participant */
 	FAssetSchemaAction_Participant* SelectionAsParticipant() const;
 
+	/** Accessor for getting the current selection as a prop */
+	FAssetSchemaAction_Prop* SelectionAsProp() const;
+
 	/** Accessor the blueprint object from the main editor */
 	UDialogBuilderGraph* GetDialogBuilderGraph() const { return DialogBuilderGraph; }
 
@@ -133,8 +136,11 @@ private:
 	void OnCut();
 	bool CanCut() const;
 
-	//Participant commands
+	//Create new participant definition
 	void CreateNewParticipant();
+
+	//Create new prop definition
+	void CreateNewProp();
 
 	/** Helper function to delete a graph in the MyBlueprint window */
 	void OnDeleteGraph(UEdGraph* InGraph);

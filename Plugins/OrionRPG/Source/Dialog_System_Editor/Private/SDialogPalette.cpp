@@ -46,7 +46,7 @@ void SDialogPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForAct
 	DialogEditorPtr = InDialogEditor;
 
 	// construct the icon widget
-	FSlateBrush const* IconBrush = FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.Dialog");
+	FSlateBrush const* IconBrush = GetPaletteIconBrushForAction(GraphAction);
 	FSlateBrush const* SecondaryBrush = FAppStyle::GetBrush(TEXT("NoBrush"));
 	FSlateColor        IconColor = FSlateColor::UseForeground();
 	FSlateColor        SecondaryIconColor = FSlateColor::UseForeground();
@@ -95,9 +95,35 @@ void SDialogPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForAct
 		];
 
 }
+
+
+
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
 
+const FSlateBrush* SDialogPaletteItem::GetPaletteIconBrushForAction(const TSharedPtr<FEdGraphSchemaAction>& Action)
+{
+	if (!Action.IsValid())
+	{
+		return FAppStyle::GetBrush(TEXT("NoBrush"));
+	}
+
+	// Preferred: use SectionID (since you asked “per section”)
+	switch (Action->GetSectionID())
+	{
+	case DialogSectionID::PARTICIPANTS:
+		return FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.Dialog.Participant");
+
+	case DialogSectionID::PROPS:
+		return FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.Dialog.Prop");
+
+	default:
+		break;
+	}
+
+	// Fallback
+	return FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.Dialog");
+}
 
 void SDialogPaletteItem::OnDragEnter(const FGeometry& MyGeometry, const FDragDropEvent& DragDropEvent)
 {

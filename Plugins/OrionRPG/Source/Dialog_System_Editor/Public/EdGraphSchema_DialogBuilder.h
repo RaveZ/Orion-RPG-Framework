@@ -133,6 +133,37 @@ struct DIALOG_SYSTEM_EDITOR_API FAssetSchemaAction_Participant : public FEdGraph
 	{}
 };
 
+/** Reference to a  dialog prop (only used in 'docked' palette) */
+USTRUCT()
+struct DIALOG_SYSTEM_EDITOR_API FAssetSchemaAction_Prop : public FEdGraphSchemaAction
+{
+	GENERATED_USTRUCT_BODY()
+
+	// Simple type info
+	static FName StaticGetTypeId() { static FName Type("FAssetSchemaAction_Prop"); return Type; }
+	virtual FName GetTypeId() const override { return StaticGetTypeId(); }
+
+	/** Name of function or class */
+	FName FuncName;
+
+
+	/** The associated participant for this chema action*/
+	class UDialogProp* Prop;
+
+
+
+	FAssetSchemaAction_Prop()
+		: FEdGraphSchemaAction()
+	{
+	}
+
+	FAssetSchemaAction_Prop(FText InNodeCategory, FText InMenuDesc, FText InToolTip, const int32 InGrouping, const int32 InSectionID = 0)
+		: FEdGraphSchemaAction(MoveTemp(InNodeCategory), MoveTemp(InMenuDesc), MoveTemp(InToolTip), InGrouping, FText(), InSectionID)
+		, Prop(nullptr)
+	{
+	}
+};
+
 /** Action to add a subnode to the selected node */
 USTRUCT()
 struct DIALOG_SYSTEM_EDITOR_API FAssetSchemaAction_DialogSystem_NewSubNode : public FEdGraphSchemaAction

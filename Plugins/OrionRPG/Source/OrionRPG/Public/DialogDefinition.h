@@ -31,12 +31,12 @@ public:
 };
 
 UCLASS(Blueprintable, BlueprintType)
-class ORIONRPG_API UDialogProps : public UDialogDefinition
+class ORIONRPG_API UDialogProp : public UDialogDefinition
 {
 	GENERATED_BODY()
 
 public:
-	UDialogParticipant();
+	UDialogProp();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog")
 	FParticipantInfo ParticipantInfo;

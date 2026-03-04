@@ -48,6 +48,8 @@ TSharedRef< FSlateStyleSet > FDialogBuilder_EditorStyle::Create()
 	//Thumbnails and icons
 	Style->Set(FName(TEXT("ClassThumbnail.Dialog")), new IMAGE_BRUSH("Dialog", Icon64x64));
 	Style->Set(FName(TEXT("ClassIcon.Dialog")), new IMAGE_BRUSH("Dialog", Icon40x40));
+	Style->Set(FName(TEXT("ClassIcon.Dialog.Participant")), new IMAGE_BRUSH("ParticipantIcon", Icon20x20));
+	Style->Set(FName(TEXT("ClassIcon.Dialog.Prop")), new IMAGE_BRUSH("PropIcon", Icon20x20));
 	Style->Set(FName(TEXT("ClassIcon.DialogNode")), new IMAGE_BRUSH("DialogNode", Icon20x20));
 	return Style;
 }

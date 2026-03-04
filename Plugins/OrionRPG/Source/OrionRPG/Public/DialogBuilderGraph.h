@@ -128,8 +128,14 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 		TArray<FName> VisitedNodeIDs;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog")
+	/*------------------------Dialog Sequence------------------------*/
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 		TArray<TObjectPtr<class UDialogParticipant>> Participants;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
+		TArray<TObjectPtr<class UDialogProp>> Props;
+
+	/*------------------------End Dialog Sequence------------------------*/
 
 	/** List of all participant Info in this dialog*/
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
