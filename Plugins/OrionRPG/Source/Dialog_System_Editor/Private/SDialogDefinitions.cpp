@@ -4,6 +4,7 @@
 #include "SDialogDefinitions.h"
 #include "Framework/Commands/GenericCommands.h"
 #include "GraphEditorActions.h"
+#include "ScopedTransaction.h"
 #include "SGraphActionMenu.h"
 #include "GraphActionNode.h"
 #include "SGraphPalette.h"
@@ -585,7 +586,6 @@ FReply SDialogDefinitions::OnAddButtonClickedOnSection(int32 InSectionID)
 		CreateNewProp();
 		break;
 	}
-
 	return FReply::Handled();
 }
 bool SDialogDefinitions::CanAddNewElementToSection(int32 InSectionID) const
@@ -630,16 +630,22 @@ void SDialogDefinitions::OnDeleteEntry()
 	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
 	check(DialogGraph);
 
+	const FScopedTransaction Transaction(LOCTEXT("RemoveDefinition", "Remove Definition"));
+	DialogGraph->Modify();
+
 	if (FAssetSchemaAction_Participant* ParticipantAction = SelectionAsParticipant())
 	{
-		DialogGraph->Participants.Remove(ParticipantAction->Participant);
+		if (DialogEditorPtr.IsValid())
+		{
+			DialogEditorPtr.Pin()->OnParticipantRemoved(ParticipantAction->Participant);
+		}
 
+		DialogGraph->Participants.Remove(ParticipantAction->Participant);
 	}
 
 	if (FAssetSchemaAction_Prop* PropAction = SelectionAsProp())
 	{
 		DialogGraph->Props.Remove(PropAction->Prop);
-
 	}
 
 	Refresh();
@@ -697,15 +703,23 @@ bool SDialogDefinitions::CanCut() const
 void SDialogDefinitions::CreateNewParticipant()
 {
 	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
-	if (DialogGraph)
+	if (!DialogGraph)
 	{
-		UDialogParticipant* NewParticipant = NewObject<UDialogParticipant>(DialogGraph, NAME_None, RF_Transactional);
-		DialogGraph->Participants.Add(NewParticipant);
-
-		DialogGraph->Modify();
-
-		Refresh();
+		return;
 	}
+
+	const FScopedTransaction Transaction(LOCTEXT("AddParticipant", "Add Participant"));
+	DialogGraph->Modify();
+
+	UDialogParticipant* NewParticipant = NewObject<UDialogParticipant>(DialogGraph, NAME_None, RF_Transactional);
+	DialogGraph->Participants.Add(NewParticipant);
+
+	if (DialogEditorPtr.IsValid())
+	{
+		DialogEditorPtr.Pin()->OnParticipantAdded(NewParticipant);
+	}
+
+	Refresh();
 }
 
 void SDialogDefinitions::CreateNewProp()

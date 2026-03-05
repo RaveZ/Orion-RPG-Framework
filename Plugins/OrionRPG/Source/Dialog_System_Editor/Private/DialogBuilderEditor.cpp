@@ -8,6 +8,7 @@
 #include "DialogBuilderEdGraph.h"
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderEditorModes.h"
+#include "DialogDefinition.h"
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderNode_DialogSequence.h"
 #include "Decorator/OrionDecorator.h"
@@ -40,8 +41,14 @@
 #include "WorkflowOrientedApp/WorkflowCentricApplication.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Widgets/Notifications/SNotificationList.h"
+#include "Misc/LevelSequenceEditorSpawnRegister.h"
+#include "Misc/LevelSequencePlaybackContext.h"
 #include "ISequencer.h"
 #include "ISequencerModule.h"
+#include "MovieScene.h"
+#include "MovieSceneTrack.h"
+#include "MovieSceneSignedObject.h"
+#include "Tracks/MovieSceneSkeletalAnimationTrack.h"
 #include "LevelSequence.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/SNullWidget.h"
@@ -309,41 +316,172 @@ static FGuid FindOrAddPossessableForObject(UMovieScene* InMovieScene, const UObj
 	return InMovieScene->AddPossessable(TargetName, InObject->GetClass());
 }
 
+void FDialogBuilderEditor::OnParticipantAdded(UDialogParticipant* Participant)
+{
+	if (!Participant || !EditingLevelSequence)
+	{
+		return;
+	}
+
+	EnsureSequencerCreated();
+	UpdateDialogDefinitions();
+
+	if (Sequencer.IsValid())
+	{
+		Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
+	}
+}
+
+void FDialogBuilderEditor::OnParticipantRemoved(UDialogParticipant* Participant)
+{
+	if (!Participant || !EditingLevelSequence)
+	{
+		return;
+	}
+
+	EnsureSequencerCreated();
+	RemoveParticipantRequiredTrack(Participant);
+
+	if (Sequencer.IsValid())
+	{
+		Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
+	}
+}
+void FDialogBuilderEditor::EnsureParticipantRequiredTrack(UDialogParticipant* Participant)
+{
+	UMovieScene* MovieScene = EditingLevelSequence ? EditingLevelSequence->GetMovieScene() : nullptr;
+	if (!MovieScene || !Participant)
+	{
+		return;
+	}
+
+
+	AActor* ParticipantActor = ParticipantTracks.FindRef(Participant).Get();
+
+	if (!ParticipantActor)
+	{
+		return;
+	}
+	
+
+	// Create/find a binding for the actor
+	const FGuid BindingGuid = FindOrAddPossessableForObject(MovieScene, ParticipantActor);
+	if (!BindingGuid.IsValid())
+	{
+		return;
+	}
+
+	EditingLevelSequence->BindPossessableObject(BindingGuid, *ParticipantActor, ParticipantActor->GetWorld());
+
+	// Add the track under the binding (instead of AddMasterTrack)
+	UMovieSceneSkeletalAnimationTrack* AnimTrack = MovieScene->AddTrack<UMovieSceneSkeletalAnimationTrack>(BindingGuid);
+	if (!AnimTrack)
+	{
+		return;
+	}
+
+	AnimTrack->Modify();
+	AnimTrack->SetDisplayName(FText::FromString(Participant->GetName()));
+
+	if (AnimTrack->GetAllSections().Num() == 0)
+	{
+		if (UMovieSceneSection* NewSection = AnimTrack->CreateNewSection())
+		{
+			AnimTrack->AddSection(*NewSection);
+		}
+	}
+}
+
+void FDialogBuilderEditor::RemoveParticipantRequiredTrack(UDialogParticipant* Participant)
+{
+	UMovieScene* MovieScene = EditingLevelSequence ? EditingLevelSequence->GetMovieScene() : nullptr;
+	if (!MovieScene || !Participant)
+	{
+		return;
+	}
+	AActor* ParticipantActor = ParticipantTracks.FindRef(Participant).Get();
+
+	if (!ParticipantActor)
+	{
+		return;
+	}
+
+	// Create/find a binding for the actor
+	const FGuid BindingGuid = FindOrAddPossessableForObject(MovieScene, ParticipantActor);
+	if (!BindingGuid.IsValid())
+	{
+		return;
+	}
+
+	TArray<UMovieSceneTrack*> TracksToRemove = MovieScene->FindTracks(UMovieSceneTrack::StaticClass(), BindingGuid);
+
+	for (UMovieSceneTrack* Track : TracksToRemove)
+	{
+		Track->Modify();
+		MovieScene->Modify();
+		MovieScene->RemoveTrack(*Track);
+		break;
+	}
+}
+
 void FDialogBuilderEditor::UpdateDialogDefinitions()
 {
 	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
 	check(DialogGraph);
 
-	UWorld* PreviewWorld = PreviewScene->GetWorld();
-	if (!PreviewWorld) return;
-
-	PreviewParticipantActors.SetNumZeroed(DialogGraph->Participants.Num());
-
-	for (int32 i = 0; i < DialogGraph->Participants.Num(); ++i)
+	if (!PreviewScene.IsValid())
 	{
-		UDialogParticipant* DialogParticipant = DialogGraph->Participants[i];
+		return;
+	}
+
+	UWorld* PreviewWorld = PreviewScene->GetWorld();
+	if (!PreviewWorld)
+	{
+		return;
+	}
+
+	// Use ParticipantTracks as the single source of truth for spawned preview actors.
+	// This allows removing PreviewParticipantActors completely.
+	for (UDialogParticipant* DialogParticipant : DialogGraph->Participants)
+	{
 		if (!DialogParticipant)
 		{
 			continue;
 		}
 
 		const FParticipantInfo& ParticipantInfo = DialogParticipant->ParticipantInfo;
-		TSubclassOf<AActor> ParticipantClass = ParticipantInfo.ParticipantToSpawn;
+		const TSubclassOf<AActor> ParticipantClass = ParticipantInfo.ParticipantToSpawn;
 
+		AActor* ExistingActor = nullptr;
+		if (TWeakObjectPtr<AActor>* ExistingActorPtr = ParticipantTracks.Find(DialogParticipant))
+		{
+			ExistingActor = ExistingActorPtr->Get();
+		}
+
+		// If participant has no class assigned, destroy any existing preview actor and remove the track entry.
 		if (!ParticipantClass)
 		{
-			if (PreviewParticipantActors[i].IsValid())
+			if (ExistingActor)
 			{
-				PreviewParticipantActors[i]->Destroy();
-				PreviewParticipantActors[i] = nullptr;
+				ExistingActor->Destroy();
 			}
+
+			ParticipantTracks.Remove(DialogParticipant);
 			continue;
 		}
 
-		if (PreviewParticipantActors[i].IsValid() && PreviewParticipantActors[i]->IsA(ParticipantClass))
+		// Reuse existing actor if it matches the desired class; otherwise respawn.
+		if (ExistingActor && ExistingActor->IsA(ParticipantClass))
 		{
-			PreviewParticipantActors[i]->SetActorTransform(ParticipantInfo.ParticipantTransform);
+			ExistingActor->SetActorTransform(ParticipantInfo.ParticipantTransform);
+			EnsureParticipantRequiredTrack(DialogParticipant);
 			continue;
+		}
+
+		if (ExistingActor)
+		{
+			ExistingActor->Destroy();
+			ExistingActor = nullptr;
 		}
 
 		FActorSpawnParameters SpawnParams;
@@ -351,7 +489,25 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 		SpawnParams.ObjectFlags |= RF_Transient;
 
 		AActor* NewActor = PreviewWorld->SpawnActor<AActor>(ParticipantClass, ParticipantInfo.ParticipantTransform, SpawnParams);
-		PreviewParticipantActors[i] = NewActor;
+		if (NewActor)
+		{
+			ParticipantTracks.Add(DialogParticipant, NewActor);
+			EnsureParticipantRequiredTrack(DialogParticipant);
+		}
+	}
+
+	// Cleanup: remove entries for participants that no longer exist in the dialog graph.
+	for (auto It = ParticipantTracks.CreateIterator(); It; ++It)
+	{
+		const UDialogParticipant* ParticipantKey = It.Key();
+		if (!ParticipantKey || !DialogGraph->Participants.Contains(const_cast<UDialogParticipant*>(ParticipantKey)))
+		{
+			if (AActor* Actor = It.Value().Get())
+			{
+				Actor->Destroy();
+			}
+			It.RemoveCurrent();
+		}
 	}
 }
 
@@ -601,6 +757,53 @@ void FDialogBuilderEditor::OpenSequencerForSequence(ULevelSequence* InSequence)
 
 }
 
+
+void FDialogBuilderEditor::ExtendSequencerToolbar(FName InToolMenuName)
+{
+	FToolMenuOwnerScoped OwnerScoped(this);
+
+	UToolMenu* ToolMenu = UToolMenus::Get()->ExtendMenu(InToolMenuName);
+
+	const FToolMenuInsert SectionInsertLocation("BaseCommands", EToolMenuInsertType::Before);
+
+	{
+		ToolMenu->AddDynamicSection("LevelSequenceEditorDynamic", FNewToolMenuDelegate::CreateLambda([](UToolMenu* InMenu)
+			{
+				UDialogSequenceEditorMenuContext* DialogSequenceEditorMenuContext = InMenu->FindContext<UDialogSequenceEditorMenuContext>();
+				if (DialogSequenceEditorMenuContext && DialogSequenceEditorMenuContext->DialogEditor.IsValid())
+				{
+					const FName SequencerToolbarStyleName = "SequencerToolbar";
+
+					FToolMenuEntry PlaybackContextEntry = FToolMenuEntry::InitWidget(
+						"PlaybackContext",
+						DialogSequenceEditorMenuContext->DialogEditor.Pin()->PlaybackContext->BuildWorldPickerCombo(),
+						LOCTEXT("PlaybackContext", "PlaybackContext")
+					);
+					PlaybackContextEntry.StyleNameOverride = SequencerToolbarStyleName;
+
+					FToolMenuSection& Section = InMenu->AddSection("LevelSequenceEditor");
+					Section.AddEntry(PlaybackContextEntry);
+				}
+			}), SectionInsertLocation);
+	}
+}
+
+
+void FDialogBuilderEditor::OnSequencerReceivedFocus()
+{
+	if (Sequencer.IsValid())
+	{
+		//FLevelEditorSequencerIntegration::Get().OnSequencerReceivedFocus(Sequencer.ToSharedRef());
+	}
+}
+
+void FDialogBuilderEditor::OnInitToolMenuContext(FToolMenuContext& MenuContext)
+{
+	UDialogSequenceEditorMenuContext* DialogSequenceEditorMenuContext = NewObject<UDialogSequenceEditorMenuContext>();
+	DialogSequenceEditorMenuContext->DialogEditor = SharedThis(this);
+	MenuContext.AddObject(DialogSequenceEditorMenuContext);
+}
+
 void FDialogBuilderEditor::EnsureSequencerCreated()
 {
 	if (Sequencer.IsValid())
@@ -612,23 +815,34 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 	{
 		return;
 	}
+
+	PlaybackContext = MakeShared<FLevelSequencePlaybackContext>(EditingLevelSequence);
+	TSharedRef<FLevelSequenceEditorSpawnRegister> SpawnRegister = MakeShareable(new FLevelSequenceEditorSpawnRegister);
 	
 	ISequencerModule& SequencerModule = FModuleManager::LoadModuleChecked<ISequencerModule>("Sequencer");
 	
-	FSequencerViewParams ViewParams(TEXT("DialogSequenceSettings"));
+	FSequencerViewParams ViewParams(TEXT("DialogSequenceSetting"));
 	{
 		ViewParams.UniqueName = "DialogSequenceEditor";
-		//ViewParams.OnGetAddMenuContent = OnGetSequencerAddMenuContent;
-		//ViewParams.OnGetPlaybackSpeeds = ISequencer::FOnGetPlaybackSpeeds::CreateRaw(this, &FContextualAnimViewModel::GetPlaybackSpeeds);
+		ViewParams.ScrubberStyle = ESequencerScrubberStyle::FrameBlock;
+		ViewParams.OnReceivedFocus.BindRaw(this, &FDialogBuilderEditor::OnSequencerReceivedFocus);
+		ViewParams.OnInitToolMenuContext.BindRaw(this, &FDialogBuilderEditor::OnInitToolMenuContext);
 	}
+
 
 	FSequencerInitParams InitParams;
 	{
-		InitParams.ViewParams = ViewParams;
-		InitParams.ToolkitHost = GetToolkitHost();
 		InitParams.RootSequence = EditingLevelSequence;
 		InitParams.bEditWithinLevelEditor = false;
-		InitParams.PlaybackContext.Bind(this, &FDialogBuilderEditor::GetPlaybackContext);
+		InitParams.ToolkitHost = GetToolkitHost();
+		InitParams.SpawnRegister = SpawnRegister;
+
+
+		InitParams.EventContexts.Bind(PlaybackContext.ToSharedRef(), &FLevelSequencePlaybackContext::GetEventContexts);
+		InitParams.PlaybackContext.Bind(PlaybackContext.ToSharedRef(), &FLevelSequencePlaybackContext::GetPlaybackContextAsObject);
+		InitParams.PlaybackClient.Bind(PlaybackContext.ToSharedRef(), &FLevelSequencePlaybackContext::GetPlaybackClientAsInterface);
+
+		InitParams.ViewParams = ViewParams;
 
 		InitParams.HostCapabilities.bSupportsCurveEditor = true;
 		InitParams.HostCapabilities.bSupportsSaveMovieSceneAsset = true;
@@ -638,6 +852,8 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		InitParams.HostCapabilities.bSupportsSidebar = true;
 		InitParams.HostCapabilities.bSupportsViewportSelectability = true;
 	}
+
+	ExtendSequencerToolbar("DialogSequence.MainToolbar");
 
 	Sequencer = SequencerModule.CreateSequencer(InitParams);
 

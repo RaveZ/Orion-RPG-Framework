@@ -160,7 +160,7 @@ TSharedRef<SWidget> SDialogPaletteItem::CreateTextSlotWidget(FCreateWidgetForAct
 			SAssignNew(EditableTextElement, SInlineEditableTextBlock)
 				.Text(this, &SDialogPaletteItem::GetDisplayText)
 				.Style(FAppStyle::Get(), "Graph.StateNode.NodeTitleInlineEditableText")
-				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 11.5f))
+				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 9.5f))
 				.HighlightText(InCreateData->HighlightText)
 				.ToolTip(ToolTipWidget)
 				.OnVerifyTextChanged(OnVerifyTextChanged)

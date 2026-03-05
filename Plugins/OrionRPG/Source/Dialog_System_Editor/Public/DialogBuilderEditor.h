@@ -4,17 +4,21 @@
 
 #include "CoreMinimal.h"
 #include "DialogBuilderSetting.h"
+#include "UObject/Package.h"
 #include "SSubobjectEditor.h"
 #include "Dialog_System_Editor.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
 #include "DialogBuilderGraph.h"
 #include "Templates/SharedPointer.h"
 
+#include "DialogBuilderEditor.generated.h"
+
 class FAdvancedPreviewScene;
 class SDialogPreviewViewport;
 class ISequencer;
 class ULevelSequence;
 class SDialogDefinitions;
+class UDialogParticipant;
 
 namespace DialogSectionID
 {
@@ -44,6 +48,16 @@ struct FDialogBuilderEditorTabs
 	static const FName DialogSequencerTabID;
 	static const FName DialogSequencerViewportID;
 
+};
+
+
+
+UCLASS()
+class UDialogSequenceEditorMenuContext : public UObject
+{
+	GENERATED_BODY()
+public:
+	TWeakPtr<class FDialogBuilderEditor> DialogEditor;
 };
 
 
@@ -264,10 +278,24 @@ public:
 
 	//Sequencer
 	void OpenSequencerForSequence(ULevelSequence* InSequence);
+	void ExtendSequencerToolbar(FName InToolMenuName);
 	void EnsureSequencerCreated();
 	UObject* GetPlaybackContext() const;
 	void BindPreviewActorToSequencer();
+
+	/** Called whenever sequencer has received focus */
+	void OnSequencerReceivedFocus();
+
+	/** Called whenever sequencer in initializing tool menu context */
+	void OnInitToolMenuContext(FToolMenuContext& MenuContext);
+
+	//DialogDefinitions
 	void UpdateDialogDefinitions();
+
+	void OnParticipantAdded(UDialogParticipant* Participant);
+	void OnParticipantRemoved(UDialogParticipant* Participant);
+	void EnsureParticipantRequiredTrack(UDialogParticipant* Participant);
+	void RemoveParticipantRequiredTrack(UDialogParticipant* Participant);
 
 	//scene viewport
 	void SetViewportWorldMode(EDialogViewportWorldMode NewMode);
@@ -410,19 +438,23 @@ protected:
 	/** The command list for this editor */
 	TSharedPtr<FUICommandList> GraphEditorCommands;
 
-
+	//Viewport
 	EDialogViewportWorldMode ViewportWorldMode = EDialogViewportWorldMode::PreviewScene;
 
 	TSharedPtr<FAdvancedPreviewScene> PreviewScene;
 	TSharedPtr<SDialogPreviewViewport> SequencerViewportWidget;
 
+	
+	//sequencer
 	TSharedPtr<ISequencer> Sequencer;
 	TWeakObjectPtr<AActor> PreviewActor;
-	TArray<TWeakObjectPtr<AActor>> PreviewParticipantActors;
+	TMap<UDialogParticipant*, TWeakObjectPtr<AActor>> ParticipantTracks;
 
 	/** MovieScene for displaying this scene asset in the sequencer time line. */
-	TObjectPtr<UMovieScene> MovieScene;
 	TObjectPtr<ULevelSequence> EditingLevelSequence = nullptr;
+
+	/** Instance of a class used for managing the playback context for a level sequence. */
+	TSharedPtr<class FLevelSequencePlaybackContext> PlaybackContext;
 
 public:
 	/** Modes in mode switcher */
