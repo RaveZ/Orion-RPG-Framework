@@ -47,19 +47,6 @@ public:
 	}
 
 
-	void SetUseLevelWorld(bool bUseLevelWorld)
-	{
-		if (bUseLevelWorld)
-		{
-			UWorld* World = GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
-			//SetWorld(World);
-		}
-		else
-		{
-			// When not using the level, keep rendering the preview scene world.
-			//SetWorld(nullptr);
-		}
-	}
 	virtual bool InputKey(const FInputKeyEventArgs& EventArgs) override
 	{
 		const bool bHandled = FEditorViewportClient::InputKey(EventArgs);
@@ -278,6 +265,29 @@ private:
 	UE::Widget::EWidgetMode WidgetMode = UE::Widget::WM_Translate;
 };
 
+class FDialogLevelViewportClient final : public FEditorViewportClient
+{
+public:
+	FDialogLevelViewportClient(const TSharedRef<SEditorViewport>& InViewport, const TSharedRef<FDialogBuilderEditor>& InEditor)
+		: FEditorViewportClient(nullptr, nullptr, InViewport)
+		, Editor(InEditor)
+	{
+		ViewportType = LVT_Perspective;
+		SetRealtime(true);
+		bSetListenerPosition = false;
+	}
+
+	virtual UWorld* GetWorld() const override
+	{
+		return GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+	}
+
+
+
+private:
+	TWeakPtr<FDialogBuilderEditor> Editor;
+};
+
 //------------------ SDialogPreviewViewport ------------------
 
 void SDialogPreviewViewport::Construct(const FArguments& InArgs, TSharedRef<FDialogBuilderEditor> InEditor, TSharedRef<FAdvancedPreviewScene> InPreviewScene)
@@ -292,146 +302,134 @@ void SDialogPreviewViewport::Construct(const FArguments& InArgs, TSharedRef<FDia
 
 TSharedRef<FEditorViewportClient> SDialogPreviewViewport::MakeEditorViewportClient()
 {
-	TSharedRef<FDialogEditorViewportClient> VClient =
-		MakeShared<FDialogEditorViewportClient>(PreviewScene.ToSharedRef(), SharedThis(this), Editor.Pin().ToSharedRef());
-	ViewportClient = VClient;
-	VClient->SetUseLevelWorld(bUseLevelWorld);
+	TSharedRef<FEditorViewportClient> VClient =
+		bUseLevelWorld
+		? StaticCastSharedRef<FEditorViewportClient>(MakeShared<FDialogLevelViewportClient>(SharedThis(this), Editor.Pin().ToSharedRef()))
+		: StaticCastSharedRef<FEditorViewportClient>(MakeShared<FDialogEditorViewportClient>(PreviewScene.ToSharedRef(), SharedThis(this), Editor.Pin().ToSharedRef()));
+
 	return VClient;
 }
 
 void SDialogPreviewViewport::SetUseLevelWorld(bool bInUseLevelWorld)
 {
+	if (bUseLevelWorld == bInUseLevelWorld)
+	{
+		return;
+	}
+
 	bUseLevelWorld = bInUseLevelWorld;
 
-	if (ViewportClient.IsValid())
+
+	// Close viewport
+	if (Client.IsValid())
 	{
-		static_cast<FDialogEditorViewportClient*>(ViewportClient.Get())->SetUseLevelWorld(bUseLevelWorld);
-		ViewportClient->Invalidate();
+		Client->Viewport = NULL;
 	}
+
+	// Release our reference to the viewport client
+	Client.Reset();
+
+	check(SceneViewport.IsUnique());
+
+	// This might be removed once ITF viewport interactions become the default, and legacy ones are removed/deactivated - responds to dedicated CVar
+	//UE::Editor::ViewportInteractions::OnEditorViewportInteractionsActivated().RemoveAll(this);
+
+	// Rebuild the viewport so MakeEditorViewportClient() is called again.
+	SEditorViewport::Construct(SEditorViewport::FArguments());
+
+
 }
 
 TSharedPtr<SWidget> SDialogPreviewViewport::BuildViewportToolbar()
 {
-	const FName ViewportToolbarName = "DialogSequencer.ViewportToolbar";
+	//const FName ViewportToolbarName = "DialogSequencer.ViewportToolbar";
 
-	if (!UToolMenus::Get()->IsMenuRegistered(ViewportToolbarName))
-	{
-		UToolMenu* const ViewportToolbarMenu = UToolMenus::Get()->RegisterMenu(
-			ViewportToolbarName, NAME_None /* parent */, EMultiBoxType::SlimHorizontalToolBar
-		);
+	//if (!UToolMenus::Get()->IsMenuRegistered(ViewportToolbarName))
+	//{
+	//	UToolMenu* const ViewportToolbarMenu = UToolMenus::Get()->RegisterMenu(
+	//		ViewportToolbarName, NAME_None /* parent */, EMultiBoxType::SlimHorizontalToolBar
+	//	);
 
-		ViewportToolbarMenu->StyleName = "ViewportToolbar";
+	//	ViewportToolbarMenu->StyleName = "ViewportToolbar";
 
-		// Add the left-aligned part of the viewport toolbar.
-		{
-			FToolMenuSection& LeftSection = ViewportToolbarMenu->AddSection("Left");
+	//	// Add the left-aligned part of the viewport toolbar.
+	//	{
+	//		FToolMenuSection& LeftSection = ViewportToolbarMenu->AddSection("Left");
 
-			LeftSection.AddEntry(UE::UnrealEd::CreateTransformsSubmenu());
-			// TODO: Needs specific Select menu for Skel Mesh.
-			LeftSection.AddEntry(UE::UnrealEd::CreateSnappingSubmenu());
-		}
+	//		LeftSection.AddEntry(UE::UnrealEd::CreateTransformsSubmenu());
+	//		LeftSection.AddEntry(UE::UnrealEd::CreateSnappingSubmenu());
+	//	}
 
-		// Add the right-aligned part of the viewport toolbar.
-		{
-			FToolMenuSection& RightSection = ViewportToolbarMenu->AddSection("Right");
-			RightSection.Alignment = EToolMenuSectionAlign::Last;
+	//	// Add the right-aligned part of the viewport toolbar.
+	//	{
+	//		FToolMenuSection& RightSection = ViewportToolbarMenu->AddSection("Right");
+	//		RightSection.Alignment = EToolMenuSectionAlign::Last;
 
-			// Add the "Camera" submenu.
-			{
-				// Build the menu name our Camera menu will be using so we can extend it.
-				RightSection.AddEntry(UE::UnrealEd::CreateCameraSubmenu(UE::UnrealEd::FViewportCameraMenuOptions().ShowAll()));
-				const FName SubmenuName = UToolMenus::JoinMenuPaths(ViewportToolbarName, "Camera");
-				//UE::AnimationEditor::ExtendCameraMenu(SubmenuName);
-			}
+	//		// Add the "Camera" submenu.
+	//		{
+	//			// Build the menu name our Camera menu will be using so we can extend it.
+	//			RightSection.AddEntry(UE::UnrealEd::CreateCameraSubmenu(UE::UnrealEd::FViewportCameraMenuOptions().ShowAll()));
+	//			const FName SubmenuName = UToolMenus::JoinMenuPaths(ViewportToolbarName, "Camera");
+	//		}
 
-			// Add the "View Modes" sub menu.
-			{
-				const FName ViewModesMenuName = "DialogSequencer.ViewportToolbar.ViewModes";
+	//		// Add the "View Modes" sub menu.
+	//		{
+	//			const FName ViewModesMenuName = "DialogSequencer.ViewportToolbar.ViewModes";
 
-				// Stay backward-compatible with the old viewport toolbar.
-				{
-					const FName ParentSubmenuName = "UnrealEd.ViewportToolbar.View";
-					// Create our parent menu.
-					if (!UToolMenus::Get()->IsMenuRegistered(ParentSubmenuName))
-					{
-						UToolMenus::Get()->RegisterMenu(ParentSubmenuName);
-					}
+	//			// Stay backward-compatible with the old viewport toolbar.
+	//			{
+	//				const FName ParentSubmenuName = "UnrealEd.ViewportToolbar.View";
+	//				// Create our parent menu.
+	//				if (!UToolMenus::Get()->IsMenuRegistered(ParentSubmenuName))
+	//				{
+	//					UToolMenus::Get()->RegisterMenu(ParentSubmenuName);
+	//				}
 
-					// Register our ToolMenu here first, before we create the submenu, so we can set our parent.
-					UToolMenus::Get()->RegisterMenu(ViewModesMenuName, ParentSubmenuName);
-				}
+	//				// Register our ToolMenu here first, before we create the submenu, so we can set our parent.
+	//				UToolMenus::Get()->RegisterMenu(ViewModesMenuName, ParentSubmenuName);
+	//			}
 
-				//UE::AnimationEditor::ExtendViewModesSubmenu(ViewModesMenuName);
 
-				RightSection.AddEntry(UE::UnrealEd::CreateViewModesSubmenu());
-			}
+	//			RightSection.AddEntry(UE::UnrealEd::CreateViewModesSubmenu());
+	//		}
 
-			/*RightSection.AddEntry(UE::AnimationEditor::CreateShowSubmenu());
-			RightSection.AddEntry(UE::AnimationEditor::CreateLODSubmenu());
-			RightSection.AddEntry(UE::AnimationEditor::CreateSkinWeightProfileMenu());*/
 
-			// Add Preview Scene Submenu
-			{
-				const FName AssetViewerProfileMenuName = "AnimationEditor.ViewportToolbar.AssetViewerProfile";
-				RightSection.AddEntry(UE::UnrealEd::CreateAssetViewerProfileSubmenu());
-				UE::AdvancedPreviewScene::Menus::ExtendAdvancedPreviewSceneSettings(AssetViewerProfileMenuName);
-				//UE::AnimationEditor::ExtendPreviewSceneSettingsSubmenu(AssetViewerProfileMenuName);
-				UE::UnrealEd::ExtendPreviewSceneSettingsWithTabEntry(AssetViewerProfileMenuName);
-			}
+	//		// Add Preview Scene Submenu
+	//		{
+	//			const FName AssetViewerProfileMenuName = "AnimationEditor.ViewportToolbar.AssetViewerProfile";
+	//			RightSection.AddEntry(UE::UnrealEd::CreateAssetViewerProfileSubmenu());
+	//			UE::AdvancedPreviewScene::Menus::ExtendAdvancedPreviewSceneSettings(AssetViewerProfileMenuName);
+	//			UE::UnrealEd::ExtendPreviewSceneSettingsWithTabEntry(AssetViewerProfileMenuName);
+	//		}
 
-			
-		}
-	}
+	//		
+	//	}
+	//}
 
-	FToolMenuContext ViewportToolbarContext;
-	{
-		/*if (TSharedPtr<IPersonaPreviewScene> PreviewScene = PreviewScenePtr.Pin())
-		{
-			ViewportToolbarContext.AppendCommandList(PreviewScene->GetCommandList());
-		}
+	//FToolMenuContext ViewportToolbarContext;
+	//{
 
-		if (TSharedPtr<SAnimationEditorViewportTabBody> TabBody = TabBodyPtr.Pin())
-		{
-			ViewportToolbarContext.AppendCommandList(TabBody->GetCommandList());
-		}*/
+	//	ViewportToolbarContext.AppendCommandList(GetCommandList());
 
-		ViewportToolbarContext.AppendCommandList(GetCommandList());
+	//
+	//	// Add the UnrealEd viewport toolbar context.
+	//	{
+	//		UUnrealEdViewportToolbarContext* const ContextObject =
+	//			UE::UnrealEd::CreateViewportToolbarDefaultContext(SharedThis(this));
 
-		// Add extenders
-		{
-			//Extenders.Add(UE::AnimationEditor::GetViewModesLegacyExtenders(TabBodyPtr));
-			//ViewportToolbarContext.AddExtender(FExtender::Combine(Extenders));
-		}
+	//		ContextObject->AssetEditorToolkit = AssetEditorToolkitPtr;
+	//		ContextObject->PreviewSettingsTabId = FName("AdvancedPreviewTab");// FPersonaTabs::AdvancedPreviewSceneSettingsID;
 
-		// Add the UnrealEd viewport toolbar context.
-		{
-			UUnrealEdViewportToolbarContext* const ContextObject =
-				UE::UnrealEd::CreateViewportToolbarDefaultContext(SharedThis(this));
+	//		ViewportToolbarContext.AddObject(ContextObject);
+	//	}
 
-			ContextObject->AssetEditorToolkit = AssetEditorToolkitPtr;
-			ContextObject->PreviewSettingsTabId = FName("AdvancedPreviewTab");// FPersonaTabs::AdvancedPreviewSceneSettingsID;
 
-			ViewportToolbarContext.AddObject(ContextObject);
-		}
+	//	AssetEditorToolkitPtr.Pin()->InitToolMenuContext(ViewportToolbarContext);
+	//	
+	//}
 
-		// Add the Anim viewport toolbar context.
-		{
-			//UAnimViewportContext* const ContextObject = NewObject<UAnimViewportContext>();
-			//ContextObject->ViewportTabBody = TabBodyPtr.Pin();
-
-			//ViewportToolbarContext.AddObject(ContextObject);
-		}
-
-		AssetEditorToolkitPtr.Pin()->InitToolMenuContext(ViewportToolbarContext);
-		// Give the asset editor a chance to extend the context.
-		/*if (TSharedPtr<SAnimationEditorViewportTabBody> Tab = TabBodyPtr.Pin())
-		{
-			Tab->GetAssetEditorToolkit()->InitToolMenuContext(ViewportToolbarContext);
-		}*/
-	}
-
-	return UToolMenus::Get()->GenerateWidget(ViewportToolbarName, ViewportToolbarContext);
-	/*TSharedPtr<FDialogBuilderEditor> EditorPinned = Editor.Pin();
+	//return UToolMenus::Get()->GenerateWidget(ViewportToolbarName, ViewportToolbarContext);
+	TSharedPtr<FDialogBuilderEditor> EditorPinned = Editor.Pin();
 	if (!EditorPinned.IsValid())
 	{
 		return SNullWidget::NullWidget;
@@ -465,5 +463,5 @@ TSharedPtr<SWidget> SDialogPreviewViewport::BuildViewportToolbar()
 		EUserInterfaceActionType::ToggleButton
 	);
 
-	return ToolbarBuilder.MakeWidget();*/
+	return ToolbarBuilder.MakeWidget();
 }

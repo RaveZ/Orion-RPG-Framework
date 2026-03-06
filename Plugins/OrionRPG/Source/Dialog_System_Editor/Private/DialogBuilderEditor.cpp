@@ -857,6 +857,8 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 
 	Sequencer = SequencerModule.CreateSequencer(InitParams);
 
+	SpawnRegister->SetSequencer(Sequencer);
+
 	BindPreviewActorToSequencer();
 }
 
