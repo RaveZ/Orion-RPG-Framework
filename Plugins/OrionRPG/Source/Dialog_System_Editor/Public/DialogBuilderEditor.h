@@ -441,7 +441,7 @@ protected:
 	//Viewport
 	EDialogViewportWorldMode ViewportWorldMode = EDialogViewportWorldMode::PreviewScene;
 
-	TSharedPtr<FAdvancedPreviewScene> PreviewScene;
+	TSharedPtr<FPreviewScene> PreviewScene;
 	TSharedPtr<SDialogPreviewViewport> SequencerViewportWidget;
 
 	

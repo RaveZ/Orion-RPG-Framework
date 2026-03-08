@@ -34,6 +34,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options", noclear)
 	TSubclassOf<class UCommonActivatableWidget> DefaultFreeMovementDialogWidget;
 
+
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor DialogLineNodeColor;
 
@@ -66,6 +67,9 @@ public:
 
 	UPROPERTY(config)
 	bool bCanBeCyclical;
+
+	UPROPERTY(config)
+	bool bShowGrid;
 	
 
 

@@ -53,7 +53,7 @@
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/SNullWidget.h"
 #include "MovieSceneSpawnRegister.h"
-#include "AdvancedPreviewScene.h"
+#include "PreviewScene.h"
 #include "SDialogPreviewViewport.h"
 #include "Engine/StaticMeshActor.h"
 #include "Components/StaticMeshComponent.h"
@@ -486,7 +486,8 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		SpawnParams.ObjectFlags |= RF_Transient;
+		SpawnParams.bNoFail = true;
+		SpawnParams.ObjectFlags = RF_Transient | RF_Transactional;
 
 		AActor* NewActor = PreviewWorld->SpawnActor<AActor>(ParticipantClass, ParticipantInfo.ParticipantTransform, SpawnParams);
 		if (NewActor)
@@ -1507,7 +1508,11 @@ void FDialogBuilderEditor::CreateInternalWidgets()
 	//create viewport
 	if (!PreviewScene.IsValid())
 	{
-		PreviewScene = MakeShared<FAdvancedPreviewScene>(FPreviewScene::ConstructionValues());
+		PreviewScene = MakeShared<FPreviewScene>(
+			FPreviewScene::ConstructionValues()
+			.SetSkyBrightness(0.25f)
+			.SetLightBrightness(1.0f) // adjust as needed
+		);
 	}
 
 	if (!SequencerViewportWidget.IsValid())

@@ -3,7 +3,7 @@
 #include "CoreMinimal.h"
 #include "SEditorViewport.h"
 
-class FAdvancedPreviewScene;
+class FPreviewScene;
 class FEditorViewportClient;
 class FDialogBuilderEditor;
 
@@ -13,21 +13,22 @@ public:
 	SLATE_BEGIN_ARGS(SDialogPreviewViewport) {}
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, TSharedRef<FDialogBuilderEditor> InEditor, TSharedRef<FAdvancedPreviewScene> InPreviewScene);
+	void Construct(const FArguments& InArgs, TSharedRef<FDialogBuilderEditor> InEditor, TSharedRef<FPreviewScene> InPreviewScene);
 
 	void SetUseLevelWorld(bool bInUseLevelWorld);
 
 protected:
 	virtual TSharedRef<FEditorViewportClient> MakeEditorViewportClient() override;
 	virtual TSharedPtr<SWidget> BuildViewportToolbar() override;
+	virtual void BindCommands() override;
 
 
 private:
 	TWeakPtr<FDialogBuilderEditor> Editor;
 	TWeakPtr<class FAssetEditorToolkit> AssetEditorToolkitPtr;
 
-	TSharedPtr<FAdvancedPreviewScene> PreviewScene;
-	TSharedPtr<FEditorViewportClient> ViewportClient;
+	TSharedPtr<FPreviewScene> PreviewScene;
+	TSharedPtr<class FDialogBuilderViewportClient> ViewportClient;
 
 	bool bUseLevelWorld = false;
 };

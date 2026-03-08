@@ -32,6 +32,7 @@ UDialogBuilderSetting::UDialogBuilderSetting()
 	bEdgeEnabled = false;            
 	bCanRenameNode = true;
 	bCanBeCyclical = false;
+	bShowGrid = true;
 }
  
 

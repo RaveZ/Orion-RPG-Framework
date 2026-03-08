@@ -6,6 +6,10 @@
 
 void FDialogBuilder_EditorCommands::RegisterCommands()
 {
+	//Viewport
+	UI_COMMAND(ShowGrid, "Show Grid", "Toggles viewport grid", EUserInterfaceActionType::ToggleButton, FInputChord());
+
+	//DialogGraph
 	UI_COMMAND(OpenPluginWindow, "Dialog_System_Editor", "Bring up Dialog_System_Editor window", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(NewDialogDecorator, "New Orion Decorator", "New Orion Decorator", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(NewDialogEvent, "New Orion Event", "New Orion Event", EUserInterfaceActionType::Button, FInputChord());

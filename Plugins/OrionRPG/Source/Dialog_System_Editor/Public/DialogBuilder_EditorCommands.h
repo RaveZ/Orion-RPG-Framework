@@ -21,6 +21,9 @@ public:
 public:
 	TSharedPtr< FUICommandInfo > OpenPluginWindow;
 
+	//Viewport
+	TSharedPtr< FUICommandInfo > ShowGrid;
+
 	// New documents
 	TSharedPtr< FUICommandInfo > AddNewDialogGraph;
 	

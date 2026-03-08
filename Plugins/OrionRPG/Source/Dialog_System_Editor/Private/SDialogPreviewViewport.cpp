@@ -1,6 +1,8 @@
 #include "SDialogPreviewViewport.h"
 
 #include "DialogBuilderEditor.h"
+#include "DialogBuilderViewportClient.h"
+#include "DialogBuilder_EditorCommands.h"
 #include "AdvancedPreviewScene.h"
 #include "Editor.h"
 #include "EditorViewportClient.h"
@@ -15,7 +17,7 @@
 #include "ComponentVisualizer.h"
 #include "Styling/AppStyle.h"
 #include "EditorModeManager.h"
-#include "AdvancedPreviewScene.h"
+#include "PreviewScene.h"
 #include "EditorModeManager.h"
 #include "UnrealEdGlobals.h"
 #include "Editor/UnrealEdEngine.h"
@@ -26,268 +28,7 @@
 
 #define LOCTEXT_NAMESPACE "DialogPreviewViewport"
 
-class FDialogEditorViewportClient final : public FEditorViewportClient
-{
-public:
-	FDialogEditorViewportClient(
-		const TSharedRef<FAdvancedPreviewScene>& InPreviewScene,
-		const TSharedRef<SEditorViewport>& InViewport,
-		const TSharedRef<FDialogBuilderEditor>& InEditor)
-		: FEditorViewportClient(nullptr, &InPreviewScene.Get(), InViewport)
-		, Editor(InEditor)
-	{
-		ViewportType = LVT_Perspective;
-		SetViewLocation(FVector(-250.0, 0.0, 125.0));
-		SetViewRotation(FRotator(0.0, 0.0, 0.0));
-		SetRealtime(true);
-		bSetListenerPosition = false;
-
-		EngineShowFlags.SetSelectionOutline(true);
-		EngineShowFlags.SetCompositeEditorPrimitives(true);
-
-		bShowWidget = true;
-		SetWidgetMode(UE::Widget::WM_Translate); 
-		CurrentPreviewScene = &InPreviewScene.Get();
-	}
-
-
-
-	void SetUseLevelWorld(bool bInUseLevelWorld)
-	{
-		if (bInUseLevelWorld)
-		{
-			PreviewScene = NULL;
-		}
-		else
-		{
-			PreviewScene = CurrentPreviewScene;
-		}
-	}
-
-	virtual bool InputKey(const FInputKeyEventArgs& EventArgs) override
-	{
-		const bool bHandled = FEditorViewportClient::InputKey(EventArgs);
-
-		if (EventArgs.Key == EKeys::LeftMouseButton && EventArgs.Event == IE_Pressed)
-		{
-			HandleClick(EventArgs.Viewport);
-			return true;
-		}
-
-		bShowWidget = HasValidSelection();
-		return bHandled;
-	}
-
-
-	// --- Gizmo (transform widget) support ---
-
-	virtual UE::Widget::EWidgetMode GetWidgetMode() const override
-	{
-		// Disable translate/rotate/scale when nothing is selected.
-		return HasValidSelection() ? WidgetMode : UE::Widget::WM_None;
-	}
-
-	virtual FVector GetWidgetLocation() const override
-	{
-		if (USelection* SelectedComponents = GEditor ? GEditor->GetSelectedComponents() : nullptr)
-		{
-			if (UActorComponent* Component = Cast<UActorComponent>(SelectedComponents->GetTop(UActorComponent::StaticClass())))
-			{
-				if (USceneComponent* SceneComp = Cast<USceneComponent>(Component))
-				{
-					return SceneComp->GetComponentLocation();
-				}
-			}
-		}
-
-		if (USelection* SelectedActors = GEditor ? GEditor->GetSelectedActors() : nullptr)
-		{
-			if (AActor* Actor = Cast<AActor>(SelectedActors->GetTop(AActor::StaticClass())))
-			{
-				return Actor->GetActorLocation();
-			}
-		}
-
-		return FVector::ZeroVector;
-	}
-
-	virtual ECoordSystem GetWidgetCoordSystemSpace() const override
-	{
-		// Local vs World. Start with world; you can add a toggle later.
-		return COORD_World;
-	}
-
-	virtual bool InputWidgetDelta(FViewport* InViewport, EAxisList::Type CurrentAxis, FVector& Drag, FRotator& Rot, FVector& Scale) override
-	{
-		USceneComponent* TargetSceneComp = nullptr;
-
-		if (USelection* SelectedComponents = GEditor ? GEditor->GetSelectedComponents() : nullptr)
-		{
-			if (UActorComponent* Component = Cast<UActorComponent>(SelectedComponents->GetTop(UActorComponent::StaticClass())))
-			{
-				TargetSceneComp = Cast<USceneComponent>(Component);
-			}
-		}
-
-		if (!TargetSceneComp)
-		{
-			if (USelection* SelectedActors = GEditor ? GEditor->GetSelectedActors() : nullptr)
-			{
-				if (AActor* Actor = Cast<AActor>(SelectedActors->GetTop(AActor::StaticClass())))
-				{
-					TargetSceneComp = Actor->GetRootComponent();
-				}
-			}
-		}
-
-		if (!TargetSceneComp)
-		{
-			return false;
-		}
-
-		const FScopedTransaction Transaction(NSLOCTEXT("DialogPreviewViewport", "MovePreviewObject", "Move Preview Object"));
-		TargetSceneComp->Modify();
-
-		// Apply deltas (minimal). Add transactions if you want undo/redo.
-		if (!Drag.IsNearlyZero())
-		{
-			TargetSceneComp->AddWorldOffset(Drag, false);
-		}
-
-		if (!Rot.IsNearlyZero())
-		{
-			TargetSceneComp->AddWorldRotation(Rot, false);
-		}
-
-		if (!Scale.IsNearlyZero())
-		{
-			const FVector NewScale = TargetSceneComp->GetComponentScale() + Scale;
-			TargetSceneComp->SetWorldScale3D(NewScale);
-		}
-
-		return true;
-	}
-
-	// Helper for switching mode (optional)
-	void SetWidgetMode(UE::Widget::EWidgetMode InMode)
-	{
-		WidgetMode = InMode;
-	}
-
-
-private:
-	bool HasValidSelection() const
-	{
-		if (!GEditor)
-		{
-			return false;
-		}
-
-		if (USelection* SelectedComponents = GEditor->GetSelectedComponents())
-		{
-			if (SelectedComponents->Num() > 0)
-			{
-				return true;
-			}
-		}
-
-		if (USelection* SelectedActors = GEditor->GetSelectedActors())
-		{
-			if (SelectedActors->Num() > 0)
-			{
-				return true;
-			}
-		}
-
-		return false;
-	}
-	void HandleClick(FViewport* InViewport)
-	{
-		if (!InViewport)
-		{
-			return;
-		}
-
-		const int32 MouseX = InViewport->GetMouseX();
-		const int32 MouseY = InViewport->GetMouseY();
-
-		HHitProxy* HitProxy = InViewport->GetHitProxy(MouseX, MouseY);
-
-		UObject* ObjectForDetails = nullptr;
-		UActorComponent* ComponentToSelect = nullptr;
-		AActor* ActorToSelect = nullptr;
-
-		if (HitProxy)
-		{
-			if (HitProxy->IsA(HActor::StaticGetType()))
-			{
-				const HActor* ActorProxy = static_cast<HActor*>(HitProxy);
-				ActorToSelect = ActorProxy->Actor;
-				ObjectForDetails = ActorToSelect;
-			}
-			else if (HitProxy->IsA(HComponentVisProxy::StaticGetType()))
-			{
-				const HComponentVisProxy* ComponentProxy = static_cast<HComponentVisProxy*>(HitProxy);
-
-				const UActorComponent* HitComponentConst = ComponentProxy->Component.Get();
-				ComponentToSelect = const_cast<UActorComponent*>(HitComponentConst);
-
-				ObjectForDetails = ComponentToSelect;
-				ActorToSelect = ComponentToSelect ? ComponentToSelect->GetOwner() : nullptr;
-			}
-		}
-
-		// Prefer showing/selecting the root primitive component if we only got an actor.
-		if (ActorToSelect && !ComponentToSelect)
-		{
-			if (UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(ActorToSelect->GetRootComponent()))
-			{
-				ComponentToSelect = PrimComp;
-				ObjectForDetails = PrimComp;
-			}
-		}
-
-		// Update details panel in your toolkit
-		if (TSharedPtr<FDialogBuilderEditor> EditorPinned = Editor.Pin())
-		{
-			EditorPinned->SetDetailsObject(ObjectForDetails);
-		}
-
-		// ------- Selection (drives outline) -------
-		if (GEditor)
-		{
-			const bool bNoteSelectionChange = true;
-			const bool bDeselectBSPSurfs = true;
-			const bool bWarnAboutManyActors = false;
-
-			GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
-
-			if (ComponentToSelect)
-			{
-				GEditor->SelectComponent(ComponentToSelect, true, bNoteSelectionChange);
-			}
-			else if (ActorToSelect)
-			{
-				GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
-			}
-
-			GEditor->NoteSelectionChange();
-		}
-
-		Invalidate();
-		
-	}
-
-private:
-	TWeakPtr<class FDialogBuilderEditor> Editor;
-	UE::Widget::EWidgetMode WidgetMode = UE::Widget::WM_Translate;
-	FPreviewScene* CurrentPreviewScene;
-};
-
-
-//------------------ SDialogPreviewViewport ------------------
-
-void SDialogPreviewViewport::Construct(const FArguments& InArgs, TSharedRef<FDialogBuilderEditor> InEditor, TSharedRef<FAdvancedPreviewScene> InPreviewScene)
+void SDialogPreviewViewport::Construct(const FArguments& InArgs, TSharedRef<FDialogBuilderEditor> InEditor, TSharedRef<FPreviewScene> InPreviewScene)
 {
 	AssetEditorToolkitPtr = InEditor;
 	Editor = InEditor;
@@ -299,7 +40,9 @@ void SDialogPreviewViewport::Construct(const FArguments& InArgs, TSharedRef<FDia
 
 TSharedRef<FEditorViewportClient> SDialogPreviewViewport::MakeEditorViewportClient()
 {
-	ViewportClient = StaticCastSharedRef<FEditorViewportClient>(MakeShared<FDialogEditorViewportClient>(PreviewScene.ToSharedRef(), SharedThis(this), Editor.Pin().ToSharedRef()));
+	ViewportClient = MakeShared<FDialogBuilderViewportClient>(PreviewScene.ToSharedRef(), SharedThis(this), Editor.Pin().ToSharedRef());
+	ViewportClient->SetRealtime(true);
+	ViewportClient->bSetListenerPosition = false;
 
 	return ViewportClient.ToSharedRef();
 }
@@ -315,8 +58,8 @@ void SDialogPreviewViewport::SetUseLevelWorld(bool bInUseLevelWorld)
 
 	if (ViewportClient.IsValid())
 	{
-		const TSharedPtr<FDialogEditorViewportClient> DialogClient =
-			StaticCastSharedPtr<FDialogEditorViewportClient>(ViewportClient);
+		const TSharedPtr<FDialogBuilderViewportClient> DialogClient =
+			StaticCastSharedPtr<FDialogBuilderViewportClient>(ViewportClient);
 
 		if (DialogClient.IsValid())
 		{
@@ -325,6 +68,20 @@ void SDialogPreviewViewport::SetUseLevelWorld(bool bInUseLevelWorld)
 	}
 
 
+
+}
+
+void SDialogPreviewViewport::BindCommands()
+{
+	//CommandList->Append(Editor->GetToolkitCommands());
+	SEditorViewport::BindCommands();
+
+	const FDialogBuilder_EditorCommands& Commands = FDialogBuilder_EditorCommands::Get();
+	CommandList->MapAction(
+		Commands.ShowGrid,
+		FExecuteAction::CreateSP(ViewportClient.Get(), &FDialogBuilderViewportClient::ToggleShowGrid),
+		FCanExecuteAction(),
+		FIsActionChecked::CreateSP(ViewportClient.Get(), &FDialogBuilderViewportClient::GetShowGrid));
 
 }
 
@@ -359,9 +116,18 @@ TSharedPtr<SWidget> SDialogPreviewViewport::BuildViewportToolbar()
 
 			RightSection.AddEntry(UE::UnrealEd::CreateAssetViewerProfileSubmenu());
 
-			const FName AssetViewerProfileMenuName("AnimationEditor.ViewportToolbar.AssetViewerProfile");
+			const FName AssetViewerProfileMenuName("DialogEditor.ViewportToolbar.AssetViewerProfile");
 			UE::AdvancedPreviewScene::Menus::ExtendAdvancedPreviewSceneSettings(AssetViewerProfileMenuName);
 			UE::UnrealEd::ExtendPreviewSceneSettingsWithTabEntry(AssetViewerProfileMenuName);
+			
+			RightSection.AddEntry(UE::UnrealEd::CreateShowSubmenu(FNewToolMenuDelegate::CreateLambda(
+				[](UToolMenu* Submenu) -> void
+				{
+					FToolMenuSection& UnnamedSection = Submenu->FindOrAddSection(NAME_None);
+					UnnamedSection.AddMenuEntry(FDialogBuilder_EditorCommands::Get().ShowGrid);
+				})
+			));
+			
 		}
 	}
 
