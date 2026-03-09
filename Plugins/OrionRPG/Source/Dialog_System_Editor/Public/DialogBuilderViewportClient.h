@@ -18,13 +18,17 @@ public:
 
 	void SetUseLevelWorld(bool bInUseLevelWorld);
 
+	// FEditorViewportClient interface
 	virtual bool InputKey(const FInputKeyEventArgs& EventArgs) override;
-
-	// --- Gizmo (transform widget) support ---
+	virtual void ProcessClick(class FSceneView& View, class HHitProxy* HitProxy, FKey Key, EInputEvent Event, uint32 HitX, uint32 HitY) override;
+	virtual bool InputWidgetDelta(FViewport* Viewport, EAxisList::Type CurrentAxis, FVector& Drag, FRotator& Rot, FVector& Scale) override;
 	virtual UE::Widget::EWidgetMode GetWidgetMode() const override;
 	virtual FVector GetWidgetLocation() const override;
+	virtual void TrackingStarted(const struct FInputEventState& InInputState, bool bIsDragging, bool bNudge) override;
+	virtual void TrackingStopped() override;
+	virtual bool BeginTransform(const FGizmoState& InState) override;
+	virtual bool EndTransform(const FGizmoState& InState) override;
 	virtual ECoordSystem GetWidgetCoordSystemSpace() const override;
-	virtual bool InputWidgetDelta(FViewport* InViewport, EAxisList::Type CurrentAxis, FVector& Drag, FRotator& Rot, FVector& Scale) override;
 
 
 	/**
@@ -51,11 +55,16 @@ protected:
 
 private:
 	bool HasValidSelection() const;
-	void HandleClick(FViewport* InViewport);
 
 private:
 	/** The current transaction for undo/redo */
 	FScopedTransaction* ScopedTransaction;
+
+	/** If true then we are manipulating a specific property or component */
+	bool bIsManipulating;
+
+	bool HandleBeginTransform();
+	bool HandleEndTransform();
 
 	TWeakPtr<FDialogBuilderEditor> Editor;
 

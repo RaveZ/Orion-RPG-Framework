@@ -19,7 +19,9 @@
 #include "EditorModeManager.h"
 #include "PreviewScene.h"
 #include "Engine/RendererSettings.h"
+#include "Components/InstancedStaticMeshComponent.h"
 #include "EditorModeManager.h"
+#include "UnrealWidget.h"
 #include "ScopedTransaction.h"
 #include "UnrealEdGlobals.h"
 #include "Editor/UnrealEdEngine.h"
@@ -34,8 +36,10 @@ FDialogBuilderViewportClient::FDialogBuilderViewportClient(
 	const TSharedRef<FDialogBuilderEditor>& InEditor,
 	bool bUseLevelWorld)
 	: FEditorViewportClient(nullptr, InPreviewScene, InViewport)
+	, ScopedTransaction(nullptr)
 	, Editor(InEditor)
-	, ScopedTransaction(NULL)
+	, WidgetMode(UE::Widget::WM_Translate)
+	, WidgetCoordSystem(COORD_Local)
 	, CurrentPreviewScene(InPreviewScene)
 {
 	ViewportType = LVT_Perspective;
@@ -44,6 +48,9 @@ FDialogBuilderViewportClient::FDialogBuilderViewportClient(
 	SetRealtime(true);
 	bSetListenerPosition = false;
 
+	check(Widget);
+	Widget->SetSnapEnabled(true);
+
 	// Set if the grid will be drawn
 	DrawHelper.bDrawGrid = GetDefault<UDialogBuilderSetting>()->bShowGrid;
 
@@ -51,9 +58,6 @@ FDialogBuilderViewportClient::FDialogBuilderViewportClient(
 	EngineShowFlags.SetCompositeEditorPrimitives(true);
 
 	bShowWidget = true;
-
-	WidgetMode = UE::Widget::WM_Translate;
-	WidgetCoordSystem = COORD_Local;
 
 	if (CurrentPreviewScene && CurrentPreviewScene->GetWorld())
 	{
@@ -118,7 +122,7 @@ void FDialogBuilderViewportClient::EndTransaction()
 
 bool FDialogBuilderViewportClient::InputKey(const FInputKeyEventArgs& EventArgs)
 {
-	const bool bHandled = FEditorViewportClient::InputKey(EventArgs);
+	/*const bool bHandled = FEditorViewportClient::InputKey(EventArgs);
 
 	if (EventArgs.Key == EKeys::LeftMouseButton && EventArgs.Event == IE_Pressed)
 	{
@@ -132,49 +136,163 @@ bool FDialogBuilderViewportClient::InputKey(const FInputKeyEventArgs& EventArgs)
 	}
 
 	bShowWidget = HasValidSelection();
-	return bHandled;
-	/*bool bHandled = GUnrealEd->ComponentVisManager.HandleInputKey(this, EventArgs.Viewport, EventArgs.Key, EventArgs.Event);
+	return bHandled;*/
+	bool bHandled = GUnrealEd->ComponentVisManager.HandleInputKey(this, EventArgs.Viewport, EventArgs.Key, EventArgs.Event);
 
 	if (!bHandled)
 	{
 		bHandled = FEditorViewportClient::InputKey(EventArgs);
 	}
 
-	return bHandled;*/
+	return bHandled;
 }
 
-UE::Widget::EWidgetMode FDialogBuilderViewportClient::GetWidgetMode() const
+void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* HitProxy, FKey Key, EInputEvent Event, uint32 HitX, uint32 HitY)
 {
-	return HasValidSelection() ? WidgetMode : UE::Widget::WM_None;
-}
+	const FViewportClick Click(&View, this, Key, Event, HitX, HitY);
 
-FVector FDialogBuilderViewportClient::GetWidgetLocation() const
-{
-	if (USelection* SelectedComponents = GEditor ? GEditor->GetSelectedComponents() : nullptr)
+	const bool bNoteSelectionChange = true;
+	const bool bDeselectBSPSurfs = true;
+	const bool bWarnAboutManyActors = false;
+
+	if (!HitProxy)
 	{
-		if (UActorComponent* Component = Cast<UActorComponent>(SelectedComponents->GetTop(UActorComponent::StaticClass())))
+		GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
+		return;
+	}
+	if (HitProxy->IsA(HWidgetAxis::StaticGetType()))
+	{
+		const bool bOldModeWidgets1 = EngineShowFlags.ModeWidgets;
+		const bool bOldModeWidgets2 = View.Family->EngineShowFlags.ModeWidgets;
+
+		EngineShowFlags.SetModeWidgets(false);
+		FSceneViewFamily* SceneViewFamily = const_cast<FSceneViewFamily*>(View.Family);
+		SceneViewFamily->EngineShowFlags.SetModeWidgets(false);
+		bool bWasWidgetDragging = Widget->IsDragging();
+		Widget->SetDragging(false);
+
+		// Invalidate the hit proxy map so it will be rendered out again when GetHitProxy
+		// is called
+		Viewport->InvalidateHitProxy();
+
+		// This will actually re-render the viewport's hit proxies!
+		HHitProxy* HitProxyWithoutAxisWidgets = Viewport->GetHitProxy(HitX, HitY);
+		if (HitProxyWithoutAxisWidgets != NULL && !HitProxyWithoutAxisWidgets->IsA(HWidgetAxis::StaticGetType()))
 		{
-			if (USceneComponent* SceneComp = Cast<USceneComponent>(Component))
+			// Try this again, but without the widget this time!
+			ProcessClick(View, HitProxyWithoutAxisWidgets, Key, Event, HitX, HitY);
+		}
+
+		// Undo the evil
+		EngineShowFlags.SetModeWidgets(bOldModeWidgets1);
+		SceneViewFamily->EngineShowFlags.SetModeWidgets(bOldModeWidgets2);
+
+		Widget->SetDragging(bWasWidgetDragging);
+
+		// Invalidate the hit proxy map again so that it'll be refreshed with the original
+		// scene contents if we need it again later.
+		Viewport->InvalidateHitProxy();
+		return;
+	}
+
+	if (GUnrealEd->ComponentVisManager.HandleClick(this, HitProxy, Click))
+	{
+		// Component Vis Manager handled this click, no need to do anything
+		return;
+	}
+
+
+	UObject* ObjectForDetails = nullptr;
+	AActor* ActorToSelect = nullptr;
+
+	if (HitProxy->IsA(HActor::StaticGetType()))
+	{
+		HActor* ActorProxy = (HActor*)HitProxy;
+		if (ActorProxy && ActorProxy->Actor && ActorProxy->PrimComponent)
+		{
+
+			ActorToSelect = ActorProxy->Actor;
+			ObjectForDetails = ActorToSelect;
+		}
+
+		if (TSharedPtr<FDialogBuilderEditor> EditorPinned = Editor.Pin())
+		{
+			EditorPinned->SetDetailsObject(ObjectForDetails);
+		}
+
+	if (GEditor)
+		{
+		
+			GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
+			if (ActorToSelect)
 			{
-				return SceneComp->GetComponentLocation();
+				GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
 			}
-		}
-	}
 
-	if (USelection* SelectedActors = GEditor ? GEditor->GetSelectedActors() : nullptr)
-	{
-		if (AActor* Actor = Cast<AActor>(SelectedActors->GetTop(AActor::StaticClass())))
-		{
-			return Actor->GetActorLocation();
+			GEditor->NoteSelectionChange();
 		}
-	}
 
-	return FVector::ZeroVector;
+		Invalidate();
+	}
 }
 
-ECoordSystem FDialogBuilderViewportClient::GetWidgetCoordSystemSpace() const
+
+void FDialogBuilderViewportClient::TrackingStarted(const struct FInputEventState& InInputState, bool bIsDraggingWidget, bool bNudge)
 {
-	return COORD_World;
+	if (!bIsManipulating && bIsDraggingWidget)
+	{
+		HandleBeginTransform();
+	}
+}
+
+void FDialogBuilderViewportClient::TrackingStopped()
+{
+	if (bIsManipulating)
+	{
+		HandleEndTransform();
+	}
+}
+
+bool FDialogBuilderViewportClient::BeginTransform(const FGizmoState& InState)
+{
+	return HandleBeginTransform();
+}
+
+bool FDialogBuilderViewportClient::EndTransform(const FGizmoState& InState)
+{
+	return HandleEndTransform();
+}
+
+bool FDialogBuilderViewportClient::HandleBeginTransform()
+{
+	if (!bIsManipulating)
+	{
+		// Suspend component modification during each delta step to avoid recording unnecessary overhead into the transaction buffer
+		GEditor->DisableDeltaModification(true);
+
+		// Begin transaction
+		BeginTransaction(NSLOCTEXT("UnrealEd", "ModifyComponents", "Modify Component(s)"));
+		bIsManipulating = true;
+		return true;
+	}
+
+	return false;
+}
+
+bool FDialogBuilderViewportClient::HandleEndTransform()
+{
+	if (bIsManipulating)
+	{
+		bIsManipulating = false;
+		EndTransaction();
+
+		// Restore component delta modification
+		GEditor->DisableDeltaModification(false);
+
+		return true;
+	}
+
+	return false;
 }
 
 bool FDialogBuilderViewportClient::InputWidgetDelta(FViewport* InViewport, EAxisList::Type CurrentAxis, FVector& Drag, FRotator& Rot, FVector& Scale)
@@ -233,6 +351,41 @@ bool FDialogBuilderViewportClient::InputWidgetDelta(FViewport* InViewport, EAxis
 	return true;
 }
 
+UE::Widget::EWidgetMode FDialogBuilderViewportClient::GetWidgetMode() const
+{
+	return HasValidSelection() ? WidgetMode : UE::Widget::WM_None;
+}
+
+FVector FDialogBuilderViewportClient::GetWidgetLocation() const
+{
+	if (USelection* SelectedComponents = GEditor ? GEditor->GetSelectedComponents() : nullptr)
+	{
+		if (UActorComponent* Component = Cast<UActorComponent>(SelectedComponents->GetTop(UActorComponent::StaticClass())))
+		{
+			if (USceneComponent* SceneComp = Cast<USceneComponent>(Component))
+			{
+				return SceneComp->GetComponentLocation();
+			}
+		}
+	}
+
+	if (USelection* SelectedActors = GEditor ? GEditor->GetSelectedActors() : nullptr)
+	{
+		if (AActor* Actor = Cast<AActor>(SelectedActors->GetTop(AActor::StaticClass())))
+		{
+			return Actor->GetActorLocation();
+		}
+	}
+
+	return FVector::ZeroVector;
+}
+
+ECoordSystem FDialogBuilderViewportClient::GetWidgetCoordSystemSpace() const
+{
+	return COORD_World;
+}
+
+
 
 bool FDialogBuilderViewportClient::GetShowGrid()
 {
@@ -281,77 +434,5 @@ bool FDialogBuilderViewportClient::HasValidSelection() const
 	return false;
 }
 
-void FDialogBuilderViewportClient::HandleClick(FViewport* InViewport)
-{
-	if (!InViewport)
-	{
-		return;
-	}
-
-	const int32 MouseX = InViewport->GetMouseX();
-	const int32 MouseY = InViewport->GetMouseY();
-
-	HHitProxy* HitProxy = InViewport->GetHitProxy(MouseX, MouseY);
-
-	UObject* ObjectForDetails = nullptr;
-	UActorComponent* ComponentToSelect = nullptr;
-	AActor* ActorToSelect = nullptr;
-
-	if (HitProxy)
-	{
-		if (HitProxy->IsA(HActor::StaticGetType()))
-		{
-			const HActor* ActorProxy = static_cast<HActor*>(HitProxy);
-			ActorToSelect = ActorProxy->Actor;
-			ObjectForDetails = ActorToSelect;
-		}
-		else if (HitProxy->IsA(HComponentVisProxy::StaticGetType()))
-		{
-			const HComponentVisProxy* ComponentProxy = static_cast<HComponentVisProxy*>(HitProxy);
-
-			const UActorComponent* HitComponentConst = ComponentProxy->Component.Get();
-			ComponentToSelect = const_cast<UActorComponent*>(HitComponentConst);
-
-			ObjectForDetails = ComponentToSelect;
-			ActorToSelect = ComponentToSelect ? ComponentToSelect->GetOwner() : nullptr;
-		}
-	}
-
-	if (ActorToSelect && !ComponentToSelect)
-	{
-		if (UPrimitiveComponent* PrimComp = Cast<UPrimitiveComponent>(ActorToSelect->GetRootComponent()))
-		{
-			ComponentToSelect = PrimComp;
-			ObjectForDetails = PrimComp;
-		}
-	}
-
-	if (TSharedPtr<FDialogBuilderEditor> EditorPinned = Editor.Pin())
-	{
-		EditorPinned->SetDetailsObject(ObjectForDetails);
-	}
-
-	if (GEditor)
-	{
-		const bool bNoteSelectionChange = true;
-		const bool bDeselectBSPSurfs = true;
-		const bool bWarnAboutManyActors = false;
-
-		GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
-
-		if (ComponentToSelect)
-		{
-			GEditor->SelectComponent(ComponentToSelect, true, bNoteSelectionChange);
-		}
-		else if (ActorToSelect)
-		{
-			GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
-		}
-
-		GEditor->NoteSelectionChange();
-	}
-
-	Invalidate();
-}
 
 #undef LOCTEXT_NAMESPACE
