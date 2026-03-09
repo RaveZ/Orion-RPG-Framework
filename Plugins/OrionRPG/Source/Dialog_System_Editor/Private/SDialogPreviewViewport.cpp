@@ -28,11 +28,10 @@
 
 #define LOCTEXT_NAMESPACE "DialogPreviewViewport"
 
-void SDialogPreviewViewport::Construct(const FArguments& InArgs, TSharedRef<FDialogBuilderEditor> InEditor, TSharedRef<FPreviewScene> InPreviewScene)
+void SDialogPreviewViewport::Construct(const FArguments& InArgs, TSharedRef<FDialogBuilderEditor> InEditor)
 {
 	AssetEditorToolkitPtr = InEditor;
 	Editor = InEditor;
-	PreviewScene = InPreviewScene;
 
 	SEditorViewport::Construct(SEditorViewport::FArguments());
 }
@@ -40,7 +39,7 @@ void SDialogPreviewViewport::Construct(const FArguments& InArgs, TSharedRef<FDia
 
 TSharedRef<FEditorViewportClient> SDialogPreviewViewport::MakeEditorViewportClient()
 {
-	ViewportClient = MakeShared<FDialogBuilderViewportClient>(PreviewScene.ToSharedRef(), SharedThis(this), Editor.Pin().ToSharedRef());
+	ViewportClient = MakeShared<FDialogBuilderViewportClient>(Editor.Pin()->GetPreviewScene(), SharedThis(this), Editor.Pin().ToSharedRef());
 	ViewportClient->SetRealtime(true);
 	ViewportClient->bSetListenerPosition = false;
 

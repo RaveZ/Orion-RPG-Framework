@@ -27,18 +27,20 @@
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 
 FDialogBuilderViewportClient::FDialogBuilderViewportClient(
-	const TSharedRef<FPreviewScene>& InPreviewScene,
+	FPreviewScene* InPreviewScene,
 	const TSharedRef<SEditorViewport>& InViewport,
 	const TSharedRef<FDialogBuilderEditor>& InEditor)
-	: FEditorViewportClient(nullptr, &InPreviewScene.Get(), InViewport)
+	: FEditorViewportClient(nullptr, InPreviewScene, InViewport)
 	, Editor(InEditor)
-	, CurrentPreviewScene(&InPreviewScene.Get())
+	, CurrentPreviewScene(InPreviewScene)
 {
 	ViewportType = LVT_Perspective;
 	SetViewLocation(FVector(-250.0, 0.0, 125.0));
 	SetViewRotation(FRotator(0.0, 0.0, 0.0));
 	SetRealtime(true);
 	bSetListenerPosition = false;
+
+	EngineShowFlags.DisableAdvancedFeatures();
 
 	// Set if the grid will be drawn
 	DrawHelper.bDrawGrid = GetDefault<UDialogBuilderSetting>()->bShowGrid;

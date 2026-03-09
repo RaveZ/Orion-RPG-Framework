@@ -11,7 +11,7 @@ class FDialogBuilderViewportClient final : public FEditorViewportClient, public 
 {
 public:
 	FDialogBuilderViewportClient(
-		const TSharedRef<FPreviewScene>& InPreviewScene,
+		FPreviewScene* InPreviewScene,
 		const TSharedRef<SEditorViewport>& InViewport,
 		const TSharedRef<FDialogBuilderEditor>& InEditor);
 

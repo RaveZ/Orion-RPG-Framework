@@ -266,6 +266,17 @@ void FDialogBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& 
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogSequencerViewportID);
 }
 
+void FDialogBuilderEditor::Tick(float DeltaTime)
+{
+	PreviewScene.UpdateCaptureContents();
+
+}
+
+TStatId FDialogBuilderEditor::GetStatId() const
+{
+	RETURN_QUICK_DECLARE_CYCLE_STAT(FDialogBuilderEditor, STATGROUP_Tickables);
+}
+
 void FDialogBuilderEditor::PostUndo(bool bSuccess)
 {
 	if (bSuccess)
@@ -429,12 +440,12 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
 	check(DialogGraph);
 
-	if (!PreviewScene.IsValid())
+	if (!GetPreviewScene())
 	{
 		return;
 	}
 
-	UWorld* PreviewWorld = PreviewScene->GetWorld();
+	UWorld* PreviewWorld = GetPreviewScene()->GetWorld();
 	if (!PreviewWorld)
 	{
 		return;
@@ -863,33 +874,6 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 	BindPreviewActorToSequencer();
 }
 
-UObject* FDialogBuilderEditor::GetPlaybackContext() const
-{
-	if (PreviewScene.IsValid())
-	{
-		if (UWorld* PreviewWorld = PreviewScene->GetWorld())
-		{
-			return PreviewWorld;
-		}
-	}
-	if (GEditor)
-	{
-		// Editor world (works for editor tools and sequencer playback context)
-		if (UWorld* EditorWorld = GEditor->GetEditorWorldContext().World())
-		{
-			return EditorWorld;
-		}
-
-		// PIE world when playing/simulating
-		if (GEditor->PlayWorld)
-		{
-			return GEditor->PlayWorld;
-		}
-	}
-
-	// Last resort fallback (may be null depending on context)
-	return GWorld;
-}
 
 TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_Sequencer(const FSpawnTabArgs& Args)
 {
@@ -1505,19 +1489,9 @@ void FDialogBuilderEditor::CreateInternalWidgets()
 
 	this->DialogDefinitionsWidget = SNew(SDialogDefinitions, SharedThis(this));
 
-	//create viewport
-	if (!PreviewScene.IsValid())
-	{
-		PreviewScene = MakeShared<FPreviewScene>(
-			FPreviewScene::ConstructionValues()
-			.SetSkyBrightness(0.25f)
-			.SetLightBrightness(1.0f) // adjust as needed
-		);
-	}
-
 	if (!SequencerViewportWidget.IsValid())
 	{
-		SequencerViewportWidget = SNew(SDialogPreviewViewport, SharedThis(this), PreviewScene.ToSharedRef());
+		SequencerViewportWidget = SNew(SDialogPreviewViewport, SharedThis(this));
 		SequencerViewportWidget->SetUseLevelWorld(ViewportWorldMode == EDialogViewportWorldMode::CurrentLevel);
 	}
 }
@@ -1533,69 +1507,7 @@ TSharedRef<SWidget> FDialogBuilderEditor::SpawnProperties()
 		[
 			PropertyWidget.ToSharedRef()
 		];
-		/*+ SVerticalBox::Slot()
-		.AutoHeight()
-		.HAlign(HAlign_Left)
-		.VAlign(VAlign_Top)
-		[
-			SNew(SVerticalBox)
-				+ SVerticalBox::Slot()
-				.HAlign(HAlign_Fill)
-				.Padding(0.0f, 5.0f)
-				[
-					SNew(SBorder)
-						.BorderBackgroundColor(BehaviorTreeColors::NodeBody::InjectedSubNode)
-						.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
-						.Visibility(this, &FBehaviorTreeEditor::GetInjectedNodeVisibility)
-						.Padding(FMargin(5.0f))
-						[
-							SNew(STextBlock)
-								.Text(LOCTEXT("InjectedNode", "Node is injected by subtree and can't be edited"))
-						]
-				]
-			+ SVerticalBox::Slot()
-				.HAlign(HAlign_Fill)
-				.Padding(0.0f, 5.0f)
-				[
-					SNew(SBorder)
-						.BorderBackgroundColor(BehaviorTreeColors::NodeBody::InjectedSubNode)
-						.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
-						.Visibility(this, &FBehaviorTreeEditor::GetRootLevelNodeVisibility)
-						.Padding(FMargin(5.0f))
-						[
-							SNew(STextBlock)
-								.Text(RootNodeNoteText)
-						]
-				]
-			+ SVerticalBox::Slot()
-				.HAlign(HAlign_Fill)
-				.Padding(0.0f, 5.0f)
-				[
-					SNew(SBorder)
-						.BorderBackgroundColor(BehaviorTreeColors::NodeBorder::HighlightAbortRange0)
-						.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
-						.Visibility(this, &FBehaviorTreeEditor::GetRangeLowerVisibility)
-						.Padding(FMargin(5.0f))
-						[
-							SNew(STextBlock)
-								.Text(FText::Format(LOCTEXT("AbortModeHighlight", "Nodes aborted by mode: {0}"), LOCTEXT("AbortPriorityLower", "Lower Priority")))
-						]
-				]
-			+ SVerticalBox::Slot()
-				.HAlign(HAlign_Fill)
-				.Padding(0.0f, 5.0f)
-				[
-					SNew(SBorder)
-						.BorderBackgroundColor(BehaviorTreeColors::NodeBorder::HighlightAbortRange1)
-						.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
-						.Visibility(this, &FBehaviorTreeEditor::GetRangeSelfVisibility)
-						.Padding(FMargin(5.0f))
-						[
-							SNew(STextBlock)
-								.Text(FText::Format(LOCTEXT("AbortModeHighlight", "Nodes aborted by mode: {0}"), LOCTEXT("AbortPrioritySelf", "Self")))
-						]
-				]
-		];*/
+		
 }
 
 TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogDefinitions()

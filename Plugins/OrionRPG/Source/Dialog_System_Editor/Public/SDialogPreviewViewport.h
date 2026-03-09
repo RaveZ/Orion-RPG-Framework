@@ -13,7 +13,7 @@ public:
 	SLATE_BEGIN_ARGS(SDialogPreviewViewport) {}
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, TSharedRef<FDialogBuilderEditor> InEditor, TSharedRef<FPreviewScene> InPreviewScene);
+	void Construct(const FArguments& InArgs, TSharedRef<FDialogBuilderEditor> InEditor);
 
 	void SetUseLevelWorld(bool bInUseLevelWorld);
 
@@ -26,8 +26,7 @@ protected:
 private:
 	TWeakPtr<FDialogBuilderEditor> Editor;
 	TWeakPtr<class FAssetEditorToolkit> AssetEditorToolkitPtr;
-
-	TSharedPtr<FPreviewScene> PreviewScene;
+	
 	TSharedPtr<class FDialogBuilderViewportClient> ViewportClient;
 
 	bool bUseLevelWorld = false;

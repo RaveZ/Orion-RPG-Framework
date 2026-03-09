@@ -9,6 +9,8 @@
 #include "Dialog_System_Editor.h"
 #include "WorkflowOrientedApp/WorkflowTabManager.h"
 #include "DialogBuilderGraph.h"
+#include "Tickable.h"
+#include "TickableEditorObject.h"
 #include "Templates/SharedPointer.h"
 
 #include "DialogBuilderEditor.generated.h"
@@ -110,7 +112,11 @@ public:
 };
 
 
-class DIALOG_SYSTEM_EDITOR_API FDialogBuilderEditor : public IDialogEditor, public FNotifyHook, public FGCObject, public FEditorUndoClient
+class DIALOG_SYSTEM_EDITOR_API FDialogBuilderEditor : public IDialogEditor,
+	public FTickableEditorObject,
+	public FNotifyHook,
+	public FGCObject, 
+	public FEditorUndoClient
 {
 public:
 	FDialogBuilderEditor();
@@ -124,7 +130,12 @@ public:
 	virtual void UnregisterTabSpawners(const TSharedRef<FTabManager>& TabManager) override;
 	// End of IToolkit interface
 
-
+	//~ Begin FTickableEditorObject Interface
+	virtual void Tick(float DeltaTime) override;
+	virtual ETickableTickType GetTickableTickType() const override { return ETickableTickType::Always; }
+	virtual TStatId GetStatId() const override;
+	//~ End FTickableEditorObject Interface
+	// 
 	//~ Begin FEditorUndoClient Interface
 	virtual void PostUndo(bool bSuccess) override;
 	virtual void PostRedo(bool bSuccess) override;
@@ -275,12 +286,18 @@ public:
 	/** Checks to see if the provided graph is contained within the current DialogBuilderGraph */
 	bool IsGraphInCurrentDialogGraph(const UEdGraph* InGraph) const;
 
+	/**
+	 * Provides access to the preview scene.
+	 */
+	FPreviewScene* GetPreviewScene()
+	{
+		return &PreviewScene;
+	}
 
 	//Sequencer
 	void OpenSequencerForSequence(ULevelSequence* InSequence);
 	void ExtendSequencerToolbar(FName InToolMenuName);
 	void EnsureSequencerCreated();
-	UObject* GetPlaybackContext() const;
 	void BindPreviewActorToSequencer();
 
 	/** Called whenever sequencer has received focus */
@@ -441,7 +458,7 @@ protected:
 	//Viewport
 	EDialogViewportWorldMode ViewportWorldMode = EDialogViewportWorldMode::PreviewScene;
 
-	TSharedPtr<FPreviewScene> PreviewScene;
+	FPreviewScene PreviewScene;
 	TSharedPtr<SDialogPreviewViewport> SequencerViewportWidget;
 
 	
