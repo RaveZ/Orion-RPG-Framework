@@ -20,6 +20,7 @@
 #include "PreviewScene.h"
 #include "Engine/RendererSettings.h"
 #include "EditorModeManager.h"
+#include "ScopedTransaction.h"
 #include "UnrealEdGlobals.h"
 #include "Editor/UnrealEdEngine.h"
 #include "AdvancedPreviewSceneMenus.h"
@@ -34,6 +35,7 @@ FDialogBuilderViewportClient::FDialogBuilderViewportClient(
 	bool bUseLevelWorld)
 	: FEditorViewportClient(nullptr, InPreviewScene, InViewport)
 	, Editor(InEditor)
+	, ScopedTransaction(NULL)
 	, CurrentPreviewScene(InPreviewScene)
 {
 	ViewportType = LVT_Perspective;
@@ -42,7 +44,6 @@ FDialogBuilderViewportClient::FDialogBuilderViewportClient(
 	SetRealtime(true);
 	bSetListenerPosition = false;
 
-
 	// Set if the grid will be drawn
 	DrawHelper.bDrawGrid = GetDefault<UDialogBuilderSetting>()->bShowGrid;
 
@@ -50,7 +51,9 @@ FDialogBuilderViewportClient::FDialogBuilderViewportClient(
 	EngineShowFlags.SetCompositeEditorPrimitives(true);
 
 	bShowWidget = true;
-	SetWidgetMode(UE::Widget::WM_Translate);
+
+	WidgetMode = UE::Widget::WM_Translate;
+	WidgetCoordSystem = COORD_Local;
 
 	if (CurrentPreviewScene && CurrentPreviewScene->GetWorld())
 	{
@@ -91,6 +94,28 @@ void FDialogBuilderViewportClient::SetUseLevelWorld(bool bInUseLevelWorld)
 	}
 }
 
+void FDialogBuilderViewportClient::BeginTransaction(const FText& Description)
+{
+	if (!ScopedTransaction)
+	{
+		if (!ScopedTransaction)
+		{
+			ScopedTransaction = new FScopedTransaction(Description);
+		}
+	}
+
+}
+
+void FDialogBuilderViewportClient::EndTransaction()
+{
+	if (ScopedTransaction)
+	{
+		delete ScopedTransaction;
+		ScopedTransaction = nullptr;
+	}
+}
+
+
 bool FDialogBuilderViewportClient::InputKey(const FInputKeyEventArgs& EventArgs)
 {
 	const bool bHandled = FEditorViewportClient::InputKey(EventArgs);
@@ -101,8 +126,21 @@ bool FDialogBuilderViewportClient::InputKey(const FInputKeyEventArgs& EventArgs)
 		return true;
 	}
 
+	if (EventArgs.Key == EKeys::LeftMouseButton && EventArgs.Event == IE_Released)
+	{
+		EndTransaction();
+	}
+
 	bShowWidget = HasValidSelection();
 	return bHandled;
+	/*bool bHandled = GUnrealEd->ComponentVisManager.HandleInputKey(this, EventArgs.Viewport, EventArgs.Key, EventArgs.Event);
+
+	if (!bHandled)
+	{
+		bHandled = FEditorViewportClient::InputKey(EventArgs);
+	}
+
+	return bHandled;*/
 }
 
 UE::Widget::EWidgetMode FDialogBuilderViewportClient::GetWidgetMode() const
@@ -167,7 +205,13 @@ bool FDialogBuilderViewportClient::InputWidgetDelta(FViewport* InViewport, EAxis
 		return false;
 	}
 
-	const FScopedTransaction Transaction(NSLOCTEXT("DialogPreviewViewport", "MovePreviewObject", "Move Preview Object"));
+	BeginTransaction(NSLOCTEXT("DialogPreviewViewport", "MovePreviewObject", "Move Preview Object"));
+
+	if (AActor* Owner = TargetSceneComp->GetOwner())
+	{
+		Owner->Modify();
+	}
+
 	TargetSceneComp->Modify();
 
 	if (!Drag.IsNearlyZero())
@@ -187,11 +231,6 @@ bool FDialogBuilderViewportClient::InputWidgetDelta(FViewport* InViewport, EAxis
 	}
 
 	return true;
-}
-
-void FDialogBuilderViewportClient::SetWidgetMode(UE::Widget::EWidgetMode InMode)
-{
-	WidgetMode = InMode;
 }
 
 

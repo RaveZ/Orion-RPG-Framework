@@ -26,8 +26,6 @@ public:
 	virtual ECoordSystem GetWidgetCoordSystemSpace() const override;
 	virtual bool InputWidgetDelta(FViewport* InViewport, EAxisList::Type CurrentAxis, FVector& Drag, FRotator& Rot, FVector& Scale) override;
 
-	// Helper for switching mode (optional)
-	void SetWidgetMode(UE::Widget::EWidgetMode InMode);
 
 	/**
 	 * Returns true if the grid is currently visible in the viewport
@@ -39,13 +37,30 @@ public:
 	 */
 	void ToggleShowGrid();
 
+protected:
+	/**
+	 * Initiates a transaction.
+	 */
+	void BeginTransaction(const FText& Description);
+
+	/**
+	 * Ends the current transaction, if one exists.
+	 */
+	void EndTransaction();
+
 
 private:
 	bool HasValidSelection() const;
 	void HandleClick(FViewport* InViewport);
 
 private:
+	/** The current transaction for undo/redo */
+	FScopedTransaction* ScopedTransaction;
+
 	TWeakPtr<FDialogBuilderEditor> Editor;
-	UE::Widget::EWidgetMode WidgetMode = UE::Widget::WM_Translate;
+
+	UE::Widget::EWidgetMode WidgetMode;
+	ECoordSystem WidgetCoordSystem;
+
 	FPreviewScene* CurrentPreviewScene = nullptr;
 };

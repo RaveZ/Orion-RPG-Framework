@@ -91,6 +91,7 @@ FDialogBuilderEditor::FDialogBuilderEditor()
 
 FDialogBuilderEditor::~FDialogBuilderEditor()
 {
+	DestroyDialogDefinitions();
 #if ENGINE_MAJOR_VERSION < 5
 	UPackage::PackageSavedEvent.Remove(OnPackageSavedDelegateHandle);
 #else // #if ENGINE_MAJOR_VERSION < 5
