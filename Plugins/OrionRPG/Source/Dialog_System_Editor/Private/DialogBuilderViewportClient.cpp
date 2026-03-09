@@ -18,6 +18,7 @@
 #include "Styling/AppStyle.h"
 #include "EditorModeManager.h"
 #include "PreviewScene.h"
+#include "Engine/RendererSettings.h"
 #include "EditorModeManager.h"
 #include "UnrealEdGlobals.h"
 #include "Editor/UnrealEdEngine.h"
@@ -29,7 +30,8 @@
 FDialogBuilderViewportClient::FDialogBuilderViewportClient(
 	FPreviewScene* InPreviewScene,
 	const TSharedRef<SEditorViewport>& InViewport,
-	const TSharedRef<FDialogBuilderEditor>& InEditor)
+	const TSharedRef<FDialogBuilderEditor>& InEditor,
+	bool bUseLevelWorld)
 	: FEditorViewportClient(nullptr, InPreviewScene, InViewport)
 	, Editor(InEditor)
 	, CurrentPreviewScene(InPreviewScene)
@@ -40,7 +42,6 @@ FDialogBuilderViewportClient::FDialogBuilderViewportClient(
 	SetRealtime(true);
 	bSetListenerPosition = false;
 
-	EngineShowFlags.DisableAdvancedFeatures();
 
 	// Set if the grid will be drawn
 	DrawHelper.bDrawGrid = GetDefault<UDialogBuilderSetting>()->bShowGrid;
@@ -60,16 +61,32 @@ FDialogBuilderViewportClient::FDialogBuilderViewportClient(
 	{
 		CurrentPreviewScene->SetSkyCubemap(GUnrealEd->GetThumbnailManager()->AmbientCubemap);
 	}
+
+	SetUseLevelWorld(bUseLevelWorld);
 }
 
 void FDialogBuilderViewportClient::SetUseLevelWorld(bool bInUseLevelWorld)
 {
 	if (bInUseLevelWorld)
 	{
+		//fetch renderer settings
+		const URendererSettings* RendererSettings = GetDefault<URendererSettings>();
+		const bool bLumenGIEnabled = RendererSettings->DynamicGlobalIllumination == EDynamicGlobalIlluminationMethod::Lumen;
+		const bool bLumenReflectionsEnabled = RendererSettings->Reflections == EReflectionMethod::Lumen;
+		const bool bMegaLightsEnabled = RendererSettings->bEnableMegaLights;
+		
+		{
+			EngineShowFlags.EnableAdvancedFeatures();
+			EngineShowFlags.SetLumenGlobalIllumination(bLumenGIEnabled);
+			EngineShowFlags.SetLumenReflections(bLumenReflectionsEnabled);
+			EngineShowFlags.SetMegaLights(bMegaLightsEnabled);
+		}
+
 		PreviewScene = nullptr;
 	}
 	else
 	{
+		EngineShowFlags.DisableAdvancedFeatures();
 		PreviewScene = CurrentPreviewScene;
 	}
 }

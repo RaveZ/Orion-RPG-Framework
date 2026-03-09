@@ -13,7 +13,8 @@ public:
 	FDialogBuilderViewportClient(
 		FPreviewScene* InPreviewScene,
 		const TSharedRef<SEditorViewport>& InViewport,
-		const TSharedRef<FDialogBuilderEditor>& InEditor);
+		const TSharedRef<FDialogBuilderEditor>& InEditor,
+		bool bUseLevelWorld);
 
 	void SetUseLevelWorld(bool bInUseLevelWorld);
 

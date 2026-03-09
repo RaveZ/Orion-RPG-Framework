@@ -32,6 +32,7 @@ void SDialogPreviewViewport::Construct(const FArguments& InArgs, TSharedRef<FDia
 {
 	AssetEditorToolkitPtr = InEditor;
 	Editor = InEditor;
+	bUseLevelWorld = false;
 
 	SEditorViewport::Construct(SEditorViewport::FArguments());
 }
@@ -39,7 +40,7 @@ void SDialogPreviewViewport::Construct(const FArguments& InArgs, TSharedRef<FDia
 
 TSharedRef<FEditorViewportClient> SDialogPreviewViewport::MakeEditorViewportClient()
 {
-	ViewportClient = MakeShared<FDialogBuilderViewportClient>(Editor.Pin()->GetPreviewScene(), SharedThis(this), Editor.Pin().ToSharedRef());
+	ViewportClient = MakeShared<FDialogBuilderViewportClient>(Editor.Pin()->GetPreviewScene(), SharedThis(this), Editor.Pin().ToSharedRef(), bUseLevelWorld);
 	ViewportClient->SetRealtime(true);
 	ViewportClient->bSetListenerPosition = false;
 

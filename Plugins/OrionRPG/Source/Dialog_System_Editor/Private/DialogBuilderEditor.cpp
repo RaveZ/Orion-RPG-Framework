@@ -445,11 +445,8 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 		return;
 	}
 
-	UWorld* PreviewWorld = GetPreviewScene()->GetWorld();
-	if (!PreviewWorld)
-	{
-		return;
-	}
+	UWorld* PreviewWorld = GetPreviewWorld();
+	check(PreviewWorld);
 
 	// Use ParticipantTracks as the single source of truth for spawned preview actors.
 	// This allows removing PreviewParticipantActors completely.
@@ -514,13 +511,39 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 		const UDialogParticipant* ParticipantKey = It.Key();
 		if (!ParticipantKey || !DialogGraph->Participants.Contains(const_cast<UDialogParticipant*>(ParticipantKey)))
 		{
-			if (AActor* Actor = It.Value().Get())
+			if (AActor* ParticipantActor = It.Value().Get())
 			{
-				Actor->Destroy();
+				PreviewWorld->EditorDestroyActor(ParticipantActor, false);
 			}
 			It.RemoveCurrent();
 		}
 	}
+}
+
+void FDialogBuilderEditor::DestroyDialogDefinitions()
+{
+	UWorld* PreviewWorld = GetPreviewWorld();
+	check(PreviewWorld);
+
+	for (auto& Pair : ParticipantTracks)
+	{
+		if (AActor* ParticipantActor = Pair.Value.Get())
+		{
+			PreviewWorld->EditorDestroyActor(ParticipantActor, false);
+		}
+	}
+
+	ParticipantTracks.Empty();
+}
+
+UWorld* FDialogBuilderEditor::GetPreviewWorld()
+{
+	if (ViewportWorldMode == EDialogViewportWorldMode::CurrentLevel)
+	{
+		return GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+	}
+
+	return PreviewScene.GetWorld();
 }
 
 void FDialogBuilderEditor::BindPreviewActorToSequencer()
@@ -2163,10 +2186,15 @@ void FDialogBuilderEditor::SetViewportWorldMode(EDialogViewportWorldMode NewMode
 
 	ViewportWorldMode = NewMode;
 
+	DestroyDialogDefinitions();
+
 	if (SequencerViewportWidget.IsValid())
 	{
 		SequencerViewportWidget->SetUseLevelWorld(ViewportWorldMode == EDialogViewportWorldMode::CurrentLevel);
 	}
+
+	UpdateDialogDefinitions();
+
 }
 
 void FDialogBuilderEditor::SetDetailsObject(UObject* InObject)

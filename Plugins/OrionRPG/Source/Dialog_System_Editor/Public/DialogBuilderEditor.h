@@ -306,8 +306,12 @@ public:
 	/** Called whenever sequencer in initializing tool menu context */
 	void OnInitToolMenuContext(FToolMenuContext& MenuContext);
 
+	UWorld* GetPreviewWorld();
+
 	//DialogDefinitions
 	void UpdateDialogDefinitions();
+	void DestroyDialogDefinitions();
+
 
 	void OnParticipantAdded(UDialogParticipant* Participant);
 	void OnParticipantRemoved(UDialogParticipant* Participant);
