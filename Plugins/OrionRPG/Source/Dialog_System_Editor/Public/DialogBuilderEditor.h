@@ -311,7 +311,7 @@ public:
 	//DialogDefinitions
 	void UpdateDialogDefinitions();
 	void DestroyDialogDefinitions();
-
+	TArray<AActor*> GetDialogDefinitionActors() const;
 
 	void OnParticipantAdded(UDialogParticipant* Participant);
 	void OnParticipantRemoved(UDialogParticipant* Participant);

@@ -537,6 +537,22 @@ void FDialogBuilderEditor::DestroyDialogDefinitions()
 	ParticipantTracks.Empty();
 }
 
+TArray<AActor*> FDialogBuilderEditor::GetDialogDefinitionActors() const
+{
+	TArray<AActor*> Result;
+	Result.Reserve(ParticipantTracks.Num());
+
+	for (const TPair<UDialogParticipant*, TWeakObjectPtr<AActor>>& Pair : ParticipantTracks)
+	{
+		if (AActor* Actor = Pair.Value.Get())
+		{
+			Result.Add(Actor);
+		}
+	}
+
+	return Result;
+}
+
 UWorld* FDialogBuilderEditor::GetPreviewWorld()
 {
 	if (ViewportWorldMode == EDialogViewportWorldMode::CurrentLevel)

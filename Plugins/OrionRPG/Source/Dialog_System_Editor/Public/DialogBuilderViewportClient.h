@@ -21,14 +21,19 @@ public:
 	// FEditorViewportClient interface
 	virtual bool InputKey(const FInputKeyEventArgs& EventArgs) override;
 	virtual void ProcessClick(class FSceneView& View, class HHitProxy* HitProxy, FKey Key, EInputEvent Event, uint32 HitX, uint32 HitY) override;
+	virtual void MouseMove(FViewport* InViewport, int32 InX, int32 InY) override;
+	virtual EMouseCursor::Type GetCursor(FViewport* InViewport, int32 InX, int32 InY) override;
 	virtual bool InputWidgetDelta(FViewport* Viewport, EAxisList::Type CurrentAxis, FVector& Drag, FRotator& Rot, FVector& Scale) override;
 	virtual UE::Widget::EWidgetMode GetWidgetMode() const override;
+	virtual ECoordSystem GetWidgetCoordSystemSpace() const override;
+	virtual void SetWidgetMode(UE::Widget::EWidgetMode NewMode) override;
+	virtual void SetWidgetCoordSystemSpace(ECoordSystem NewCoordSystem) override;
 	virtual FVector GetWidgetLocation() const override;
+	virtual FMatrix GetWidgetCoordSystem() const override;
 	virtual void TrackingStarted(const struct FInputEventState& InInputState, bool bIsDragging, bool bNudge) override;
 	virtual void TrackingStopped() override;
 	virtual bool BeginTransform(const FGizmoState& InState) override;
 	virtual bool EndTransform(const FGizmoState& InState) override;
-	virtual ECoordSystem GetWidgetCoordSystemSpace() const override;
 
 
 	/**
@@ -52,9 +57,13 @@ protected:
 	 */
 	void EndTransaction();
 
+	void UpdateHoverFromHitProxy(HHitProxy* const InHitProxy);
 
-private:
-	bool HasValidSelection() const;
+	/**
+	* Can only select actor from the definitions
+	*/
+	bool CanSelectActorFromHitProxy(HHitProxy* const InHitProxy);
+
 
 private:
 	/** The current transaction for undo/redo */
@@ -72,4 +81,7 @@ private:
 	ECoordSystem WidgetCoordSystem;
 
 	FPreviewScene* CurrentPreviewScene = nullptr;
+
+
+	TOptional<EMouseCursor::Type> MouseCursor;
 };
