@@ -16,9 +16,16 @@ public:
 		const TSharedRef<FDialogBuilderEditor>& InEditor,
 		bool bUseLevelWorld);
 
+
+	/**
+	 * Destructor.
+	 */
+	virtual ~FDialogBuilderViewportClient();
+
 	void SetUseLevelWorld(bool bInUseLevelWorld);
 
 	// FEditorViewportClient interface
+	virtual void Tick(float DeltaSeconds) override;
 	virtual bool InputKey(const FInputKeyEventArgs& EventArgs) override;
 	virtual void ProcessClick(class FSceneView& View, class HHitProxy* HitProxy, FKey Key, EInputEvent Event, uint32 HitX, uint32 HitY) override;
 	virtual void MouseMove(FViewport* InViewport, int32 InX, int32 InY) override;
@@ -46,6 +53,24 @@ public:
 	 */
 	void ToggleShowGrid();
 
+
+	/**
+	 * Focuses the viewport on the selected components
+	 */
+	void FocusViewportToSelection();
+
+	/**
+	 * Recreates the preview scene and invalidates the owning viewport.
+	 *
+	 * @param bResetCamera Whether or not to reset the camera after recreating the preview scene.
+	 */
+	void InvalidatePreview(bool bResetCamera = true);
+
+	/**
+	 * Resets the camera position
+	 */
+	void ResetCamera();
+
 protected:
 	/**
 	 * Initiates a transaction.
@@ -68,6 +93,8 @@ protected:
 private:
 	/** The current transaction for undo/redo */
 	FScopedTransaction* ScopedTransaction;
+
+	bool bUseLevelWorld;
 
 	/** If true then we are manipulating a specific property or component */
 	bool bIsManipulating;

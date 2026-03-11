@@ -35,6 +35,8 @@
 #include "SDialogDefinitions.h"
 #include "Dialog_System_Editor.h"
 #include "ContentBrowserModule.h"
+#include "Components/BillboardComponent.h"
+#include "Engine/Texture2D.h"
 #include "ContentBrowserFrontEndFilterExtension.h"
 #include "Kismet2/KismetDebugUtilities.h"
 #include "WorkflowOrientedApp/WorkflowUObjectDocuments.h"
@@ -449,6 +451,48 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 	UWorld* PreviewWorld = GetPreviewWorld();
 	check(PreviewWorld);
 
+	AActor* PivotActor = SequencePivot.Get();
+	if (!IsValid(PivotActor))
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Name = TEXT("DialogSequencePivot");
+		SpawnParams.ObjectFlags = RF_Transient | RF_TextExportTransient;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		PivotActor = PreviewWorld->SpawnActor<AActor>(AActor::StaticClass(), FTransform::Identity, SpawnParams);
+		if (PivotActor)
+		{
+			USceneComponent* PivotRoot = NewObject<USceneComponent>(PivotActor, TEXT("PivotRoot"));
+			PivotActor->SetRootComponent(PivotRoot);
+			PivotRoot->RegisterComponent();
+
+			UBillboardComponent* BillboardComponent = NewObject<UBillboardComponent>(PivotActor, TEXT("PivotBillboard"));
+			BillboardComponent->SetupAttachment(PivotRoot);
+			BillboardComponent->SetMobility(EComponentMobility::Movable);
+			BillboardComponent->SetHiddenInGame(false);
+			BillboardComponent->SetUsingAbsoluteScale(true);
+			BillboardComponent->bIsScreenSizeScaled = true;
+			BillboardComponent->bUseInEditorScaling = true;
+			BillboardComponent->ScreenSize = 0.0025f;
+			BillboardComponent->SpriteInfo.Category = TEXT("Dialog");
+			BillboardComponent->SpriteInfo.DisplayName = LOCTEXT("DialogSequencePivotSprite", "Dialog Sequence Pivot");
+
+			if (UTexture2D* PivotSprite = LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EditorResources/S_Actor.S_Actor")))
+			{
+				BillboardComponent->SetSprite(PivotSprite);
+			}
+
+			BillboardComponent->RegisterComponent();
+
+			PivotActor->SetActorHiddenInGame(true);
+			PivotActor->SetActorEnableCollision(false);
+			PivotActor->bIsEditorOnlyActor = true;
+
+			SequencePivot = PivotActor;
+		}
+	}
+	PivotActor->SetActorTransform(DialogGraph->SequencePivot);
+
 	// Use ParticipantTracks as the single source of truth for spawned preview actors.
 	// This allows removing PreviewParticipantActors completely.
 	for (UDialogParticipant* DialogParticipant : DialogGraph->Participants)
@@ -501,6 +545,8 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 		AActor* NewActor = PreviewWorld->SpawnActor<AActor>(ParticipantClass, ParticipantInfo.ParticipantTransform, SpawnParams);
 		if (NewActor)
 		{
+			NewActor->AttachToActor(PivotActor, FAttachmentTransformRules::KeepRelativeTransform);
+			//NewActor->SetActorRelativeTransform(ParticipantInfo.ParticipantTransform);
 			ParticipantTracks.Add(DialogParticipant, NewActor);
 			EnsureParticipantRequiredTrack(DialogParticipant);
 		}
@@ -563,39 +609,7 @@ UWorld* FDialogBuilderEditor::GetPreviewWorld()
 	return PreviewScene.GetWorld();
 }
 
-void FDialogBuilderEditor::BindPreviewActorToSequencer()
-{
-	/*if (!Sequencer.IsValid() || !EditingLevelSequence || !MovieScene)
-	{
-		return;
-	}*/
 
-	UpdateDialogDefinitions();
-
-	AActor* ActorToBind = PreviewActor.Get();
-	if (!ActorToBind)
-	{
-		return;
-	}
-
-	UMovieScene* Scene = EditingLevelSequence->GetMovieScene();
-	if (!Scene)
-	{
-		return;
-	}
-
-	const FGuid PossessableGuid = FindOrAddPossessableForObject(Scene, ActorToBind);
-	if (!PossessableGuid.IsValid())
-	{
-		return;
-	}
-
-	// Bind possessable GUID -> the spawned preview actor.
-	EditingLevelSequence->BindPossessableObject(PossessableGuid, *ActorToBind, ActorToBind->GetWorld());
-
-	// Let Sequencer know its internals should refresh.
-	Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
-}
 void FDialogBuilderEditor::BindCommands()
 {
 	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().NewDialogDecorator,
@@ -869,6 +883,7 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 	}
 
 	PlaybackContext = MakeShared<FLevelSequencePlaybackContext>(EditingLevelSequence);
+
 	TSharedRef<FLevelSequenceEditorSpawnRegister> SpawnRegister = MakeShareable(new FLevelSequenceEditorSpawnRegister);
 	
 	ISequencerModule& SequencerModule = FModuleManager::LoadModuleChecked<ISequencerModule>("Sequencer");
@@ -911,7 +926,6 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 
 	SpawnRegister->SetSequencer(Sequencer);
 
-	BindPreviewActorToSequencer();
 }
 
 

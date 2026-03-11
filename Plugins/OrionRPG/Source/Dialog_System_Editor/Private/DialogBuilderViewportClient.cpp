@@ -8,6 +8,7 @@
 #include "EditorViewportClient.h"
 #include "Subsystems/AssetEditorSubsystem.h"
 #include "SNameComboBox.h"
+#include "ThumbnailRendering/SceneThumbnailInfo.h"
 #include "ToolMenus.h"
 #include "Viewports.h"
 #include "EditorViewportSelectability.h"
@@ -72,10 +73,19 @@ FDialogBuilderViewportClient::FDialogBuilderViewportClient(
 	}
 
 	SetUseLevelWorld(bUseLevelWorld);
+
+	
+}
+
+FDialogBuilderViewportClient::~FDialogBuilderViewportClient()
+{
+	// Ensure that an in-progress transaction is ended
+	EndTransaction();
 }
 
 void FDialogBuilderViewportClient::SetUseLevelWorld(bool bInUseLevelWorld)
 {
+	bUseLevelWorld = bInUseLevelWorld;	
 	if (bInUseLevelWorld)
 	{
 		//fetch renderer settings
@@ -126,6 +136,28 @@ void FDialogBuilderViewportClient::EndTransaction()
 	}
 }
 
+
+void FDialogBuilderViewportClient::Tick(float DeltaSeconds)
+{
+	FEditorViewportClient::Tick(DeltaSeconds);
+
+	
+
+	// Tick the preview scene world.
+	if (!GIntraFrameDebuggingGameThread && !bUseLevelWorld)
+	{
+
+		// Allow full tick only if preview simulation is enabled and we're not currently in an active SIE or PIE session
+		if (GEditor->PlayWorld == NULL && !GEditor->bIsSimulatingInEditor)
+		{
+			PreviewScene->GetWorld()->Tick(IsRealtime() ? LEVELTICK_All : LEVELTICK_TimeOnly, DeltaSeconds);
+		}
+		else
+		{
+			PreviewScene->GetWorld()->Tick(IsRealtime() ? LEVELTICK_ViewportsOnly : LEVELTICK_TimeOnly, DeltaSeconds);
+		}
+	}
+}
 
 bool FDialogBuilderViewportClient::InputKey(const FInputKeyEventArgs& EventArgs)
 {
@@ -514,6 +546,11 @@ bool FDialogBuilderViewportClient::CanSelectActorFromHitProxy(HHitProxy* const I
 
 	const AActor* const HitActor = ActorProxy->Actor;
 
+	if (DialogEditor->GetSequencePivot() == HitActor)
+	{
+		return true;
+	}
+
 	// Replace `GetParticipantTrackActors()` with your actual editor accessor.
 	for (AActor* ParticipantActor : DialogEditor->GetDialogDefinitionActors())
 	{
@@ -524,6 +561,96 @@ bool FDialogBuilderViewportClient::CanSelectActorFromHitProxy(HHitProxy* const I
 	}
 
 	return false;
+}
+
+
+void FDialogBuilderViewportClient::InvalidatePreview(bool bResetCamera)
+{
+	TSharedPtr<FDialogBuilderEditor> DialogEditor = Editor.Pin();
+
+	if (!DialogEditor.IsValid()) return;
+	
+	DialogEditor->UpdateDialogDefinitions();
+
+	Invalidate();
+
+	if (bResetCamera)
+	{
+		ResetCamera();
+	}
+}
+
+void FDialogBuilderViewportClient::ResetCamera()
+{
+	TSharedPtr<FDialogBuilderEditor> DialogEditor = Editor.Pin();
+	if (!DialogEditor.IsValid())
+	{
+		return;
+	}
+
+	AActor* SequencePivot = DialogEditor->GetSequencePivot();
+
+	FVector FocusLocation = FVector::ZeroVector;
+	FBox CombinedBounds(ForceInit);
+
+	for (AActor* DialogActor : DialogEditor->GetDialogDefinitionActors())
+	{
+		if (IsValid(DialogActor))
+		{
+			CombinedBounds += DialogActor->GetComponentsBoundingBox(true);
+		}
+	}
+
+	if (IsValid(SequencePivot))
+	{
+		FocusLocation = SequencePivot->GetActorLocation();
+	}
+	else if (CombinedBounds.IsValid)
+	{
+		FocusLocation = CombinedBounds.GetCenter();
+	}
+
+	USceneThumbnailInfo* ThumbnailInfo = USceneThumbnailInfo::StaticClass()->GetDefaultObject<USceneThumbnailInfo>();
+
+	const float BoundsRadius = CombinedBounds.IsValid ? CombinedBounds.GetExtent().Length() : 256.0f;
+	double OrbitZoom = ThumbnailInfo ? ThumbnailInfo->OrbitZoom : 0.0;
+
+	if (BoundsRadius + OrbitZoom < 0.0)
+	{
+		OrbitZoom = -BoundsRadius;
+	}
+
+	const double TargetDistance = BoundsRadius > 0.0f ? BoundsRadius : 256.0f;
+	const FRotator ThumbnailAngle = ThumbnailInfo
+		? FRotator(ThumbnailInfo->OrbitPitch, ThumbnailInfo->OrbitYaw, 0.0f)
+		: FRotator(-15.0f, -135.0f, 0.0f);
+
+	ToggleOrbitCamera(true);
+	SetViewLocationForOrbiting(FocusLocation);
+	SetViewLocation(GetViewLocation() + FVector(0.0f, TargetDistance * 1.5f + OrbitZoom - 256.0f, 0.0f));
+	SetViewRotation(ThumbnailAngle);
+
+	Invalidate();
+}
+
+void FDialogBuilderViewportClient::FocusViewportToSelection()
+{
+	USelection* SelectedActors = GEditor ? GEditor->GetSelectedActors() : nullptr;
+
+	FBox BoundingBox(ForceInit);
+
+	for (FSelectionIterator It(*SelectedActors); It; ++It)
+	{
+		if (AActor* SelectedActor = Cast<AActor>(*It))
+		{
+			BoundingBox += SelectedActor->GetRootComponent()->Bounds.GetBox();
+		}
+	}
+
+	if (BoundingBox.IsValid)
+	{
+		FocusViewportOnBox(BoundingBox);
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

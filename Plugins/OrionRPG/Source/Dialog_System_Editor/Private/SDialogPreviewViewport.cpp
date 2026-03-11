@@ -4,6 +4,7 @@
 #include "DialogBuilderViewportClient.h"
 #include "DialogBuilder_EditorCommands.h"
 #include "AdvancedPreviewScene.h"
+#include "Types/SlateEnums.h"
 #include "Editor.h"
 #include "EditorViewportClient.h"
 #include "Subsystems/AssetEditorSubsystem.h"
@@ -30,17 +31,61 @@
 
 void SDialogPreviewViewport::Construct(const FArguments& InArgs, TSharedRef<FDialogBuilderEditor> InEditor)
 {
+	bIsActiveTimerRegistered = false;
 	AssetEditorToolkitPtr = InEditor;
-	Editor = InEditor;
+	DialogEditor = InEditor;
 	bUseLevelWorld = false;
 
 	SEditorViewport::Construct(SEditorViewport::FArguments());
+
+	// Restore last used feature level
+	if (ViewportClient.IsValid())
+	{
+		UWorld* World = ViewportClient->GetPreviewScene()->GetWorld();
+		if (World != nullptr)
+		{
+			World->ChangeFeatureLevel(GWorld->GetFeatureLevel());
+		}
+	}
+
+	// Use a delegate to inform the attached world of feature level changes.
+	UEditorEngine* Editor = (UEditorEngine*)GEngine;
+	PreviewFeatureLevelChangedHandle = Editor->OnPreviewFeatureLevelChanged().AddLambda([this](ERHIFeatureLevel::Type NewFeatureLevel)
+		{
+			if (ViewportClient.IsValid())
+			{
+				UWorld* World = ViewportClient->GetPreviewScene()->GetWorld();
+				if (World != nullptr)
+				{
+					World->ChangeFeatureLevel(NewFeatureLevel);
+
+					// Refresh the preview scene. Don't change the camera.
+					RequestRefresh(false);
+				}
+			}
+		});
+
+	// Refresh the preview scene
+	RequestRefresh(true);
+
 }
 
 
+SDialogPreviewViewport::~SDialogPreviewViewport()
+{
+	UEditorEngine* Editor = (UEditorEngine*)GEngine;
+	Editor->OnPreviewFeatureLevelChanged().Remove(PreviewFeatureLevelChangedHandle);
+
+	if (ViewportClient.IsValid())
+	{
+		// Reset this to ensure it's no longer in use after destruction
+		ViewportClient->Viewport = NULL;
+	}
+}
+
 TSharedRef<FEditorViewportClient> SDialogPreviewViewport::MakeEditorViewportClient()
 {
-	ViewportClient = MakeShared<FDialogBuilderViewportClient>(Editor.Pin()->GetPreviewScene(), SharedThis(this), Editor.Pin().ToSharedRef(), bUseLevelWorld);
+	ViewportClient = MakeShared<FDialogBuilderViewportClient>(DialogEditor.Pin()->GetPreviewScene(), SharedThis(this), DialogEditor.Pin().ToSharedRef(), bUseLevelWorld);
 	ViewportClient->SetRealtime(true);
 	ViewportClient->bSetListenerPosition = false;
 
@@ -71,6 +116,40 @@ void SDialogPreviewViewport::SetUseLevelWorld(bool bInUseLevelWorld)
 
 }
 
+
+
+void SDialogPreviewViewport::RequestRefresh(bool bResetCamera, bool bRefreshNow)
+{
+	if (bRefreshNow)
+	{
+		if (ViewportClient.IsValid())
+		{
+			ViewportClient->InvalidatePreview(bResetCamera);
+		}
+	}
+	else
+	{
+		// Defer the update until the next tick. This way we don't accidentally spawn the preview actor in the middle of a transaction, for example.
+		if (!bIsActiveTimerRegistered)
+		{
+			bIsActiveTimerRegistered = true;
+			RegisterActiveTimer(0.f, FWidgetActiveTimerDelegate::CreateSP(this, &SDialogPreviewViewport::DeferredUpdatePreview, bResetCamera));
+		}
+	}
+}
+
+EActiveTimerReturnType SDialogPreviewViewport::DeferredUpdatePreview(double InCurrentTime, float InDeltaTime, bool bResetCamera)
+{
+	if (ViewportClient.IsValid())
+	{
+		ViewportClient->InvalidatePreview(bResetCamera);
+	}
+
+	bIsActiveTimerRegistered = false;
+	return EActiveTimerReturnType::Stop;
+}
+
+
 void SDialogPreviewViewport::BindCommands()
 {
 	//CommandList->Append(Editor->GetToolkitCommands());
@@ -83,6 +162,11 @@ void SDialogPreviewViewport::BindCommands()
 		FCanExecuteAction(),
 		FIsActionChecked::CreateSP(ViewportClient.Get(), &FDialogBuilderViewportClient::GetShowGrid));
 
+}
+
+void SDialogPreviewViewport::OnFocusViewportToSelection()
+{
+	ViewportClient->FocusViewportToSelection();
 }
 
 TSharedPtr<SWidget> SDialogPreviewViewport::BuildViewportToolbar()
@@ -145,7 +229,7 @@ TSharedPtr<SWidget> SDialogPreviewViewport::BuildViewportToolbar()
 
 		ViewportToolbarContext.AddObject(ContextObject);
 
-		if (TSharedPtr<FDialogBuilderEditor> EditorPinned = Editor.Pin())
+		if (TSharedPtr<FDialogBuilderEditor> EditorPinned = DialogEditor.Pin())
 		{
 			EditorPinned->InitToolMenuContext(ViewportToolbarContext);
 		}
@@ -156,7 +240,7 @@ TSharedPtr<SWidget> SDialogPreviewViewport::BuildViewportToolbar()
 	// Build your custom right-side widget
 	TSharedPtr<SWidget> CustomToolbarWidget = SNullWidget::NullWidget;
 	{
-		TSharedPtr<FDialogBuilderEditor> EditorPinned = Editor.Pin();
+		TSharedPtr<FDialogBuilderEditor> EditorPinned = DialogEditor.Pin();
 		if (EditorPinned.IsValid())
 		{
 			FToolBarBuilder ToolbarBuilder(GetCommandList(), FMultiBoxCustomization::None);
@@ -210,5 +294,6 @@ TSharedPtr<SWidget> SDialogPreviewViewport::BuildViewportToolbar()
 			CustomToolbarWidget.IsValid() ? CustomToolbarWidget.ToSharedRef() : SNullWidget::NullWidget
 		];
 }
+
 
 #undef LOCTEXT_NAMESPACE

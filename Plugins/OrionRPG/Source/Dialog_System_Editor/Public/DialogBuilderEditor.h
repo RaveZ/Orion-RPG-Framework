@@ -298,7 +298,6 @@ public:
 	void OpenSequencerForSequence(ULevelSequence* InSequence);
 	void ExtendSequencerToolbar(FName InToolMenuName);
 	void EnsureSequencerCreated();
-	void BindPreviewActorToSequencer();
 
 	/** Called whenever sequencer has received focus */
 	void OnSequencerReceivedFocus();
@@ -325,6 +324,7 @@ public:
 
 	//Getter
 	TSharedPtr<SDialogDefinitions> GetDialogDefinitionsWidget() const { return DialogDefinitionsWidget; }
+	AActor* GetSequencePivot() { return SequencePivot.Get(); };
 
 
 	FGraphAppearanceInfo GetGraphAppearance() const;
@@ -468,7 +468,7 @@ protected:
 	
 	//sequencer
 	TSharedPtr<ISequencer> Sequencer;
-	TWeakObjectPtr<AActor> PreviewActor;
+	TWeakObjectPtr<AActor> SequencePivot;
 	TMap<UDialogParticipant*, TWeakObjectPtr<AActor>> ParticipantTracks;
 
 	/** MovieScene for displaying this scene asset in the sequencer time line. */
