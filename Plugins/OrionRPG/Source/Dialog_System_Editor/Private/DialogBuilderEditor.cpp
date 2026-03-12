@@ -9,6 +9,7 @@
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderEditorModes.h"
 #include "DialogDefinition.h"
+#include "DialogSequence.h"
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderNode_DialogSequence.h"
 #include "Decorator/OrionDecorator.h"
@@ -332,7 +333,7 @@ static FGuid FindOrAddPossessableForObject(UMovieScene* InMovieScene, const UObj
 
 void FDialogBuilderEditor::OnParticipantAdded(UDialogParticipant* Participant)
 {
-	if (!Participant || !EditingLevelSequence)
+	if (!Participant || !EditingDialogSequence)
 	{
 		return;
 	}
@@ -348,7 +349,7 @@ void FDialogBuilderEditor::OnParticipantAdded(UDialogParticipant* Participant)
 
 void FDialogBuilderEditor::OnParticipantRemoved(UDialogParticipant* Participant)
 {
-	if (!Participant || !EditingLevelSequence)
+	if (!Participant || !EditingDialogSequence)
 	{
 		return;
 	}
@@ -363,7 +364,7 @@ void FDialogBuilderEditor::OnParticipantRemoved(UDialogParticipant* Participant)
 }
 void FDialogBuilderEditor::EnsureParticipantRequiredTrack(UDialogParticipant* Participant)
 {
-	UMovieScene* MovieScene = EditingLevelSequence ? EditingLevelSequence->GetMovieScene() : nullptr;
+	UMovieScene* MovieScene = EditingDialogSequence ? EditingDialogSequence->GetMovieScene() : nullptr;
 	if (!MovieScene || !Participant)
 	{
 		return;
@@ -385,7 +386,7 @@ void FDialogBuilderEditor::EnsureParticipantRequiredTrack(UDialogParticipant* Pa
 		return;
 	}
 
-	EditingLevelSequence->BindPossessableObject(BindingGuid, *ParticipantActor, ParticipantActor->GetWorld());
+	EditingDialogSequence->BindPossessableObject(BindingGuid, *ParticipantActor, ParticipantActor->GetWorld());
 
 	// Add the track under the binding (instead of AddMasterTrack)
 	UMovieSceneSkeletalAnimationTrack* AnimTrack = MovieScene->AddTrack<UMovieSceneSkeletalAnimationTrack>(BindingGuid);
@@ -408,7 +409,7 @@ void FDialogBuilderEditor::EnsureParticipantRequiredTrack(UDialogParticipant* Pa
 
 void FDialogBuilderEditor::RemoveParticipantRequiredTrack(UDialogParticipant* Participant)
 {
-	UMovieScene* MovieScene = EditingLevelSequence ? EditingLevelSequence->GetMovieScene() : nullptr;
+	UMovieScene* MovieScene = EditingDialogSequence ? EditingDialogSequence->GetMovieScene() : nullptr;
 	if (!MovieScene || !Participant)
 	{
 		return;
@@ -805,14 +806,14 @@ void FDialogBuilderEditor::AddToSelection(UEdGraphNode* InNode)
 }
 
 //Sequencer
-void FDialogBuilderEditor::OpenSequencerForSequence(ULevelSequence* InSequence)
+void FDialogBuilderEditor::OpenDialogSequence(UDialogSequence* InDialogSequence)
 {
-	if (!InSequence)
+	if (!InDialogSequence)
 	{
 		return;
 	}
 
-	EditingLevelSequence = InSequence;
+	EditingDialogSequence = InDialogSequence;
 
 	Sequencer.Reset();
 
@@ -877,12 +878,12 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		return;
 	}
 
-	if (!EditingLevelSequence)
+	if (!EditingDialogSequence)
 	{
 		return;
 	}
 
-	PlaybackContext = MakeShared<FLevelSequencePlaybackContext>(EditingLevelSequence);
+	PlaybackContext = MakeShared<FLevelSequencePlaybackContext>(EditingDialogSequence);
 
 	TSharedRef<FLevelSequenceEditorSpawnRegister> SpawnRegister = MakeShareable(new FLevelSequenceEditorSpawnRegister);
 	
@@ -894,12 +895,13 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		ViewParams.ScrubberStyle = ESequencerScrubberStyle::FrameBlock;
 		ViewParams.OnReceivedFocus.BindRaw(this, &FDialogBuilderEditor::OnSequencerReceivedFocus);
 		ViewParams.OnInitToolMenuContext.BindRaw(this, &FDialogBuilderEditor::OnInitToolMenuContext);
+		//ViewParams.ToolbarExtender = FToolBarExtender::CreateRaw(this, &FDialogBuilderEditor::ExtendSequencerToolbar);
 	}
 
 
 	FSequencerInitParams InitParams;
 	{
-		InitParams.RootSequence = EditingLevelSequence;
+		InitParams.RootSequence = EditingDialogSequence;
 		InitParams.bEditWithinLevelEditor = false;
 		InitParams.ToolkitHost = GetToolkitHost();
 		InitParams.SpawnRegister = SpawnRegister;
@@ -2276,7 +2278,7 @@ void FDialogBuilderEditor::OnNodeDoubleClicked(UEdGraphNode* Node)
 	if(UDialogBuilderNode_DialogSequence* DialogSequenceNode = Cast<UDialogBuilderNode_DialogSequence>(DialogEdNode ? DialogEdNode->NodeInstance : nullptr))
 	{
 
-		OpenSequencerForSequence(DialogSequenceNode->LevelSequence);
+		OpenDialogSequence(DialogSequenceNode->DialogSequence);
 	}
 
 	

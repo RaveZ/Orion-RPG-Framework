@@ -32,4 +32,8 @@ public:
 	TSharedPtr<FUICommandInfo> NewDialogEvent;
 	TSharedPtr<FUICommandInfo> NewDialogCameraShot;
 	TSharedPtr<FUICommandInfo> DialogSetting;
+
+	//Sequencer
+	/** Create camera and set it as the current camera cut */
+	TSharedPtr< FUICommandInfo > CreateCamera;
 };

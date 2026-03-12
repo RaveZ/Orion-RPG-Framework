@@ -21,6 +21,7 @@ class ISequencer;
 class ULevelSequence;
 class SDialogDefinitions;
 class UDialogParticipant;
+class UDialogSequence;
 
 namespace DialogSectionID
 {
@@ -295,7 +296,7 @@ public:
 	}
 
 	//Sequencer
-	void OpenSequencerForSequence(ULevelSequence* InSequence);
+	void OpenDialogSequence(UDialogSequence* InDialogSequence);
 	void ExtendSequencerToolbar(FName InToolMenuName);
 	void EnsureSequencerCreated();
 
@@ -471,8 +472,8 @@ protected:
 	TWeakObjectPtr<AActor> SequencePivot;
 	TMap<UDialogParticipant*, TWeakObjectPtr<AActor>> ParticipantTracks;
 
-	/** MovieScene for displaying this scene asset in the sequencer time line. */
-	TObjectPtr<ULevelSequence> EditingLevelSequence = nullptr;
+	/** MovieScene for displaying this dialog sequence in timeline. */
+	TObjectPtr<UDialogSequence> EditingDialogSequence = nullptr;
 
 	/** Instance of a class used for managing the playback context for a level sequence. */
 	TSharedPtr<class FLevelSequencePlaybackContext> PlaybackContext;

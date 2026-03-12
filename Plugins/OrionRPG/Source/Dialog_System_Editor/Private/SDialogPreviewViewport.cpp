@@ -111,9 +111,6 @@ void SDialogPreviewViewport::SetUseLevelWorld(bool bInUseLevelWorld)
 			DialogClient->SetUseLevelWorld(bInUseLevelWorld);
 		}
 	}
-
-
-
 }
 
 

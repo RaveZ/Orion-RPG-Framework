@@ -5,6 +5,7 @@
 #include "DialogBuilderNode_PlayerChoice.h"
 #include "Decorator/OrionDecorator.h"
 #include "DialogBuilderGraph.h"
+#include "DialogSequence.h"
 #include "DialogBuilderSetting.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Animation/AnimMontage.h"
@@ -36,12 +37,12 @@ void UDialogBuilderNode_DialogSequence::EvaluateNextNode()
 
 void UDialogBuilderNode_DialogSequence::EnsureSequenceCreated()
 {
-	if (!LevelSequence)
+	if (!DialogSequence)
 	{
 		Modify();
-		LevelSequence = NewObject<ULevelSequence>(this, NAME_None, RF_Transactional);
-		LevelSequence->MovieScene = NewObject<UMovieScene>(LevelSequence, FName("DialogMovieScene"), RF_Transactional);
-		LevelSequence->MovieScene->SetDisplayRate(FFrameRate(30, 1));
+		DialogSequence = NewObject<UDialogSequence>(this, NAME_None, RF_Transactional);
+		DialogSequence->MovieScene = NewObject<UMovieScene>(DialogSequence, FName("DialogSequence"), RF_Transactional);
+		DialogSequence->MovieScene->SetDisplayRate(FFrameRate(30, 1));
 	}
 }
 

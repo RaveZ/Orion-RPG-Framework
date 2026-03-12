@@ -11,7 +11,7 @@
 #include "DialogBuilderNode_DialogSequence.generated.h"
 
 
-
+class UDialogSequence;
 UCLASS(Blueprintable, BlueprintType, AutoExpandCategories = "Shot Override")
 class ORIONRPG_API UDialogBuilderNode_DialogSequence : public UDialogBuilderNode
 {
@@ -32,7 +32,7 @@ public:
 	virtual void Serialize(FArchive& Ar) override;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sequence")
-	TObjectPtr<ULevelSequence> LevelSequence = nullptr;
+	TObjectPtr<UDialogSequence> DialogSequence = nullptr;
 
 #if WITH_EDITORONLY_DATA
 	TWeakPtr<ISequencer> Sequencer;
