@@ -6,6 +6,11 @@
 #include "LevelSequence.h"
 #include "DialogSequence.generated.h"
 
+class UMovieSceneDialogSection;
+class UMovieSceneDialogTrack;
+struct FDialogLineData;
+struct FGameplayTag;
+
 UCLASS(BlueprintType)
 class ORIONRPG_API UDialogSequence : public ULevelSequence
 {
@@ -13,4 +18,14 @@ class ORIONRPG_API UDialogSequence : public ULevelSequence
 
 public:
 	UDialogSequence(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+
+	UMovieSceneDialogTrack* GetOrCreateDialogTrack();
+	const UMovieSceneDialogTrack* FindDialogTrack() const;
+
+	UMovieSceneDialogSection* AddDialogSection(
+		const FDialogLineData& InDialogLineData,
+		const FGameplayTag& InSpeakerParticipantTag,
+		const FGameplayTag& InListenerParticipantTag,
+		FFrameNumber InStartFrame,
+		int32 InDurationFrames = 1);
 };
