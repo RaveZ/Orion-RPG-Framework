@@ -2,6 +2,7 @@
 
 #include "MovieSceneDialogTrack.h"
 #include "MovieSceneDialogSection.h"
+#include "MovieSceneDialogTemplate.h"
 #include "DialogData.h"
 
 UMovieSceneDialogTrack::UMovieSceneDialogTrack(const FObjectInitializer& ObjectInitializer)
@@ -80,6 +81,11 @@ bool UMovieSceneDialogTrack::IsEmpty() const
 bool UMovieSceneDialogTrack::SupportsMultipleRows() const
 {
 	return false;
+}
+
+FMovieSceneEvalTemplatePtr UMovieSceneDialogTrack::CreateTemplateForSection(const UMovieSceneSection& InSection) const
+{
+	return FMovieSceneDialogSectionTemplate(*CastChecked<UMovieSceneDialogSection>(&InSection));
 }
 
 #if WITH_EDITORONLY_DATA

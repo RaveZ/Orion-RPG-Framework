@@ -1,0 +1,40 @@
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Evaluation/MovieSceneEvalTemplate.h"
+#include "DialogData.h"
+#include "MovieSceneDialogTemplate.generated.h"
+
+class UMovieSceneDialogSection;
+
+USTRUCT()
+struct ORIONRPG_API FMovieSceneDialogSectionTemplate : public FMovieSceneEvalTemplate
+{
+	GENERATED_BODY()
+
+	FMovieSceneDialogSectionTemplate() = default;
+	FMovieSceneDialogSectionTemplate(const UMovieSceneDialogSection& InSection);
+
+private:
+	virtual UScriptStruct& GetScriptStructImpl() const override
+	{
+		return *StaticStruct();
+	}
+
+	virtual void Evaluate(
+		const FMovieSceneEvaluationOperand& Operand,
+		const FMovieSceneContext& Context,
+		const FPersistentEvaluationData& PersistentData,
+		FMovieSceneExecutionTokens& ExecutionTokens) const override;
+
+	UPROPERTY()
+	FGameplayTag SpeakerParticipantTag;
+
+	UPROPERTY()
+	FGameplayTag ListenerParticipantTag;
+
+	UPROPERTY()
+	FDialogLineData DialogLineData;
+};

@@ -3,16 +3,20 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Compilation/IMovieSceneTrackTemplateProducer.h"
 #include "MovieSceneNameableTrack.h"
 #include "MovieSceneDialogTrack.generated.h"
 
 class UMovieSceneDialogSection;
 class UMovieSceneSection;
+class UDialogDefinition;
 struct FDialogLineData;
 struct FGameplayTag;
 
 UCLASS()
-class ORIONRPG_API UMovieSceneDialogTrack : public UMovieSceneNameableTrack
+class ORIONRPG_API UMovieSceneDialogTrack
+	: public UMovieSceneNameableTrack
+	, public IMovieSceneTrackTemplateProducer
 {
 	GENERATED_BODY()
 
@@ -26,6 +30,10 @@ public:
 		FFrameNumber InStartFrame,
 		int32 InDurationFrames = 1);
 
+	/**Which dialog definition this track belong to*/
+	UPROPERTY()
+	TObjectPtr<UDialogDefinition> InDialogDefinition;
+
 public:
 	virtual bool SupportsType(TSubclassOf<UMovieSceneSection> SectionClass) const override;
 	virtual UMovieSceneSection* CreateNewSection() override;
@@ -36,6 +44,8 @@ public:
 	virtual void RemoveSection(UMovieSceneSection& Section) override;
 	virtual bool IsEmpty() const override;
 	virtual bool SupportsMultipleRows() const override;
+
+	virtual FMovieSceneEvalTemplatePtr CreateTemplateForSection(const UMovieSceneSection& InSection) const override;
 
 #if WITH_EDITORONLY_DATA
 	virtual FText GetDefaultDisplayName() const override;

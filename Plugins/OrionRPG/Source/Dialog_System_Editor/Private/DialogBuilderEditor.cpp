@@ -1,6 +1,5 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
-
 #include "DialogBuilderEditor.h"
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderEditorToolbar.h"
@@ -51,6 +50,7 @@
 #include "MovieScene.h"
 #include "MovieSceneTrack.h"
 #include "MovieSceneSignedObject.h"
+#include "MovieSceneDialogTrack.h"
 #include "Tracks/MovieSceneSkeletalAnimationTrack.h"
 #include "LevelSequence.h"
 #include "Widgets/Docking/SDockTab.h"
@@ -370,16 +370,12 @@ void FDialogBuilderEditor::EnsureParticipantRequiredTrack(UDialogParticipant* Pa
 		return;
 	}
 
-
 	AActor* ParticipantActor = ParticipantTracks.FindRef(Participant).Get();
-
 	if (!ParticipantActor)
 	{
 		return;
 	}
-	
 
-	// Create/find a binding for the actor
 	const FGuid BindingGuid = FindOrAddPossessableForObject(MovieScene, ParticipantActor);
 	if (!BindingGuid.IsValid())
 	{
@@ -388,7 +384,20 @@ void FDialogBuilderEditor::EnsureParticipantRequiredTrack(UDialogParticipant* Pa
 
 	EditingDialogSequence->BindPossessableObject(BindingGuid, *ParticipantActor, ParticipantActor->GetWorld());
 
-	// Add the track under the binding (instead of AddMasterTrack)
+	if (UMovieSceneDialogTrack* ExistingDialogTrack = MovieScene->FindTrack<UMovieSceneDialogTrack>(BindingGuid))
+	{
+		return;
+	}
+
+	UMovieSceneDialogTrack* DialogTrack = MovieScene->AddTrack<UMovieSceneDialogTrack>(BindingGuid);
+	if (!DialogTrack)
+	{
+		return;
+	}
+
+	DialogTrack->Modify();
+	DialogTrack->SetDisplayName(FText::FromString(Participant->GetName()));
+
 	UMovieSceneSkeletalAnimationTrack* AnimTrack = MovieScene->AddTrack<UMovieSceneSkeletalAnimationTrack>(BindingGuid);
 	if (!AnimTrack)
 	{
