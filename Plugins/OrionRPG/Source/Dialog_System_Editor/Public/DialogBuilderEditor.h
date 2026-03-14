@@ -23,6 +23,7 @@ class SDialogDefinitions;
 class UDialogParticipant;
 class UDialogSequence;
 class UDialogDefinition;
+class ACineCameraActor;
 
 namespace DialogSectionID
 {
@@ -300,6 +301,8 @@ public:
 	void OpenDialogSequence(UDialogSequence* InDialogSequence);
 	void ExtendSequencerToolbar(FName InToolMenuName);
 	void EnsureSequencerCreated();
+	FGuid CreateDialogCamera(const bool bSpawnable, class ACineCameraActor*& OutActor);
+
 
 	/** Called whenever sequencer has received focus */
 	void OnSequencerReceivedFocus();
@@ -475,6 +478,7 @@ protected:
 	TSharedPtr<ISequencer> Sequencer;
 	TWeakObjectPtr<AActor> SequencePivot;
 	TMap<UDialogDefinition*, TWeakObjectPtr<AActor>> DialogDefinitionActors;
+	TWeakObjectPtr<ACineCameraActor> DialogPreviewCamera;
 
 	/** MovieScene for displaying this dialog sequence in timeline. */
 	TObjectPtr<UDialogSequence> EditingDialogSequence = nullptr;

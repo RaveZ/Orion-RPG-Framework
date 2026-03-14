@@ -38,6 +38,7 @@ public class Dialog_System_Editor : ModuleRules
                 "Slate",
                 "AssetDefinition",
 				"GameplayTags",
+				"CinematicCamera"
             }
 			);
 		

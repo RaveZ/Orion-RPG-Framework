@@ -61,6 +61,15 @@
 #include "Engine/StaticMeshActor.h"
 #include "Components/StaticMeshComponent.h"
 #include "UObject/SoftObjectPath.h"
+#include "CineCameraActor.h"
+#include "SequencerUtilities.h"
+#include "MovieSceneToolHelpers.h"
+#include "Tracks/MovieSceneCameraCutTrack.h"
+#include "Bindings/MovieSceneCustomBinding.h"
+#include "Bindings/MovieSceneSpawnableBinding.h"
+#include "Bindings/MovieSceneReplaceableBinding.h"
+#include "Bindings/MovieSceneSpawnableActorBinding.h"
+#include "Bindings/MovieSceneReplaceableActorBinding.h"
 #include <Kismet2/KismetEditorUtilities.h>
 
 #define LOCTEXT_NAMESPACE "DialogBuilderEditor"
@@ -329,29 +338,27 @@ static UMovieSceneDialogTrack* FindDialogTrackForDefinition(UMovieScene* InMovie
 		return nullptr;
 	}
 
+	const UMovieScene* ConstMovieScene = InMovieScene;
+
 	// Master tracks
-	for (UMovieSceneTrack* Track : InMovieScene->GetTracks())
+	for (const UMovieSceneTrack* Track : ConstMovieScene->GetTracks())
 	{
-		if (UMovieSceneDialogTrack* DialogTrack = Cast<UMovieSceneDialogTrack>(Track))
+		const UMovieSceneDialogTrack* DialogTrack = Cast<UMovieSceneDialogTrack>(Track);
+		if (DialogTrack && DialogTrack->DialogDefinition == InDialogDefinition)
 		{
-			if (DialogTrack->DialogDefinition == InDialogDefinition)
-			{
-				return DialogTrack;
-			}
+			return const_cast<UMovieSceneDialogTrack*>(DialogTrack);
 		}
 	}
 
 	// Object-bound tracks
-	for (const FMovieSceneBinding& Binding : InMovieScene->GetBindings())
+	for (const FMovieSceneBinding& Binding : ConstMovieScene->GetBindings())
 	{
-		for (UMovieSceneTrack* Track : Binding.GetTracks())
+		for (const UMovieSceneTrack* Track : Binding.GetTracks())
 		{
-			if (UMovieSceneDialogTrack* DialogTrack = Cast<UMovieSceneDialogTrack>(Track))
+			const UMovieSceneDialogTrack* DialogTrack = Cast<UMovieSceneDialogTrack>(Track);
+			if (DialogTrack && DialogTrack->DialogDefinition == InDialogDefinition)
 			{
-				if (DialogTrack->DialogDefinition == InDialogDefinition)
-				{
-					return DialogTrack;
-				}
+				return const_cast<UMovieSceneDialogTrack*>(DialogTrack);
 			}
 		}
 	}
@@ -492,7 +499,7 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 			UBillboardComponent* BillboardComponent = NewObject<UBillboardComponent>(PivotActor, TEXT("PivotBillboard"));
 			BillboardComponent->SetupAttachment(PivotRoot);
 			BillboardComponent->SetMobility(EComponentMobility::Movable);
-			BillboardComponent->SetHiddenInGame(false);
+			BillboardComponent->SetHiddenInGame(true);
 			BillboardComponent->SetUsingAbsoluteScale(true);
 			BillboardComponent->bIsScreenSizeScaled = true;
 			BillboardComponent->bUseInEditorScaling = true;
@@ -515,6 +522,24 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 		}
 	}
 	PivotActor->SetActorTransform(DialogGraph->SequencePivot);
+
+	if (!DialogPreviewCamera.IsValid())
+	{
+		ACineCameraActor* NewCamera = nullptr;
+		const FGuid CameraGuid = CreateDialogCamera(false, NewCamera);
+		if (CameraGuid.IsValid() && NewCamera)
+		{
+			NewCamera->AttachToActor(PivotActor, FAttachmentTransformRules::KeepRelativeTransform);
+			DialogPreviewCamera = NewCamera;
+		}
+	}
+	else if (AActor* ExistingCamera = DialogPreviewCamera.Get())
+	{
+		if (ExistingCamera->GetAttachParentActor() != PivotActor)
+		{
+			ExistingCamera->AttachToActor(PivotActor, FAttachmentTransformRules::KeepRelativeTransform);
+		}
+	}
 
 	// Use DialogDefinitionActors as the single source of truth for spawned preview actors.
 	// This allows removing PreviewParticipantActors completely.
@@ -1016,6 +1041,119 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 	SpawnRegister->SetSequencer(Sequencer);
 
 }
+
+void NewCameraAdded(TSharedRef<ISequencer> Sequencer, ACameraActor* NewCamera, FGuid CameraGuid)
+{
+	if (Sequencer->OnCameraAddedToSequencer().IsBound() && !Sequencer->OnCameraAddedToSequencer().Execute(NewCamera, CameraGuid))
+	{
+		return;
+	}
+
+	MovieSceneToolHelpers::LockCameraActorToViewport(Sequencer, NewCamera);
+
+	UMovieSceneSequence* Sequence = Sequencer->GetFocusedMovieSceneSequence();
+	if (Sequence && Sequence->IsTrackSupported(UMovieSceneCameraCutTrack::StaticClass()) == ETrackSupport::Supported)
+	{
+		MovieSceneToolHelpers::CreateCameraCutSectionForCamera(Sequence->GetMovieScene(), CameraGuid, Sequencer->GetLocalTime().Time.FloorToFrame());
+	}
+}
+
+FGuid FDialogBuilderEditor::CreateDialogCamera(const bool bSpawnable, ACineCameraActor*& OutActor)
+{
+	FGuid CameraGuid;
+
+	if (!Sequencer.IsValid() || !EditingDialogSequence)
+	{
+		return CameraGuid;
+	}
+
+	UMovieSceneSequence* Sequence = Sequencer->GetFocusedMovieSceneSequence();
+	if (!Sequence)
+	{
+		return CameraGuid;
+	}
+
+	UMovieScene* MovieScene = Sequence->GetMovieScene();
+	if (!MovieScene || MovieScene->IsReadOnly())
+	{
+		return CameraGuid;
+	}
+
+	UWorld* World = GetPreviewWorld();
+	if (!World)
+	{
+		return CameraGuid;
+	}
+
+	const FScopedTransaction Transaction(LOCTEXT("CreateDialogCamera", "Create Dialog Camera"));
+
+	FActorSpawnParameters SpawnParams;
+	if (bSpawnable)
+	{
+		SpawnParams.ObjectFlags &= ~RF_Transactional;
+	}
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+	OutActor = World->SpawnActor<ACineCameraActor>(SpawnParams);
+	if (!OutActor)
+	{
+		return CameraGuid;
+	}
+
+
+	//OutActor->SetActorLocation(GCurrentLevelEditingViewportClient->GetViewLocation(), false);
+	//OutActor->SetActorRotation(GCurrentLevelEditingViewportClient->GetViewRotation());
+
+	OutActor->SetActorLocation(FVector::ZeroVector, false);
+	OutActor->SetActorRotation(FRotator::ZeroRotator);
+	FActorLabelUtilities::SetActorLabelUnique(OutActor, ACineCameraActor::StaticClass()->GetName());
+
+	CameraGuid = FSequencerUtilities::CreateBinding(Sequencer.ToSharedRef(), *OutActor);
+
+	TSubclassOf<UMovieSceneCustomBinding> CustomBindingClass = bSpawnable
+		? UMovieSceneSpawnableActorBinding::StaticClass()
+		: UMovieSceneReplaceableActorBinding::StaticClass();
+
+	const FMovieSceneBindingReferences* BindingReferences = Sequence->GetBindingReferences();
+	if (BindingReferences)
+	{
+		for (const FMovieSceneBindingReference& Reference : BindingReferences->GetReferences(CameraGuid))
+		{
+			for (const TSubclassOf<UMovieSceneCustomBinding>& SupportedCustomBindingType : Sequencer->GetSupportedCustomBindingTypes())
+			{
+				if (SupportedCustomBindingType
+					&& SupportedCustomBindingType->IsChildOf(CustomBindingClass)
+					&& SupportedCustomBindingType->GetDefaultObject<UMovieSceneCustomBinding>()->SupportsConversionFromBinding(Reference, OutActor))
+				{
+					FMovieScenePossessable* NewPossessable = FSequencerUtilities::ConvertToCustomBinding(Sequencer.ToSharedRef(), CameraGuid, CustomBindingClass);
+					if (NewPossessable)
+					{
+						for (TWeakObjectPtr<> WeakObject : Sequencer->FindBoundObjects(NewPossessable->GetGuid(), Sequencer->GetFocusedTemplateID()))
+						{
+							if (ACineCameraActor* SpawnedActor = Cast<ACineCameraActor>(WeakObject.Get()))
+							{
+								OutActor = SpawnedActor;
+							}
+						}
+
+						CameraGuid = NewPossessable->GetGuid();
+					}
+					break;
+				}
+			}
+		}
+	}
+
+	if (!CameraGuid.IsValid())
+	{
+		return CameraGuid;
+	}
+
+	NewCameraAdded(Sequencer.ToSharedRef(), OutActor, CameraGuid);
+
+	return CameraGuid;
+}
+
 
 
 TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_Sequencer(const FSpawnTabArgs& Args)
