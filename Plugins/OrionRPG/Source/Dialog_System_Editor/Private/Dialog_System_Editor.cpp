@@ -20,6 +20,9 @@
 #include "DialogBuilderSetting.h"
 #include "DialogNodeDetails.h"
 #include "DialogData.h"
+#include "ISequencerModule.h"
+#include "Modules/ModuleManager.h"
+#include "Sequencer/DialogTrackEditor.h"
 
 
 #define LOCTEXT_NAMESPACE "FDialog_System_EditorModule"
@@ -49,6 +52,9 @@ void FDialog_System_EditorModule::StartupModule()
 	FEdGraphUtilities::RegisterVisualNodeFactory(GraphPanelNodeFactory_DialogEditor);
 	
 	PropertyModule.NotifyCustomizationModuleChanged();
+
+	ISequencerModule& SequencerModule = FModuleManager::LoadModuleChecked<ISequencerModule>("Sequencer");
+	DialogTrackEditorHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FDialogTrackEditor::CreateTrackEditor));
 }
 
 void FDialog_System_EditorModule::ShutdownModule()
@@ -87,6 +93,12 @@ void FDialog_System_EditorModule::ShutdownModule()
 				PropertyModule.UnregisterCustomClassLayout(*It);
 			}
 		}
+	}
+
+	if (FModuleManager::Get().IsModuleLoaded("Sequencer"))
+	{
+		ISequencerModule& SequencerModule = FModuleManager::GetModuleChecked<ISequencerModule>("Sequencer");
+		SequencerModule.UnRegisterTrackEditor(DialogTrackEditorHandle);
 	}
 
 	DecoratorClassCache.Reset();

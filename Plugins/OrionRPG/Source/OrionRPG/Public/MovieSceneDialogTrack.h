@@ -31,8 +31,8 @@ public:
 		int32 InDurationFrames = 1);
 
 	/**Which dialog definition this track belong to*/
-	UPROPERTY()
-	TObjectPtr<UDialogDefinition> InDialogDefinition;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog")
+	TObjectPtr<class UDialogDefinition> DialogDefinition;
 
 public:
 	virtual bool SupportsType(TSubclassOf<UMovieSceneSection> SectionClass) const override;

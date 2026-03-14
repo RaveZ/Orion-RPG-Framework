@@ -356,7 +356,8 @@ void SDialogDefinitions::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchema
 		UDialogParticipant* DialogParticipant = ParticipantAction->Participant;
 		if (DialogEditor && DialogParticipant)
 		{
-			DialogEditor->PropertyWidget->SetObject(DialogParticipant);
+			DialogEditor->SetDetailsObject(DialogParticipant);
+			DialogEditor->SelectDialogDefinitionActor(DialogParticipant);
 		}
 		
 		//Prop
@@ -365,8 +366,10 @@ void SDialogDefinitions::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchema
 		UDialogProp* DialogProp = PropAction->Prop;
 		if (DialogEditor && DialogProp)
 		{
-			DialogEditor->PropertyWidget->SetObject(DialogProp);
+			DialogEditor->SetDetailsObject(DialogProp);
+			DialogEditor->SelectDialogDefinitionActor(DialogProp);
 		}
+		
 		
 	}
 }
@@ -403,7 +406,7 @@ void SDialogDefinitions::ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction
 		UDialogParticipant* DialogParticipant = ParticipantAction->Participant;
 		if (DialogEditor && DialogParticipant)
 		{
-			DialogEditor->PropertyWidget->SetObject(DialogParticipant);
+			DialogEditor->SetDetailsObject(DialogParticipant);
 		}
 
 		//Prop
@@ -412,7 +415,7 @@ void SDialogDefinitions::ExecuteAction(TSharedPtr<FEdGraphSchemaAction> InAction
 		UDialogProp* DialogProp = PropAction->Prop;
 		if (DialogEditor && DialogProp)
 		{
-			DialogEditor->PropertyWidget->SetObject(DialogProp);
+			DialogEditor->SetDetailsObject(DialogProp);
 		}
 
 	}
@@ -594,7 +597,41 @@ bool SDialogDefinitions::CanAddNewElementToSection(int32 InSectionID) const
 }
 bool SDialogDefinitions::HandleActionMatchesName(FEdGraphSchemaAction* InAction, const FName& InName) const
 {
-	return false;
+	if (!InAction || InName.IsNone())
+	{
+		return false;
+	}
+
+	if (InAction->GetTypeId() == FAssetSchemaAction_Participant::StaticGetTypeId())
+	{
+		FAssetSchemaAction_Participant* ParticipantAction = static_cast<FAssetSchemaAction_Participant*>(InAction);
+		if (ParticipantAction->FuncName == InName)
+		{
+			return true;
+		}
+
+		if (ParticipantAction->Participant && ParticipantAction->Participant->GetFName() == InName)
+		{
+			return true;
+		}
+	}
+	else if (InAction->GetTypeId() == FAssetSchemaAction_Prop::StaticGetTypeId())
+	{
+		FAssetSchemaAction_Prop* PropAction = static_cast<FAssetSchemaAction_Prop*>(InAction);
+		if (PropAction->FuncName == InName)
+		{
+			return true;
+		}
+
+		if (PropAction->Prop && PropAction->Prop->GetFName() == InName)
+		{
+			return true;
+		}
+	}
+
+	// Optional fallback
+	return InAction->GetMenuDescription().ToString() == InName.ToString();
+
 }
 void SDialogDefinitions::OnOpenGraph()
 {
@@ -637,7 +674,7 @@ void SDialogDefinitions::OnDeleteEntry()
 	{
 		if (DialogEditorPtr.IsValid())
 		{
-			DialogEditorPtr.Pin()->OnParticipantRemoved(ParticipantAction->Participant);
+			DialogEditorPtr.Pin()->OnDialogDefinitionRemoved(ParticipantAction->Participant);
 		}
 
 		DialogGraph->Participants.Remove(ParticipantAction->Participant);
@@ -716,7 +753,7 @@ void SDialogDefinitions::CreateNewParticipant()
 
 	if (DialogEditorPtr.IsValid())
 	{
-		DialogEditorPtr.Pin()->OnParticipantAdded(NewParticipant);
+		DialogEditorPtr.Pin()->OnDialogDefinitionAdded(NewParticipant);
 	}
 
 	Refresh();

@@ -79,6 +79,12 @@ FDialogBuilderViewportClient::FDialogBuilderViewportClient(
 
 FDialogBuilderViewportClient::~FDialogBuilderViewportClient()
 {
+	if (GEditor)
+	{
+		GEditor->SelectNone(true, true, false);
+	
+		GEditor->NoteSelectionChange();
+	}
 	// Ensure that an in-progress transaction is ended
 	EndTransaction();
 }
@@ -185,8 +191,7 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 
 	if (!HitProxy)
 	{
-		DialogEditor->SetDetailsObject(nullptr);
-		GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
+		DialogEditor->SelectDialogDefinition(nullptr);
 		return;
 	}
 	if (HitProxy->IsA(HWidgetAxis::StaticGetType()))
@@ -241,24 +246,35 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 		HActor* ActorProxy = (HActor*)HitProxy;
 		if (ActorProxy && ActorProxy->Actor && ActorProxy->PrimComponent)
 		{
-
 			ActorToSelect = ActorProxy->Actor;
 			ObjectForDetails = ActorToSelect;
 		}
 
-		DialogEditor->SetDetailsObject(ObjectForDetails);
+		UDialogDefinition* DialogDefinition = DialogEditor->FindDialogDefinitionByActor(ActorToSelect);
+
+		if (DialogDefinition)
+		{
+			DialogEditor->SelectDialogDefinition(DialogDefinition);
+		}
+		else
+		{
+			DialogEditor->SetDetailsObject(ObjectForDetails);
+
+			if (GEditor)
+			{
+				GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
+				if (ActorToSelect)
+				{
+					GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
+				}
+
+				GEditor->NoteSelectionChange();
+			}
+		}
+
+
 		
 
-		if (GEditor)
-		{
-			GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
-			if (ActorToSelect)
-			{
-				GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
-			}
-
-			GEditor->NoteSelectionChange();
-		}
 
 		Invalidate();
 	}

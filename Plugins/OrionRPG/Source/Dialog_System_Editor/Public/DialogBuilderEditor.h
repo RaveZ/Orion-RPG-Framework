@@ -22,6 +22,7 @@ class ULevelSequence;
 class SDialogDefinitions;
 class UDialogParticipant;
 class UDialogSequence;
+class UDialogDefinition;
 
 namespace DialogSectionID
 {
@@ -312,11 +313,14 @@ public:
 	void UpdateDialogDefinitions();
 	void DestroyDialogDefinitions();
 	TArray<AActor*> GetDialogDefinitionActors() const;
+	void SelectDialogDefinitionActor(UDialogDefinition* InDialogDefinition);
+	void SelectDialogDefinition(UDialogDefinition* InDialogDefinition);
+	UDialogDefinition* FindDialogDefinitionByActor(const AActor* InActor) const;
 
-	void OnParticipantAdded(UDialogParticipant* Participant);
-	void OnParticipantRemoved(UDialogParticipant* Participant);
-	void EnsureParticipantRequiredTrack(UDialogParticipant* Participant);
-	void RemoveParticipantRequiredTrack(UDialogParticipant* Participant);
+	void OnDialogDefinitionAdded(UDialogDefinition* InDialogDefinition);
+	void OnDialogDefinitionRemoved(UDialogDefinition* InDialogDefinition);
+	void CreateDialogTrackDefinition(UDialogDefinition* InDialogDefinition);
+	void RemoveDialogTrackDefinition(UDialogDefinition* InDialogDefinition);
 
 	//scene viewport
 	void SetViewportWorldMode(EDialogViewportWorldMode NewMode);
@@ -470,7 +474,7 @@ protected:
 	//sequencer
 	TSharedPtr<ISequencer> Sequencer;
 	TWeakObjectPtr<AActor> SequencePivot;
-	TMap<UDialogParticipant*, TWeakObjectPtr<AActor>> ParticipantTracks;
+	TMap<UDialogDefinition*, TWeakObjectPtr<AActor>> DialogDefinitionActors;
 
 	/** MovieScene for displaying this dialog sequence in timeline. */
 	TObjectPtr<UDialogSequence> EditingDialogSequence = nullptr;

@@ -70,4 +70,6 @@ private:
 
 	/** List of registered class that we must unregister when the module shuts down */
 	TSet< FName > RegisteredClassNames;
+private:
+	FDelegateHandle DialogTrackEditorHandle;
 };

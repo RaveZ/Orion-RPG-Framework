@@ -94,6 +94,19 @@ FDialogBuilderEditor::FDialogBuilderEditor()
 
 FDialogBuilderEditor::~FDialogBuilderEditor()
 {
+	// Unbind raw package dirty callback added in Initialize()
+	if (EditingDialogGraph && EditingDialogGraph->GetOutermost())
+	{
+		EditingDialogGraph->GetOutermost()->PackageMarkedDirtyEvent.RemoveAll(this);
+	}
+
+	// Release sequencer/editor references early
+	Sequencer.Reset();
+	PlaybackContext.Reset();
+	SequencerViewportWidget.Reset();
+
+	// Optional but recommended if you extend tool menus with this owner
+	UToolMenus::UnregisterOwner(this);
 	DestroyDialogDefinitions();
 #if ENGINE_MAJOR_VERSION < 5
 	UPackage::PackageSavedEvent.Remove(OnPackageSavedDelegateHandle);
@@ -309,31 +322,48 @@ void FDialogBuilderEditor::PostRedo(bool bSuccess)
 	}
 }
 
-static FGuid FindOrAddPossessableForObject(UMovieScene* InMovieScene, const UObject* InObject)
+static UMovieSceneDialogTrack* FindDialogTrackForDefinition(UMovieScene* InMovieScene, const UDialogDefinition* InDialogDefinition)
 {
-	if (!InMovieScene || !InObject)
+	if (!InMovieScene || !InDialogDefinition)
 	{
-		return FGuid();
+		return nullptr;
 	}
 
-	// Try to find an existing possessable by name (simple heuristic).
-	const FString TargetName = InObject->GetName();
-	for (int32 Index = 0; Index < InMovieScene->GetPossessableCount(); ++Index)
+	// Master tracks
+	for (UMovieSceneTrack* Track : InMovieScene->GetTracks())
 	{
-		const FMovieScenePossessable& Possessable = InMovieScene->GetPossessable(Index);
-		if (Possessable.GetName() == TargetName)
+		if (UMovieSceneDialogTrack* DialogTrack = Cast<UMovieSceneDialogTrack>(Track))
 		{
-			return Possessable.GetGuid();
+			if (DialogTrack->DialogDefinition == InDialogDefinition)
+			{
+				return DialogTrack;
+			}
 		}
 	}
 
-	// Otherwise add a new one.
-	return InMovieScene->AddPossessable(TargetName, InObject->GetClass());
+	// Object-bound tracks
+	for (const FMovieSceneBinding& Binding : InMovieScene->GetBindings())
+	{
+		for (UMovieSceneTrack* Track : Binding.GetTracks())
+		{
+			if (UMovieSceneDialogTrack* DialogTrack = Cast<UMovieSceneDialogTrack>(Track))
+			{
+				if (DialogTrack->DialogDefinition == InDialogDefinition)
+				{
+					return DialogTrack;
+				}
+			}
+		}
+	}
+
+	return nullptr;
 }
 
-void FDialogBuilderEditor::OnParticipantAdded(UDialogParticipant* Participant)
+
+
+void FDialogBuilderEditor::OnDialogDefinitionAdded(UDialogDefinition* InDialogDefinition)
 {
-	if (!Participant || !EditingDialogSequence)
+	if (!InDialogDefinition || !EditingDialogSequence)
 	{
 		return;
 	}
@@ -347,105 +377,88 @@ void FDialogBuilderEditor::OnParticipantAdded(UDialogParticipant* Participant)
 	}
 }
 
-void FDialogBuilderEditor::OnParticipantRemoved(UDialogParticipant* Participant)
+void FDialogBuilderEditor::OnDialogDefinitionRemoved(UDialogDefinition* InDialogDefinition)
 {
-	if (!Participant || !EditingDialogSequence)
+	if (!InDialogDefinition || !EditingDialogSequence)
 	{
 		return;
 	}
 
 	EnsureSequencerCreated();
-	RemoveParticipantRequiredTrack(Participant);
+	RemoveDialogTrackDefinition(InDialogDefinition);
 
 	if (Sequencer.IsValid())
 	{
 		Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
 	}
 }
-void FDialogBuilderEditor::EnsureParticipantRequiredTrack(UDialogParticipant* Participant)
+void FDialogBuilderEditor::CreateDialogTrackDefinition(UDialogDefinition* InDialogDefinition)
 {
 	UMovieScene* MovieScene = EditingDialogSequence ? EditingDialogSequence->GetMovieScene() : nullptr;
-	if (!MovieScene || !Participant)
+	if (!MovieScene || !InDialogDefinition)
 	{
 		return;
 	}
 
-	AActor* ParticipantActor = ParticipantTracks.FindRef(Participant).Get();
-	if (!ParticipantActor)
+	if (FindDialogTrackForDefinition(MovieScene, InDialogDefinition))
 	{
 		return;
 	}
 
-	const FGuid BindingGuid = FindOrAddPossessableForObject(MovieScene, ParticipantActor);
-	if (!BindingGuid.IsValid())
+	MovieScene->Modify();
+
+	AActor* BoundActor = DialogDefinitionActors.FindRef(InDialogDefinition).Get();
+
+	// If we have a spawned preview actor and a valid sequencer, create an object-bound track
+	if (BoundActor && Sequencer.IsValid())
 	{
-		return;
+		const FGuid ObjectBinding = Sequencer->GetHandleToObject(BoundActor, true);
+		if (ObjectBinding.IsValid())
+		{
+			UMovieSceneDialogTrack* DialogTrack = MovieScene->AddTrack<UMovieSceneDialogTrack>(ObjectBinding);
+			if (!DialogTrack)
+			{
+				return;
+			}
+
+			DialogTrack->Modify();
+			DialogTrack->DialogDefinition = InDialogDefinition;
+			DialogTrack->SetDisplayName(FText::FromString(InDialogDefinition->GetName()));
+			return;
+		}
 	}
 
-	EditingDialogSequence->BindPossessableObject(BindingGuid, *ParticipantActor, ParticipantActor->GetWorld());
-
-	if (UMovieSceneDialogTrack* ExistingDialogTrack = MovieScene->FindTrack<UMovieSceneDialogTrack>(BindingGuid))
-	{
-		return;
-	}
-
-	UMovieSceneDialogTrack* DialogTrack = MovieScene->AddTrack<UMovieSceneDialogTrack>(BindingGuid);
+	// Fallback to master track
+	UMovieSceneDialogTrack* DialogTrack = MovieScene->AddTrack<UMovieSceneDialogTrack>();
 	if (!DialogTrack)
 	{
 		return;
 	}
 
 	DialogTrack->Modify();
-	DialogTrack->SetDisplayName(FText::FromString(Participant->GetName()));
+	DialogTrack->DialogDefinition = InDialogDefinition;
+	DialogTrack->SetDisplayName(FText::FromString(InDialogDefinition->GetName()));
 
-	UMovieSceneSkeletalAnimationTrack* AnimTrack = MovieScene->AddTrack<UMovieSceneSkeletalAnimationTrack>(BindingGuid);
-	if (!AnimTrack)
-	{
-		return;
-	}
-
-	AnimTrack->Modify();
-	AnimTrack->SetDisplayName(FText::FromString(Participant->GetName()));
-
-	if (AnimTrack->GetAllSections().Num() == 0)
-	{
-		if (UMovieSceneSection* NewSection = AnimTrack->CreateNewSection())
-		{
-			AnimTrack->AddSection(*NewSection);
-		}
-	}
+	
 }
 
-void FDialogBuilderEditor::RemoveParticipantRequiredTrack(UDialogParticipant* Participant)
+void FDialogBuilderEditor::RemoveDialogTrackDefinition(UDialogDefinition* InDialogDefinition)
 {
 	UMovieScene* MovieScene = EditingDialogSequence ? EditingDialogSequence->GetMovieScene() : nullptr;
-	if (!MovieScene || !Participant)
+	if (!MovieScene || !InDialogDefinition)
 	{
 		return;
 	}
-	AActor* ParticipantActor = ParticipantTracks.FindRef(Participant).Get();
+	
 
-	if (!ParticipantActor)
-	{
-		return;
-	}
+	UMovieSceneTrack* TracksToRemove = FindDialogTrackForDefinition(MovieScene, InDialogDefinition);
 
-	// Create/find a binding for the actor
-	const FGuid BindingGuid = FindOrAddPossessableForObject(MovieScene, ParticipantActor);
-	if (!BindingGuid.IsValid())
-	{
-		return;
-	}
 
-	TArray<UMovieSceneTrack*> TracksToRemove = MovieScene->FindTracks(UMovieSceneTrack::StaticClass(), BindingGuid);
+	TracksToRemove->Modify();
+	MovieScene->Modify();
+	MovieScene->RemoveTrack(*TracksToRemove);
 
-	for (UMovieSceneTrack* Track : TracksToRemove)
-	{
-		Track->Modify();
-		MovieScene->Modify();
-		MovieScene->RemoveTrack(*Track);
-		break;
-	}
+	
 }
 
 void FDialogBuilderEditor::UpdateDialogDefinitions()
@@ -503,7 +516,7 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 	}
 	PivotActor->SetActorTransform(DialogGraph->SequencePivot);
 
-	// Use ParticipantTracks as the single source of truth for spawned preview actors.
+	// Use DialogDefinitionActors as the single source of truth for spawned preview actors.
 	// This allows removing PreviewParticipantActors completely.
 	for (UDialogParticipant* DialogParticipant : DialogGraph->Participants)
 	{
@@ -516,7 +529,7 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 		const TSubclassOf<AActor> ParticipantClass = ParticipantInfo.ParticipantToSpawn;
 
 		AActor* ExistingActor = nullptr;
-		if (TWeakObjectPtr<AActor>* ExistingActorPtr = ParticipantTracks.Find(DialogParticipant))
+		if (TWeakObjectPtr<AActor>* ExistingActorPtr = DialogDefinitionActors.Find(DialogParticipant))
 		{
 			ExistingActor = ExistingActorPtr->Get();
 		}
@@ -529,7 +542,7 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 				ExistingActor->Destroy();
 			}
 
-			ParticipantTracks.Remove(DialogParticipant);
+			DialogDefinitionActors.Remove(DialogParticipant);
 			continue;
 		}
 
@@ -537,7 +550,7 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 		if (ExistingActor && ExistingActor->IsA(ParticipantClass))
 		{
 			ExistingActor->SetActorTransform(ParticipantInfo.ParticipantTransform);
-			EnsureParticipantRequiredTrack(DialogParticipant);
+			CreateDialogTrackDefinition(DialogParticipant);
 			continue;
 		}
 
@@ -557,20 +570,20 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 		{
 			NewActor->AttachToActor(PivotActor, FAttachmentTransformRules::KeepRelativeTransform);
 			//NewActor->SetActorRelativeTransform(ParticipantInfo.ParticipantTransform);
-			ParticipantTracks.Add(DialogParticipant, NewActor);
-			EnsureParticipantRequiredTrack(DialogParticipant);
+			DialogDefinitionActors.Add(DialogParticipant, NewActor);
+			CreateDialogTrackDefinition(DialogParticipant);
 		}
 	}
 
 	// Cleanup: remove entries for participants that no longer exist in the dialog graph.
-	for (auto It = ParticipantTracks.CreateIterator(); It; ++It)
+	for (auto It = DialogDefinitionActors.CreateIterator(); It; ++It)
 	{
-		const UDialogParticipant* ParticipantKey = It.Key();
-		if (!ParticipantKey || !DialogGraph->Participants.Contains(const_cast<UDialogParticipant*>(ParticipantKey)))
+		const UDialogDefinition* Key = It.Key();
+		if (!Key || !DialogGraph->Participants.Contains(Key))
 		{
-			if (AActor* ParticipantActor = It.Value().Get())
+			if (AActor* Actor = It.Value().Get())
 			{
-				PreviewWorld->EditorDestroyActor(ParticipantActor, false);
+				PreviewWorld->EditorDestroyActor(Actor, false);
 			}
 			It.RemoveCurrent();
 		}
@@ -582,23 +595,23 @@ void FDialogBuilderEditor::DestroyDialogDefinitions()
 	UWorld* PreviewWorld = GetPreviewWorld();
 	check(PreviewWorld);
 
-	for (auto& Pair : ParticipantTracks)
+	for (auto& Pair : DialogDefinitionActors)
 	{
-		if (AActor* ParticipantActor = Pair.Value.Get())
+		if (AActor* Actor = Pair.Value.Get())
 		{
-			PreviewWorld->EditorDestroyActor(ParticipantActor, false);
+			PreviewWorld->EditorDestroyActor(Actor, false);
 		}
 	}
 
-	ParticipantTracks.Empty();
+	DialogDefinitionActors.Empty();
 }
 
 TArray<AActor*> FDialogBuilderEditor::GetDialogDefinitionActors() const
 {
 	TArray<AActor*> Result;
-	Result.Reserve(ParticipantTracks.Num());
+	Result.Reserve(DialogDefinitionActors.Num());
 
-	for (const TPair<UDialogParticipant*, TWeakObjectPtr<AActor>>& Pair : ParticipantTracks)
+	for (const TPair<UDialogDefinition*, TWeakObjectPtr<AActor>>& Pair : DialogDefinitionActors)
 	{
 		if (AActor* Actor = Pair.Value.Get())
 		{
@@ -607,6 +620,71 @@ TArray<AActor*> FDialogBuilderEditor::GetDialogDefinitionActors() const
 	}
 
 	return Result;
+}
+
+void FDialogBuilderEditor::SelectDialogDefinitionActor(UDialogDefinition* InDialogDefinition)
+{
+	const bool bNoteSelectionChange = true;
+	const bool bDeselectBSPSurfs = true;
+	const bool bWarnAboutManyActors = false;
+
+	AActor* ActorToSelect = DialogDefinitionActors.FindRef(InDialogDefinition).Get();
+	if (GEditor)
+	{
+		GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
+		if (ActorToSelect)
+		{
+			GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
+		}
+
+		GEditor->NoteSelectionChange();
+	}
+}
+
+void FDialogBuilderEditor::SelectDialogDefinition(UDialogDefinition* InDialogDefinition)
+{
+	if (!DialogDefinitionsWidget.IsValid())
+	{
+		return;
+	}
+
+
+	int32 SectionId = INDEX_NONE;
+	if (Cast<UDialogParticipant>(InDialogDefinition))
+	{
+		SectionId = DialogSectionID::PARTICIPANTS;
+	}
+	else if (Cast<UDialogProp>(InDialogDefinition))
+	{
+		SectionId = DialogSectionID::PROPS;
+	}
+
+	DialogDefinitionsWidget->SelectItemByName(
+		InDialogDefinition ? InDialogDefinition->GetFName() : NAME_None,
+		ESelectInfo::Direct,
+		SectionId,
+		false);
+
+	SetDetailsObject(InDialogDefinition);
+	SelectDialogDefinitionActor(InDialogDefinition);
+}
+
+UDialogDefinition* FDialogBuilderEditor::FindDialogDefinitionByActor(const AActor* InActor) const
+{
+	if (!InActor)
+	{
+		return nullptr;
+	}
+
+	for (const TPair<UDialogDefinition*, TWeakObjectPtr<AActor>>& Pair : DialogDefinitionActors)
+	{
+		if (Pair.Key && Pair.Value.IsValid() && Pair.Value.Get() == InActor)
+		{
+			return Pair.Key;
+		}
+	}
+
+	return nullptr;
 }
 
 UWorld* FDialogBuilderEditor::GetPreviewWorld()

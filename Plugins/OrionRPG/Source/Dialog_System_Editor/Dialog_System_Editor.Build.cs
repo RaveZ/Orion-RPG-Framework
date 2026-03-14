@@ -64,7 +64,8 @@ public class Dialog_System_Editor : ModuleRules
 				"UMG",
 				"Sequencer",
 				"MovieScene",
-				"MovieSceneTracks",
+                "MovieSceneTools",
+                "MovieSceneTracks",
 				"LevelSequence",
 				"LevelSequenceEditor",
                 "AdvancedPreviewScene"
