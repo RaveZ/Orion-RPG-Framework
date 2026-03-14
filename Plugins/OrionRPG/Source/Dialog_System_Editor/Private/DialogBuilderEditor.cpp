@@ -1110,7 +1110,7 @@ FGuid FDialogBuilderEditor::CreateDialogCamera(const bool bSpawnable, ACineCamer
 
 	CameraGuid = FSequencerUtilities::CreateBinding(Sequencer.ToSharedRef(), *OutActor);
 
-	TSubclassOf<UMovieSceneCustomBinding> CustomBindingClass = bSpawnable
+	/*TSubclassOf<UMovieSceneCustomBinding> CustomBindingClass = bSpawnable
 		? UMovieSceneSpawnableActorBinding::StaticClass()
 		: UMovieSceneReplaceableActorBinding::StaticClass();
 
@@ -1142,7 +1142,7 @@ FGuid FDialogBuilderEditor::CreateDialogCamera(const bool bSpawnable, ACineCamer
 				}
 			}
 		}
-	}
+	}*/
 
 	if (!CameraGuid.IsValid())
 	{
