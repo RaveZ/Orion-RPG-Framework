@@ -480,6 +480,9 @@ protected:
 	TMap<UDialogDefinition*, TWeakObjectPtr<AActor>> DialogDefinitionActors;
 	TWeakObjectPtr<ACineCameraActor> DialogPreviewCamera;
 
+	bool bPendingDialogDefinitionsUpdate = false;
+	bool bIsUpdatingDialogDefinitions = false;
+
 	/** MovieScene for displaying this dialog sequence in timeline. */
 	TObjectPtr<UDialogSequence> EditingDialogSequence = nullptr;
 

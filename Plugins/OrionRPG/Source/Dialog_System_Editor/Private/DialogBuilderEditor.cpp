@@ -295,6 +295,13 @@ void FDialogBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& 
 void FDialogBuilderEditor::Tick(float DeltaTime)
 {
 	PreviewScene.UpdateCaptureContents();
+	if (bPendingDialogDefinitionsUpdate && !bIsUpdatingDialogDefinitions)
+	{
+		bPendingDialogDefinitionsUpdate = false;
+
+		TGuardValue<bool> ReentryGuard(bIsUpdatingDialogDefinitions, true);
+		UpdateDialogDefinitions();
+	}
 
 }
 
@@ -2592,7 +2599,18 @@ void FDialogBuilderEditor::OnFinishedChangingProperties(const FPropertyChangedEv
 
 void FDialogBuilderEditor::OnPackageMarkedDirty(UPackage* ModifiedPackage, bool bWasDirty)
 {   
-	//UpdateDialogDefinitions();
+	if (!EditingDialogGraph || !EditingDialogGraph->GetOutermost())
+	{
+		return;
+	}
+
+	if (ModifiedPackage != EditingDialogGraph->GetOutermost())
+	{
+		return;
+	}
+
+
+	bPendingDialogDefinitionsUpdate = true;
 }
 //Called when saving our file graph
 #if ENGINE_MAJOR_VERSION < 5
