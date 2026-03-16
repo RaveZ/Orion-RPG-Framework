@@ -26,13 +26,14 @@ UDialogBuilderNode_DialogSequence::UDialogBuilderNode_DialogSequence()
 void UDialogBuilderNode_DialogSequence::BeginNode()
 {
 	Super::BeginNode();
-	
+
+	GetOwningDialogGraph()->BeginDialogSequence(this);
 }
 
 void UDialogBuilderNode_DialogSequence::EvaluateNextNode()
 {
-	
 	Super::EvaluateNextNode();
+
 }
 
 void UDialogBuilderNode_DialogSequence::EnsureSequenceCreated()

@@ -154,3 +154,28 @@ public:
 	}
 };
 
+
+USTRUCT(BlueprintType)
+struct FPropInfo
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog")
+	FGameplayTag Tag;
+
+	/** Your Participant Name*/
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog")
+	FText DisplayName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog")
+	TSubclassOf<class AActor> ActorClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog")
+	FTransform Transform;
+
+	FPropInfo()
+	{
+		DisplayName = FText::FromString("Prop");
+	}
+};

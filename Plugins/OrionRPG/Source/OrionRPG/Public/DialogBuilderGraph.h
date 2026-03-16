@@ -173,7 +173,7 @@ public:
 		TObjectPtr<UDialogBuilderNode> LatestRootSelectionNode;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
-		TObjectPtr<class ALevelSequenceActor> DialogSequencer;
+		TObjectPtr<class ALevelSequenceActor> DialogSequenceActor;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
 		bool bOptionSelectionActive;
@@ -216,10 +216,13 @@ public:
 	virtual void BeginChoiceSelection(class UDialogBuilderNode_DialogLine* InDialogLine);
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	virtual void BeginDialogSequence(class UDialogBuilderNode_DialogSequence* InDialogSequence);
+
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 	virtual void PlayDialogShot(class UDialogCameraShot* InDialogShot, AActor* InSpeaker);
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
-	virtual void PlayDialogSequence(const FDialogLineData& InDialogLineData);
+	virtual void PlaySequence(class ULevelSequence* InSequence, FMovieSceneSequencePlaybackSettings InPlaybackSetting);
 	
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	int GetLevelNum() const;

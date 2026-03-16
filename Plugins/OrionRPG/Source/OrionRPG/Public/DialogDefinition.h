@@ -39,7 +39,7 @@ public:
 	UDialogProp();
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog")
-	FParticipantInfo ParticipantInfo;
+	FPropInfo PropInfo;
 
 };
 

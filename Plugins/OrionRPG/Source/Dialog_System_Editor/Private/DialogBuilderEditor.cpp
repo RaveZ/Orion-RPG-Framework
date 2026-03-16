@@ -564,7 +564,7 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 		{
 			if (ExistingActor)
 			{
-				ExistingActor->Destroy();
+				PreviewWorld->EditorDestroyActor(ExistingActor, false);
 			}
 
 			DialogDefinitionActors.Remove(DialogParticipant);
@@ -600,11 +600,58 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 		}
 	}
 
+	for (UDialogProp* DialogProp : DialogGraph->Props)
+	{
+		if (!DialogProp)
+		{
+			continue;
+		}
+		const FPropInfo& PropInfo = DialogProp->PropInfo;
+		const TSubclassOf<AActor> PropClass = PropInfo.ActorClass;
+		AActor* ExistingActor = nullptr;
+		if (TWeakObjectPtr<AActor>* ExistingActorPtr = DialogDefinitionActors.Find(DialogProp))
+		{
+			ExistingActor = ExistingActorPtr->Get();
+		}
+		if (!PropClass)
+		{
+			if (ExistingActor)
+			{
+				PreviewWorld->EditorDestroyActor(ExistingActor, false);
+			}
+			DialogDefinitionActors.Remove(DialogProp);
+			continue;
+		}
+		if (ExistingActor && ExistingActor->IsA(PropClass))
+		{
+			ExistingActor->SetActorTransform(PropInfo.Transform);
+			CreateDialogTrackDefinition(DialogProp);
+			continue;
+		}
+		if (ExistingActor)
+		{
+			ExistingActor->Destroy();
+			ExistingActor = nullptr;
+		}
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		SpawnParams.bNoFail = true;
+		SpawnParams.ObjectFlags = RF_Transient | RF_Transactional;
+		AActor* NewActor = PreviewWorld->SpawnActor<AActor>(PropClass, PropInfo.Transform, SpawnParams);
+		if (NewActor)
+		{
+			NewActor->AttachToActor(PivotActor, FAttachmentTransformRules::KeepRelativeTransform);
+			NewActor->SetActorRelativeTransform(PropInfo.Transform);
+			DialogDefinitionActors.Add(DialogProp, NewActor);
+			CreateDialogTrackDefinition(DialogProp);
+		}
+	}
+
 	// Cleanup: remove entries for participants that no longer exist in the dialog graph.
 	for (auto It = DialogDefinitionActors.CreateIterator(); It; ++It)
 	{
 		const UDialogDefinition* Key = It.Key();
-		if (!Key || !DialogGraph->Participants.Contains(Key))
+		if (!Key || (!DialogGraph->Participants.Contains(Key) && !DialogGraph->Props.Contains(Key)))
 		{
 			if (AActor* Actor = It.Value().Get())
 			{
@@ -628,6 +675,12 @@ void FDialogBuilderEditor::DestroyDialogDefinitions()
 		}
 	}
 
+	if (AActor* CameraActor = DialogPreviewCamera.Get())
+	{
+		PreviewWorld->EditorDestroyActor(CameraActor, false);
+	}
+
+	DialogPreviewCamera.Reset();
 	DialogDefinitionActors.Empty();
 }
 
@@ -2539,6 +2592,7 @@ void FDialogBuilderEditor::OnFinishedChangingProperties(const FPropertyChangedEv
 
 void FDialogBuilderEditor::OnPackageMarkedDirty(UPackage* ModifiedPackage, bool bWasDirty)
 {   
+	//UpdateDialogDefinitions();
 }
 //Called when saving our file graph
 #if ENGINE_MAJOR_VERSION < 5

@@ -181,11 +181,20 @@ FText SDialogPaletteItem::GetDisplayText() const
 	if (MenuDescriptionCache.IsOutOfDate(DialogSchema))
 	{
 		TSharedPtr< FEdGraphSchemaAction > GraphAction = ActionPtr.Pin();
-		FAssetSchemaAction_Participant* DialogGraphAction = (FAssetSchemaAction_Participant*)GraphAction.Get();
-		if (UDialogParticipant* DialogParticipant = Cast<UDialogParticipant>(DialogGraphAction->Participant))
+		FAssetSchemaAction_Participant* GraphAction_Participant = (FAssetSchemaAction_Participant*)GraphAction.Get();
+		if (UDialogParticipant* DialogParticipant = Cast<UDialogParticipant>(GraphAction_Participant->Participant))
 		{
 			FText ParticipantName = DialogParticipant->ParticipantInfo.ParticipantName;
 			FText FinalParticipantName = ParticipantName.IsEmpty() ? FText::FromString("Participant") : ParticipantName;
+			MenuDescriptionCache.SetCachedText(ParticipantName, DialogSchema);
+		}
+
+
+		FAssetSchemaAction_Prop* GraphAction_Prop = (FAssetSchemaAction_Prop*)GraphAction.Get();
+		if (UDialogProp* DialogProp = Cast<UDialogProp>(GraphAction_Prop->Prop))
+		{
+			FText ParticipantName = DialogProp->PropInfo.DisplayName;
+			FText FinalParticipantName = ParticipantName.IsEmpty() ? FText::FromString("Prop") : ParticipantName;
 			MenuDescriptionCache.SetCachedText(ParticipantName, DialogSchema);
 		}
 	}

@@ -6,12 +6,14 @@
 #include "DialogBuilderNode.h"
 #include "DialogBuilderEdge.h"
 #include "DialogCameraShot.h"
+#include "DialogSequence.h"
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderSetting.h"
 #include "LevelSequencePlayer.h"
 #include "LevelSequenceActor.h"
 #include "DialogBuilderNode_RerouteNode.h"
 #include "DialogBuilderNode_DialogLine.h"
+#include "DialogBuilderNode_DialogSequence.h"
 #include "EngineUtils.h"
 #include "GameFramework/Character.h"
 #include <CineCameraActor.h>
@@ -272,22 +274,25 @@ void UDialogBuilderGraph::DetermineDialogShot(UDialogBuilderNode_DialogLine* InD
 
 	UDialogCameraShot* DialogShot = nullptr;
 
+	FDialogLineData& DialogLineData = InDialogLine->DialogLineData;
+	FParticipantInfo& ParticipantInfo = InDialogLine->ParticipantInfo;
+
 	//Determine the shot
-	switch (InDialogLine->DialogLineData.DialogCameraMode)
+	switch (DialogLineData.DialogCameraMode)
 	{
 	case EDialogCameraMode::E_GeneratedCameraShot:
-		DialogShot = InDialogLine->ParticipantInfo.DefaultShot;
-		if (!DialogShot || InDialogLine->DialogLineData.ShotOverride)
+		DialogShot = ParticipantInfo.DefaultShot;
+		if (!DialogShot ||DialogLineData.ShotOverride)
 		{
 			//if default shot not valid, try use override shot data instead
-			DialogShot = InDialogLine->DialogLineData.ShotOverride;
+			DialogShot = DialogLineData.ShotOverride;
 		}
 
 		PlayDialogShot(DialogShot, Speaker);
 
 		break;
 	case EDialogCameraMode::E_Sequence:
-		PlayDialogSequence(InDialogLine->DialogLineData);
+		PlaySequence(DialogLineData.SequenceToPlay, DialogLineData.PlaybackSettings);
 		break;
 	}
 	CachedLastShot = DialogShot;
@@ -319,6 +324,15 @@ void UDialogBuilderGraph::BeginChoiceSelection(UDialogBuilderNode_DialogLine* In
 	CachedLastShot = DialogShot;
 }
 
+void UDialogBuilderGraph::BeginDialogSequence(UDialogBuilderNode_DialogSequence* InDialogSequence)
+{
+	if (InDialogSequence == nullptr)
+		return;
+
+	PlaySequence(Cast<ULevelSequence>(InDialogSequence->DialogSequence.Get()), InDialogSequence->PlaybackSettings);
+
+}
+
 void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot, AActor* InSpeaker)
 {
 	if(!InDialogShot || !InSpeaker)
@@ -326,13 +340,13 @@ void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot, AActor
 		return;
 	}
 	//Shot method changed, make sure sequencer is destroyed
-	if (DialogSequencer)
+	if (DialogSequenceActor)
 	{
-		if (ULevelSequencePlayer* SP = DialogSequencer->GetSequencePlayer())
+		if (ULevelSequencePlayer* SP = DialogSequenceActor->GetSequencePlayer())
 		{
 			SP->Stop();
 		}
-		DialogSequencer->Destroy();
+		DialogSequenceActor->Destroy();
 	}
 
 	// Spawn cinecam if it does not exist
@@ -347,7 +361,7 @@ void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot, AActor
 	InDialogShot->Play(this, InSpeaker);
 }
 
-void UDialogBuilderGraph::PlayDialogSequence(const FDialogLineData& InDialogLineData)
+void UDialogBuilderGraph::PlaySequence(class ULevelSequence* InSequence, FMovieSceneSequencePlaybackSettings InPlaybackSetting)
 {
 	//Shot method changed, make sure cinecam is destroyed
 	if (Cinecam.IsValid())
@@ -356,33 +370,31 @@ void UDialogBuilderGraph::PlayDialogSequence(const FDialogLineData& InDialogLine
 		Cinecam = nullptr;
 	}
 
-	if (!DialogSequencer)
+	if (!DialogSequenceActor)
 	{
 		ALevelSequenceActor* OutActor = nullptr;
-		ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), InDialogLineData.SequenceToPlay, InDialogLineData.PlaybackSettings, OutActor);
-		DialogSequencer = OutActor;
-		if (DialogSequencer)
+		ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), InSequence, InPlaybackSetting, OutActor);
+		DialogSequenceActor = OutActor;
+		if (DialogSequenceActor)
 		{
-			DialogSequencer->SetSequence(nullptr);
+			DialogSequenceActor->SetSequence(nullptr);
 		}
 	}
-	if (DialogSequencer)
+	if (DialogSequenceActor)
 	{
-		if (ULevelSequencePlayer* SP = DialogSequencer->GetSequencePlayer())
+		if (ULevelSequencePlayer* SP = DialogSequenceActor->GetSequencePlayer())
 		{
 			SP->OnFinished.RemoveAll(this);
 			if (SP->IsPlaying())
 			{
 				SP->Stop();
 			}
-			if (InDialogLineData.SequenceToPlay)
+			if (InSequence)
 			{
-				DialogSequencer->PlaybackSettings = InDialogLineData.PlaybackSettings;
-				DialogSequencer->SetSequence(InDialogLineData.SequenceToPlay);
+				DialogSequenceActor->PlaybackSettings = InPlaybackSetting;
+				DialogSequenceActor->SetSequence(InSequence);
 			}
 			SP->Play();
-
-
 		}
 	}
 }
@@ -552,14 +564,14 @@ void UDialogBuilderGraph::EndDialog()
 	
 	
 	//clear shot and sequence
-	if (DialogSequencer)
+	if (DialogSequenceActor)
 	{
-		if (ULevelSequencePlayer* SP = DialogSequencer->GetSequencePlayer())
+		if (ULevelSequencePlayer* SP = DialogSequenceActor->GetSequencePlayer())
 		{
 			SP->Stop();
 		}
 
-		DialogSequencer->Destroy();
+		DialogSequenceActor->Destroy();
 	}
 
 	if (Cinecam.IsValid())

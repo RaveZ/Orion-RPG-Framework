@@ -34,6 +34,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sequence")
 	TObjectPtr<UDialogSequence> DialogSequence = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sequence")
+	FMovieSceneSequencePlaybackSettings PlaybackSettings;
+
 #if WITH_EDITORONLY_DATA
 	TWeakPtr<ISequencer> Sequencer;
 #endif
