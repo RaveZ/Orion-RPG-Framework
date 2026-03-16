@@ -33,17 +33,24 @@
 #include "Widgets/Text/SRichTextBlock.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 
+#define LOCTEXT_NAMESPACE "DialogBuilderViewportClient"
+
+TMap< TObjectKey< AActor >, TWeakObjectPtr< UActorComponent > > FDialogBuilderViewportClient::ViewComponentForActorCache;
+
 FDialogBuilderViewportClient::FDialogBuilderViewportClient(
 	FPreviewScene* InPreviewScene,
 	const TSharedRef<SEditorViewport>& InViewport,
 	const TSharedRef<FDialogBuilderEditor>& InEditor,
 	bool bUseLevelWorld)
 	: FEditorViewportClient(nullptr, InPreviewScene, InViewport)
+	, bLockedCameraView(true)
 	, ScopedTransaction(nullptr)
 	, Editor(InEditor)
 	, WidgetMode(UE::Widget::WM_Translate)
 	, WidgetCoordSystem(COORD_Local)
 	, CurrentPreviewScene(InPreviewScene)
+	, bEditorCameraCut(false)
+	, bWasEditorCameraCut(false)
 {
 	ViewportType = LVT_Perspective;
 	SetViewLocation(FVector(-250.0, 0.0, 125.0));
@@ -145,9 +152,18 @@ void FDialogBuilderViewportClient::EndTransaction()
 
 void FDialogBuilderViewportClient::Tick(float DeltaSeconds)
 {
+	if (bWasEditorCameraCut && bEditorCameraCut)
+	{
+		bEditorCameraCut = false;
+	}
+	bWasEditorCameraCut = bEditorCameraCut;
+
+	// Gives FindViewComponentForActor a chance to refresh once every Tick.
+	ViewComponentForActorCache.Reset();
+
 	FEditorViewportClient::Tick(DeltaSeconds);
 
-	
+
 
 	// Tick the preview scene world.
 	if (!GIntraFrameDebuggingGameThread && !bUseLevelWorld)
@@ -667,6 +683,187 @@ void FDialogBuilderViewportClient::FocusViewportToSelection()
 	{
 		FocusViewportOnBox(BoundingBox);
 	}
+}
+
+
+UActorComponent* FDialogBuilderViewportClient::FindViewComponentForActor(AActor const* Actor)
+{
+	UActorComponent* PreviewComponent = nullptr;
+	if (Actor)
+	{
+		const TWeakObjectPtr<UActorComponent>* CachedComponent = ViewComponentForActorCache.Find(Actor);
+		if (CachedComponent != nullptr)
+		{
+			PreviewComponent = CachedComponent->Get();
+		}
+		else
+		{
+			TSet<AActor const*> CheckedActors;
+			PreviewComponent = FindViewComponentForActor(Actor, CheckedActors);
+			ViewComponentForActorCache.Add(Actor, PreviewComponent);
+		}
+	}
+
+	return PreviewComponent;
+}
+
+
+UActorComponent* FDialogBuilderViewportClient::FindViewComponentForActor(AActor const* Actor, TSet<AActor const*>& CheckedActors)
+{
+	UActorComponent* PreviewComponent = nullptr;
+	if (Actor && !CheckedActors.Contains(Actor))
+	{
+		CheckedActors.Add(Actor);
+		// see if actor has a component with preview capabilities (prioritize camera components)
+		const TSet<UActorComponent*>& Comps = Actor->GetComponents();
+
+		// We need to know if any child component with preview info is selected
+		bool bFoundSelectedComp = false;
+
+		for (UActorComponent* Comp : Comps)
+		{
+			FMinimalViewInfo DummyViewInfo;
+			if (Comp && Comp->IsActive() && Comp->GetEditorPreviewInfo(/*DeltaTime =*/0.0f, DummyViewInfo))
+			{
+				if (Comp->IsSelected())
+				{
+					PreviewComponent = Comp;
+					bFoundSelectedComp = true;
+					break;
+				}
+				else if (PreviewComponent)
+				{
+					UCameraComponent* AsCamComp = Cast<UCameraComponent>(Comp);
+					if (AsCamComp != nullptr)
+					{
+						PreviewComponent = AsCamComp;
+					}
+					continue;
+				}
+				PreviewComponent = Comp;
+			}
+		}
+
+		// No preview if default preview is forbidden and no children selection found
+		if (!Actor->IsDefaultPreviewEnabled() && !bFoundSelectedComp)
+		{
+			return nullptr;
+		}
+
+		// now see if any actors are attached to us, directly or indirectly, that have an active camera component we might want to use
+		// we will just return the first one.
+		if (PreviewComponent == nullptr)
+		{
+			Actor->ForEachAttachedActors(
+				[&](AActor* AttachedActor) -> bool
+				{
+					UActorComponent* const Comp = FindViewComponentForActor(AttachedActor, CheckedActors);
+					if (Comp)
+					{
+						PreviewComponent = Comp;
+						return false; /* stops iteration */
+					}
+
+					return true; /* continue iteration */
+				}
+			);
+		}
+	}
+
+	return PreviewComponent;
+}
+
+
+void FDialogBuilderViewportClient::MoveCameraToLockedActor()
+{
+	// Do a slightly shorter version of the code in UpdateViewForLockedActor where we don't care about
+	// post-process settings.
+	const FLevelViewportActorLock& ActiveLock = ActorLocks.GetLock();
+	AActor* Actor = ActiveLock.GetLockedActor();
+	if (Actor)
+	{
+		bool bGotCameraView = false;
+		if (bLockedCameraView)
+		{
+			// If this is a camera actor, then inherit some other settings
+			UActorComponent* const ViewComponent = FindViewComponentForActor(Actor);
+			if (ViewComponent != nullptr)
+			{
+				FMinimalViewInfo ViewInfo;
+				if (ensure(ViewComponent->GetEditorPreviewInfo(0.f, ViewInfo)))
+				{
+					ViewFOV = ViewInfo.FOV;
+					AspectRatio = ViewInfo.AspectRatio;
+					SetViewLocation(ViewInfo.Location);
+					SetViewRotation(ViewInfo.Rotation);
+					bGotCameraView = true;
+				}
+			}
+		}
+		if (!bGotCameraView)
+		{
+			if (Actor->GetAttachParentActor() != NULL)
+			{
+				// Actor is parented, so use the actor to world matrix for translation and rotation information.
+				SetViewLocation(Actor->GetActorLocation());
+				SetViewRotation(Actor->GetActorRotation());
+			}
+			else if (Actor->GetRootComponent() != NULL)
+			{
+				// No attachment, so just use the relative location, so that we don't need to
+				// convert from a quaternion, which loses winding information.
+				SetViewLocation(Actor->GetRootComponent()->GetRelativeLocation());
+				SetViewRotation(Actor->GetRootComponent()->GetRelativeRotation());
+			}
+		}
+
+		Invalidate();
+	}
+}
+
+bool FDialogBuilderViewportClient::IsActorLocked(const TWeakObjectPtr<const AActor> InActor) const
+{
+	return (InActor.IsValid() && GetActiveActorLock() == InActor);
+}
+
+bool FDialogBuilderViewportClient::IsAnyActorLocked() const
+{
+	return GetActiveActorLock().IsValid();
+}
+
+void FDialogBuilderViewportClient::SetActorLock(AActor* Actor)
+{
+	// If we had an active lock and are clearing it, also end the transaction for that lock
+	if (!Actor)
+	{
+		AActor* ActiveActorLock = GetActiveActorLock().Get();
+		if (ActiveActorLock && !ActiveActorLock->IsLockLocation() && CachedPilotTransform.IsSet())
+		{
+			FTransform EndPosition = ActiveActorLock->GetTransform();
+			ActiveActorLock->SetActorTransform(CachedPilotTransform.GetValue());
+			{
+				const FScopedTransaction Transaction(LOCTEXT("PilotTransaction", "Pilot Actor"));
+				ActiveActorLock->Modify();
+				ActiveActorLock->SetActorTransform(EndPosition);
+			}
+
+			CachedPilotTransform = TOptional<FTransform>();
+		}
+	}
+	SetActorLock(FLevelViewportActorLock(Actor));
+}
+
+void FDialogBuilderViewportClient::SetActorLock(const FLevelViewportActorLock& InActorLock)
+{
+	if (ActorLocks.ActorLock.LockedActor != InActorLock.LockedActor)
+	{
+		SetIsCameraCut();
+	}
+	if (ActorLocks.ActorLock.LockedActor.IsValid())
+	{
+		PreviousActorLocks.ActorLock = ActorLocks.ActorLock;
+	}
+	ActorLocks.ActorLock = InActorLock;
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -20,11 +20,14 @@
 #include "EditorModeManager.h"
 #include "PreviewScene.h"
 #include "EditorModeManager.h"
+#include "IVREditorModule.h"
 #include "UnrealEdGlobals.h"
+#include "LevelEditor.h"
 #include "Editor/UnrealEdEngine.h"
 #include "AdvancedPreviewSceneMenus.h"
 #include "ViewportToolbar/UnrealEdViewportToolbar.h"
 #include "Widgets/Text/SRichTextBlock.h"
+#include "DialogEditorSubmenus.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 
 #define LOCTEXT_NAMESPACE "DialogPreviewViewport"
@@ -39,9 +42,9 @@ void SDialogPreviewViewport::Construct(const FArguments& InArgs, TSharedRef<FDia
 	SEditorViewport::Construct(SEditorViewport::FArguments());
 
 	// Restore last used feature level
-	if (ViewportClient.IsValid())
+	if (DialogViewportClient.IsValid())
 	{
-		UWorld* World = ViewportClient->GetPreviewScene()->GetWorld();
+		UWorld* World = DialogViewportClient->GetPreviewScene()->GetWorld();
 		if (World != nullptr)
 		{
 			World->ChangeFeatureLevel(GWorld->GetFeatureLevel());
@@ -52,9 +55,9 @@ void SDialogPreviewViewport::Construct(const FArguments& InArgs, TSharedRef<FDia
 	UEditorEngine* Editor = (UEditorEngine*)GEngine;
 	PreviewFeatureLevelChangedHandle = Editor->OnPreviewFeatureLevelChanged().AddLambda([this](ERHIFeatureLevel::Type NewFeatureLevel)
 		{
-			if (ViewportClient.IsValid())
+			if (DialogViewportClient.IsValid())
 			{
-				UWorld* World = ViewportClient->GetPreviewScene()->GetWorld();
+				UWorld* World = DialogViewportClient->GetPreviewScene()->GetWorld();
 				if (World != nullptr)
 				{
 					World->ChangeFeatureLevel(NewFeatureLevel);
@@ -76,20 +79,20 @@ SDialogPreviewViewport::~SDialogPreviewViewport()
 	UEditorEngine* Editor = (UEditorEngine*)GEngine;
 	Editor->OnPreviewFeatureLevelChanged().Remove(PreviewFeatureLevelChangedHandle);
 
-	if (ViewportClient.IsValid())
+	if (DialogViewportClient.IsValid())
 	{
 		// Reset this to ensure it's no longer in use after destruction
-		ViewportClient->Viewport = NULL;
+		DialogViewportClient->Viewport = NULL;
 	}
 }
 
 TSharedRef<FEditorViewportClient> SDialogPreviewViewport::MakeEditorViewportClient()
 {
-	ViewportClient = MakeShared<FDialogBuilderViewportClient>(DialogEditor.Pin()->GetPreviewScene(), SharedThis(this), DialogEditor.Pin().ToSharedRef(), bUseLevelWorld);
-	ViewportClient->SetRealtime(true);
-	ViewportClient->bSetListenerPosition = false;
+	DialogViewportClient = MakeShared<FDialogBuilderViewportClient>(DialogEditor.Pin()->GetPreviewScene(), SharedThis(this), DialogEditor.Pin().ToSharedRef(), bUseLevelWorld);
+	DialogViewportClient->SetRealtime(true);
+	DialogViewportClient->bSetListenerPosition = false;
 
-	return ViewportClient.ToSharedRef();
+	return DialogViewportClient.ToSharedRef();
 }
 
 void SDialogPreviewViewport::SetUseLevelWorld(bool bInUseLevelWorld)
@@ -101,10 +104,10 @@ void SDialogPreviewViewport::SetUseLevelWorld(bool bInUseLevelWorld)
 
 	bUseLevelWorld = bInUseLevelWorld;
 
-	if (ViewportClient.IsValid())
+	if (DialogViewportClient.IsValid())
 	{
 		const TSharedPtr<FDialogBuilderViewportClient> DialogClient =
-			StaticCastSharedPtr<FDialogBuilderViewportClient>(ViewportClient);
+			StaticCastSharedPtr<FDialogBuilderViewportClient>(DialogViewportClient);
 
 		if (DialogClient.IsValid())
 		{
@@ -119,9 +122,9 @@ void SDialogPreviewViewport::RequestRefresh(bool bResetCamera, bool bRefreshNow)
 {
 	if (bRefreshNow)
 	{
-		if (ViewportClient.IsValid())
+		if (DialogViewportClient.IsValid())
 		{
-			ViewportClient->InvalidatePreview(bResetCamera);
+			DialogViewportClient->InvalidatePreview(bResetCamera);
 		}
 	}
 	else
@@ -135,11 +138,134 @@ void SDialogPreviewViewport::RequestRefresh(bool bResetCamera, bool bRefreshNow)
 	}
 }
 
+UWorld* SDialogPreviewViewport::GetWorld() const
+{
+	return Client->GetWorld();
+}
+
+
+void SDialogPreviewViewport::OnActorLockToggleFromMenu(AActor* Actor)
+{
+	if (Actor != nullptr)
+	{
+		const bool bLockNewActor = Actor != DialogViewportClient->GetActiveActorLock().Get();
+
+		// Lock the new actor if it wasn't the same actor that we just unlocked
+		if (bLockNewActor)
+		{
+			// Unlock the previous actor
+			OnActorUnlock();
+
+			LockActorInternal(Actor);
+		}
+	}
+}
+
+void SDialogPreviewViewport::OnActorLockToggleFromMenu()
+{
+	OnActorUnlock();
+}
+
+
+void SDialogPreviewViewport::LockActorInternal(AActor* NewActorToLock)
+{
+	if (NewActorToLock != nullptr)
+	{
+		DialogViewportClient->SetActorLock(NewActorToLock);
+		if (DialogViewportClient->IsPerspective() && DialogViewportClient->GetActiveActorLock().IsValid())
+		{
+			// Store perspective camera transform before piloting
+			CachedPerspectiveCameraTransform = DialogViewportClient->GetViewTransform();
+			DialogViewportClient->MoveCameraToLockedActor();
+		}
+	}
+
+	// Make sure the inset preview is closed if we are locking a camera that was already part of the selection set and thus being previewed.
+	OnPreviewSelectedCamerasChange();
+}
+
+
+bool SDialogPreviewViewport::IsActorLocked(const TWeakObjectPtr<AActor> Actor) const
+{
+	return DialogViewportClient->IsActorLocked(Actor);
+}
+
+bool SDialogPreviewViewport::IsAnyActorLocked() const
+{
+	return DialogViewportClient->IsAnyActorLocked();
+}
+
+void SDialogPreviewViewport::OnActorUnlock()
+{
+	if (AActor* LockedActor = DialogViewportClient->GetActiveActorLock().Get())
+	{
+		// Check to see if the locked actor was previously overriding the camera settings
+		if (CanGetCameraInformationFromActor(LockedActor))
+		{
+			// Reset the settings
+			DialogViewportClient->ViewFOV = DialogViewportClient->FOVAngle;
+		}
+
+		DialogViewportClient->SetActorLock(nullptr);
+
+		// remove roll and pitch from camera when unbinding from actors
+		GEditor->RemovePerspectiveViewRotation(true, true, false);
+
+		// Move perspective camera back to pre-piloting transform
+		DialogViewportClient->SetViewLocation(CachedPerspectiveCameraTransform.GetLocation());
+		DialogViewportClient->SetViewRotation(CachedPerspectiveCameraTransform.GetRotation());
+		Invalidate();
+
+		// If we had a camera actor locked, and it was selected, then we should re-show the inset preview
+		OnPreviewSelectedCamerasChange();
+	}
+}
+
+
+bool SDialogPreviewViewport::GetCameraInformationFromActor(AActor* Actor, FMinimalViewInfo& out_CameraInfo)
+{
+	//
+	//@TODO: CAMERA: Support richer camera interactions in SIE; this may shake out naturally if everything uses camera components though
+
+	bool bFoundCamInfo = false;
+	if (UActorComponent* ViewComponent = FLevelEditorViewportClient::FindViewComponentForActor(Actor))
+	{
+		bFoundCamInfo = ViewComponent->GetEditorPreviewInfo(/*DeltaTime =*/0.0f, out_CameraInfo);
+		ensure(bFoundCamInfo);
+	}
+	return bFoundCamInfo;
+}
+
+bool SDialogPreviewViewport::CanGetCameraInformationFromActor(AActor* Actor)
+{
+	FMinimalViewInfo CameraInfo;
+
+	return GetCameraInformationFromActor(Actor, /*out*/ CameraInfo);
+}
+
+void SDialogPreviewViewport::OnPreviewSelectedCamerasChange()
+{
+	PRAGMA_DISABLE_DEPRECATION_WARNINGS
+		const bool bPreviewInDesktopViewport = !IVREditorModule::Get().IsVREditorModeActive();
+	PRAGMA_ENABLE_DEPRECATION_WARNINGS
+
+		// Check to see if previewing selected cameras is enabled and if we're the active level viewport client.
+		/*if (GetDefault<ULevelEditorViewportSettings>()->bPreviewSelectedCameras && GCurrentLevelEditingViewportClient == DialogViewportClient.Get())
+		{
+			PreviewSelectedCameraActors(bPreviewInDesktopViewport);
+		}
+		else
+		{
+			// We're either not the active viewport client or preview selected cameras option is disabled, so remove any existing previewed actors
+			PreviewActors(TArray<AActor*>(), bPreviewInDesktopViewport);
+		}*/
+}
+
 EActiveTimerReturnType SDialogPreviewViewport::DeferredUpdatePreview(double InCurrentTime, float InDeltaTime, bool bResetCamera)
 {
-	if (ViewportClient.IsValid())
+	if (DialogViewportClient.IsValid())
 	{
-		ViewportClient->InvalidatePreview(bResetCamera);
+		DialogViewportClient->InvalidatePreview(bResetCamera);
 	}
 
 	bIsActiveTimerRegistered = false;
@@ -155,15 +281,15 @@ void SDialogPreviewViewport::BindCommands()
 	const FDialogBuilder_EditorCommands& Commands = FDialogBuilder_EditorCommands::Get();
 	CommandList->MapAction(
 		Commands.ShowGrid,
-		FExecuteAction::CreateSP(ViewportClient.Get(), &FDialogBuilderViewportClient::ToggleShowGrid),
+		FExecuteAction::CreateSP(DialogViewportClient.Get(), &FDialogBuilderViewportClient::ToggleShowGrid),
 		FCanExecuteAction(),
-		FIsActionChecked::CreateSP(ViewportClient.Get(), &FDialogBuilderViewportClient::GetShowGrid));
+		FIsActionChecked::CreateSP(DialogViewportClient.Get(), &FDialogBuilderViewportClient::GetShowGrid));
 
 }
 
 void SDialogPreviewViewport::OnFocusViewportToSelection()
 {
-	ViewportClient->FocusViewportToSelection();
+	DialogViewportClient->FocusViewportToSelection();
 }
 
 TSharedPtr<SWidget> SDialogPreviewViewport::BuildViewportToolbar()
@@ -192,7 +318,10 @@ TSharedPtr<SWidget> SDialogPreviewViewport::BuildViewportToolbar()
 			FToolMenuSection& RightSection = ViewportToolbarMenu->AddSection("Right");
 			RightSection.Alignment = EToolMenuSectionAlign::Last;
 
+			const FName SubmenuName = UToolMenus::JoinMenuPaths(ViewportToolbarName, "Camera");
 			RightSection.AddEntry(UE::UnrealEd::CreateCameraSubmenu(UE::UnrealEd::FViewportCameraMenuOptions().ShowAll()));
+			UE::DialogEditor::ExtendCameraSubmenu(SubmenuName);
+
 			RightSection.AddEntry(UE::UnrealEd::CreateViewModesSubmenu());
 
 			RightSection.AddEntry(UE::UnrealEd::CreateAssetViewerProfileSubmenu());

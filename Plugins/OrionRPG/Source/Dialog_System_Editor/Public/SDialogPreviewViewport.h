@@ -5,6 +5,7 @@
 
 class FPreviewScene;
 class FEditorViewportClient;
+class FDialogBuilderViewportClient;
 class FDialogBuilderEditor;
 
 class SDialogPreviewViewport : public SEditorViewport
@@ -29,7 +30,38 @@ public:
 	 * @param bRefreshNow If true, the preview will be refreshed immediately. Otherwise, it will be deferred until the next tick (default behavior).
 	 */
 	void RequestRefresh(bool bResetCamera = false, bool bRefreshNow = false);
+
+	virtual UWorld* GetWorld() const override;
+	const FDialogBuilderViewportClient& GetDialogViewportClient() const
+	{
+		return *DialogViewportClient;
+	}
+
+
+	/**
+	 * @return true if the actor is locked to the viewport
+	 */
+	bool IsActorLocked(const TWeakObjectPtr<AActor> Actor) const;
+
+	/**
+	 * @return true if an actor is locked to the viewport
+	 */
+	bool IsAnyActorLocked() const;
+
+
+	/** Called to clear the current actor lock */
+	void OnActorUnlock();
+
+	/** Called to lock/unlock the actor from the viewport's context menu */
+	void OnActorLockToggleFromMenu(AActor* Actor);
+
+	/** Called to unlock the actor from the viewport's context menu */
+	void OnActorLockToggleFromMenu();
+
+	/** Called when Preview Selected Cameras preference is changed.*/
+	void OnPreviewSelectedCamerasChange();
 protected:
+
 	virtual TSharedRef<FEditorViewportClient> MakeEditorViewportClient() override;
 	virtual TSharedPtr<SWidget> BuildViewportToolbar() override;
 	virtual void BindCommands() override;
@@ -38,6 +70,7 @@ protected:
 	 */
 	virtual void OnFocusViewportToSelection() override;
 
+	void LockActorInternal(AActor* NewActorToLock);
 
 private:
 	/** One-off active timer to update the preview */
@@ -47,7 +80,7 @@ private:
 	TWeakPtr<FDialogBuilderEditor> DialogEditor;
 	TWeakPtr<class FAssetEditorToolkit> AssetEditorToolkitPtr;
 	
-	TSharedPtr<class FDialogBuilderViewportClient> ViewportClient;
+	TSharedPtr<class FDialogBuilderViewportClient> DialogViewportClient;
 
 	bool bUseLevelWorld = false;
 
@@ -56,4 +89,16 @@ private:
 
 	/** Handle to the registered OnPreviewFeatureLevelChanged delegate. */
 	FDelegateHandle PreviewFeatureLevelChangedHandle;
+
+	/**
+	 * Used to store last perspective camera transform before piloting (Actor Lock)
+	 * Once piloting ends, this transform is re-applied to the camera.
+	 */
+	FViewportCameraTransform CachedPerspectiveCameraTransform;
+
+
+public:
+	static bool GetCameraInformationFromActor(AActor* Actor, FMinimalViewInfo& out_CameraInfo);
+
+	static bool CanGetCameraInformationFromActor(AActor* Actor);
 };

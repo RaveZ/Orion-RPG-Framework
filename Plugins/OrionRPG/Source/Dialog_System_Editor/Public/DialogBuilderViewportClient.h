@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "LevelEditorViewport.h"
 #include "EditorViewportClient.h"
 
 class FDialogBuilderEditor;
@@ -43,6 +44,19 @@ public:
 	virtual bool EndTransform(const FGizmoState& InState) override;
 
 
+	/** Sets a flag for this frame indicating that the camera has been cut, and temporal effects (such as motion blur) should be reset */
+	void SetIsCameraCut()
+	{
+		bEditorCameraCut = true;
+		bWasEditorCameraCut = false;
+	}
+
+	bool GetIsCameraCut() const
+	{
+		return bEditorCameraCut;
+	}
+
+
 	/**
 	 * Returns true if the grid is currently visible in the viewport
 	 */
@@ -71,6 +85,67 @@ public:
 	 */
 	void ResetCamera();
 
+	/**
+	 * Access the 'active' actor lock.
+	 *
+	 * This returns the actor lock (as per GetActorLock) if that is the currently active lock. It is *not* the currently
+	 * active lock if there's a valid cinematic lock actor (as per GetCinematicActorLock), since cinematics take
+	 * precedence.
+	 *
+	 * @return  The actor currently locked to the viewport and actively linked to the camera movements.
+	 */
+	TWeakObjectPtr<AActor> GetActiveActorLock() const
+	{
+		if (ActorLocks.CinematicActorLock.HasValidLockedActor())
+		{
+			return TWeakObjectPtr<AActor>();
+		}
+		return ActorLocks.ActorLock.LockedActor;
+	}
+
+
+	/**
+	* Gets the actor lock. This is the actor locked to the viewport via the viewport menus.
+	*/
+	const FLevelViewportActorLock& GetActorLock() const
+	{
+		return ActorLocks.ActorLock;
+	}
+
+	/**
+	 * Gets the actor lock. This is the actor locked to the viewport via the viewport menus.
+	 */
+	FLevelViewportActorLock& GetActorLock()
+	{
+		return ActorLocks.ActorLock;
+	}
+
+	/**
+	 * Set the actor lock. This is the actor locked to the viewport via the viewport menus.
+	 */
+	void SetActorLock(AActor* Actor);
+
+	/**
+	 * Set the actor lock. This is the actor locked to the viewport via the viewport menus.
+	 */
+	void SetActorLock(const FLevelViewportActorLock& InActorLock);
+
+
+	/**
+	 * Check to see if this actor is locked by the viewport
+	 */
+	bool IsActorLocked(const TWeakObjectPtr<const AActor> InActor) const;
+
+	/**
+	 * Check to see if any actor is locked by the viewport
+	 */
+	bool IsAnyActorLocked() const;
+
+	/**
+	 * Moves the viewport camera according to the locked actors location and rotation
+	 */
+	void MoveCameraToLockedActor();
+
 protected:
 	/**
 	 * Initiates a transaction.
@@ -89,6 +164,32 @@ protected:
 	*/
 	bool CanSelectActorFromHitProxy(HHitProxy* const InHitProxy);
 
+	/**
+	 * Find a view component to use for the specified actor. Prioritizes selected
+	 * components first, followed by camera components (then falls through to the first component that implements GetEditorPreviewInfo)
+	 */
+	static UActorComponent* FindViewComponentForActor(AActor const* Actor);
+
+	/**
+	 * Find the camera component that is driving this viewport, in the following order of preference:
+	 *		1. Cinematic locked actor
+	 *		2. User actor lock (if (bLockedCameraView is true)
+	 *
+	 * @return  Pointer to a camera component to use for this viewport's view
+	 */
+	UCameraComponent* GetCameraComponentForView() const
+	{
+		const FLevelViewportActorLock& ActorLock = ActorLocks.GetLock(bLockedCameraView);
+		return Cast<UCameraComponent>(FindViewComponentForActor(ActorLock.GetLockedActor()));
+	}
+
+private:
+	/** Internal function for public FindViewComponentForActor, which finds a view component to use for the specified actor. */
+	static UActorComponent* FindViewComponentForActor(AActor const* Actor, TSet<AActor const*>& CheckedActors);
+
+public:
+	/** True if this viewport is to change its view (aspect ratio, post processing, FOV etc) to match that of the currently locked camera, if applicable */
+	bool bLockedCameraView;
 
 private:
 	/** The current transaction for undo/redo */
@@ -109,6 +210,50 @@ private:
 
 	FPreviewScene* CurrentPreviewScene = nullptr;
 
+	/**
+	 * When locked to an actor this view will be positioned in the same location and rotation as the actor.
+	 * If the actor has a camera component the view will also inherit camera settings such as aspect ratio,
+	 * FOV, post processing settings, and the like.
+	 *
+	 * This structure allows us to keep track of two actor locks: a normal actor lock, and a lock specifically
+	 * for cinematic tools like Sequencer. A viewport locked to an actor by cinematics will always take
+	 * precedent over any other.
+	 */
+	struct FActorLockStack
+	{
+		/** Get the active lock info. Cinematics take precedence. */
+		const FLevelViewportActorLock& GetLock(bool bAllowActorLock = true) const
+		{
+			if (CinematicActorLock.LockedActor.IsValid())
+			{
+				return CinematicActorLock;
+			}
+			return bAllowActorLock ? ActorLock : FLevelViewportActorLock::None;
+		}
+
+		/** Returns whether the given actor is used as one of our locks. */
+		bool HasActorLocked(const AActor* InActor) const
+		{
+			return CinematicActorLock.LockedActor.Get() == InActor || ActorLock.LockedActor.Get() == InActor;
+		}
+
+		FLevelViewportActorLock CinematicActorLock;
+		FLevelViewportActorLock ActorLock;
+	};
+	FActorLockStack ActorLocks;
+	FActorLockStack PreviousActorLocks;
+	
+	/** If true, we switched between two different cameras. Set by cinematics, used by the motion blur to invalidate this frames motion vectors */
+	bool bEditorCameraCut;
+
+	/** Stores the previous frame's value of bEditorCameraCut in order to reset it back to false on the next frame */
+	bool bWasEditorCameraCut;
+
+	/** Caching for expensive FindViewComponentForActor. Invalidated once per Tick. */
+	static TMap<TObjectKey<AActor>, TWeakObjectPtr<UActorComponent>> ViewComponentForActorCache;
+
+	/** Cached transform of pilot actor before transaction, used to allow other transactions while piloting by performing a single end-transaction */
+	TOptional<FTransform> CachedPilotTransform;
 
 	TOptional<EMouseCursor::Type> MouseCursor;
 };
