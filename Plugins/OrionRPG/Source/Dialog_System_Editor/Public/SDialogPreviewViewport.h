@@ -39,6 +39,11 @@ public:
 
 
 	/**
+	 * @return true if the viewport is locked to selected actor
+	 */
+	bool IsSelectedActorLocked() const;
+
+	/**
 	 * @return true if the actor is locked to the viewport
 	 */
 	bool IsActorLocked(const TWeakObjectPtr<AActor> Actor) const;
@@ -60,6 +65,23 @@ public:
 
 	/** Called when Preview Selected Cameras preference is changed.*/
 	void OnPreviewSelectedCamerasChange();
+
+	/**
+	 * Called when game view should be toggled
+	 */
+	void ToggleGameView();
+
+	/**
+	 * @return true if we can toggle game view
+	 */
+	bool CanToggleGameView() const;
+
+	/**
+	 * @return true if we are in game view
+	 */
+	bool IsInGameView() const;
+
+
 protected:
 
 	virtual TSharedRef<FEditorViewportClient> MakeEditorViewportClient() override;

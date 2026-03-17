@@ -20,6 +20,16 @@ void FDialogBuilder_EditorCommands::RegisterCommands()
 	//Sequencer
 	UI_COMMAND(CreateCamera, "Create Camera", "Create a new camera and set it as the current camera cut", EUserInterfaceActionType::Button, FInputChord());
 
+	//Pilot Camera
+	UI_COMMAND(SelectPilotedActor, "Select Piloted Actor", "Select the currently piloted actor.", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(PilotSelectedActor, "Pilot Selected Actor", "Move the selected actor around using the viewport controls, and bind the viewport to the actor's location and orientation.", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control | EModifierKey::Shift, EKeys::P));
+	UI_COMMAND(EjectActorPilot, "Eject from Actor Pilot", "Stop piloting an actor with the current viewport. Unlocks the viewport's position and orientation from the actor the viewport is currently piloting.", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(ToggleActorPilotCameraView, "Actor Pilot Camera View", "Toggles showing the exact camera view when using the viewport to pilot a camera", EUserInterfaceActionType::ToggleButton, FInputChord(EModifierKey::Control | EModifierKey::Shift, EKeys::C));
+
+	//Toggle Game View
+	UI_COMMAND(ToggleGameView, "Game View", "Toggles game view.  Game view shows the scene as it appears in game", EUserInterfaceActionType::ToggleButton, FInputChord(EKeys::G));
+
+
 }
 
 #undef LOCTEXT_NAMESPACE

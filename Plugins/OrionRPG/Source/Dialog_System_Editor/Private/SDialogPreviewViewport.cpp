@@ -19,6 +19,7 @@
 #include "Styling/AppStyle.h"
 #include "EditorModeManager.h"
 #include "PreviewScene.h"
+#include "Engine/Selection.h"
 #include "EditorModeManager.h"
 #include "IVREditorModule.h"
 #include "UnrealEdGlobals.h"
@@ -144,6 +145,20 @@ UWorld* SDialogPreviewViewport::GetWorld() const
 }
 
 
+bool SDialogPreviewViewport::IsSelectedActorLocked() const
+{
+	USelection* ActorSelection = GEditor->GetSelectedActors();
+	if (1 == ActorSelection->Num() && IsAnyActorLocked())
+	{
+		AActor* Actor = CastChecked<AActor>(ActorSelection->GetSelectedObject(0));
+		if (DialogViewportClient->GetActiveActorLock().Get() == Actor)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
 void SDialogPreviewViewport::OnActorLockToggleFromMenu(AActor* Actor)
 {
 	if (Actor != nullptr)
@@ -228,7 +243,7 @@ bool SDialogPreviewViewport::GetCameraInformationFromActor(AActor* Actor, FMinim
 	//@TODO: CAMERA: Support richer camera interactions in SIE; this may shake out naturally if everything uses camera components though
 
 	bool bFoundCamInfo = false;
-	if (UActorComponent* ViewComponent = FLevelEditorViewportClient::FindViewComponentForActor(Actor))
+	if (UActorComponent* ViewComponent = FDialogBuilderViewportClient::FindViewComponentForActor(Actor))
 	{
 		bFoundCamInfo = ViewComponent->GetEditorPreviewInfo(/*DeltaTime =*/0.0f, out_CameraInfo);
 		ensure(bFoundCamInfo);
@@ -285,6 +300,30 @@ void SDialogPreviewViewport::BindCommands()
 		FCanExecuteAction(),
 		FIsActionChecked::CreateSP(DialogViewportClient.Get(), &FDialogBuilderViewportClient::GetShowGrid));
 
+
+	CommandList->MapAction(
+		Commands.ToggleGameView,
+		FExecuteAction::CreateSP(this, &SDialogPreviewViewport::ToggleGameView),
+		FCanExecuteAction(),
+		FIsActionChecked::CreateSP(this, &SDialogPreviewViewport::IsInGameView));
+
+	/*CommandList->MapAction(
+		Commands.SelectPilotedActor,
+		FExecuteAction::CreateSP(this, &SDialogPreviewViewport::OnSelectLockedActor),
+		FCanExecuteAction::CreateSP(this, &SDialogPreviewViewport::CanExecuteSelectLockedActor)
+	);
+
+	CommandList->MapAction(
+		Commands.EjectActorPilot,
+		FExecuteAction::CreateSP(this, &SDialogPreviewViewport::OnActorUnlock),
+		FCanExecuteAction::CreateSP(this, &SDialogPreviewViewport::CanExecuteActorUnlock)
+	);
+
+	CommandList->MapAction(
+		Commands.PilotSelectedActor,
+		FExecuteAction::CreateSP(this, &SDialogPreviewViewport::OnActorLockSelected),
+		FCanExecuteAction::CreateSP(this, &SDialogPreviewViewport::CanExecuteActorLockSelected)
+	);*/
 }
 
 void SDialogPreviewViewport::OnFocusViewportToSelection()
@@ -421,5 +460,29 @@ TSharedPtr<SWidget> SDialogPreviewViewport::BuildViewportToolbar()
 		];
 }
 
+void SDialogPreviewViewport::ToggleGameView()
+{
+	bool bGameViewEnable = !DialogViewportClient->IsInGameView();
+
+	// "Mode Widget" should not automatically be reactivated by selecting an actor after "Game View" is enabled
+	DialogViewportClient->bAlwaysShowModeWidgetAfterSelectionChanges = bGameViewEnable ? false : true;
+
+	DialogViewportClient->SetGameView(bGameViewEnable);
+
+	// LevelViewportClient->bShowWidget is set to "false" when entering game mode
+	// Need to turn it back to "true" 
+	DialogViewportClient->ShowWidget(true);
+	DialogViewportClient->RefreshRenderFeature();
+}
+
+bool SDialogPreviewViewport::CanToggleGameView() const
+{
+	return DialogViewportClient->IsPerspective();
+}
+
+bool SDialogPreviewViewport::IsInGameView() const
+{
+	return DialogViewportClient->IsInGameView();
+}
 
 #undef LOCTEXT_NAMESPACE

@@ -1,6 +1,7 @@
 #include "DialogEditorSubmenus.h"
 
 #include "DialogBuilderViewportClient.h"
+#include "DialogBuilder_EditorCommands.h"	
 #include "SDialogPreviewViewport.h"
 #include "EngineUtils.h"
 #include "Styling/SlateIconFinder.h"
@@ -11,6 +12,10 @@
 #include "Camera/CameraActor.h"
 #include "ToolMenu.h"
 #include "ToolMenus.h"
+#include "UnrealEdGlobals.h"
+#include "Editor.h"
+#include "ViewportToolbar/UnrealEdViewportToolbar.h"
+#include "Engine/Selection.h"
 #include "Styling/AppStyle.h"
 #include "ViewportToolbar/UnrealEdViewportToolbarContext.h"
 
@@ -151,6 +156,168 @@ namespace UE::DialogEditor::Private
 		}
 	}
 
+	// Can be used to show entries only in perspective view - specialized version of UE::UnrealEd method, for LevelViewport argument
+	TAttribute<bool> GetIsPerspectiveAttribute(const TWeakPtr<::SDialogPreviewViewport>& DialogViewportWeak)
+	{
+		if (TSharedPtr<::SDialogPreviewViewport> DialogViewport = DialogViewportWeak.Pin())
+		{
+			return UE::UnrealEd::GetIsPerspectiveAttribute(DialogViewport->GetViewportClient());
+		}
+
+		return false;
+	}
+
+	FToolMenuEntry CreateEjectActorPilotEntry()
+	{
+		return FToolMenuEntry::InitDynamicEntry(
+			"EjectActorPilotDynamicSection",
+			FNewToolMenuSectionDelegate::CreateLambda(
+				[](FToolMenuSection& InnerSection) -> void
+				{
+					UUnrealEdViewportToolbarContext* const ToolbarContext = InnerSection.FindContext<UUnrealEdViewportToolbarContext>();
+
+					const TSharedPtr<SDialogPreviewViewport> DialogViewport = ToolbarContext ? StaticCastSharedPtr<SDialogPreviewViewport>(ToolbarContext->Viewport.Pin()) : nullptr;
+					if (!DialogViewport.IsValid())
+					{
+						return;
+					}
+
+					FToolUIAction EjectActorPilotAction;
+
+					EjectActorPilotAction.ExecuteAction = FToolMenuExecuteAction::CreateLambda(
+						[DialogViewportWeak = DialogViewport.ToWeakPtr()](const FToolMenuContext& Context) -> void
+						{
+							if (TSharedPtr<::SDialogPreviewViewport> DialogViewport = DialogViewportWeak.Pin())
+							{
+								DialogViewport->OnActorLockToggleFromMenu();
+							}
+						}
+					);
+
+					EjectActorPilotAction.CanExecuteAction = FToolMenuCanExecuteAction::CreateLambda(
+						[DialogViewportWeak = DialogViewport.ToWeakPtr()](const FToolMenuContext& Context)
+						{
+							if (TSharedPtr<::SDialogPreviewViewport> DialogViewport = DialogViewportWeak.Pin())
+							{
+								return DialogViewport->IsAnyActorLocked();
+							}
+							return false;
+						}
+					);
+
+					// We use this entry to gather its Name, Tooltip and Icon. See comment below as to why we cannot directly use this entry.
+					FToolMenuEntry SourceEjectPilotEntry =
+						FToolMenuEntry::InitMenuEntry(FDialogBuilder_EditorCommands::Get().EjectActorPilot);
+
+					// We want to use SetShowInToolbarTopLevel to show the Eject entry in the Top Level only when piloting is active.
+					// Currently, this will not work with Commands, e.g. AddMenuEntry(FDialogBuilder_EditorCommands::Get().EjectActorPilot).
+					// So, we create the entry using FToolMenuEntry::InitMenuEntry, and we create our own Action to handle it.
+					FToolMenuEntry EjectPilotActor = FToolMenuEntry::InitMenuEntry(
+						"EjectActorPilot",
+						LOCTEXT("EjectActorPilotLabel", "Stop Piloting Actor"),
+						LOCTEXT(
+							"EjectActorPilotTooltip", "Stop piloting an actor with the current viewport. Unlocks the viewport's position and orientation from the actor the viewport is currently piloting."
+						),
+						FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelViewport.EjectActorPilot"),
+						EjectActorPilotAction,
+						EUserInterfaceActionType::Button
+					);
+
+					const TAttribute<bool> bShownInTopLevel = TAttribute<bool>::CreateLambda(
+						[DialogViewportWeak = DialogViewport.ToWeakPtr()]() -> bool
+						{
+							if (TSharedPtr<::SDialogPreviewViewport> DialogViewport = DialogViewportWeak.Pin())
+							{
+								return DialogViewport->IsAnyActorLocked();
+							}
+
+							return true;
+						}
+					);
+
+					EjectPilotActor.SetShowInToolbarTopLevel(bShownInTopLevel);
+
+					InnerSection.AddEntry(EjectPilotActor);
+				}
+			)
+		);
+	}
+
+
+	FToolMenuEntry CreatePilotSubmenu(TWeakPtr<::SDialogPreviewViewport> DialogViewportWeak)
+	{
+		FToolMenuEntry Entry = FToolMenuEntry::InitSubMenu(
+			"PilotingSubmenu",
+			LOCTEXT("PilotingSubmenu", "Pilot"),
+			LOCTEXT("PilotingSubmenu_ToolTip", "Piloting cameras and actors"),
+			FNewToolMenuDelegate::CreateLambda(
+				[DialogViewportWeak](UToolMenu* InMenu)
+				{
+					FToolMenuSection& PilotSection = InMenu->FindOrAddSection("Pilot");
+
+					bool bShowPilotSelectedActorEntry = false;
+
+					AActor* SelectedActor = nullptr;
+					if (TSharedPtr<::SDialogPreviewViewport> DialogViewport = DialogViewportWeak.Pin())
+					{
+						TArray<AActor*> SelectedActors;
+						GEditor->GetSelectedActors()->GetSelectedObjects<AActor>(SelectedActors);
+
+						if (!SelectedActors.IsEmpty() && !DialogViewport->IsSelectedActorLocked())
+						{
+							SelectedActor = SelectedActors[0];
+							const FDialogBuilderViewportClient& ViewportClient = DialogViewport->GetDialogViewportClient();
+
+							bShowPilotSelectedActorEntry = SelectedActor && ViewportClient.IsPerspective()
+								&& !ViewportClient.IsLockedToCinematic();
+						}
+					}
+
+					if (bShowPilotSelectedActorEntry)
+					{
+						// Pilot Selected Actor Entry
+						PilotSection.AddMenuEntry(
+							FDialogBuilder_EditorCommands::Get().PilotSelectedActor,
+							FText::Format(LOCTEXT("PilotActor", "Pilot '{0}'"), FText::FromString(SelectedActor->GetActorLabel()))
+						);
+					}
+
+					// Stop Piloting Entry
+					PilotSection.AddEntry(UE::DialogEditor::Private::CreateEjectActorPilotEntry());
+
+					// Exact Camera View Entry
+					{
+						FToolMenuEntry& ToggleCameraView =
+							PilotSection.AddMenuEntry(FDialogBuilder_EditorCommands::Get().ToggleActorPilotCameraView);
+						ToggleCameraView.Label = LOCTEXT("ToggleCameraViewLabel", "Exact Camera View");
+						ToggleCameraView.SetShowInToolbarTopLevel(
+							TAttribute<bool>::CreateLambda(
+								[DialogViewportWeak]()
+								{
+									if (TSharedPtr<::SDialogPreviewViewport> EditorViewport = DialogViewportWeak.Pin())
+									{
+										return EditorViewport->IsAnyActorLocked();
+									}
+									return false;
+								}
+							)
+						);
+					}
+
+					PilotSection.AddMenuEntry(FDialogBuilder_EditorCommands::Get().SelectPilotedActor);
+				}
+			),
+			false,
+			FSlateIcon(FAppStyle::Get().GetStyleSetName(), "DialogViewport.PilotSelectedActor")
+		);
+
+		Entry.Visibility = GetIsPerspectiveAttribute(DialogViewportWeak);
+
+		return Entry;
+	}
+
+	
+
 
 }
 
@@ -169,7 +336,36 @@ namespace UE::DialogEditor
 			FNewToolMenuDelegate::CreateLambda(
 				[](UToolMenu* InDynamicMenu)
 				{
-					Private::AddCameraActorSelectSection(InDynamicMenu);
+					UUnrealEdViewportToolbarContext* const ToolbarContext = InDynamicMenu->FindContext<UUnrealEdViewportToolbarContext>();
+
+					const TSharedPtr<SDialogPreviewViewport> DialogViewport = ToolbarContext ? StaticCastSharedPtr<SDialogPreviewViewport>(ToolbarContext->Viewport.Pin()) : nullptr;
+					if (!DialogViewport.IsValid())
+					{
+						return;
+					}
+					TWeakPtr<SDialogPreviewViewport> DialogViewportWeak = DialogViewport.ToWeakPtr();
+					// Camera Selection elements
+					{
+						Private::AddCameraActorSelectSection(InDynamicMenu);
+					}
+					// Movement Menus
+					{
+						FToolMenuSection& MovementSection = InDynamicMenu->FindOrAddSection("Movement");
+
+						MovementSection.AddEntry(Private::CreatePilotSubmenu(DialogViewportWeak));
+						//MovementSection.AddEntry(Private::CreateCameraMovementSubmenu(DialogViewportWeak));
+					}
+
+					// Options Section
+					{
+						FToolMenuSection& OptionsSection =
+							InDynamicMenu->FindOrAddSection("CameraOptions", LOCTEXT("OptionsLabel", "Options"));
+
+						FToolMenuEntry ToggleGameView =
+							FToolMenuEntry::InitMenuEntry(FDialogBuilder_EditorCommands::Get().ToggleGameView);
+						ToggleGameView.UserInterfaceActionType = EUserInterfaceActionType::ToggleButton;
+						OptionsSection.AddEntry(ToggleGameView);
+					}
 				}
 			)
 		);

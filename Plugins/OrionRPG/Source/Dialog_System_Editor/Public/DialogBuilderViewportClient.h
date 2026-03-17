@@ -24,6 +24,7 @@ public:
 	virtual ~FDialogBuilderViewportClient();
 
 	void SetUseLevelWorld(bool bInUseLevelWorld);
+	void RefreshRenderFeature();
 
 	// FEditorViewportClient interface
 	virtual void Tick(float DeltaSeconds) override;
@@ -86,6 +87,21 @@ public:
 	void ResetCamera();
 
 	/**
+	 * Check whether this viewport is locked to the specified actor
+	 */
+	bool IsLockedToActor(AActor* Actor) const
+	{
+		return ActorLocks.HasActorLocked(Actor);
+	}
+
+	/**
+	 * Check whether this viewport is locked to display a cinematic camera, like a Sequencer camera.
+	 */
+	bool IsLockedToCinematic() const
+	{
+		return ActorLocks.CinematicActorLock.HasValidLockedActor();
+	}
+	/**
 	 * Access the 'active' actor lock.
 	 *
 	 * This returns the actor lock (as per GetActorLock) if that is the currently active lock. It is *not* the currently
@@ -121,6 +137,49 @@ public:
 	}
 
 	/**
+	 * Get the actor locked to the viewport by cinematic tools like Sequencer.
+	 */
+	const FLevelViewportActorLock& GetCinematicActorLock() const
+	{
+		return ActorLocks.CinematicActorLock;
+	}
+
+	/**
+	 * Get the actor locked to the viewport by cinematic tools like Sequencer.
+	 */
+	FLevelViewportActorLock& GetCinematicActorLock()
+	{
+		return ActorLocks.CinematicActorLock;
+	}
+
+	/**
+	 * Set the actor locked to the viewport by cinematic tools like Sequencer.
+	 */
+	void SetCinematicActorLock(AActor* Actor);
+
+	/**
+	 * Set the actor locked to the viewport by cinematic tools like Sequencer.
+	 */
+	void SetCinematicActorLock(const FLevelViewportActorLock& InActorLock);
+
+	/**
+	 * Gets the previous actor lock. This is the actor locked to the viewport via the viewport menus.
+	 */
+	const FLevelViewportActorLock& GetPreviousActorLock() const
+	{
+		return PreviousActorLocks.ActorLock;
+	}
+
+	/**
+	 * Get the previous actor locked to the viewport by cinematic tools like Sequencer.
+	 */
+	const FLevelViewportActorLock& GetPreviousCinematicActorLock() const
+	{
+		return PreviousActorLocks.CinematicActorLock;
+	}
+
+
+	/**
 	 * Set the actor lock. This is the actor locked to the viewport via the viewport menus.
 	 */
 	void SetActorLock(AActor* Actor);
@@ -146,6 +205,14 @@ public:
 	 */
 	void MoveCameraToLockedActor();
 
+
+	/**
+	 * Find a view component to use for the specified actor. Prioritizes selected
+	 * components first, followed by camera components (then falls through to the first component that implements GetEditorPreviewInfo)
+	 */
+	static UActorComponent* FindViewComponentForActor(AActor const* Actor);
+
+
 protected:
 	/**
 	 * Initiates a transaction.
@@ -163,12 +230,6 @@ protected:
 	* Can only select actor from the definitions
 	*/
 	bool CanSelectActorFromHitProxy(HHitProxy* const InHitProxy);
-
-	/**
-	 * Find a view component to use for the specified actor. Prioritizes selected
-	 * components first, followed by camera components (then falls through to the first component that implements GetEditorPreviewInfo)
-	 */
-	static UActorComponent* FindViewComponentForActor(AActor const* Actor);
 
 	/**
 	 * Find the camera component that is driving this viewport, in the following order of preference:
@@ -190,6 +251,9 @@ private:
 public:
 	/** True if this viewport is to change its view (aspect ratio, post processing, FOV etc) to match that of the currently locked camera, if applicable */
 	bool bLockedCameraView;
+
+	/** When enabled, the Unreal transform widget will become visible after an actor is selected, even if it was turned off via a show flag */
+	bool bAlwaysShowModeWidgetAfterSelectionChanges;
 
 private:
 	/** The current transaction for undo/redo */

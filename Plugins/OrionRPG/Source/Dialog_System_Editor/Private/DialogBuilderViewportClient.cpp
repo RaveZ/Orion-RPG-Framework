@@ -52,6 +52,7 @@ FDialogBuilderViewportClient::FDialogBuilderViewportClient(
 	, bEditorCameraCut(false)
 	, bWasEditorCameraCut(false)
 {
+	bAlwaysShowModeWidgetAfterSelectionChanges = true;
 	ViewportType = LVT_Perspective;
 	SetViewLocation(FVector(-250.0, 0.0, 125.0));
 	SetViewRotation(FRotator(0.0, 0.0, 0.0));
@@ -101,31 +102,43 @@ void FDialogBuilderViewportClient::SetUseLevelWorld(bool bInUseLevelWorld)
 	bUseLevelWorld = bInUseLevelWorld;	
 	if (bInUseLevelWorld)
 	{
+		PreviewScene = nullptr;
+	}
+	else
+	{
+		PreviewScene = CurrentPreviewScene;
+	}
+
+	RefreshRenderFeature();
+	if (GEditor)
+	{
+		GEditor->SelectNone(true, true, false);
+	}
+}
+
+void FDialogBuilderViewportClient::RefreshRenderFeature()
+{
+	if (bUseLevelWorld)
+	{
 		//fetch renderer settings
 		const URendererSettings* RendererSettings = GetDefault<URendererSettings>();
 		const bool bLumenGIEnabled = RendererSettings->DynamicGlobalIllumination == EDynamicGlobalIlluminationMethod::Lumen;
 		const bool bLumenReflectionsEnabled = RendererSettings->Reflections == EReflectionMethod::Lumen;
 		const bool bMegaLightsEnabled = RendererSettings->bEnableMegaLights;
-		
+
 		{
 			EngineShowFlags.EnableAdvancedFeatures();
 			EngineShowFlags.SetLumenGlobalIllumination(bLumenGIEnabled);
 			EngineShowFlags.SetLumenReflections(bLumenReflectionsEnabled);
 			EngineShowFlags.SetMegaLights(bMegaLightsEnabled);
 		}
-
-		PreviewScene = nullptr;
 	}
 	else
 	{
 		EngineShowFlags.DisableAdvancedFeatures();
-		PreviewScene = CurrentPreviewScene;
 	}
 
-	if (GEditor)
-	{
-		GEditor->SelectNone(true, true, false);
-	}
+	EngineShowFlags.SetSelectionOutline(true);
 }
 
 void FDialogBuilderViewportClient::BeginTransaction(const FText& Description)
@@ -865,5 +878,25 @@ void FDialogBuilderViewportClient::SetActorLock(const FLevelViewportActorLock& I
 	}
 	ActorLocks.ActorLock = InActorLock;
 }
+
+
+void FDialogBuilderViewportClient::SetCinematicActorLock(AActor* Actor)
+{
+	SetCinematicActorLock(FLevelViewportActorLock(Actor));
+}
+
+void FDialogBuilderViewportClient::SetCinematicActorLock(const FLevelViewportActorLock& InActorLock)
+{
+	if (ActorLocks.CinematicActorLock.LockedActor != InActorLock.LockedActor)
+	{
+		SetIsCameraCut();
+	}
+	if (ActorLocks.CinematicActorLock.LockedActor.IsValid())
+	{
+		PreviousActorLocks.CinematicActorLock = ActorLocks.CinematicActorLock;
+	}
+	ActorLocks.CinematicActorLock = InActorLock;
+}
+
 
 #undef LOCTEXT_NAMESPACE
