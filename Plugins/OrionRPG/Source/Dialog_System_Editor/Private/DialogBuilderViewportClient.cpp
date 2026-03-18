@@ -435,6 +435,115 @@ bool FDialogBuilderViewportClient::EndTransform(const FGizmoState& InState)
 	return HandleEndTransform();
 }
 
+void FDialogBuilderViewportClient::PerspectiveCameraMoved()
+{
+	// Update the locked actor (if any) from the camera
+	MoveLockedActorToCamera();
+
+	// If any other viewports have this actor locked too, we need to update them
+	if (GetActiveActorLock().IsValid())
+	{
+		UpdateLockedActorViewport(GetActiveActorLock().Get(), false);
+	}
+
+	// Broadcast 'camera moved' delegate
+	FEditorDelegates::OnEditorCameraMoved.Broadcast(GetViewLocation(), GetViewRotation(), ViewportType, ViewIndex);
+}
+
+
+void FDialogBuilderViewportClient::MoveLockedActorToCamera()
+{
+	// If turned on, move any selected actors to the cameras location/rotation
+	AActor* ActiveActorLock = GetActiveActorLock().Get();
+	if (ActiveActorLock)
+	{
+		if (!ActiveActorLock->IsLockLocation())
+		{
+			if (TrackingTransaction.TransCount > 0)
+			{
+				SnapshotTransactionBuffer(ActiveActorLock);
+
+				USceneComponent* ActiveActorLockComponent = ActiveActorLock->GetRootComponent();
+				if (ActiveActorLockComponent && !ActiveActorLockComponent->IsCreatedByConstructionScript())
+				{
+					SnapshotTransactionBuffer(ActiveActorLockComponent);
+				}
+			}
+
+			// Need to disable orbit camera before setting actor position so that the viewport camera location is converted back
+			ToggleOrbitCamera(false);
+
+			USceneComponent* ActiveActorLockComponent = ActiveActorLock->GetRootComponent();
+			TOptional<FRotator> PreviousRotator;
+			if (ActiveActorLockComponent)
+			{
+				PreviousRotator = ActiveActorLockComponent->GetRelativeRotation();
+			}
+
+			// If we're locked to a camera then we're reflecting the camera view and not the actor position. We need to reflect that delta when we reposition the piloted actor
+			if (bUseControllingActorViewInfo)
+			{
+				const UActorComponent* ViewComponent = FindViewComponentForActor(ActiveActorLock);
+				if (const UCameraComponent* CameraViewComponent = Cast<UCameraComponent>(ViewComponent))
+				{
+					FTransform AdditiveOffset;
+					float AdditiveFOV;
+					CameraViewComponent->GetAdditiveOffset(AdditiveOffset, AdditiveFOV);
+					const FTransform RelativeTransform = (AdditiveOffset * CameraViewComponent->GetComponentTransform()).Inverse();
+					const FTransform DesiredTransform = FTransform(GetViewRotation(), GetViewLocation());
+					ActiveActorLock->SetActorTransform(ActiveActorLock->GetActorTransform() * RelativeTransform * DesiredTransform);
+				}
+				else if (const USceneComponent* SceneViewComponent = Cast<USceneComponent>(ViewComponent))
+				{
+					const FTransform RelativeTransform = SceneViewComponent->GetComponentTransform().Inverse();
+					const FTransform DesiredTransform = FTransform(GetViewRotation(), GetViewLocation());
+					ActiveActorLock->SetActorTransform(ActiveActorLock->GetActorTransform() * RelativeTransform * DesiredTransform);
+				}
+			}
+			else
+			{
+				ActiveActorLock->SetActorLocation(GetViewLocation(), false);
+				ActiveActorLock->SetActorRotation(GetViewRotation());
+			}
+
+			if (ActiveActorLockComponent)
+			{
+				const FRotator Rot = PreviousRotator.GetValue();
+				FRotator ActorRotWind, ActorRotRem;
+				Rot.GetWindingAndRemainder(ActorRotWind, ActorRotRem);
+				const FQuat ActorQ = ActorRotRem.Quaternion();
+				const FQuat ResultQ = ActiveActorLockComponent->GetRelativeRotation().Quaternion();
+				FRotator NewActorRotRem = FRotator(ResultQ);
+				ActorRotRem.SetClosestToMe(NewActorRotRem);
+				FRotator DeltaRot = NewActorRotRem - ActorRotRem;
+				DeltaRot.Normalize();
+				ActiveActorLockComponent->SetRelativeRotationExact(Rot + DeltaRot);
+			}
+		}
+
+		if (ABrush* Brush = Cast<ABrush>(ActiveActorLock))
+		{
+			Brush->SetNeedRebuild(Brush->GetLevel());
+		}
+
+		FScopedLevelDirtied LevelDirtyCallback;
+		LevelDirtyCallback.Request();
+
+		RedrawAllViewportsIntoThisScene();
+	}
+}
+
+
+
+void FDialogBuilderViewportClient::UpdateLockedActorViewport(const AActor* InActor, const bool bCheckRealtime)
+{
+	// If this viewport has the actor locked and we need to update the camera, then do so
+	if (IsActorLocked(InActor) && (!bCheckRealtime || IsRealtime()))
+	{
+		MoveCameraToLockedActor();
+	}
+}
+
 bool FDialogBuilderViewportClient::HandleBeginTransform()
 {
 	if (!bIsManipulating)
@@ -443,7 +552,7 @@ bool FDialogBuilderViewportClient::HandleBeginTransform()
 		GEditor->DisableDeltaModification(true);
 
 		// Begin transaction
-		BeginTransaction(NSLOCTEXT("UnrealEd", "ModifyComponents", "Modify Component(s)"));
+		BeginTransaction(NSLOCTEXT("DialogEd", "ModifyComponents", "Modify Component(s)"));
 		bIsManipulating = true;
 		return true;
 	}

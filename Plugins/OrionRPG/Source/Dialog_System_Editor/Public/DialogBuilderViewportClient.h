@@ -43,7 +43,17 @@ public:
 	virtual void TrackingStopped() override;
 	virtual bool BeginTransform(const FGizmoState& InState) override;
 	virtual bool EndTransform(const FGizmoState& InState) override;
+	virtual void PerspectiveCameraMoved() override;
 
+	/**
+	 * Checks to see the viewports locked actor need updating
+	 */
+	void UpdateLockedActorViewport(const AActor* InActor, const bool bCheckRealtime);
+
+	/**
+	 * Moves the locked actor according to the viewport cameras location and rotation
+	 */
+	void MoveLockedActorToCamera();
 
 	/** Sets a flag for this frame indicating that the camera has been cut, and temporal effects (such as motion blur) should be reset */
 	void SetIsCameraCut()
@@ -278,6 +288,9 @@ private:
 	ECoordSystem WidgetCoordSystem;
 
 	FPreviewScene* CurrentPreviewScene = nullptr;
+
+	/** Global shared transaction for all mouse interactions. */
+	FTrackingTransaction TrackingTransaction;
 
 	/**
 	 * When locked to an actor this view will be positioned in the same location and rotation as the actor.
