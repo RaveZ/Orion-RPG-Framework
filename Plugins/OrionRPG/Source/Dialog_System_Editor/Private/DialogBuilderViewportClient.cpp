@@ -162,7 +162,6 @@ void FDialogBuilderViewportClient::EndTransaction()
 	}
 }
 
-
 void FDialogBuilderViewportClient::Tick(float DeltaSeconds)
 {
 	if (bWasEditorCameraCut && bEditorCameraCut)
@@ -192,7 +191,89 @@ void FDialogBuilderViewportClient::Tick(float DeltaSeconds)
 			PreviewScene->GetWorld()->Tick(IsRealtime() ? LEVELTICK_ViewportsOnly : LEVELTICK_TimeOnly, DeltaSeconds);
 		}
 	}
+
+	UpdateViewForLockedActor(DeltaSeconds);
+
 }
+
+
+void FDialogBuilderViewportClient::UpdateViewForLockedActor(float DeltaTime)
+{
+	// We can't be locked to a cinematic actor if this viewport doesn't allow cinematic control
+	if (!bAllowCinematicControl && ActorLocks.CinematicActorLock.HasValidLockedActor())
+	{
+		ActorLocks.CinematicActorLock = FLevelViewportActorLock::None;
+	}
+
+	bUseControllingActorViewInfo = false;
+	ControllingActorViewInfo = FMinimalViewInfo();
+	ControllingActorAspectRatioAxisConstraint.Reset();
+	ControllingActorExtraPostProcessBlends.Empty();
+	ControllingActorExtraPostProcessBlendWeights.Empty();
+
+	const FLevelViewportActorLock& ActiveLock = ActorLocks.GetLock();
+	AActor* Actor = ActiveLock.GetLockedActor();
+	if (Actor != NULL)
+	{
+		// Check if the viewport is transitioning
+		FViewportCameraTransform& ViewTransform = GetViewTransform();
+		if (!ViewTransform.IsPlaying())
+		{
+			// Update transform
+			bool bGotCameraView = false;
+			if (bLockedCameraView)
+			{
+				// If this is a camera actor, then inherit some other settings
+				UActorComponent* const ViewComponent = FindViewComponentForActor(Actor);
+				if (ViewComponent != nullptr)
+				{
+					if (ensure(ViewComponent->GetEditorPreviewInfo(DeltaTime, ControllingActorViewInfo)))
+					{
+						bUseControllingActorViewInfo = true;
+						if (UCameraComponent* CameraComponent = Cast<UCameraComponent>(ViewComponent))
+						{
+							CameraComponent->GetExtraPostProcessBlends(ControllingActorExtraPostProcessBlends, ControllingActorExtraPostProcessBlendWeights);
+						}
+
+						// Axis constraint for aspect ratio
+						ControllingActorAspectRatioAxisConstraint = ActiveLock.AspectRatioAxisConstraint;
+
+						// Post processing is handled by OverridePostProcessingSettings
+						ViewFOV = ControllingActorViewInfo.FOV;
+						AspectRatio = ControllingActorViewInfo.AspectRatio;
+						SetViewLocation(ControllingActorViewInfo.Location);
+						SetViewRotation(ControllingActorViewInfo.Rotation);
+						bGotCameraView = true;
+					}
+				}
+			}
+			if (!bGotCameraView)
+			{
+				if (Actor->GetAttachParentActor() != NULL)
+				{
+					// Actor is parented, so use the actor to world matrix for translation and rotation information.
+					SetViewLocation(Actor->GetActorLocation());
+					SetViewRotation(Actor->GetActorRotation());
+				}
+				else if (Actor->GetRootComponent() != NULL)
+				{
+					// No attachment, so just use the relative location, so that we don't need to
+					// convert from a quaternion, which loses winding information.
+					SetViewLocation(Actor->GetRootComponent()->GetRelativeLocation());
+					SetViewRotation(Actor->GetRootComponent()->GetRelativeRotation());
+				}
+			}
+
+			const double DistanceToCurrentLookAt = FVector::Dist(GetViewLocation(), GetLookAtLocation());
+
+			const FQuat CameraOrientation = FQuat::MakeFromEuler(GetViewRotation().Euler());
+			FVector Direction = CameraOrientation.RotateVector(FVector(1, 0, 0));
+
+			SetLookAtLocation(GetViewLocation() + Direction * DistanceToCurrentLookAt);
+		}
+	}
+}
+
 
 bool FDialogBuilderViewportClient::InputKey(const FInputKeyEventArgs& EventArgs)
 {

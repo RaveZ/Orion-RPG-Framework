@@ -59,6 +59,11 @@ public:
 
 
 	/**
+	 * Updates or resets view properties such as aspect ratio, FOV, location etc to match that of any actor we are locked to
+	 */
+	void UpdateViewForLockedActor(float DeltaTime = 0.f);
+
+	/**
 	 * Returns true if the grid is currently visible in the viewport
 	 */
 	bool GetShowGrid();

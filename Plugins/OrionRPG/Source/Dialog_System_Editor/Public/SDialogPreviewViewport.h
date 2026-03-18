@@ -37,6 +37,13 @@ public:
 		return *DialogViewportClient;
 	}
 
+	/** Called to select the currently locked actor */
+	void OnSelectLockedActor();
+
+	/**
+	 * @return true if the currently locked actor is selectable
+	 */
+	bool CanExecuteSelectLockedActor() const;
 
 	/**
 	 * @return true if the viewport is locked to selected actor
@@ -57,6 +64,29 @@ public:
 	/** Called to clear the current actor lock */
 	void OnActorUnlock();
 
+	/**
+	 * @return true if clearing the current actor lock is a valid input
+	 */
+	bool CanExecuteActorUnlock() const;
+
+	/** Called to lock the viewport to the currently selected actor */
+	void OnActorLockSelected();
+
+	/**
+	 * @return true if clearing the setting the actor lock to the selected actor is a valid input
+	 */
+	bool CanExecuteActorLockSelected() const;
+
+	/**
+	 * Toggles enabling the exact camera view when locking a viewport to a camera
+	 */
+	void ToggleActorPilotCameraView();
+
+	/**
+	 * Check whether locked camera view is enabled
+	 */
+
+	bool IsLockedCameraViewEnabled() const;
 	/** Called to lock/unlock the actor from the viewport's context menu */
 	void OnActorLockToggleFromMenu(AActor* Actor);
 

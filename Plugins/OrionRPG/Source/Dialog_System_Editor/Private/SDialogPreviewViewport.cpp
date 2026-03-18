@@ -181,6 +181,34 @@ void SDialogPreviewViewport::OnActorLockToggleFromMenu()
 	OnActorUnlock();
 }
 
+void SDialogPreviewViewport::OnSelectLockedActor()
+{
+	if (AActor* LockedActor = DialogViewportClient->GetActiveActorLock().Get())
+	{
+		// Deselect any currently selected actors, then select the locked/piloted actor
+		if (GEditor)
+		{
+			GEditor->SelectNone(true, true, false);
+			if (LockedActor)
+			{
+				GEditor->SelectActor(LockedActor, true, true);
+			}
+
+			GEditor->NoteSelectionChange();
+		}
+	}
+}
+
+bool SDialogPreviewViewport::CanExecuteSelectLockedActor() const
+{
+	if (const AActor* LockedActor = DialogViewportClient->GetActiveActorLock().Get())
+	{
+		return LockedActor->IsSelectable();
+	}
+
+	return false;
+}
+
 
 void SDialogPreviewViewport::LockActorInternal(AActor* NewActorToLock)
 {
@@ -236,6 +264,41 @@ void SDialogPreviewViewport::OnActorUnlock()
 	}
 }
 
+bool SDialogPreviewViewport::CanExecuteActorUnlock() const
+{
+	return IsAnyActorLocked();
+}
+
+
+void SDialogPreviewViewport::ToggleActorPilotCameraView()
+{
+	DialogViewportClient->bLockedCameraView = !DialogViewportClient->bLockedCameraView;
+}
+
+bool SDialogPreviewViewport::IsLockedCameraViewEnabled() const
+{
+	return DialogViewportClient->bLockedCameraView;
+}
+
+void SDialogPreviewViewport::OnActorLockSelected()
+{
+	USelection* ActorSelection = GEditor->GetSelectedActors();
+	if (1 == ActorSelection->Num())
+	{
+		AActor* Actor = CastChecked<AActor>(ActorSelection->GetSelectedObject(0));
+		LockActorInternal(Actor);
+	}
+}
+
+bool SDialogPreviewViewport::CanExecuteActorLockSelected() const
+{
+	USelection* ActorSelection = GEditor->GetSelectedActors();
+	if (1 == ActorSelection->Num())
+	{
+		return true;
+	}
+	return false;
+}
 
 bool SDialogPreviewViewport::GetCameraInformationFromActor(AActor* Actor, FMinimalViewInfo& out_CameraInfo)
 {
@@ -307,7 +370,7 @@ void SDialogPreviewViewport::BindCommands()
 		FCanExecuteAction(),
 		FIsActionChecked::CreateSP(this, &SDialogPreviewViewport::IsInGameView));
 
-	/*CommandList->MapAction(
+	CommandList->MapAction(
 		Commands.SelectPilotedActor,
 		FExecuteAction::CreateSP(this, &SDialogPreviewViewport::OnSelectLockedActor),
 		FCanExecuteAction::CreateSP(this, &SDialogPreviewViewport::CanExecuteSelectLockedActor)
@@ -323,7 +386,14 @@ void SDialogPreviewViewport::BindCommands()
 		Commands.PilotSelectedActor,
 		FExecuteAction::CreateSP(this, &SDialogPreviewViewport::OnActorLockSelected),
 		FCanExecuteAction::CreateSP(this, &SDialogPreviewViewport::CanExecuteActorLockSelected)
-	);*/
+	);
+
+	CommandList->MapAction(
+		Commands.ToggleActorPilotCameraView,
+		FExecuteAction::CreateSP(this, &SDialogPreviewViewport::ToggleActorPilotCameraView),
+		FCanExecuteAction(),
+		FIsActionChecked::CreateSP(this, &SDialogPreviewViewport::IsLockedCameraViewEnabled)
+	);
 }
 
 void SDialogPreviewViewport::OnFocusViewportToSelection()
