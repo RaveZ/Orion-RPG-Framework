@@ -16,6 +16,7 @@
 #include "Editor.h"
 #include "ViewportToolbar/UnrealEdViewportToolbar.h"
 #include "Engine/Selection.h"
+#include "ISettingsModule.h"
 #include "Styling/AppStyle.h"
 #include "ViewportToolbar/UnrealEdViewportToolbarContext.h"
 
@@ -290,6 +291,7 @@ namespace UE::DialogEditor::Private
 						FToolMenuEntry& ToggleCameraView =
 							PilotSection.AddMenuEntry(FDialogBuilder_EditorCommands::Get().ToggleActorPilotCameraView);
 						ToggleCameraView.Label = LOCTEXT("ToggleCameraViewLabel", "Exact Camera View");
+						ToggleCameraView.Icon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelViewport.ToggleActorPilotCameraView");
 						ToggleCameraView.SetShowInToolbarTopLevel(
 							TAttribute<bool>::CreateLambda(
 								[DialogViewportWeak]()
@@ -358,6 +360,26 @@ namespace UE::DialogEditor::Private
 		return FSlateIcon(FAppStyle::GetAppStyleSetName(), "ClassIcon.CameraComponent");
 	}
 
+	void ExtendCameraSpeedSubmenu(FName InCameraSpeedSubmenuName)
+	{
+		UToolMenu* Menu = UToolMenus::Get()->ExtendMenu(InCameraSpeedSubmenuName);
+
+		FToolMenuSection& SettingsSection = Menu->AddSection("Settings");
+		SettingsSection.AddMenuEntry(
+			"OpenPreferences",
+			LOCTEXT("OpenCameraSpeedPreferencesLabel", "Show Camera Speed Preferences..."),
+			LOCTEXT("OpenCameraSpeedPreferencesTooltip", "Opens the Editor Preferences page for camera speed."),
+			FSlateIcon(FAppStyle::GetAppStyleSetName(), "EditorPreferences.TabIcon"),
+			FExecuteAction::CreateLambda([]
+				{
+					ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings");
+					if (SettingsModule)
+					{
+						SettingsModule->ShowViewer("Editor", "LevelEditor", "Viewport");
+					}
+				})
+		);
+	}
 
 }
 
@@ -409,6 +431,8 @@ namespace UE::DialogEditor
 				}
 			)
 		);
+
+		Private::ExtendCameraSpeedSubmenu(UToolMenus::JoinMenuPaths(InCameraOptionsSubmenuName, "CameraMovement.CameraSpeed"));
 	}
 
 
@@ -450,7 +474,9 @@ namespace UE::DialogEditor
 							FNewToolMenuDelegate::CreateLambda(
 								[](UToolMenu* Submenu) -> void
 								{
-									UnrealEd::PopulateCameraMenu(Submenu, UnrealEd::FViewportCameraMenuOptions().ShowLensControls());
+									//UnrealEd::PopulateCameraMenu(Submenu, UnrealEd::FViewportCameraMenuOptions().ShowLensControls());
+									UE::UnrealEd::PopulateCameraMenu(Submenu, UE::UnrealEd::FViewportCameraMenuOptions().ShowAll());
+
 								}
 							),
 							false,
