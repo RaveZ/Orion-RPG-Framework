@@ -45,6 +45,9 @@ public:
 	virtual bool EndTransform(const FGizmoState& InState) override;
 	virtual void PerspectiveCameraMoved() override;
 
+	virtual ELevelViewportType GetViewportType() const override;
+	virtual void SetViewportType(ELevelViewportType InViewportType) override;
+
 	/**
 	 * Checks to see the viewports locked actor need updating
 	 */

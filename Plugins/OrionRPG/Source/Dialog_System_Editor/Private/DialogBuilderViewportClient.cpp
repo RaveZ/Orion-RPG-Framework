@@ -450,6 +450,31 @@ void FDialogBuilderViewportClient::PerspectiveCameraMoved()
 	FEditorDelegates::OnEditorCameraMoved.Broadcast(GetViewLocation(), GetViewRotation(), ViewportType, ViewIndex);
 }
 
+ELevelViewportType FDialogBuilderViewportClient::GetViewportType() const
+{
+	const UCameraComponent* ActiveCameraComponent = GetCameraComponentForView();
+
+	if (ActiveCameraComponent != NULL)
+	{
+		return (ActiveCameraComponent->ProjectionMode == ECameraProjectionMode::Perspective) ? LVT_Perspective : LVT_OrthoFreelook;
+	}
+	else
+	{
+		return FEditorViewportClient::GetViewportType();
+	}
+}
+
+void FDialogBuilderViewportClient::SetViewportType(ELevelViewportType InViewportType)
+{
+	if (InViewportType != LVT_Perspective)
+	{
+		SetActorLock(nullptr);
+		UpdateViewForLockedActor();
+	}
+
+	FEditorViewportClient::SetViewportType(InViewportType);
+}
+
 
 void FDialogBuilderViewportClient::MoveLockedActorToCamera()
 {

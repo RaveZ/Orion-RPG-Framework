@@ -316,7 +316,47 @@ namespace UE::DialogEditor::Private
 		return Entry;
 	}
 
-	
+	FText GetCameraSubmenuLabelFromLevelViewport(const TWeakPtr<::SDialogPreviewViewport>& InDialogBuilderViewportClientWeak)
+	{
+		if (TSharedPtr<::SDialogPreviewViewport> DialogViewport = InDialogBuilderViewportClientWeak.Pin())
+		{
+			const FDialogBuilderViewportClient& DialogViewportClient = DialogViewport->GetDialogViewportClient();
+
+			if (!DialogViewportClient.IsAnyActorLocked())
+			{
+				return UnrealEd::GetCameraSubmenuLabelFromViewportType(DialogViewportClient.GetViewportType());
+			}
+			else if (TStrongObjectPtr<AActor> ActorLock = DialogViewportClient.GetActiveActorLock().Pin())
+			{
+				return FText::FromString(ActorLock->GetActorNameOrLabel());
+			}
+		}
+
+		return LOCTEXT("MissingActiveCameraLabel", "No Active Camera");
+	}
+
+	FSlateIcon GetCameraSubmenuIconFromLevelViewport(const TWeakPtr<::SDialogPreviewViewport>& InDialogBuilderViewportClientWeak)
+	{
+		if (TSharedPtr<::SDialogPreviewViewport> DialogViewport = InDialogBuilderViewportClientWeak.Pin())
+		{
+			const FDialogBuilderViewportClient& DialogViewportClient = DialogViewport->GetDialogViewportClient();
+			if (!DialogViewportClient.IsAnyActorLocked())
+			{
+				const FName IconName =
+					UnrealEd::GetCameraSubmenuIconFNameFromViewportType(DialogViewportClient.GetViewportType());
+				return FSlateIcon(FAppStyle::GetAppStyleSetName(), IconName);
+			}
+			else if (TStrongObjectPtr<AActor> LockedActor = DialogViewportClient.GetActorLock().LockedActor.Pin())
+			{
+				if (!LockedActor->IsA<ACameraActor>() && !LockedActor->IsA<ASceneCapture>())
+				{
+					return FSlateIconFinder::FindIconForClass(LockedActor->GetClass());
+				}
+			}
+		}
+
+		return FSlateIcon(FAppStyle::GetAppStyleSetName(), "ClassIcon.CameraComponent");
+	}
 
 
 }
@@ -369,6 +409,60 @@ namespace UE::DialogEditor
 				}
 			)
 		);
+	}
+
+
+	FToolMenuEntry CreateToolbarCameraSubmenu()
+	{
+		FToolMenuEntry Entry = FToolMenuEntry::InitDynamicEntry(
+			"DynamicCameraOptions",
+			FNewToolMenuSectionDelegate::CreateLambda(
+				[](FToolMenuSection& InDynamicSection) -> void
+				{
+					UUnrealEdViewportToolbarContext* const ToolbarContext = InDynamicSection.FindContext<UUnrealEdViewportToolbarContext>();
+					const TSharedPtr<SDialogPreviewViewport> DialogViewport = ToolbarContext ? StaticCastSharedPtr<SDialogPreviewViewport>(ToolbarContext->Viewport.Pin()) : nullptr;
+					if (!DialogViewport.IsValid())
+					{
+						return;
+					}
+					TWeakPtr<SDialogPreviewViewport> DialogViewportWeak = DialogViewport.ToWeakPtr();
+
+					if (ToolbarContext)
+					{
+						const TAttribute<FText> Label = TAttribute<FText>::CreateLambda(
+							[ViewportWeak = DialogViewportWeak]()
+							{
+								return UE::DialogEditor::Private::GetCameraSubmenuLabelFromLevelViewport(ViewportWeak);
+							}
+						);
+
+						const TAttribute<FSlateIcon> Icon = TAttribute<FSlateIcon>::CreateLambda(
+							[ViewportWeak = DialogViewportWeak]()
+							{
+								return UE::DialogEditor::Private::GetCameraSubmenuIconFromLevelViewport(ViewportWeak);
+							}
+						);
+
+						FToolMenuEntry& Entry = InDynamicSection.AddSubMenu(
+							"Camera",
+							Label,
+							LOCTEXT("CameraSubmenuTooltip", "Camera options"),
+							FNewToolMenuDelegate::CreateLambda(
+								[](UToolMenu* Submenu) -> void
+								{
+									UnrealEd::PopulateCameraMenu(Submenu, UnrealEd::FViewportCameraMenuOptions().ShowLensControls());
+								}
+							),
+							false,
+							Icon
+						);
+						Entry.ToolBarData.ResizeParams.ClippingPriority = 800;
+					}
+				}
+			)
+		);
+
+		return Entry;
 	}
 }
 

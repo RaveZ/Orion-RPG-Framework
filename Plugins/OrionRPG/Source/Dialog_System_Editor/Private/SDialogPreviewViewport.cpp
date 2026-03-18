@@ -13,6 +13,7 @@
 #include "Viewports.h"
 #include "Components/PrimitiveComponent.h"
 #include "Engine/Selection.h"
+#include "EditorViewportCommands.h"
 #include "EngineUtils.h"
 #include "HitProxies.h"
 #include "ComponentVisualizer.h"
@@ -394,6 +395,55 @@ void SDialogPreviewViewport::BindCommands()
 		FCanExecuteAction(),
 		FIsActionChecked::CreateSP(this, &SDialogPreviewViewport::IsLockedCameraViewEnabled)
 	);
+
+	// Re-Map Perspective command so that
+	// - Perspective menu entry radial checkbox is not flagged when actors are being piloted (including cameras)
+	// - Clicking on the Perspective entry interrupts piloting
+	{
+		const TWeakPtr<SDialogPreviewViewport> DialogViewportWeak = SharedThis(this);
+
+		CommandList->MapAction(
+			FEditorViewportCommands::Get().Perspective,
+			FExecuteAction::CreateLambda(
+				[DialogViewportWeak]()
+				{
+					if (const TSharedPtr<::SDialogPreviewViewport>& DialogViewportPinned =
+						DialogViewportWeak.Pin())
+					{
+						// If piloting, stop
+						DialogViewportPinned->OnActorUnlock();
+
+						if (const TSharedPtr<FEditorViewportClient>& ViewportClient = DialogViewportPinned->GetViewportClient())
+						{
+							// Set to perspective
+							ViewportClient->SetViewportType(LVT_Perspective);
+						}
+					}
+				}
+			),
+			FCanExecuteAction(),
+			FIsActionChecked::CreateLambda(
+				[DialogViewportWeak]()
+				{
+					if (const TSharedPtr<::SDialogPreviewViewport>& DialogViewportPinned =
+						DialogViewportWeak.Pin())
+					{
+						// Don't check action when piloting an actor
+						if (DialogViewportPinned->IsAnyActorLocked())
+						{
+							return false;
+						}
+
+						if (const TSharedPtr<FEditorViewportClient>& ViewportClient = DialogViewportPinned->GetViewportClient())
+						{
+							return ViewportClient->IsPerspective();
+						}
+					}
+					return false;
+				}
+			)
+		);
+	}
 }
 
 void SDialogPreviewViewport::OnFocusViewportToSelection()
@@ -428,7 +478,7 @@ TSharedPtr<SWidget> SDialogPreviewViewport::BuildViewportToolbar()
 			RightSection.Alignment = EToolMenuSectionAlign::Last;
 
 			const FName SubmenuName = UToolMenus::JoinMenuPaths(ViewportToolbarName, "Camera");
-			RightSection.AddEntry(UE::UnrealEd::CreateCameraSubmenu(UE::UnrealEd::FViewportCameraMenuOptions().ShowAll()));
+			RightSection.AddEntry(UE::DialogEditor::CreateToolbarCameraSubmenu());
 			UE::DialogEditor::ExtendCameraSubmenu(SubmenuName);
 
 			RightSection.AddEntry(UE::UnrealEd::CreateViewModesSubmenu());

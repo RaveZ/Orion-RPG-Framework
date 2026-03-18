@@ -6,5 +6,6 @@ class UToolMenu;
 
 namespace UE::DialogEditor
 {
-	DIALOG_SYSTEM_EDITOR_API void ExtendCameraSubmenu(FName InCameraOptionsSubmenuName);
+	void ExtendCameraSubmenu(FName InCameraOptionsSubmenuName);
+	FToolMenuEntry CreateToolbarCameraSubmenu();
 }
