@@ -108,7 +108,10 @@ FDialogBuilderEditor::~FDialogBuilderEditor()
 	{
 		EditingDialogGraph->GetOutermost()->PackageMarkedDirtyEvent.RemoveAll(this);
 	}
-
+	if (GEditor)
+	{
+		GEditor->UnregisterForUndo(this);
+	}
 	// Release sequencer/editor references early
 	Sequencer.Reset();
 	PlaybackContext.Reset();
@@ -131,6 +134,11 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 	if (DialogGraphToEdit != nullptr)
 	{
 		EditingDialogGraph = DialogGraphToEdit;
+	}
+
+	if (GEditor)
+	{
+		GEditor->RegisterForUndo(this);
 	}
 
 	//Binding Functionality
@@ -314,12 +322,24 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 {
 	if (bSuccess)
 	{
-		// Clear selection, to avoid holding refs to nodes that go away
 		if (TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor())
 		{
 			CurrentGraphEditor->ClearSelectionSet();
 			CurrentGraphEditor->NotifyGraphChanged();
 		}
+
+		if (DialogDefinitionsWidget.IsValid())
+		{
+			DialogDefinitionsWidget->Refresh();
+		}
+
+		if (PropertyWidget.IsValid())
+		{
+			PropertyWidget->ForceRefresh();
+		}
+
+		bPendingDialogDefinitionsUpdate = true;
+
 		FSlateApplication::Get().DismissAllMenus();
 	}
 }
@@ -328,12 +348,24 @@ void FDialogBuilderEditor::PostRedo(bool bSuccess)
 {
 	if (bSuccess)
 	{
-		// Clear selection, to avoid holding refs to nodes that go away
 		if (TSharedPtr<SGraphEditor> CurrentGraphEditor = GetCurrGraphEditor())
 		{
 			CurrentGraphEditor->ClearSelectionSet();
 			CurrentGraphEditor->NotifyGraphChanged();
 		}
+
+		if (DialogDefinitionsWidget.IsValid())
+		{
+			DialogDefinitionsWidget->Refresh();
+		}
+
+		if (PropertyWidget.IsValid())
+		{
+			PropertyWidget->ForceRefresh();
+		}
+
+		bPendingDialogDefinitionsUpdate = true;
+
 		FSlateApplication::Get().DismissAllMenus();
 	}
 }

@@ -154,38 +154,6 @@ void FDialogBuilderViewportClient::BeginTransaction(const FText& Description)
 
 }
 
-bool FDialogBuilderViewportClient::HandleBeginTransform()
-{
-	if (!bIsManipulating)
-	{
-		// Suspend component modification during each delta step to avoid recording unnecessary overhead into the transaction buffer
-		GEditor->DisableDeltaModification(true);
-
-		// Begin transaction
-		BeginTransaction(NSLOCTEXT("DialogEd", "ModifyComponents", "Modify Component(s)"));
-		bIsManipulating = true;
-		return true;
-	}
-
-	return false;
-}
-
-bool FDialogBuilderViewportClient::HandleEndTransform()
-{
-	if (bIsManipulating)
-	{
-		bIsManipulating = false;
-		EndTransaction();
-
-		// Restore component delta modification
-		GEditor->DisableDeltaModification(false);
-
-		return true;
-	}
-
-	return false;
-}
-
 void FDialogBuilderViewportClient::EndTransaction()
 {
 	if (ScopedTransaction)
@@ -458,20 +426,6 @@ void FDialogBuilderViewportClient::TrackingStopped()
 	}
 }
 
-void FDialogBuilderViewportClient::AbortTracking()
-{
-	if(TrackingTransaction.IsActive())
-	{
-		// Applying the global undo here will reset the drag operation
-		if (GUndo)
-		{
-			GUndo->Apply();
-		}
-		TrackingTransaction.Cancel();
-		StopTracking();
-	}
-}
-
 bool FDialogBuilderViewportClient::BeginTransform(const FGizmoState& InState)
 {
 	return HandleBeginTransform();
@@ -524,7 +478,10 @@ void FDialogBuilderViewportClient::BeginCameraMovement(bool bHasMovement)
 
 			if (!bIsUsingLegacyMovementNotify)
 			{
-				TrackingTransaction.Cancel();
+				if (!HandleEndTransform())
+				{
+					EndTransaction();
+				}
 			}
 			bIsCameraMoving = true;
 		}
@@ -587,7 +544,7 @@ void FDialogBuilderViewportClient::MoveLockedActorToCamera()
 	{
 		if (!ActiveActorLock->IsLockLocation())
 		{
-			if (TrackingTransaction.TransCount > 0)
+			if (ScopedTransaction != nullptr)
 			{
 				SnapshotTransactionBuffer(ActiveActorLock);
 
@@ -672,7 +629,37 @@ void FDialogBuilderViewportClient::UpdateLockedActorViewport(const AActor* InAct
 	}
 }
 
+bool FDialogBuilderViewportClient::HandleBeginTransform()
+{
+	if (!bIsManipulating)
+	{
+		// Suspend component modification during each delta step to avoid recording unnecessary overhead into the transaction buffer
+		GEditor->DisableDeltaModification(true);
 
+		// Begin transaction
+		BeginTransaction(NSLOCTEXT("DialogEd", "ModifyComponents", "Modify Component(s)"));
+		bIsManipulating = true;
+		return true;
+	}
+
+	return false;
+}
+
+bool FDialogBuilderViewportClient::HandleEndTransform()
+{
+	if (bIsManipulating)
+	{
+		bIsManipulating = false;
+		EndTransaction();
+
+		// Restore component delta modification
+		GEditor->DisableDeltaModification(false);
+
+		return true;
+	}
+
+	return false;
+}
 
 bool FDialogBuilderViewportClient::InputWidgetDelta(FViewport* InViewport, EAxisList::Type CurrentAxis, FVector& Drag, FRotator& Rot, FVector& Scale)
 {

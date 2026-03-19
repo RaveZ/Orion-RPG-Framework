@@ -41,7 +41,6 @@ public:
 	virtual FMatrix GetWidgetCoordSystem() const override;
 	virtual void TrackingStarted(const struct FInputEventState& InInputState, bool bIsDragging, bool bNudge) override;
 	virtual void TrackingStopped() override;
-	virtual void AbortTracking() override;
 	virtual bool BeginTransform(const FGizmoState& InState) override;
 	virtual bool EndTransform(const FGizmoState& InState) override;
 	virtual void PerspectiveCameraMoved() override;
@@ -295,8 +294,6 @@ private:
 
 	FPreviewScene* CurrentPreviewScene = nullptr;
 
-	/** Global shared transaction for all mouse interactions. */
-	FTrackingTransaction TrackingTransaction;
 
 	/**
 	 * When locked to an actor this view will be positioned in the same location and rotation as the actor.
