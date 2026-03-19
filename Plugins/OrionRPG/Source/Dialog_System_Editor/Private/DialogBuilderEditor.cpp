@@ -1062,9 +1062,19 @@ void FDialogBuilderEditor::ExtendSequencerToolbar(FName InToolMenuName)
 
 void FDialogBuilderEditor::OnSequencerReceivedFocus()
 {
-	if (Sequencer.IsValid())
+	if (!Sequencer.IsValid())
 	{
-		//FLevelEditorSequencerIntegration::Get().OnSequencerReceivedFocus(Sequencer.ToSharedRef());
+		return;
+	}
+
+	// For custom editor hosts, avoid LevelEditor integration path.
+	// Just ensure camera cuts are enabled for this sequencer instance.
+	Sequencer->SetPerspectiveViewportCameraCutEnabled(true);
+	Sequencer->ForceEvaluate();
+
+	if (SequencerViewportWidget.IsValid())
+	{
+		SequencerViewportWidget->RequestRefresh(false, true);
 	}
 }
 

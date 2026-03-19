@@ -59,7 +59,7 @@ FDialogBuilderViewportClient::FDialogBuilderViewportClient(
 	SetViewRotation(FRotator(0.0, 0.0, 0.0));
 	SetRealtime(true);
 	bSetListenerPosition = false;
-
+	bAllowCinematicControl = true;
 	check(Widget);
 	Widget->SetSnapEnabled(true);
 
