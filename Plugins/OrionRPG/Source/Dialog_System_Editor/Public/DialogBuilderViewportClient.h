@@ -41,9 +41,12 @@ public:
 	virtual FMatrix GetWidgetCoordSystem() const override;
 	virtual void TrackingStarted(const struct FInputEventState& InInputState, bool bIsDragging, bool bNudge) override;
 	virtual void TrackingStopped() override;
+	virtual void AbortTracking() override;
 	virtual bool BeginTransform(const FGizmoState& InState) override;
 	virtual bool EndTransform(const FGizmoState& InState) override;
 	virtual void PerspectiveCameraMoved() override;
+	virtual void BeginCameraMovement(bool bHasMovement) override;
+	virtual void EndCameraMovement() override;
 
 	virtual ELevelViewportType GetViewportType() const override;
 	virtual void SetViewportType(ELevelViewportType InViewportType) override;

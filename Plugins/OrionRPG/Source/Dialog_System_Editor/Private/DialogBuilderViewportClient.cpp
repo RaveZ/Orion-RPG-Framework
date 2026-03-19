@@ -22,6 +22,7 @@
 #include "EditorModeManager.h"
 #include "PreviewScene.h"
 #include "Engine/RendererSettings.h"
+#include "Elements/Component/ComponentElementLevelEditorViewportInteractionCustomization.h"
 #include "Components/InstancedStaticMeshComponent.h"
 #include "EditorModeManager.h"
 #include "UnrealWidget.h"
@@ -151,6 +152,38 @@ void FDialogBuilderViewportClient::BeginTransaction(const FText& Description)
 		}
 	}
 
+}
+
+bool FDialogBuilderViewportClient::HandleBeginTransform()
+{
+	if (!bIsManipulating)
+	{
+		// Suspend component modification during each delta step to avoid recording unnecessary overhead into the transaction buffer
+		GEditor->DisableDeltaModification(true);
+
+		// Begin transaction
+		BeginTransaction(NSLOCTEXT("DialogEd", "ModifyComponents", "Modify Component(s)"));
+		bIsManipulating = true;
+		return true;
+	}
+
+	return false;
+}
+
+bool FDialogBuilderViewportClient::HandleEndTransform()
+{
+	if (bIsManipulating)
+	{
+		bIsManipulating = false;
+		EndTransaction();
+
+		// Restore component delta modification
+		GEditor->DisableDeltaModification(false);
+
+		return true;
+	}
+
+	return false;
 }
 
 void FDialogBuilderViewportClient::EndTransaction()
@@ -425,6 +458,20 @@ void FDialogBuilderViewportClient::TrackingStopped()
 	}
 }
 
+void FDialogBuilderViewportClient::AbortTracking()
+{
+	if(TrackingTransaction.IsActive())
+	{
+		// Applying the global undo here will reset the drag operation
+		if (GUndo)
+		{
+			GUndo->Apply();
+		}
+		TrackingTransaction.Cancel();
+		StopTracking();
+	}
+}
+
 bool FDialogBuilderViewportClient::BeginTransform(const FGizmoState& InState)
 {
 	return HandleBeginTransform();
@@ -448,6 +495,62 @@ void FDialogBuilderViewportClient::PerspectiveCameraMoved()
 
 	// Broadcast 'camera moved' delegate
 	FEditorDelegates::OnEditorCameraMoved.Broadcast(GetViewLocation(), GetViewRotation(), ViewportType, ViewIndex);
+}
+
+void FDialogBuilderViewportClient::BeginCameraMovement(bool bHasMovement)
+{
+	const bool bIsUsingLegacyMovementNotify = GetDefault<ULevelEditorViewportSettings>()->bUseLegacyCameraMovementNotifications;
+	// If there's new movement broadcast it
+	if (bHasMovement)
+	{
+		if (!bIsCameraMoving)
+		{
+			AActor* ActorLock = GetActiveActorLock().Get();
+			if (!bIsCameraMovingOnTick && ActorLock)
+			{
+				GEditor->BroadcastBeginCameraMovement(*ActorLock);
+				// consider modification from piloting as relative location changes
+				FProperty* TransformProperty = FComponentElementLevelEditorViewportInteractionCustomization::GetEditTransformProperty(UE::Widget::WM_Translate);
+				if (TransformProperty)
+				{
+					// Create edit property event
+					FEditPropertyChain PropertyChain;
+					PropertyChain.AddHead(TransformProperty);
+
+					// Broadcast Pre Edit change notification, we can't call PreEditChange directly on Actor or ActorComponent from here since it will unregister the components until PostEditChange
+					FCoreUObjectDelegates::OnPreObjectPropertyChanged.Broadcast(ActorLock, PropertyChain);
+				}
+			}
+
+			if (!bIsUsingLegacyMovementNotify)
+			{
+				TrackingTransaction.Cancel();
+			}
+			bIsCameraMoving = true;
+		}
+	}
+	else if (bIsUsingLegacyMovementNotify || !bIsTracking)
+	{
+		bIsCameraMoving = false;
+	}
+}
+
+void FDialogBuilderViewportClient::EndCameraMovement()
+{
+	// If there was movement and it has now stopped, broadcast it
+	if (bIsCameraMovingOnTick && !bIsCameraMoving)
+	{
+		if (AActor* ActorLock = GetActiveActorLock().Get())
+		{
+			GEditor->BroadcastEndCameraMovement(*ActorLock);
+			// Create post edit property change event, consider modification from piloting as relative location changes
+			FProperty* TransformProperty = FComponentElementLevelEditorViewportInteractionCustomization::GetEditTransformProperty(UE::Widget::WM_Translate);
+			FPropertyChangedEvent PropertyChangedEvent(TransformProperty, EPropertyChangeType::ValueSet);
+
+			// Broadcast Post Edit change notification, we can't call PostEditChangeProperty directly on Actor or ActorComponent from here since it wasn't pair with a proper PreEditChange
+			FCoreUObjectDelegates::OnObjectPropertyChanged.Broadcast(ActorLock, PropertyChangedEvent);
+		}
+	}
 }
 
 ELevelViewportType FDialogBuilderViewportClient::GetViewportType() const
@@ -569,37 +672,7 @@ void FDialogBuilderViewportClient::UpdateLockedActorViewport(const AActor* InAct
 	}
 }
 
-bool FDialogBuilderViewportClient::HandleBeginTransform()
-{
-	if (!bIsManipulating)
-	{
-		// Suspend component modification during each delta step to avoid recording unnecessary overhead into the transaction buffer
-		GEditor->DisableDeltaModification(true);
 
-		// Begin transaction
-		BeginTransaction(NSLOCTEXT("DialogEd", "ModifyComponents", "Modify Component(s)"));
-		bIsManipulating = true;
-		return true;
-	}
-
-	return false;
-}
-
-bool FDialogBuilderViewportClient::HandleEndTransform()
-{
-	if (bIsManipulating)
-	{
-		bIsManipulating = false;
-		EndTransaction();
-
-		// Restore component delta modification
-		GEditor->DisableDeltaModification(false);
-
-		return true;
-	}
-
-	return false;
-}
 
 bool FDialogBuilderViewportClient::InputWidgetDelta(FViewport* InViewport, EAxisList::Type CurrentAxis, FVector& Drag, FRotator& Rot, FVector& Scale)
 {
