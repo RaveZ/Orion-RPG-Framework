@@ -9,7 +9,10 @@
 #include "DialogBuilderEditorModes.h"
 #include "DialogDefinition.h"
 #include "DialogSequence.h"
+#include "Sections/MovieSceneCameraCutSection.h"
+#include "MovieSceneObjectBindingID.h"
 #include "DialogBuilderEdNode.h"
+#include "DialogBuilderViewportClient.h"
 #include "DialogBuilderNode_DialogSequence.h"
 #include "Decorator/OrionDecorator.h"
 #include "EngineGlobals.h"
@@ -112,6 +115,8 @@ FDialogBuilderEditor::~FDialogBuilderEditor()
 	{
 		GEditor->UnregisterForUndo(this);
 	}
+	UnbindSequencerDelegates();
+
 	// Release sequencer/editor references early
 	Sequencer.Reset();
 	PlaybackContext.Reset();
@@ -1019,6 +1024,7 @@ void FDialogBuilderEditor::OpenDialogSequence(UDialogSequence* InDialogSequence)
 
 	EditingDialogSequence = InDialogSequence;
 
+	UnbindSequencerDelegates();
 	Sequencer.Reset();
 
 	EnsureSequencerCreated();
@@ -1067,15 +1073,16 @@ void FDialogBuilderEditor::OnSequencerReceivedFocus()
 		return;
 	}
 
+	RefreshSequencerCameraCutLock();
 	// For custom editor hosts, avoid LevelEditor integration path.
 	// Just ensure camera cuts are enabled for this sequencer instance.
-	Sequencer->SetPerspectiveViewportCameraCutEnabled(true);
+	/*Sequencer->SetPerspectiveViewportCameraCutEnabled(true);
 	Sequencer->ForceEvaluate();
 
 	if (SequencerViewportWidget.IsValid())
 	{
 		SequencerViewportWidget->RequestRefresh(false, true);
-	}
+	}*/
 }
 
 void FDialogBuilderEditor::OnInitToolMenuContext(FToolMenuContext& MenuContext)
@@ -1100,18 +1107,16 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 	PlaybackContext = MakeShared<FLevelSequencePlaybackContext>(EditingDialogSequence);
 
 	TSharedRef<FLevelSequenceEditorSpawnRegister> SpawnRegister = MakeShareable(new FLevelSequenceEditorSpawnRegister);
-	
+
 	ISequencerModule& SequencerModule = FModuleManager::LoadModuleChecked<ISequencerModule>("Sequencer");
-	
+
 	FSequencerViewParams ViewParams(TEXT("DialogSequenceSetting"));
 	{
 		ViewParams.UniqueName = "DialogSequenceEditor";
 		ViewParams.ScrubberStyle = ESequencerScrubberStyle::FrameBlock;
 		ViewParams.OnReceivedFocus.BindRaw(this, &FDialogBuilderEditor::OnSequencerReceivedFocus);
 		ViewParams.OnInitToolMenuContext.BindRaw(this, &FDialogBuilderEditor::OnInitToolMenuContext);
-		//ViewParams.ToolbarExtender = FToolBarExtender::CreateRaw(this, &FDialogBuilderEditor::ExtendSequencerToolbar);
 	}
-
 
 	FSequencerInitParams InitParams;
 	{
@@ -1119,7 +1124,6 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		InitParams.bEditWithinLevelEditor = false;
 		InitParams.ToolkitHost = GetToolkitHost();
 		InitParams.SpawnRegister = SpawnRegister;
-
 
 		InitParams.EventContexts.Bind(PlaybackContext.ToSharedRef(), &FLevelSequencePlaybackContext::GetEventContexts);
 		InitParams.PlaybackContext.Bind(PlaybackContext.ToSharedRef(), &FLevelSequencePlaybackContext::GetPlaybackContextAsObject);
@@ -1142,7 +1146,124 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 
 	SpawnRegister->SetSequencer(Sequencer);
 
+	if (Sequencer.IsValid())
+	{
+		SequencerGlobalTimeChangedHandle = Sequencer->OnGlobalTimeChanged().AddRaw(this, &FDialogBuilderEditor::OnSequencerGlobalTimeChanged);
+		SequencerMovieSceneDataChangedHandle = Sequencer->OnMovieSceneDataChanged().AddRaw(this, &FDialogBuilderEditor::OnSequencerMovieSceneDataChanged);
+
+		Sequencer->SetPerspectiveViewportCameraCutEnabled(true);
+		Sequencer->ForceEvaluate();
+
+		RefreshSequencerCameraCutLock();
+	}
+
 }
+
+void FDialogBuilderEditor::UnbindSequencerDelegates()
+{
+	if (!Sequencer.IsValid())
+	{
+		return;
+	}
+
+	if (SequencerGlobalTimeChangedHandle.IsValid())
+	{
+		Sequencer->OnGlobalTimeChanged().Remove(SequencerGlobalTimeChangedHandle);
+		SequencerGlobalTimeChangedHandle.Reset();
+	}
+
+	if (SequencerMovieSceneDataChangedHandle.IsValid())
+	{
+		Sequencer->OnMovieSceneDataChanged().Remove(SequencerMovieSceneDataChangedHandle);
+		SequencerMovieSceneDataChangedHandle.Reset();
+	}
+
+	LastSequencerCameraCutActor.Reset();
+}
+
+void FDialogBuilderEditor::OnSequencerGlobalTimeChanged()
+{
+	RefreshSequencerCameraCutLock();
+}
+
+void FDialogBuilderEditor::OnSequencerMovieSceneDataChanged(EMovieSceneDataChangeType ChangeType)
+{
+	RefreshSequencerCameraCutLock();
+}
+
+static AActor* ResolveActiveCameraCutActor(ISequencer& InSequencer)
+{
+	UMovieSceneSequence* FocusedSequence = InSequencer.GetFocusedMovieSceneSequence();
+	UMovieScene* MovieScene = FocusedSequence ? FocusedSequence->GetMovieScene() : nullptr;
+	UMovieSceneCameraCutTrack* CameraCutTrack = MovieScene ? Cast<UMovieSceneCameraCutTrack>(MovieScene->GetCameraCutTrack()) : nullptr;
+	if (!CameraCutTrack)
+	{
+		return nullptr;
+	}
+
+
+	const FFrameNumber CurrentFrame = InSequencer.GetLocalTime().Time.FloorToFrame();
+
+	for (UMovieSceneSection* Section : CameraCutTrack->GetAllSections())
+	{
+		UMovieSceneCameraCutSection* CameraCutSection = Cast<UMovieSceneCameraCutSection>(Section);
+		if (!CameraCutSection || !CameraCutSection->GetRange().Contains(CurrentFrame))
+		{
+			continue;
+		}
+
+		const FMovieSceneObjectBindingID CameraBindingID = CameraCutSection->GetCameraBindingID();
+		for (TWeakObjectPtr<> WeakObject : CameraBindingID.ResolveBoundObjects(InSequencer.GetFocusedTemplateID(), InSequencer))
+		{
+			if (AActor* CameraActor = Cast<AActor>(WeakObject.Get()))
+			{
+				return CameraActor;
+			}
+		}
+
+		break;
+	}
+
+	return nullptr;
+}
+
+void FDialogBuilderEditor::RefreshSequencerCameraCutLock()
+{
+	if (!Sequencer.IsValid() || !SequencerViewportWidget.IsValid())
+	{
+		return;
+	}
+
+	FDialogBuilderViewportClient* ViewportClient = SequencerViewportWidget->GetDialogViewportClientPtr();
+	if (!ViewportClient)
+	{
+		return;
+	}
+
+	if (!Sequencer->IsPerspectiveViewportCameraCutEnabled())
+	{
+		if (ViewportClient->IsLockedToCinematic())
+		{
+			ViewportClient->SetCinematicActorLock(nullptr);
+			ViewportClient->UpdateViewForLockedActor();
+			ViewportClient->Invalidate();
+		}
+
+		LastSequencerCameraCutActor.Reset();
+		return;
+	}
+
+	AActor* ActiveCameraActor = ResolveActiveCameraCutActor(*Sequencer);
+	if (LastSequencerCameraCutActor.Get() != ActiveCameraActor)
+	{
+		ViewportClient->SetCinematicActorLock(ActiveCameraActor);
+		ViewportClient->UpdateViewForLockedActor();
+		ViewportClient->Invalidate();
+		LastSequencerCameraCutActor = ActiveCameraActor;
+	}
+}
+
+
 
 void NewCameraAdded(TSharedRef<ISequencer> Sequencer, ACameraActor* NewCamera, FGuid CameraGuid)
 {

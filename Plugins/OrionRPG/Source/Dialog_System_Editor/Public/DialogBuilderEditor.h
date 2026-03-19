@@ -25,6 +25,8 @@ class UDialogSequence;
 class UDialogDefinition;
 class ACineCameraActor;
 
+enum class EMovieSceneDataChangeType;
+
 namespace DialogSectionID
 {
 	enum Type
@@ -307,6 +309,11 @@ public:
 	/** Called whenever sequencer has received focus */
 	void OnSequencerReceivedFocus();
 
+	void OnSequencerGlobalTimeChanged();
+	void OnSequencerMovieSceneDataChanged(EMovieSceneDataChangeType ChangeType);
+	void RefreshSequencerCameraCutLock();
+	void UnbindSequencerDelegates();
+
 	/** Called whenever sequencer in initializing tool menu context */
 	void OnInitToolMenuContext(FToolMenuContext& MenuContext);
 
@@ -479,6 +486,10 @@ protected:
 	TWeakObjectPtr<AActor> SequencePivot;
 	TMap<UDialogDefinition*, TWeakObjectPtr<AActor>> DialogDefinitionActors;
 	TWeakObjectPtr<ACineCameraActor> DialogPreviewCamera;
+
+	FDelegateHandle SequencerGlobalTimeChangedHandle;
+	FDelegateHandle SequencerMovieSceneDataChangedHandle;
+	TWeakObjectPtr<AActor> LastSequencerCameraCutActor;
 
 	bool bPendingDialogDefinitionsUpdate = false;
 	bool bIsUpdatingDialogDefinitions = false;

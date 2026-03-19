@@ -37,6 +37,11 @@ public:
 		return *DialogViewportClient;
 	}
 
+	FDialogBuilderViewportClient* GetDialogViewportClientPtr() const
+	{
+		return DialogViewportClient.Get();
+	}
+
 	/** Called to select the currently locked actor */
 	void OnSelectLockedActor();
 
