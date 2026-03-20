@@ -311,7 +311,7 @@ public:
 
 	void OnSequencerGlobalTimeChanged();
 	void OnSequencerMovieSceneDataChanged(EMovieSceneDataChangeType ChangeType);
-	void RefreshSequencerCameraCutLock();
+	void RefreshSequencerCameraLock();
 	void UnbindSequencerDelegates();
 
 	/** Called whenever sequencer in initializing tool menu context */

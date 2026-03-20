@@ -1073,7 +1073,7 @@ void FDialogBuilderEditor::OnSequencerReceivedFocus()
 		return;
 	}
 
-	RefreshSequencerCameraCutLock();
+	RefreshSequencerCameraLock();
 	// For custom editor hosts, avoid LevelEditor integration path.
 	// Just ensure camera cuts are enabled for this sequencer instance.
 	/*Sequencer->SetPerspectiveViewportCameraCutEnabled(true);
@@ -1154,7 +1154,7 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		Sequencer->SetPerspectiveViewportCameraCutEnabled(true);
 		Sequencer->ForceEvaluate();
 
-		RefreshSequencerCameraCutLock();
+		RefreshSequencerCameraLock();
 	}
 
 }
@@ -1183,12 +1183,12 @@ void FDialogBuilderEditor::UnbindSequencerDelegates()
 
 void FDialogBuilderEditor::OnSequencerGlobalTimeChanged()
 {
-	RefreshSequencerCameraCutLock();
+	RefreshSequencerCameraLock();
 }
 
 void FDialogBuilderEditor::OnSequencerMovieSceneDataChanged(EMovieSceneDataChangeType ChangeType)
 {
-	RefreshSequencerCameraCutLock();
+	RefreshSequencerCameraLock();
 }
 
 static AActor* ResolveActiveCameraCutActor(ISequencer& InSequencer)
@@ -1227,7 +1227,44 @@ static AActor* ResolveActiveCameraCutActor(ISequencer& InSequencer)
 	return nullptr;
 }
 
-void FDialogBuilderEditor::RefreshSequencerCameraCutLock()
+static AActor* ResolveBoundCineCameraActor(ISequencer& InSequencer)
+{
+	UMovieSceneSequence* FocusedSequence = InSequencer.GetFocusedMovieSceneSequence();
+	const UMovieScene* MovieScene = FocusedSequence ? FocusedSequence->GetMovieScene() : nullptr;
+	if (!MovieScene)
+	{
+		return nullptr;
+	}
+
+	for (const FMovieSceneBinding& Binding : MovieScene->GetBindings())
+	{
+		bool bHasTransformTrack = false;
+		for (UMovieSceneTrack* Track : Binding.GetTracks())
+		{
+			InSequencer.GetTrackEditor(Track);
+			bHasTransformTrack = true;
+			break;
+			
+		}
+
+		if (!bHasTransformTrack)
+		{
+			continue;
+		}
+
+		for (TWeakObjectPtr<> WeakObject : InSequencer.FindBoundObjects(Binding.GetObjectGuid(), InSequencer.GetFocusedTemplateID()))
+		{
+			if (ACineCameraActor* CineCamera = Cast<ACineCameraActor>(WeakObject.Get()))
+			{
+				return CineCamera;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+void FDialogBuilderEditor::RefreshSequencerCameraLock()
 {
 	if (!Sequencer.IsValid() || !SequencerViewportWidget.IsValid())
 	{
@@ -1261,6 +1298,8 @@ void FDialogBuilderEditor::RefreshSequencerCameraCutLock()
 		ViewportClient->Invalidate();
 		LastSequencerCameraCutActor = ActiveCameraActor;
 	}
+
+
 }
 
 

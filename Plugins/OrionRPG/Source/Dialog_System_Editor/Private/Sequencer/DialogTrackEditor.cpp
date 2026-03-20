@@ -4,6 +4,7 @@
 #include "Sequencer/DialogSection.h"
 #include "MovieSceneDialogSection.h"
 #include "MovieSceneDialogTrack.h"
+#include "DialogSequence.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "EditorStyleSet.h"
 #include "SequencerUtilities.h"
@@ -31,6 +32,12 @@ FDialogTrackEditor::FDialogTrackEditor(TSharedRef<ISequencer> InSequencer)
 bool FDialogTrackEditor::SupportsType(TSubclassOf<UMovieSceneTrack> Type) const
 {
 	return Type == UMovieSceneDialogTrack::StaticClass();
+}
+
+bool FDialogTrackEditor::SupportsSequence(UMovieSceneSequence* InSequence) const
+{
+	UDialogSequence* DialogSequence = Cast<UDialogSequence>(InSequence);	
+	return DialogSequence != nullptr;
 }
 
 TSharedRef<ISequencerSection> FDialogTrackEditor::MakeSectionInterface(UMovieSceneSection& SectionObject, UMovieSceneTrack& Track, FGuid ObjectBinding)
