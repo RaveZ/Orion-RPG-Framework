@@ -7,6 +7,7 @@
 #include "DialogData.h"
 #include "MovieSceneDialogTemplate.generated.h"
 
+class IMovieScenePlayer;
 class UMovieSceneDialogSection;
 
 USTRUCT()
@@ -28,6 +29,9 @@ private:
 		const FMovieSceneContext& Context,
 		const FPersistentEvaluationData& PersistentData,
 		FMovieSceneExecutionTokens& ExecutionTokens) const override;
+
+	virtual void Setup(FPersistentEvaluationData& PersistentData, IMovieScenePlayer& Player) const override;
+	virtual void TearDown(FPersistentEvaluationData& PersistentData, IMovieScenePlayer& Player) const override;
 
 	UPROPERTY()
 	FGameplayTag SpeakerParticipantTag;

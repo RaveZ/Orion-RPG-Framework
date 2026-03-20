@@ -461,7 +461,7 @@ void FDialogBuilderEditor::CreateDialogTrackDefinition(UDialogDefinition* InDial
 	AActor* BoundActor = DialogDefinitionActors.FindRef(InDialogDefinition).Get();
 
 	// If we have a spawned preview actor and a valid sequencer, create an object-bound track
-	if (BoundActor && Sequencer.IsValid())
+	/*if (BoundActor && Sequencer.IsValid())
 	{
 		const FGuid ObjectBinding = Sequencer->GetHandleToObject(BoundActor, true);
 		if (ObjectBinding.IsValid())
@@ -477,7 +477,7 @@ void FDialogBuilderEditor::CreateDialogTrackDefinition(UDialogDefinition* InDial
 			DialogTrack->SetDisplayName(FText::FromString(InDialogDefinition->GetName()));
 			return;
 		}
-	}
+	}*/
 
 	// Fallback to master track
 	UMovieSceneDialogTrack* DialogTrack = MovieScene->AddTrack<UMovieSceneDialogTrack>();

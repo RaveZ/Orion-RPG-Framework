@@ -11,6 +11,32 @@ UMovieSceneDialogTrack::UMovieSceneDialogTrack(const FObjectInitializer& ObjectI
 	TrackTint = FColor(52, 152, 219);
 }
 
+
+void UMovieSceneDialogTrack::AddSection(UMovieSceneSection& Section)
+{
+	Sections.Add(&Section);
+}
+
+void UMovieSceneDialogTrack::RemoveSection(UMovieSceneSection& Section)
+{
+	Sections.Remove(&Section);
+}
+
+bool UMovieSceneDialogTrack::IsEmpty() const
+{
+	return Sections.Num() == 0;
+}
+
+UMovieSceneSection* UMovieSceneDialogTrack::CreateNewSection()
+{
+	return NewObject<UMovieSceneDialogSection>(this, NAME_None, RF_Transactional);
+}
+
+const TArray<UMovieSceneSection*>& UMovieSceneDialogTrack::GetAllSections() const
+{
+	return Sections;
+}
+
 UMovieSceneDialogSection* UMovieSceneDialogTrack::AddDialogSection(
 	const FDialogLineData& InDialogLineData,
 	const FGameplayTag& InSpeakerParticipantTag,
@@ -43,15 +69,7 @@ bool UMovieSceneDialogTrack::SupportsType(TSubclassOf<UMovieSceneSection> Sectio
 	return SectionClass == UMovieSceneDialogSection::StaticClass();
 }
 
-UMovieSceneSection* UMovieSceneDialogTrack::CreateNewSection()
-{
-	return NewObject<UMovieSceneDialogSection>(this, NAME_None, RF_Transactional);
-}
 
-const TArray<UMovieSceneSection*>& UMovieSceneDialogTrack::GetAllSections() const
-{
-	return Sections;
-}
 
 void UMovieSceneDialogTrack::RemoveAllAnimationData()
 {
@@ -63,24 +81,10 @@ bool UMovieSceneDialogTrack::HasSection(const UMovieSceneSection& Section) const
 	return Sections.Contains(&Section);
 }
 
-void UMovieSceneDialogTrack::AddSection(UMovieSceneSection& Section)
-{
-	Sections.Add(&Section);
-}
-
-void UMovieSceneDialogTrack::RemoveSection(UMovieSceneSection& Section)
-{
-	Sections.Remove(&Section);
-}
-
-bool UMovieSceneDialogTrack::IsEmpty() const
-{
-	return Sections.Num() == 0;
-}
 
 bool UMovieSceneDialogTrack::SupportsMultipleRows() const
 {
-	return false;
+	return true;
 }
 
 FMovieSceneEvalTemplatePtr UMovieSceneDialogTrack::CreateTemplateForSection(const UMovieSceneSection& InSection) const

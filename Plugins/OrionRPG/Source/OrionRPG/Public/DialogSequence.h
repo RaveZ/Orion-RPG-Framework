@@ -28,4 +28,7 @@ public:
 		const FGameplayTag& InListenerParticipantTag,
 		FFrameNumber InStartFrame,
 		int32 InDurationFrames = 1);
+#if WITH_EDITOR
+	//virtual ETrackSupport IsTrackSupportedImpl(TSubclassOf<class UMovieSceneTrack> InTrackClass) const override;
+#endif
 };

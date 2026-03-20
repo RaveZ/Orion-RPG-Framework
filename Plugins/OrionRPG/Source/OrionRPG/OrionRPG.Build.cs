@@ -45,6 +45,7 @@ public class OrionRPG : ModuleRules
                 "Slate",
                 "SlateCore",
                 "GameplayTags",
+                "MovieSceneTracks",
             }
             );
 

@@ -5,6 +5,11 @@
 #include "MovieScene.h"
 #include "MovieSceneDialogSection.h"
 #include "MovieSceneDialogTrack.h"
+#include "Tracks/MovieSceneAudioTrack.h"
+#include "Tracks/MovieSceneEventTrack.h"
+#include "Tracks/MovieSceneMaterialParameterCollectionTrack.h"
+#include "Tracks/MovieSceneSkeletalAnimationTrack.h"
+#include "Tracks/MovieSceneTimeWarpTrack.h"
 
 UDialogSequence::UDialogSequence(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)

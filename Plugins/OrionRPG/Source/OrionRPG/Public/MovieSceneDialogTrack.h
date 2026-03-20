@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Compilation/IMovieSceneTrackTemplateProducer.h"
+#include "Tracks/MovieSceneSpawnTrack.h"
 #include "MovieSceneNameableTrack.h"
 #include "MovieSceneDialogTrack.generated.h"
 
@@ -23,6 +24,8 @@ class ORIONRPG_API UMovieSceneDialogTrack
 public:
 	UMovieSceneDialogTrack(const FObjectInitializer& ObjectInitializer);
 
+	static uint16 GetEvaluationPriority() { return UMovieSceneSpawnTrack::GetEvaluationPriority() + 120; }
+
 	UMovieSceneDialogSection* AddDialogSection(
 		const FDialogLineData& InDialogLineData,
 		const FGameplayTag& InSpeakerParticipantTag,
@@ -35,14 +38,14 @@ public:
 	TObjectPtr<class UDialogDefinition> DialogDefinition;
 
 public:
-	virtual bool SupportsType(TSubclassOf<UMovieSceneSection> SectionClass) const override;
-	virtual UMovieSceneSection* CreateNewSection() override;
-	virtual const TArray<UMovieSceneSection*>& GetAllSections() const override;
-	virtual void RemoveAllAnimationData() override;
-	virtual bool HasSection(const UMovieSceneSection& Section) const override;
+	virtual bool IsEmpty() const override;
 	virtual void AddSection(UMovieSceneSection& Section) override;
 	virtual void RemoveSection(UMovieSceneSection& Section) override;
-	virtual bool IsEmpty() const override;
+	virtual const TArray<UMovieSceneSection*>& GetAllSections() const override;
+	virtual bool SupportsType(TSubclassOf<UMovieSceneSection> SectionClass) const override;
+	virtual UMovieSceneSection* CreateNewSection() override;
+	virtual void RemoveAllAnimationData() override;
+	virtual bool HasSection(const UMovieSceneSection& Section) const override;
 	virtual bool SupportsMultipleRows() const override;
 
 	virtual FMovieSceneEvalTemplatePtr CreateTemplateForSection(const UMovieSceneSection& InSection) const override;
