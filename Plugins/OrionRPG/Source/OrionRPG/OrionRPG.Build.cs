@@ -77,5 +77,10 @@ public class OrionRPG : ModuleRules
             }
         }
 
+        if (Target.bBuildEditor)
+        {
+            PrivateDependencyModuleNames.Add("UnrealEd");
+            PrivateDependencyModuleNames.Add("EditorStyle");
+        }
     }
 }

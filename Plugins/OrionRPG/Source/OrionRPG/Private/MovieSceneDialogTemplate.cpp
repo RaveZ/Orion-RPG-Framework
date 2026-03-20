@@ -6,9 +6,20 @@
 
 #include "Engine/Engine.h"
 #include "Engine/GameViewportClient.h"
+#include "Engine/World.h"
 #include "Evaluation/MovieSceneExecutionTokens.h"
 #include "IMovieScenePlayer.h"
 #include "Widgets/SWidget.h"
+#include "Widgets/SViewport.h"
+
+#if WITH_EDITOR
+#include "LevelEditor.h"
+//#include "ILevelViewport.h"
+#include "Editor.h"
+#include "Slate/SceneViewport.h"
+#include "EditorStyleSet.h"
+
+#endif
 
 namespace OrionDialogTemplate
 {
@@ -45,7 +56,71 @@ namespace OrionDialogTemplate
 			bNeedExecute = false;
 
 			UWorld* World = Player.GetPlaybackContext() ? Player.GetPlaybackContext()->GetWorld() : nullptr;
-			if (!World || !GEngine || !GEngine->GameViewport)
+			if (!World)
+			{
+				return;
+			}
+
+#if WITH_EDITOR
+			// Editor non-PIE path
+			if (GIsEditor && !World->IsGameWorld())
+			{
+				if (bShow)
+				{
+					if (!DialogWidget)
+					{
+						DialogWidget = CreateWidget<UOrionDialogWidget>(World, UOrionDialogWidget::StaticClass());
+						if (DialogWidget)
+						{
+							DialogWidgetSlateWidget = DialogWidget->TakeWidget();
+
+							if (FSceneViewport* SceneViewport = static_cast<FSceneViewport*>(GEditor ? GEditor->GetActiveViewport() : nullptr))
+							{
+								if (SceneViewport->GetViewportWidget().IsValid())
+								{
+									EditorViewportContainer = SceneViewport->GetViewportWidget().Pin()->GetContent();
+									if (TSharedPtr<SOverlay> Overlay = StaticCastSharedPtr<SOverlay>(EditorViewportContainer.Pin()))
+									{
+										Overlay->AddSlot()
+										[
+											DialogWidgetSlateWidget.ToSharedRef()
+										];
+									}
+								}
+							}
+						}
+					}
+
+					if (DialogWidget)
+					{
+						DialogWidget->SetDialogData(
+							FText::FromString(SpeakerTag.ToString()),
+							DialogLineData.Line,
+							SpeakerTag,
+							ListenerTag);
+					}
+				}
+				else
+				{
+					if (DialogWidgetSlateWidget.IsValid())
+					{
+						if (TSharedPtr<SOverlay> Overlay = StaticCastSharedPtr<SOverlay>(EditorViewportContainer.Pin()))
+						{
+							Overlay->RemoveSlot(DialogWidgetSlateWidget.ToSharedRef());
+						}
+					}
+
+					EditorViewportContainer.Reset();
+					DialogWidgetSlateWidget.Reset();
+					DialogWidget = nullptr;
+				}
+
+				return;
+			}
+#endif
+
+			// Runtime / PIE path
+			if (!GEngine || !GEngine->GameViewport)
 			{
 				return;
 			}
@@ -96,6 +171,10 @@ namespace OrionDialogTemplate
 		TObjectPtr<UOrionDialogWidget> DialogWidget = nullptr;
 
 		TSharedPtr<SWidget> DialogWidgetSlateWidget;
+
+#if WITH_EDITOR
+		TWeakPtr<SWidget> EditorViewportContainer;
+#endif
 	};
 
 	struct FDialogExecutionToken : IMovieSceneSharedExecutionToken
