@@ -3,16 +3,11 @@
 #include "Sequencer/DialogSection.h"
 #include "MovieSceneDialogSection.h"
 
-#include "Misc/PackageName.h"
-#include "Widgets/DeclarativeSyntaxSupport.h"
-#include "Styling/CoreStyle.h"
 #include "Widgets/Layout/SBorder.h"
-#include "Widgets/Text/STextBlock.h"
-#include "SequencerSectionPainter.h"
-#include "SDropTarget.h"
-#include "DragAndDrop/LevelDragDropOp.h"
-#include "ScopedTransaction.h"
 #include "Widgets/Layout/SBox.h"
+#include "Widgets/Text/STextBlock.h"
+#include "Styling/AppStyle.h"
+#include "SequencerSectionPainter.h"
 
 FDialogSection::FDialogSection(UMovieSceneDialogSection& InSectionObject)
 	: SectionObject(InSectionObject)
@@ -26,7 +21,13 @@ UMovieSceneSection* FDialogSection::GetSectionObject()
 
 TSharedRef<SWidget> FDialogSection::GenerateSectionWidget()
 {
-	return SNew(SBox);
+	return SNew(SBorder)
+		.BorderImage(FAppStyle::GetBrush("Sequencer.Section.Background"))
+		.Padding(FMargin(4.0f, 2.0f))
+		[
+			SNew(STextBlock)
+			.Text(FText())
+		];
 }
 
 int32 FDialogSection::OnPaintSection(FSequencerSectionPainter& InPainter) const
