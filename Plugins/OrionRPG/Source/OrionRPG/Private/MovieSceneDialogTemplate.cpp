@@ -2,23 +2,24 @@
 
 #include "MovieSceneDialogTemplate.h"
 #include "MovieSceneDialogSection.h"
-#include "UI/OrionDialogWidget.h"
+#include "OrionDialogInterface.h"
 
 #include "Engine/Engine.h"
+#include "DialogBuilderSetting.h"
 #include "Engine/GameViewportClient.h"
 #include "Engine/World.h"
 #include "Evaluation/MovieSceneExecutionTokens.h"
 #include "IMovieScenePlayer.h"
 #include "Widgets/SWidget.h"
 #include "Widgets/SViewport.h"
+#include "CommonActivatableWidget.h"
+#include "Blueprint/UserWidget.h"
 
 #if WITH_EDITOR
 #include "LevelEditor.h"
-//#include "ILevelViewport.h"
 #include "Editor.h"
 #include "Slate/SceneViewport.h"
 #include "EditorStyleSet.h"
-
 #endif
 
 namespace OrionDialogTemplate
@@ -51,6 +52,23 @@ namespace OrionDialogTemplate
 			bNeedExecute = true;
 		}
 
+		void NotifyDialogInterface(UObject* TargetObject) const
+		{
+			if (!TargetObject || !TargetObject->GetClass()->ImplementsInterface(UOrionDialogInterface::StaticClass()))
+			{
+				return;
+			}
+			 
+			if (bShow)
+			{
+				IOrionDialogInterface::Execute_OnDialogLineStarted(TargetObject, DialogLineData, SpeakerTag, ListenerTag);
+			}
+			else
+			{
+				IOrionDialogInterface::Execute_OnDialogLineEnded(TargetObject, DialogLineData, SpeakerTag, ListenerTag);
+			}
+		}
+
 		void Apply(IMovieScenePlayer& Player)
 		{
 			bNeedExecute = false;
@@ -61,15 +79,19 @@ namespace OrionDialogTemplate
 				return;
 			}
 
+			UDialogBuilderSetting* DialogBuilderSetting = GetMutableDefault<UDialogBuilderSetting>();
+			TSubclassOf<UUserWidget> DialogWidgetClass = DialogBuilderSetting->DefaultDialogWidget.Get();
+
+
 #if WITH_EDITOR
-			// Editor non-PIE path
 			if (GIsEditor && !World->IsGameWorld())
 			{
 				if (bShow)
 				{
 					if (!DialogWidget)
 					{
-						DialogWidget = CreateWidget<UOrionDialogWidget>(World, UOrionDialogWidget::StaticClass());
+
+						DialogWidget = CreateWidget<UUserWidget>(World, DialogWidgetClass);
 						if (DialogWidget)
 						{
 							DialogWidgetSlateWidget = DialogWidget->TakeWidget();
@@ -81,27 +103,19 @@ namespace OrionDialogTemplate
 									EditorViewportContainer = SceneViewport->GetViewportWidget().Pin()->GetContent();
 									if (TSharedPtr<SOverlay> Overlay = StaticCastSharedPtr<SOverlay>(EditorViewportContainer.Pin()))
 									{
-										Overlay->AddSlot()
-										[
-											DialogWidgetSlateWidget.ToSharedRef()
-										];
+										Overlay->AddSlot()[DialogWidgetSlateWidget.ToSharedRef()];
 									}
 								}
 							}
 						}
 					}
 
-					if (DialogWidget)
-					{
-						DialogWidget->SetDialogData(
-							FText::FromString(SpeakerTag.ToString()),
-							DialogLineData.Line,
-							SpeakerTag,
-							ListenerTag);
-					}
+					NotifyDialogInterface(DialogWidget);
 				}
 				else
 				{
+					NotifyDialogInterface(DialogWidget);
+
 					if (DialogWidgetSlateWidget.IsValid())
 					{
 						if (TSharedPtr<SOverlay> Overlay = StaticCastSharedPtr<SOverlay>(EditorViewportContainer.Pin()))
@@ -119,7 +133,6 @@ namespace OrionDialogTemplate
 			}
 #endif
 
-			// Runtime / PIE path
 			if (!GEngine || !GEngine->GameViewport)
 			{
 				return;
@@ -131,7 +144,7 @@ namespace OrionDialogTemplate
 			{
 				if (!DialogWidget)
 				{
-					DialogWidget = CreateWidget<UOrionDialogWidget>(World, UOrionDialogWidget::StaticClass());
+					DialogWidget = CreateWidget<UUserWidget>(World, UUserWidget::StaticClass());
 					if (DialogWidget)
 					{
 						DialogWidgetSlateWidget = DialogWidget->TakeWidget();
@@ -139,17 +152,12 @@ namespace OrionDialogTemplate
 					}
 				}
 
-				if (DialogWidget)
-				{
-					DialogWidget->SetDialogData(
-						FText::FromString(SpeakerTag.ToString()),
-						DialogLineData.Line,
-						SpeakerTag,
-						ListenerTag);
-				}
+				NotifyDialogInterface(DialogWidget);
 			}
 			else
 			{
+				NotifyDialogInterface(DialogWidget);
+
 				if (DialogWidgetSlateWidget.IsValid())
 				{
 					GameViewport->RemoveViewportWidgetContent(DialogWidgetSlateWidget.ToSharedRef());
@@ -168,7 +176,7 @@ namespace OrionDialogTemplate
 		FGameplayTag ListenerTag;
 
 		UPROPERTY()
-		TObjectPtr<UOrionDialogWidget> DialogWidget = nullptr;
+		TObjectPtr<UUserWidget> DialogWidget = nullptr;
 
 		TSharedPtr<SWidget> DialogWidgetSlateWidget;
 

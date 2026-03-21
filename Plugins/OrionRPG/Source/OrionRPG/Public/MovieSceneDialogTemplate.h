@@ -23,6 +23,11 @@ private:
 	{
 		return *StaticStruct();
 	}
+	
+	virtual void SetupOverrides() override
+	{
+		EnableOverrides(RequiresSetupFlag | RequiresTearDownFlag);
+	}
 
 	virtual void Evaluate(
 		const FMovieSceneEvaluationOperand& Operand,
