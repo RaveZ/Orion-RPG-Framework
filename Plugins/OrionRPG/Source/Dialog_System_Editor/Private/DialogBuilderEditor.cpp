@@ -7,6 +7,7 @@
 #include "DialogBuilderEdGraph.h"
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderEditorModes.h"
+#include "DialogSequencePlaybackContext.h"
 #include "DialogDefinition.h"
 #include "DialogSequence.h"
 #include "Sections/MovieSceneCameraCutSection.h"
@@ -120,7 +121,7 @@ FDialogBuilderEditor::~FDialogBuilderEditor()
 	// Release sequencer/editor references early
 	Sequencer.Reset();
 	PlaybackContext.Reset();
-	SequencerViewportWidget.Reset();
+	DialogViewportWidget.Reset();
 
 	// Optional but recommended if you extend tool menus with this owner
 	UToolMenus::UnregisterOwner(this);
@@ -1079,9 +1080,9 @@ void FDialogBuilderEditor::OnSequencerReceivedFocus()
 	/*Sequencer->SetPerspectiveViewportCameraCutEnabled(true);
 	Sequencer->ForceEvaluate();
 
-	if (SequencerViewportWidget.IsValid())
+	if (DialogViewportWidget.IsValid())
 	{
-		SequencerViewportWidget->RequestRefresh(false, true);
+		DialogViewportWidget->RequestRefresh(false, true);
 	}*/
 }
 
@@ -1104,7 +1105,9 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		return;
 	}
 
-	PlaybackContext = MakeShared<FLevelSequencePlaybackContext>(EditingDialogSequence);
+	PlaybackContext = MakeShared<FDialogSequencePlaybackContext>(EditingDialogSequence);
+	PlaybackContext->SetDialogViewport(DialogViewportWidget);
+
 
 	TSharedRef<FLevelSequenceEditorSpawnRegister> SpawnRegister = MakeShareable(new FLevelSequenceEditorSpawnRegister);
 
@@ -1125,9 +1128,9 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		InitParams.ToolkitHost = GetToolkitHost();
 		InitParams.SpawnRegister = SpawnRegister;
 
-		InitParams.EventContexts.Bind(PlaybackContext.ToSharedRef(), &FLevelSequencePlaybackContext::GetEventContexts);
-		InitParams.PlaybackContext.Bind(PlaybackContext.ToSharedRef(), &FLevelSequencePlaybackContext::GetPlaybackContextAsObject);
-		InitParams.PlaybackClient.Bind(PlaybackContext.ToSharedRef(), &FLevelSequencePlaybackContext::GetPlaybackClientAsInterface);
+		InitParams.EventContexts.Bind(PlaybackContext.ToSharedRef(), &FDialogSequencePlaybackContext::GetEventContexts);
+		InitParams.PlaybackContext.Bind(PlaybackContext.ToSharedRef(), &FDialogSequencePlaybackContext::GetPlaybackContextAsObject);
+		InitParams.PlaybackClient.Bind(PlaybackContext.ToSharedRef(), &FDialogSequencePlaybackContext::GetPlaybackClientAsInterface);
 
 		InitParams.ViewParams = ViewParams;
 
@@ -1266,12 +1269,12 @@ static AActor* ResolveBoundCineCameraActor(ISequencer& InSequencer)
 
 void FDialogBuilderEditor::RefreshSequencerCameraLock()
 {
-	if (!Sequencer.IsValid() || !SequencerViewportWidget.IsValid())
+	if (!Sequencer.IsValid() || !DialogViewportWidget.IsValid())
 	{
 		return;
 	}
 
-	FDialogBuilderViewportClient* ViewportClient = SequencerViewportWidget->GetDialogViewportClientPtr();
+	FDialogBuilderViewportClient* ViewportClient = DialogViewportWidget->GetDialogViewportClientPtr();
 	if (!ViewportClient)
 	{
 		return;
@@ -1440,8 +1443,8 @@ TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_SequencerViewport(const FSpa
 	return SNew(SDockTab)
 		.Label(LOCTEXT("DialogSequencerViewport_Title", "Viewport"))
 		[
-			SequencerViewportWidget.IsValid()
-				? SequencerViewportWidget.ToSharedRef()
+			DialogViewportWidget.IsValid()
+				? DialogViewportWidget.ToSharedRef()
 				: SNullWidget::NullWidget
 		];
 }
@@ -2032,10 +2035,10 @@ void FDialogBuilderEditor::CreateInternalWidgets()
 
 	this->DialogDefinitionsWidget = SNew(SDialogDefinitions, SharedThis(this));
 
-	if (!SequencerViewportWidget.IsValid())
+	if (!DialogViewportWidget.IsValid())
 	{
-		SequencerViewportWidget = SNew(SDialogPreviewViewport, SharedThis(this));
-		SequencerViewportWidget->SetUseLevelWorld(ViewportWorldMode == EDialogViewportWorldMode::CurrentLevel);
+		DialogViewportWidget = SNew(SDialogPreviewViewport, SharedThis(this));
+		DialogViewportWidget->SetUseLevelWorld(ViewportWorldMode == EDialogViewportWorldMode::CurrentLevel);
 	}
 }
 
@@ -2080,8 +2083,8 @@ TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogSequencerViewportTab()
 		.FillHeight(1.0f)
 		.HAlign(HAlign_Fill)
 		[
-			SequencerViewportWidget.IsValid()
-				? SequencerViewportWidget.ToSharedRef()
+			DialogViewportWidget.IsValid()
+				? DialogViewportWidget.ToSharedRef()
 				: SNullWidget::NullWidget
 		];
 }
@@ -2708,9 +2711,9 @@ void FDialogBuilderEditor::SetViewportWorldMode(EDialogViewportWorldMode NewMode
 
 	DestroyDialogDefinitions();
 
-	if (SequencerViewportWidget.IsValid())
+	if (DialogViewportWidget.IsValid())
 	{
-		SequencerViewportWidget->SetUseLevelWorld(ViewportWorldMode == EDialogViewportWorldMode::CurrentLevel);
+		DialogViewportWidget->SetUseLevelWorld(ViewportWorldMode == EDialogViewportWorldMode::CurrentLevel);
 	}
 
 	UpdateDialogDefinitions();

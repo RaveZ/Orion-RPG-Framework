@@ -478,7 +478,7 @@ protected:
 	EDialogViewportWorldMode ViewportWorldMode = EDialogViewportWorldMode::PreviewScene;
 
 	FPreviewScene PreviewScene;
-	TSharedPtr<SDialogPreviewViewport> SequencerViewportWidget;
+	TSharedPtr<SDialogPreviewViewport> DialogViewportWidget;
 
 	
 	//sequencer
@@ -498,7 +498,7 @@ protected:
 	TObjectPtr<UDialogSequence> EditingDialogSequence = nullptr;
 
 	/** Instance of a class used for managing the playback context for a level sequence. */
-	TSharedPtr<class FLevelSequencePlaybackContext> PlaybackContext;
+	TSharedPtr<class FDialogSequencePlaybackContext> PlaybackContext;
 
 public:
 	/** Modes in mode switcher */

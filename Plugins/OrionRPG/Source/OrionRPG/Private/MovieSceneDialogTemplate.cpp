@@ -96,15 +96,11 @@ namespace OrionDialogTemplate
 						{
 							DialogWidgetSlateWidget = DialogWidget->TakeWidget();
 
-							if (FSceneViewport* SceneViewport = static_cast<FSceneViewport*>(GEditor ? GEditor->GetActiveViewport() : nullptr))
+							if (UObject* PlaybackContextObject = Player.GetPlaybackContext())
 							{
-								if (SceneViewport->GetViewportWidget().IsValid())
+								if (IDialogContext* DialogContext = Cast<IDialogContext>(PlaybackContextObject))
 								{
-									EditorViewportContainer = SceneViewport->GetViewportWidget().Pin()->GetContent();
-									if (TSharedPtr<SOverlay> Overlay = StaticCastSharedPtr<SOverlay>(EditorViewportContainer.Pin()))
-									{
-										Overlay->AddSlot()[DialogWidgetSlateWidget.ToSharedRef()];
-									}
+									DialogContext->AddDialogToViewport(DialogWidgetSlateWidget.ToSharedRef());
 								}
 							}
 						}
@@ -116,11 +112,11 @@ namespace OrionDialogTemplate
 				{
 					NotifyDialogInterface(DialogWidget);
 
-					if (DialogWidgetSlateWidget.IsValid())
+					if (UObject* PlaybackContextObject = Player.GetPlaybackContext())
 					{
-						if (TSharedPtr<SOverlay> Overlay = StaticCastSharedPtr<SOverlay>(EditorViewportContainer.Pin()))
+						if (IDialogContext* DialogContext = Cast<IDialogContext>(PlaybackContextObject))
 						{
-							Overlay->RemoveSlot(DialogWidgetSlateWidget.ToSharedRef());
+							DialogContext->RemoveDialogFromViewport();
 						}
 					}
 

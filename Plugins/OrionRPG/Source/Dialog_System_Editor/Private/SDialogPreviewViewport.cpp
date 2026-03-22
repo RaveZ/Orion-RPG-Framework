@@ -5,6 +5,7 @@
 #include "DialogBuilder_EditorCommands.h"
 #include "AdvancedPreviewScene.h"
 #include "Types/SlateEnums.h"
+#include "Slate/SceneViewport.h"
 #include "Editor.h"
 #include "EditorViewportClient.h"
 #include "Subsystems/AssetEditorSubsystem.h"
@@ -603,6 +604,43 @@ bool SDialogPreviewViewport::CanToggleGameView() const
 bool SDialogPreviewViewport::IsInGameView() const
 {
 	return DialogViewportClient->IsInGameView();
+}
+
+void SDialogPreviewViewport::AddDialogOverlayWidget(const TSharedRef<SWidget>& InWidget)
+{
+	if (!SceneViewport.IsValid())
+	{
+		return;
+	}
+
+
+	DialogOverlayWidget = InWidget;
+	TWeakPtr<SWidget> EditorViewportContainer = SceneViewport->GetViewportWidget().Pin()->GetContent();
+	if (TSharedPtr<SOverlay> Overlay = StaticCastSharedPtr<SOverlay>(EditorViewportContainer.Pin()))
+	{
+		Overlay->AddSlot()[DialogOverlayWidget.ToSharedRef()];
+	}
+
+}
+
+void SDialogPreviewViewport::RemoveDialogOverlayWidget()
+{
+	if (!SceneViewport.IsValid() || !DialogOverlayWidget.IsValid())
+	{
+		return;
+	}
+
+	TWeakPtr<SWidget> EditorViewportContainer = SceneViewport->GetViewportWidget().Pin()->GetContent();
+	if (DialogOverlayWidget.IsValid())
+	{
+		if (TSharedPtr<SOverlay> Overlay = StaticCastSharedPtr<SOverlay>(EditorViewportContainer.Pin()))
+		{
+			Overlay->RemoveSlot(DialogOverlayWidget.ToSharedRef());
+		}
+	}
+
+	EditorViewportContainer.Reset();
+	DialogOverlayWidget.Reset();
 }
 
 #undef LOCTEXT_NAMESPACE
