@@ -12,6 +12,7 @@ class SDialogPreviewViewport;
 class IMovieScenePlaybackClient;
 class SWidget;
 class UDialogPlaybackContextObject;
+class UWorld;
 
 class FDialogSequencePlaybackContext : public TSharedFromThis<FDialogSequencePlaybackContext>
 {
@@ -29,11 +30,21 @@ public:
 	TSharedRef<SWidget> BuildWorldPickerCombo();
 
 private:
+	void RefreshDialogContextObject();
+	UObject* ResolvePlaybackContextOuter() const;
+
+	void OnMapChange(uint32);
+	void OnPieEvent(bool);
+	void OnWorldListChanged(UWorld*);
+
+private:
 	TWeakPtr<SDialogPreviewViewport> DialogViewport;
 	TWeakObjectPtr<UDialogSequence> DialogSequence;
 	TWeakObjectPtr<UObject> PlaybackContextObject;
 
 	TStrongObjectPtr<UDialogPlaybackContextObject> DialogContextObject;
+
+	bool bUseManualPlaybackContext = false;
 };
 
 

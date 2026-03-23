@@ -47,7 +47,7 @@ TSharedRef<ISequencerSection> FDialogTrackEditor::MakeSectionInterface(UMovieSce
 
 void FDialogTrackEditor::BuildAddTrackMenu(FMenuBuilder& MenuBuilder)
 {
-	UMovieSceneSequence* RootSequence = GetSequencer()->GetRootMovieSceneSequence();
+	/*UMovieSceneSequence* RootSequence = GetSequencer()->GetRootMovieSceneSequence();
 	if (!Cast<UDialogSequence>(RootSequence))
 	{
 		return;
@@ -57,7 +57,7 @@ void FDialogTrackEditor::BuildAddTrackMenu(FMenuBuilder& MenuBuilder)
 		LOCTEXT("AddDialogTrack", "Dialog"),
 		LOCTEXT("AddDialogTrackTooltip", "Add a dialog track."),
 		FSlateIcon(),
-		FUIAction(FExecuteAction::CreateSP(this, &FDialogTrackEditor::OnAddTrack)));
+		FUIAction(FExecuteAction::CreateSP(this, &FDialogTrackEditor::OnAddTrack)));*/
 }
 
 TSharedPtr<SWidget> FDialogTrackEditor::BuildOutlinerEditWidget(const FGuid& ObjectBinding, UMovieSceneTrack* Track, const FBuildEditWidgetParams& Params)
