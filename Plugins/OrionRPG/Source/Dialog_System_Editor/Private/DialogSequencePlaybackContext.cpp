@@ -41,12 +41,6 @@ FDialogSequencePlaybackContext::~FDialogSequencePlaybackContext()
 	}
 }
 
-void FDialogSequencePlaybackContext::SetPlaybackContext(UObject* InPlaybackContextObject)
-{
-	bUseManualPlaybackContext = (InPlaybackContextObject != nullptr);
-	PlaybackContextObject = InPlaybackContextObject;
-	RefreshDialogContextObject();
-}
 
 void FDialogSequencePlaybackContext::SetDialogViewport(TSharedPtr<SDialogPreviewViewport> InDialogViewport)
 {
@@ -80,7 +74,7 @@ UObject* FDialogSequencePlaybackContext::GetPlaybackContextAsObject() const
 		return DialogContextObject.Get();
 	}
 
-	return PlaybackContextObject.IsValid() ? PlaybackContextObject.Get() : nullptr;
+	return nullptr;
 }
 
 IMovieScenePlaybackClient* FDialogSequencePlaybackContext::GetPlaybackClientAsInterface() const
@@ -88,6 +82,7 @@ IMovieScenePlaybackClient* FDialogSequencePlaybackContext::GetPlaybackClientAsIn
 	// If needed later, return a real playback client object here.
 	return nullptr;
 }
+
 
 TSharedRef<SWidget> FDialogSequencePlaybackContext::BuildWorldPickerCombo()
 {
@@ -97,37 +92,24 @@ TSharedRef<SWidget> FDialogSequencePlaybackContext::BuildWorldPickerCombo()
 
 void FDialogSequencePlaybackContext::OnMapChange(uint32)
 {
-	if (!bUseManualPlaybackContext)
-	{
-		PlaybackContextObject = nullptr;
-		RefreshDialogContextObject();
-	}
+	DialogContextObject = nullptr;
+	
 }
 
 void FDialogSequencePlaybackContext::OnPieEvent(bool)
 {
-	if (!bUseManualPlaybackContext)
-	{
-		PlaybackContextObject = nullptr;
-		RefreshDialogContextObject();
-	}
+	DialogContextObject = nullptr;
+	
 }
 
 void FDialogSequencePlaybackContext::OnWorldListChanged(UWorld*)
 {
-	if (!bUseManualPlaybackContext)
-	{
-		PlaybackContextObject = nullptr;
-		RefreshDialogContextObject();
-	}
+	DialogContextObject = nullptr;
+	
 }
 
 UObject* FDialogSequencePlaybackContext::ResolvePlaybackContextOuter() const
 {
-	if (bUseManualPlaybackContext && PlaybackContextObject.IsValid())
-	{
-		return PlaybackContextObject.Get();
-	}
 
 	if (GEngine)
 	{
@@ -169,7 +151,6 @@ void FDialogSequencePlaybackContext::RefreshDialogContextObject()
 		OuterObject = GetTransientPackage();
 	}
 
-	PlaybackContextObject = OuterObject;
 
 	if (DialogContextObject.IsValid() && DialogContextObject->GetOuter() == OuterObject)
 	{
@@ -178,11 +159,16 @@ void FDialogSequencePlaybackContext::RefreshDialogContextObject()
 	}
 
 	DialogContextObject.Reset();
-	DialogContextObject = TStrongObjectPtr<UDialogPlaybackContextObject>(NewObject<UDialogPlaybackContextObject>(OuterObject));
+	DialogContextObject = TWeakObjectPtr<UDialogPlaybackContextObject>(NewObject<UDialogPlaybackContextObject>(OuterObject));
 
 	if (DialogContextObject.IsValid())
 	{
 		DialogContextObject->SetDialogViewport(DialogViewport);
+	}
+
+	if (TSharedPtr<SDialogPreviewViewport> Pinned = DialogViewport.Pin())
+	{
+		Pinned->RemoveDialogOverlayWidget();
 	}
 }
 

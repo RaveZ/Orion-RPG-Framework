@@ -20,7 +20,6 @@ public:
 	FDialogSequencePlaybackContext(UDialogSequence* InDialogSequence);
 	~FDialogSequencePlaybackContext();
 
-	void SetPlaybackContext(UObject* InPlaybackContextObject);
 	void SetDialogViewport(TSharedPtr<SDialogPreviewViewport> InDialogViewport);
 
 	TArray<UObject*> GetEventContexts() const;
@@ -29,9 +28,11 @@ public:
 
 	TSharedRef<SWidget> BuildWorldPickerCombo();
 
+
 private:
 	void RefreshDialogContextObject();
 	UObject* ResolvePlaybackContextOuter() const;
+
 
 	void OnMapChange(uint32);
 	void OnPieEvent(bool);
@@ -40,11 +41,9 @@ private:
 private:
 	TWeakPtr<SDialogPreviewViewport> DialogViewport;
 	TWeakObjectPtr<UDialogSequence> DialogSequence;
-	TWeakObjectPtr<UObject> PlaybackContextObject;
 
-	TStrongObjectPtr<UDialogPlaybackContextObject> DialogContextObject;
+	mutable TWeakObjectPtr<UDialogPlaybackContextObject> DialogContextObject;
 
-	bool bUseManualPlaybackContext = false;
 };
 
 
