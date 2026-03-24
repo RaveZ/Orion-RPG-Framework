@@ -399,6 +399,32 @@ void UDialogBuilderGraph::PlaySequence(class ULevelSequence* InSequence, FMovieS
 	}
 }
 
+FText UDialogBuilderGraph::GetParticipantName(FGameplayTag ParticipantTag) const
+{
+	if(!ParticipantTag.IsValid())
+	{
+		return FText::FromString("Speaker");
+	}
+	for (auto& Participant : Participants)
+	{
+		if (Participant->ParticipantInfo.ParticipantTag == ParticipantTag)
+		{
+			return Participant->ParticipantInfo.ParticipantName;
+		}
+	}
+
+	FParticipantInfo ParticipantInfo;
+	if (const FParticipantInfo* FoundInfo = ParticipantInfoMap.Find(ParticipantTag))
+	{
+		ParticipantInfo = *FoundInfo;
+	}
+	else
+	{
+		return FText::FromString("Speaker");
+	}
+	return ParticipantInfo.ParticipantName.IsEmpty() ? FText::FromString("None") : ParticipantInfo.ParticipantName;
+}
+
 int UDialogBuilderGraph::GetLevelNum() const
 {
 	int Level = 0;

@@ -223,7 +223,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 	virtual void PlaySequence(class ULevelSequence* InSequence, FMovieSceneSequencePlaybackSettings InPlaybackSetting);
-	
+
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	FText GetParticipantName(FGameplayTag ParticipantTag) const;
+
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	int GetLevelNum() const;
 

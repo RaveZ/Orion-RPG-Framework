@@ -1,9 +1,10 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #include "MovieSceneDialogTrack.h"
+#include "DialogSequence.h"
+#include "DialogBuilderGraph.h"
 #include "MovieSceneDialogSection.h"
 #include "MovieSceneDialogTemplate.h"
-#include "DialogData.h"
 
 UMovieSceneDialogTrack::UMovieSceneDialogTrack(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -11,6 +12,19 @@ UMovieSceneDialogTrack::UMovieSceneDialogTrack(const FObjectInitializer& ObjectI
 	TrackTint = FColor(52, 152, 219);
 }
 
+UDialogSequence* UMovieSceneDialogTrack::GetOwningDialogSequence() const
+{
+	return GetTypedOuter<UDialogSequence>();
+}
+
+UDialogBuilderGraph* UMovieSceneDialogTrack::GetOwningDialogGraph() const
+{
+	if(UDialogSequence* DialogSequence = GetOwningDialogSequence())
+	{
+		return DialogSequence->OwningDialogGraph;
+	}
+	return nullptr;
+}
 
 void UMovieSceneDialogTrack::AddSection(UMovieSceneSection& Section)
 {
@@ -38,9 +52,7 @@ const TArray<UMovieSceneSection*>& UMovieSceneDialogTrack::GetAllSections() cons
 }
 
 UMovieSceneDialogSection* UMovieSceneDialogTrack::AddDialogSection(
-	const FDialogLineData& InDialogLineData,
-	const FGameplayTag& InSpeakerParticipantTag,
-	const FGameplayTag& InListenerParticipantTag,
+	const FOrionDialogLine& InDialogLine,
 	FFrameNumber InStartFrame,
 	int32 InDurationFrames)
 {
@@ -50,9 +62,7 @@ UMovieSceneDialogSection* UMovieSceneDialogTrack::AddDialogSection(
 		return nullptr;
 	}
 
-	NewSection->SpeakerParticipantTag = InSpeakerParticipantTag;
-	NewSection->ListenerParticipantTag = InListenerParticipantTag;
-	NewSection->DialogLineData = InDialogLineData;
+	NewSection->DialogLine = InDialogLine;
 
 	const int32 ClampedDurationFrames = FMath::Max(1, InDurationFrames);
 	NewSection->SetRange(TRange<FFrameNumber>(

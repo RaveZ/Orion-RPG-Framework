@@ -17,10 +17,10 @@ class ORIONRPG_API IOrionDialogInterface
 
 public:
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Orion|Dialog")
-	void OnDialogLineStarted(const FDialogLineData& DialogLineData, const FGameplayTag& SpeakerParticipantTag, const FGameplayTag& ListenerParticipantTag);
+	void OnDialogLineStarted(const FOrionDialogLine& DialogLine);
 
 	UFUNCTION(BlueprintNativeEvent, BlueprintCallable, Category = "Orion|Dialog")
-	void OnDialogLineEnded(const FDialogLineData& DialogLineData, const FGameplayTag& SpeakerParticipantTag, const FGameplayTag& ListenerParticipantTag);
+	void OnDialogLineEnded(const FOrionDialogLine& DialogLine);
 };
 
 

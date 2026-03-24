@@ -4,8 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "LevelSequence.h"
+#include "DialogData.h"
 #include "DialogSequence.generated.h"
 
+class UDialogBuilderGraph;
 class UMovieSceneDialogSection;
 class UMovieSceneDialogTrack;
 struct FDialogLineData;
@@ -22,12 +24,9 @@ public:
 	UMovieSceneDialogTrack* GetOrCreateDialogTrack();
 	const UMovieSceneDialogTrack* FindDialogTrack() const;
 
-	UMovieSceneDialogSection* AddDialogSection(
-		const FDialogLineData& InDialogLineData,
-		const FGameplayTag& InSpeakerParticipantTag,
-		const FGameplayTag& InListenerParticipantTag,
-		FFrameNumber InStartFrame,
-		int32 InDurationFrames = 1);
+	UPROPERTY(BlueprintReadOnly, Category = "DialogBuilderNode")
+	TObjectPtr<UDialogBuilderGraph> OwningDialogGraph;
+
 #if WITH_EDITOR
 	//virtual ETrackSupport IsTrackSupportedImpl(TSubclassOf<class UMovieSceneTrack> InTrackClass) const override;
 #endif

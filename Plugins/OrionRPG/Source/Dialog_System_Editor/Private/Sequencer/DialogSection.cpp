@@ -37,9 +37,9 @@ int32 FDialogSection::OnPaintSection(FSequencerSectionPainter& InPainter) const
 
 FText FDialogSection::GetSectionTitle() const
 {
-	if (!SectionObject.DialogLineData.Line.IsEmpty())
+	if (!SectionObject.DialogLine.Line.IsEmpty())
 	{
-		return SectionObject.DialogLineData.Line;
+		return SectionObject.DialogLine.Line;
 	}
 
 	return FText::FromString(TEXT("Dialog"));

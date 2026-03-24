@@ -15,6 +15,16 @@ class ORIONRPG_API UDialogDefinition : public UObject
 public:
 	UDialogDefinition();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialog")
+	FGuid ID;
+
+	void RefreshID()
+	{
+		if (!HasAnyFlags(RF_ClassDefaultObject) && !ID.IsValid())
+		{
+			ID = FGuid::NewGuid();
+		}
+	}
 };
 
 UCLASS(Blueprintable, BlueprintType)
@@ -43,5 +53,15 @@ public:
 
 };
 
+UCLASS(Blueprintable, BlueprintType)
+class ORIONRPG_API UDialogCamera : public UDialogDefinition
+{
+	GENERATED_BODY()
+
+public:
+	UDialogCamera();
+
+
+};
 
 

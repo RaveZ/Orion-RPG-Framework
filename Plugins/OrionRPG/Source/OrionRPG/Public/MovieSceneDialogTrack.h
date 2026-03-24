@@ -6,12 +6,12 @@
 #include "Compilation/IMovieSceneTrackTemplateProducer.h"
 #include "Tracks/MovieSceneSpawnTrack.h"
 #include "MovieSceneNameableTrack.h"
+#include "DialogData.h"
 #include "MovieSceneDialogTrack.generated.h"
 
 class UMovieSceneDialogSection;
 class UMovieSceneSection;
 class UDialogDefinition;
-struct FDialogLineData;
 struct FGameplayTag;
 
 UCLASS()
@@ -24,12 +24,13 @@ class ORIONRPG_API UMovieSceneDialogTrack
 public:
 	UMovieSceneDialogTrack(const FObjectInitializer& ObjectInitializer);
 
+	class  UDialogSequence* GetOwningDialogSequence() const;
+	class UDialogBuilderGraph* GetOwningDialogGraph() const;
+
 	static uint16 GetEvaluationPriority() { return UMovieSceneSpawnTrack::GetEvaluationPriority() + 120; }
 
 	UMovieSceneDialogSection* AddDialogSection(
-		const FDialogLineData& InDialogLineData,
-		const FGameplayTag& InSpeakerParticipantTag,
-		const FGameplayTag& InListenerParticipantTag,
+		const FOrionDialogLine& InDialogLine,
 		FFrameNumber InStartFrame,
 		int32 InDurationFrames = 1);
 

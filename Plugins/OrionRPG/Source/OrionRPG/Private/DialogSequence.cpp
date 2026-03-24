@@ -1,7 +1,6 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #include "DialogSequence.h"
-#include "DialogData.h"
 #include "MovieScene.h"
 #include "MovieSceneDialogSection.h"
 #include "MovieSceneDialogTrack.h"
@@ -44,26 +43,4 @@ const UMovieSceneDialogTrack* UDialogSequence::FindDialogTrack() const
 	return MovieScene->FindTrack<UMovieSceneDialogTrack>();
 }
 
-UMovieSceneDialogSection* UDialogSequence::AddDialogSection(
-	const FDialogLineData& InDialogLineData,
-	const FGameplayTag& InSpeakerParticipantTag,
-	const FGameplayTag& InListenerParticipantTag,
-	FFrameNumber InStartFrame,
-	int32 InDurationFrames)
-{
-	UMovieSceneDialogTrack* DialogTrack = GetOrCreateDialogTrack();
-	if (!DialogTrack)
-	{
-		return nullptr;
-	}
 
-	Modify();
-	DialogTrack->Modify();
-
-	return DialogTrack->AddDialogSection(
-		InDialogLineData,
-		InSpeakerParticipantTag,
-		InListenerParticipantTag,
-		InStartFrame,
-		InDurationFrames);
-}

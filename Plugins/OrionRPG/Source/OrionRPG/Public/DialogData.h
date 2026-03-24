@@ -55,6 +55,34 @@ enum class EDialogCameraMode : uint8
 };
 
 USTRUCT(BlueprintType)
+struct FOrionDialogLine
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog", meta = (Categories = "Dialog.Participant"))
+	FGameplayTag SpeakerTag;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog", meta = (Categories = "Dialog.Participant"))
+	FGameplayTag ListenerTag;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
+	FText SpeakerName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (MultiLine = true, NoResetToDefault, DisplayPriority = -1), Category = "Dialog")
+	FText Line;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog")
+	class USoundBase* DialogSound = nullptr;
+	
+	FOrionDialogLine()
+	{
+		Line = FText::FromString("None");
+		DialogSound = nullptr;
+	}
+};
+
+USTRUCT(BlueprintType)
 struct FDialogLineData
 {
 	GENERATED_BODY()

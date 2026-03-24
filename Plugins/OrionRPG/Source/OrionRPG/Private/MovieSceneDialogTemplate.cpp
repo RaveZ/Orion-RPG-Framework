@@ -6,6 +6,8 @@
 
 #include "Engine/Engine.h"
 #include "DialogBuilderSetting.h"
+#include "DialogComponent.h"
+#include "DialogBuilderFunctionLibrary.h"
 #include "Engine/GameViewportClient.h"
 #include "Engine/World.h"
 #include "Evaluation/MovieSceneExecutionTokens.h"
@@ -43,12 +45,10 @@ namespace OrionDialogTemplate
 			return bNeedExecute;
 		}
 
-		void SetInfo(bool bInShow, const FDialogLineData& InDialogLineData, const FGameplayTag& InSpeakerTag, const FGameplayTag& InListenerTag)
+		void SetInfo(bool bInShow, const FOrionDialogLine& InDialogLine)
 		{
 			bShow = bInShow;
-			DialogLineData = InDialogLineData;
-			SpeakerTag = InSpeakerTag;
-			ListenerTag = InListenerTag;
+			DialogLine = InDialogLine;
 			bNeedExecute = true;
 		}
 
@@ -61,11 +61,11 @@ namespace OrionDialogTemplate
 			 
 			if (bShow)
 			{
-				IOrionDialogInterface::Execute_OnDialogLineStarted(TargetObject, DialogLineData, SpeakerTag, ListenerTag);
+				IOrionDialogInterface::Execute_OnDialogLineStarted(TargetObject, DialogLine);
 			}
 			else
 			{
-				IOrionDialogInterface::Execute_OnDialogLineEnded(TargetObject, DialogLineData, SpeakerTag, ListenerTag);
+				IOrionDialogInterface::Execute_OnDialogLineEnded(TargetObject, DialogLine);
 			}
 		}
 
@@ -136,38 +136,23 @@ namespace OrionDialogTemplate
 
 			UGameViewportClient* GameViewport = GEngine->GameViewport;
 
+			UDialogComponent* DialogComponent = UDialogBuilderFunctionLibrary::GetDialogComponent(World);
+
+			if (!DialogComponent) return;
 			if (bShow)
 			{
-				if (!DialogWidget)
-				{
-					DialogWidget = CreateWidget<UUserWidget>(World, UUserWidget::StaticClass());
-					if (DialogWidget)
-					{
-						DialogWidgetSlateWidget = DialogWidget->TakeWidget();
-						GameViewport->AddViewportWidgetContent(DialogWidgetSlateWidget.ToSharedRef());
-					}
-				}
-
-				NotifyDialogInterface(DialogWidget);
+				DialogComponent->OnDialogLineUpdated.Broadcast(DialogLine);
 			}
 			else
 			{
-				NotifyDialogInterface(DialogWidget);
-
-				if (DialogWidgetSlateWidget.IsValid())
-				{
-					GameViewport->RemoveViewportWidgetContent(DialogWidgetSlateWidget.ToSharedRef());
-				}
-
-				DialogWidgetSlateWidget.Reset();
-				DialogWidget = nullptr;
+				
 			}
 		}
 
 		bool bNeedExecute;
 		bool bShow;
 
-		FDialogLineData DialogLineData;
+		FOrionDialogLine DialogLine;
 		FGameplayTag SpeakerTag;
 		FGameplayTag ListenerTag;
 
@@ -195,9 +180,7 @@ namespace OrionDialogTemplate
 }
 
 FMovieSceneDialogSectionTemplate::FMovieSceneDialogSectionTemplate(const UMovieSceneDialogSection& InSection)
-	: SpeakerParticipantTag(InSection.SpeakerParticipantTag)
-	, ListenerParticipantTag(InSection.ListenerParticipantTag)
-	, DialogLineData(InSection.DialogLineData)
+	: DialogLine(InSection.DialogLine)
 {
 }
 
@@ -225,7 +208,7 @@ void FMovieSceneDialogSectionTemplate::Setup(FPersistentEvaluationData& Persiste
 	using namespace OrionDialogTemplate;
 
 	FDialogSharedTrackData& TrackData = PersistentData.GetOrAdd<FDialogSharedTrackData>(GetSharedDataKey());
-	TrackData.SetInfo(true, DialogLineData, SpeakerParticipantTag, ListenerParticipantTag);
+	TrackData.SetInfo(true, DialogLine);
 }
 
 void FMovieSceneDialogSectionTemplate::TearDown(FPersistentEvaluationData& PersistentData, IMovieScenePlayer& Player) const
@@ -233,6 +216,6 @@ void FMovieSceneDialogSectionTemplate::TearDown(FPersistentEvaluationData& Persi
 	using namespace OrionDialogTemplate;
 
 	FDialogSharedTrackData& TrackData = PersistentData.GetOrAdd<FDialogSharedTrackData>(GetSharedDataKey());
-	TrackData.SetInfo(false, DialogLineData, SpeakerParticipantTag, ListenerParticipantTag);
+	TrackData.SetInfo(false, DialogLine);
 	TrackData.Apply(Player);
 }

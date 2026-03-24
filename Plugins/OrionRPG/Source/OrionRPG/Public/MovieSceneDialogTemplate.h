@@ -39,11 +39,5 @@ private:
 	virtual void TearDown(FPersistentEvaluationData& PersistentData, IMovieScenePlayer& Player) const override;
 
 	UPROPERTY()
-	FGameplayTag SpeakerParticipantTag;
-
-	UPROPERTY()
-	FGameplayTag ListenerParticipantTag;
-
-	UPROPERTY()
-	FDialogLineData DialogLineData;
+	FOrionDialogLine DialogLine;
 };

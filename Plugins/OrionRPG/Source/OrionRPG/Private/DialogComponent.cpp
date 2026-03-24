@@ -13,7 +13,6 @@
 #include "DialogBuilderNode_PlayerChoice.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Controller.h"
-#include "DialogData.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "GameFramework/Pawn.h"
 #include "TimerManager.h"

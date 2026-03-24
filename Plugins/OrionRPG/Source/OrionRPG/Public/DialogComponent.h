@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "DialogData.h"
 #include "Components/ActorComponent.h"
 #include "DialogComponent.generated.h"
 
@@ -13,6 +14,8 @@ class APlayerController;
 //Dialog Delegate
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateDialog, class UDialogBuilderNode*, DialogNode);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateDialogLine, FOrionDialogLine, DialogLine);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FEnterChoiceSelection, const TArray<class UDialogBuilderNode_PlayerChoice*>&, PlayerChoices);
 
@@ -44,6 +47,9 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
 		FUpdateDialog OnDialogUpdated;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
+	FUpdateDialogLine OnDialogLineUpdated;
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
 		FEnterChoiceSelection OnEnterChoiceSelection;

@@ -2,12 +2,14 @@
 
 
 #include "DialogDefinition.h"
+#include "Misc/Guid.h"
 
 
 #define LOCTEXT_NAMESPACE "DialogDefinition"
 
 UDialogDefinition::UDialogDefinition()
 {
+	RefreshID();
 }
 
 
@@ -20,6 +22,9 @@ UDialogProp::UDialogProp()
 {
 }
 
+UDialogCamera::UDialogCamera()
+{
+}
 
 #undef LOCTEXT_NAMESPACE
 
