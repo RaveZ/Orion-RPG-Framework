@@ -101,6 +101,10 @@ public:
 public:
 	virtual void Serialize(FArchive& Ar) override;
 
+
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Dialog")
+	FOrionDialogLine GetDialogLine();
+
 	//Participant Sharing
 	void MakeParticipantShareable(FString ShareName);
 	void UnshareParticipant();

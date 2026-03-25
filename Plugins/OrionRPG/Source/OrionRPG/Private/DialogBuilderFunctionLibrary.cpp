@@ -77,12 +77,22 @@ UDialogBuilderNode* UDialogBuilderFunctionLibrary::GetCurrentDialogNode(const UO
 UDialogBuilderNode_DialogLine* UDialogBuilderFunctionLibrary::GetCurrentLine(const UObject* WorldContextObject)
 {
     UDialogBuilderGraph* CurrentDialogGraph = GetCurrentActiveDialog(WorldContextObject);
-    if (CurrentDialogGraph && CurrentDialogGraph->CurrentNode)
+    if (CurrentDialogGraph && CurrentDialogGraph->CurrentLine)
     {
         return CurrentDialogGraph->CurrentLine;
     }
 
     return nullptr;
+}
+
+FOrionDialogLine UDialogBuilderFunctionLibrary::GetCurrentDialogLine(const UObject* WorldContextObject)
+{
+    UDialogBuilderGraph* CurrentDialogGraph = GetCurrentActiveDialog(WorldContextObject);
+    if (CurrentDialogGraph && CurrentDialogGraph->CurrentLine)
+    {
+       return CurrentDialogGraph->CurrentLine->GetDialogLine();
+    }
+	return FOrionDialogLine();
 }
 
 void UDialogBuilderFunctionLibrary::AdvanceDialogLine(const UObject* WorldContextObject)

@@ -54,6 +54,13 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Dialog", meta = (WorldContext = "WorldContextObject"))
 	static class UDialogBuilderNode_DialogLine* GetCurrentLine(const UObject* WorldContextObject);
 
+	/**
+	* Get the current dialog line.
+	*
+	* @return The Dialog Line.
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Dialog", meta = (WorldContext = "WorldContextObject"))
+	static FOrionDialogLine GetCurrentDialogLine(const UObject* WorldContextObject);
 
 	/**
 	* Advance the dialog line

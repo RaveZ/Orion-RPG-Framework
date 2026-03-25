@@ -66,6 +66,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog", meta = (Categories = "Dialog.Participant"))
 	FGameplayTag ListenerTag;
 
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true", Category = "Override", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
+	TObjectPtr<UObject> SpeakerImage;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
 	FText SpeakerName;
 

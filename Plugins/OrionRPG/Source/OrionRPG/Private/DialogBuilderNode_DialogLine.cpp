@@ -31,6 +31,8 @@ void UDialogBuilderNode_DialogLine::BeginNode()
 {
 	Super::BeginNode();
 	GetOwningDialogGraph()->BeginDialogLine(this);
+
+	GetDialogComponent()->OnDialogLineUpdated.Broadcast(GetDialogLine());
 	GetDialogComponent()->OnDialogUpdated.Broadcast(this);
 }
 
@@ -271,6 +273,17 @@ void UDialogBuilderNode_DialogLine::PostLoad()
 void UDialogBuilderNode_DialogLine::Serialize(FArchive& Ar)
 {
 	Super::Serialize(Ar);
+}
+FOrionDialogLine UDialogBuilderNode_DialogLine::GetDialogLine()
+{
+	FOrionDialogLine DialogLine;
+	DialogLine.SpeakerTag = ParticipantInfo.ParticipantTag;
+	DialogLine.ListenerTag = ListenerTag;
+	DialogLine.SpeakerImage = GetParticipantImage();
+	DialogLine.SpeakerName = ParticipantInfo.ParticipantName;
+	DialogLine.Line = DialogLineData.Line;
+	DialogLine.DialogSound = DialogLineData.DialogSound;
+	return DialogLine;
 }
 void IDialogNodeSharedDataHelper::MakeSureGuidExists(UDialogBuilderNode_DialogLine* Node)
 {

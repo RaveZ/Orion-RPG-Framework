@@ -35,7 +35,7 @@ void UMovieSceneDialogSection::PostEditChangeProperty(FPropertyChangedEvent& Pro
 	if (DialogLineProperty == GET_MEMBER_NAME_CHECKED(UMovieSceneDialogSection, DialogLine))
 	{
 		UDialogBuilderGraph* DialogGraph = GetOwningDialogGraph();
-		DialogLine.SpeakerName = DialogGraph ? DialogGraph->GetParticipantName(DialogLine.SpeakerTag) : FText::FromString("None");
+		DialogLine.SpeakerName = DialogGraph ? DialogGraph->GetParticipantName(DialogLine.SpeakerTag) : FText();
 	}
 }
 

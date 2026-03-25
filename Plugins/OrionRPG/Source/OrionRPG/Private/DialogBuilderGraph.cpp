@@ -403,7 +403,7 @@ FText UDialogBuilderGraph::GetParticipantName(FGameplayTag ParticipantTag) const
 {
 	if(!ParticipantTag.IsValid())
 	{
-		return FText::FromString("Speaker");
+		return FText();
 	}
 	for (auto& Participant : Participants)
 	{
@@ -420,9 +420,9 @@ FText UDialogBuilderGraph::GetParticipantName(FGameplayTag ParticipantTag) const
 	}
 	else
 	{
-		return FText::FromString("Speaker");
+		return FText();
 	}
-	return ParticipantInfo.ParticipantName.IsEmpty() ? FText::FromString("None") : ParticipantInfo.ParticipantName;
+	return ParticipantInfo.ParticipantName.IsEmpty() ? FText() : ParticipantInfo.ParticipantName;
 }
 
 int UDialogBuilderGraph::GetLevelNum() const
