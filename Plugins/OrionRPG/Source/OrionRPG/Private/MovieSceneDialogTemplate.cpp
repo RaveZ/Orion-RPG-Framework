@@ -193,7 +193,7 @@ void FMovieSceneDialogSectionTemplate::Evaluate(
 	using namespace OrionDialogTemplate;
 
 	const FDialogSharedTrackData* TrackData = PersistentData.Find<FDialogSharedTrackData>(GetSharedDataKey());
-	if (TrackData && TrackData->HasAnythingToDo())
+	if (TrackData)
 	{
 		const FMovieSceneSharedDataId SharedId = GetSharedDataKey().UniqueId;
 		if (!ExecutionTokens.FindShared(SharedId))

@@ -33,7 +33,6 @@ void UDialogBuilderNode_DialogSequence::BeginNode()
 void UDialogBuilderNode_DialogSequence::EvaluateNextNode()
 {
 	Super::EvaluateNextNode();
-
 }
 
 void UDialogBuilderNode_DialogSequence::EnsureSequenceCreated()
@@ -46,6 +45,18 @@ void UDialogBuilderNode_DialogSequence::EnsureSequenceCreated()
 		DialogSequence->MovieScene = NewObject<UMovieScene>(DialogSequence, FName("DialogSequence"), RF_Transactional);
 		DialogSequence->MovieScene->SetDisplayRate(FFrameRate(30, 1));
 	}
+}
+
+float UDialogBuilderNode_DialogSequence::GetSequenceDuration()
+{
+	float Duration = 0.f;
+	if (DialogSequence)
+	{
+		FFrameRate TickResolution = DialogSequence->MovieScene->GetTickResolution();
+		float SequenceDuration = DialogSequence->MovieScene->GetPlaybackRange().GetUpperBoundValue() / TickResolution;
+		Duration = FMath::Max(Duration, SequenceDuration);
+	}
+	return Duration;
 }
 
 

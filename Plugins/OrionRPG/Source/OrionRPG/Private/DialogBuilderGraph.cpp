@@ -329,8 +329,9 @@ void UDialogBuilderGraph::BeginDialogSequence(UDialogBuilderNode_DialogSequence*
 	if (InDialogSequence == nullptr)
 		return;
 
-	PlaySequence(Cast<ULevelSequence>(InDialogSequence->DialogSequence.Get()), InDialogSequence->PlaybackSettings);
+	DetermineAdvanceDialogRule(InDialogSequence);
 
+	PlaySequence(Cast<ULevelSequence>(InDialogSequence->DialogSequence.Get()), InDialogSequence->PlaybackSettings);
 }
 
 void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot, AActor* InSpeaker)
@@ -636,24 +637,21 @@ void UDialogBuilderGraph::EndDialog()
 	GetWorld()->GetTimerManager().ClearTimer(DialogLineTimer);
 }
 
-void UDialogBuilderGraph::DetermineAdvanceDialogRule(UDialogBuilderNode_DialogLine* InDialogLine)
+void UDialogBuilderGraph::DetermineAdvanceDialogRule(UDialogBuilderNode* InDialogNode)
 {
 	if(!GetWorld())
 		return;
 	//Determine each dialog time before advance to the next line
 	if (bAutoAdvanceDialogLine)
 	{
-		GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, this, &ThisClass::AdvanceDialogLine, InDialogLine->GetLineDuration(), false);	
-	}
-	else
-    {		
-		FTimerDelegate TimerDel;
-		TimerDel = FTimerDelegate::CreateLambda([this]()
+		if (UDialogBuilderNode_DialogLine* InDialogLine = Cast<UDialogBuilderNode_DialogLine>(InDialogNode))
 		{
-			//empty implementation, just to make sure timer is valid
-		});
-		GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, TimerDel, InDialogLine->GetLineDuration(), false);
-    
+			GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, this, &ThisClass::AdvanceDialogLine, InDialogLine->GetLineDuration(), false);
+		}
+		else if (UDialogBuilderNode_DialogSequence* InDialogSequence = Cast< UDialogBuilderNode_DialogSequence>(InDialogNode))
+		{
+			GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, this, &ThisClass::AdvanceDialogLine, InDialogSequence->GetSequenceDuration(), false);
+		}
 	}
 }
 

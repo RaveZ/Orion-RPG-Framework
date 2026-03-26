@@ -49,7 +49,6 @@ void UDialogBuilderNode_DialogLine::EvaluateNextNode()
 	if (EvaluateAnyPlayerOptions())
 		return;
 
-
 	Super::EvaluateNextNode();
 }
 

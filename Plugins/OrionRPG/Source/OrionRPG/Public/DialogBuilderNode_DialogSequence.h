@@ -27,6 +27,9 @@ public:
 
 	void EnsureSequenceCreated();
 
+	UFUNCTION(BlueprintPure, Category = "DialogLine")
+	float GetSequenceDuration();
+
 
 public:
 	virtual void Serialize(FArchive& Ar) override;

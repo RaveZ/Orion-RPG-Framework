@@ -254,7 +254,7 @@ public:
 		virtual void EndDialog();
 
 	UFUNCTION()
-	virtual void DetermineAdvanceDialogRule(class UDialogBuilderNode_DialogLine* InDialogLine);
+	virtual void DetermineAdvanceDialogRule(class UDialogBuilderNode* InDialogNode);
 
 	UFUNCTION()
 	virtual FVector GetSpeakerBoneLocation(class AActor* Actor, bool bOverrideTrackedBone = false, FName BoneOverride = NAME_None) const;

@@ -9,7 +9,9 @@
 UMovieSceneDialogTrack::UMovieSceneDialogTrack(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+#if WITH_EDITOR
 	TrackTint = FColor(52, 152, 219);
+#endif
 }
 
 UDialogSequence* UMovieSceneDialogTrack::GetOwningDialogSequence() const
@@ -78,8 +80,6 @@ bool UMovieSceneDialogTrack::SupportsType(TSubclassOf<UMovieSceneSection> Sectio
 {
 	return SectionClass == UMovieSceneDialogSection::StaticClass();
 }
-
-
 
 void UMovieSceneDialogTrack::RemoveAllAnimationData()
 {

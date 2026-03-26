@@ -27,6 +27,7 @@ UDialogBuilderGraph* UMovieSceneDialogSection::GetOwningDialogGraph() const
 	return nullptr;
 }
 
+#if WITH_EDITOR
 void UMovieSceneDialogSection::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
@@ -38,5 +39,6 @@ void UMovieSceneDialogSection::PostEditChangeProperty(FPropertyChangedEvent& Pro
 		DialogLine.SpeakerName = DialogGraph ? DialogGraph->GetParticipantName(DialogLine.SpeakerTag) : FText();
 	}
 }
+#endif
 
 #undef LOCTEXT_NAMESPACE
