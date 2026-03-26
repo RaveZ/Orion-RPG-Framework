@@ -10,7 +10,6 @@
 #include "GameFramework/GameModeBase.h"
 
 #include "Widgets/SViewport.h"
-
 #include "Widgets/SOverlay.h"
 #include "DialogueWidget.h"
 #include "UObject/ConstructorHelpers.h"

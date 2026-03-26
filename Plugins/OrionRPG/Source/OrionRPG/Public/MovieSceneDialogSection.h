@@ -18,6 +18,8 @@ public:
 	class  UDialogSequence* GetOwningDialogSequence() const;
 	class UDialogBuilderGraph* GetOwningDialogGraph() const;
 
+	void RefreshDialogContent();
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog", meta = (ShowOnlyInnerProperties))
 	FOrionDialogLine DialogLine;
 

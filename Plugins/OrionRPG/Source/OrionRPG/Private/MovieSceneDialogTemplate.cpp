@@ -94,6 +94,7 @@ namespace OrionDialogTemplate
 						DialogWidget = CreateWidget<UUserWidget>(World, DialogWidgetClass);
 						if (DialogWidget)
 						{
+							DialogWidget->GetRootWidget()->SetVisibility(ESlateVisibility::HitTestInvisible);
 							DialogWidgetSlateWidget = DialogWidget->TakeWidget();
 
 							if (UObject* PlaybackContextObject = Player.GetPlaybackContext())
@@ -182,6 +183,7 @@ namespace OrionDialogTemplate
 FMovieSceneDialogSectionTemplate::FMovieSceneDialogSectionTemplate(const UMovieSceneDialogSection& InSection)
 	: DialogLine(InSection.DialogLine)
 {
+	DialogSection = const_cast<UMovieSceneDialogSection*>(& InSection);
 }
 
 void FMovieSceneDialogSectionTemplate::Evaluate(
@@ -191,6 +193,8 @@ void FMovieSceneDialogSectionTemplate::Evaluate(
 	FMovieSceneExecutionTokens& ExecutionTokens) const
 {
 	using namespace OrionDialogTemplate;
+
+	DialogSection->RefreshDialogContent();
 
 	const FDialogSharedTrackData* TrackData = PersistentData.Find<FDialogSharedTrackData>(GetSharedDataKey());
 	if (TrackData)
@@ -208,7 +212,7 @@ void FMovieSceneDialogSectionTemplate::Setup(FPersistentEvaluationData& Persiste
 	using namespace OrionDialogTemplate;
 
 	FDialogSharedTrackData& TrackData = PersistentData.GetOrAdd<FDialogSharedTrackData>(GetSharedDataKey());
-	TrackData.SetInfo(true, DialogLine);
+	TrackData.SetInfo(true, DialogSection->DialogLine);
 }
 
 void FMovieSceneDialogSectionTemplate::TearDown(FPersistentEvaluationData& PersistentData, IMovieScenePlayer& Player) const
@@ -216,6 +220,6 @@ void FMovieSceneDialogSectionTemplate::TearDown(FPersistentEvaluationData& Persi
 	using namespace OrionDialogTemplate;
 
 	FDialogSharedTrackData& TrackData = PersistentData.GetOrAdd<FDialogSharedTrackData>(GetSharedDataKey());
-	TrackData.SetInfo(false, DialogLine);
+	TrackData.SetInfo(false, DialogSection->DialogLine);
 	TrackData.Apply(Player);
 }

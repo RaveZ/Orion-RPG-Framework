@@ -64,6 +64,8 @@
 #include "SDialogPreviewViewport.h"
 #include "Engine/StaticMeshActor.h"
 #include "Components/StaticMeshComponent.h"
+#include "LevelSequencePlayer.h"
+#include "LevelSequenceActor.h"
 #include "UObject/SoftObjectPath.h"
 #include "CineCameraActor.h"
 #include "SequencerUtilities.h"
@@ -317,6 +319,7 @@ void FDialogBuilderEditor::Tick(float DeltaTime)
 		UpdateDialogDefinitions();
 	}
 
+	ResolveDialogBoundObjects();
 }
 
 TStatId FDialogBuilderEditor::GetStatId() const
@@ -396,6 +399,8 @@ static UMovieSceneDialogTrack* FindDialogTrackForDefinition(UMovieScene* InMovie
 	}
 
 	// Object-bound tracks
+	ConstMovieScene->FindBinding(InDialogDefinition->ID);
+
 	for (const FMovieSceneBinding& Binding : ConstMovieScene->GetBindings())
 	{
 		for (const UMovieSceneTrack* Track : Binding.GetTracks())
@@ -452,21 +457,40 @@ void FDialogBuilderEditor::CreateDialogTrackDefinition(UDialogDefinition* InDial
 		return;
 	}
 
-	if (FindDialogTrackForDefinition(MovieScene, InDialogDefinition))
+	AActor* BoundActor = DialogDefinitionActors.FindRef(InDialogDefinition).Get();
+
+	if(!BoundActor)
 	{
+		return;
+	}
+	FGuid ObjectBinding = InDialogDefinition->ID;
+	FMovieSceneBinding* BoundDialogDefinition = MovieScene->FindBinding(ObjectBinding);
+	TArrayView<TWeakObjectPtr<>> BoundObjects = Sequencer->FindBoundObjects(ObjectBinding, Sequencer->GetRootTemplateID());
+
+	if (BoundDialogDefinition)
+	{
+		/*if (!BoundObjects.IsValidIndex(0))
+		{
+			EditingDialogSequence->UnbindInvalidObjects(InDialogDefinition->ID, GetPreviewWorld());
+			FMovieSceneBindingProxy BindingProxy(InDialogDefinition->ID, Sequencer->GetFocusedMovieSceneSequence());
+			TArray<AActor*> SelectedActors;
+			GEditor->GetSelectedActors()->GetSelectedObjects<AActor>(SelectedActors);
+			TArray<AActor*> Actors;
+			Actors.Add(BoundActor);
+			FSequencerUtilities::ReplaceBindingWithActors(Sequencer.ToSharedRef(), Actors, BindingProxy);
+		}
+		*/
 		return;
 	}
 
 	MovieScene->Modify();
 
-	AActor* BoundActor = DialogDefinitionActors.FindRef(InDialogDefinition).Get();
 
 
-	/*if (BoundActor && Sequencer.IsValid())
+	if (Sequencer.IsValid())
 	{
-		InDialogDefinition->RefreshID();
 
-		UE::Sequencer::FCreateBindingParams BindingParams;
+		/*UE::Sequencer::FCreateBindingParams BindingParams;
 		{
 			BindingParams.BindingNameOverride = InDialogDefinition->GetName();
 			BindingParams.bSpawnable = false;
@@ -474,11 +498,14 @@ void FDialogBuilderEditor::CreateDialogTrackDefinition(UDialogDefinition* InDial
 			BindingParams.bAllowCustomBinding = true;
 			BindingParams.bSetupDefaults = true;
 			BindingParams.ReplacementGuid = InDialogDefinition->ID;
-		}
-		const FGuid ObjectBinding = FSequencerUtilities::CreateBinding(Sequencer.ToSharedRef(), *BoundActor, BindingParams);
+		}*/
 
+		
+		ObjectBinding = FSequencerUtilities::CreateBinding(Sequencer.ToSharedRef(), *BoundActor); // , BindingParams);
+		InDialogDefinition->ID = ObjectBinding;
 		if (ObjectBinding.IsValid())
 		{
+			//Sequencer->
 			UMovieSceneDialogTrack* DialogTrack = MovieScene->AddTrack<UMovieSceneDialogTrack>(ObjectBinding);
 			if (!DialogTrack)
 			{
@@ -490,7 +517,7 @@ void FDialogBuilderEditor::CreateDialogTrackDefinition(UDialogDefinition* InDial
 			DialogTrack->SetDisplayName(FText::FromString(InDialogDefinition->GetName()));
 			return;
 		}
-	}*/
+	}
 
 	// Fallback to master track
 	UMovieSceneDialogTrack* DialogTrack = MovieScene->AddTrack<UMovieSceneDialogTrack>();
@@ -513,7 +540,6 @@ void FDialogBuilderEditor::RemoveDialogTrackDefinition(UDialogDefinition* InDial
 	{
 		return;
 	}
-	
 
 	UMovieSceneTrack* TracksToRemove = FindDialogTrackForDefinition(MovieScene, InDialogDefinition);
 
@@ -523,6 +549,39 @@ void FDialogBuilderEditor::RemoveDialogTrackDefinition(UDialogDefinition* InDial
 	MovieScene->RemoveTrack(*TracksToRemove);
 
 	
+}
+
+void FDialogBuilderEditor::ResolveDialogBoundObjects()
+{
+	UMovieScene* MovieScene = EditingDialogSequence ? EditingDialogSequence->GetMovieScene() : nullptr;
+	if (!MovieScene) return;
+	TArray<UDialogDefinition*> DialogDefinitions;
+	DialogDefinitionActors.GenerateKeyArray(DialogDefinitions);
+
+	for (int32 i = 0; i < DialogDefinitions.Num(); i++)
+	{
+		UDialogDefinition* DialogDefinition = DialogDefinitions[i];
+		AActor* DialogActor = DialogDefinitionActors.FindRef(DialogDefinition).Get();
+
+		if (DialogDefinition && DialogActor)
+		{
+			FGuid ObjectBinding = DialogDefinition->ID;
+			FMovieSceneBinding* BoundDialogDefinition = MovieScene->FindBinding(ObjectBinding);
+			TArrayView<TWeakObjectPtr<>> BoundObjects = Sequencer->FindBoundObjects(ObjectBinding, Sequencer->GetRootTemplateID());
+
+			if (BoundDialogDefinition)
+			{
+				if (!BoundObjects.IsValidIndex(0))
+				{
+					EditingDialogSequence->UnbindInvalidObjects(DialogDefinition->ID, GetPreviewWorld());
+					FMovieSceneBindingProxy BindingProxy(DialogDefinition->ID, Sequencer->GetFocusedMovieSceneSequence());
+					TArray<AActor*> Actors;
+					Actors.Add(DialogActor);
+					FSequencerUtilities::ReplaceBindingWithActors(Sequencer.ToSharedRef(), Actors, BindingProxy);
+				}
+			}
+		}
+	}
 }
 
 void FDialogBuilderEditor::UpdateDialogDefinitions()
@@ -622,6 +681,10 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 			if (ExistingActor)
 			{
 				PreviewWorld->EditorDestroyActor(ExistingActor, false);
+				if (EditingDialogSequence)
+				{
+					EditingDialogSequence->UnbindInvalidObjects(DialogParticipant->ID, PreviewWorld);
+				}
 			}
 
 			DialogDefinitionActors.Remove(DialogParticipant);
@@ -675,6 +738,10 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 			if (ExistingActor)
 			{
 				PreviewWorld->EditorDestroyActor(ExistingActor, false);
+				if (EditingDialogSequence)
+				{
+					EditingDialogSequence->UnbindInvalidObjects(DialogProp->ID, PreviewWorld);
+				}
 			}
 			DialogDefinitionActors.Remove(DialogProp);
 			continue;
@@ -708,11 +775,18 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 	for (auto It = DialogDefinitionActors.CreateIterator(); It; ++It)
 	{
 		const UDialogDefinition* Key = It.Key();
-		if (!Key || (!DialogGraph->Participants.Contains(Key) && !DialogGraph->Props.Contains(Key)))
+		if (!Key) return;
+		bool bDefinitionNotFound = (!DialogGraph->Participants.Contains(Key) && !DialogGraph->Props.Contains(Key));
+
+		if (bDefinitionNotFound)
 		{
 			if (AActor* Actor = It.Value().Get())
 			{
 				PreviewWorld->EditorDestroyActor(Actor, false);
+				if (EditingDialogSequence)
+				{
+					EditingDialogSequence->UnbindInvalidObjects(Key->ID, PreviewWorld);
+				}
 			}
 			It.RemoveCurrent();
 		}
@@ -729,6 +803,11 @@ void FDialogBuilderEditor::DestroyDialogDefinitions()
 		if (AActor* Actor = Pair.Value.Get())
 		{
 			PreviewWorld->EditorDestroyActor(Actor, false);
+
+			if (EditingDialogSequence)
+			{
+				EditingDialogSequence->UnbindInvalidObjects(Pair.Key->ID, PreviewWorld);
+			}
 		}
 	}
 
@@ -1116,6 +1195,10 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 	{
 		return;
 	}
+
+	
+
+	
 
 	PlaybackContext = MakeShared<FDialogSequencePlaybackContext>(EditingDialogSequence);
 	PlaybackContext->SetDialogViewport(DialogViewportWidget);
@@ -2728,6 +2811,8 @@ void FDialogBuilderEditor::SetViewportWorldMode(EDialogViewportWorldMode NewMode
 		DialogViewportWidget->SetUseLevelWorld(ViewportWorldMode == EDialogViewportWorldMode::CurrentLevel);
 	}
 
+
+	
 	UpdateDialogDefinitions();
 
 }

@@ -332,6 +332,8 @@ public:
 	void CreateDialogTrackDefinition(UDialogDefinition* InDialogDefinition);
 	void RemoveDialogTrackDefinition(UDialogDefinition* InDialogDefinition);
 
+	void ResolveDialogBoundObjects();
+
 	//scene viewport
 	void SetViewportWorldMode(EDialogViewportWorldMode NewMode);
 	bool IsViewportWorldMode(EDialogViewportWorldMode Mode) const { return ViewportWorldMode == Mode; }

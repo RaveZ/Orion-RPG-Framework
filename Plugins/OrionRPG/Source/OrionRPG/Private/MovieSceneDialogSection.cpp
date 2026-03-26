@@ -27,6 +27,12 @@ UDialogBuilderGraph* UMovieSceneDialogSection::GetOwningDialogGraph() const
 	return nullptr;
 }
 
+void UMovieSceneDialogSection::RefreshDialogContent()
+{
+	UDialogBuilderGraph* DialogGraph = GetOwningDialogGraph();
+	DialogLine.SpeakerName = DialogGraph ? DialogGraph->GetParticipantName(DialogLine.SpeakerTag) : FText();
+}
+
 #if WITH_EDITOR
 void UMovieSceneDialogSection::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
@@ -35,8 +41,7 @@ void UMovieSceneDialogSection::PostEditChangeProperty(FPropertyChangedEvent& Pro
 	FName DialogLineProperty = FName("DialogLine");
 	if (DialogLineProperty == GET_MEMBER_NAME_CHECKED(UMovieSceneDialogSection, DialogLine))
 	{
-		UDialogBuilderGraph* DialogGraph = GetOwningDialogGraph();
-		DialogLine.SpeakerName = DialogGraph ? DialogGraph->GetParticipantName(DialogLine.SpeakerTag) : FText();
+		RefreshDialogContent();
 	}
 }
 #endif

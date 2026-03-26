@@ -39,5 +39,8 @@ private:
 	virtual void TearDown(FPersistentEvaluationData& PersistentData, IMovieScenePlayer& Player) const override;
 
 	UPROPERTY()
+	UMovieSceneDialogSection* DialogSection;
+
+	UPROPERTY()
 	FOrionDialogLine DialogLine;
 };
