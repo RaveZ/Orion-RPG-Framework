@@ -49,7 +49,7 @@ const UMovieSceneDialogTrack* UDialogSequence::FindDialogTrack() const
 void UDialogSequence::RefreshSequence()
 {
 	//Ensure Sequence has a dialog track
-	DialogTrack = GetOrCreateDialogTrack();
+	GetOrCreateDialogTrack();
 
 }
 

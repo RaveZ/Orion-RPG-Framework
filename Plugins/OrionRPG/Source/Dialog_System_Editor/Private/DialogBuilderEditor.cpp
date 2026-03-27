@@ -76,6 +76,10 @@
 #include "Bindings/MovieSceneReplaceableBinding.h"
 #include "Bindings/MovieSceneSpawnableActorBinding.h"
 #include "Bindings/MovieSceneReplaceableActorBinding.h"
+#include "MVVM/ViewModels/ObjectBindingModel.h"
+#include "MVVM/ViewModels/SequencerEditorViewModel.h"
+#include "MVVM/ViewModels/ViewModel.h"
+#include "MVVM/ViewModels/TrackModel.h"
 #include <Kismet2/KismetEditorUtilities.h>
 
 #define LOCTEXT_NAMESPACE "DialogBuilderEditor"
@@ -1101,6 +1105,91 @@ void FDialogBuilderEditor::ExtendSequencerToolbar(FName InToolMenuName)
 }
 
 
+
+static void TraverseViewModelChildren(const TSharedPtr<UE::Sequencer::FViewModel>& Node, TFunctionRef<void(const TSharedPtr<UE::Sequencer::FViewModel>&)> Visitor)
+{
+	if (!Node.IsValid())
+	{
+		return;
+	}
+
+	// FViewModel exposes children accessors in MVVM; prefer the direct children accessor.
+	// If your engine variant exposes a different API, inspect ViewModel.h for the correct methods.
+	for (const TSharedPtr<UE::Sequencer::FViewModel>& Child : Node->GetChildren())
+	{
+		if (!Child.IsValid())
+		{
+			continue;
+		}
+
+		Visitor(Child);
+		TraverseViewModelChildren(Child, Visitor);
+	}
+}
+
+static void ForcePinBindingInSequencer(TSharedRef<ISequencer> Sequencer, const FGuid& BindingToPin)
+{
+	using namespace UE::Sequencer;
+
+	TSharedPtr<FSequencerEditorViewModel> EditorViewModel = Sequencer->GetViewModel();
+	if (!EditorViewModel.IsValid())
+	{
+		return;
+	}
+
+	TSharedPtr<FViewModel> Root = EditorViewModel->GetRoot();
+	if (!Root.IsValid())
+	{
+		return;
+	}
+
+	TraverseViewModelChildren(Root, [&](const TSharedPtr<FViewModel>& VM)
+		{
+			// CastThis returns a raw pointer (not a TSharedPtr). Use that raw pointer safely.
+			if (FObjectBindingModel* ObjBinding = VM->CastThis<FObjectBindingModel>())
+			{
+				// ObjectBindingModel exposes the binding id by name GetObjectGuid() in recent engine versions.
+				// If your engine uses a different method name, replace accordingly after checking the header.
+				if (ObjBinding->GetObjectGuid() == BindingToPin)
+				{
+					ObjBinding->SetPinned(true);
+				}
+			}
+		});
+}
+
+static void ForcePinCameraCutTrackInSequencer(TSharedRef<ISequencer> Sequencer)
+{
+	using namespace UE::Sequencer;
+
+	TSharedPtr<FSequencerEditorViewModel> EditorViewModel = Sequencer->GetViewModel();
+	if (!EditorViewModel.IsValid())
+	{
+		return;
+	}
+
+	TSharedPtr<FViewModel> Root = EditorViewModel->GetRoot();
+	if (!Root.IsValid())
+	{
+		return;
+	}
+
+	TraverseViewModelChildren(Root, [&](const TSharedPtr<FViewModel>& VM)
+		{
+			// Cast to track model; CastThis returns raw pointer
+			if (UE::Sequencer::FTrackModel* TrackModel = VM->CastThis<UE::Sequencer::FTrackModel>())
+			{
+				if (UMovieSceneTrack* Underlying = TrackModel->GetTrack())
+				{
+					if (Underlying->IsA(UMovieSceneCameraCutTrack::StaticClass()))
+					{
+						TrackModel->SetPinned(true);
+					}
+				}
+			}
+		});
+}
+
 void FDialogBuilderEditor::OnSequencerReceivedFocus()
 {
 	if (!Sequencer.IsValid())
@@ -1109,6 +1198,7 @@ void FDialogBuilderEditor::OnSequencerReceivedFocus()
 	}
 
 	RefreshSequencerCameraLock();
+	//ForcePinCameraCutTrackInSequencer(Sequencer.ToSharedRef());
 	// For custom editor hosts, avoid LevelEditor integration path.
 	// Just ensure camera cuts are enabled for this sequencer instance.
 	/*Sequencer->SetPerspectiveViewportCameraCutEnabled(true);
