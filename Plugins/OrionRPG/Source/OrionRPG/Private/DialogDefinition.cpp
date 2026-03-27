@@ -2,6 +2,7 @@
 
 
 #include "DialogDefinition.h"
+#include "CineCameraActor.h"
 #include "Misc/Guid.h"
 
 
@@ -11,18 +12,28 @@ UDialogDefinition::UDialogDefinition()
 {
 }
 
+UDialogPivot::UDialogPivot()
+{
+	DisplayName = FText::FromString("Dialog Pivot");
+	ActorClass = AActor::StaticClass();	
+}
+
 
 UDialogParticipant::UDialogParticipant()
 {
-	ParticipantInfo.ParticipantSetup = EParticipantSetup::E_SpawnParticipant;
+	DisplayName = FText::FromString("Participant");
+	Tag = FGameplayTag::RequestGameplayTag(FName("Dialog.Participant"));
 }
 
 UDialogProp::UDialogProp()
 {
+	DisplayName = FText::FromString("Prop");
 }
 
 UDialogCamera::UDialogCamera()
 {
+	DisplayName = FText::FromString("Camera");
+	CameraClass = ACineCameraActor::StaticClass();
 }
 
 #undef LOCTEXT_NAMESPACE

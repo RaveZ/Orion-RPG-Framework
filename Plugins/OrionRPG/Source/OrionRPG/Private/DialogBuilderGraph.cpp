@@ -406,11 +406,11 @@ FText UDialogBuilderGraph::GetParticipantName(FGameplayTag ParticipantTag) const
 	{
 		return FText();
 	}
-	for (auto& Participant : Participants)
+	for (auto& Participant : ParticipantDefinitions)
 	{
-		if (Participant->ParticipantInfo.ParticipantTag == ParticipantTag)
+		if (Participant->Tag == ParticipantTag)
 		{
-			return Participant->ParticipantInfo.ParticipantName;
+			return Participant->DisplayName;
 		}
 	}
 

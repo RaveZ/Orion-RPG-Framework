@@ -136,10 +136,17 @@ public:
 
 	/*------------------------Dialog Sequence------------------------*/
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
-		TArray<TObjectPtr<class UDialogParticipant>> Participants;
+		TArray<TObjectPtr<class UDialogParticipant>> ParticipantDefinitions;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
-		TArray<TObjectPtr<class UDialogProp>> Props;
+		TArray<TObjectPtr<class UDialogProp>> PropDefinitions;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
+		TArray<TObjectPtr<class UDialogCamera>> CameraDefinitions;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
+		TObjectPtr<class UDialogPivot> Pivot;
+
 
 	/*------------------------End Dialog Sequence------------------------*/
 

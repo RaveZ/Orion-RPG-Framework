@@ -311,12 +311,13 @@ void FDialogBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& 
 void FDialogBuilderEditor::Tick(float DeltaTime)
 {
 	PreviewScene.UpdateCaptureContents();
-	if (bPendingDialogDefinitionsUpdate && !bIsUpdatingDialogDefinitions)
+	if (bPendingRefreshDialogEditor && !bIsRefreshDialogEditorInProgress)
 	{
-		bPendingDialogDefinitionsUpdate = false;
+		bPendingRefreshDialogEditor = false;
 
-		TGuardValue<bool> ReentryGuard(bIsUpdatingDialogDefinitions, true);
+		TGuardValue<bool> ReentryGuard(bIsRefreshDialogEditorInProgress, true);
 		UpdateDialogDefinitions();
+		if (EditingDialogSequence) EditingDialogSequence->RefreshSequence();
 	}
 
 	ResolveDialogBoundObjects();
@@ -347,7 +348,7 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 			PropertyWidget->ForceRefresh();
 		}
 
-		bPendingDialogDefinitionsUpdate = true;
+		bPendingRefreshDialogEditor = true;
 
 		FSlateApplication::Get().DismissAllMenus();
 	}
@@ -373,7 +374,7 @@ void FDialogBuilderEditor::PostRedo(bool bSuccess)
 			PropertyWidget->ForceRefresh();
 		}
 
-		bPendingDialogDefinitionsUpdate = true;
+		bPendingRefreshDialogEditor = true;
 
 		FSlateApplication::Get().DismissAllMenus();
 	}
@@ -447,6 +448,7 @@ void FDialogBuilderEditor::OnDialogDefinitionRemoved(UDialogDefinition* InDialog
 	if (Sequencer.IsValid())
 	{
 		Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
+		Sequencer->ForceEvaluate();
 	}
 }
 void FDialogBuilderEditor::CreateDialogTrackDefinition(UDialogDefinition* InDialogDefinition)
@@ -469,17 +471,6 @@ void FDialogBuilderEditor::CreateDialogTrackDefinition(UDialogDefinition* InDial
 
 	if (BoundDialogDefinition)
 	{
-		/*if (!BoundObjects.IsValidIndex(0))
-		{
-			EditingDialogSequence->UnbindInvalidObjects(InDialogDefinition->ID, GetPreviewWorld());
-			FMovieSceneBindingProxy BindingProxy(InDialogDefinition->ID, Sequencer->GetFocusedMovieSceneSequence());
-			TArray<AActor*> SelectedActors;
-			GEditor->GetSelectedActors()->GetSelectedObjects<AActor>(SelectedActors);
-			TArray<AActor*> Actors;
-			Actors.Add(BoundActor);
-			FSequencerUtilities::ReplaceBindingWithActors(Sequencer.ToSharedRef(), Actors, BindingProxy);
-		}
-		*/
 		return;
 	}
 
@@ -489,46 +480,11 @@ void FDialogBuilderEditor::CreateDialogTrackDefinition(UDialogDefinition* InDial
 
 	if (Sequencer.IsValid())
 	{
-
-		/*UE::Sequencer::FCreateBindingParams BindingParams;
-		{
-			BindingParams.BindingNameOverride = InDialogDefinition->GetName();
-			BindingParams.bSpawnable = false;
-			BindingParams.bReplaceable = false;
-			BindingParams.bAllowCustomBinding = true;
-			BindingParams.bSetupDefaults = true;
-			BindingParams.ReplacementGuid = InDialogDefinition->ID;
-		}*/
-
-		
-		ObjectBinding = FSequencerUtilities::CreateBinding(Sequencer.ToSharedRef(), *BoundActor); // , BindingParams);
+		ObjectBinding = FSequencerUtilities::CreateBinding(Sequencer.ToSharedRef(), *BoundActor); 
 		InDialogDefinition->ID = ObjectBinding;
-		if (ObjectBinding.IsValid())
-		{
-			//Sequencer->
-			UMovieSceneDialogTrack* DialogTrack = MovieScene->AddTrack<UMovieSceneDialogTrack>(ObjectBinding);
-			if (!DialogTrack)
-			{
-				return;
-			}
-
-			DialogTrack->Modify();
-			DialogTrack->DialogDefinition = InDialogDefinition;
-			DialogTrack->SetDisplayName(FText::FromString(InDialogDefinition->GetName()));
-			return;
-		}
-	}
-
-	// Fallback to master track
-	UMovieSceneDialogTrack* DialogTrack = MovieScene->AddTrack<UMovieSceneDialogTrack>();
-	if (!DialogTrack)
-	{
 		return;
 	}
 
-	DialogTrack->Modify();
-	DialogTrack->DialogDefinition = InDialogDefinition;
-	DialogTrack->SetDisplayName(FText::FromString(InDialogDefinition->GetName()));
 
 	
 }
@@ -541,14 +497,18 @@ void FDialogBuilderEditor::RemoveDialogTrackDefinition(UDialogDefinition* InDial
 		return;
 	}
 
-	UMovieSceneTrack* TracksToRemove = FindDialogTrackForDefinition(MovieScene, InDialogDefinition);
+	FGuid BindingGuid = InDialogDefinition->ID;
+	const FScopedTransaction Transaction(LOCTEXT("DeleteBinding", "Delete Sequence Binding"));
 
 
-	TracksToRemove->Modify();
 	MovieScene->Modify();
-	MovieScene->RemoveTrack(*TracksToRemove);
 
-	
+	MovieScene->RemovePossessable(BindingGuid);
+	if (EditingDialogSequence)
+	{
+		EditingDialogSequence->UnbindInvalidObjects(BindingGuid, GetPreviewWorld());
+	}
+
 }
 
 void FDialogBuilderEditor::ResolveDialogBoundObjects()
@@ -571,7 +531,7 @@ void FDialogBuilderEditor::ResolveDialogBoundObjects()
 
 			if (BoundDialogDefinition)
 			{
-				if (!BoundObjects.IsValidIndex(0))
+				if (!BoundObjects.Contains(DialogActor))
 				{
 					EditingDialogSequence->UnbindInvalidObjects(DialogDefinition->ID, GetPreviewWorld());
 					FMovieSceneBindingProxy BindingProxy(DialogDefinition->ID, Sequencer->GetFocusedMovieSceneSequence());
@@ -598,11 +558,17 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 	check(PreviewWorld);
 
 	AActor* PivotActor = SequencePivot.Get();
+	if (!DialogGraph->Pivot)
+	{
+		//TODO: Create pivot elsewhere, ensure pivot uobject valid for development purposes
+		DialogGraph->Pivot = NewObject<UDialogPivot>(DialogGraph, NAME_None, RF_Transactional);
+	}
+
 	if (!IsValid(PivotActor))
 	{
 		FActorSpawnParameters SpawnParams;
 		SpawnParams.Name = TEXT("DialogSequencePivot");
-		SpawnParams.ObjectFlags = RF_Transient | RF_TextExportTransient;
+		SpawnParams.ObjectFlags = RF_Transient | RF_Transactional;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
 		PivotActor = PreviewWorld->SpawnActor<AActor>(AActor::StaticClass(), FTransform::Identity, SpawnParams);
@@ -619,6 +585,7 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 			BillboardComponent->SetUsingAbsoluteScale(true);
 			BillboardComponent->bIsScreenSizeScaled = true;
 			BillboardComponent->bUseInEditorScaling = true;
+
 			BillboardComponent->ScreenSize = 0.0025f;
 			BillboardComponent->SpriteInfo.Category = TEXT("Dialog");
 			BillboardComponent->SpriteInfo.DisplayName = LOCTEXT("DialogSequencePivotSprite", "Dialog Sequence Pivot");
@@ -637,9 +604,10 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 			SequencePivot = PivotActor;
 		}
 	}
-	PivotActor->SetActorTransform(DialogGraph->SequencePivot);
+	
+	PivotActor->SetActorTransform(DialogGraph->Pivot->Transform);
 
-	if (!DialogPreviewCamera.IsValid())
+	/*if (!DialogPreviewCamera.IsValid())
 	{
 		ACineCameraActor* NewCamera = nullptr;
 		const FGuid CameraGuid = CreateDialogCamera(false, NewCamera);
@@ -655,128 +623,37 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 		{
 			ExistingCamera->AttachToActor(PivotActor, FAttachmentTransformRules::KeepRelativeTransform);
 		}
-	}
+	}*/
 
-	// Use DialogDefinitionActors as the single source of truth for spawned preview actors.
-	// This allows removing PreviewParticipantActors completely.
-	for (UDialogParticipant* DialogParticipant : DialogGraph->Participants)
+	for (UDialogProp* DialogProp : DialogGraph->PropDefinitions)
 	{
-		if (!DialogParticipant)
-		{
-			continue;
-		}
-
-		const FParticipantInfo& ParticipantInfo = DialogParticipant->ParticipantInfo;
-		const TSubclassOf<AActor> ParticipantClass = ParticipantInfo.ParticipantToSpawn;
-
-		AActor* ExistingActor = nullptr;
-		if (TWeakObjectPtr<AActor>* ExistingActorPtr = DialogDefinitionActors.Find(DialogParticipant))
-		{
-			ExistingActor = ExistingActorPtr->Get();
-		}
-
-		// If participant has no class assigned, destroy any existing preview actor and remove the track entry.
-		if (!ParticipantClass)
-		{
-			if (ExistingActor)
-			{
-				PreviewWorld->EditorDestroyActor(ExistingActor, false);
-				if (EditingDialogSequence)
-				{
-					EditingDialogSequence->UnbindInvalidObjects(DialogParticipant->ID, PreviewWorld);
-				}
-			}
-
-			DialogDefinitionActors.Remove(DialogParticipant);
-			continue;
-		}
-
-		// Reuse existing actor if it matches the desired class; otherwise respawn.
-		if (ExistingActor && ExistingActor->IsA(ParticipantClass))
-		{
-			ExistingActor->SetActorTransform(ParticipantInfo.ParticipantTransform);
-			CreateDialogTrackDefinition(DialogParticipant);
-			continue;
-		}
-
-		if (ExistingActor)
-		{
-			ExistingActor->Destroy();
-			ExistingActor = nullptr;
-		}
-
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		SpawnParams.bNoFail = true;
-		SpawnParams.ObjectFlags = RF_Transient | RF_Transactional;
-
-		AActor* NewActor = PreviewWorld->SpawnActor<AActor>(ParticipantClass, ParticipantInfo.ParticipantTransform, SpawnParams);
-		if (NewActor)
-		{
-			NewActor->AttachToActor(PivotActor, FAttachmentTransformRules::KeepRelativeTransform);
-			//NewActor->SetActorRelativeTransform(ParticipantInfo.ParticipantTransform);
-			DialogDefinitionActors.Add(DialogParticipant, NewActor);
-			CreateDialogTrackDefinition(DialogParticipant);
-		}
+		SpawnDialogDefinitionActor(DialogProp);
 	}
 
-	for (UDialogProp* DialogProp : DialogGraph->Props)
+
+	for (UDialogParticipant* DialogParticipant : DialogGraph->ParticipantDefinitions)
 	{
-		if (!DialogProp)
-		{
-			continue;
-		}
-		const FPropInfo& PropInfo = DialogProp->PropInfo;
-		const TSubclassOf<AActor> PropClass = PropInfo.ActorClass;
-		AActor* ExistingActor = nullptr;
-		if (TWeakObjectPtr<AActor>* ExistingActorPtr = DialogDefinitionActors.Find(DialogProp))
-		{
-			ExistingActor = ExistingActorPtr->Get();
-		}
-		if (!PropClass)
-		{
-			if (ExistingActor)
-			{
-				PreviewWorld->EditorDestroyActor(ExistingActor, false);
-				if (EditingDialogSequence)
-				{
-					EditingDialogSequence->UnbindInvalidObjects(DialogProp->ID, PreviewWorld);
-				}
-			}
-			DialogDefinitionActors.Remove(DialogProp);
-			continue;
-		}
-		if (ExistingActor && ExistingActor->IsA(PropClass))
-		{
-			ExistingActor->SetActorTransform(PropInfo.Transform);
-			CreateDialogTrackDefinition(DialogProp);
-			continue;
-		}
-		if (ExistingActor)
-		{
-			ExistingActor->Destroy();
-			ExistingActor = nullptr;
-		}
-		FActorSpawnParameters SpawnParams;
-		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		SpawnParams.bNoFail = true;
-		SpawnParams.ObjectFlags = RF_Transient | RF_Transactional;
-		AActor* NewActor = PreviewWorld->SpawnActor<AActor>(PropClass, PropInfo.Transform, SpawnParams);
-		if (NewActor)
-		{
-			NewActor->AttachToActor(PivotActor, FAttachmentTransformRules::KeepRelativeTransform);
-			NewActor->SetActorRelativeTransform(PropInfo.Transform);
-			DialogDefinitionActors.Add(DialogProp, NewActor);
-			CreateDialogTrackDefinition(DialogProp);
-		}
+		SpawnDialogDefinitionActor(DialogParticipant);
 	}
+
+	if (DialogGraph->CameraDefinitions.Num() == 0)
+	{
+		//TODO: Create camera elsewhere, ensure camera uobject valid for development purposes
+		DialogGraph->CameraDefinitions.Add(NewObject<UDialogCamera>(DialogGraph, NAME_None, RF_Transactional));
+	}
+
+	for (UDialogCamera* DialogCamera : DialogGraph->CameraDefinitions)
+	{
+		SpawnDialogDefinitionActor(DialogCamera);
+	}
+	
 
 	// Cleanup: remove entries for participants that no longer exist in the dialog graph.
 	for (auto It = DialogDefinitionActors.CreateIterator(); It; ++It)
 	{
 		const UDialogDefinition* Key = It.Key();
 		if (!Key) return;
-		bool bDefinitionNotFound = (!DialogGraph->Participants.Contains(Key) && !DialogGraph->Props.Contains(Key));
+		bool bDefinitionNotFound = (!DialogGraph->ParticipantDefinitions.Contains(Key) && !DialogGraph->PropDefinitions.Contains(Key) && !DialogGraph->CameraDefinitions.Contains(Key));
 
 		if (bDefinitionNotFound)
 		{
@@ -790,6 +667,70 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 			}
 			It.RemoveCurrent();
 		}
+	}
+}
+
+
+void FDialogBuilderEditor::SpawnDialogDefinitionActor(UDialogDefinition* InDialogDefinition)
+{
+	if (!InDialogDefinition)
+	{
+		return;
+	}
+
+	UWorld* PreviewWorld = GetPreviewWorld();
+	check(PreviewWorld);
+
+	const TSubclassOf<AActor> ParticipantClass = InDialogDefinition->GetActorClass();
+
+	AActor* ExistingActor = nullptr;
+	if (TWeakObjectPtr<AActor>* ExistingActorPtr = DialogDefinitionActors.Find(InDialogDefinition))
+	{
+		ExistingActor = ExistingActorPtr->Get();
+	}
+
+	// If participant has no class assigned, destroy any existing preview actor and remove the track entry.
+	if (!ParticipantClass)
+	{
+		if (ExistingActor)
+		{
+			PreviewWorld->EditorDestroyActor(ExistingActor, false);
+			if (EditingDialogSequence)
+			{
+				EditingDialogSequence->UnbindInvalidObjects(InDialogDefinition->ID, PreviewWorld);
+			}
+		}
+
+		DialogDefinitionActors.Remove(InDialogDefinition);
+		return;
+	}
+
+	// Reuse existing actor if it matches the desired class; otherwise respawn.
+	if (ExistingActor && ExistingActor->IsA(ParticipantClass))
+	{
+		ExistingActor->SetActorTransform(InDialogDefinition->Transform);
+		CreateDialogTrackDefinition(InDialogDefinition);
+		return;
+	}
+
+	if (ExistingActor)
+	{
+		ExistingActor->Destroy();
+		ExistingActor = nullptr;
+	}
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnParams.bNoFail = true;
+	SpawnParams.ObjectFlags = RF_Transient | RF_Transactional;
+
+	AActor* NewActor = PreviewWorld->SpawnActor<AActor>(ParticipantClass, InDialogDefinition->Transform, SpawnParams);
+	if (NewActor)
+	{
+		NewActor->AttachToActor(SequencePivot.Get(), FAttachmentTransformRules::KeepRelativeTransform);
+		//NewActor->SetActorRelativeTransform(ParticipantInfo.ParticipantTransform);
+		DialogDefinitionActors.Emplace(InDialogDefinition, NewActor);
+		CreateDialogTrackDefinition(InDialogDefinition);
 	}
 }
 
@@ -809,6 +750,7 @@ void FDialogBuilderEditor::DestroyDialogDefinitions()
 				EditingDialogSequence->UnbindInvalidObjects(Pair.Key->ID, PreviewWorld);
 			}
 		}
+
 	}
 
 	if (AActor* CameraActor = DialogPreviewCamera.Get())
@@ -819,6 +761,7 @@ void FDialogBuilderEditor::DestroyDialogDefinitions()
 	DialogPreviewCamera.Reset();
 	DialogDefinitionActors.Empty();
 }
+
 
 TArray<AActor*> FDialogBuilderEditor::GetDialogDefinitionActors() const
 {
@@ -1196,7 +1139,7 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		return;
 	}
 
-	
+	EditingDialogSequence->RefreshSequence();
 
 	
 
@@ -1379,6 +1322,7 @@ void FDialogBuilderEditor::RefreshSequencerCameraLock()
 	{
 		if (ViewportClient->IsLockedToCinematic())
 		{
+			DialogViewportWidget->ResetCameraSetting();
 			ViewportClient->SetCinematicActorLock(nullptr);
 			ViewportClient->UpdateViewForLockedActor();
 			ViewportClient->Invalidate();
@@ -2912,7 +2856,7 @@ void FDialogBuilderEditor::OnPackageMarkedDirty(UPackage* ModifiedPackage, bool 
 	}
 
 
-	bPendingDialogDefinitionsUpdate = true;
+	bPendingRefreshDialogEditor = true;
 }
 //Called when saving our file graph
 #if ENGINE_MAJOR_VERSION < 5

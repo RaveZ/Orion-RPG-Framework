@@ -322,6 +322,7 @@ public:
 	//DialogDefinitions
 	void UpdateDialogDefinitions();
 	void DestroyDialogDefinitions();
+	void SpawnDialogDefinitionActor(UDialogDefinition* InDialogDefinition);
 	TArray<AActor*> GetDialogDefinitionActors() const;
 	void SelectDialogDefinitionActor(UDialogDefinition* InDialogDefinition);
 	void SelectDialogDefinition(UDialogDefinition* InDialogDefinition);
@@ -493,8 +494,8 @@ protected:
 	FDelegateHandle SequencerMovieSceneDataChangedHandle;
 	TWeakObjectPtr<AActor> LastSequencerCameraCutActor;
 
-	bool bPendingDialogDefinitionsUpdate = false;
-	bool bIsUpdatingDialogDefinitions = false;
+	bool bPendingRefreshDialogEditor = false;
+	bool bIsRefreshDialogEditorInProgress = false;
 
 	/** MovieScene for displaying this dialog sequence in timeline. */
 	TObjectPtr<UDialogSequence> EditingDialogSequence = nullptr;

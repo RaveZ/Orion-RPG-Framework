@@ -15,17 +15,38 @@ class ORIONRPG_API UDialogDefinition : public UObject
 public:
 	UDialogDefinition();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialog")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayPriority = -1))
 	FGuid ID;
 
-	void RefreshID()
-	{
-		if (!HasAnyFlags(RF_ClassDefaultObject) && !ID.IsValid())
-		{
-			ID = FGuid::NewGuid();
-		}
-	}
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog Definition")
+	FGameplayTag Tag;
+
+	/** Your Participant Name*/
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog Definition")
+	FText DisplayName;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Definition")
+	FTransform Transform;
+
+public:
+	virtual TSubclassOf< class AActor> GetActorClass() const { return nullptr; }
+
 };
+
+/**Pivot for all dialog definition*/
+UCLASS(Blueprintable, BlueprintType)
+class ORIONRPG_API UDialogPivot : public UDialogDefinition
+{
+	GENERATED_BODY()
+public:
+	UDialogPivot();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayAfter = "DisplayName"))
+	TSubclassOf<class AActor> ActorClass;
+
+	virtual TSubclassOf< class AActor> GetActorClass() const { return ActorClass; }
+};
+
 
 UCLASS(Blueprintable, BlueprintType)
 class ORIONRPG_API UDialogParticipant : public UDialogDefinition
@@ -35,9 +56,11 @@ class ORIONRPG_API UDialogParticipant : public UDialogDefinition
 public:
 	UDialogParticipant();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog")
-		FParticipantInfo ParticipantInfo;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayAfter = "DisplayName"))
+	TSubclassOf<class APawn> PawnClass;
+
+	virtual TSubclassOf< class AActor> GetActorClass() const { return PawnClass; }
 };
 
 UCLASS(Blueprintable, BlueprintType)
@@ -48,9 +71,10 @@ class ORIONRPG_API UDialogProp : public UDialogDefinition
 public:
 	UDialogProp();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog")
-	FPropInfo PropInfo;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayAfter = "DisplayName"))
+	TSubclassOf<class AActor> PropClass;
 
+	virtual TSubclassOf< class AActor> GetActorClass() const { return PropClass; }
 };
 
 UCLASS(Blueprintable, BlueprintType)
@@ -61,6 +85,10 @@ class ORIONRPG_API UDialogCamera : public UDialogDefinition
 public:
 	UDialogCamera();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayAfter = "DisplayName"))
+	TSubclassOf<class AActor> CameraClass;
+
+	virtual TSubclassOf< class AActor> GetActorClass() const { return CameraClass; }
 
 };
 

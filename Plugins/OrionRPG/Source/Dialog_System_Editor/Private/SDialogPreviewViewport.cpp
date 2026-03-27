@@ -248,7 +248,7 @@ void SDialogPreviewViewport::OnActorUnlock()
 		if (CanGetCameraInformationFromActor(LockedActor))
 		{
 			// Reset the settings
-			DialogViewportClient->ViewFOV = DialogViewportClient->FOVAngle;
+			ResetCameraSetting();
 		}
 
 		DialogViewportClient->SetActorLock(nullptr);
@@ -604,6 +604,11 @@ bool SDialogPreviewViewport::CanToggleGameView() const
 bool SDialogPreviewViewport::IsInGameView() const
 {
 	return DialogViewportClient->IsInGameView();
+}
+
+void SDialogPreviewViewport::ResetCameraSetting()
+{
+	DialogViewportClient->ViewFOV = DialogViewportClient->FOVAngle;
 }
 
 void SDialogPreviewViewport::AddDialogOverlayWidget(const TSharedRef<SWidget>& InWidget)

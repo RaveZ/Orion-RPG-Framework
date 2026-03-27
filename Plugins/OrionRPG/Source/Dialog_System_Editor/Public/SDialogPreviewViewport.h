@@ -119,6 +119,11 @@ public:
 	 */
 	bool IsInGameView() const;
 
+	/**
+	 * Reset Camera setting after unlock actor
+	 */
+	void ResetCameraSetting();
+
 
 protected:
 

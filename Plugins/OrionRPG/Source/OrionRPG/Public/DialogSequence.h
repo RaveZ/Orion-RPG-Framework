@@ -24,8 +24,14 @@ public:
 	UMovieSceneDialogTrack* GetOrCreateDialogTrack();
 	const UMovieSceneDialogTrack* FindDialogTrack() const;
 
-	UPROPERTY(BlueprintReadOnly, Category = "DialogBuilderNode")
+	UPROPERTY(BlueprintReadOnly, Category = "Dialog Sequence")
 	TObjectPtr<UDialogBuilderGraph> OwningDialogGraph;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Dialog Sequence")
+	TObjectPtr<UMovieSceneDialogTrack> DialogTrack;
+
+public:
+	void RefreshSequence();
 
 #if WITH_EDITOR
 	//virtual ETrackSupport IsTrackSupportedImpl(TSubclassOf<class UMovieSceneTrack> InTrackClass) const override;

@@ -13,6 +13,8 @@
 UDialogSequence::UDialogSequence(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+
+	
 }
 
 UMovieSceneDialogTrack* UDialogSequence::GetOrCreateDialogTrack()
@@ -29,8 +31,9 @@ UMovieSceneDialogTrack* UDialogSequence::GetOrCreateDialogTrack()
 
 	Modify();
 	MovieScene->Modify();
-
-	return MovieScene->AddTrack<UMovieSceneDialogTrack>();
+	UMovieSceneDialogTrack* NewDialogTrack = MovieScene->AddTrack<UMovieSceneDialogTrack>();
+	NewDialogTrack->SetDisplayName(FText::FromString("Dialog"));
+	return NewDialogTrack;
 }
 
 const UMovieSceneDialogTrack* UDialogSequence::FindDialogTrack() const
@@ -41,6 +44,13 @@ const UMovieSceneDialogTrack* UDialogSequence::FindDialogTrack() const
 	}
 
 	return MovieScene->FindTrack<UMovieSceneDialogTrack>();
+}
+
+void UDialogSequence::RefreshSequence()
+{
+	//Ensure Sequence has a dialog track
+	DialogTrack = GetOrCreateDialogTrack();
+
 }
 
 

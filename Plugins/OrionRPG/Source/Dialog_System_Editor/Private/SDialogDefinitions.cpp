@@ -307,9 +307,9 @@ void SDialogDefinitions::CollectAllActions(FGraphActionListBuilderBase& OutAllAc
 	if (DialogSystemEditor.IsValid())
 	{
 		// Grab participants
-		for (int32 i = 0; i < DialogSystemObj->Participants.Num(); i++)
+		for (int32 i = 0; i < DialogSystemObj->ParticipantDefinitions.Num(); i++)
 		{
-			UDialogParticipant* DialogParticipant = DialogSystemObj->Participants[i];
+			UDialogParticipant* DialogParticipant = DialogSystemObj->ParticipantDefinitions[i];
 
 			if (!DialogParticipant) continue;
 
@@ -320,9 +320,9 @@ void SDialogDefinitions::CollectAllActions(FGraphActionListBuilderBase& OutAllAc
 		}
 
 		//Grab props
-		for (int32 i = 0; i < DialogSystemObj->Props.Num(); i++)
+		for (int32 i = 0; i < DialogSystemObj->PropDefinitions.Num(); i++)
 		{
-			UDialogProp* DialogProp = DialogSystemObj->Props[i];
+			UDialogProp* DialogProp = DialogSystemObj->PropDefinitions[i];
 			if (!DialogProp) continue;
 			TSharedPtr<FAssetSchemaAction_Prop> NeUbergraphAction = MakeShareable(new FAssetSchemaAction_Prop(FText::GetEmpty(), FText::GetEmpty(), FText::GetEmpty(), 2, DialogSectionID::PROPS));
 			NeUbergraphAction->FuncName = DialogProp->GetFName();
@@ -677,12 +677,12 @@ void SDialogDefinitions::OnDeleteEntry()
 			DialogEditorPtr.Pin()->OnDialogDefinitionRemoved(ParticipantAction->Participant);
 		}
 
-		DialogGraph->Participants.Remove(ParticipantAction->Participant);
+		DialogGraph->ParticipantDefinitions.Remove(ParticipantAction->Participant);
 	}
 
 	if (FAssetSchemaAction_Prop* PropAction = SelectionAsProp())
 	{
-		DialogGraph->Props.Remove(PropAction->Prop);
+		DialogGraph->PropDefinitions.Remove(PropAction->Prop);
 	}
 
 	Refresh();
@@ -749,7 +749,7 @@ void SDialogDefinitions::CreateNewParticipant()
 	DialogGraph->Modify();
 
 	UDialogParticipant* NewParticipant = NewObject<UDialogParticipant>(DialogGraph, NAME_None, RF_Transactional);
-	DialogGraph->Participants.Add(NewParticipant);
+	DialogGraph->ParticipantDefinitions.Add(NewParticipant);
 
 	if (DialogEditorPtr.IsValid())
 	{
@@ -765,7 +765,7 @@ void SDialogDefinitions::CreateNewProp()
 	if (DialogGraph)
 	{
 		UDialogProp* NewProp = NewObject<UDialogProp>(DialogGraph, NAME_None, RF_Transactional);
-		DialogGraph->Props.Add(NewProp);
+		DialogGraph->PropDefinitions.Add(NewProp);
 
 		DialogGraph->Modify();
 
