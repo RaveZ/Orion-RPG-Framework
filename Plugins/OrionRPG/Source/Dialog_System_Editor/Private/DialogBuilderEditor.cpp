@@ -478,14 +478,13 @@ void FDialogBuilderEditor::CreateDialogTrackDefinition(UDialogDefinition* InDial
 		return;
 	}
 
-	MovieScene->Modify();
 
 
 
 	if (Sequencer.IsValid())
 	{
-		ObjectBinding = FSequencerUtilities::CreateBinding(Sequencer.ToSharedRef(), *BoundActor); 
-		InDialogDefinition->ID = ObjectBinding;
+		InDialogDefinition->ID = FSequencerUtilities::CreateBinding(Sequencer.ToSharedRef(), *BoundActor);
+		MovieScene->Modify();
 		return;
 	}
 
@@ -685,7 +684,7 @@ void FDialogBuilderEditor::SpawnDialogDefinitionActor(UDialogDefinition* InDialo
 	UWorld* PreviewWorld = GetPreviewWorld();
 	check(PreviewWorld);
 
-	const TSubclassOf<AActor> ParticipantClass = InDialogDefinition->GetActorClass();
+	const TSubclassOf<AActor> ActorClass = InDialogDefinition->GetActorClass();
 
 	AActor* ExistingActor = nullptr;
 	if (TWeakObjectPtr<AActor>* ExistingActorPtr = DialogDefinitionActors.Find(InDialogDefinition))
@@ -694,7 +693,7 @@ void FDialogBuilderEditor::SpawnDialogDefinitionActor(UDialogDefinition* InDialo
 	}
 
 	// If participant has no class assigned, destroy any existing preview actor and remove the track entry.
-	if (!ParticipantClass)
+	if (!ActorClass)
 	{
 		if (ExistingActor)
 		{
@@ -710,7 +709,7 @@ void FDialogBuilderEditor::SpawnDialogDefinitionActor(UDialogDefinition* InDialo
 	}
 
 	// Reuse existing actor if it matches the desired class; otherwise respawn.
-	if (ExistingActor && ExistingActor->IsA(ParticipantClass))
+	if (ExistingActor && ExistingActor->IsA(ActorClass))
 	{
 		ExistingActor->SetActorTransform(InDialogDefinition->Transform);
 		CreateDialogTrackDefinition(InDialogDefinition);
@@ -728,7 +727,7 @@ void FDialogBuilderEditor::SpawnDialogDefinitionActor(UDialogDefinition* InDialo
 	SpawnParams.bNoFail = true;
 	SpawnParams.ObjectFlags = RF_Transient | RF_Transactional;
 
-	AActor* NewActor = PreviewWorld->SpawnActor<AActor>(ParticipantClass, InDialogDefinition->Transform, SpawnParams);
+	AActor* NewActor = PreviewWorld->SpawnActor<AActor>(ActorClass, InDialogDefinition->Transform, SpawnParams);
 	if (NewActor)
 	{
 		NewActor->AttachToActor(SequencePivot.Get(), FAttachmentTransformRules::KeepRelativeTransform);
