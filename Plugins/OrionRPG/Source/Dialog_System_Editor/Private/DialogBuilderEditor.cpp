@@ -216,7 +216,7 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 
 		if (DialogGraphToEdit != nullptr)
 		{
-			SetCurrentMode(DialogEditorMode);
+			SetCurrentMode(DialogSequencerMode);
 		}
 
 		if (EditingDialogGraph && EditingDialogGraph->bIsNewlyCreated)
@@ -1067,8 +1067,33 @@ void FDialogBuilderEditor::OpenDialogSequence(UDialogSequence* InDialogSequence)
 
 	EnsureSequencerCreated();
 
-	// Switch to sequencer mode and bring up the tabs
-	SetCurrentMode(DialogSequencerMode);
+
+
+	TSharedPtr<FTabManager> HostTabManager;
+	HostTabManager = GetToolkitHost()->GetTabManager();
+
+
+	const FTabId SequencerTabId(FDialogBuilderEditorTabs::DialogSequencerTabID);
+
+	if (HostTabManager.IsValid())
+	{
+		TSharedPtr<SDockTab> ExistingTab = HostTabManager->FindExistingLiveTab(SequencerTabId);
+		if (ExistingTab.IsValid())
+		{
+			ExistingTab->SetContent(Sequencer.IsValid() ? Sequencer->GetSequencerWidget() : SNullWidget::NullWidget);
+			ExistingTab->Invalidate(EInvalidateWidget::Layout);
+		}
+
+		HostTabManager->TryInvokeTab(SequencerTabId);
+	}
+
+	// Ensure the sequencer UI has the latest data
+	if (Sequencer.IsValid())
+	{
+		Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
+		Sequencer->ForceEvaluate();
+	}
+
 
 }
 

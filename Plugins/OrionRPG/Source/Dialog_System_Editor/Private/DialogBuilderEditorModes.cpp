@@ -35,13 +35,13 @@ FDialogBuilderEditorApplicationMode::FDialogBuilderEditorApplicationMode(TShared
 				->SetSizeCoefficient(0.2f)
 				->AddTab(FDialogBuilderEditorTabs::DialogDefinitionsID, ETabState::ClosedTab)
 			)
-			->Split
+			/*->Split
 			(
 				FTabManager::NewStack()
 				->SetSizeCoefficient(0.7f)
-				->AddTab("Document", ETabState::ClosedTab)
+				->AddTab("Document1", ETabState::ClosedTab)
 				->SetHideTabWell(true)
-			)
+			)*/
 			->Split
 			(
 				FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)
@@ -56,7 +56,7 @@ FDialogBuilderEditorApplicationMode::FDialogBuilderEditorApplicationMode(TShared
 		)
 	);
 	
-	InDialogBuilderEditor->GetToolbarBuilder()->AddModesToolbar(ToolbarExtender);
+	//InDialogBuilderEditor->GetToolbarBuilder()->AddModesToolbar(ToolbarExtender);
 	InDialogBuilderEditor->GetToolbarBuilder()->AddDialogSystemToolbar(ToolbarExtender);
 }
 
@@ -132,7 +132,7 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 					(
 						FTabManager::NewStack()
 						->SetSizeCoefficient(0.3f)
-						->SetHideTabWell(true)
+						->AddTab("Document", ETabState::ClosedTab)
 						->AddTab(FDialogBuilderEditorTabs::DialogSequencerTabID, ETabState::OpenedTab)
 					)
 				)
@@ -157,7 +157,7 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 			
 		);
 
-	InDialogBuilderEditor->GetToolbarBuilder()->AddModesToolbar(ToolbarExtender);
+	//InDialogBuilderEditor->GetToolbarBuilder()->AddModesToolbar(ToolbarExtender);
 }
 
 void FDialogBuilderSequencerApplicationMode::RegisterTabFactories(TSharedPtr<FTabManager> InTabManager)
@@ -179,6 +179,7 @@ void FDialogBuilderSequencerApplicationMode::PreDeactivateMode()
 
 	check(DialogEditor.IsValid());
 	TSharedPtr<FDialogBuilderEditor> DialogEditorPtr = DialogEditor.Pin();
+	DialogEditorPtr->SaveEditedObjectState();
 
 }
 
@@ -186,6 +187,7 @@ void FDialogBuilderSequencerApplicationMode::PostActivateMode()
 {
 	check(DialogEditor.IsValid());
 	TSharedPtr<FDialogBuilderEditor> DialogEditorPtr = DialogEditor.Pin();
+	DialogEditorPtr->RestoreDialogEditor();
 
 	FApplicationMode::PostActivateMode();
 }

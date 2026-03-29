@@ -85,11 +85,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration|Dialog")
 		FName DefaultBoneToTrack;
 
-	/*
-	* Pivot for all dialog definitions
-	*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration|Dialog Sequence")
-	FTransform SequencePivot;
 
 	/**Camera*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
