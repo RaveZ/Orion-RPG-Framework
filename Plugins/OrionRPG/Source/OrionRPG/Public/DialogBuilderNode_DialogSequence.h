@@ -12,6 +12,8 @@
 
 
 class UDialogSequence;
+class UDialogSet;
+ 
 UCLASS(Blueprintable, BlueprintType, AutoExpandCategories = "Shot Override")
 class ORIONRPG_API UDialogBuilderNode_DialogSequence : public UDialogBuilderNode
 {
@@ -39,6 +41,11 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sequence")
 	FMovieSceneSequencePlaybackSettings PlaybackSettings;
+
+	/**Dialog Set for this sequence node*/
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Override")
+	TObjectPtr<UDialogSet> DialogSet;
+
 
 #if WITH_EDITORONLY_DATA
 	TWeakPtr<ISequencer> Sequencer;

@@ -50,6 +50,7 @@ struct FDialogBuilderEditorTabs
 	// Tab identifiers
 	static const FName DialogDefinitionsID;
 	static const FName DialogBuilderPropertyID;
+	static const FName DialogsetSettingsID;
 	static const FName ViewportID;
 	static const FName DialogBuilderEditorSettingsID;
 	static const FName DialogSequencerTabID;
@@ -172,16 +173,19 @@ public:
 
 
 	//Tabs
-	/** Spawns the tab with the update graph inside */
+	/** Spawns the detail property tab */
 	TSharedRef<SWidget> SpawnProperties();
 
-	/** Spawns the dialog list tab*/
+	/** Spawns the dialog set settings tab */
+	TSharedRef<SWidget> SpawnDialogsetSettings();
+
+	/** Spawns the dialog definitions tab*/
 	TSharedRef<SWidget> SpawnDialogDefinitions();
 
-	/** Spawns the dialog list tab*/
+	/** Spawns the dialog sequencer tab*/
 	TSharedRef<SWidget> SpawnDialogSequencerTab();
 	
-	/** Spawns the dialog list tab*/
+	/** Spawns the dialog viewport tab*/
 	TSharedRef<SWidget> SpawnDialogSequencerViewportTab();
 
 
@@ -361,6 +365,7 @@ private:
 protected:
 	TSharedRef<SDockTab> SpawnTab_Viewport(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_Details(const FSpawnTabArgs& Args);
+	TSharedRef<SDockTab> SpawnTab_DialogsetSettings(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_EditorSettings(const FSpawnTabArgs& Args); 
 	TSharedRef<SDockTab> SpawnTab_DialogDefinitions(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_Sequencer(const FSpawnTabArgs& Args);
@@ -450,6 +455,8 @@ public:
 	TSharedPtr<FDocumentTracker> DocumentManager;
 	TSharedPtr<class IDetailsView> PropertyWidget;
 
+	TSharedPtr<class IDetailsView> DialogsetWidget;
+
 	/** Currently focused Editor Graph*/
 	UEdGraph* FocusedEdGraph;
 
@@ -485,6 +492,7 @@ protected:
 
 	
 	//sequencer
+	TWeakObjectPtr<class UDialogBuilderNode_DialogSequence> CurrentSequenceNode;
 	TSharedPtr<ISequencer> Sequencer;
 	TWeakObjectPtr<AActor> SequencePivot;
 	TMap<UDialogDefinition*, TWeakObjectPtr<AActor>> DialogDefinitionActors;

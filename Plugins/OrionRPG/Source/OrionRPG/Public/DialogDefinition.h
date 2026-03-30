@@ -21,7 +21,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog Definition")
 	FGameplayTag Tag;
 
-	/** Your Participant Name*/
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog Definition")
 	FText DisplayName;
 
@@ -30,6 +29,7 @@ public:
 
 public:
 	virtual TSubclassOf< class AActor> GetActorClass() const { return nullptr; }
+	FGuid GetOrCreateID();
 
 };
 

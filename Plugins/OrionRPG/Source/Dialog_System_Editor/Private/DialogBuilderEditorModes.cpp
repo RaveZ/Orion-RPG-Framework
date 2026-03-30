@@ -109,7 +109,7 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogSequencerViewportSummoner(InDialogBuilderEditor)));
 	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogEditorDetailsSummoner(InDialogBuilderEditor)));
 	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new DialogDefinitionsSummoner(InDialogBuilderEditor)));
-	
+	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogsetSettingsSummoner(InDialogBuilderEditor)));
 
 	TabLayout = FTabManager::NewLayout("Standalone_DialogSequencer_Layout_v2")
 		->AddArea
@@ -124,16 +124,17 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 					->Split
 					(
 						FTabManager::NewStack()
-						->SetSizeCoefficient(0.7f)
+						->SetSizeCoefficient(0.6f)
 						->SetHideTabWell(true)
 						->AddTab(FDialogBuilderEditorTabs::DialogSequencerViewportID, ETabState::OpenedTab)
 					)
 					->Split
 					(
 						FTabManager::NewStack()
-						->SetSizeCoefficient(0.3f)
+						->SetSizeCoefficient(0.4f)
 						->AddTab("Document", ETabState::ClosedTab)
 						->AddTab(FDialogBuilderEditorTabs::DialogSequencerTabID, ETabState::OpenedTab)
+						->AddTab(FDialogBuilderEditorTabs::DialogsetSettingsID, ETabState::OpenedTab)
 					)
 				)
 				->Split

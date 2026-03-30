@@ -12,6 +12,7 @@
 #include "DialogSequence.h"
 #include "Sections/MovieSceneCameraCutSection.h"
 #include "MovieSceneObjectBindingID.h"
+#include "DialogSet.h"
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderViewportClient.h"
 #include "DialogBuilderNode_DialogSequence.h"
@@ -88,13 +89,14 @@ const FName FDialogBuilderEditor::DialogEditorMode(TEXT("DialogEditor"));
 const FName FDialogBuilderEditor::DialogSequencerMode(TEXT("DialogSequencer"));
 
 FText FDialogBuilderEditor::DialogEditorModeText(LOCTEXT("DialogEditorMode", "Dialog Editor"));
-FText FDialogBuilderEditor::DialogSequencerModeText(LOCTEXT("DialogSequencerMode", "Dialog Sequencer"));
+FText FDialogBuilderEditor::DialogSequencerModeText(LOCTEXT("DialogSequencerMode", "Sequencer"));
 
 const FName FDialogBuilderEditorTabs::DialogDefinitionsID(TEXT("DialogDefinitions"));
 const FName FDialogBuilderEditorTabs::DialogBuilderPropertyID(TEXT("DialogBuilderProperty"));
 const FName FDialogBuilderEditorTabs::ViewportID(TEXT("Viewport"));
 const FName FDialogBuilderEditorTabs::DialogBuilderEditorSettingsID(TEXT("DialogBuilderEditorSettings"));
 const FName FDialogBuilderEditorTabs::DialogSequencerTabID(TEXT("DialogSequencerTab"));
+const FName FDialogBuilderEditorTabs::DialogsetSettingsID(TEXT("DialogsetSettingsID"));
 const FName FDialogBuilderEditorTabs::DialogSequencerViewportID(TEXT("DialogSequencerViewport"));
 
 const FName DialogBuilderEditorAppName = FName(TEXT("DialogBuilderEditorApp"));
@@ -283,6 +285,12 @@ void FDialogBuilderEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.EventGraph_16x"));
 
+
+	InTabManager->RegisterTabSpawner(FDialogBuilderEditorTabs::DialogsetSettingsID, FOnSpawnTab::CreateSP(this, &FDialogBuilderEditor::SpawnTab_DialogsetSettings))
+		.SetDisplayName(LOCTEXT("DetailsTab", "Dialogset settings"))
+		.SetGroup(WorkspaceMenuCategoryRef)
+		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
+
 	InTabManager->RegisterTabSpawner(FDialogBuilderEditorTabs::DialogBuilderPropertyID, FOnSpawnTab::CreateSP(this, &FDialogBuilderEditor::SpawnTab_Details))
 		.SetDisplayName(LOCTEXT("DetailsTab", "Property"))
 		.SetGroup(WorkspaceMenuCategoryRef)
@@ -307,6 +315,7 @@ void FDialogBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& 
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogDefinitionsID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::ViewportID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogBuilderPropertyID);
+	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogsetSettingsID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogBuilderEditorSettingsID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogSequencerTabID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogSequencerViewportID);
@@ -355,6 +364,7 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 		bPendingRefreshDialogEditor = true;
 
 		FSlateApplication::Get().DismissAllMenus();
+		UpdateDialogDefinitions();
 	}
 }
 
@@ -552,6 +562,11 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
 	check(DialogGraph);
 
+	if (!EditingDialogGraph && !CurrentSequenceNode.Get())
+	{
+		return;
+	}
+
 	if (!GetPreviewScene())
 	{
 		return;
@@ -561,12 +576,7 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 	check(PreviewWorld);
 
 	AActor* PivotActor = SequencePivot.Get();
-	if (!DialogGraph->Pivot)
-	{
-		//TODO: Create pivot elsewhere, ensure pivot uobject valid for development purposes
-		DialogGraph->Pivot = NewObject<UDialogPivot>(DialogGraph, NAME_None, RF_Transactional);
-	}
-
+	
 	if (!IsValid(PivotActor))
 	{
 		FActorSpawnParameters SpawnParams;
@@ -2143,6 +2153,20 @@ TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_Details(const FSpawnTabArgs&
 		];
 }
 
+TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_DialogsetSettings(const FSpawnTabArgs& Args)
+{
+	check(Args.GetTabId() == FDialogBuilderEditorTabs::DialogsetSettingsID);
+
+	return SNew(SDockTab)
+#if ENGINE_MAJOR_VERSION < 5
+		.Icon(FAppStyle::GetBrush("LevelEditor.Tabs.Details"))
+#endif // #if ENGINE_MAJOR_VERSION < 5
+		.Label(LOCTEXT("Details_Title", "Property"))
+		[
+			DialogsetWidget.ToSharedRef()
+		];
+}
+
 TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_EditorSettings(const FSpawnTabArgs& Args)
 {
 	check(Args.GetTabId() == FDialogBuilderEditorTabs::DialogBuilderEditorSettingsID);
@@ -2185,6 +2209,9 @@ void FDialogBuilderEditor::CreateInternalWidgets()
 	PropertyWidget->SetObject( EditingDialogGraph );
 	PropertyWidget->OnFinishedChangingProperties().AddSP(this, &FDialogBuilderEditor::OnFinishedChangingProperties);
 
+	DialogsetWidget = PropertyModule.CreateDetailView(DetailsViewArgs);
+
+
 
 	this->DialogDefinitionsWidget = SNew(SDialogDefinitions, SharedThis(this));
 
@@ -2207,6 +2234,18 @@ TSharedRef<SWidget> FDialogBuilderEditor::SpawnProperties()
 			PropertyWidget.ToSharedRef()
 		];
 		
+}
+
+TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogsetSettings()
+{
+	return
+		SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		.HAlign(HAlign_Fill)
+		[
+			DialogsetWidget.ToSharedRef()
+		];
 }
 
 TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogDefinitions()
@@ -2922,7 +2961,8 @@ void FDialogBuilderEditor::OnNodeDoubleClicked(UEdGraphNode* Node)
 
 	if(UDialogBuilderNode_DialogSequence* DialogSequenceNode = Cast<UDialogBuilderNode_DialogSequence>(DialogEdNode ? DialogEdNode->NodeInstance : nullptr))
 	{
-
+		CurrentSequenceNode = DialogSequenceNode;	
+		DialogsetWidget->SetObject(DialogSequenceNode->DialogSet);
 		OpenDialogSequence(DialogSequenceNode->DialogSequence);
 	}
 

@@ -12,6 +12,16 @@ UDialogDefinition::UDialogDefinition()
 {
 }
 
+FGuid UDialogDefinition::GetOrCreateID()
+{
+	if(!ID.IsValid())
+	{
+		ID = FGuid::NewGuid();
+	}
+
+	return ID;
+}
+
 UDialogPivot::UDialogPivot()
 {
 	DisplayName = FText::FromString("Dialog Pivot");

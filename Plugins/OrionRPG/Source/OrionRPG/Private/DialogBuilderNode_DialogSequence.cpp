@@ -13,10 +13,10 @@
 #include "LevelSequencePlayer.h"
 #include "LevelSequenceActor.h"
 #include "DialogComponent.h"
+#include "DialogSet.h"
 
 
 #define LOCTEXT_NAMESPACE "DialogSystemGraphNode"
-
 
 UDialogBuilderNode_DialogSequence::UDialogBuilderNode_DialogSequence()
 {
@@ -44,6 +44,11 @@ void UDialogBuilderNode_DialogSequence::EnsureSequenceCreated()
 		DialogSequence->OwningDialogGraph = GetOwningDialogGraph();	
 		DialogSequence->MovieScene = NewObject<UMovieScene>(DialogSequence, FName("DialogSequence"), RF_Transactional);
 		DialogSequence->MovieScene->SetDisplayRate(FFrameRate(30, 1));
+	}
+
+	if (!DialogSet)
+	{
+		DialogSet = NewObject<UDialogSet>(this, NAME_None, RF_Transactional);
 	}
 }
 

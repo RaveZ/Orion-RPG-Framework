@@ -45,6 +45,31 @@ FText FDialogEditorDetailsSummoner::GetTabToolTipText(const FWorkflowTabSpawnInf
 	return LOCTEXT("DialogEditorDetailsTabTooltip", "The dialog editor details tab allows editing of the properties of dialog nodes");
 }
 
+FDialogsetSettingsSummoner::FDialogsetSettingsSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr)
+	: FWorkflowTabFactory(FDialogBuilderEditorTabs::DialogsetSettingsID, InDialogEditorPtr)
+	, DialogEditorPtr(InDialogEditorPtr)
+{
+	TabLabel = LOCTEXT("DialogsetSettingsLabel", "Dialogset settings");
+	TabIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details");
+
+	bIsSingleton = true;
+
+	ViewMenuDescription = LOCTEXT("DialogsetSettingsView", "Dialogset settings");
+	ViewMenuTooltip = LOCTEXT("DialogsetSettings_ToolTip", "Show the dialogset settings");
+}
+
+TSharedRef<SWidget> FDialogsetSettingsSummoner::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
+{
+	check(DialogEditorPtr.IsValid());
+	return DialogEditorPtr.Pin()->SpawnDialogsetSettings();
+}
+
+FText FDialogsetSettingsSummoner::GetTabToolTipText(const FWorkflowTabSpawnInfo& Info) const
+{
+	return LOCTEXT("DialogsetSettingsTooltip", "The dialog editor details tab allows editing of the properties of dialogset");
+}
+
+
 DialogDefinitionsSummoner::DialogDefinitionsSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr)
 	: FWorkflowTabFactory(FDialogBuilderEditorTabs::DialogDefinitionsID, InDialogEditorPtr)
 	, DialogEditorPtr(InDialogEditorPtr)
@@ -73,12 +98,12 @@ FDialogSequencerTabSummoner::FDialogSequencerTabSummoner(TSharedPtr<class FDialo
 	: FWorkflowTabFactory(FDialogBuilderEditorTabs::DialogSequencerTabID, InDialogEditorPtr)
 	, DialogEditorPtr(InDialogEditorPtr)
 {
-	TabLabel = LOCTEXT("DialogSequencerTabLabel", "Dialog Sequencer");
+	TabLabel = LOCTEXT("DialogSequencerTabLabel", "Sequencer");
 	TabIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Cinematics");
 
 	bIsSingleton = true;
 
-	ViewMenuDescription = LOCTEXT("DialogSequencerTabView", "Dialog Sequencer");
+	ViewMenuDescription = LOCTEXT("DialogSequencerTabView", "Sequencer");
 	ViewMenuTooltip = LOCTEXT("DialogSequencerTabView_ToolTip", "Show the dialog sequencer tab");
 }
 
