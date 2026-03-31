@@ -7,6 +7,7 @@
 #include "DialogBuilderEdge.h"
 #include "DialogCameraShot.h"
 #include "DialogSequence.h"
+#include "DialogSet.h"
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderSetting.h"
 #include "LevelSequencePlayer.h"
@@ -66,7 +67,7 @@ bool UDialogBuilderGraph::Initialize(UDialogComponent* InitializingComp)
 		OwningController = InitializingComp->GetOwningController();
 		DialogComponent = InitializingComp;
 		VisitedNodeIDs.Empty();
-		CachedParticipants.Empty();
+		CachedActorMap.Empty();
 		NodeMap.Empty();
 		for (auto& Node : AllNodes)
 		{
@@ -86,18 +87,8 @@ bool UDialogBuilderGraph::Initialize(UDialogComponent* InitializingComp)
 			}
 		}
 
-		for (TPair<FGameplayTag, FParticipantInfo>& Pair : ParticipantInfoMap)
-		{
-			FGameplayTag ParticipantTag = Pair.Key;
-			FParticipantInfo& ParticipantInfo = Pair.Value;
-			if(AActor* ParticipantActor = RetrieveParticipant(ParticipantInfo))
-			{
-				CachedParticipants.Emplace(ParticipantInfo.ParticipantTag, ParticipantActor);
-				ParticipantInfo.InitialTransform = ParticipantActor->GetTransform();
-
-			}
-		}
-
+		InitializeDialogActors();
+		
 
 		if (OwningController && OwningController->IsLocalPlayerController())
 		{
@@ -109,10 +100,66 @@ bool UDialogBuilderGraph::Initialize(UDialogComponent* InitializingComp)
 		bAutoAdvanceDialogLine = bLockPlayerMovement ? bAutoAdvanceDialogLine : true; // if dialog is free movement, force auto advance dialog line -> true
 		bUseDialogCameraFade = bLockPlayerMovement ? bUseDialogCameraFade : false;
 		
-
-		
 	}
 	return false;
+}
+
+void UDialogBuilderGraph::InitializeDialogActors()
+{
+	UWorld* World = GetWorld();
+	check(World);
+
+	//retrieve partcipant
+	for (TPair<FGameplayTag, FParticipantInfo>& Pair : ParticipantInfoMap)
+	{
+		FGameplayTag ParticipantTag = Pair.Key;
+		FParticipantInfo& ParticipantInfo = Pair.Value;
+		if (AActor* ParticipantActor = RetrieveParticipant(ParticipantInfo))
+		{
+			CachedActorMap.Emplace(ParticipantInfo.ParticipantTag, ParticipantActor);
+			ParticipantInfo.InitialTransform = ParticipantActor->GetTransform();
+
+		}
+	}
+
+
+	if (!SequencePivot)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Name = TEXT("DialogSequencePivot");
+		SpawnParams.bNoFail = true;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		AActor* PivotActor = World->SpawnActor<AActor>(AActor::StaticClass(), FTransform::Identity, SpawnParams);
+		if (PivotActor)
+		{
+			USceneComponent* PivotRoot = NewObject<USceneComponent>(PivotActor, TEXT("PivotRoot"));
+			PivotActor->SetRootComponent(PivotRoot);
+			PivotRoot->RegisterComponent();
+
+
+			PivotActor->SetActorHiddenInGame(true);
+			PivotActor->SetActorEnableCollision(false);
+
+			SequencePivot = PivotActor;
+		}
+	}
+
+	for (auto& DialogSet : DialogSets)
+	{
+		if (DialogSet)
+		{
+			for (auto& Slot : DialogSet->Slots)
+			{
+				if (AActor* DialogActor = RetrieveActorFromSlot(Slot))
+				{
+					CachedActorMap.Emplace(Slot->ActorTag, DialogActor);
+				}
+
+
+			}
+		}
+	}
 }
 
 void UDialogBuilderGraph::Deinitialize()
@@ -175,8 +222,8 @@ void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialo
 		return;
 	CurrentLine = InDialogLine;
 
-	AActor* Speaker = CachedParticipants.FindRef(InDialogLine->ParticipantInfo.ParticipantTag);
-	AActor* Listener = CachedParticipants.FindRef(InDialogLine->ListenerTag);
+	AActor* Speaker = CachedActorMap.FindRef(InDialogLine->ParticipantInfo.ParticipantTag);
+	AActor* Listener = CachedActorMap.FindRef(InDialogLine->ListenerTag);
 
 	DetermineAdvanceDialogRule(InDialogLine);
 
@@ -222,7 +269,7 @@ void UDialogBuilderGraph::ApplyRotationSetting(UDialogBuilderNode_DialogLine* In
 	//Rotation Setting
 	if (Speaker && bAutoRotateParticipant)
 	{
-		for (auto& Participant : CachedParticipants)
+		for (auto& Participant : CachedActorMap)
 		{
 			if (Participant.Value && Participant.Value->IsValidLowLevel())
 			{
@@ -309,7 +356,7 @@ void UDialogBuilderGraph::BeginChoiceSelection(UDialogBuilderNode_DialogLine* In
 		return;
 
 	UDialogCameraShot* DialogShot = DefaultSelectingChoiceShot;
-	AActor* Speaker = CachedParticipants.FindRef(TAG_Dialog_Participant_Player);
+	AActor* Speaker = CachedActorMap.FindRef(TAG_Dialog_Participant_Player);
 	Speaker = Speaker ? Speaker : GetOwningPawn();
 
 	if (!DialogShot || InDialogLine->SelectingChoiceShotOverride)
@@ -577,7 +624,7 @@ void UDialogBuilderGraph::EndDialog()
 		if (bKeepPosition)
 		{
 			//Send all participants back to their initial transforms
-			for (const TPair<FGameplayTag, TObjectPtr<AActor>>& Pair : CachedParticipants)
+			for (const TPair<FGameplayTag, TObjectPtr<AActor>>& Pair : CachedActorMap)
 			{
 				FGameplayTag ParticipantTag = Pair.Key;
 				AActor* ParticipantActor = Pair.Value;
@@ -627,7 +674,7 @@ void UDialogBuilderGraph::EndDialog()
 	}
 
 	//destroy spawned participant
-	for (auto& SpawnedParticipant : SpawnedParticipants)
+	for (auto& SpawnedParticipant : SpawnedDialogActors)
 	{
 		SpawnedParticipant->Destroy();
 	}
@@ -744,7 +791,7 @@ AActor* UDialogBuilderGraph::RetrieveParticipant(const FParticipantInfo& Info)
 	//Retrieve other participant
 	if(!Info.ParticipantTag.GetTagName().IsNone())
 	{
-		if (!CachedParticipants.Contains(Info.ParticipantTag) && 
+		if (!CachedActorMap.Contains(Info.ParticipantTag) && 
 			IsValid(Info.ParticipantToSpawn) &&
 			Info.ParticipantSetup == EParticipantSetup::E_SpawnParticipant)
 		{
@@ -757,7 +804,7 @@ AActor* UDialogBuilderGraph::RetrieveParticipant(const FParticipantInfo& Info)
 			if (UWorld* World = GetWorld())
 			{
 				AActor* SpawnedParticipant = World->SpawnActor(Info.ParticipantToSpawn, &Info.ParticipantTransform, SpawnParams);
-				SpawnedParticipants.AddUnique(SpawnedParticipant);
+				SpawnedDialogActors.AddUnique(SpawnedParticipant);
 				return SpawnedParticipant;
 			}
 		}
@@ -788,6 +835,44 @@ AActor* UDialogBuilderGraph::RetrieveParticipant(const FParticipantInfo& Info)
 		}
 	}
 	
+
+
+	return nullptr;
+}
+
+
+AActor* UDialogBuilderGraph::RetrieveActorFromSlot(const UDialogSequenceSlot* InSlot)
+{
+	if (!InSlot)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("RetrieveParticipant: Slot is null for Dialog ID: %s"), *ID.ToString());
+		return nullptr;
+	}
+
+	UWorld* World = GetWorld();
+	UDialogDefinition* InDialogDefinition = InSlot->DialogDefinition;
+	const TSubclassOf<AActor> ActorClass = InDialogDefinition->GetActorClass();
+
+	if (TObjectPtr<AActor> ExistingActor = CachedActorMap.FindRef(InSlot->ActorTag))
+	{
+		return ExistingActor;
+	}
+
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.bNoFail = true;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnParams.Owner = OwningController;
+
+	AActor* NewActor = World->SpawnActor<AActor>(ActorClass, FTransform::Identity, SpawnParams);
+	if (NewActor)
+	{
+		// Preserve the actor's world transform when attaching to the pivot.
+		NewActor->AttachToActor(SequencePivot, FAttachmentTransformRules::KeepWorldTransform);
+		NewActor->SetActorRelativeTransform(InSlot->SlotPlacement);
+
+		SpawnedDialogActors.AddUnique(NewActor);
+	}
 
 
 	return nullptr;

@@ -50,12 +50,12 @@ void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker)
 
 	//Define Track & Focus rules
 	bool bTrackEnabled = CameraTrackingRule == EDialogCameraTrackingRule::E_Disabled ? false : true;
-	LookAtActor = CameraTrackingRule == EDialogCameraTrackingRule::E_OtherParticipant ? InDialog->CachedParticipants.FindRef(ParticipantToTrack).Get()
+	LookAtActor = CameraTrackingRule == EDialogCameraTrackingRule::E_OtherParticipant ? InDialog->CachedActorMap.FindRef(ParticipantToTrack).Get()
         : InSpeaker;
 	
 	FocusActor = CameraFocusRule == EDialogCameraFocusRule::E_TrackedActor ? LookAtActor
 		: CameraFocusRule == EDialogCameraFocusRule::E_Speaker ? InSpeaker 
-		: CameraFocusRule == EDialogCameraFocusRule::E_OtherParticipant ? InDialog->CachedParticipants.FindRef(ParticipantToFocus).Get()
+		: CameraFocusRule == EDialogCameraFocusRule::E_OtherParticipant ? InDialog->CachedActorMap.FindRef(ParticipantToFocus).Get()
 		: nullptr;
 
     // Optionally, focus/track the speaker if LookAtActor is valid

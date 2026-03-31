@@ -139,6 +139,10 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 		TArray<TObjectPtr<class UDialogCamera>> CameraDefinitions;
 
+	/**List of dialog set used in this graph*/
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Detail")
+		TArray<TObjectPtr<class UDialogSet>> DialogSets;
+
 
 	/*------------------------End Dialog Sequence------------------------*/
 
@@ -146,11 +150,16 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 		TMap<FGameplayTag, FParticipantInfo> ParticipantInfoMap;
 
+	/**Cached actor reference of this dialog, each actor has their own unique tags*/
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
-		TMap<FGameplayTag, TObjectPtr<AActor>> CachedParticipants;
+		TMap<FGameplayTag, TObjectPtr<AActor>> CachedActorMap;
+
+		/**List of spawned actor in dialog, this specific actors will be destroyed after dialog ended*/
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
+		TArray<TObjectPtr<AActor>> SpawnedDialogActors;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
-		TArray<TObjectPtr<AActor>> SpawnedParticipants;
+		TObjectPtr<AActor> SequencePivot;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 		TObjectPtr<UDialogBuilderNode> CurrentNode;
@@ -194,6 +203,7 @@ public:
 		FTimerHandle DialogLineTimer;
 public:
 	virtual bool Initialize(UDialogComponent* InitializingComp);
+	void InitializeDialogActors();
 	virtual void Deinitialize();
 	virtual UWorld* GetWorld() const override;
 
@@ -263,6 +273,7 @@ public:
 
 protected:
 	virtual AActor* RetrieveParticipant(const FParticipantInfo& Info);
+	virtual AActor* RetrieveActorFromSlot(const class UDialogSequenceSlot* InSlot);
 	
 #if WITH_EDITORONLY_DATA
 public:
