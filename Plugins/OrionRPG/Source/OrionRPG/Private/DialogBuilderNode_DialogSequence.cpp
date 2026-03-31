@@ -49,6 +49,7 @@ void UDialogBuilderNode_DialogSequence::EnsureSequenceCreated()
 	if (!DialogSet)
 	{
 		DialogSet = NewObject<UDialogSet>(this, NAME_None, RF_Transactional);
+		DialogSet->OwningDialogGraph = GetOwningDialogGraph();
 	}
 }
 

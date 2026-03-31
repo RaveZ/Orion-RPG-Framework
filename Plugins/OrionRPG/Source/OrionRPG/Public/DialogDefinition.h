@@ -18,14 +18,11 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayPriority = -1))
 	FGuid ID;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog Definition")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog Definition", meta=(Categories = "Dialog"))
 	FGameplayTag Tag;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog Definition")
 	FText DisplayName;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Definition")
-	FTransform Transform;
 
 public:
 	virtual TSubclassOf< class AActor> GetActorClass() const { return nullptr; }

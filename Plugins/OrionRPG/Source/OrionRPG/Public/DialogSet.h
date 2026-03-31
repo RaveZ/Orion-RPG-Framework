@@ -7,6 +7,8 @@
 #include "UObject/NoExportTypes.h"
 #include "DialogSet.generated.h"
 
+class UDialogBuilderGraph;
+
 UCLASS(Blueprintable, BlueprintType, EditInlineNew, AutoExpandCategories = "Detail")
 class ORIONRPG_API UDialogSequenceSlot : public UObject
 {
@@ -15,19 +17,27 @@ class ORIONRPG_API UDialogSequenceSlot : public UObject
 public:
 	UDialogSequenceSlot();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detail")
+	TObjectPtr<UDialogBuilderGraph> OwningDialogGraph;
+
 	//id used for binding reference in sequence
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detail", meta = (DisplayPriority = -1))
 	FGuid ID;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Detail")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detail")
 	TObjectPtr<class UDialogDefinition> DialogDefinition;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail", meta = (Categories = "Dialog"))
 	FGameplayTag ActorTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
 	FTransform SlotPlacement;
 
+#if WITH_EDITOR
+	//~ Begin UObject Interface
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	//~ End UObject Interface
+#endif
 };
 
 
@@ -40,6 +50,9 @@ class ORIONRPG_API UDialogSet : public UObject
 public:
 	UDialogSet();
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detail")
+	TObjectPtr<UDialogBuilderGraph> OwningDialogGraph;
+
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Detail")
 	FText Name;
 
@@ -49,5 +62,14 @@ public:
 	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Detail")
 	TArray<TObjectPtr<class UDialogSequenceSlot>> Slots;
 
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Detail")
+	TArray<TObjectPtr<class UDialogSequenceSlot>> CameraSlots;
+
+
+#if WITH_EDITOR
+	//~ Begin UObject Interface
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+	//~ End UObject Interface
+#endif
 };
 

@@ -365,24 +365,24 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 
 		if (DialogDefinition)
 		{
-			DialogEditor->SelectDialogDefinition(DialogDefinition);
+			DialogEditor->SetDetailsObject(DialogDefinition);
 		}
 		else
 		{
 			DialogEditor->SetDetailsObject(ObjectForDetails);
 
-			if (GEditor)
-			{
-				GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
-				if (ActorToSelect)
-				{
-					GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
-				}
-
-				GEditor->NoteSelectionChange();
-			}
+			
 		}
+		if (GEditor)
+		{
+			GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
+			if (ActorToSelect)
+			{
+				GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
+			}
 
+			GEditor->NoteSelectionChange();
+		}
 
 		
 
@@ -872,7 +872,7 @@ bool FDialogBuilderViewportClient::CanSelectActorFromHitProxy(HHitProxy* const I
 	}
 
 	// Replace `GetParticipantTrackActors()` with your actual editor accessor.
-	for (AActor* ParticipantActor : DialogEditor->GetDialogDefinitionActors())
+	for (AActor* ParticipantActor : DialogEditor->GetDialogSlotActors())
 	{
 		if (ParticipantActor == HitActor)
 		{
@@ -890,7 +890,7 @@ void FDialogBuilderViewportClient::InvalidatePreview(bool bResetCamera)
 
 	if (!DialogEditor.IsValid()) return;
 	
-	DialogEditor->UpdateDialogDefinitions();
+	DialogEditor->UpdateDialogSet();
 
 	Invalidate();
 
@@ -913,7 +913,7 @@ void FDialogBuilderViewportClient::ResetCamera()
 	FVector FocusLocation = FVector::ZeroVector;
 	FBox CombinedBounds(ForceInit);
 
-	for (AActor* DialogActor : DialogEditor->GetDialogDefinitionActors())
+	for (AActor* DialogActor : DialogEditor->GetDialogSlotActors())
 	{
 		if (IsValid(DialogActor))
 		{

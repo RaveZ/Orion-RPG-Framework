@@ -139,9 +139,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 		TArray<TObjectPtr<class UDialogCamera>> CameraDefinitions;
 
-	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
-		TObjectPtr<class UDialogPivot> Pivot;
-
 
 	/*------------------------End Dialog Sequence------------------------*/
 
@@ -254,6 +251,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 		virtual void EndDialog();
+
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	UDialogDefinition* GetDialogDefinitionByTag(FGameplayTag InTag);
 
 	UFUNCTION()
 	virtual void DetermineAdvanceDialogRule(class UDialogBuilderNode* InDialogNode);

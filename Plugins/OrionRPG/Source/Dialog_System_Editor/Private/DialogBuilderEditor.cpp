@@ -133,7 +133,7 @@ FDialogBuilderEditor::~FDialogBuilderEditor()
 
 	// Optional but recommended if you extend tool menus with this owner
 	UToolMenus::UnregisterOwner(this);
-	DestroyDialogDefinitions();
+	DestroyDialogSet();
 #if ENGINE_MAJOR_VERSION < 5
 	UPackage::PackageSavedEvent.Remove(OnPackageSavedDelegateHandle);
 #else // #if ENGINE_MAJOR_VERSION < 5
@@ -262,7 +262,7 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 	RegenerateMenusAndToolbars();
 	RebuildDialogBuilderGraphPages();
 
-	UpdateDialogDefinitions();
+	UpdateDialogSet();
 }
 
 
@@ -329,7 +329,7 @@ void FDialogBuilderEditor::Tick(float DeltaTime)
 		bPendingRefreshDialogEditor = false;
 
 		TGuardValue<bool> ReentryGuard(bIsRefreshDialogEditorInProgress, true);
-		UpdateDialogDefinitions();
+		UpdateDialogSet();
 		if (EditingDialogSequence) EditingDialogSequence->RefreshSequence();
 	}
 
@@ -364,7 +364,7 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 		bPendingRefreshDialogEditor = true;
 
 		FSlateApplication::Get().DismissAllMenus();
-		UpdateDialogDefinitions();
+		UpdateDialogSet();
 	}
 }
 
@@ -441,7 +441,7 @@ void FDialogBuilderEditor::OnDialogDefinitionAdded(UDialogDefinition* InDialogDe
 	}
 
 	EnsureSequencerCreated();
-	UpdateDialogDefinitions();
+	UpdateDialogSet();
 
 	if (Sequencer.IsValid())
 	{
@@ -465,21 +465,36 @@ void FDialogBuilderEditor::OnDialogDefinitionRemoved(UDialogDefinition* InDialog
 		Sequencer->ForceEvaluate();
 	}
 }
-void FDialogBuilderEditor::CreateDialogTrackDefinition(UDialogDefinition* InDialogDefinition)
+void FDialogBuilderEditor::CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot)
 {
+	if (!InSlot)
+	{
+		return;
+	}
+
+	if (!InSlot->DialogDefinition)
+	{
+		return;
+	}
+
+	UWorld* PreviewWorld = GetPreviewWorld();
+	check(PreviewWorld);
+
+	UDialogDefinition* InDialogDefinition = InSlot->DialogDefinition;
+
 	UMovieScene* MovieScene = EditingDialogSequence ? EditingDialogSequence->GetMovieScene() : nullptr;
 	if (!MovieScene || !InDialogDefinition)
 	{
 		return;
 	}
 
-	AActor* BoundActor = DialogDefinitionActors.FindRef(InDialogDefinition).Get();
+	AActor* BoundActor = DialogSlotActors.FindRef(InSlot).Get();
 
 	if(!BoundActor)
 	{
 		return;
 	}
-	FGuid ObjectBinding = InDialogDefinition->ID;
+	FGuid ObjectBinding = InSlot->ID;
 	FMovieSceneBinding* BoundDialogDefinition = MovieScene->FindBinding(ObjectBinding);
 	TArrayView<TWeakObjectPtr<>> BoundObjects = Sequencer->FindBoundObjects(ObjectBinding, Sequencer->GetRootTemplateID());
 
@@ -493,7 +508,7 @@ void FDialogBuilderEditor::CreateDialogTrackDefinition(UDialogDefinition* InDial
 
 	if (Sequencer.IsValid())
 	{
-		InDialogDefinition->ID = FSequencerUtilities::CreateBinding(Sequencer.ToSharedRef(), *BoundActor);
+		InSlot->ID = FSequencerUtilities::CreateBinding(Sequencer.ToSharedRef(), *BoundActor);
 		MovieScene->Modify();
 		return;
 	}
@@ -528,26 +543,26 @@ void FDialogBuilderEditor::ResolveDialogBoundObjects()
 {
 	UMovieScene* MovieScene = EditingDialogSequence ? EditingDialogSequence->GetMovieScene() : nullptr;
 	if (!MovieScene) return;
-	TArray<UDialogDefinition*> DialogDefinitions;
-	DialogDefinitionActors.GenerateKeyArray(DialogDefinitions);
+	TArray<UDialogSequenceSlot*> DialogSlots;
+	DialogSlotActors.GenerateKeyArray(DialogSlots);
 
-	for (int32 i = 0; i < DialogDefinitions.Num(); i++)
+	for (int32 i = 0; i < DialogSlots.Num(); i++)
 	{
-		UDialogDefinition* DialogDefinition = DialogDefinitions[i];
-		AActor* DialogActor = DialogDefinitionActors.FindRef(DialogDefinition).Get();
+		UDialogSequenceSlot* DialogSlot = DialogSlots[i];
+		AActor* DialogActor = DialogSlotActors.FindRef(DialogSlot).Get();
 
-		if (DialogDefinition && DialogActor)
+		if (DialogSlot && DialogActor)
 		{
-			FGuid ObjectBinding = DialogDefinition->ID;
-			FMovieSceneBinding* BoundDialogDefinition = MovieScene->FindBinding(ObjectBinding);
+			FGuid ObjectBinding = DialogSlot->ID;
+			FMovieSceneBinding* BoundDialogSlot = MovieScene->FindBinding(ObjectBinding);
 			TArrayView<TWeakObjectPtr<>> BoundObjects = Sequencer->FindBoundObjects(ObjectBinding, Sequencer->GetRootTemplateID());
 
-			if (BoundDialogDefinition)
+			if (BoundDialogSlot)
 			{
 				if (!BoundObjects.Contains(DialogActor))
 				{
-					EditingDialogSequence->UnbindInvalidObjects(DialogDefinition->ID, GetPreviewWorld());
-					FMovieSceneBindingProxy BindingProxy(DialogDefinition->ID, Sequencer->GetFocusedMovieSceneSequence());
+					EditingDialogSequence->UnbindInvalidObjects(DialogSlot->ID, GetPreviewWorld());
+					FMovieSceneBindingProxy BindingProxy(DialogSlot->ID, Sequencer->GetFocusedMovieSceneSequence());
 					TArray<AActor*> Actors;
 					Actors.Add(DialogActor);
 					FSequencerUtilities::ReplaceBindingWithActors(Sequencer.ToSharedRef(), Actors, BindingProxy);
@@ -557,15 +572,12 @@ void FDialogBuilderEditor::ResolveDialogBoundObjects()
 	}
 }
 
-void FDialogBuilderEditor::UpdateDialogDefinitions()
+void FDialogBuilderEditor::UpdateDialogSet()
 {
 	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
 	check(DialogGraph);
 
-	if (!EditingDialogGraph && !CurrentSequenceNode.Get())
-	{
-		return;
-	}
+	
 
 	if (!GetPreviewScene())
 	{
@@ -618,27 +630,33 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 		}
 	}
 	
-	PivotActor->SetActorTransform(DialogGraph->Pivot->Transform);
+	if (!EditingDialogGraph || !CurrentSequenceNode.IsValid()) return;
 
-	/*if (!DialogPreviewCamera.IsValid())
+	UDialogSet* DialogSet = CurrentSequenceNode.Get()->DialogSet;
+	if (!DialogSet)
 	{
-		ACineCameraActor* NewCamera = nullptr;
-		const FGuid CameraGuid = CreateDialogCamera(false, NewCamera);
-		if (CameraGuid.IsValid() && NewCamera)
-		{
-			NewCamera->AttachToActor(PivotActor, FAttachmentTransformRules::KeepRelativeTransform);
-			DialogPreviewCamera = NewCamera;
-		}
+		return;
 	}
-	else if (AActor* ExistingCamera = DialogPreviewCamera.Get())
-	{
-		if (ExistingCamera->GetAttachParentActor() != PivotActor)
-		{
-			ExistingCamera->AttachToActor(PivotActor, FAttachmentTransformRules::KeepRelativeTransform);
-		}
-	}*/
 
-	for (UDialogProp* DialogProp : DialogGraph->PropDefinitions)
+	PivotActor->SetActorTransform(DialogSet->PlacementTransform);
+
+	for(auto& DialogSlot : DialogSet->Slots)
+	{
+		SpawnDialogSlotActor(DialogSlot);
+	}
+
+	if (DialogSet->CameraSlots.Num() == 0)
+	{
+		UDialogSequenceSlot* NewCameraSlot = NewObject<UDialogSequenceSlot>(DialogGraph, NAME_None, RF_Transactional);
+		NewCameraSlot->DialogDefinition = NewObject<UDialogCamera>(DialogGraph, NAME_None, RF_Transactional);
+		DialogSet->CameraSlots.Add(NewCameraSlot);
+
+	}
+	for (auto& DialogSlot : DialogSet->CameraSlots)
+	{
+		SpawnDialogSlotActor(DialogSlot);
+	}
+	/*for (UDialogProp* DialogProp : DialogGraph->PropDefinitions)
 	{
 		SpawnDialogDefinitionActor(DialogProp);
 	}
@@ -658,17 +676,17 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 	for (UDialogCamera* DialogCamera : DialogGraph->CameraDefinitions)
 	{
 		SpawnDialogDefinitionActor(DialogCamera);
-	}
+	}*/
 	
 
 	// Cleanup: remove entries for participants that no longer exist in the dialog graph.
-	for (auto It = DialogDefinitionActors.CreateIterator(); It; ++It)
+	for (auto It = DialogSlotActors.CreateIterator(); It; ++It)
 	{
-		const UDialogDefinition* Key = It.Key();
+		const UDialogSequenceSlot* Key = It.Key();
 		if (!Key) return;
-		bool bDefinitionNotFound = (!DialogGraph->ParticipantDefinitions.Contains(Key) && !DialogGraph->PropDefinitions.Contains(Key) && !DialogGraph->CameraDefinitions.Contains(Key));
+		bool bSlotNotFound = (!DialogSet->Slots.Contains(Key) && !DialogSet->CameraSlots.Contains(Key));
 
-		if (bDefinitionNotFound)
+		if (bSlotNotFound)
 		{
 			if (AActor* Actor = It.Value().Get())
 			{
@@ -684,9 +702,14 @@ void FDialogBuilderEditor::UpdateDialogDefinitions()
 }
 
 
-void FDialogBuilderEditor::SpawnDialogDefinitionActor(UDialogDefinition* InDialogDefinition)
+void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot)
 {
-	if (!InDialogDefinition)
+	if (!InSlot)
+	{
+		return;
+	}
+
+	if (!InSlot->DialogDefinition)
 	{
 		return;
 	}
@@ -694,10 +717,11 @@ void FDialogBuilderEditor::SpawnDialogDefinitionActor(UDialogDefinition* InDialo
 	UWorld* PreviewWorld = GetPreviewWorld();
 	check(PreviewWorld);
 
+	UDialogDefinition* InDialogDefinition = InSlot->DialogDefinition;
 	const TSubclassOf<AActor> ActorClass = InDialogDefinition->GetActorClass();
 
 	AActor* ExistingActor = nullptr;
-	if (TWeakObjectPtr<AActor>* ExistingActorPtr = DialogDefinitionActors.Find(InDialogDefinition))
+	if (TWeakObjectPtr<AActor>* ExistingActorPtr = DialogSlotActors.Find(InSlot))
 	{
 		ExistingActor = ExistingActorPtr->Get();
 	}
@@ -714,15 +738,16 @@ void FDialogBuilderEditor::SpawnDialogDefinitionActor(UDialogDefinition* InDialo
 			}
 		}
 
-		DialogDefinitionActors.Remove(InDialogDefinition);
+		DialogSlotActors.Remove(InSlot);
 		return;
 	}
 
 	// Reuse existing actor if it matches the desired class; otherwise respawn.
 	if (ExistingActor && ExistingActor->IsA(ActorClass))
 	{
-		ExistingActor->SetActorTransform(InDialogDefinition->Transform);
-		CreateDialogTrackDefinition(InDialogDefinition);
+		ExistingActor->SetActorRelativeTransform(InSlot->SlotPlacement);
+		
+		CreateDialogTrackFromSlot(InSlot);
 		return;
 	}
 
@@ -737,22 +762,23 @@ void FDialogBuilderEditor::SpawnDialogDefinitionActor(UDialogDefinition* InDialo
 	SpawnParams.bNoFail = true;
 	SpawnParams.ObjectFlags = RF_Transient | RF_Transactional;
 
-	AActor* NewActor = PreviewWorld->SpawnActor<AActor>(ActorClass, InDialogDefinition->Transform, SpawnParams);
+	AActor* NewActor = PreviewWorld->SpawnActor<AActor>(ActorClass, FTransform::Identity, SpawnParams);
 	if (NewActor)
 	{
-		NewActor->AttachToActor(SequencePivot.Get(), FAttachmentTransformRules::KeepRelativeTransform);
-		//NewActor->SetActorRelativeTransform(ParticipantInfo.ParticipantTransform);
-		DialogDefinitionActors.Emplace(InDialogDefinition, NewActor);
-		CreateDialogTrackDefinition(InDialogDefinition);
+		// Preserve the actor's world transform when attaching to the pivot.
+		NewActor->AttachToActor(SequencePivot.Get(), FAttachmentTransformRules::KeepWorldTransform);
+		NewActor->SetActorRelativeTransform(InSlot->SlotPlacement);
+		DialogSlotActors.Emplace(InSlot, NewActor);
+		CreateDialogTrackFromSlot(InSlot);
 	}
 }
 
-void FDialogBuilderEditor::DestroyDialogDefinitions()
+void FDialogBuilderEditor::DestroyDialogSet()
 {
 	UWorld* PreviewWorld = GetPreviewWorld();
 	check(PreviewWorld);
 
-	for (auto& Pair : DialogDefinitionActors)
+	for (auto& Pair : DialogSlotActors)
 	{
 		if (AActor* Actor = Pair.Value.Get())
 		{
@@ -772,16 +798,16 @@ void FDialogBuilderEditor::DestroyDialogDefinitions()
 	}
 
 	DialogPreviewCamera.Reset();
-	DialogDefinitionActors.Empty();
+	DialogSlotActors.Empty();
 }
 
 
-TArray<AActor*> FDialogBuilderEditor::GetDialogDefinitionActors() const
+TArray<AActor*> FDialogBuilderEditor::GetDialogSlotActors() const
 {
 	TArray<AActor*> Result;
-	Result.Reserve(DialogDefinitionActors.Num());
+	Result.Reserve(DialogSlotActors.Num());
 
-	for (const TPair<UDialogDefinition*, TWeakObjectPtr<AActor>>& Pair : DialogDefinitionActors)
+	for (const TPair<UDialogSequenceSlot*, TWeakObjectPtr<AActor>>& Pair : DialogSlotActors)
 	{
 		if (AActor* Actor = Pair.Value.Get())
 		{
@@ -798,7 +824,19 @@ void FDialogBuilderEditor::SelectDialogDefinitionActor(UDialogDefinition* InDial
 	const bool bDeselectBSPSurfs = true;
 	const bool bWarnAboutManyActors = false;
 
-	AActor* ActorToSelect = DialogDefinitionActors.FindRef(InDialogDefinition).Get();
+	AActor* ActorToSelect = nullptr;
+	for (const TPair<UDialogSequenceSlot*, TWeakObjectPtr<AActor>>& Pair : DialogSlotActors)
+	{
+		if (UDialogSequenceSlot* Slot = Pair.Key)
+		{
+			if (Slot->DialogDefinition == InDialogDefinition)
+			{
+				ActorToSelect = Pair.Value.Get();
+				break;
+			}
+		}
+	}
+
 	if (GEditor)
 	{
 		GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
@@ -841,16 +879,27 @@ void FDialogBuilderEditor::SelectDialogDefinition(UDialogDefinition* InDialogDef
 
 UDialogDefinition* FDialogBuilderEditor::FindDialogDefinitionByActor(const AActor* InActor) const
 {
-	if (!InActor)
+	if (!InActor || !CurrentSequenceNode.IsValid())
 	{
 		return nullptr;
 	}
 
-	for (const TPair<UDialogDefinition*, TWeakObjectPtr<AActor>>& Pair : DialogDefinitionActors)
+	UDialogSet* DialogSet = CurrentSequenceNode.Get()->DialogSet;
+	if (!DialogSet)
 	{
-		if (Pair.Key && Pair.Value.IsValid() && Pair.Value.Get() == InActor)
+		return nullptr;
+	}
+
+
+	for (auto& Slot : DialogSet->Slots)
+	{
+		if (Slot)
 		{
-			return Pair.Key;
+			AActor* Actor = DialogSlotActors.FindRef(Slot).Get();
+			if(Actor == InActor)
+			{
+				return Slot->DialogDefinition;
+			}
 		}
 	}
 
@@ -1529,48 +1578,11 @@ FGuid FDialogBuilderEditor::CreateDialogCamera(const bool bSpawnable, ACineCamer
 	}
 
 
-	//OutActor->SetActorLocation(GCurrentLevelEditingViewportClient->GetViewLocation(), false);
-	//OutActor->SetActorRotation(GCurrentLevelEditingViewportClient->GetViewRotation());
-
 	OutActor->SetActorLocation(FVector::ZeroVector, false);
 	OutActor->SetActorRotation(FRotator::ZeroRotator);
 	FActorLabelUtilities::SetActorLabelUnique(OutActor, ACineCameraActor::StaticClass()->GetName());
 
 	CameraGuid = FSequencerUtilities::CreateBinding(Sequencer.ToSharedRef(), *OutActor);
-
-	/*TSubclassOf<UMovieSceneCustomBinding> CustomBindingClass = bSpawnable
-		? UMovieSceneSpawnableActorBinding::StaticClass()
-		: UMovieSceneReplaceableActorBinding::StaticClass();
-
-	const FMovieSceneBindingReferences* BindingReferences = Sequence->GetBindingReferences();
-	if (BindingReferences)
-	{
-		for (const FMovieSceneBindingReference& Reference : BindingReferences->GetReferences(CameraGuid))
-		{
-			for (const TSubclassOf<UMovieSceneCustomBinding>& SupportedCustomBindingType : Sequencer->GetSupportedCustomBindingTypes())
-			{
-				if (SupportedCustomBindingType
-					&& SupportedCustomBindingType->IsChildOf(CustomBindingClass)
-					&& SupportedCustomBindingType->GetDefaultObject<UMovieSceneCustomBinding>()->SupportsConversionFromBinding(Reference, OutActor))
-				{
-					FMovieScenePossessable* NewPossessable = FSequencerUtilities::ConvertToCustomBinding(Sequencer.ToSharedRef(), CameraGuid, CustomBindingClass);
-					if (NewPossessable)
-					{
-						for (TWeakObjectPtr<> WeakObject : Sequencer->FindBoundObjects(NewPossessable->GetGuid(), Sequencer->GetFocusedTemplateID()))
-						{
-							if (ACineCameraActor* SpawnedActor = Cast<ACineCameraActor>(WeakObject.Get()))
-							{
-								OutActor = SpawnedActor;
-							}
-						}
-
-						CameraGuid = NewPossessable->GetGuid();
-					}
-					break;
-				}
-			}
-		}
-	}*/
 
 	if (!CameraGuid.IsValid())
 	{
@@ -2901,7 +2913,7 @@ void FDialogBuilderEditor::SetViewportWorldMode(EDialogViewportWorldMode NewMode
 
 	ViewportWorldMode = NewMode;
 
-	DestroyDialogDefinitions();
+	DestroyDialogSet();
 
 	if (DialogViewportWidget.IsValid())
 	{
@@ -2910,7 +2922,7 @@ void FDialogBuilderEditor::SetViewportWorldMode(EDialogViewportWorldMode NewMode
 
 
 	
-	UpdateDialogDefinitions();
+	UpdateDialogSet();
 
 }
 
@@ -2947,7 +2959,7 @@ void FDialogBuilderEditor::OnSelectedNodesChanged(const TSet<class UObject*>& Ne
 		else
 		{
 			PropertyWidget->SetObjects(Selection);
-			}
+		}
 	}
 	else
 	{
@@ -2961,9 +2973,15 @@ void FDialogBuilderEditor::OnNodeDoubleClicked(UEdGraphNode* Node)
 
 	if(UDialogBuilderNode_DialogSequence* DialogSequenceNode = Cast<UDialogBuilderNode_DialogSequence>(DialogEdNode ? DialogEdNode->NodeInstance : nullptr))
 	{
+		if(CurrentSequenceNode == DialogSequenceNode)
+		{
+			return;
+		}
+		DestroyDialogSet();
 		CurrentSequenceNode = DialogSequenceNode;	
 		DialogsetWidget->SetObject(DialogSequenceNode->DialogSet);
 		OpenDialogSequence(DialogSequenceNode->DialogSequence);
+		UpdateDialogSet();
 	}
 
 	

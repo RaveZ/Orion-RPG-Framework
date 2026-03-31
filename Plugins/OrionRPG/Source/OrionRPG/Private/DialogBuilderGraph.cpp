@@ -637,6 +637,32 @@ void UDialogBuilderGraph::EndDialog()
 	GetWorld()->GetTimerManager().ClearTimer(DialogLineTimer);
 }
 
+UDialogDefinition* UDialogBuilderGraph::GetDialogDefinitionByTag(FGameplayTag InTag)
+{
+	// Search ParticipantDefinitions
+	for (auto&  Participant : ParticipantDefinitions)
+	{
+		if (!Participant) continue;
+		// Matches tag?
+		if (Participant->Tag == InTag)
+		{
+			return Participant;
+		}
+	}
+
+	for (auto& Prop : PropDefinitions)
+	{
+		if (!Prop) continue;
+		// Matches tag?
+		if (Prop->Tag == InTag)
+		{
+			return Prop;
+		}
+	}
+
+	return nullptr;
+}
+
 void UDialogBuilderGraph::DetermineAdvanceDialogRule(UDialogBuilderNode* InDialogNode)
 {
 	if(!GetWorld())

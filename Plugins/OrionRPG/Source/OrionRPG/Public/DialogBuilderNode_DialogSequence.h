@@ -47,6 +47,7 @@ public:
 	TObjectPtr<UDialogSet> DialogSet;
 
 
+
 #if WITH_EDITORONLY_DATA
 	TWeakPtr<ISequencer> Sequencer;
 #endif

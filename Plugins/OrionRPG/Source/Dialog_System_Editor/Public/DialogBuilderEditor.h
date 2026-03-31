@@ -22,6 +22,7 @@ class ULevelSequence;
 class SDialogDefinitions;
 class UDialogParticipant;
 class UDialogSequence;
+class UDialogSequenceSlot;
 class UDialogDefinition;
 class ACineCameraActor;
 
@@ -324,17 +325,17 @@ public:
 	UWorld* GetPreviewWorld();
 
 	//DialogDefinitions
-	void UpdateDialogDefinitions();
-	void DestroyDialogDefinitions();
-	void SpawnDialogDefinitionActor(UDialogDefinition* InDialogDefinition);
-	TArray<AActor*> GetDialogDefinitionActors() const;
+	void UpdateDialogSet();
+	void DestroyDialogSet();
+	void SpawnDialogSlotActor(UDialogSequenceSlot* InSlot);
+	void CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot);
+	TArray<AActor*> GetDialogSlotActors() const;
 	void SelectDialogDefinitionActor(UDialogDefinition* InDialogDefinition);
 	void SelectDialogDefinition(UDialogDefinition* InDialogDefinition);
 	UDialogDefinition* FindDialogDefinitionByActor(const AActor* InActor) const;
 
 	void OnDialogDefinitionAdded(UDialogDefinition* InDialogDefinition);
 	void OnDialogDefinitionRemoved(UDialogDefinition* InDialogDefinition);
-	void CreateDialogTrackDefinition(UDialogDefinition* InDialogDefinition);
 	void RemoveDialogTrackDefinition(UDialogDefinition* InDialogDefinition);
 
 	void ResolveDialogBoundObjects();
@@ -495,7 +496,7 @@ protected:
 	TWeakObjectPtr<class UDialogBuilderNode_DialogSequence> CurrentSequenceNode;
 	TSharedPtr<ISequencer> Sequencer;
 	TWeakObjectPtr<AActor> SequencePivot;
-	TMap<UDialogDefinition*, TWeakObjectPtr<AActor>> DialogDefinitionActors;
+	TMap<UDialogSequenceSlot*, TWeakObjectPtr<AActor>> DialogSlotActors;
 	TWeakObjectPtr<ACineCameraActor> DialogPreviewCamera;
 
 	FDelegateHandle SequencerGlobalTimeChangedHandle;
