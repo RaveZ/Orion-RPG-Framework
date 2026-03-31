@@ -10,6 +10,7 @@
 #include "DialogBuilderNode.h"
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderNode_DialogLine.h"
+#include "DialogBuilderNode_DialogSequence.h"
 #include "DialogBuilderNode_RerouteNode.h"
 #include "DialogBuilderNode_PlayerChoice.h"
 #include "DialogBuilderNode_PlayerLine.h"
@@ -231,6 +232,10 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 			}
 			if (NodeInstance)
 			{
+				if (UDialogBuilderNode_DialogSequence* DialogSequenceNode = Cast<UDialogBuilderNode_DialogSequence>(NodeInstance))
+				{
+					FindUniqueNodeName("DialogSequence");
+				}
 				if (UDialogBuilderNode_PlayerLine* PlayerLineNode = Cast<UDialogBuilderNode_PlayerLine>(NodeInstance))
 				{
 					FindUniqueNodeName("PlayerLine");

@@ -4,8 +4,10 @@
 
 #include "DialogBuilderEdNode_DialogLine.h"
 #include "DialogBuilderNode_DialogLine.h"
+#include "DialogBuilderNode_DialogSequence.h"
 #include "DialogBuilderEdNode_PlayerLine.h"
 #include "DialogBuilderNode_PlayerLine.h"
+#include "DialogSet.h"
 #include "Containers/Array.h"
 #include "Containers/EnumAsByte.h"
 #include "Containers/Map.h"
@@ -74,6 +76,14 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 		const TWeakObjectPtr<UObject>& CurrentObject = SelectedObjects[ObjectIndex];
 		if (CurrentObject.IsValid())
 		{
+			if (UDialogBuilderNode_DialogSequence* SequenceNodePtr = Cast<UDialogBuilderNode_DialogSequence>(CurrentObject.Get()))
+			{
+				if (!DialogSequenceNode.IsValid())
+				{
+					DialogSequenceNode = SequenceNodePtr;
+				}
+
+			}
 			if (UDialogBuilderNode_DialogLine* DialogLineNodePtr = Cast<UDialogBuilderNode_DialogLine>(CurrentObject.Get()))
 			{
 				if (!DialogLineNode.IsValid())
@@ -92,6 +102,8 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 			}
 		}
 	}
+	
+	//Option Selection Category
 	IDetailCategoryBuilder& OptionSelectionCategory = DetailBuilder.EditCategory("Selection Rule", LOCTEXT("OptionSelectionCategoryLabel", "Selection Rule"));
 	OptionSelectionCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, SelectingChoiceShotOverride)).DisplayName(LOCTEXT("SelectingChoiceShotOverrideLabel", "Selecting Shot Override"));
 	OptionSelectionCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, SelectionTimeLimit)).DisplayName(LOCTEXT("SelectionTimeLimitLabel", "Selection Time Limit"));
@@ -99,6 +111,7 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 
 	
 
+	//Dialog Line - Participant Category
 	IDetailCategoryBuilder& DialogParticipantCategory = DetailBuilder.EditCategory("Participant", LOCTEXT("ParticipantCategoryTitle", "Participant Settings"));
 	if (PlayerLineNode == NULL && DialogLineNode != NULL && SelectedObjects.Num() == 1)
 	{
@@ -138,7 +151,32 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 	}
 
 
-	
+	//Dialog Sequence - Dialog Set 
+	IDetailCategoryBuilder& DialogSetCategory = DetailBuilder.EditCategory("Dialog Set", LOCTEXT("DialogsetSettingsTitle", "Dialogset Settings"));
+	if(DialogSequenceNode != NULL && SelectedObjects.Num() == 1)
+	{
+
+		UDialogBuilderNode_DialogSequence* DialogSequenceNodeInstance = DialogSequenceNode.Get();
+		DialogSetCategory.AddCustomRow(LOCTEXT("DialogsetSettingsLabel", "Dialogset Settings"))
+			.NameContent()
+			[
+				SNew(STextBlock)
+					.Text(LOCTEXT("DialogsetLabel", "Dialogset Settings"))
+					.Font(IDetailLayoutBuilder::GetDetailFont())
+					.ToolTipText(LOCTEXT("DialogsetSettings_ToolTip", "Pick which dialog set to use for this sequence"))
+			]
+			.ValueContent()
+			.MaxDesiredWidth(300.0f)
+			[
+				GetWidgetForInlineShareMenu(
+					TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateLambda([DialogSequenceNodeInstance]() { return FText::FromString(DialogSequenceNodeInstance->DialogSet ? DialogSequenceNodeInstance->DialogSet->Name.ToString() : "None"); })),
+					TAttribute<bool>::Create(TAttribute<bool>::FGetter::CreateLambda([DialogSequenceNodeInstance]() { return  true; })),
+					FOnClicked::CreateSP(this, &FDialogNodeDetails::OnPromoteToSharedClick),
+					FOnClicked::CreateSP(this, &FDialogNodeDetails::OnUnshareClick),
+					FOnGetContent::CreateSP(this, &FDialogNodeDetails::OnGetShareableNodesMenu))
+			];
+	}
+
 
 	IDetailCategoryBuilder& DialogNodeDetail = DetailBuilder.EditCategory("Detail", LOCTEXT("DetailTitle", "Detail"));
 	DialogNodeDetail.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, ID)).DisplayName(LOCTEXT("IDLabel", "ID"));

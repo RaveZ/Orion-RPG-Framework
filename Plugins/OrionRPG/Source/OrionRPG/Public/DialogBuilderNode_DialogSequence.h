@@ -29,7 +29,7 @@ public:
 
 	void EnsureSequenceCreated();
 
-	UFUNCTION(BlueprintPure, Category = "DialogLine")
+	UFUNCTION(BlueprintPure, Category = "Dialog Sequence")
 	float GetSequenceDuration();
 
 
@@ -42,11 +42,19 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sequence")
 	FMovieSceneSequencePlaybackSettings PlaybackSettings;
 
+	UPROPERTY(EditAnywhere, Category = "Sequence", DisplayName = "Dialog Set To Use", meta = (GetOptions = "GetDialogSetOptions"))
+	FName DialogSetToUseName;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sequence")
+	TObjectPtr<UDialogSet> DialogSetToUse;
+
 	/**Dialog Set for this sequence node*/
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Override")
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Sequence")
 	TObjectPtr<UDialogSet> DialogSet;
 
-
+	UFUNCTION(CallInEditor)
+	TArray<FName> GetDialogSetOptions();
 
 #if WITH_EDITORONLY_DATA
 	TWeakPtr<ISequencer> Sequencer;

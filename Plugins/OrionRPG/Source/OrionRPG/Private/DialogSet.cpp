@@ -27,6 +27,7 @@ void UDialogSequenceSlot::PostEditChangeProperty(FPropertyChangedEvent& Property
 
 UDialogSet::UDialogSet()
 {
+
 }
 
 #if WITH_EDITOR

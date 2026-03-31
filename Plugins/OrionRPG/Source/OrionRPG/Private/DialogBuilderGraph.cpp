@@ -163,7 +163,16 @@ void UDialogBuilderGraph::SetDialogSet(UDialogSet* InDialogSet)
 		}
 	}
 		
-	
+
+	for (auto& Slot : CurrentDialogSet->CameraSlots)
+	{
+		if (AActor* DialogActor = RetrieveActorFromSlot(Slot))
+		{
+			CachedActorMap.Emplace(Slot->GetID(), DialogActor);
+		}
+	}
+
+
 }
 
 void UDialogBuilderGraph::Deinitialize()
@@ -885,9 +894,7 @@ AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot)
 	AActor* NewActor = World->SpawnActor<AActor>(ActorClass, FTransform::Identity, SpawnParams);
 	if (NewActor)
 	{
-		// Preserve the actor's world transform when attaching to the pivot.
 		NewActor->AttachToActor(SequencePivot, FAttachmentTransformRules::KeepWorldTransform);
-		// Apply the slot placement as a relative transform so the slot defines actor offset from the pivot.
 		NewActor->SetActorRelativeTransform(InSlot->SlotPlacement);
 
 		SpawnedDialogActors.AddUnique(NewActor);
