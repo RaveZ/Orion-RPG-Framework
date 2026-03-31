@@ -143,6 +143,9 @@ public:
 	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Detail")
 		TArray<TObjectPtr<class UDialogSet>> DialogSets;
 
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Detail")
+		TObjectPtr<class UDialogSet> CurrentDialogSet;
+
 
 	/*------------------------End Dialog Sequence------------------------*/
 
@@ -152,7 +155,7 @@ public:
 
 	/**Cached actor reference of this dialog, each actor has their own unique tags*/
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
-		TMap<FGameplayTag, TObjectPtr<AActor>> CachedActorMap;
+		TMap<FName, TObjectPtr<AActor>> CachedActorMap;
 
 		/**List of spawned actor in dialog, this specific actors will be destroyed after dialog ended*/
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
@@ -199,15 +202,15 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
 		class UAudioComponent* DialogAudio;
 
-	protected:
+protected:
 		FTimerHandle DialogLineTimer;
 public:
 	virtual bool Initialize(UDialogComponent* InitializingComp);
-	void InitializeDialogActors();
 	virtual void Deinitialize();
 	virtual UWorld* GetWorld() const override;
 
 	void StartFromRoot();
+
 
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void BeginNode(UDialogBuilderNode* InNode, bool bLaunchEventOnLoad = false);
@@ -272,9 +275,11 @@ public:
 	virtual FVector GetSpeakerBoneLocation(class AActor* Actor, bool bOverrideTrackedBone = false, FName BoneOverride = NAME_None) const;
 
 protected:
-	virtual AActor* RetrieveParticipant(const FParticipantInfo& Info);
-	virtual AActor* RetrieveActorFromSlot(const class UDialogSequenceSlot* InSlot);
-	
+	virtual AActor* RetrieveParticipant(FParticipantInfo& Info);
+	virtual AActor* RetrieveActorFromSlot(class UDialogSequenceSlot* InSlot);
+
+	void InitializeDialogActors();
+	void SetDialogSet(class UDialogSet* InDialogSet);	
 #if WITH_EDITORONLY_DATA
 public:
 	/** Set of dialog-graph pages */

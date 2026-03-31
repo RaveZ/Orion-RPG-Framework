@@ -179,6 +179,11 @@ public:
 	FTransform InitialTransform;
 
 public:
+	FName GetID()
+	{
+		return ParticipantTag.GetTagName();
+	}
+public:
 	FParticipantInfo()
 	{
 		ParticipantName = FText::FromString("Participant");

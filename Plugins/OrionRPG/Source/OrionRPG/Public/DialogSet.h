@@ -33,6 +33,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
 	FTransform SlotPlacement;
 
+	FName GetID()
+	{
+		FName OutName = ActorTag.IsValid() ? ActorTag.GetTagName() : FName(*ID.ToString());
+		return OutName;
+	}
 #if WITH_EDITOR
 	//~ Begin UObject Interface
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
