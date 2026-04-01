@@ -244,7 +244,7 @@ void FDialogNodeDetails::UseDialogset(UDialogSet* InDialogSet)
 {
 	if (DialogSequenceNode.Get())
 	{
-		DialogSequenceNode.Get()->DialogSetToUse = InDialogSet;
+		DialogSequenceNode.Get()->UseDialogSet(InDialogSet);
 
 	}
 }

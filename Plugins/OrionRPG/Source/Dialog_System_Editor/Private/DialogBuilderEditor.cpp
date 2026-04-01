@@ -638,6 +638,7 @@ void FDialogBuilderEditor::UpdateDialogSet()
 		return;
 	}
 
+	CurrentSequenceNode.Get()->UpdateDialogSetData();
 	PivotActor->SetActorTransform(DialogSet->PlacementTransform);
 
 	for(auto& DialogSlot : DialogSet->Slots)
@@ -656,28 +657,6 @@ void FDialogBuilderEditor::UpdateDialogSet()
 	{
 		SpawnDialogSlotActor(DialogSlot);
 	}
-	/*for (UDialogProp* DialogProp : DialogGraph->PropDefinitions)
-	{
-		SpawnDialogDefinitionActor(DialogProp);
-	}
-
-
-	for (UDialogParticipant* DialogParticipant : DialogGraph->ParticipantDefinitions)
-	{
-		SpawnDialogDefinitionActor(DialogParticipant);
-	}
-
-	if (DialogGraph->CameraDefinitions.Num() == 0)
-	{
-		//TODO: Create camera elsewhere, ensure camera uobject valid for development purposes
-		DialogGraph->CameraDefinitions.Add(NewObject<UDialogCamera>(DialogGraph, NAME_None, RF_Transactional));
-	}
-
-	for (UDialogCamera* DialogCamera : DialogGraph->CameraDefinitions)
-	{
-		SpawnDialogDefinitionActor(DialogCamera);
-	}*/
-	
 
 	// Cleanup: remove entries for participants that no longer exist in the dialog graph.
 	for (auto It = DialogSlotActors.CreateIterator(); It; ++It)

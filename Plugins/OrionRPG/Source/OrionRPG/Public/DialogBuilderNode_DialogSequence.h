@@ -32,21 +32,24 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Dialog Sequence")
 	float GetSequenceDuration();
 
+	void UseDialogSet(UDialogSet* InDialogSet);
+	void UpdateDialogSetData();
+
 
 public:
 	virtual void Serialize(FArchive& Ar) override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sequence")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialog Sequence")
 	TObjectPtr<UDialogSequence> DialogSequence = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sequence")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog Sequence")
 	FMovieSceneSequencePlaybackSettings PlaybackSettings;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sequence")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Sequence")
 	TObjectPtr<UDialogSet> DialogSetToUse;
 
 	/**Dialog Set for this sequence node*/
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Sequence")
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Dialog Sequence")
 	TObjectPtr<UDialogSet> DialogSet;
 
 

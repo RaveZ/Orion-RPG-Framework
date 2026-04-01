@@ -299,6 +299,9 @@ public:
 	void GetAllGraphs(TArray<UEdGraph*>& Graphs) const;
 #endif
 
+#if WITH_EDITOR
+	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
+#endif
 };
 
 

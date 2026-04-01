@@ -903,7 +903,7 @@ AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot)
 	return NewActor;
 }
 
-#if WITH_EDITORONLY_DATA
+#if WITH_EDITOR
 
 void UDialogBuilderGraph::GetAllGraphs(TArray<UEdGraph*>& Graphs) const
 {
@@ -919,6 +919,16 @@ void UDialogBuilderGraph::GetAllGraphs(TArray<UEdGraph*>& Graphs) const
 		}
 	}
 	
+}
+void UDialogBuilderGraph::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+{
+	for (auto& DialogSet : DialogSets)
+	{
+		if (DialogSet)
+		{
+			DialogSet->OwningDialogGraph = this;
+		}
+	}
 }
 #endif // WITH_EDITORONLY_DATA
 
