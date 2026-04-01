@@ -130,6 +130,9 @@ public:
 		TArray<FName> VisitedNodeIDs;
 
 	/*------------------------Dialog Sequence------------------------*/
+	UPROPERTY(BlueprintReadOnly, Category = "Detail")
+		TObjectPtr<class UDialogSequence> CurrentDialogSequence;
+
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 		TArray<TObjectPtr<class UDialogParticipant>> ParticipantDefinitions;
 

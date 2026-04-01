@@ -323,6 +323,10 @@ void FDialogBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& 
 
 void FDialogBuilderEditor::Tick(float DeltaTime)
 {
+	if (IsPIESimulating())
+	{
+		return;
+	}
 	PreviewScene.UpdateCaptureContents();
 	if (bPendingRefreshDialogEditor && !bIsRefreshDialogEditorInProgress)
 	{
@@ -502,9 +506,6 @@ void FDialogBuilderEditor::CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot
 	{
 		return;
 	}
-
-
-
 
 	if (Sequencer.IsValid())
 	{
@@ -2103,12 +2104,12 @@ bool FDialogBuilderEditor::InEditingMode(bool bGraphIsEditable) const
 
 bool FDialogBuilderEditor::IsPIESimulating()
 {
-	return GEditor->bIsSimulatingInEditor || GEditor->PlayWorld;
+	return GEditor->IsSimulateInEditorInProgress() || GEditor->PlayWorld;
 }
 
 bool FDialogBuilderEditor::IsPIENotSimulating()
 {
-	return !GEditor->bIsSimulatingInEditor && (GEditor->PlayWorld == NULL);
+	return !GEditor->IsSimulateInEditorInProgress() && (GEditor->PlayWorld == NULL);
 }
 
 void FDialogBuilderEditor::OnChangeBreadCrumbGraph(UEdGraph* InGraph)

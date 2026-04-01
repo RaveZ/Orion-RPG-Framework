@@ -149,6 +149,7 @@ void UDialogBuilderGraph::InitializeDialogActors()
 
 void UDialogBuilderGraph::SetDialogSet(UDialogSet* InDialogSet)
 {
+	if (!CurrentDialogSequence) return;
 	if(!InDialogSet || InDialogSet == CurrentDialogSet)
 		return;
 
@@ -171,8 +172,26 @@ void UDialogBuilderGraph::SetDialogSet(UDialogSet* InDialogSet)
 			CachedActorMap.Emplace(Slot->GetID(), DialogActor);
 		}
 	}
+	
+	UMovieScene* MovieScene = CurrentDialogSequence ? CurrentDialogSequence->GetMovieScene() : nullptr;
+	if (!MovieScene) return;
+	TArray<UDialogSequenceSlot*> DialogSlots;
 
+	DialogSlots.Append(CurrentDialogSet->Slots);
+	DialogSlots.Append(CurrentDialogSet->CameraSlots);
 
+	for (int32 i = 0; i < DialogSlots.Num(); i++)
+	{
+		UDialogSequenceSlot* DialogSlot = DialogSlots[i];
+		AActor* DialogActor = CachedActorMap.FindRef(DialogSlot->GetID());
+
+		if (DialogSlot && DialogActor)
+		{
+			FGuid ObjectBinding = DialogSlot->ID;
+
+			CurrentDialogSequence->BindPossessableObject(ObjectBinding, *DialogActor, DialogActor->GetClass());
+		}
+	}
 }
 
 void UDialogBuilderGraph::Deinitialize()
@@ -386,14 +405,23 @@ void UDialogBuilderGraph::BeginChoiceSelection(UDialogBuilderNode_DialogLine* In
 
 void UDialogBuilderGraph::BeginDialogSequence(UDialogBuilderNode_DialogSequence* InDialogSequence)
 {
-	if (InDialogSequence == nullptr)
+	if (!InDialogSequence)
 		return;
+	if(!InDialogSequence->DialogSequence)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("BeginDialogSequence: DialogSequence is null for Node ID: %s"), *InDialogSequence->ID.ToString());
+		return;
+	}
+	CurrentDialogSequence = InDialogSequence->DialogSequence;
+	InDialogSequence->UpdateDialogSetData();
 
 	SetDialogSet(InDialogSequence->DialogSet);
+
 
 	DetermineAdvanceDialogRule(InDialogSequence);
 
 	PlaySequence(Cast<ULevelSequence>(InDialogSequence->DialogSequence.Get()), InDialogSequence->PlaybackSettings);
+
 }
 
 void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot, AActor* InSpeaker)

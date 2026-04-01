@@ -116,7 +116,7 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogSetData()
 	}
 
 	//Populate Camera Slots
-	{
+	/*{
 		const int32 SourceCount = DialogSetToUse->CameraSlots.Num();
 		DialogSet->CameraSlots.SetNum(SourceCount);
 		for (int32 idx = 0; idx < SourceCount; ++idx)
@@ -141,7 +141,7 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogSetData()
 
 			DialogSet->CameraSlots[idx] = Target;
 		}
-	}
+	}*/
 }
 
 
