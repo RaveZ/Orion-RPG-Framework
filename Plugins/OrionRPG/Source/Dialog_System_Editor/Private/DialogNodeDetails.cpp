@@ -152,29 +152,30 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 
 
 	//Dialog Sequence - Dialog Set 
-	IDetailCategoryBuilder& DialogSetCategory = DetailBuilder.EditCategory("Dialog Set", LOCTEXT("DialogsetSettingsTitle", "Dialogset Settings"));
+	IDetailCategoryBuilder& DialogSequenceCategory = DetailBuilder.EditCategory("Dialog Sequence", LOCTEXT("DialogSqeuenceTitle", "Dialog Sequence"));
 	if(DialogSequenceNode != NULL && SelectedObjects.Num() == 1)
 	{
 
 		UDialogBuilderNode_DialogSequence* DialogSequenceNodeInstance = DialogSequenceNode.Get();
-		DialogSetCategory.AddCustomRow(LOCTEXT("DialogsetSettingsLabel", "Dialogset Settings"))
+		DialogSequenceCategory.AddCustomRow(LOCTEXT("DialogsetSettingsLabel", "Dialogset To Use"))
 			.NameContent()
 			[
 				SNew(STextBlock)
-					.Text(LOCTEXT("DialogsetLabel", "Dialogset Settings"))
+					.Text(LOCTEXT("DialogsetLabel", "Dialogset To Use"))
 					.Font(IDetailLayoutBuilder::GetDetailFont())
 					.ToolTipText(LOCTEXT("DialogsetSettings_ToolTip", "Pick which dialog set to use for this sequence"))
 			]
 			.ValueContent()
 			.MaxDesiredWidth(300.0f)
 			[
-				GetWidgetForInlineShareMenu(
-					TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateLambda([DialogSequenceNodeInstance]() { return FText::FromString(DialogSequenceNodeInstance->DialogSet ? DialogSequenceNodeInstance->DialogSet->Name.ToString() : "None"); })),
-					TAttribute<bool>::Create(TAttribute<bool>::FGetter::CreateLambda([DialogSequenceNodeInstance]() { return  true; })),
+				GetWidgetForDialogsetPicker(
+					TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateLambda([DialogSequenceNodeInstance]() { return FText::FromString(DialogSequenceNodeInstance->DialogSetToUse ? DialogSequenceNodeInstance->DialogSetToUse->Name.ToString() : "None"); })),
 					FOnClicked::CreateSP(this, &FDialogNodeDetails::OnPromoteToSharedClick),
-					FOnClicked::CreateSP(this, &FDialogNodeDetails::OnUnshareClick),
-					FOnGetContent::CreateSP(this, &FDialogNodeDetails::OnGetShareableNodesMenu))
+					FOnGetContent::CreateSP(this, &FDialogNodeDetails::OnGetDialogsetListMenu))
 			];
+
+		DialogSequenceCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogSequence, DialogSequence)).DisplayName(LOCTEXT("DialogSequenceLabel", "Dialog Sequence"));
+		DialogSequenceCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogSequence, PlaybackSettings)).DisplayName(LOCTEXT("PlaybackSettingsLabel", "Playback Settings"));
 	}
 
 
@@ -183,6 +184,71 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 
 }
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
+
+TSharedRef<SWidget> FDialogNodeDetails::GetWidgetForDialogsetPicker(const TAttribute<FText>& InDialogsetNameText, FOnClicked PromoteClick, FOnGetContent GetContentMenu)
+{
+	return
+		SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot()
+		.AutoWidth()
+		[
+			SNew(SComboButton)
+				.ContentPadding(FMargin(4.0f, 2.0f))
+				.ToolTipText(LOCTEXT("Dialogset_ToolTip", "Dialogset to use"))
+				.OnGetMenuContent(GetContentMenu)
+				.ButtonContent()
+				[
+					SNew(STextBlock)
+						.Text_Lambda([InDialogsetNameText]() { return  InDialogsetNameText.Get(); })
+						.Font(IDetailLayoutBuilder::GetDetailFont())
+				]
+		];
+
+}
+
+TSharedRef<SWidget> FDialogNodeDetails::OnGetDialogsetListMenu()
+{
+	FMenuBuilder MenuBuilder(true, NULL);
+
+	FText SectionText;
+
+	SectionText = LOCTEXT("DialogsetList", "Dialogset List");
+
+
+	MenuBuilder.BeginSection("DialogsetListSection", SectionText);
+
+	if (UDialogBuilderNode_DialogSequence* DialogSequenceInstance = DialogSequenceNode.Get())
+	{
+		const UDialogBuilderGraph* CurrentDialogGraph = DialogSequenceInstance->GetOwningDialogGraph();
+
+
+		for (const auto& Dialogset : CurrentDialogGraph->DialogSets)
+		{
+			if (Dialogset)
+			{
+				FTextBuilder ToolTipBuilder;
+				FText DialogsetName = FText::FromString(Dialogset->Name.ToString());
+				// Pass raw pointer obtained from TObjectPtr via .Get() so the delegate argument type matches UDialogSet*
+				FUIAction Action = FUIAction(FExecuteAction::CreateSP(this, &FDialogNodeDetails::UseDialogset, Dialogset.Get()));
+				MenuBuilder.AddMenuEntry(DialogsetName, ToolTipBuilder.ToText(), FSlateIcon(), Action);
+			}
+		}
+		
+	}
+	MenuBuilder.EndSection();
+
+	return MenuBuilder.MakeWidget();
+}
+
+void FDialogNodeDetails::UseDialogset(UDialogSet* InDialogSet)
+{
+	if (DialogSequenceNode.Get())
+	{
+		DialogSequenceNode.Get()->DialogSetToUse = InDialogSet;
+
+	}
+}
+
 
 TSharedRef<SWidget> FDialogNodeDetails::GetWidgetForInlineShareMenu(const TAttribute<FText>& InSharedNameText, const TAttribute<bool>& bInIsCurrentlyShared, FOnClicked PromoteClick, FOnClicked DemoteClick, FOnGetContent GetContentMenu)
 {
@@ -369,6 +435,7 @@ void FDialogNodeDetails::BecomeSharedWith(UDialogBuilderNode_DialogLine* NewNode
 		
 	}
 }
+
 
 
 

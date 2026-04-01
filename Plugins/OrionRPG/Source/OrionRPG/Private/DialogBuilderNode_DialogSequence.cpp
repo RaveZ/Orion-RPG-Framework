@@ -68,22 +68,6 @@ float UDialogBuilderNode_DialogSequence::GetSequenceDuration()
 
 #if WITH_EDITOR
 
-TArray<FName> UDialogBuilderNode_DialogSequence::GetDialogSetOptions()
-{
-	TArray<FName> DialogSetNames;
-	if(DialogGraph)
-	{
-		for (const TObjectPtr<UDialogSet>& Set : DialogGraph->DialogSets)
-		{
-			if (Set)
-			{
-				DialogSetNames.Add(FName(*Set->Name.ToString()));
-			}
-		}
-	}
-	return DialogSetNames;
-}
-
 FText UDialogBuilderNode_DialogSequence::GetNodeTitle() const
 {
     return FText::FromString("Dialog Sequence");
@@ -108,10 +92,6 @@ void UDialogBuilderNode_DialogSequence::PostEditChangeProperty(FPropertyChangedE
 void UDialogBuilderNode_DialogSequence::PostLoad()
 {
 	Super::PostLoad();
-	if (DialogSetToUse)
-	{
-		DialogSetToUseName = FName(*DialogSetToUseName.ToString());
-	}
 }
 
 #endif

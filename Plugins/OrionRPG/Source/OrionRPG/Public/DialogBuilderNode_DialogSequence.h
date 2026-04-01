@@ -42,10 +42,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sequence")
 	FMovieSceneSequencePlaybackSettings PlaybackSettings;
 
-	UPROPERTY(EditAnywhere, Category = "Sequence", DisplayName = "Dialog Set To Use", meta = (GetOptions = "GetDialogSetOptions"))
-	FName DialogSetToUseName;
-
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Sequence")
 	TObjectPtr<UDialogSet> DialogSetToUse;
 
@@ -53,8 +49,6 @@ public:
 	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Sequence")
 	TObjectPtr<UDialogSet> DialogSet;
 
-	UFUNCTION(CallInEditor)
-	TArray<FName> GetDialogSetOptions();
 
 #if WITH_EDITORONLY_DATA
 	TWeakPtr<ISequencer> Sequencer;

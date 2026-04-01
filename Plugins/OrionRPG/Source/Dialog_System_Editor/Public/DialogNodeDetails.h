@@ -40,12 +40,17 @@ public:
 protected:
 
 	TSharedRef<SWidget> GetWidgetForInlineShareMenu(const TAttribute<FText>& InSharedNameText, const TAttribute<bool>& bInIsCurrentlyShared, FOnClicked PromoteClick, FOnClicked DemoteClick, FOnGetContent GetContentMenu);
-
+	
 	FReply OnPromoteToSharedClick();
 	void PromoteToShared(const FText& NewTransitionName, ETextCommit::Type CommitInfo);
 	FReply OnUnshareClick();
 	TSharedRef<SWidget> OnGetShareableNodesMenu();
 	void BecomeSharedWith(UDialogBuilderNode_DialogLine* NewNode);
+
+	TSharedRef<SWidget> GetWidgetForDialogsetPicker(const TAttribute<FText>& InDialogsetNameText, FOnClicked PromoteClick, FOnGetContent GetContentMenu);
+	TSharedRef<SWidget> OnGetDialogsetListMenu();
+	void UseDialogset(class UDialogSet* InDialogSet);
+
 
 private:
 	TWeakObjectPtr<UDialogBuilderNode_DialogSequence> DialogSequenceNode;
