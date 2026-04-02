@@ -682,6 +682,7 @@ void UDialogBuilderGraph::EndDialog()
 	
 	
 	//clear shot and sequence
+	CurrentDialogSequence = nullptr;
 	if (DialogSequenceActor)
 	{
 		if (ULevelSequencePlayer* SP = DialogSequenceActor->GetSequencePlayer())
@@ -765,11 +766,13 @@ void UDialogBuilderGraph::DetermineAdvanceDialogRule(UDialogBuilderNode* InDialo
 		{
 			GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, this, &ThisClass::AdvanceDialogLine, InDialogLine->GetLineDuration(), false);
 		}
-		else if (UDialogBuilderNode_DialogSequence* InDialogSequence = Cast< UDialogBuilderNode_DialogSequence>(InDialogNode))
-		{
-			GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, this, &ThisClass::AdvanceDialogLine, InDialogSequence->GetSequenceDuration(), false);
-		}
+		
 	}
+	if (UDialogBuilderNode_DialogSequence* InDialogSequence = Cast< UDialogBuilderNode_DialogSequence>(InDialogNode))
+	{
+		GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, this, &ThisClass::AdvanceDialogLine, InDialogSequence->GetSequenceDuration(), false);
+	}
+
 }
 
 FVector UDialogBuilderGraph::GetSpeakerBoneLocation(AActor* Actor, bool bOverrideTrackedBone, FName BoneOverride) const

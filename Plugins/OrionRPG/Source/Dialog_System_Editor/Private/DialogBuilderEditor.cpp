@@ -7,6 +7,7 @@
 #include "DialogBuilderEdGraph.h"
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderEditorModes.h"
+#include "SDialogSetManager.h"
 #include "DialogSequencePlaybackContext.h"
 #include "DialogDefinition.h"
 #include "DialogSequence.h"
@@ -337,7 +338,6 @@ void FDialogBuilderEditor::Tick(float DeltaTime)
 		if (EditingDialogSequence) EditingDialogSequence->RefreshSequence();
 	}
 
-	ResolveDialogBoundObjects();
 }
 
 TStatId FDialogBuilderEditor::GetStatId() const
@@ -562,7 +562,7 @@ void FDialogBuilderEditor::ResolveDialogBoundObjects()
 			{
 				if (!BoundObjects.Contains(DialogActor))
 				{
-					EditingDialogSequence->UnbindInvalidObjects(DialogSlot->ID, GetPreviewWorld());
+					EditingDialogSequence->UnbindPossessableObjects(DialogSlot->ID);
 					FMovieSceneBindingProxy BindingProxy(DialogSlot->ID, Sequencer->GetFocusedMovieSceneSequence());
 					TArray<AActor*> Actors;
 					Actors.Add(DialogActor);
@@ -679,6 +679,9 @@ void FDialogBuilderEditor::UpdateDialogSet()
 			It.RemoveCurrent();
 		}
 	}
+
+
+	ResolveDialogBoundObjects();
 }
 
 
@@ -2152,10 +2155,10 @@ TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_DialogsetSettings(const FSpa
 	return SNew(SDockTab)
 #if ENGINE_MAJOR_VERSION < 5
 		.Icon(FAppStyle::GetBrush("LevelEditor.Tabs.Details"))
-#endif // #if ENGINE_MAJOR_VERSION < 5
-		.Label(LOCTEXT("Details_Title", "Property"))
+#endif
+		.Label(LOCTEXT("DialogsetSettings_Title", "Dialog Set Manager"))
 		[
-			DialogsetWidget.ToSharedRef()
+			DialogSetManagerWidget.ToSharedRef()
 		];
 }
 
@@ -2206,6 +2209,7 @@ void FDialogBuilderEditor::CreateInternalWidgets()
 
 
 	this->DialogDefinitionsWidget = SNew(SDialogDefinitions, SharedThis(this));
+	DialogSetManagerWidget = SNew(SDialogSetManager, GetDialogBuilderGraph());
 
 	if (!DialogViewportWidget.IsValid())
 	{
@@ -2236,7 +2240,7 @@ TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogsetSettings()
 		.FillHeight(1.0f)
 		.HAlign(HAlign_Fill)
 		[
-			DialogsetWidget.ToSharedRef()
+			DialogSetManagerWidget.ToSharedRef()
 		];
 }
 

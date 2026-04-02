@@ -481,6 +481,7 @@ protected:
 
 	TSharedPtr<class IDetailsView> EditorSettingsWidget;
 	TSharedPtr<class SDialogDefinitions> DialogDefinitionsWidget;
+	TSharedPtr<class SDialogSetManager> DialogSetManagerWidget;
 
 	/** The command list for this editor */
 	TSharedPtr<FUICommandList> GraphEditorCommands;
