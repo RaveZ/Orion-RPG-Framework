@@ -2,71 +2,81 @@
 
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
-#include "Widgets/Views/STreeView.h"
-#include "Widgets/Input/SButton.h"
+#include "Widgets/Views/SListView.h"
 
+class IDetailsView;
 class UDialogBuilderGraph;
 class UDialogSet;
 class UDialogSequenceSlot;
-class FDialogSetManagerItem;
+class FUICommandList;
 
-using FDialogSetManagerItemPtr = TSharedPtr<FDialogSetManagerItem>;
-
-/**
- * Tree item representing either a DialogSet or a Slot within it
- */
-class FDialogSetManagerItem : public TSharedFromThis<FDialogSetManagerItem>
+struct FDialogSetListItem
 {
-public:
-	enum class EItemType
-	{
-		DialogSet,
-		Slot
-	};
-
-	FDialogSetManagerItem(EItemType InType, UDialogSet* InDialogSet = nullptr, UDialogSequenceSlot* InSlot = nullptr);
-
-	EItemType ItemType;
 	TWeakObjectPtr<UDialogSet> DialogSet;
-	TWeakObjectPtr<UDialogSequenceSlot> Slot;
-	TArray<FDialogSetManagerItemPtr> Children;
-
-	FText GetDisplayName() const;
-	bool HasChildren() const { return Children.Num() > 0; }
 };
 
-/**
- * Widget to manage DialogSets and their Slots within a DialogBuilderGraph
- */
+struct FDialogSlotListItem
+{
+	TWeakObjectPtr<UDialogSequenceSlot> Slot;
+	bool bIsCameraSlot = false;
+};
+
+using FDialogSetListItemPtr = TSharedPtr<FDialogSetListItem>;
+using FDialogSlotListItemPtr = TSharedPtr<FDialogSlotListItem>;
+
 class DIALOG_SYSTEM_EDITOR_API SDialogSetManager : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SDialogSetManager)
-	{}
+	SLATE_BEGIN_ARGS(SDialogSetManager) {}
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, UDialogBuilderGraph* InDialogGraph);
 
-	virtual ~SDialogSetManager();
+	// Keyboard commands (Delete)
+	virtual FReply OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent) override;
+
+	void Refresh();
 
 private:
-	// Tree view callbacks
-	TSharedRef<ITableRow> GenerateTreeRow(FDialogSetManagerItemPtr InItem, const TSharedRef<STableViewBase>& InOwnerTable);
-	void OnGetChildren(FDialogSetManagerItemPtr InItem, TArray<FDialogSetManagerItemPtr>& OutChildren);
-	void OnSelectionChanged(FDialogSetManagerItemPtr InSelectedItem, ESelectInfo::Type SelectInfo);
-
-	// Button callbacks
+	// DialogSet list
+	TSharedRef<ITableRow> GenerateDialogSetRow(FDialogSetListItemPtr InItem, const TSharedRef<STableViewBase>& InOwnerTable);
+	void OnDialogSetSelectionChanged(FDialogSetListItemPtr InItem, ESelectInfo::Type InSelectInfo);
 	FReply OnAddDialogSet();
-	FReply OnRemoveSelected();
-	FReply OnAddSlotToSelectedSet();
+	void OnRemoveDialogSet(UDialogSet* InDialogSet);
+	void OnDialogSetNameCommitted(const FText& InText, ETextCommit::Type InCommitType, TWeakObjectPtr<UDialogSet> InDialogSet);
+	TSharedPtr<SWidget> OnDialogSetContextMenuOpening();
 
-	// Helper functions
-	void RefreshTreeView();
-	void RebuildTree();
-	void SelectDialogSet(UDialogSet* InDialogSet);
+	// Slot list
+	TSharedRef<ITableRow> GenerateSlotRow(FDialogSlotListItemPtr InItem, const TSharedRef<STableViewBase>& InOwnerTable);
+	void OnSlotSelectionChanged(FDialogSlotListItemPtr InItem, ESelectInfo::Type InSelectInfo);
+	FReply OnAddSlot();
+	FReply OnAddCameraSlot();
+	void OnRemoveSlot(UDialogSequenceSlot* InSlot, bool bIsCameraSlot);
+	TSharedPtr<SWidget> OnSlotContextMenuOpening();
 
+	// Delete command helpers
+	void OnDeleteSelection();
+	bool CanDeleteSelection() const;
+	bool IsSelectedSlotCamera() const;
+
+	// Refresh
+	void RefreshDialogSetList();
+	void RefreshSlotList();
+	void MarkGraphDirty() const;
+
+private:
 	TWeakObjectPtr<UDialogBuilderGraph> DialogGraph;
-	TSharedPtr<STreeView<FDialogSetManagerItemPtr>> TreeView;
-	TArray<FDialogSetManagerItemPtr> RootItems;
-	FDialogSetManagerItemPtr SelectedItem;
+	TWeakObjectPtr<UDialogSet> SelectedDialogSet;
+	TWeakObjectPtr<UDialogSequenceSlot> SelectedSlot;
+
+	TArray<FDialogSetListItemPtr> DialogSetItems;
+	TArray<FDialogSlotListItemPtr> SlotItems;
+
+	TSharedPtr<SListView<FDialogSetListItemPtr>> DialogSetListView;
+	TSharedPtr<SListView<FDialogSlotListItemPtr>> SlotListView;
+
+	TSharedPtr<IDetailsView> DialogSetDetailsView;
+	TSharedPtr<IDetailsView> SlotDetailsView;
+
+	TSharedPtr<FUICommandList> CommandList;
 };

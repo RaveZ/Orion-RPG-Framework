@@ -33,7 +33,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
 	FTransform SlotPlacement;
 
-	FName GetID()
+	FName GetID() const
 	{
 		FName OutName = ActorTag.IsValid() ? ActorTag.GetTagName() : FName(*ID.ToString());
 		return OutName;

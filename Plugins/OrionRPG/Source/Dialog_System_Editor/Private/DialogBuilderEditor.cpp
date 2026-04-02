@@ -365,6 +365,11 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 			PropertyWidget->ForceRefresh();
 		}
 
+		if (DialogSetManagerWidget.IsValid())
+		{
+			DialogSetManagerWidget->Refresh();
+		}
+
 		bPendingRefreshDialogEditor = true;
 
 		FSlateApplication::Get().DismissAllMenus();
