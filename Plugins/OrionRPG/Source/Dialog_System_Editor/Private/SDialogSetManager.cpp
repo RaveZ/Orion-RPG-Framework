@@ -1,6 +1,9 @@
 #include "SDialogSetManager.h"
 
 #include "DialogBuilderGraph.h"
+#include "DialogBuilderNode_DialogSequence.h"
+#include "DialogDefinition.h"
+#include "DialogSequence.h"
 #include "DialogBuilder_EditorStyle.h"
 #include "DialogSet.h"
 #include "PropertyEditorModule.h"
@@ -12,6 +15,7 @@
 #include "Framework/MultiBox/MultiBoxBuilder.h"
 #include "Styling/AppStyle.h"
 #include "Widgets/SBoxPanel.h"
+#include "Widgets/Layout/SSplitter.h"
 #include "Widgets/Images/SImage.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
@@ -41,16 +45,17 @@ public:
 		[
 			SNew(SHorizontalBox)
 
-			+ SHorizontalBox::Slot()
+			/*+ SHorizontalBox::Slot()
 			.AutoWidth()
 			.VAlign(VAlign_Center)
 			.Padding(0.f, 0.f, 4.f, 0.f)
 			[
 				SNew(SImage).Image(FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.Dialog"))
-			]
+			]*/
 
 			+ SHorizontalBox::Slot()
 			.FillWidth(1.0f)
+			.Padding(FMargin(7.0f, 4.0f, 4.0f, 4.0f))
 			.VAlign(VAlign_Center)
 			[
 				SNew(SInlineEditableTextBlock)
@@ -58,12 +63,13 @@ public:
 				{
 					if (const UDialogSet* LocalSet = DialogSet.Get())
 					{
-						return LocalSet->Name.IsEmpty() ? LOCTEXT("UnnamedDialogSet", "Unnamed Dialog Set") : LocalSet->Name;
+						return LocalSet->Name.IsEmpty() ? LOCTEXT("UnnamedDialogSet", "None") : LocalSet->Name;
 					}
 					return LOCTEXT("InvalidDialogSet", "Invalid");
 				})
 				.OnTextCommitted(OnNameCommitted)
 				.IsReadOnly(false)
+				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.0f))
 			]
 		];
 	}
@@ -90,35 +96,37 @@ public:
 		[
 			SNew(SHorizontalBox)
 
-			+ SHorizontalBox::Slot()
+			/*+ SHorizontalBox::Slot()
 			.AutoWidth()
 			.VAlign(VAlign_Center)
 			.Padding(0.f, 0.f, 4.f, 0.f)
 			[
 				SNew(SImage)
-				.Image(FDialogBuilder_EditorStyle::Get().GetBrush(bIsCameraSlot ? "ClassIcon.Dialog.Prop" : "ClassIcon.Dialog.Participant"))
-			]
+				.Image(FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.Dialog.Prop"))
+			]*/
 
 			+ SHorizontalBox::Slot()
 			.FillWidth(1.0f)
+			.Padding(FMargin(7.0f, 4.0f, 4.0f, 4.0f))
 			.VAlign(VAlign_Center)
 			[
 				SNew(STextBlock)
 				.Text_Lambda([this]()
 				{
 					const UDialogSequenceSlot* LocalSlot = Slot.Get();
+					UDialogDefinition* DialogDef = LocalSlot ? LocalSlot->DialogDefinition : nullptr;
 					if (!LocalSlot)
 					{
 						return LOCTEXT("InvalidSlot", "Invalid");
 					}
 
-					const FString Prefix = bIsCameraSlot ? TEXT("[Camera] ") : TEXT("[Slot] ");
 					const FString Label = LocalSlot->ActorTag.IsValid()
-						? LocalSlot->ActorTag.GetTagName().ToString()
-						: LocalSlot->GetID().ToString();
+						? DialogDef->DisplayName.ToString()
+						: "None";
 
-					return FText::FromString(Prefix + Label);
+					return FText::FromString(Label);
 				})
+				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.0f))
 			]
 		];
 	}
@@ -153,12 +161,11 @@ void SDialogSetManager::Construct(const FArguments& InArgs, UDialogBuilderGraph*
 
 	ChildSlot
 	[
-		SNew(SHorizontalBox)
+		SNew(SSplitter)
 
 		// 1) DialogSet List
-		+ SHorizontalBox::Slot()
-		.FillWidth(0.25f)
-		.Padding(2.0f)
+		+ SSplitter::Slot()
+		.Value(0.25f)
 		[
 			SNew(SBorder)
 			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
@@ -175,7 +182,9 @@ void SDialogSetManager::Construct(const FArguments& InArgs, UDialogBuilderGraph*
 					.FillWidth(1.0f)
 					.VAlign(VAlign_Center)
 					[
-						SNew(STextBlock).Text(LOCTEXT("DialogSetListTitle", "Dialog Sets"))
+						SNew(STextBlock)
+							.Text(LOCTEXT("DialogSetListTitle", "Dialog Sets"))
+							.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.5f))
 					]
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
@@ -206,9 +215,8 @@ void SDialogSetManager::Construct(const FArguments& InArgs, UDialogBuilderGraph*
 		]
 
 		// 2) DialogSet Details
-		+ SHorizontalBox::Slot()
-		.FillWidth(0.25f)
-		.Padding(2.0f)
+		+ SSplitter::Slot()
+		.Value(0.25f)
 		[
 			SNew(SBorder)
 			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
@@ -219,9 +227,8 @@ void SDialogSetManager::Construct(const FArguments& InArgs, UDialogBuilderGraph*
 		]
 
 		// 3) Slot List
-		+ SHorizontalBox::Slot()
-		.FillWidth(0.25f)
-		.Padding(2.0f)
+		+ SSplitter::Slot()
+		.Value(0.25f)
 		[
 			SNew(SBorder)
 			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
@@ -238,7 +245,9 @@ void SDialogSetManager::Construct(const FArguments& InArgs, UDialogBuilderGraph*
 					.FillWidth(1.0f)
 					.VAlign(VAlign_Center)
 					[
-						SNew(STextBlock).Text(LOCTEXT("SlotListTitle", "Slots"))
+						SNew(STextBlock)
+							.Text(LOCTEXT("SlotListTitle", "Slots"))
+							.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.5f))
 					]
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
@@ -270,9 +279,8 @@ void SDialogSetManager::Construct(const FArguments& InArgs, UDialogBuilderGraph*
 		]
 
 		// 4) Slot Details
-		+ SHorizontalBox::Slot()
-		.FillWidth(0.25f)
-		.Padding(2.0f)
+		+ SSplitter::Slot()
+		.Value(0.25f)
 		[
 			SNew(SBorder)
 			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
@@ -326,6 +334,7 @@ void SDialogSetManager::OnDialogSetSelectionChanged(FDialogSetListItemPtr InItem
 {
 	SelectedDialogSet = InItem.IsValid() ? InItem->DialogSet.Get() : nullptr;
 	SelectedSlot.Reset();
+	SelectedSlotIndex = INDEX_NONE;
 
 	if (DialogSetDetailsView.IsValid())
 	{
@@ -354,7 +363,7 @@ FReply SDialogSetManager::OnAddDialogSet()
 	if (NewDialogSet)
 	{
 		NewDialogSet->OwningDialogGraph = Graph;
-		NewDialogSet->Name = FText::FromString(FString::Printf(TEXT("DialogSet_%d"), Graph->DialogSets.Num() + 1));
+		NewDialogSet->Name = FText::FromString(FString::Printf(TEXT("DialogSet%d"), Graph->DialogSets.Num() + 1));
 		Graph->DialogSets.Add(NewDialogSet);
 
 		MarkGraphDirty();
@@ -421,6 +430,7 @@ TSharedRef<ITableRow> SDialogSetManager::GenerateSlotRow(FDialogSlotListItemPtr 
 void SDialogSetManager::OnSlotSelectionChanged(FDialogSlotListItemPtr InItem, ESelectInfo::Type InSelectInfo)
 {
 	SelectedSlot = InItem.IsValid() ? InItem->Slot.Get() : nullptr;
+	SelectedSlotIndex = InItem.IsValid() ? InItem->SlotIndex : INDEX_NONE;
 
 	if (SlotDetailsView.IsValid())
 	{
@@ -490,7 +500,7 @@ FReply SDialogSetManager::OnAddCameraSlot()
 	return FReply::Handled();
 }
 
-void SDialogSetManager::OnRemoveSlot(UDialogSequenceSlot* InSlot, bool bIsCameraSlot)
+void SDialogSetManager::OnRemoveSlot(UDialogSequenceSlot* InSlot, int32 InSlotIndex, bool bIsCameraSlot)
 {
 	UDialogSet* DialogSet = SelectedDialogSet.Get();
 	if (!DialogSet || !InSlot)
@@ -502,18 +512,57 @@ void SDialogSetManager::OnRemoveSlot(UDialogSequenceSlot* InSlot, bool bIsCamera
 	DialogSet->Modify();
 	InSlot->Modify();
 
+	TArray<UDialogBuilderNode_DialogSequence*> SequenceNodes;
+	DialogGraph->GetNodesOfType(SequenceNodes);
+
+	for (UDialogBuilderNode_DialogSequence* SequenceNode : SequenceNodes)
+	{
+		if (SequenceNode && SequenceNode->DialogSetToUse == DialogSet)
+		{
+			UDialogSequence* DialogSequence = SequenceNode->DialogSequence;
+			UDialogSet* DialogSetInstance = SequenceNode->DialogSet;
+			if (DialogSequence && DialogSetInstance && DialogSequence->MovieScene)
+			{
+				UDialogSequenceSlot* SlotInSequence = DialogSetInstance->Slots.IsValidIndex(InSlotIndex) ? DialogSetInstance->Slots[InSlotIndex] : nullptr;
+				
+				if (SlotInSequence)
+				{
+					DialogSequence->MovieScene->RemovePossessable(SlotInSequence->ID);
+				}
+				
+			}
+		}
+		
+	}
+
 	if (bIsCameraSlot)
 	{
-		DialogSet->CameraSlots.Remove(InSlot);
+		if (DialogSet->CameraSlots.IsValidIndex(InSlotIndex))
+		{
+			DialogSet->CameraSlots.RemoveAt(InSlotIndex);
+		}
+		else
+		{
+			DialogSet->CameraSlots.RemoveSingle(InSlot);
+		}
 	}
 	else
 	{
-		DialogSet->Slots.Remove(InSlot);
+		if (DialogSet->Slots.IsValidIndex(InSlotIndex))
+		{
+			DialogSet->Slots.RemoveAt(InSlotIndex);
+		}
+		else
+		{
+			DialogSet->Slots.RemoveSingle(InSlot);
+		}
 	}
 
 	if (SelectedSlot.Get() == InSlot)
 	{
 		SelectedSlot.Reset();
+		SelectedSlotIndex = INDEX_NONE;
+
 		if (SlotDetailsView.IsValid())
 		{
 			SlotDetailsView->SetObject(nullptr);
@@ -586,7 +635,7 @@ TSharedPtr<SWidget> SDialogSetManager::OnSlotContextMenuOpening()
 			FSlateIcon(),
 			FUIAction(FExecuteAction::CreateLambda([this]()
 			{
-				OnRemoveSlot(SelectedSlot.Get(), IsSelectedSlotCamera());
+				OnRemoveSlot(SelectedSlot.Get(), SelectedSlotIndex, IsSelectedSlotCamera());
 			}))
 		);
 	}
@@ -598,7 +647,7 @@ void SDialogSetManager::OnDeleteSelection()
 {
 	if (SelectedSlot.IsValid() && SelectedDialogSet.IsValid())
 	{
-		OnRemoveSlot(SelectedSlot.Get(), IsSelectedSlotCamera());
+		OnRemoveSlot(SelectedSlot.Get(), SelectedSlotIndex, IsSelectedSlotCamera());
 		return;
 	}
 
@@ -659,8 +708,9 @@ void SDialogSetManager::RefreshSlotList()
 	UDialogSet* DialogSet = SelectedDialogSet.Get();
 	if (DialogSet)
 	{
-		for (UDialogSequenceSlot* Slot : DialogSet->Slots)
+		for (int32 SlotIndex = 0; SlotIndex < DialogSet->Slots.Num(); ++SlotIndex)
 		{
+			UDialogSequenceSlot* Slot = DialogSet->Slots[SlotIndex];
 			if (!Slot)
 			{
 				continue;
@@ -669,11 +719,13 @@ void SDialogSetManager::RefreshSlotList()
 			FDialogSlotListItemPtr NewItem = MakeShared<FDialogSlotListItem>();
 			NewItem->Slot = Slot;
 			NewItem->bIsCameraSlot = false;
+			NewItem->SlotIndex = SlotIndex;
 			SlotItems.Add(NewItem);
 		}
 
-		for (UDialogSequenceSlot* Slot : DialogSet->CameraSlots)
+		for (int32 CameraSlotIndex = 0; CameraSlotIndex < DialogSet->CameraSlots.Num(); ++CameraSlotIndex)
 		{
+			UDialogSequenceSlot* Slot = DialogSet->CameraSlots[CameraSlotIndex];
 			if (!Slot)
 			{
 				continue;
@@ -682,6 +734,7 @@ void SDialogSetManager::RefreshSlotList()
 			FDialogSlotListItemPtr NewItem = MakeShared<FDialogSlotListItem>();
 			NewItem->Slot = Slot;
 			NewItem->bIsCameraSlot = true;
+			NewItem->SlotIndex = CameraSlotIndex;
 			SlotItems.Add(NewItem);
 		}
 	}

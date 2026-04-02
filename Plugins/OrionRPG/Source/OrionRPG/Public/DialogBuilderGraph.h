@@ -305,6 +305,24 @@ public:
 #if WITH_EDITOR
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 #endif
+
+public:
+	template<typename TNodeType>
+	void GetNodesOfType(TArray<TNodeType*>& OutNodes) const
+	{
+		OutNodes.Reset();
+
+		for (UDialogBuilderNode* Node : AllNodes)
+		{
+			if (TNodeType* TypedNode = Cast<TNodeType>(Node))
+			{
+				OutNodes.Add(TypedNode);
+			}
+		}
+	}
+
+	void GetNodesOfType(TSubclassOf<UDialogBuilderNode> NodeType, TArray<UDialogBuilderNode*>& Nodes) const;
 };
+
 
 

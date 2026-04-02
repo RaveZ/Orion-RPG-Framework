@@ -10,6 +10,7 @@
 
 UDialogDefinition::UDialogDefinition()
 {
+	GetOrCreateID();
 }
 
 FGuid UDialogDefinition::GetOrCreateID()

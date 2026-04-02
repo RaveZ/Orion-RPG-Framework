@@ -953,14 +953,26 @@ void UDialogBuilderGraph::GetAllGraphs(TArray<UEdGraph*>& Graphs) const
 }
 void UDialogBuilderGraph::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
-	for (auto& DialogSet : DialogSets)
-	{
-		if (DialogSet)
-		{
-			DialogSet->OwningDialogGraph = this;
-		}
-	}
+	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 #endif // WITH_EDITORONLY_DATA
 
 #undef LOCTEXT_NAMESPACE
+
+void UDialogBuilderGraph::GetNodesOfType(TSubclassOf<UDialogBuilderNode> NodeType, TArray<UDialogBuilderNode*>& Nodes) const
+{
+	Nodes.Reset();
+
+	if (!*NodeType)
+	{
+		return;
+	}
+
+	for (UDialogBuilderNode* Node : AllNodes)
+	{
+		if (Node && Node->IsA(NodeType))
+		{
+			Nodes.Add(Node);
+		}
+	}
+}

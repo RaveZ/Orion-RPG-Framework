@@ -19,6 +19,7 @@ struct FDialogSlotListItem
 {
 	TWeakObjectPtr<UDialogSequenceSlot> Slot;
 	bool bIsCameraSlot = false;
+	int32 SlotIndex = INDEX_NONE;
 };
 
 using FDialogSetListItemPtr = TSharedPtr<FDialogSetListItem>;
@@ -51,7 +52,7 @@ private:
 	void OnSlotSelectionChanged(FDialogSlotListItemPtr InItem, ESelectInfo::Type InSelectInfo);
 	FReply OnAddSlot();
 	FReply OnAddCameraSlot();
-	void OnRemoveSlot(UDialogSequenceSlot* InSlot, bool bIsCameraSlot);
+	void OnRemoveSlot(UDialogSequenceSlot* InSlot, int32 InSlotIndex, bool bIsCameraSlot);
 	TSharedPtr<SWidget> OnSlotContextMenuOpening();
 
 	// Delete command helpers
@@ -79,4 +80,6 @@ private:
 	TSharedPtr<IDetailsView> SlotDetailsView;
 
 	TSharedPtr<FUICommandList> CommandList;
+
+	int32 SelectedSlotIndex = INDEX_NONE;
 };

@@ -35,14 +35,6 @@ void UDialogSet::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEv
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 	
-	for (TObjectPtr<UDialogSequenceSlot>& Slot : Slots)
-	{
-		if (Slot)
-		{
-			Slot->OwningDialogGraph = OwningDialogGraph;
-		}
-	}
-	
 }
 
 #endif
