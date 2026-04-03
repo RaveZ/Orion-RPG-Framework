@@ -194,6 +194,23 @@ void UDialogBuilderGraph::SetDialogSet(UDialogSet* InDialogSet)
 	}
 }
 
+void UDialogBuilderGraph::UpdateDialogSetsReference()
+{
+	for(auto& DialogSet : DialogSets)
+	{
+		if (DialogSet)
+		{
+			for(auto& Slot : DialogSet->Slots)
+			{
+				if (Slot)
+				{
+					Slot->DialogDefinition = GetDialogDefinitionByTag(Slot->ActorTag);
+				}
+			}
+		}
+	}
+}
+
 void UDialogBuilderGraph::Deinitialize()
 {
 	VisitedNodeIDs.Empty();

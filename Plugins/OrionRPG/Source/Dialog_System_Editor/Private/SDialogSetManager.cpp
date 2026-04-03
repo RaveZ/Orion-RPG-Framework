@@ -120,7 +120,7 @@ public:
 						return LOCTEXT("InvalidSlot", "Invalid");
 					}
 
-					const FString Label = LocalSlot->ActorTag.IsValid()
+					const FString Label = LocalSlot->ActorTag.IsValid() && DialogDef
 						? DialogDef->DisplayName.ToString()
 						: "None";
 
@@ -473,7 +473,7 @@ FReply SDialogSetManager::OnAddCameraSlot()
 {
 	UDialogSet* DialogSet = SelectedDialogSet.Get();
 	UDialogBuilderGraph* Graph = DialogGraph.Get();
-	if (!DialogSet || !Graph)
+	if (!DialogSet || !Graph)	
 	{
 		return FReply::Handled();
 	}
@@ -672,8 +672,11 @@ bool SDialogSetManager::IsSelectedSlotCamera() const
 
 void SDialogSetManager::Refresh()
 {
+	const FName CachedDialogSetObjectName = SelectedDialogSet.IsValid() ? SelectedDialogSet->GetFName() : NAME_None;
+	const FGuid CachedSlotId = SelectedSlot.IsValid() ? SelectedSlot->ID : FGuid();
+
 	RefreshDialogSetList();
-	RefreshSlotList();
+	RestoreSelection(CachedDialogSetObjectName, CachedSlotId);
 }
 
 void SDialogSetManager::RefreshDialogSetList()
@@ -755,6 +758,85 @@ void SDialogSetManager::MarkGraphDirty() const
 			Package->MarkPackageDirty();
 		}
 	}
+}
+
+FDialogSetListItemPtr SDialogSetManager::FindDialogSetItemByObjectName(const FName& InDialogSetObjectName) const
+{
+	if (InDialogSetObjectName.IsNone())
+	{
+		return nullptr;
+	}
+
+	for (const FDialogSetListItemPtr& Item : DialogSetItems)
+	{
+		if (Item.IsValid())
+		{
+			UDialogSet* DialogSet = Item->DialogSet.Get();
+			if (DialogSet && DialogSet->GetFName() == InDialogSetObjectName)
+			{
+				return Item;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+FDialogSlotListItemPtr SDialogSetManager::FindSlotItemById(const FGuid& InSlotId) const
+{
+	if (!InSlotId.IsValid())
+	{
+		return nullptr;
+	}
+
+	for (const FDialogSlotListItemPtr& Item : SlotItems)
+	{
+		if (Item.IsValid())
+		{
+			UDialogSequenceSlot* Slot = Item->Slot.Get();
+			if (Slot && Slot->ID == InSlotId)
+			{
+				return Item;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+void SDialogSetManager::SelectDialogSetByObjectName(const FName& InDialogSetObjectName)
+{
+	if (!DialogSetListView.IsValid())
+	{
+		return;
+	}
+
+	if (FDialogSetListItemPtr FoundItem = FindDialogSetItemByObjectName(InDialogSetObjectName))
+	{
+		DialogSetListView->SetSelection(FoundItem, ESelectInfo::Direct);
+		DialogSetListView->RequestScrollIntoView(FoundItem);
+	}
+}
+
+void SDialogSetManager::SelectSlotById(const FGuid& InSlotId)
+{
+	if (!SlotListView.IsValid())
+	{
+		return;
+	}
+
+	if (FDialogSlotListItemPtr FoundItem = FindSlotItemById(InSlotId))
+	{
+		SlotListView->SetSelection(FoundItem, ESelectInfo::Direct);
+		SlotListView->RequestScrollIntoView(FoundItem);
+	}
+}
+
+void SDialogSetManager::RestoreSelection(const FName& InDialogSetObjectName, const FGuid& InSlotId)
+{
+	SelectDialogSetByObjectName(InDialogSetObjectName);
+	RefreshSlotList();
+	SelectSlotById(InSlotId);
 }
 
 #undef LOCTEXT_NAMESPACE

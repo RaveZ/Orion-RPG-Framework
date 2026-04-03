@@ -82,4 +82,11 @@ private:
 	TSharedPtr<FUICommandList> CommandList;
 
 	int32 SelectedSlotIndex = INDEX_NONE;
+
+private:
+	void RestoreSelection(const FName& InDialogSetObjectName, const FGuid& InSlotId);
+	void SelectDialogSetByObjectName(const FName& InDialogSetObjectName);
+	void SelectSlotById(const FGuid& InSlotId);
+	FDialogSetListItemPtr FindDialogSetItemByObjectName(const FName& InDialogSetObjectName) const;
+	FDialogSlotListItemPtr FindSlotItemById(const FGuid& InSlotId) const;
 };

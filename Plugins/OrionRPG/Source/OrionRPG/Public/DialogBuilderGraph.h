@@ -212,6 +212,7 @@ public:
 	virtual void Deinitialize();
 	virtual UWorld* GetWorld() const override;
 
+	void UpdateDialogSetsReference();
 	void StartFromRoot();
 
 
@@ -283,6 +284,7 @@ protected:
 
 	void InitializeDialogActors();
 	void SetDialogSet(class UDialogSet* InDialogSet);	
+
 #if WITH_EDITORONLY_DATA
 public:
 	/** Set of dialog-graph pages */

@@ -638,6 +638,7 @@ void FDialogBuilderEditor::UpdateDialogSet()
 	
 	if (!EditingDialogGraph || !CurrentSequenceNode.IsValid()) return;
 
+	EditingDialogGraph->UpdateDialogSetsReference();
 	UDialogSet* DialogSet = CurrentSequenceNode.Get()->DialogSet;
 	if (!DialogSet)
 	{
@@ -697,34 +698,35 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot)
 		return;
 	}
 
-	if (!InSlot->DialogDefinition)
-	{
-		return;
-	}
+	
 
 	UWorld* PreviewWorld = GetPreviewWorld();
 	check(PreviewWorld);
 
 	UDialogDefinition* InDialogDefinition = InSlot->DialogDefinition;
-	const TSubclassOf<AActor> ActorClass = InDialogDefinition->GetActorClass();
 
 	AActor* ExistingActor = nullptr;
 	if (TWeakObjectPtr<AActor>* ExistingActorPtr = DialogSlotActors.Find(InSlot))
 	{
 		ExistingActor = ExistingActorPtr->Get();
 	}
+	
+	if (!InDialogDefinition && ExistingActor)
+	{
+		PreviewWorld->EditorDestroyActor(ExistingActor, false);
+
+		DialogSlotActors.Remove(InSlot);
+		return;
+	}
+
+
+	const TSubclassOf<AActor> ActorClass = InDialogDefinition->GetActorClass();
+	
 
 	// If participant has no class assigned, destroy any existing preview actor and remove the track entry.
-	if (!ActorClass)
+	if (!ActorClass && ExistingActor)
 	{
-		if (ExistingActor)
-		{
-			PreviewWorld->EditorDestroyActor(ExistingActor, false);
-			if (EditingDialogSequence)
-			{
-				EditingDialogSequence->UnbindInvalidObjects(InDialogDefinition->ID, PreviewWorld);
-			}
-		}
+		PreviewWorld->EditorDestroyActor(ExistingActor, false);
 
 		DialogSlotActors.Remove(InSlot);
 		return;
@@ -739,11 +741,6 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot)
 		return;
 	}
 
-	if (ExistingActor)
-	{
-		ExistingActor->Destroy();
-		ExistingActor = nullptr;
-	}
 
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;

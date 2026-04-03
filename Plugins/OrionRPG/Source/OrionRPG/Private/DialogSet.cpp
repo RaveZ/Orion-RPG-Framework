@@ -18,10 +18,6 @@ UDialogSequenceSlot::UDialogSequenceSlot()
 void UDialogSequenceSlot::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-	if(OwningDialogGraph)
-	{
-		DialogDefinition = OwningDialogGraph->GetDialogDefinitionByTag(ActorTag);
-	}
 }
 #endif
 
