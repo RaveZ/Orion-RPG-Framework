@@ -21,6 +21,9 @@ public:
 	void AddDialogOverlayWidget(const TSharedRef<SWidget>& InWidget);
 	void RemoveDialogOverlayWidget();
 
+	void AddOverlayViewportMenu();
+	void RemoveOverlayViewportMenu();
+
 	/**
 	 * Destructor.
 	 */
@@ -150,7 +153,8 @@ private:
 	TWeakPtr<class FAssetEditorToolkit> AssetEditorToolkitPtr;
 	
 	TSharedPtr<SWidget> DialogOverlayWidget;
-	
+	TSharedPtr<SWidget> ViewportMenuOverlayWidget;
+
 	TSharedPtr<class FDialogBuilderViewportClient> DialogViewportClient;
 
 	bool bUseLevelWorld = false;

@@ -1,7 +1,7 @@
 #include "DialogEditorSubmenus.h"
 
 #include "DialogBuilderViewportClient.h"
-#include "DialogBuilder_EditorCommands.h"	
+#include "DialogBuilder_EditorCommands.h"
 #include "SDialogPreviewViewport.h"
 #include "EngineUtils.h"
 #include "Styling/SlateIconFinder.h"
@@ -10,6 +10,7 @@
 #include "Engine/GameViewportClient.h"
 #include "SortHelper.h"
 #include "Camera/CameraActor.h"
+#include "CineCameraActor.h"
 #include "ToolMenu.h"
 #include "ToolMenus.h"
 #include "UnrealEdGlobals.h"
@@ -19,14 +20,32 @@
 #include "ISettingsModule.h"
 #include "Styling/AppStyle.h"
 #include "ViewportToolbar/UnrealEdViewportToolbarContext.h"
-#include "DialogBuilderEditor.h"
 #include "Widgets/Input/SCheckBox.h"
+#include "Widgets/Images/SImage.h"
 #include "Widgets/SBoxPanel.h"
 
 #define LOCTEXT_NAMESPACE "DialogEditorViewportToolbar"
 
 namespace UE::DialogEditor::Private
 {
+	static const FSlateBrush* GetViewportCameraModeBrush(EDialogViewportCameraMode Mode)
+	{
+		switch (Mode)
+		{
+		case EDialogViewportCameraMode::Perspective:
+			return FEditorViewportCommands::Get().Perspective->GetIcon().GetIcon();
+
+		case EDialogViewportCameraMode::DialogCameraLock:
+			return FSlateIconFinder::FindIconForClass(ACineCameraActor::StaticClass()).GetIcon();
+
+		case EDialogViewportCameraMode::SequencerCameraCuts:
+			return FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Cinematics").GetIcon();
+
+		default:
+			return FAppStyle::GetBrush("NoBrush");
+		}
+	}
+
 	void GeneratePlacedCameraMenuEntries(
 		FToolMenuSection& InSection, TArray<AActor*> InLookThroughActors, const TSharedPtr<::SDialogPreviewViewport>& InDialogViewport
 	)
@@ -494,79 +513,65 @@ namespace UE::DialogEditor
 		return Entry;
 	}
 
-	FToolMenuEntry CreateToolbarViewportCameraModeEntry()
+	TSharedRef<SWidget> CreateViewportCameraModeWidget(TWeakPtr<FDialogBuilderEditor> InEditor)
 	{
-		return FToolMenuEntry::InitDynamicEntry(
-			"DialogViewportCameraMode",
-			FNewToolMenuSectionDelegate::CreateLambda(
-				[](FToolMenuSection& InDynamicSection) -> void
-				{
-					UUnrealEdViewportToolbarContext* const ToolbarContext = InDynamicSection.FindContext<UUnrealEdViewportToolbarContext>();
-					const TSharedPtr<SDialogPreviewViewport> DialogViewport = ToolbarContext ? StaticCastSharedPtr<SDialogPreviewViewport>(ToolbarContext->Viewport.Pin()) : nullptr;
-					if (!DialogViewport.IsValid())
-					{
-						return;
-					}
-
-					const TSharedPtr<FDialogBuilderEditor> EditorPinned = DialogViewport->GetDialogEditor();
-					if (!EditorPinned.IsValid())
-					{
-						return;
-					}
-
-					auto MakeModeButton = [EditorPinned](const FText& Label, const FText& Tooltip, EDialogViewportCameraMode Mode) -> TSharedRef<SWidget>
-					{
-						return SNew(SCheckBox)
-							.Style(FAppStyle::Get(), "RadioButton")
-							.ToolTipText(Tooltip)
-							.IsChecked_Lambda([EditorPinned, Mode]()
+		auto MakeButton = [InEditor](EDialogViewportCameraMode Mode) -> TSharedRef<SWidget>
+			{
+				return SNew(SCheckBox)
+					.Style(FAppStyle::Get(), "RadioButton")
+					.ToolTipText_Lambda([Mode]() -> FText
+						{
+							switch (Mode)
+							{
+							case EDialogViewportCameraMode::Perspective:
+								return LOCTEXT("ViewportCamModePerspectiveTip", "Regular perspective camera");
+							case EDialogViewportCameraMode::DialogCameraLock:
+								return LOCTEXT("ViewportCamModeDialogTip", "Lock camera to Dialog Camera");
+							case EDialogViewportCameraMode::SequencerCameraCuts:
+								return LOCTEXT("ViewportCamModeSequencerTip", "Toggle Sequencer camera cuts");
+							default:
+								return FText::GetEmpty();
+							}
+						})
+					.IsChecked_Lambda([InEditor, Mode]() -> ECheckBoxState
+						{
+							if (const TSharedPtr<::FDialogBuilderEditor> EditorPinned = InEditor.Pin())
+							{
+								return EditorPinned->IsViewportCameraMode(Mode)
+									? ECheckBoxState::Checked
+									: ECheckBoxState::Unchecked;
+							}
+							return ECheckBoxState::Unchecked;
+						})
+					.OnCheckStateChanged_Lambda([InEditor, Mode](ECheckBoxState NewState)
+						{
+							if (NewState == ECheckBoxState::Checked)
+							{
+								if (const TSharedPtr<::FDialogBuilderEditor> EditorPinned = InEditor.Pin())
 								{
-									return EditorPinned->IsViewportCameraMode(Mode) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
-								})
-							.OnCheckStateChanged_Lambda([EditorPinned, Mode](ECheckBoxState NewState)
-								{
-									if (NewState == ECheckBoxState::Checked)
-									{
-										EditorPinned->SetViewportCameraMode(Mode);
-									}
-								})
-							[
-								SNew(STextBlock).Text(Label)
-							];
-					};
+									EditorPinned->SetViewportCameraMode(Mode);
+								}
+							}
+						})
+					[
+						SNew(SImage)
+							.Image(UE::DialogEditor::Private::GetViewportCameraModeBrush(Mode))
+					];
+			};
 
-					FToolMenuEntry Entry = FToolMenuEntry::InitWidget(
-						"DialogViewportCameraModeWidget",
-						SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot().AutoWidth().Padding(2.0f, 0.0f)
-						[
-							MakeModeButton(
-								LOCTEXT("CamModePerspectiveShort", "P"),
-								LOCTEXT("CamModePerspectiveTip", "Regular perspective camera"),
-								EDialogViewportCameraMode::Perspective)
-						]
-						+ SHorizontalBox::Slot().AutoWidth().Padding(2.0f, 0.0f)
-						[
-							MakeModeButton(
-								LOCTEXT("CamModeDialogShort", "D"),
-								LOCTEXT("CamModeDialogTip", "Lock camera to Dialog Camera"),
-								EDialogViewportCameraMode::DialogCameraLock)
-						]
-						+ SHorizontalBox::Slot().AutoWidth().Padding(2.0f, 0.0f)
-						[
-							MakeModeButton(
-								LOCTEXT("CamModeSequencerShort", "S"),
-								LOCTEXT("CamModeSequencerTip", "Enable Sequencer camera cuts"),
-								EDialogViewportCameraMode::SequencerCameraCuts)
-						],
-						LOCTEXT("CamModeWidgetLabel", "Camera Mode")
-					);
-
-					Entry.ToolTip = LOCTEXT("CamModeWidgetTooltip", "Viewport camera source mode");
-					InDynamicSection.AddEntry(Entry);
-				}
-			)
-		);
+		return SNew(SHorizontalBox)
+			+ SHorizontalBox::Slot().AutoWidth().Padding(2.0f, 0.0f)
+			[
+				MakeButton(EDialogViewportCameraMode::Perspective)
+			]
+			+ SHorizontalBox::Slot().AutoWidth().Padding(2.0f, 0.0f)
+			[
+				MakeButton(EDialogViewportCameraMode::DialogCameraLock)
+			]
+			+ SHorizontalBox::Slot().AutoWidth().Padding(2.0f, 0.0f)
+			[
+				MakeButton(EDialogViewportCameraMode::SequencerCameraCuts)
+			];
 	}
 }
 

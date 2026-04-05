@@ -1386,15 +1386,6 @@ void FDialogBuilderEditor::RefreshSequencerCameraLock()
 
 	if (!Sequencer->IsPerspectiveViewportCameraCutEnabled())
 	{
-		if (ViewportClient->IsLockedToCinematic())
-		{
-			DialogViewportWidget->ResetCameraSetting();
-			ViewportClient->SetCinematicActorLock(nullptr);
-			ViewportClient->UpdateViewForLockedActor();
-			ViewportClient->Invalidate();
-		}
-
-		LastSequencerCameraCutActor.Reset();
 		return;
 	}
 
@@ -2840,9 +2831,17 @@ void FDialogBuilderEditor::ApplyViewportCameraMode()
 
 	auto UnlockCinematic = [this, ViewportClient]()
 		{
+			if (ViewportClient->IsLockedToCinematic())
+			{
+				DialogViewportWidget->ResetCameraSetting();
+				ViewportClient->SetCinematicActorLock(nullptr);
+				ViewportClient->UpdateViewForLockedActor();
+				ViewportClient->Invalidate();
+			}
+
 			DialogViewportWidget->OnActorUnlock();
 			ViewportClient->SetViewportType(LVT_Perspective);
-			
+
 			LastSequencerCameraCutActor.Reset();
 		};
 
@@ -2857,6 +2856,9 @@ void FDialogBuilderEditor::ApplyViewportCameraMode()
 		break;
 
 	case EDialogViewportCameraMode::DialogCameraLock:
+
+		UnlockCinematic();
+
 		if (Sequencer.IsValid())
 		{
 			Sequencer->SetPerspectiveViewportCameraCutEnabled(false);
@@ -2865,10 +2867,7 @@ void FDialogBuilderEditor::ApplyViewportCameraMode()
 		{
 			DialogViewportWidget->OnActorLockToggleFromMenu(DialogCameraActor);
 		}
-		else
-		{
-			UnlockCinematic();
-		}
+		
 		break;
 
 	case EDialogViewportCameraMode::SequencerCameraCuts:

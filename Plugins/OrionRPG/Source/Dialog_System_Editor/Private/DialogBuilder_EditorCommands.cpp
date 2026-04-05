@@ -29,7 +29,10 @@ void FDialogBuilder_EditorCommands::RegisterCommands()
 	//Toggle Game View
 	UI_COMMAND(ToggleGameView, "Game View", "Toggles game view.  Game view shows the scene as it appears in game", EUserInterfaceActionType::ToggleButton, FInputChord(EKeys::G));
 
-
+	// Viewport camera modes
+	UI_COMMAND(SetViewportCameraPerspective, "Perspective", "Switch viewport camera mode to perspective", EUserInterfaceActionType::Button, FInputChord(EKeys::One));
+	UI_COMMAND(SetViewportCameraDialogCamera, "Dialog Camera", "Lock viewport camera to the dialog camera", EUserInterfaceActionType::Button, FInputChord(EKeys::Two));
+	UI_COMMAND(SetViewportCameraSequencerCuts, "Sequencer Cuts", "Enable Sequencer camera cuts", EUserInterfaceActionType::Button, FInputChord(EKeys::Three));
 }
 
 #undef LOCTEXT_NAMESPACE

@@ -7,6 +7,7 @@
 #include "Types/SlateEnums.h"
 #include "Slate/SceneViewport.h"
 #include "Editor.h"
+#include "Widgets/SOverlay.h"
 #include "EditorViewportClient.h"
 #include "Subsystems/AssetEditorSubsystem.h"
 #include "SNameComboBox.h"
@@ -74,19 +75,66 @@ void SDialogPreviewViewport::Construct(const FArguments& InArgs, TSharedRef<FDia
 	// Refresh the preview scene
 	RequestRefresh(true);
 
+	AddOverlayViewportMenu();
 }
 
 
 SDialogPreviewViewport::~SDialogPreviewViewport()
 {
+	RemoveOverlayViewportMenu();
+	RemoveDialogOverlayWidget();
+
 	UEditorEngine* Editor = (UEditorEngine*)GEngine;
 	Editor->OnPreviewFeatureLevelChanged().Remove(PreviewFeatureLevelChangedHandle);
 
 	if (DialogViewportClient.IsValid())
 	{
-		// Reset this to ensure it's no longer in use after destruction
 		DialogViewportClient->Viewport = NULL;
 	}
+}
+
+void SDialogPreviewViewport::AddOverlayViewportMenu()
+{
+	if (!SceneViewport.IsValid())
+	{
+		return;
+	}
+
+	TSharedPtr<FDialogBuilderEditor> EditorPinned = DialogEditor.Pin();
+	if (!EditorPinned.IsValid())
+	{
+		return;
+	}
+
+	ViewportMenuOverlayWidget = UE::DialogEditor::CreateViewportCameraModeWidget(DialogEditor);
+
+	TWeakPtr<SWidget> EditorViewportContainer = SceneViewport->GetViewportWidget().Pin()->GetContent();
+	if (TSharedPtr<SOverlay> Overlay = StaticCastSharedPtr<SOverlay>(EditorViewportContainer.Pin()))
+	{
+		Overlay->AddSlot()
+			.HAlign(HAlign_Left)
+			.VAlign(VAlign_Top)
+			.Padding(FMargin(10.0f, 10.0f, 10.0f, 10.0f))
+			[
+				ViewportMenuOverlayWidget.ToSharedRef()
+			];
+	}
+}
+
+void SDialogPreviewViewport::RemoveOverlayViewportMenu()
+{
+	if (!SceneViewport.IsValid() || !ViewportMenuOverlayWidget.IsValid())
+	{
+		return;
+	}
+
+	TWeakPtr<SWidget> EditorViewportContainer = SceneViewport->GetViewportWidget().Pin()->GetContent();
+	if (TSharedPtr<SOverlay> Overlay = StaticCastSharedPtr<SOverlay>(EditorViewportContainer.Pin()))
+	{
+		Overlay->RemoveSlot(ViewportMenuOverlayWidget.ToSharedRef());
+	}
+
+	ViewportMenuOverlayWidget.Reset();
 }
 
 TSharedRef<FEditorViewportClient> SDialogPreviewViewport::MakeEditorViewportClient()
@@ -481,7 +529,6 @@ TSharedPtr<SWidget> SDialogPreviewViewport::BuildViewportToolbar()
 			const FName SubmenuName = UToolMenus::JoinMenuPaths(ViewportToolbarName, "Camera");
 			RightSection.AddEntry(UE::DialogEditor::CreateToolbarCameraSubmenu());
 			UE::DialogEditor::ExtendCameraSubmenu(SubmenuName);
-			RightSection.AddEntry(UE::DialogEditor::CreateToolbarViewportCameraModeEntry());
 
 			RightSection.AddEntry(UE::UnrealEd::CreateViewModesSubmenu());
 

@@ -48,4 +48,8 @@ public:
 	/** Toggles game preview in the viewport */
 	TSharedPtr< FUICommandInfo > ToggleGameView;
 
+	// Viewport camera modes
+	TSharedPtr<FUICommandInfo> SetViewportCameraPerspective;
+	TSharedPtr<FUICommandInfo> SetViewportCameraDialogCamera;
+	TSharedPtr<FUICommandInfo> SetViewportCameraSequencerCuts;
 };
