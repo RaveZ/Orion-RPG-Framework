@@ -518,9 +518,6 @@ void FDialogBuilderEditor::CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot
 		MovieScene->Modify();
 		return;
 	}
-
-
-	
 }
 
 void FDialogBuilderEditor::RemoveDialogTrackDefinition(UDialogDefinition* InDialogDefinition)
@@ -650,7 +647,8 @@ void FDialogBuilderEditor::UpdateDialogSet()
 
 	for(auto& DialogSlot : DialogSet->Slots)
 	{
-		SpawnDialogSlotActor(DialogSlot);
+		AActor* SpawnedActor = nullptr;
+		SpawnDialogSlotActor(DialogSlot, SpawnedActor);
 	}
 
 	if (DialogSet->CameraSlots.Num() == 0)
@@ -662,7 +660,9 @@ void FDialogBuilderEditor::UpdateDialogSet()
 	}
 	for (auto& DialogSlot : DialogSet->CameraSlots)
 	{
-		SpawnDialogSlotActor(DialogSlot);
+		AActor* SpawnedCamera = nullptr;
+		SpawnDialogSlotActor(DialogSlot, SpawnedCamera);
+		DialogCamera = SpawnedCamera;
 	}
 
 	// Cleanup: remove entries for participants that no longer exist in the dialog graph.
@@ -691,7 +691,7 @@ void FDialogBuilderEditor::UpdateDialogSet()
 }
 
 
-void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot)
+void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AActor*& OutActor)
 {
 	if (!InSlot)
 	{
@@ -735,6 +735,7 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot)
 	// Reuse existing actor if it matches the desired class; otherwise respawn.
 	if (ExistingActor && ExistingActor->IsA(ActorClass))
 	{
+		OutActor = ExistingActor;
 		ExistingActor->SetActorRelativeTransform(InSlot->SlotPlacement);
 		
 		CreateDialogTrackFromSlot(InSlot);
@@ -750,6 +751,7 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot)
 	AActor* NewActor = PreviewWorld->SpawnActor<AActor>(ActorClass, FTransform::Identity, SpawnParams);
 	if (NewActor)
 	{
+		OutActor = NewActor;
 		// Preserve the actor's world transform when attaching to the pivot.
 		NewActor->AttachToActor(SequencePivot.Get(), FAttachmentTransformRules::KeepWorldTransform);
 		NewActor->SetActorRelativeTransform(InSlot->SlotPlacement);
@@ -777,12 +779,12 @@ void FDialogBuilderEditor::DestroyDialogSet()
 
 	}
 
-	if (AActor* CameraActor = DialogPreviewCamera.Get())
+	if (AActor* CameraActor = DialogCamera.Get())
 	{
 		PreviewWorld->EditorDestroyActor(CameraActor, false);
 	}
 
-	DialogPreviewCamera.Reset();
+	DialogCamera.Reset();
 	DialogSlotActors.Empty();
 }
 
@@ -1172,92 +1174,6 @@ void FDialogBuilderEditor::ExtendSequencerToolbar(FName InToolMenuName)
 	}
 }
 
-
-
-static void TraverseViewModelChildren(const TSharedPtr<UE::Sequencer::FViewModel>& Node, TFunctionRef<void(const TSharedPtr<UE::Sequencer::FViewModel>&)> Visitor)
-{
-	if (!Node.IsValid())
-	{
-		return;
-	}
-
-	// FViewModel exposes children accessors in MVVM; prefer the direct children accessor.
-	// If your engine variant exposes a different API, inspect ViewModel.h for the correct methods.
-	for (const TSharedPtr<UE::Sequencer::FViewModel>& Child : Node->GetChildren())
-	{
-		if (!Child.IsValid())
-		{
-			continue;
-		}
-
-		Visitor(Child);
-		TraverseViewModelChildren(Child, Visitor);
-	}
-}
-
-static void ForcePinBindingInSequencer(TSharedRef<ISequencer> Sequencer, const FGuid& BindingToPin)
-{
-	using namespace UE::Sequencer;
-
-	TSharedPtr<FSequencerEditorViewModel> EditorViewModel = Sequencer->GetViewModel();
-	if (!EditorViewModel.IsValid())
-	{
-		return;
-	}
-
-	TSharedPtr<FViewModel> Root = EditorViewModel->GetRoot();
-	if (!Root.IsValid())
-	{
-		return;
-	}
-
-	TraverseViewModelChildren(Root, [&](const TSharedPtr<FViewModel>& VM)
-		{
-			// CastThis returns a raw pointer (not a TSharedPtr). Use that raw pointer safely.
-			if (FObjectBindingModel* ObjBinding = VM->CastThis<FObjectBindingModel>())
-			{
-				// ObjectBindingModel exposes the binding id by name GetObjectGuid() in recent engine versions.
-				// If your engine uses a different method name, replace accordingly after checking the header.
-				if (ObjBinding->GetObjectGuid() == BindingToPin)
-				{
-					ObjBinding->SetPinned(true);
-				}
-			}
-		});
-}
-
-static void ForcePinCameraCutTrackInSequencer(TSharedRef<ISequencer> Sequencer)
-{
-	using namespace UE::Sequencer;
-
-	TSharedPtr<FSequencerEditorViewModel> EditorViewModel = Sequencer->GetViewModel();
-	if (!EditorViewModel.IsValid())
-	{
-		return;
-	}
-
-	TSharedPtr<FViewModel> Root = EditorViewModel->GetRoot();
-	if (!Root.IsValid())
-	{
-		return;
-	}
-
-	TraverseViewModelChildren(Root, [&](const TSharedPtr<FViewModel>& VM)
-		{
-			// Cast to track model; CastThis returns raw pointer
-			if (UE::Sequencer::FTrackModel* TrackModel = VM->CastThis<UE::Sequencer::FTrackModel>())
-			{
-				if (UMovieSceneTrack* Underlying = TrackModel->GetTrack())
-				{
-					if (Underlying->IsA(UMovieSceneCameraCutTrack::StaticClass()))
-					{
-						TrackModel->SetPinned(true);
-					}
-				}
-			}
-		});
-}
-
 void FDialogBuilderEditor::OnSequencerReceivedFocus()
 {
 	if (!Sequencer.IsValid())
@@ -1266,16 +1182,6 @@ void FDialogBuilderEditor::OnSequencerReceivedFocus()
 	}
 
 	RefreshSequencerCameraLock();
-	//ForcePinCameraCutTrackInSequencer(Sequencer.ToSharedRef());
-	// For custom editor hosts, avoid LevelEditor integration path.
-	// Just ensure camera cuts are enabled for this sequencer instance.
-	/*Sequencer->SetPerspectiveViewportCameraCutEnabled(true);
-	Sequencer->ForceEvaluate();
-
-	if (DialogViewportWidget.IsValid())
-	{
-		DialogViewportWidget->RequestRefresh(false, true);
-	}*/
 }
 
 void FDialogBuilderEditor::OnInitToolMenuContext(FToolMenuContext& MenuContext)

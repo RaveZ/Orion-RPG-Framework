@@ -327,7 +327,7 @@ public:
 	//DialogDefinitions
 	void UpdateDialogSet();
 	void DestroyDialogSet();
-	void SpawnDialogSlotActor(UDialogSequenceSlot* InSlot);
+	void SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AActor*& OutActor);
 	void CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot);
 	TArray<AActor*> GetDialogSlotActors() const;
 	void SelectDialogDefinitionActor(UDialogDefinition* InDialogDefinition);
@@ -498,7 +498,7 @@ protected:
 	TSharedPtr<ISequencer> Sequencer;
 	TWeakObjectPtr<AActor> SequencePivot;
 	TMap<UDialogSequenceSlot*, TWeakObjectPtr<AActor>> DialogSlotActors;
-	TWeakObjectPtr<ACineCameraActor> DialogPreviewCamera;
+	TWeakObjectPtr<ACineCameraActor> DialogCamera;
 
 	FDelegateHandle SequencerGlobalTimeChangedHandle;
 	FDelegateHandle SequencerMovieSceneDataChangedHandle;
