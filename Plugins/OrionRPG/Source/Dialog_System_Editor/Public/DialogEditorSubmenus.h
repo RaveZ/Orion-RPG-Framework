@@ -8,4 +8,5 @@ namespace UE::DialogEditor
 {
 	void ExtendCameraSubmenu(FName InCameraOptionsSubmenuName);
 	FToolMenuEntry CreateToolbarCameraSubmenu();
+	FToolMenuEntry CreateToolbarViewportCameraModeEntry();
 }

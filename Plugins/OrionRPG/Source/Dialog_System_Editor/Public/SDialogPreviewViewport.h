@@ -124,6 +124,10 @@ public:
 	 */
 	void ResetCameraSetting();
 
+	TSharedPtr<FDialogBuilderEditor> GetDialogEditor() const
+	{
+		return DialogEditor.Pin();
+	}
 
 protected:
 

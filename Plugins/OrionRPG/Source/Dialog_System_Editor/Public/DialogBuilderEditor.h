@@ -46,6 +46,13 @@ enum class EDialogViewportWorldMode : uint8
 	CurrentLevel
 };
 
+enum class EDialogViewportCameraMode : uint8
+{
+	Perspective,
+	DialogCameraLock,
+	SequencerCameraCuts
+};
+
 struct FDialogBuilderEditorTabs
 {
 	// Tab identifiers
@@ -318,6 +325,7 @@ public:
 	void OnSequencerMovieSceneDataChanged(EMovieSceneDataChangeType ChangeType);
 	void RefreshSequencerCameraLock();
 	void UnbindSequencerDelegates();
+	void ApplyViewportCameraMode();
 
 	/** Called whenever sequencer in initializing tool menu context */
 	void OnInitToolMenuContext(FToolMenuContext& MenuContext);
@@ -343,6 +351,10 @@ public:
 	//scene viewport
 	void SetViewportWorldMode(EDialogViewportWorldMode NewMode);
 	bool IsViewportWorldMode(EDialogViewportWorldMode Mode) const { return ViewportWorldMode == Mode; }
+
+	void SetViewportCameraMode(EDialogViewportCameraMode NewMode);
+	bool IsViewportCameraMode(EDialogViewportCameraMode Mode) const { return ViewportCameraMode == Mode; }
+
 	void SetDetailsObject(UObject* InObject);
 
 	//Getter
@@ -488,6 +500,7 @@ protected:
 
 	//Viewport
 	EDialogViewportWorldMode ViewportWorldMode = EDialogViewportWorldMode::PreviewScene;
+	EDialogViewportCameraMode ViewportCameraMode = EDialogViewportCameraMode::Perspective;
 
 	FPreviewScene PreviewScene;
 	TSharedPtr<SDialogPreviewViewport> DialogViewportWidget;
@@ -498,7 +511,7 @@ protected:
 	TSharedPtr<ISequencer> Sequencer;
 	TWeakObjectPtr<AActor> SequencePivot;
 	TMap<UDialogSequenceSlot*, TWeakObjectPtr<AActor>> DialogSlotActors;
-	TWeakObjectPtr<ACineCameraActor> DialogCamera;
+	TWeakObjectPtr<AActor> DialogCamera;
 
 	FDelegateHandle SequencerGlobalTimeChangedHandle;
 	FDelegateHandle SequencerMovieSceneDataChangedHandle;

@@ -31,7 +31,7 @@
 #include "ViewportToolbar/UnrealEdViewportToolbar.h"
 #include "Widgets/Text/SRichTextBlock.h"
 #include "DialogEditorSubmenus.h"
-#include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "Widgets/Input/SCheckBox.h"
 
 #define LOCTEXT_NAMESPACE "DialogPreviewViewport"
 
@@ -481,6 +481,7 @@ TSharedPtr<SWidget> SDialogPreviewViewport::BuildViewportToolbar()
 			const FName SubmenuName = UToolMenus::JoinMenuPaths(ViewportToolbarName, "Camera");
 			RightSection.AddEntry(UE::DialogEditor::CreateToolbarCameraSubmenu());
 			UE::DialogEditor::ExtendCameraSubmenu(SubmenuName);
+			RightSection.AddEntry(UE::DialogEditor::CreateToolbarViewportCameraModeEntry());
 
 			RightSection.AddEntry(UE::UnrealEd::CreateViewModesSubmenu());
 

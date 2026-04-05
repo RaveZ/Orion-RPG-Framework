@@ -688,6 +688,7 @@ void FDialogBuilderEditor::UpdateDialogSet()
 
 
 	ResolveDialogBoundObjects();
+	ApplyViewportCameraMode();
 }
 
 
@@ -1139,6 +1140,7 @@ void FDialogBuilderEditor::OpenDialogSequence(UDialogSequence* InDialogSequence)
 		Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
 		Sequencer->ForceEvaluate();
 	}
+	ApplyViewportCameraMode();
 
 
 }
@@ -1256,7 +1258,6 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		SequencerGlobalTimeChangedHandle = Sequencer->OnGlobalTimeChanged().AddRaw(this, &FDialogBuilderEditor::OnSequencerGlobalTimeChanged);
 		SequencerMovieSceneDataChangedHandle = Sequencer->OnMovieSceneDataChanged().AddRaw(this, &FDialogBuilderEditor::OnSequencerMovieSceneDataChanged);
 
-		Sequencer->SetPerspectiveViewportCameraCutEnabled(true);
 		Sequencer->ForceEvaluate();
 
 		RefreshSequencerCameraLock();
@@ -1371,6 +1372,7 @@ static AActor* ResolveBoundCineCameraActor(ISequencer& InSequencer)
 
 void FDialogBuilderEditor::RefreshSequencerCameraLock()
 {
+
 	if (!Sequencer.IsValid() || !DialogViewportWidget.IsValid())
 	{
 		return;
@@ -2812,10 +2814,73 @@ void FDialogBuilderEditor::SetViewportWorldMode(EDialogViewportWorldMode NewMode
 		DialogViewportWidget->SetUseLevelWorld(ViewportWorldMode == EDialogViewportWorldMode::CurrentLevel);
 	}
 
-
-	
 	UpdateDialogSet();
+	ApplyViewportCameraMode();
 
+}
+
+void FDialogBuilderEditor::SetViewportCameraMode(EDialogViewportCameraMode NewMode)
+{
+	ViewportCameraMode = NewMode;
+	ApplyViewportCameraMode();
+}
+
+void FDialogBuilderEditor::ApplyViewportCameraMode()
+{
+	if (!DialogViewportWidget.IsValid())
+	{
+		return;
+	}
+
+	FDialogBuilderViewportClient* ViewportClient = DialogViewportWidget->GetDialogViewportClientPtr();
+	if (!ViewportClient)
+	{
+		return;
+	}
+
+	auto UnlockCinematic = [this, ViewportClient]()
+		{
+			DialogViewportWidget->OnActorUnlock();
+			ViewportClient->SetViewportType(LVT_Perspective);
+			
+			LastSequencerCameraCutActor.Reset();
+		};
+
+	switch (ViewportCameraMode)
+	{
+	case EDialogViewportCameraMode::Perspective:
+		if (Sequencer.IsValid())
+		{
+			Sequencer->SetPerspectiveViewportCameraCutEnabled(false);
+		}
+		UnlockCinematic();
+		break;
+
+	case EDialogViewportCameraMode::DialogCameraLock:
+		if (Sequencer.IsValid())
+		{
+			Sequencer->SetPerspectiveViewportCameraCutEnabled(false);
+		}
+		if (AActor* DialogCameraActor = DialogCamera.Get())
+		{
+			DialogViewportWidget->OnActorLockToggleFromMenu(DialogCameraActor);
+		}
+		else
+		{
+			UnlockCinematic();
+		}
+		break;
+
+	case EDialogViewportCameraMode::SequencerCameraCuts:
+		EnsureSequencerCreated();
+		if (Sequencer.IsValid())
+		{
+			Sequencer->SetPerspectiveViewportCameraCutEnabled(true);
+		}
+		break;
+	}
+
+	RefreshSequencerCameraLock();
 }
 
 void FDialogBuilderEditor::SetDetailsObject(UObject* InObject)

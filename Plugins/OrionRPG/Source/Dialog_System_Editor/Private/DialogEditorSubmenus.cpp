@@ -19,6 +19,9 @@
 #include "ISettingsModule.h"
 #include "Styling/AppStyle.h"
 #include "ViewportToolbar/UnrealEdViewportToolbarContext.h"
+#include "DialogBuilderEditor.h"
+#include "Widgets/Input/SCheckBox.h"
+#include "Widgets/SBoxPanel.h"
 
 #define LOCTEXT_NAMESPACE "DialogEditorViewportToolbar"
 
@@ -489,6 +492,81 @@ namespace UE::DialogEditor
 		);
 
 		return Entry;
+	}
+
+	FToolMenuEntry CreateToolbarViewportCameraModeEntry()
+	{
+		return FToolMenuEntry::InitDynamicEntry(
+			"DialogViewportCameraMode",
+			FNewToolMenuSectionDelegate::CreateLambda(
+				[](FToolMenuSection& InDynamicSection) -> void
+				{
+					UUnrealEdViewportToolbarContext* const ToolbarContext = InDynamicSection.FindContext<UUnrealEdViewportToolbarContext>();
+					const TSharedPtr<SDialogPreviewViewport> DialogViewport = ToolbarContext ? StaticCastSharedPtr<SDialogPreviewViewport>(ToolbarContext->Viewport.Pin()) : nullptr;
+					if (!DialogViewport.IsValid())
+					{
+						return;
+					}
+
+					const TSharedPtr<FDialogBuilderEditor> EditorPinned = DialogViewport->GetDialogEditor();
+					if (!EditorPinned.IsValid())
+					{
+						return;
+					}
+
+					auto MakeModeButton = [EditorPinned](const FText& Label, const FText& Tooltip, EDialogViewportCameraMode Mode) -> TSharedRef<SWidget>
+					{
+						return SNew(SCheckBox)
+							.Style(FAppStyle::Get(), "RadioButton")
+							.ToolTipText(Tooltip)
+							.IsChecked_Lambda([EditorPinned, Mode]()
+								{
+									return EditorPinned->IsViewportCameraMode(Mode) ? ECheckBoxState::Checked : ECheckBoxState::Unchecked;
+								})
+							.OnCheckStateChanged_Lambda([EditorPinned, Mode](ECheckBoxState NewState)
+								{
+									if (NewState == ECheckBoxState::Checked)
+									{
+										EditorPinned->SetViewportCameraMode(Mode);
+									}
+								})
+							[
+								SNew(STextBlock).Text(Label)
+							];
+					};
+
+					FToolMenuEntry Entry = FToolMenuEntry::InitWidget(
+						"DialogViewportCameraModeWidget",
+						SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot().AutoWidth().Padding(2.0f, 0.0f)
+						[
+							MakeModeButton(
+								LOCTEXT("CamModePerspectiveShort", "P"),
+								LOCTEXT("CamModePerspectiveTip", "Regular perspective camera"),
+								EDialogViewportCameraMode::Perspective)
+						]
+						+ SHorizontalBox::Slot().AutoWidth().Padding(2.0f, 0.0f)
+						[
+							MakeModeButton(
+								LOCTEXT("CamModeDialogShort", "D"),
+								LOCTEXT("CamModeDialogTip", "Lock camera to Dialog Camera"),
+								EDialogViewportCameraMode::DialogCameraLock)
+						]
+						+ SHorizontalBox::Slot().AutoWidth().Padding(2.0f, 0.0f)
+						[
+							MakeModeButton(
+								LOCTEXT("CamModeSequencerShort", "S"),
+								LOCTEXT("CamModeSequencerTip", "Enable Sequencer camera cuts"),
+								EDialogViewportCameraMode::SequencerCameraCuts)
+						],
+						LOCTEXT("CamModeWidgetLabel", "Camera Mode")
+					);
+
+					Entry.ToolTip = LOCTEXT("CamModeWidgetTooltip", "Viewport camera source mode");
+					InDynamicSection.AddEntry(Entry);
+				}
+			)
+		);
 	}
 }
 
