@@ -46,6 +46,7 @@ namespace UE::DialogEditor::Private
 		}
 	}
 
+
 	void GeneratePlacedCameraMenuEntries(
 		FToolMenuSection& InSection, TArray<AActor*> InLookThroughActors, const TSharedPtr<::SDialogPreviewViewport>& InDialogViewport
 	)
@@ -524,11 +525,14 @@ namespace UE::DialogEditor
 							switch (Mode)
 							{
 							case EDialogViewportCameraMode::Perspective:
-								return LOCTEXT("ViewportCamModePerspectiveTip", "Regular perspective camera");
+								return LOCTEXT("ViewportCamModePerspectiveTip", "Regular perspective camera \n Press '1' to switch to this mode");
+
 							case EDialogViewportCameraMode::DialogCameraLock:
-								return LOCTEXT("ViewportCamModeDialogTip", "Lock camera to Dialog Camera");
+								return LOCTEXT("ViewportCamModeDialogTip", "Lock camera to Dialog Camera \n Press '2' to switch to this mode");
+
 							case EDialogViewportCameraMode::SequencerCameraCuts:
-								return LOCTEXT("ViewportCamModeSequencerTip", "Toggle Sequencer camera cuts");
+								return LOCTEXT("ViewportCamModeSequencerTip", "Toggle Sequencer camera cuts \n Press '3' to switch to this mode");
+
 							default:
 								return FText::GetEmpty();
 							}
