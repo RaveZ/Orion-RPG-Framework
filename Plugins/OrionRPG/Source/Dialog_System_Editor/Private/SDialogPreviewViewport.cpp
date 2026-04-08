@@ -76,6 +76,7 @@ void SDialogPreviewViewport::Construct(const FArguments& InArgs, TSharedRef<FDia
 	RequestRefresh(true);
 
 	AddOverlayViewportMenu();
+	ToggleGameView();
 }
 
 
@@ -681,13 +682,16 @@ void SDialogPreviewViewport::ToggleGameView()
 	bool bGameViewEnable = !DialogViewportClient->IsInGameView();
 
 	// "Mode Widget" should not automatically be reactivated by selecting an actor after "Game View" is enabled
-	DialogViewportClient->bAlwaysShowModeWidgetAfterSelectionChanges = bGameViewEnable ? false : true;
+	DialogViewportClient->bAlwaysShowModeWidgetAfterSelectionChanges = true;// bGameViewEnable ? false : true;
 
 	DialogViewportClient->SetGameView(bGameViewEnable);
 
 	// LevelViewportClient->bShowWidget is set to "false" when entering game mode
 	// Need to turn it back to "true" 
 	DialogViewportClient->ShowWidget(true);
+	DialogViewportClient->EngineShowFlags.SetSelection(true);
+	DialogViewportClient->EngineShowFlags.SetSelectionOutline(true);
+
 	DialogViewportClient->RefreshRenderFeature();
 }
 

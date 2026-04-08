@@ -930,6 +930,8 @@ AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot)
 	// Look up by the slot's ID (FName) which is the map's key type
 	if (TObjectPtr<AActor> ExistingActor = CachedActorMap.FindRef(InSlot->GetID()))
 	{
+		ExistingActor->AttachToActor(SequencePivot, FAttachmentTransformRules::KeepWorldTransform);
+		ExistingActor->SetActorRelativeTransform(InSlot->SlotPlacement);
 		return ExistingActor;
 	}
 

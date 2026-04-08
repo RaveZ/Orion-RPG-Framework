@@ -4,6 +4,7 @@
 #include "MovieScene.h"
 #include "MovieSceneDialogSection.h"
 #include "MovieSceneDialogTrack.h"
+#include "Tracks/MovieSceneCameraCutTrack.h"
 #include "Tracks/MovieSceneAudioTrack.h"
 #include "Tracks/MovieSceneEventTrack.h"
 #include "Tracks/MovieSceneMaterialParameterCollectionTrack.h"
@@ -13,7 +14,7 @@
 UDialogSequence::UDialogSequence(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
-
+	MaxFrame = 0;
 	
 }
 
@@ -48,8 +49,68 @@ const UMovieSceneDialogTrack* UDialogSequence::FindDialogTrack() const
 
 void UDialogSequence::RefreshSequence()
 {
-	//Ensure Sequence has a dialog track
-	GetOrCreateDialogTrack();
+	DialogTrack = GetOrCreateDialogTrack();
+	if (!MovieScene || !DialogTrack)
+	{
+		return;
+	}
+
+	bool bHasSections = false;
+	FFrameNumber MinFrame = 0;
+	MaxFrame = 0;
+
+	for (UMovieSceneSection* Section : DialogTrack->GetAllSections())
+	{
+		if (!Section)
+		{
+			continue;
+		}
+
+		const TRange<FFrameNumber> SectionRange = Section->GetRange();
+		if (!SectionRange.HasLowerBound() || !SectionRange.HasUpperBound())
+		{
+			continue;
+		}
+
+		const FFrameNumber SectionStart = SectionRange.GetLowerBoundValue();
+		const FFrameNumber SectionEnd = SectionRange.GetUpperBoundValue();
+
+		if (!bHasSections)
+		{
+			MinFrame = SectionStart;
+			MaxFrame = SectionEnd;
+			bHasSections = true;
+		}
+		else
+		{
+			MinFrame = SectionStart < MinFrame ? SectionStart : MinFrame;
+			MaxFrame = MaxFrame < SectionEnd ? SectionEnd : MaxFrame;
+		}
+	}
+
+
+	if (bHasSections)
+	{
+		const TRange<FFrameNumber> PlaybackRange(0, MaxFrame);
+		MovieScene->SetPlaybackRange(PlaybackRange);
+
+		if (UMovieSceneTrack* CameraCutTrack = MovieScene->GetCameraCutTrack())
+		{
+			for (UMovieSceneSection* Section : CameraCutTrack->GetAllSections())
+			{
+				if (!Section) continue;
+				
+				const TRange<FFrameNumber> SectionRange = Section->GetRange();
+				if (!SectionRange.HasUpperBound() || SectionRange.GetUpperBoundValue() != MaxFrame)
+				{
+					Section->SetRange(PlaybackRange);
+				}
+			}
+		}
+	}
+
+	
+	MovieScene->SetPlaybackRangeLocked(true);
 
 }
 

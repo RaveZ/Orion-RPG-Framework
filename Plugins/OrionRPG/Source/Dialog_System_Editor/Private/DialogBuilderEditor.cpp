@@ -72,6 +72,7 @@
 #include "CineCameraActor.h"
 #include "SequencerUtilities.h"
 #include "MovieSceneToolHelpers.h"
+#include "Tracks/MovieScene3DTransformTrack.h"
 #include "Tracks/MovieSceneCameraCutTrack.h"
 #include "Bindings/MovieSceneCustomBinding.h"
 #include "Bindings/MovieSceneSpawnableBinding.h"
@@ -82,6 +83,9 @@
 #include "MVVM/ViewModels/SequencerEditorViewModel.h"
 #include "MVVM/ViewModels/ViewModel.h"
 #include "MVVM/ViewModels/TrackModel.h"
+#include "MVVM/ViewModels/SequenceModel.h"
+#include "Framework/Application/SlateApplication.h"
+#include "Input/Events.h"
 #include <Kismet2/KismetEditorUtilities.h>
 
 #define LOCTEXT_NAMESPACE "DialogBuilderEditor"
@@ -645,12 +649,6 @@ void FDialogBuilderEditor::UpdateDialogSet()
 	CurrentSequenceNode.Get()->UpdateDialogSetData();
 	PivotActor->SetActorTransform(DialogSet->PlacementTransform);
 
-	for(auto& DialogSlot : DialogSet->Slots)
-	{
-		AActor* SpawnedActor = nullptr;
-		SpawnDialogSlotActor(DialogSlot, SpawnedActor);
-	}
-
 	if (DialogSet->CameraSlots.Num() == 0)
 	{
 		UDialogSequenceSlot* NewCameraSlot = NewObject<UDialogSequenceSlot>(DialogGraph, NAME_None, RF_Transactional);
@@ -664,6 +662,14 @@ void FDialogBuilderEditor::UpdateDialogSet()
 		SpawnDialogSlotActor(DialogSlot, SpawnedCamera);
 		DialogCamera = SpawnedCamera;
 	}
+
+	for(auto& DialogSlot : DialogSet->Slots)
+	{
+		AActor* SpawnedActor = nullptr;
+		SpawnDialogSlotActor(DialogSlot, SpawnedActor);
+	}
+
+	
 
 	// Cleanup: remove entries for participants that no longer exist in the dialog graph.
 	for (auto It = DialogSlotActors.CreateIterator(); It; ++It)
@@ -689,6 +695,15 @@ void FDialogBuilderEditor::UpdateDialogSet()
 
 	ResolveDialogBoundObjects();
 	ApplyViewportCameraMode();
+
+	//Ensure
+	EnsureDialogCameraCutSection();
+
+	//update track model rule
+	UpdateTrackModelRule();
+
+	//update section rule
+	UpdateSectionRule();
 }
 
 
@@ -1207,8 +1222,6 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 
 	EditingDialogSequence->RefreshSequence();
 
-	
-
 	PlaybackContext = MakeShared<FDialogSequencePlaybackContext>(EditingDialogSequence);
 	PlaybackContext->SetDialogViewport(DialogViewportWidget);
 
@@ -1260,6 +1273,22 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 
 		Sequencer->ForceEvaluate();
 
+		const TSharedRef<SWidget> SequencerWidget = Sequencer->GetSequencerWidget();
+		FSlateApplication::Get().SetKeyboardFocus(SequencerWidget, EFocusCause::SetDirectly);
+
+		const FModifierKeysState AltModifiers(
+			false, false, false, false,
+			true, false,
+			false, false,
+			false);
+
+		const FKeyEvent KeyDownEvent(EKeys::D, AltModifiers, 0, false, 0, 0);
+		FSlateApplication::Get().ProcessKeyDownEvent(KeyDownEvent);
+		FSlateApplication::Get().ProcessKeyUpEvent(KeyDownEvent);
+
+
+
+
 		RefreshSequencerCameraLock();
 	}
 
@@ -1295,6 +1324,52 @@ void FDialogBuilderEditor::OnSequencerGlobalTimeChanged()
 void FDialogBuilderEditor::OnSequencerMovieSceneDataChanged(EMovieSceneDataChangeType ChangeType)
 {
 	RefreshSequencerCameraLock();
+}
+
+void FDialogBuilderEditor::EnsureDialogCameraCutSection()
+{
+	if (!Sequencer.IsValid() || !EditingDialogSequence)
+	{
+		return;
+	}
+
+	AActor* CameraActor = DialogCamera.Get();
+	if (!IsValid(CameraActor))
+	{
+		return;
+	}
+
+	UMovieScene* MovieScene = EditingDialogSequence->GetMovieScene();
+	if (!MovieScene)
+	{
+		return;
+	}
+
+	UDialogSequenceSlot* CameraSlot = nullptr;
+	for (const TPair<UDialogSequenceSlot*, TWeakObjectPtr<AActor>>& Pair : DialogSlotActors)
+	{
+		if (Pair.Value.Get() == CameraActor)
+		{
+			CameraSlot = Pair.Key;
+			break;
+		}
+	}
+	if(!CameraSlot)
+	{
+		return;
+	}
+
+	FGuid CameraBindingId = CameraSlot->ID;
+	if (!CameraBindingId.IsValid())
+	{
+		return;
+	}
+
+	const FFrameNumber CurrentFrame = Sequencer->GetLocalTime().Time.FloorToFrame();
+	MovieSceneToolHelpers::CreateCameraCutSectionForCamera(MovieScene, CameraBindingId, CurrentFrame);
+
+
+	
 }
 
 static AActor* ResolveActiveCameraCutActor(ISequencer& InSequencer)
@@ -1476,6 +1551,112 @@ FGuid FDialogBuilderEditor::CreateDialogCamera(const bool bSpawnable, ACineCamer
 	NewCameraAdded(Sequencer.ToSharedRef(), OutActor, CameraGuid);
 
 	return CameraGuid;
+}
+
+void FDialogBuilderEditor::UpdateTrackModelRule()
+{
+	if (TSharedPtr<UE::Sequencer::FSequencerEditorViewModel> EditorViewModel = Sequencer->GetViewModel())
+	{
+		TSharedPtr<UE::Sequencer::FSequenceModel> RootSequenceModel = EditorViewModel->GetRootSequenceModel();
+		if (RootSequenceModel.IsValid())
+		{
+			for (TSharedPtr<UE::Sequencer::FTrackModel> TrackModel :
+				RootSequenceModel->GetDescendantsOfType<UE::Sequencer::FTrackModel>(true))
+			{
+				if (!TrackModel.IsValid()) continue;
+				bool bLocked = TrackModel->GetLockState() == UE::Sequencer::ELockableLockState::Locked;
+				bool bPinned = TrackModel->IsPinned();
+
+				//ensure lock and pin camera cut track
+				if (TrackModel->GetTrack() == EditingDialogSequence->GetMovieScene()->GetCameraCutTrack() &&
+					(!bPinned))
+				{
+					TrackModel->SetPinned(true);
+					break;
+				}
+
+				//ensure pin dialog track
+				if (TrackModel->GetTrack()->IsA(UMovieSceneDialogTrack::StaticClass()) &&
+					(!bPinned))
+				{
+					TrackModel->SetPinned(true);
+					break;
+				}
+			}
+		}
+	}
+
+}
+
+void FDialogBuilderEditor::UpdateSectionRule()
+{
+	//update the section rule to make sure the section in specific track to follonw a certain rule/setting
+	if (!Sequencer.IsValid() || !EditingDialogSequence)
+	{
+		return;
+	}
+
+	UMovieScene* MovieScene = EditingDialogSequence->GetMovieScene();
+	if (!MovieScene)
+	{
+		return;
+	}
+
+	UDialogSequenceSlot* CameraSlot = nullptr;
+	for (const TPair<UDialogSequenceSlot*, TWeakObjectPtr<AActor>>& Pair : DialogSlotActors)
+	{
+		if (Pair.Value.Get() == DialogCamera.Get())
+		{
+			CameraSlot = Pair.Key;
+			break;
+		}
+	}
+
+	if (!CameraSlot || !CameraSlot->ID.IsValid())
+	{
+		return;
+	}
+
+	//resolve camera cut section binding
+	if (UMovieSceneTrack* CameraCutTrack = MovieScene->GetCameraCutTrack())
+	{
+		for (UMovieSceneSection* Section : CameraCutTrack->GetAllSections())
+		{
+			UMovieSceneCameraCutSection* CameraCutSection = Cast<UMovieSceneCameraCutSection>(Section);
+			if (!CameraCutSection->GetCameraBindingID().IsValid())
+			{
+				CameraCutSection->SetCameraBindingID(FMovieSceneObjectBindingID(CameraSlot->ID));
+			}
+		}
+	}
+
+	const FMovieSceneBinding* CameraSlotBinding = MovieScene->FindBinding(CameraSlot->ID);
+	if (!CameraSlotBinding)
+	{
+		return;
+	}
+
+	for (UMovieSceneTrack* Track : CameraSlotBinding->GetTracks())
+	{
+		UMovieScene3DTransformTrack* TransformTrack = Cast<UMovieScene3DTransformTrack>(Track);
+		if (!TransformTrack)
+		{
+			continue;
+		}
+
+		for (UMovieSceneSection* Section : TransformTrack->GetAllSections())
+		{
+			if (!Section)
+			{
+				continue;
+			}
+
+			if (Section->GetCompletionMode() != EMovieSceneCompletionMode::KeepState)
+			{
+				Section->SetCompletionMode(EMovieSceneCompletionMode::KeepState);
+			}
+		}
+	}
 }
 
 

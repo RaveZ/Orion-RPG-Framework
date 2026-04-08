@@ -20,7 +20,7 @@ public:
 
 	void RefreshDialogContent();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog", meta = (ShowOnlyInnerProperties))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Section|Dialog", meta = (ShowOnlyInnerProperties))
 	FOrionDialogLine DialogLine;
 
 

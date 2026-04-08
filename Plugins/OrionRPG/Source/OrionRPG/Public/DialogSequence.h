@@ -30,6 +30,8 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Dialog Sequence")
 	TObjectPtr<UMovieSceneDialogTrack> DialogTrack;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Dialog Sequence")
+	FFrameNumber MaxFrame;
 public:
 	void RefreshSequence();
 

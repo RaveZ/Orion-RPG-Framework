@@ -311,12 +311,15 @@ public:
 		return &PreviewScene;
 	}
 
+
 	//Sequencer
 	void OpenDialogSequence(UDialogSequence* InDialogSequence);
 	void ExtendSequencerToolbar(FName InToolMenuName);
 	void EnsureSequencerCreated();
+	void EnsureDialogCameraCutSection();
 	FGuid CreateDialogCamera(const bool bSpawnable, class ACineCameraActor*& OutActor);
-
+	void UpdateTrackModelRule();
+	void UpdateSectionRule();
 
 	/** Called whenever sequencer has received focus */
 	void OnSequencerReceivedFocus();
