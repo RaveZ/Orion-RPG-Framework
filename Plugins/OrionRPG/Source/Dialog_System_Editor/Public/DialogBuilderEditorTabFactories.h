@@ -29,10 +29,10 @@ protected:
 	TWeakPtr<class FDialogBuilderEditor> DialogEditorPtr;
 };
 
-struct FDialogsetSettingsSummoner : public FWorkflowTabFactory
+struct FDialogStageSettingsSummoner : public FWorkflowTabFactory
 {
 public:
-	FDialogsetSettingsSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr);
+	FDialogStageSettingsSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr);
 
 	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override;
 	virtual FText GetTabToolTipText(const FWorkflowTabSpawnInfo& Info) const override;

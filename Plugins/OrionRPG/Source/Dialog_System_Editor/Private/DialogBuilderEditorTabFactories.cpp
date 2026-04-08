@@ -45,28 +45,28 @@ FText FDialogEditorDetailsSummoner::GetTabToolTipText(const FWorkflowTabSpawnInf
 	return LOCTEXT("DialogEditorDetailsTabTooltip", "The dialog editor details tab allows editing of the properties of dialog nodes");
 }
 
-FDialogsetSettingsSummoner::FDialogsetSettingsSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr)
-	: FWorkflowTabFactory(FDialogBuilderEditorTabs::DialogsetSettingsID, InDialogEditorPtr)
+FDialogStageSettingsSummoner::FDialogStageSettingsSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr)
+	: FWorkflowTabFactory(FDialogBuilderEditorTabs::DialogStageSettingsID, InDialogEditorPtr)
 	, DialogEditorPtr(InDialogEditorPtr)
 {
-	TabLabel = LOCTEXT("DialogsetSettingsLabel", "Dialogset settings");
+	TabLabel = LOCTEXT("DialogStageSettingsLabel", "Dialog Stage");
 	TabIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details");
 
 	bIsSingleton = true;
 
-	ViewMenuDescription = LOCTEXT("DialogsetSettingsView", "Dialogset settings");
-	ViewMenuTooltip = LOCTEXT("DialogsetSettings_ToolTip", "Show the dialogset settings");
+	ViewMenuDescription = LOCTEXT("DialogStageSettingsView", "Dialog Stage");
+	ViewMenuTooltip = LOCTEXT("DialogStageSettings_ToolTip", "Show the dialog stage settings");
 }
 
-TSharedRef<SWidget> FDialogsetSettingsSummoner::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
+TSharedRef<SWidget> FDialogStageSettingsSummoner::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
 {
 	check(DialogEditorPtr.IsValid());
-	return DialogEditorPtr.Pin()->SpawnDialogsetSettings();
+	return DialogEditorPtr.Pin()->SpawnDialogStageSettings();
 }
 
-FText FDialogsetSettingsSummoner::GetTabToolTipText(const FWorkflowTabSpawnInfo& Info) const
+FText FDialogStageSettingsSummoner::GetTabToolTipText(const FWorkflowTabSpawnInfo& Info) const
 {
-	return LOCTEXT("DialogsetSettingsTooltip", "The dialog editor details tab allows editing of the properties of dialogset");
+	return LOCTEXT("DialogStageSettingsTooltip", "The dialog editor details tab allows editing of the properties of dialog stage");
 }
 
 

@@ -101,7 +101,7 @@ const FName FDialogBuilderEditorTabs::DialogBuilderPropertyID(TEXT("DialogBuilde
 const FName FDialogBuilderEditorTabs::ViewportID(TEXT("Viewport"));
 const FName FDialogBuilderEditorTabs::DialogBuilderEditorSettingsID(TEXT("DialogBuilderEditorSettings"));
 const FName FDialogBuilderEditorTabs::DialogSequencerTabID(TEXT("DialogSequencerTab"));
-const FName FDialogBuilderEditorTabs::DialogsetSettingsID(TEXT("DialogsetSettingsID"));
+const FName FDialogBuilderEditorTabs::DialogStageSettingsID(TEXT("DialogStageSettingsID"));
 const FName FDialogBuilderEditorTabs::DialogSequencerViewportID(TEXT("DialogSequencerViewport"));
 
 const FName DialogBuilderEditorAppName = FName(TEXT("DialogBuilderEditorApp"));
@@ -291,8 +291,8 @@ void FDialogBuilderEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.EventGraph_16x"));
 
 
-	InTabManager->RegisterTabSpawner(FDialogBuilderEditorTabs::DialogsetSettingsID, FOnSpawnTab::CreateSP(this, &FDialogBuilderEditor::SpawnTab_DialogsetSettings))
-		.SetDisplayName(LOCTEXT("DetailsTab", "Dialogset settings"))
+	InTabManager->RegisterTabSpawner(FDialogBuilderEditorTabs::DialogStageSettingsID, FOnSpawnTab::CreateSP(this, &FDialogBuilderEditor::SpawnTab_DialogStageSettings))
+		.SetDisplayName(LOCTEXT("DetailsTab", "Dialog Stage"))
 		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Details"));
 
@@ -320,7 +320,7 @@ void FDialogBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& 
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogDefinitionsID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::ViewportID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogBuilderPropertyID);
-	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogsetSettingsID);
+	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogStageSettingsID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogBuilderEditorSettingsID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogSequencerTabID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogSequencerViewportID);
@@ -518,9 +518,23 @@ void FDialogBuilderEditor::CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot
 
 	if (Sequencer.IsValid())
 	{
-		InSlot->ID = FSequencerUtilities::CreateBinding(Sequencer.ToSharedRef(), *BoundActor);
+		const FString BindingName = BoundActor->GetActorLabel();
+
+		FGuid NewBindingId = MovieScene->AddPossessable(BindingName, BoundActor->GetClass());
+		FMovieScenePossessable* Possessable = MovieScene->FindPossessable(NewBindingId);
+
+		if (Possessable)
+		{
+			if (!Possessable->BindSpawnableObject(Sequencer->GetFocusedTemplateID(), BoundActor, Sequencer->GetSharedPlaybackState()))
+			{
+				EditingDialogSequence->BindPossessableObject(NewBindingId, *BoundActor, Sequencer->GetPlaybackContext());
+			}
+		}
+
+		InSlot->ID = NewBindingId;
 		MovieScene->Modify();
 		return;
+		
 	}
 }
 
@@ -737,7 +751,7 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 	}
 
 
-	const TSubclassOf<AActor> ActorClass = InDialogDefinition->GetActorClass();
+	const TSubclassOf<AActor> ActorClass = InDialogDefinition ? InDialogDefinition->GetActorClass() : nullptr;
 	
 
 	// If participant has no class assigned, destroy any existing preview actor and remove the track entry.
@@ -1599,6 +1613,18 @@ FGuid FDialogBuilderEditor::CreateDialogCamera(const bool bSpawnable, ACineCamer
 
 void FDialogBuilderEditor::UpdateTrackModelRule()
 {
+	if (UMovieScene* MovieScene = EditingDialogSequence ? EditingDialogSequence->GetMovieScene() : nullptr)
+	{
+		constexpr int32 DialogTrackSortingOrder = MIN_int32;
+
+		for (UMovieSceneTrack* Track : MovieScene->GetTracks())
+		{
+			if (UMovieSceneDialogTrack* DialogTrack = Cast<UMovieSceneDialogTrack>(Track))
+			{
+				DialogTrack->SetSortingOrder(DialogTrackSortingOrder);
+			}
+		}
+	}
 	if (TSharedPtr<UE::Sequencer::FSequencerEditorViewModel> EditorViewModel = Sequencer->GetViewModel())
 	{
 		TSharedPtr<UE::Sequencer::FSequenceModel> RootSequenceModel = EditorViewModel->GetRootSequenceModel();
@@ -2274,15 +2300,15 @@ TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_Details(const FSpawnTabArgs&
 		];
 }
 
-TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_DialogsetSettings(const FSpawnTabArgs& Args)
+TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_DialogStageSettings(const FSpawnTabArgs& Args)
 {
-	check(Args.GetTabId() == FDialogBuilderEditorTabs::DialogsetSettingsID);
+	check(Args.GetTabId() == FDialogBuilderEditorTabs::DialogStageSettingsID);
 
 	return SNew(SDockTab)
 #if ENGINE_MAJOR_VERSION < 5
 		.Icon(FAppStyle::GetBrush("LevelEditor.Tabs.Details"))
 #endif
-		.Label(LOCTEXT("DialogsetSettings_Title", "Dialog Set Manager"))
+		.Label(LOCTEXT("DialogStageSettings_Title", "Dialog Set Manager"))
 		[
 			DialogStageManagerWidget.ToSharedRef()
 		];
@@ -2330,7 +2356,7 @@ void FDialogBuilderEditor::CreateInternalWidgets()
 	PropertyWidget->SetObject( EditingDialogGraph );
 	PropertyWidget->OnFinishedChangingProperties().AddSP(this, &FDialogBuilderEditor::OnFinishedChangingProperties);
 
-	DialogsetWidget = PropertyModule.CreateDetailView(DetailsViewArgs);
+	DialogStageWidget = PropertyModule.CreateDetailView(DetailsViewArgs);
 
 
 
@@ -2358,7 +2384,7 @@ TSharedRef<SWidget> FDialogBuilderEditor::SpawnProperties()
 		
 }
 
-TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogsetSettings()
+TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogStageSettings()
 {
 	return
 		SNew(SVerticalBox)
@@ -3160,7 +3186,7 @@ void FDialogBuilderEditor::OnNodeDoubleClicked(UEdGraphNode* Node)
 		}
 		DestroyDialogStage();
 		CurrentSequenceNode = DialogSequenceNode;	
-		DialogsetWidget->SetObject(DialogSequenceNode->DialogStage);
+		DialogStageWidget->SetObject(DialogSequenceNode->DialogStage);
 		OpenDialogSequence(DialogSequenceNode->DialogSequence);
 		UpdateDialogStage();
 	}

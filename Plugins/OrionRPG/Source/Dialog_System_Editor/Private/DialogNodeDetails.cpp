@@ -157,21 +157,21 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 	{
 
 		UDialogBuilderNode_DialogSequence* DialogSequenceNodeInstance = DialogSequenceNode.Get();
-		DialogSequenceCategory.AddCustomRow(LOCTEXT("DialogsetSettingsLabel", "Dialogset To Use"))
+		DialogSequenceCategory.AddCustomRow(LOCTEXT("DialogStageSettingsLabel", "DialogStage To Use"))
 			.NameContent()
 			[
 				SNew(STextBlock)
-					.Text(LOCTEXT("DialogsetLabel", "Dialogset To Use"))
+					.Text(LOCTEXT("DialogStageLabel", "DialogStage To Use"))
 					.Font(IDetailLayoutBuilder::GetDetailFont())
-					.ToolTipText(LOCTEXT("DialogsetSettings_ToolTip", "Pick which dialog set to use for this sequence"))
+					.ToolTipText(LOCTEXT("DialogStageSettings_ToolTip", "Pick which dialog set to use for this sequence"))
 			]
 			.ValueContent()
 			.MaxDesiredWidth(300.0f)
 			[
-				GetWidgetForDialogsetPicker(
+				GetWidgetForDialogStagePicker(
 					TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateLambda([DialogSequenceNodeInstance]() { return FText::FromString(DialogSequenceNodeInstance->DialogStageToUse ? DialogSequenceNodeInstance->DialogStageToUse->Name.ToString() : "None"); })),
 					FOnClicked::CreateSP(this, &FDialogNodeDetails::OnPromoteToSharedClick),
-					FOnGetContent::CreateSP(this, &FDialogNodeDetails::OnGetDialogsetListMenu))
+					FOnGetContent::CreateSP(this, &FDialogNodeDetails::OnGetDialogStageListMenu))
 			];
 
 		DialogSequenceCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogSequence, DialogSequence)).DisplayName(LOCTEXT("DialogSequenceLabel", "Dialog Sequence"));
@@ -185,7 +185,7 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 }
 END_SLATE_FUNCTION_BUILD_OPTIMIZATION
 
-TSharedRef<SWidget> FDialogNodeDetails::GetWidgetForDialogsetPicker(const TAttribute<FText>& InDialogsetNameText, FOnClicked PromoteClick, FOnGetContent GetContentMenu)
+TSharedRef<SWidget> FDialogNodeDetails::GetWidgetForDialogStagePicker(const TAttribute<FText>& InDialogStageNameText, FOnClicked PromoteClick, FOnGetContent GetContentMenu)
 {
 	return
 		SNew(SHorizontalBox)
@@ -194,43 +194,43 @@ TSharedRef<SWidget> FDialogNodeDetails::GetWidgetForDialogsetPicker(const TAttri
 		[
 			SNew(SComboButton)
 				.ContentPadding(FMargin(4.0f, 2.0f))
-				.ToolTipText(LOCTEXT("Dialogset_ToolTip", "Dialogset to use"))
+				.ToolTipText(LOCTEXT("DialogStage_ToolTip", "DialogStage to use"))
 				.OnGetMenuContent(GetContentMenu)
 				.ButtonContent()
 				[
 					SNew(STextBlock)
-						.Text_Lambda([InDialogsetNameText]() { return  InDialogsetNameText.Get(); })
+						.Text_Lambda([InDialogStageNameText]() { return  InDialogStageNameText.Get(); })
 						.Font(IDetailLayoutBuilder::GetDetailFont())
 				]
 		];
 
 }
 
-TSharedRef<SWidget> FDialogNodeDetails::OnGetDialogsetListMenu()
+TSharedRef<SWidget> FDialogNodeDetails::OnGetDialogStageListMenu()
 {
 	FMenuBuilder MenuBuilder(true, NULL);
 
 	FText SectionText;
 
-	SectionText = LOCTEXT("DialogsetList", "Dialogset List");
+	SectionText = LOCTEXT("DialogStageList", "DialogStage List");
 
 
-	MenuBuilder.BeginSection("DialogsetListSection", SectionText);
+	MenuBuilder.BeginSection("DialogStageListSection", SectionText);
 
 	if (UDialogBuilderNode_DialogSequence* DialogSequenceInstance = DialogSequenceNode.Get())
 	{
 		const UDialogBuilderGraph* CurrentDialogGraph = DialogSequenceInstance->GetOwningDialogGraph();
 
 
-		for (const auto& Dialogset : CurrentDialogGraph->DialogStages)
+		for (const auto& DialogStage : CurrentDialogGraph->DialogStages)
 		{
-			if (Dialogset)
+			if (DialogStage)
 			{
 				FTextBuilder ToolTipBuilder;
-				FText DialogsetName = FText::FromString(Dialogset->Name.ToString());
+				FText DialogStageName = FText::FromString(DialogStage->Name.ToString());
 				// Pass raw pointer obtained from TObjectPtr via .Get() so the delegate argument type matches UDialogStage*
-				FUIAction Action = FUIAction(FExecuteAction::CreateSP(this, &FDialogNodeDetails::UseDialogset, Dialogset.Get()));
-				MenuBuilder.AddMenuEntry(DialogsetName, ToolTipBuilder.ToText(), FSlateIcon(), Action);
+				FUIAction Action = FUIAction(FExecuteAction::CreateSP(this, &FDialogNodeDetails::UseDialogStage, DialogStage.Get()));
+				MenuBuilder.AddMenuEntry(DialogStageName, ToolTipBuilder.ToText(), FSlateIcon(), Action);
 			}
 		}
 		
@@ -240,7 +240,7 @@ TSharedRef<SWidget> FDialogNodeDetails::OnGetDialogsetListMenu()
 	return MenuBuilder.MakeWidget();
 }
 
-void FDialogNodeDetails::UseDialogset(UDialogStage* InDialogStage)
+void FDialogNodeDetails::UseDialogStage(UDialogStage* InDialogStage)
 {
 	if (DialogSequenceNode.Get())
 	{

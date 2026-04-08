@@ -47,9 +47,9 @@ protected:
 	TSharedRef<SWidget> OnGetShareableNodesMenu();
 	void BecomeSharedWith(UDialogBuilderNode_DialogLine* NewNode);
 
-	TSharedRef<SWidget> GetWidgetForDialogsetPicker(const TAttribute<FText>& InDialogsetNameText, FOnClicked PromoteClick, FOnGetContent GetContentMenu);
-	TSharedRef<SWidget> OnGetDialogsetListMenu();
-	void UseDialogset(class UDialogStage* InDialogStage);
+	TSharedRef<SWidget> GetWidgetForDialogStagePicker(const TAttribute<FText>& InDialogStageNameText, FOnClicked PromoteClick, FOnGetContent GetContentMenu);
+	TSharedRef<SWidget> OnGetDialogStageListMenu();
+	void UseDialogStage(class UDialogStage* InDialogStage);
 
 
 private:

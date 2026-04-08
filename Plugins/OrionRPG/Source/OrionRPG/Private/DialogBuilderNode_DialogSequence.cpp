@@ -67,6 +67,7 @@ void UDialogBuilderNode_DialogSequence::UseDialogStage(UDialogStage* InDialogSta
 	DialogStageToUse = InDialogStage;
 
 	UpdateDialogStageData();
+	Modify();
 }
 
 void UDialogBuilderNode_DialogSequence::UpdateDialogStageData()
