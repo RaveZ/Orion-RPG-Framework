@@ -31,7 +31,7 @@ public:
 	TSharedPtr<FUICommandInfo> NewDialogDecorator;
 	TSharedPtr<FUICommandInfo> NewDialogEvent;
 	TSharedPtr<FUICommandInfo> NewDialogCameraShot;
-	TSharedPtr<FUICommandInfo> DialogSetting;
+	TSharedPtr<FUICommandInfo> DialogStageting;
 
 	//Sequencer
 	/** Create camera and set it as the current camera cut */

@@ -7,13 +7,13 @@
 #include "DialogBuilderEdGraph.h"
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderEditorModes.h"
-#include "SDialogSetManager.h"
+#include "SDialogStageManager.h"
 #include "DialogSequencePlaybackContext.h"
 #include "DialogDefinition.h"
 #include "DialogSequence.h"
 #include "Sections/MovieSceneCameraCutSection.h"
 #include "MovieSceneObjectBindingID.h"
-#include "DialogSet.h"
+#include "DialogStage.h"
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderViewportClient.h"
 #include "DialogBuilderNode_DialogSequence.h"
@@ -138,7 +138,7 @@ FDialogBuilderEditor::~FDialogBuilderEditor()
 
 	// Optional but recommended if you extend tool menus with this owner
 	UToolMenus::UnregisterOwner(this);
-	DestroyDialogSet();
+	DestroyDialogStage();
 #if ENGINE_MAJOR_VERSION < 5
 	UPackage::PackageSavedEvent.Remove(OnPackageSavedDelegateHandle);
 #else // #if ENGINE_MAJOR_VERSION < 5
@@ -267,7 +267,7 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 	RegenerateMenusAndToolbars();
 	RebuildDialogBuilderGraphPages();
 
-	UpdateDialogSet();
+	UpdateDialogStage();
 }
 
 
@@ -338,7 +338,7 @@ void FDialogBuilderEditor::Tick(float DeltaTime)
 		bPendingRefreshDialogEditor = false;
 
 		TGuardValue<bool> ReentryGuard(bIsRefreshDialogEditorInProgress, true);
-		UpdateDialogSet();
+		UpdateDialogStage();
 		if (EditingDialogSequence) EditingDialogSequence->RefreshSequence();
 	}
 
@@ -369,15 +369,15 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 			PropertyWidget->ForceRefresh();
 		}
 
-		if (DialogSetManagerWidget.IsValid())
+		if (DialogStageManagerWidget.IsValid())
 		{
-			DialogSetManagerWidget->Refresh();
+			DialogStageManagerWidget->Refresh();
 		}
 
 		bPendingRefreshDialogEditor = true;
 
 		FSlateApplication::Get().DismissAllMenus();
-		UpdateDialogSet();
+		UpdateDialogStage();
 	}
 }
 
@@ -454,7 +454,7 @@ void FDialogBuilderEditor::OnDialogDefinitionAdded(UDialogDefinition* InDialogDe
 	}
 
 	EnsureSequencerCreated();
-	UpdateDialogSet();
+	UpdateDialogStage();
 
 	if (Sequencer.IsValid())
 	{
@@ -579,7 +579,7 @@ void FDialogBuilderEditor::ResolveDialogBoundObjects()
 	}
 }
 
-void FDialogBuilderEditor::UpdateDialogSet()
+void FDialogBuilderEditor::UpdateDialogStage()
 {
 	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
 	check(DialogGraph);
@@ -640,31 +640,31 @@ void FDialogBuilderEditor::UpdateDialogSet()
 	
 	if (!EditingDialogGraph || !CurrentSequenceNode.IsValid()) return;
 
-	EditingDialogGraph->UpdateDialogSetsReference();
-	UDialogSet* DialogSet = CurrentSequenceNode.Get()->DialogSet;
-	if (!DialogSet)
+	EditingDialogGraph->UpdateDialogStagesReference();
+	UDialogStage* DialogStage = CurrentSequenceNode.Get()->DialogStage;
+	if (!DialogStage)
 	{
 		return;
 	}
 
-	CurrentSequenceNode.Get()->UpdateDialogSetData();
-	PivotActor->SetActorTransform(DialogSet->PlacementTransform);
+	CurrentSequenceNode.Get()->UpdateDialogStageData();
+	PivotActor->SetActorTransform(DialogStage->PlacementTransform);
 
-	if (DialogSet->CameraSlots.Num() == 0)
+	if (DialogStage->CameraSlots.Num() == 0)
 	{
 		UDialogSequenceSlot* NewCameraSlot = NewObject<UDialogSequenceSlot>(DialogGraph, NAME_None, RF_Transactional);
 		NewCameraSlot->DialogDefinition = NewObject<UDialogCamera>(DialogGraph, NAME_None, RF_Transactional);
-		DialogSet->CameraSlots.Add(NewCameraSlot);
+		DialogStage->CameraSlots.Add(NewCameraSlot);
 
 	}
-	for (auto& DialogSlot : DialogSet->CameraSlots)
+	for (auto& DialogSlot : DialogStage->CameraSlots)
 	{
 		AActor* SpawnedCamera = nullptr;
 		SpawnDialogSlotActor(DialogSlot, SpawnedCamera);
 		DialogCamera = SpawnedCamera;
 	}
 
-	for(auto& DialogSlot : DialogSet->Slots)
+	for(auto& DialogSlot : DialogStage->Slots)
 	{
 		AActor* SpawnedActor = nullptr;
 		SpawnDialogSlotActor(DialogSlot, SpawnedActor);
@@ -677,7 +677,7 @@ void FDialogBuilderEditor::UpdateDialogSet()
 	{
 		const UDialogSequenceSlot* Key = It.Key();
 		if (!Key) return;
-		bool bSlotNotFound = (!DialogSet->Slots.Contains(Key) && !DialogSet->CameraSlots.Contains(Key));
+		bool bSlotNotFound = (!DialogStage->Slots.Contains(Key) && !DialogStage->CameraSlots.Contains(Key));
 
 		if (bSlotNotFound)
 		{
@@ -777,7 +777,7 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 	}
 }
 
-void FDialogBuilderEditor::DestroyDialogSet()
+void FDialogBuilderEditor::DestroyDialogStage()
 {
 	UWorld* PreviewWorld = GetPreviewWorld();
 	check(PreviewWorld);
@@ -888,14 +888,14 @@ UDialogDefinition* FDialogBuilderEditor::FindDialogDefinitionByActor(const AActo
 		return nullptr;
 	}
 
-	UDialogSet* DialogSet = CurrentSequenceNode.Get()->DialogSet;
-	if (!DialogSet)
+	UDialogStage* DialogStage = CurrentSequenceNode.Get()->DialogStage;
+	if (!DialogStage)
 	{
 		return nullptr;
 	}
 
 
-	for (auto& Slot : DialogSet->Slots)
+	for (auto& Slot : DialogStage->Slots)
 	{
 		if (Slot)
 		{
@@ -938,9 +938,9 @@ void FDialogBuilderEditor::BindCommands()
 		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanCreateDialogCameraShot)
 	);
 
-	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().DialogSetting,
-		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::OpenDialogSetting),
-		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanOpenDialogSetting)
+	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().DialogStageting,
+		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::OpenDialogStageting),
+		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanOpenDialogStageting)
 	);
 	
 	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().AddNewDialogGraph,
@@ -1021,9 +1021,9 @@ void FDialogBuilderEditor::CreateCommandList()
 		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CreateNewDialogEvent),
 		FCanExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CanCreateDialogEvent));
 
-	GraphEditorCommands->MapAction(FDialogBuilder_EditorCommands::Get().DialogSetting,
-		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::OpenDialogSetting),
-		FCanExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CanOpenDialogSetting));
+	GraphEditorCommands->MapAction(FDialogBuilder_EditorCommands::Get().DialogStageting,
+		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::OpenDialogStageting),
+		FCanExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CanOpenDialogStageting));
 
 	GraphEditorCommands->MapAction(FDialogBuilder_EditorCommands::Get().NewDialogCameraShot,
 		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CreateNewDialogCameraShot),
@@ -2284,7 +2284,7 @@ TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_DialogsetSettings(const FSpa
 #endif
 		.Label(LOCTEXT("DialogsetSettings_Title", "Dialog Set Manager"))
 		[
-			DialogSetManagerWidget.ToSharedRef()
+			DialogStageManagerWidget.ToSharedRef()
 		];
 }
 
@@ -2335,7 +2335,7 @@ void FDialogBuilderEditor::CreateInternalWidgets()
 
 
 	this->DialogDefinitionsWidget = SNew(SDialogDefinitions, SharedThis(this));
-	DialogSetManagerWidget = SNew(SDialogSetManager, GetDialogBuilderGraph());
+	DialogStageManagerWidget = SNew(SDialogStageManager, GetDialogBuilderGraph());
 
 	if (!DialogViewportWidget.IsValid())
 	{
@@ -2366,7 +2366,7 @@ TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogsetSettings()
 		.FillHeight(1.0f)
 		.HAlign(HAlign_Fill)
 		[
-			DialogSetManagerWidget.ToSharedRef()
+			DialogStageManagerWidget.ToSharedRef()
 		];
 }
 
@@ -2953,11 +2953,11 @@ bool FDialogBuilderEditor::CanCreateDialogCameraShot() const
 {
 	return true;
 }
-void FDialogBuilderEditor::OpenDialogSetting()
+void FDialogBuilderEditor::OpenDialogStageting()
 {
 	PropertyWidget->SetObject(GetDialogBuilderGraph());
 }
-bool FDialogBuilderEditor::CanOpenDialogSetting() const
+bool FDialogBuilderEditor::CanOpenDialogStageting() const
 {
 	return true;
 }
@@ -3023,14 +3023,14 @@ void FDialogBuilderEditor::SetViewportWorldMode(EDialogViewportWorldMode NewMode
 
 	ViewportWorldMode = NewMode;
 
-	DestroyDialogSet();
+	DestroyDialogStage();
 
 	if (DialogViewportWidget.IsValid())
 	{
 		DialogViewportWidget->SetUseLevelWorld(ViewportWorldMode == EDialogViewportWorldMode::CurrentLevel);
 	}
 
-	UpdateDialogSet();
+	UpdateDialogStage();
 	ApplyViewportCameraMode();
 
 }
@@ -3158,11 +3158,11 @@ void FDialogBuilderEditor::OnNodeDoubleClicked(UEdGraphNode* Node)
 		{
 			return;
 		}
-		DestroyDialogSet();
+		DestroyDialogStage();
 		CurrentSequenceNode = DialogSequenceNode;	
-		DialogsetWidget->SetObject(DialogSequenceNode->DialogSet);
+		DialogsetWidget->SetObject(DialogSequenceNode->DialogStage);
 		OpenDialogSequence(DialogSequenceNode->DialogSequence);
-		UpdateDialogSet();
+		UpdateDialogStage();
 	}
 
 	

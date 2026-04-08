@@ -7,7 +7,7 @@
 #include "DialogBuilderEdge.h"
 #include "DialogCameraShot.h"
 #include "DialogSequence.h"
-#include "DialogSet.h"
+#include "DialogStage.h"
 #include "DialogBuilderNode_Root.h"
 #include "DialogBuilderSetting.h"
 #include "LevelSequencePlayer.h"
@@ -147,16 +147,16 @@ void UDialogBuilderGraph::InitializeDialogActors()
 	
 }
 
-void UDialogBuilderGraph::SetDialogSet(UDialogSet* InDialogSet)
+void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 {
 	if (!CurrentDialogSequence) return;
-	if(!InDialogSet || InDialogSet == CurrentDialogSet)
+	if(!InDialogStage || InDialogStage == CurrentDialogStage)
 		return;
 
-	UDialogSet* LastDialogSet = CurrentDialogSet;
-	CurrentDialogSet = InDialogSet;
+	UDialogStage* LastDialogStage = CurrentDialogStage;
+	CurrentDialogStage = InDialogStage;
 	
-	for (auto& Slot : CurrentDialogSet->Slots)
+	for (auto& Slot : CurrentDialogStage->Slots)
 	{
 		if (AActor* DialogActor = RetrieveActorFromSlot(Slot))
 		{
@@ -165,7 +165,7 @@ void UDialogBuilderGraph::SetDialogSet(UDialogSet* InDialogSet)
 	}
 		
 
-	for (auto& Slot : CurrentDialogSet->CameraSlots)
+	for (auto& Slot : CurrentDialogStage->CameraSlots)
 	{
 		if (AActor* DialogActor = RetrieveActorFromSlot(Slot))
 		{
@@ -177,8 +177,8 @@ void UDialogBuilderGraph::SetDialogSet(UDialogSet* InDialogSet)
 	if (!MovieScene) return;
 	TArray<UDialogSequenceSlot*> DialogSlots;
 
-	DialogSlots.Append(CurrentDialogSet->Slots);
-	DialogSlots.Append(CurrentDialogSet->CameraSlots);
+	DialogSlots.Append(CurrentDialogStage->Slots);
+	DialogSlots.Append(CurrentDialogStage->CameraSlots);
 
 	for (int32 i = 0; i < DialogSlots.Num(); i++)
 	{
@@ -194,13 +194,13 @@ void UDialogBuilderGraph::SetDialogSet(UDialogSet* InDialogSet)
 	}
 }
 
-void UDialogBuilderGraph::UpdateDialogSetsReference()
+void UDialogBuilderGraph::UpdateDialogStagesReference()
 {
-	for(auto& DialogSet : DialogSets)
+	for(auto& DialogStage : DialogStages)
 	{
-		if (DialogSet)
+		if (DialogStage)
 		{
-			for(auto& Slot : DialogSet->Slots)
+			for(auto& Slot : DialogStage->Slots)
 			{
 				if (Slot)
 				{
@@ -430,9 +430,9 @@ void UDialogBuilderGraph::BeginDialogSequence(UDialogBuilderNode_DialogSequence*
 		return;
 	}
 	CurrentDialogSequence = InDialogSequence->DialogSequence;
-	InDialogSequence->UpdateDialogSetData();
+	InDialogSequence->UpdateDialogStageData();
 
-	SetDialogSet(InDialogSequence->DialogSet);
+	SetDialogStage(InDialogSequence->DialogStage);
 
 
 	DetermineAdvanceDialogRule(InDialogSequence);

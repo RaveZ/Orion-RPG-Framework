@@ -15,7 +15,7 @@ void FDialogBuilder_EditorCommands::RegisterCommands()
 	UI_COMMAND(NewDialogEvent, "New Orion Event", "New Orion Event", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(NewDialogCameraShot, "New Dialog Camera Shot", "New Dialog Camera Shot", EUserInterfaceActionType::Button, FInputChord());
 	UI_COMMAND(AddNewDialogGraph, "New Dialog Graph", "New Dialog Graph", EUserInterfaceActionType::Button, FInputChord(EModifierKey::Control, EKeys::Q));
-	UI_COMMAND(DialogSetting, "Dialog Setting", "Open Dialog Setting", EUserInterfaceActionType::Button, FInputChord());
+	UI_COMMAND(DialogStageting, "Dialog Setting", "Open Dialog Setting", EUserInterfaceActionType::Button, FInputChord());
 
 	//Sequencer
 	UI_COMMAND(CreateCamera, "Create Camera", "Create a new camera and set it as the current camera cut", EUserInterfaceActionType::Button, FInputChord());

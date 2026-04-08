@@ -336,8 +336,8 @@ public:
 	UWorld* GetPreviewWorld();
 
 	//DialogDefinitions
-	void UpdateDialogSet();
-	void DestroyDialogSet();
+	void UpdateDialogStage();
+	void DestroyDialogStage();
 	void SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AActor*& OutActor);
 	void CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot);
 	TArray<AActor*> GetDialogSlotActors() const;
@@ -434,8 +434,8 @@ protected:
 	void CreateNewDialogCameraShot();
 	bool CanCreateDialogCameraShot() const;
 	
-	void OpenDialogSetting();
-	bool CanOpenDialogSetting() const;
+	void OpenDialogStageting();
+	bool CanOpenDialogStageting() const;
 
 	void OnRenameNode();
 	bool CanRenameNodes() const;
@@ -496,7 +496,7 @@ protected:
 
 	TSharedPtr<class IDetailsView> EditorSettingsWidget;
 	TSharedPtr<class SDialogDefinitions> DialogDefinitionsWidget;
-	TSharedPtr<class SDialogSetManager> DialogSetManagerWidget;
+	TSharedPtr<class SDialogStageManager> DialogStageManagerWidget;
 
 	/** The command list for this editor */
 	TSharedPtr<FUICommandList> GraphEditorCommands;

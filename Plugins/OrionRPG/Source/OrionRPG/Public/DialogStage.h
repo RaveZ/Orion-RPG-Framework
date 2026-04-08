@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "DialogData.h"
 #include "UObject/NoExportTypes.h"
-#include "DialogSet.generated.h"
+#include "DialogStage.generated.h"
 
 class UDialogBuilderGraph;
 
@@ -48,12 +48,12 @@ public:
 
 
 UCLASS(Blueprintable, BlueprintType, EditInlineNew, AutoExpandCategories = "Detail")
-class ORIONRPG_API UDialogSet : public UObject
+class ORIONRPG_API UDialogStage : public UObject
 {
 	GENERATED_BODY()
 
 public:
-	UDialogSet();
+	UDialogStage();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detail")
 	TObjectPtr<UDialogBuilderGraph> OwningDialogGraph;

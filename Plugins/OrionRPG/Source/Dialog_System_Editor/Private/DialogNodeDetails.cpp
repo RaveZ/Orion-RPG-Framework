@@ -7,7 +7,7 @@
 #include "DialogBuilderNode_DialogSequence.h"
 #include "DialogBuilderEdNode_PlayerLine.h"
 #include "DialogBuilderNode_PlayerLine.h"
-#include "DialogSet.h"
+#include "DialogStage.h"
 #include "Containers/Array.h"
 #include "Containers/EnumAsByte.h"
 #include "Containers/Map.h"
@@ -169,7 +169,7 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 			.MaxDesiredWidth(300.0f)
 			[
 				GetWidgetForDialogsetPicker(
-					TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateLambda([DialogSequenceNodeInstance]() { return FText::FromString(DialogSequenceNodeInstance->DialogSetToUse ? DialogSequenceNodeInstance->DialogSetToUse->Name.ToString() : "None"); })),
+					TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateLambda([DialogSequenceNodeInstance]() { return FText::FromString(DialogSequenceNodeInstance->DialogStageToUse ? DialogSequenceNodeInstance->DialogStageToUse->Name.ToString() : "None"); })),
 					FOnClicked::CreateSP(this, &FDialogNodeDetails::OnPromoteToSharedClick),
 					FOnGetContent::CreateSP(this, &FDialogNodeDetails::OnGetDialogsetListMenu))
 			];
@@ -222,13 +222,13 @@ TSharedRef<SWidget> FDialogNodeDetails::OnGetDialogsetListMenu()
 		const UDialogBuilderGraph* CurrentDialogGraph = DialogSequenceInstance->GetOwningDialogGraph();
 
 
-		for (const auto& Dialogset : CurrentDialogGraph->DialogSets)
+		for (const auto& Dialogset : CurrentDialogGraph->DialogStages)
 		{
 			if (Dialogset)
 			{
 				FTextBuilder ToolTipBuilder;
 				FText DialogsetName = FText::FromString(Dialogset->Name.ToString());
-				// Pass raw pointer obtained from TObjectPtr via .Get() so the delegate argument type matches UDialogSet*
+				// Pass raw pointer obtained from TObjectPtr via .Get() so the delegate argument type matches UDialogStage*
 				FUIAction Action = FUIAction(FExecuteAction::CreateSP(this, &FDialogNodeDetails::UseDialogset, Dialogset.Get()));
 				MenuBuilder.AddMenuEntry(DialogsetName, ToolTipBuilder.ToText(), FSlateIcon(), Action);
 			}
@@ -240,11 +240,11 @@ TSharedRef<SWidget> FDialogNodeDetails::OnGetDialogsetListMenu()
 	return MenuBuilder.MakeWidget();
 }
 
-void FDialogNodeDetails::UseDialogset(UDialogSet* InDialogSet)
+void FDialogNodeDetails::UseDialogset(UDialogStage* InDialogStage)
 {
 	if (DialogSequenceNode.Get())
 	{
-		DialogSequenceNode.Get()->UseDialogSet(InDialogSet);
+		DialogSequenceNode.Get()->UseDialogStage(InDialogStage);
 
 	}
 }

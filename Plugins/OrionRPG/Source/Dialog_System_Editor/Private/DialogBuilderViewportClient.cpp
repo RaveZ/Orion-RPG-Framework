@@ -890,7 +890,7 @@ void FDialogBuilderViewportClient::InvalidatePreview(bool bResetCamera)
 
 	if (!DialogEditor.IsValid()) return;
 	
-	DialogEditor->UpdateDialogSet();
+	DialogEditor->UpdateDialogStage();
 
 	Invalidate();
 

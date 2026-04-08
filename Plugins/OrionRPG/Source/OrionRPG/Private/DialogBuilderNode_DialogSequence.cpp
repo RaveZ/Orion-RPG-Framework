@@ -12,7 +12,7 @@
 #include "LevelSequencePlayer.h"
 #include "LevelSequenceActor.h"
 #include "DialogComponent.h"
-#include "DialogSet.h"
+#include "DialogStage.h"
 
 #define LOCTEXT_NAMESPACE "DialogNode_Sequence"
 
@@ -61,49 +61,49 @@ float UDialogBuilderNode_DialogSequence::GetSequenceDuration()
 	return Duration;
 }
 
-void UDialogBuilderNode_DialogSequence::UseDialogSet(UDialogSet* InDialogSet)
+void UDialogBuilderNode_DialogSequence::UseDialogStage(UDialogStage* InDialogStage)
 {
 
-	DialogSetToUse = InDialogSet;
+	DialogStageToUse = InDialogStage;
 
-	UpdateDialogSetData();
+	UpdateDialogStageData();
 }
 
-void UDialogBuilderNode_DialogSequence::UpdateDialogSetData()
+void UDialogBuilderNode_DialogSequence::UpdateDialogStageData()
 {
-	if (!DialogSetToUse)
+	if (!DialogStageToUse)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("DialogSetToUse is null, cannot update DialogSet data"));
-		DialogSet = nullptr;
+		UE_LOG(LogTemp, Warning, TEXT("DialogStageToUse is null, cannot update DialogStage data"));
+		DialogStage = nullptr;
 		return;
 	}
 
-	if (!DialogSet)
+	if (!DialogStage)
 	{
-		DialogSet = NewObject<UDialogSet>(this, NAME_None, RF_Transactional);
-		DialogSet->OwningDialogGraph = GetOwningDialogGraph();
+		DialogStage = NewObject<UDialogStage>(this, NAME_None, RF_Transactional);
+		DialogStage->OwningDialogGraph = GetOwningDialogGraph();
 	}
 
-	DialogSet->Name = DialogSetToUse->Name;
-	DialogSet->PlacementTransform = DialogSetToUse->PlacementTransform;
+	DialogStage->Name = DialogStageToUse->Name;
+	DialogStage->PlacementTransform = DialogStageToUse->PlacementTransform;
 
 	//Populate Dialog Definition Slots
 	{
-		const int32 SourceCount = DialogSetToUse->Slots.Num();
-		DialogSet->Slots.SetNum(SourceCount);
+		const int32 SourceCount = DialogStageToUse->Slots.Num();
+		DialogStage->Slots.SetNum(SourceCount);
 		for (int32 idx = 0; idx < SourceCount; ++idx)
 		{
-			UDialogSequenceSlot* Source = DialogSetToUse->Slots[idx];
+			UDialogSequenceSlot* Source = DialogStageToUse->Slots[idx];
 			if (!Source)
 			{
-				DialogSet->Slots[idx] = nullptr;
+				DialogStage->Slots[idx] = nullptr;
 				continue;
 			}
 
-			UDialogSequenceSlot* Target = DialogSet->Slots[idx];
+			UDialogSequenceSlot* Target = DialogStage->Slots[idx];
 			if (!Target)
 			{
-				Target = NewObject<UDialogSequenceSlot>(DialogSet, NAME_None, RF_Transactional);
+				Target = NewObject<UDialogSequenceSlot>(DialogStage, NAME_None, RF_Transactional);
 			}
 
 			Target->OwningDialogGraph = GetOwningDialogGraph();
@@ -111,27 +111,27 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogSetData()
 			Target->DialogDefinition = Source->DialogDefinition;
 			Target->SlotPlacement = Source->SlotPlacement;
 
-			DialogSet->Slots[idx] = Target;
+			DialogStage->Slots[idx] = Target;
 		}
 	}
 
 	//Populate Camera Slots
 	/*{
-		const int32 SourceCount = DialogSetToUse->CameraSlots.Num();
-		DialogSet->CameraSlots.SetNum(SourceCount);
+		const int32 SourceCount = DialogStageToUse->CameraSlots.Num();
+		DialogStage->CameraSlots.SetNum(SourceCount);
 		for (int32 idx = 0; idx < SourceCount; ++idx)
 		{
-			UDialogSequenceSlot* Source = DialogSetToUse->CameraSlots[idx];
+			UDialogSequenceSlot* Source = DialogStageToUse->CameraSlots[idx];
 			if (!Source)
 			{
-				DialogSet->CameraSlots[idx] = nullptr;
+				DialogStage->CameraSlots[idx] = nullptr;
 				continue;
 			}
 
-			UDialogSequenceSlot* Target = DialogSet->CameraSlots[idx];
+			UDialogSequenceSlot* Target = DialogStage->CameraSlots[idx];
 			if (!Target)
 			{
-				Target = NewObject<UDialogSequenceSlot>(DialogSet, NAME_None, RF_Transactional);
+				Target = NewObject<UDialogSequenceSlot>(DialogStage, NAME_None, RF_Transactional);
 			}
 
 			Target->OwningDialogGraph = GetOwningDialogGraph();
@@ -139,7 +139,7 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogSetData()
 			Target->DialogDefinition = Source->DialogDefinition;
 			Target->SlotPlacement = Source->SlotPlacement;
 
-			DialogSet->CameraSlots[idx] = Target;
+			DialogStage->CameraSlots[idx] = Target;
 		}
 	}*/
 }

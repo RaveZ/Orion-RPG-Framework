@@ -1,13 +1,13 @@
 ﻿// Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
-#include "DialogSet.h"
+#include "DialogStage.h"
 #include "DialogBuilderGraph.h"
 #include "CineCameraActor.h"
 #include "Misc/Guid.h"
 
 
-#define LOCTEXT_NAMESPACE "DialogSet"
+#define LOCTEXT_NAMESPACE "DialogStage"
 
 UDialogSequenceSlot::UDialogSequenceSlot()
 {
@@ -21,13 +21,13 @@ void UDialogSequenceSlot::PostEditChangeProperty(FPropertyChangedEvent& Property
 }
 #endif
 
-UDialogSet::UDialogSet()
+UDialogStage::UDialogStage()
 {
 
 }
 
 #if WITH_EDITOR
-void UDialogSet::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
+void UDialogStage::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 	

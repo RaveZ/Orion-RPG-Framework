@@ -6,13 +6,13 @@
 
 class IDetailsView;
 class UDialogBuilderGraph;
-class UDialogSet;
+class UDialogStage;
 class UDialogSequenceSlot;
 class FUICommandList;
 
-struct FDialogSetListItem
+struct FDialogStageListItem
 {
-	TWeakObjectPtr<UDialogSet> DialogSet;
+	TWeakObjectPtr<UDialogStage> DialogStage;
 };
 
 struct FDialogSlotListItem
@@ -22,13 +22,13 @@ struct FDialogSlotListItem
 	int32 SlotIndex = INDEX_NONE;
 };
 
-using FDialogSetListItemPtr = TSharedPtr<FDialogSetListItem>;
+using FDialogStageListItemPtr = TSharedPtr<FDialogStageListItem>;
 using FDialogSlotListItemPtr = TSharedPtr<FDialogSlotListItem>;
 
-class DIALOG_SYSTEM_EDITOR_API SDialogSetManager : public SCompoundWidget
+class DIALOG_SYSTEM_EDITOR_API SDialogStageManager : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SDialogSetManager) {}
+	SLATE_BEGIN_ARGS(SDialogStageManager) {}
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs, UDialogBuilderGraph* InDialogGraph);
@@ -39,13 +39,13 @@ public:
 	void Refresh();
 
 private:
-	// DialogSet list
-	TSharedRef<ITableRow> GenerateDialogSetRow(FDialogSetListItemPtr InItem, const TSharedRef<STableViewBase>& InOwnerTable);
-	void OnDialogSetSelectionChanged(FDialogSetListItemPtr InItem, ESelectInfo::Type InSelectInfo);
-	FReply OnAddDialogSet();
-	void OnRemoveDialogSet(UDialogSet* InDialogSet);
-	void OnDialogSetNameCommitted(const FText& InText, ETextCommit::Type InCommitType, TWeakObjectPtr<UDialogSet> InDialogSet);
-	TSharedPtr<SWidget> OnDialogSetContextMenuOpening();
+	// DialogStage list
+	TSharedRef<ITableRow> GenerateDialogStageRow(FDialogStageListItemPtr InItem, const TSharedRef<STableViewBase>& InOwnerTable);
+	void OnDialogStageSelectionChanged(FDialogStageListItemPtr InItem, ESelectInfo::Type InSelectInfo);
+	FReply OnAddDialogStage();
+	void OnRemoveDialogStage(UDialogStage* InDialogStage);
+	void OnDialogStageNameCommitted(const FText& InText, ETextCommit::Type InCommitType, TWeakObjectPtr<UDialogStage> InDialogStage);
+	TSharedPtr<SWidget> OnDialogStageContextMenuOpening();
 
 	// Slot list
 	TSharedRef<ITableRow> GenerateSlotRow(FDialogSlotListItemPtr InItem, const TSharedRef<STableViewBase>& InOwnerTable);
@@ -61,22 +61,22 @@ private:
 	bool IsSelectedSlotCamera() const;
 
 	// Refresh
-	void RefreshDialogSetList();
+	void RefreshDialogStageList();
 	void RefreshSlotList();
 	void MarkGraphDirty() const;
 
 private:
 	TWeakObjectPtr<UDialogBuilderGraph> DialogGraph;
-	TWeakObjectPtr<UDialogSet> SelectedDialogSet;
+	TWeakObjectPtr<UDialogStage> SelectedDialogStage;
 	TWeakObjectPtr<UDialogSequenceSlot> SelectedSlot;
 
-	TArray<FDialogSetListItemPtr> DialogSetItems;
+	TArray<FDialogStageListItemPtr> DialogStageItems;
 	TArray<FDialogSlotListItemPtr> SlotItems;
 
-	TSharedPtr<SListView<FDialogSetListItemPtr>> DialogSetListView;
+	TSharedPtr<SListView<FDialogStageListItemPtr>> DialogStageListView;
 	TSharedPtr<SListView<FDialogSlotListItemPtr>> SlotListView;
 
-	TSharedPtr<IDetailsView> DialogSetDetailsView;
+	TSharedPtr<IDetailsView> DialogStageDetailsView;
 	TSharedPtr<IDetailsView> SlotDetailsView;
 
 	TSharedPtr<FUICommandList> CommandList;
@@ -84,9 +84,9 @@ private:
 	int32 SelectedSlotIndex = INDEX_NONE;
 
 private:
-	void RestoreSelection(const FName& InDialogSetObjectName, const FGuid& InSlotId);
-	void SelectDialogSetByObjectName(const FName& InDialogSetObjectName);
+	void RestoreSelection(const FName& InDialogStageObjectName, const FGuid& InSlotId);
+	void SelectDialogStageByObjectName(const FName& InDialogStageObjectName);
 	void SelectSlotById(const FGuid& InSlotId);
-	FDialogSetListItemPtr FindDialogSetItemByObjectName(const FName& InDialogSetObjectName) const;
+	FDialogStageListItemPtr FindDialogStageItemByObjectName(const FName& InDialogStageObjectName) const;
 	FDialogSlotListItemPtr FindSlotItemById(const FGuid& InSlotId) const;
 };

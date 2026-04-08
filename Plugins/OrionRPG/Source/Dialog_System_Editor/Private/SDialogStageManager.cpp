@@ -1,11 +1,11 @@
-#include "SDialogSetManager.h"
+#include "SDialogStageManager.h"
 
 #include "DialogBuilderGraph.h"
 #include "DialogBuilderNode_DialogSequence.h"
 #include "DialogDefinition.h"
 #include "DialogSequence.h"
 #include "DialogBuilder_EditorStyle.h"
-#include "DialogSet.h"
+#include "DialogStage.h"
 #include "PropertyEditorModule.h"
 #include "IDetailsView.h"
 #include "Modules/ModuleManager.h"
@@ -23,22 +23,22 @@
 #include "Widgets/Views/SListView.h"
 #include "Widgets/Layout/SBorder.h"
 
-#define LOCTEXT_NAMESPACE "DialogSetManager"
+#define LOCTEXT_NAMESPACE "DialogStageManager"
 
 // -----------------------------------------------------------------------------
-// Local palette row widgets (defined inside DialogSetManager, as requested)
+// Local palette row widgets (defined inside DialogStageManager, as requested)
 // -----------------------------------------------------------------------------
-class SDialogSetPaletteItem : public SCompoundWidget
+class SDialogStagePaletteItem : public SCompoundWidget
 {
 public:
-	SLATE_BEGIN_ARGS(SDialogSetPaletteItem) {}
-		SLATE_ARGUMENT(TWeakObjectPtr<UDialogSet>, DialogSet)
+	SLATE_BEGIN_ARGS(SDialogStagePaletteItem) {}
+		SLATE_ARGUMENT(TWeakObjectPtr<UDialogStage>, DialogStage)
 		SLATE_EVENT(FOnTextCommitted, OnNameCommitted)
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs)
 	{
-		DialogSet = InArgs._DialogSet;
+		DialogStage = InArgs._DialogStage;
 		OnNameCommitted = InArgs._OnNameCommitted;
 
 		ChildSlot
@@ -61,11 +61,11 @@ public:
 				SNew(SInlineEditableTextBlock)
 				.Text_Lambda([this]()
 				{
-					if (const UDialogSet* LocalSet = DialogSet.Get())
+					if (const UDialogStage* LocalSet = DialogStage.Get())
 					{
-						return LocalSet->Name.IsEmpty() ? LOCTEXT("UnnamedDialogSet", "None") : LocalSet->Name;
+						return LocalSet->Name.IsEmpty() ? LOCTEXT("UnnamedDialogStage", "None") : LocalSet->Name;
 					}
-					return LOCTEXT("InvalidDialogSet", "Invalid");
+					return LOCTEXT("InvalidDialogStage", "Invalid");
 				})
 				.OnTextCommitted(OnNameCommitted)
 				.IsReadOnly(false)
@@ -75,7 +75,7 @@ public:
 	}
 
 private:
-	TWeakObjectPtr<UDialogSet> DialogSet;
+	TWeakObjectPtr<UDialogStage> DialogStage;
 	FOnTextCommitted OnNameCommitted;
 };
 
@@ -137,17 +137,17 @@ private:
 };
 
 // -----------------------------------------------------------------------------
-// SDialogSetManager
+// SDialogStageManager
 // -----------------------------------------------------------------------------
-void SDialogSetManager::Construct(const FArguments& InArgs, UDialogBuilderGraph* InDialogGraph)
+void SDialogStageManager::Construct(const FArguments& InArgs, UDialogBuilderGraph* InDialogGraph)
 {
 	DialogGraph = InDialogGraph;
 
 	CommandList = MakeShareable(new FUICommandList);
 	CommandList->MapAction(
 		FGenericCommands::Get().Delete,
-		FExecuteAction::CreateSP(this, &SDialogSetManager::OnDeleteSelection),
-		FCanExecuteAction::CreateSP(this, &SDialogSetManager::CanDeleteSelection));
+		FExecuteAction::CreateSP(this, &SDialogStageManager::OnDeleteSelection),
+		FCanExecuteAction::CreateSP(this, &SDialogStageManager::CanDeleteSelection));
 
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 
@@ -156,14 +156,14 @@ void SDialogSetManager::Construct(const FArguments& InArgs, UDialogBuilderGraph*
 	DetailsArgs.bUpdatesFromSelection = false;
 	DetailsArgs.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Hide;
 
-	DialogSetDetailsView = PropertyModule.CreateDetailView(DetailsArgs);
+	DialogStageDetailsView = PropertyModule.CreateDetailView(DetailsArgs);
 	SlotDetailsView = PropertyModule.CreateDetailView(DetailsArgs);
 
 	ChildSlot
 	[
 		SNew(SSplitter)
 
-		// 1) DialogSet List
+		// 1) DialogStage List
 		+ SSplitter::Slot()
 		.Value(0.25f)
 		[
@@ -183,7 +183,7 @@ void SDialogSetManager::Construct(const FArguments& InArgs, UDialogBuilderGraph*
 					.VAlign(VAlign_Center)
 					[
 						SNew(STextBlock)
-							.Text(LOCTEXT("DialogSetListTitle", "Dialog Sets"))
+							.Text(LOCTEXT("DialogStageListTitle", "Dialog Sets"))
 							.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.5f))
 					]
 					+ SHorizontalBox::Slot()
@@ -192,8 +192,8 @@ void SDialogSetManager::Construct(const FArguments& InArgs, UDialogBuilderGraph*
 						SNew(SButton)
 						.ButtonStyle(FAppStyle::Get(), "SimpleButton")
 						.ContentPadding(FMargin(2.f))
-						.ToolTipText(LOCTEXT("AddDialogSetTooltip", "Add Dialog Set"))
-						.OnClicked(this, &SDialogSetManager::OnAddDialogSet)
+						.ToolTipText(LOCTEXT("AddDialogStageTooltip", "Add Dialog Set"))
+						.OnClicked(this, &SDialogStageManager::OnAddDialogStage)
 						[
 							SNew(SImage).Image(FAppStyle::GetBrush("Icons.Plus"))
 						]
@@ -204,17 +204,17 @@ void SDialogSetManager::Construct(const FArguments& InArgs, UDialogBuilderGraph*
 				.FillHeight(1.0f)
 				.Padding(2.0f)
 				[
-					SAssignNew(DialogSetListView, SListView<FDialogSetListItemPtr>)
-					.ListItemsSource(&DialogSetItems)
-					.OnGenerateRow(this, &SDialogSetManager::GenerateDialogSetRow)
-					.OnSelectionChanged(this, &SDialogSetManager::OnDialogSetSelectionChanged)
-					.OnContextMenuOpening(this, &SDialogSetManager::OnDialogSetContextMenuOpening)
+					SAssignNew(DialogStageListView, SListView<FDialogStageListItemPtr>)
+					.ListItemsSource(&DialogStageItems)
+					.OnGenerateRow(this, &SDialogStageManager::GenerateDialogStageRow)
+					.OnSelectionChanged(this, &SDialogStageManager::OnDialogStageSelectionChanged)
+					.OnContextMenuOpening(this, &SDialogStageManager::OnDialogStageContextMenuOpening)
 					.SelectionMode(ESelectionMode::Single)
 				]
 			]
 		]
 
-		// 2) DialogSet Details
+		// 2) DialogStage Details
 		+ SSplitter::Slot()
 		.Value(0.25f)
 		[
@@ -222,7 +222,7 @@ void SDialogSetManager::Construct(const FArguments& InArgs, UDialogBuilderGraph*
 			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
 			.Padding(4.0f)
 			[
-				DialogSetDetailsView.ToSharedRef()
+				DialogStageDetailsView.ToSharedRef()
 			]
 		]
 
@@ -257,7 +257,7 @@ void SDialogSetManager::Construct(const FArguments& InArgs, UDialogBuilderGraph*
 						.ButtonStyle(FAppStyle::Get(), "SimpleButton")
 						.ContentPadding(FMargin(2.f))
 						.ToolTipText(LOCTEXT("AddSlotTooltip", "Add Slot"))
-						.OnClicked(this, &SDialogSetManager::OnAddSlot)
+						.OnClicked(this, &SDialogStageManager::OnAddSlot)
 						[
 							SNew(SImage).Image(FAppStyle::GetBrush("Icons.Plus"))
 						]
@@ -270,9 +270,9 @@ void SDialogSetManager::Construct(const FArguments& InArgs, UDialogBuilderGraph*
 				[
 					SAssignNew(SlotListView, SListView<FDialogSlotListItemPtr>)
 					.ListItemsSource(&SlotItems)
-					.OnGenerateRow(this, &SDialogSetManager::GenerateSlotRow)
-					.OnSelectionChanged(this, &SDialogSetManager::OnSlotSelectionChanged)
-					.OnContextMenuOpening(this, &SDialogSetManager::OnSlotContextMenuOpening)
+					.OnGenerateRow(this, &SDialogStageManager::GenerateSlotRow)
+					.OnSelectionChanged(this, &SDialogStageManager::OnSlotSelectionChanged)
+					.OnContextMenuOpening(this, &SDialogStageManager::OnSlotContextMenuOpening)
 					.SelectionMode(ESelectionMode::Single)
 				]
 			]
@@ -291,10 +291,10 @@ void SDialogSetManager::Construct(const FArguments& InArgs, UDialogBuilderGraph*
 		]
 	];
 
-	RefreshDialogSetList();
+	RefreshDialogStageList();
 }
 
-FReply SDialogSetManager::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent)
+FReply SDialogStageManager::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent)
 {
 	if (CommandList.IsValid() && CommandList->ProcessCommandBindings(InKeyEvent))
 	{
@@ -303,42 +303,42 @@ FReply SDialogSetManager::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent
 	return FReply::Unhandled();
 }
 
-TSharedRef<ITableRow> SDialogSetManager::GenerateDialogSetRow(FDialogSetListItemPtr InItem, const TSharedRef<STableViewBase>& InOwnerTable)
+TSharedRef<ITableRow> SDialogStageManager::GenerateDialogStageRow(FDialogStageListItemPtr InItem, const TSharedRef<STableViewBase>& InOwnerTable)
 {
-	const TWeakObjectPtr<UDialogSet> WeakDialogSet = InItem.IsValid() ? InItem->DialogSet : nullptr;
+	const TWeakObjectPtr<UDialogStage> WeakDialogStage = InItem.IsValid() ? InItem->DialogStage : nullptr;
 
-	return SNew(STableRow<FDialogSetListItemPtr>, InOwnerTable)
+	return SNew(STableRow<FDialogStageListItemPtr>, InOwnerTable)
 	[
-		SNew(SDialogSetPaletteItem)
-		.DialogSet(WeakDialogSet)
-		.OnNameCommitted(FOnTextCommitted::CreateSP(this, &SDialogSetManager::OnDialogSetNameCommitted, WeakDialogSet))
+		SNew(SDialogStagePaletteItem)
+		.DialogStage(WeakDialogStage)
+		.OnNameCommitted(FOnTextCommitted::CreateSP(this, &SDialogStageManager::OnDialogStageNameCommitted, WeakDialogStage))
 	];
 }
 
-void SDialogSetManager::OnDialogSetNameCommitted(const FText& InText, ETextCommit::Type InCommitType, TWeakObjectPtr<UDialogSet> InDialogSet)
+void SDialogStageManager::OnDialogStageNameCommitted(const FText& InText, ETextCommit::Type InCommitType, TWeakObjectPtr<UDialogStage> InDialogStage)
 {
-	UDialogSet* DialogSet = InDialogSet.Get();
-	if (!DialogSet)
+	UDialogStage* DialogStage = InDialogStage.Get();
+	if (!DialogStage)
 	{
 		return;
 	}
 
-	DialogSet->Modify();
-	DialogSet->Name = InText;
+	DialogStage->Modify();
+	DialogStage->Name = InText;
 
 	MarkGraphDirty();
-	RefreshDialogSetList();
+	RefreshDialogStageList();
 }
 
-void SDialogSetManager::OnDialogSetSelectionChanged(FDialogSetListItemPtr InItem, ESelectInfo::Type InSelectInfo)
+void SDialogStageManager::OnDialogStageSelectionChanged(FDialogStageListItemPtr InItem, ESelectInfo::Type InSelectInfo)
 {
-	SelectedDialogSet = InItem.IsValid() ? InItem->DialogSet.Get() : nullptr;
+	SelectedDialogStage = InItem.IsValid() ? InItem->DialogStage.Get() : nullptr;
 	SelectedSlot.Reset();
 	SelectedSlotIndex = INDEX_NONE;
 
-	if (DialogSetDetailsView.IsValid())
+	if (DialogStageDetailsView.IsValid())
 	{
-		DialogSetDetailsView->SetObject(SelectedDialogSet.Get());
+		DialogStageDetailsView->SetObject(SelectedDialogStage.Get());
 	}
 	if (SlotDetailsView.IsValid())
 	{
@@ -348,7 +348,7 @@ void SDialogSetManager::OnDialogSetSelectionChanged(FDialogSetListItemPtr InItem
 	RefreshSlotList();
 }
 
-FReply SDialogSetManager::OnAddDialogSet()
+FReply SDialogStageManager::OnAddDialogStage()
 {
 	UDialogBuilderGraph* Graph = DialogGraph.Get();
 	if (!Graph)
@@ -356,23 +356,23 @@ FReply SDialogSetManager::OnAddDialogSet()
 		return FReply::Handled();
 	}
 
-	const FScopedTransaction Transaction(LOCTEXT("AddDialogSetTransaction", "Add Dialog Set"));
+	const FScopedTransaction Transaction(LOCTEXT("AddDialogStageTransaction", "Add Dialog Set"));
 	Graph->Modify();
 
-	UDialogSet* NewDialogSet = NewObject<UDialogSet>(Graph, NAME_None, RF_Transactional);
-	if (NewDialogSet)
+	UDialogStage* NewDialogStage = NewObject<UDialogStage>(Graph, NAME_None, RF_Transactional);
+	if (NewDialogStage)
 	{
-		NewDialogSet->OwningDialogGraph = Graph;
-		NewDialogSet->Name = FText::FromString(FString::Printf(TEXT("DialogSet%d"), Graph->DialogSets.Num() + 1));
-		Graph->DialogSets.Add(NewDialogSet);
+		NewDialogStage->OwningDialogGraph = Graph;
+		NewDialogStage->Name = FText::FromString(FString::Printf(TEXT("DialogStage%d"), Graph->DialogStages.Num() + 1));
+		Graph->DialogStages.Add(NewDialogStage);
 
 		MarkGraphDirty();
-		RefreshDialogSetList();
+		RefreshDialogStageList();
 
-		SelectedDialogSet = NewDialogSet;
-		if (DialogSetDetailsView.IsValid())
+		SelectedDialogStage = NewDialogStage;
+		if (DialogStageDetailsView.IsValid())
 		{
-			DialogSetDetailsView->SetObject(NewDialogSet);
+			DialogStageDetailsView->SetObject(NewDialogStage);
 		}
 		RefreshSlotList();
 	}
@@ -380,28 +380,28 @@ FReply SDialogSetManager::OnAddDialogSet()
 	return FReply::Handled();
 }
 
-void SDialogSetManager::OnRemoveDialogSet(UDialogSet* InDialogSet)
+void SDialogStageManager::OnRemoveDialogStage(UDialogStage* InDialogStage)
 {
 	UDialogBuilderGraph* Graph = DialogGraph.Get();
-	if (!Graph || !InDialogSet)
+	if (!Graph || !InDialogStage)
 	{
 		return;
 	}
 
-	const FScopedTransaction Transaction(LOCTEXT("DeleteDialogSetTransaction", "Delete Dialog Set"));
+	const FScopedTransaction Transaction(LOCTEXT("DeleteDialogStageTransaction", "Delete Dialog Set"));
 	Graph->Modify();
-	InDialogSet->Modify();
+	InDialogStage->Modify();
 
-	Graph->DialogSets.Remove(InDialogSet);
+	Graph->DialogStages.Remove(InDialogStage);
 
-	if (SelectedDialogSet.Get() == InDialogSet)
+	if (SelectedDialogStage.Get() == InDialogStage)
 	{
-		SelectedDialogSet.Reset();
+		SelectedDialogStage.Reset();
 		SelectedSlot.Reset();
 
-		if (DialogSetDetailsView.IsValid())
+		if (DialogStageDetailsView.IsValid())
 		{
-			DialogSetDetailsView->SetObject(nullptr);
+			DialogStageDetailsView->SetObject(nullptr);
 		}
 		if (SlotDetailsView.IsValid())
 		{
@@ -410,11 +410,11 @@ void SDialogSetManager::OnRemoveDialogSet(UDialogSet* InDialogSet)
 	}
 
 	MarkGraphDirty();
-	RefreshDialogSetList();
+	RefreshDialogStageList();
 	RefreshSlotList();
 }
 
-TSharedRef<ITableRow> SDialogSetManager::GenerateSlotRow(FDialogSlotListItemPtr InItem, const TSharedRef<STableViewBase>& InOwnerTable)
+TSharedRef<ITableRow> SDialogStageManager::GenerateSlotRow(FDialogSlotListItemPtr InItem, const TSharedRef<STableViewBase>& InOwnerTable)
 {
 	const TWeakObjectPtr<UDialogSequenceSlot> WeakSlot = InItem.IsValid() ? InItem->Slot : nullptr;
 	const bool bCamera = InItem.IsValid() ? InItem->bIsCameraSlot : false;
@@ -427,7 +427,7 @@ TSharedRef<ITableRow> SDialogSetManager::GenerateSlotRow(FDialogSlotListItemPtr 
 	];
 }
 
-void SDialogSetManager::OnSlotSelectionChanged(FDialogSlotListItemPtr InItem, ESelectInfo::Type InSelectInfo)
+void SDialogStageManager::OnSlotSelectionChanged(FDialogSlotListItemPtr InItem, ESelectInfo::Type InSelectInfo)
 {
 	SelectedSlot = InItem.IsValid() ? InItem->Slot.Get() : nullptr;
 	SelectedSlotIndex = InItem.IsValid() ? InItem->SlotIndex : INDEX_NONE;
@@ -438,23 +438,23 @@ void SDialogSetManager::OnSlotSelectionChanged(FDialogSlotListItemPtr InItem, ES
 	}
 }
 
-FReply SDialogSetManager::OnAddSlot()
+FReply SDialogStageManager::OnAddSlot()
 {
-	UDialogSet* DialogSet = SelectedDialogSet.Get();
+	UDialogStage* DialogStage = SelectedDialogStage.Get();
 	UDialogBuilderGraph* Graph = DialogGraph.Get();
-	if (!DialogSet || !Graph)
+	if (!DialogStage || !Graph)
 	{
 		return FReply::Handled();
 	}
 
 	const FScopedTransaction Transaction(LOCTEXT("AddSlotTransaction", "Add Slot"));
-	DialogSet->Modify();
+	DialogStage->Modify();
 
-	UDialogSequenceSlot* NewSlot = NewObject<UDialogSequenceSlot>(DialogSet, NAME_None, RF_Transactional);
+	UDialogSequenceSlot* NewSlot = NewObject<UDialogSequenceSlot>(DialogStage, NAME_None, RF_Transactional);
 	if (NewSlot)
 	{
 		NewSlot->OwningDialogGraph = Graph;
-		DialogSet->Slots.Add(NewSlot);
+		DialogStage->Slots.Add(NewSlot);
 
 		MarkGraphDirty();
 		RefreshSlotList();
@@ -469,23 +469,23 @@ FReply SDialogSetManager::OnAddSlot()
 	return FReply::Handled();
 }
 
-FReply SDialogSetManager::OnAddCameraSlot()
+FReply SDialogStageManager::OnAddCameraSlot()
 {
-	UDialogSet* DialogSet = SelectedDialogSet.Get();
+	UDialogStage* DialogStage = SelectedDialogStage.Get();
 	UDialogBuilderGraph* Graph = DialogGraph.Get();
-	if (!DialogSet || !Graph)	
+	if (!DialogStage || !Graph)	
 	{
 		return FReply::Handled();
 	}
 
 	const FScopedTransaction Transaction(LOCTEXT("AddCameraSlotTransaction", "Add Camera Slot"));
-	DialogSet->Modify();
+	DialogStage->Modify();
 
-	UDialogSequenceSlot* NewSlot = NewObject<UDialogSequenceSlot>(DialogSet, NAME_None, RF_Transactional);
+	UDialogSequenceSlot* NewSlot = NewObject<UDialogSequenceSlot>(DialogStage, NAME_None, RF_Transactional);
 	if (NewSlot)
 	{
 		NewSlot->OwningDialogGraph = Graph;
-		DialogSet->CameraSlots.Add(NewSlot);
+		DialogStage->CameraSlots.Add(NewSlot);
 
 		MarkGraphDirty();
 		RefreshSlotList();
@@ -500,16 +500,16 @@ FReply SDialogSetManager::OnAddCameraSlot()
 	return FReply::Handled();
 }
 
-void SDialogSetManager::OnRemoveSlot(UDialogSequenceSlot* InSlot, int32 InSlotIndex, bool bIsCameraSlot)
+void SDialogStageManager::OnRemoveSlot(UDialogSequenceSlot* InSlot, int32 InSlotIndex, bool bIsCameraSlot)
 {
-	UDialogSet* DialogSet = SelectedDialogSet.Get();
-	if (!DialogSet || !InSlot)
+	UDialogStage* DialogStage = SelectedDialogStage.Get();
+	if (!DialogStage || !InSlot)
 	{
 		return;
 	}
 
 	const FScopedTransaction Transaction(LOCTEXT("DeleteSlotTransaction", "Delete Slot"));
-	DialogSet->Modify();
+	DialogStage->Modify();
 	InSlot->Modify();
 
 	TArray<UDialogBuilderNode_DialogSequence*> SequenceNodes;
@@ -517,13 +517,13 @@ void SDialogSetManager::OnRemoveSlot(UDialogSequenceSlot* InSlot, int32 InSlotIn
 
 	for (UDialogBuilderNode_DialogSequence* SequenceNode : SequenceNodes)
 	{
-		if (SequenceNode && SequenceNode->DialogSetToUse == DialogSet)
+		if (SequenceNode && SequenceNode->DialogStageToUse == DialogStage)
 		{
 			UDialogSequence* DialogSequence = SequenceNode->DialogSequence;
-			UDialogSet* DialogSetInstance = SequenceNode->DialogSet;
-			if (DialogSequence && DialogSetInstance && DialogSequence->MovieScene)
+			UDialogStage* DialogStageInstance = SequenceNode->DialogStage;
+			if (DialogSequence && DialogStageInstance && DialogSequence->MovieScene)
 			{
-				UDialogSequenceSlot* SlotInSequence = DialogSetInstance->Slots.IsValidIndex(InSlotIndex) ? DialogSetInstance->Slots[InSlotIndex] : nullptr;
+				UDialogSequenceSlot* SlotInSequence = DialogStageInstance->Slots.IsValidIndex(InSlotIndex) ? DialogStageInstance->Slots[InSlotIndex] : nullptr;
 				
 				if (SlotInSequence)
 				{
@@ -537,24 +537,24 @@ void SDialogSetManager::OnRemoveSlot(UDialogSequenceSlot* InSlot, int32 InSlotIn
 
 	if (bIsCameraSlot)
 	{
-		if (DialogSet->CameraSlots.IsValidIndex(InSlotIndex))
+		if (DialogStage->CameraSlots.IsValidIndex(InSlotIndex))
 		{
-			DialogSet->CameraSlots.RemoveAt(InSlotIndex);
+			DialogStage->CameraSlots.RemoveAt(InSlotIndex);
 		}
 		else
 		{
-			DialogSet->CameraSlots.RemoveSingle(InSlot);
+			DialogStage->CameraSlots.RemoveSingle(InSlot);
 		}
 	}
 	else
 	{
-		if (DialogSet->Slots.IsValidIndex(InSlotIndex))
+		if (DialogStage->Slots.IsValidIndex(InSlotIndex))
 		{
-			DialogSet->Slots.RemoveAt(InSlotIndex);
+			DialogStage->Slots.RemoveAt(InSlotIndex);
 		}
 		else
 		{
-			DialogSet->Slots.RemoveSingle(InSlot);
+			DialogStage->Slots.RemoveSingle(InSlot);
 		}
 	}
 
@@ -573,29 +573,29 @@ void SDialogSetManager::OnRemoveSlot(UDialogSequenceSlot* InSlot, int32 InSlotIn
 	RefreshSlotList();
 }
 
-TSharedPtr<SWidget> SDialogSetManager::OnDialogSetContextMenuOpening()
+TSharedPtr<SWidget> SDialogStageManager::OnDialogStageContextMenuOpening()
 {
 	FMenuBuilder MenuBuilder(true, nullptr);		
 
 	MenuBuilder.AddMenuEntry(
-		LOCTEXT("AddDialogSetCtx", "Add Dialog Set"),
-		LOCTEXT("AddDialogSetCtxTooltip", "Add a new Dialog Set"),
+		LOCTEXT("AddDialogStageCtx", "Add Dialog Set"),
+		LOCTEXT("AddDialogStageCtxTooltip", "Add a new Dialog Set"),
 		FSlateIcon(),
 		FUIAction(FExecuteAction::CreateLambda([this]()
 		{
-			OnAddDialogSet();
+			OnAddDialogStage();
 		}))
 	);
 
-	if (SelectedDialogSet.IsValid())
+	if (SelectedDialogStage.IsValid())
 	{
 		MenuBuilder.AddMenuEntry(
-			LOCTEXT("DeleteDialogSetCtx", "Delete"),
-			LOCTEXT("DeleteDialogSetCtxTooltip", "Delete selected Dialog Set"),
+			LOCTEXT("DeleteDialogStageCtx", "Delete"),
+			LOCTEXT("DeleteDialogStageCtxTooltip", "Delete selected Dialog Set"),
 			FSlateIcon(),
 			FUIAction(FExecuteAction::CreateLambda([this]()
 			{
-				OnRemoveDialogSet(SelectedDialogSet.Get());
+				OnRemoveDialogStage(SelectedDialogStage.Get());
 			}))
 		);
 	}
@@ -603,7 +603,7 @@ TSharedPtr<SWidget> SDialogSetManager::OnDialogSetContextMenuOpening()
 	return MenuBuilder.MakeWidget();
 }
 
-TSharedPtr<SWidget> SDialogSetManager::OnSlotContextMenuOpening()
+TSharedPtr<SWidget> SDialogStageManager::OnSlotContextMenuOpening()
 {
 	FMenuBuilder MenuBuilder(true, nullptr);
 
@@ -627,7 +627,7 @@ TSharedPtr<SWidget> SDialogSetManager::OnSlotContextMenuOpening()
 		}))
 	);*/
 
-	if (SelectedSlot.IsValid() && SelectedDialogSet.IsValid())
+	if (SelectedSlot.IsValid() && SelectedDialogStage.IsValid())
 	{
 		MenuBuilder.AddMenuEntry(
 			LOCTEXT("DeleteSlotCtx", "Delete"),
@@ -643,77 +643,77 @@ TSharedPtr<SWidget> SDialogSetManager::OnSlotContextMenuOpening()
 	return MenuBuilder.MakeWidget();
 }
 
-void SDialogSetManager::OnDeleteSelection()
+void SDialogStageManager::OnDeleteSelection()
 {
-	if (SelectedSlot.IsValid() && SelectedDialogSet.IsValid())
+	if (SelectedSlot.IsValid() && SelectedDialogStage.IsValid())
 	{
 		OnRemoveSlot(SelectedSlot.Get(), SelectedSlotIndex, IsSelectedSlotCamera());
 		return;
 	}
 
-	if (SelectedDialogSet.IsValid())
+	if (SelectedDialogStage.IsValid())
 	{
-		OnRemoveDialogSet(SelectedDialogSet.Get());
+		OnRemoveDialogStage(SelectedDialogStage.Get());
 	}
 }
 
-bool SDialogSetManager::CanDeleteSelection() const
+bool SDialogStageManager::CanDeleteSelection() const
 {
-	return SelectedSlot.IsValid() || SelectedDialogSet.IsValid();
+	return SelectedSlot.IsValid() || SelectedDialogStage.IsValid();
 }
 
-bool SDialogSetManager::IsSelectedSlotCamera() const
+bool SDialogStageManager::IsSelectedSlotCamera() const
 {
-	const UDialogSet* DialogSet = SelectedDialogSet.Get();
+	const UDialogStage* DialogStage = SelectedDialogStage.Get();
 	const UDialogSequenceSlot* Slot = SelectedSlot.Get();
 
-	return DialogSet && Slot && DialogSet->CameraSlots.Contains(const_cast<UDialogSequenceSlot*>(Slot));
+	return DialogStage && Slot && DialogStage->CameraSlots.Contains(const_cast<UDialogSequenceSlot*>(Slot));
 }
 
-void SDialogSetManager::Refresh()
+void SDialogStageManager::Refresh()
 {
-	const FName CachedDialogSetObjectName = SelectedDialogSet.IsValid() ? SelectedDialogSet->GetFName() : NAME_None;
+	const FName CachedDialogStageObjectName = SelectedDialogStage.IsValid() ? SelectedDialogStage->GetFName() : NAME_None;
 	const FGuid CachedSlotId = SelectedSlot.IsValid() ? SelectedSlot->ID : FGuid();
 
-	RefreshDialogSetList();
-	RestoreSelection(CachedDialogSetObjectName, CachedSlotId);
+	RefreshDialogStageList();
+	RestoreSelection(CachedDialogStageObjectName, CachedSlotId);
 }
 
-void SDialogSetManager::RefreshDialogSetList()
+void SDialogStageManager::RefreshDialogStageList()
 {
-	DialogSetItems.Empty();
+	DialogStageItems.Empty();
 
 	if (UDialogBuilderGraph* Graph = DialogGraph.Get())
 	{
-		for (UDialogSet* DialogSet : Graph->DialogSets)
+		for (UDialogStage* DialogStage : Graph->DialogStages)
 		{
-			if (!DialogSet)
+			if (!DialogStage)
 			{
 				continue;
 			}
 
-			FDialogSetListItemPtr NewItem = MakeShared<FDialogSetListItem>();
-			NewItem->DialogSet = DialogSet;
-			DialogSetItems.Add(NewItem);
+			FDialogStageListItemPtr NewItem = MakeShared<FDialogStageListItem>();
+			NewItem->DialogStage = DialogStage;
+			DialogStageItems.Add(NewItem);
 		}
 	}
 
-	if (DialogSetListView.IsValid())
+	if (DialogStageListView.IsValid())
 	{
-		DialogSetListView->RequestListRefresh();
+		DialogStageListView->RequestListRefresh();
 	}
 }
 
-void SDialogSetManager::RefreshSlotList()
+void SDialogStageManager::RefreshSlotList()
 {
 	SlotItems.Empty();
 
-	UDialogSet* DialogSet = SelectedDialogSet.Get();
-	if (DialogSet)
+	UDialogStage* DialogStage = SelectedDialogStage.Get();
+	if (DialogStage)
 	{
-		for (int32 SlotIndex = 0; SlotIndex < DialogSet->Slots.Num(); ++SlotIndex)
+		for (int32 SlotIndex = 0; SlotIndex < DialogStage->Slots.Num(); ++SlotIndex)
 		{
-			UDialogSequenceSlot* Slot = DialogSet->Slots[SlotIndex];
+			UDialogSequenceSlot* Slot = DialogStage->Slots[SlotIndex];
 			if (!Slot)
 			{
 				continue;
@@ -726,9 +726,9 @@ void SDialogSetManager::RefreshSlotList()
 			SlotItems.Add(NewItem);
 		}
 
-		for (int32 CameraSlotIndex = 0; CameraSlotIndex < DialogSet->CameraSlots.Num(); ++CameraSlotIndex)
+		for (int32 CameraSlotIndex = 0; CameraSlotIndex < DialogStage->CameraSlots.Num(); ++CameraSlotIndex)
 		{
-			UDialogSequenceSlot* Slot = DialogSet->CameraSlots[CameraSlotIndex];
+			UDialogSequenceSlot* Slot = DialogStage->CameraSlots[CameraSlotIndex];
 			if (!Slot)
 			{
 				continue;
@@ -748,7 +748,7 @@ void SDialogSetManager::RefreshSlotList()
 	}
 }
 
-void SDialogSetManager::MarkGraphDirty() const
+void SDialogStageManager::MarkGraphDirty() const
 {
 	if (UDialogBuilderGraph* Graph = DialogGraph.Get())
 	{
@@ -760,19 +760,19 @@ void SDialogSetManager::MarkGraphDirty() const
 	}
 }
 
-FDialogSetListItemPtr SDialogSetManager::FindDialogSetItemByObjectName(const FName& InDialogSetObjectName) const
+FDialogStageListItemPtr SDialogStageManager::FindDialogStageItemByObjectName(const FName& InDialogStageObjectName) const
 {
-	if (InDialogSetObjectName.IsNone())
+	if (InDialogStageObjectName.IsNone())
 	{
 		return nullptr;
 	}
 
-	for (const FDialogSetListItemPtr& Item : DialogSetItems)
+	for (const FDialogStageListItemPtr& Item : DialogStageItems)
 	{
 		if (Item.IsValid())
 		{
-			UDialogSet* DialogSet = Item->DialogSet.Get();
-			if (DialogSet && DialogSet->GetFName() == InDialogSetObjectName)
+			UDialogStage* DialogStage = Item->DialogStage.Get();
+			if (DialogStage && DialogStage->GetFName() == InDialogStageObjectName)
 			{
 				return Item;
 			}
@@ -782,7 +782,7 @@ FDialogSetListItemPtr SDialogSetManager::FindDialogSetItemByObjectName(const FNa
 	return nullptr;
 }
 
-FDialogSlotListItemPtr SDialogSetManager::FindSlotItemById(const FGuid& InSlotId) const
+FDialogSlotListItemPtr SDialogStageManager::FindSlotItemById(const FGuid& InSlotId) const
 {
 	if (!InSlotId.IsValid())
 	{
@@ -804,21 +804,21 @@ FDialogSlotListItemPtr SDialogSetManager::FindSlotItemById(const FGuid& InSlotId
 	return nullptr;
 }
 
-void SDialogSetManager::SelectDialogSetByObjectName(const FName& InDialogSetObjectName)
+void SDialogStageManager::SelectDialogStageByObjectName(const FName& InDialogStageObjectName)
 {
-	if (!DialogSetListView.IsValid())
+	if (!DialogStageListView.IsValid())
 	{
 		return;
 	}
 
-	if (FDialogSetListItemPtr FoundItem = FindDialogSetItemByObjectName(InDialogSetObjectName))
+	if (FDialogStageListItemPtr FoundItem = FindDialogStageItemByObjectName(InDialogStageObjectName))
 	{
-		DialogSetListView->SetSelection(FoundItem, ESelectInfo::Direct);
-		DialogSetListView->RequestScrollIntoView(FoundItem);
+		DialogStageListView->SetSelection(FoundItem, ESelectInfo::Direct);
+		DialogStageListView->RequestScrollIntoView(FoundItem);
 	}
 }
 
-void SDialogSetManager::SelectSlotById(const FGuid& InSlotId)
+void SDialogStageManager::SelectSlotById(const FGuid& InSlotId)
 {
 	if (!SlotListView.IsValid())
 	{
@@ -832,9 +832,9 @@ void SDialogSetManager::SelectSlotById(const FGuid& InSlotId)
 	}
 }
 
-void SDialogSetManager::RestoreSelection(const FName& InDialogSetObjectName, const FGuid& InSlotId)
+void SDialogStageManager::RestoreSelection(const FName& InDialogStageObjectName, const FGuid& InSlotId)
 {
-	SelectDialogSetByObjectName(InDialogSetObjectName);
+	SelectDialogStageByObjectName(InDialogStageObjectName);
 	RefreshSlotList();
 	SelectSlotById(InSlotId);
 }

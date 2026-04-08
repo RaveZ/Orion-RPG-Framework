@@ -49,7 +49,7 @@ protected:
 
 	TSharedRef<SWidget> GetWidgetForDialogsetPicker(const TAttribute<FText>& InDialogsetNameText, FOnClicked PromoteClick, FOnGetContent GetContentMenu);
 	TSharedRef<SWidget> OnGetDialogsetListMenu();
-	void UseDialogset(class UDialogSet* InDialogSet);
+	void UseDialogset(class UDialogStage* InDialogStage);
 
 
 private:

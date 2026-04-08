@@ -144,10 +144,10 @@ public:
 
 	/**List of dialog set used in this graph*/
 	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Detail")
-		TArray<TObjectPtr<class UDialogSet>> DialogSets;
+		TArray<TObjectPtr<class UDialogStage>> DialogStages;
 
 	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Detail")
-		TObjectPtr<class UDialogSet> CurrentDialogSet;
+		TObjectPtr<class UDialogStage> CurrentDialogStage;
 
 
 	/*------------------------End Dialog Sequence------------------------*/
@@ -212,7 +212,7 @@ public:
 	virtual void Deinitialize();
 	virtual UWorld* GetWorld() const override;
 
-	void UpdateDialogSetsReference();
+	void UpdateDialogStagesReference();
 	void StartFromRoot();
 
 
@@ -283,7 +283,7 @@ protected:
 	virtual AActor* RetrieveActorFromSlot(class UDialogSequenceSlot* InSlot);
 
 	void InitializeDialogActors();
-	void SetDialogSet(class UDialogSet* InDialogSet);	
+	void SetDialogStage(class UDialogStage* InDialogStage);	
 
 #if WITH_EDITORONLY_DATA
 public:
