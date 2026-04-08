@@ -94,7 +94,7 @@ bool UMovieSceneDialogTrack::HasSection(const UMovieSceneSection& Section) const
 
 bool UMovieSceneDialogTrack::SupportsMultipleRows() const
 {
-	return true;
+	return false;
 }
 
 FMovieSceneEvalTemplatePtr UMovieSceneDialogTrack::CreateTemplateForSection(const UMovieSceneSection& InSection) const

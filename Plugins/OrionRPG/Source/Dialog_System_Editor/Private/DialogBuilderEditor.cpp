@@ -613,7 +613,8 @@ void FDialogBuilderEditor::UpdateDialogSet()
 			UBillboardComponent* BillboardComponent = NewObject<UBillboardComponent>(PivotActor, TEXT("PivotBillboard"));
 			BillboardComponent->SetupAttachment(PivotRoot);
 			BillboardComponent->SetMobility(EComponentMobility::Movable);
-			BillboardComponent->SetHiddenInGame(true);
+			BillboardComponent->SetHiddenInGame(false);
+			BillboardComponent->SetVisibility(true);
 			BillboardComponent->SetUsingAbsoluteScale(true);
 			BillboardComponent->bIsScreenSizeScaled = true;
 			BillboardComponent->bUseInEditorScaling = true;
@@ -622,14 +623,14 @@ void FDialogBuilderEditor::UpdateDialogSet()
 			BillboardComponent->SpriteInfo.Category = TEXT("Dialog");
 			BillboardComponent->SpriteInfo.DisplayName = LOCTEXT("DialogSequencePivotSprite", "Dialog Sequence Pivot");
 
-			if (UTexture2D* PivotSprite = LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EditorResources/S_Actor.S_Actor")))
+			if (UTexture2D* PivotSprite = LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EditorResources/S_LevelSequence.S_LevelSequence")))
 			{
 				BillboardComponent->SetSprite(PivotSprite);
 			}
 
 			BillboardComponent->RegisterComponent();
 
-			PivotActor->SetActorHiddenInGame(true);
+			PivotActor->SetActorHiddenInGame(false);
 			PivotActor->SetActorEnableCollision(false);
 			PivotActor->bIsEditorOnlyActor = true;
 
@@ -947,6 +948,49 @@ void FDialogBuilderEditor::BindCommands()
 		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanAddNewDialogGraph),
 		FIsActionChecked(),
 		FIsActionButtonVisible::CreateSP(this, &FDialogBuilderEditor::NewDocument_IsVisibleForType, CGT_NewDialogGraph)
+	);
+
+
+	const TWeakPtr<FDialogBuilderEditor> EditorWeak = SharedThis(this);
+
+	ToolkitCommands->MapAction(
+		FDialogBuilder_EditorCommands::Get().SetViewportCameraPerspective,
+		FExecuteAction::CreateLambda([EditorWeak]()
+			{
+				if (const TSharedPtr<FDialogBuilderEditor> EditorPinned = EditorWeak.Pin())
+				{
+					EditorPinned->SetViewportCameraMode(EDialogViewportCameraMode::Perspective);
+					
+				}
+			}),
+		FCanExecuteAction()
+	);
+
+
+	ToolkitCommands->MapAction(
+		FDialogBuilder_EditorCommands::Get().SetViewportCameraDialogCamera,
+		FExecuteAction::CreateLambda([EditorWeak]()
+			{
+				if (const TSharedPtr<FDialogBuilderEditor> EditorPinned = EditorWeak.Pin())
+				{
+					EditorPinned->SetViewportCameraMode(EDialogViewportCameraMode::DialogCameraLock);
+					
+				}
+			}),
+		FCanExecuteAction()
+	);
+
+	ToolkitCommands->MapAction(
+		FDialogBuilder_EditorCommands::Get().SetViewportCameraSequencerCuts,
+		FExecuteAction::CreateLambda([EditorWeak]()
+			{
+				if (const TSharedPtr<FDialogBuilderEditor> EditorPinned = EditorWeak.Pin())
+				{
+					EditorPinned->SetViewportCameraMode(EDialogViewportCameraMode::SequencerCameraCuts);
+					
+				}
+			}),
+		FCanExecuteAction()
 	);
 
 }

@@ -497,50 +497,7 @@ void SDialogPreviewViewport::BindCommands()
 
 	const TWeakPtr<SDialogPreviewViewport> DialogViewportWeak = SharedThis(this);
 
-	CommandList->MapAction(
-		FDialogBuilder_EditorCommands::Get().SetViewportCameraPerspective,
-		FExecuteAction::CreateLambda([DialogViewportWeak]()
-			{
-				if (const TSharedPtr<SDialogPreviewViewport> DialogViewportPinned = DialogViewportWeak.Pin())
-				{
-					if (const TSharedPtr<FDialogBuilderEditor> EditorPinned = DialogViewportPinned->GetDialogEditor())
-					{
-						EditorPinned->SetViewportCameraMode(EDialogViewportCameraMode::Perspective);
-					}
-				}
-			}),
-		FCanExecuteAction()
-	);
-
-	CommandList->MapAction(
-		FDialogBuilder_EditorCommands::Get().SetViewportCameraDialogCamera,
-		FExecuteAction::CreateLambda([DialogViewportWeak]()
-			{
-				if (const TSharedPtr<SDialogPreviewViewport> DialogViewportPinned = DialogViewportWeak.Pin())
-				{
-					if (const TSharedPtr<FDialogBuilderEditor> EditorPinned = DialogViewportPinned->GetDialogEditor())
-					{
-						EditorPinned->SetViewportCameraMode(EDialogViewportCameraMode::DialogCameraLock);
-					}
-				}
-			}),
-		FCanExecuteAction()
-	);
-
-	CommandList->MapAction(
-		FDialogBuilder_EditorCommands::Get().SetViewportCameraSequencerCuts,
-		FExecuteAction::CreateLambda([DialogViewportWeak]()
-			{
-				if (const TSharedPtr<SDialogPreviewViewport> DialogViewportPinned = DialogViewportWeak.Pin())
-				{
-					if (const TSharedPtr<FDialogBuilderEditor> EditorPinned = DialogViewportPinned->GetDialogEditor())
-					{
-						EditorPinned->SetViewportCameraMode(EDialogViewportCameraMode::SequencerCameraCuts);
-					}
-				}
-			}),
-		FCanExecuteAction()
-	);
+	
 }
 
 void SDialogPreviewViewport::OnFocusViewportToSelection()
@@ -689,6 +646,7 @@ void SDialogPreviewViewport::ToggleGameView()
 	// LevelViewportClient->bShowWidget is set to "false" when entering game mode
 	// Need to turn it back to "true" 
 	DialogViewportClient->ShowWidget(true);
+	DialogViewportClient->EngineShowFlags.SetBillboardSprites(true);
 	DialogViewportClient->EngineShowFlags.SetSelection(true);
 	DialogViewportClient->EngineShowFlags.SetSelectionOutline(true);
 
