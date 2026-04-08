@@ -1440,7 +1440,6 @@ static AActor* ResolveActiveCameraCutActor(ISequencer& InSequencer)
 		return nullptr;
 	}
 
-
 	const FFrameNumber CurrentFrame = InSequencer.GetLocalTime().Time.FloorToFrame();
 
 	for (UMovieSceneSection* Section : CameraCutTrack->GetAllSections())
@@ -1505,7 +1504,6 @@ static AActor* ResolveBoundCineCameraActor(ISequencer& InSequencer)
 
 void FDialogBuilderEditor::RefreshSequencerCameraLock()
 {
-
 	if (!Sequencer.IsValid() || !DialogViewportWidget.IsValid())
 	{
 		return;
@@ -1625,6 +1623,7 @@ void FDialogBuilderEditor::UpdateTrackModelRule()
 			}
 		}
 	}
+
 	if (TSharedPtr<UE::Sequencer::FSequencerEditorViewModel> EditorViewModel = Sequencer->GetViewModel())
 	{
 		TSharedPtr<UE::Sequencer::FSequenceModel> RootSequenceModel = EditorViewModel->GetRootSequenceModel();
@@ -1655,7 +1654,6 @@ void FDialogBuilderEditor::UpdateTrackModelRule()
 			}
 		}
 	}
-
 }
 
 void FDialogBuilderEditor::UpdateSectionRule()
@@ -1728,8 +1726,6 @@ void FDialogBuilderEditor::UpdateSectionRule()
 		}
 	}
 }
-
-
 
 TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_Sequencer(const FSpawnTabArgs& Args)
 {
