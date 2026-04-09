@@ -13,6 +13,8 @@ class APlayerController;
 
 //Dialog Delegate
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FDialogSignature);
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateDialog, class UDialogBuilderNode*, DialogNode);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FUpdateDialogLine, FOrionDialogLine, DialogLine);

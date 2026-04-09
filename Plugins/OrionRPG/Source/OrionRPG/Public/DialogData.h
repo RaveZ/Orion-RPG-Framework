@@ -81,7 +81,7 @@ public:
 	
 	FOrionDialogLine()
 	{
-		Line = FText::FromString("None");
+		Line = FText::FromString("");
 		DialogSound = nullptr;
 	}
 };

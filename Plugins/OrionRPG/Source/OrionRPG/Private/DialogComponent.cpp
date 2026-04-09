@@ -76,25 +76,26 @@ bool UDialogComponent::BeginDialog(UDialogBuilderGraph* DialogAsset)
 		NewDialogGraph->Initialize(this);
 		CurrentActiveDialog = NewDialogGraph;
 
-		if (NewDialogGraph->bUseDialogCameraFade)
+		if (NewDialogGraph->bFadeCameraOnDialogBegin)
 		{
 			if (OwningController && OwningController->IsLocalPlayerController())
 			{
 				if (APlayerCameraManager* PCM = OwningController->PlayerCameraManager)
 				{
-					PCM->StartCameraFade(1.0f, 1.0f, .1f, NewDialogGraph->FadeColor, false, true);
+					PCM->StartCameraFade(1.0f, 1.0f, .1f, FLinearColor::Black , false, true);
 
-					const float HoldDurationSeconds = 2.0f;
+					NewDialogGraph->StartFromRoot();
+					OnBeginDialog.Broadcast(NewDialogGraph);
+
+					const float HoldDurationSeconds = 1.0f;
 
 					FTimerDelegate FadeDel = FTimerDelegate::CreateLambda([this, PCM, NewDialogGraph]()
 						{
 							if (PCM)
 							{
 								// Fade from black (1.0) back to clear (0.0)
-								PCM->StartCameraFade(1.0f, 0.0f, NewDialogGraph->FadeDuration, NewDialogGraph->FadeColor, false, false);
+								PCM->StartCameraFade(1.0f, 0.0f, 2.0f, FLinearColor::Black, false, true);
 							}
-							NewDialogGraph->StartFromRoot();
-							OnBeginDialog.Broadcast(NewDialogGraph);
 						});
 
 					if (GetWorld())

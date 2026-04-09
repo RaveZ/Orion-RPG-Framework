@@ -105,16 +105,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (EditCondition = "bBlendCameraOnDialogEnd == true", HideEditConditionToggle, EditConditionHides))
 		float BlendExp;
 
+	/**Fade camera before starting dialog*/
 	UPROPERTY(BlueprintReadOnly, Category = "Camera")
-		bool bUseDialogCameraFade;
+		bool bFadeCameraOnDialogBegin;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Camera", meta = (EditCondition = "bUseDialogCameraFade == true", HideEditConditionToggle, EditConditionHides))
-		float FadeDuration;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Camera", meta = (EditCondition = "bUseDialogCameraFade == true", HideEditConditionToggle, EditConditionHides))
-		FLinearColor FadeColor;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Audio", meta = (EditCondition = "bUseDialogCameraFade == true", HideEditConditionToggle, EditConditionHides))
+	UPROPERTY(BlueprintReadOnly, Category = "Audio")
 		class USoundAttenuation* DialogSoundAttenuation;
 	
 

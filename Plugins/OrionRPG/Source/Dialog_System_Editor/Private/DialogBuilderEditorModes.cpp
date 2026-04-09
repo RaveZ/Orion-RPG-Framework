@@ -121,13 +121,26 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 				FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)
 				->Split
 				(
+					
 					FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)
 					->Split
 					(
-						FTabManager::NewStack()
+						FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)
 						->SetSizeCoefficient(0.6f)
-						->SetHideTabWell(true)
-						->AddTab(FDialogBuilderEditorTabs::DialogSequencerViewportID, ETabState::OpenedTab)
+						->Split
+						(
+							FTabManager::NewStack()
+							->SetSizeCoefficient(0.85f)
+							->SetHideTabWell(true)
+							->AddTab(FDialogBuilderEditorTabs::DialogSequencerViewportID, ETabState::OpenedTab)
+						)
+						->Split
+						(
+							FTabManager::NewStack()
+							->SetSizeCoefficient(0.15f)
+							->AddTab(FDialogBuilderEditorTabs::DialogCameraPresetsID, ETabState::OpenedTab)
+						)
+						
 					)
 					->Split
 					(
@@ -141,13 +154,12 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 				->Split
 				(
 					FTabManager::NewSplitter()->SetOrientation(Orient_Vertical)
-					->SetSizeCoefficient(0.3f)
+					->SetSizeCoefficient(0.25f)
 					->Split
 					(
 						FTabManager::NewStack()
 						->SetSizeCoefficient(0.6f)
 						->AddTab(FDialogBuilderEditorTabs::DialogBuilderPropertyID, ETabState::OpenedTab)
-						->AddTab(FDialogBuilderEditorTabs::DialogCameraPresetsID, ETabState::OpenedTab)
 					)
 					->Split
 					(

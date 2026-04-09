@@ -12,3 +12,7 @@ UDialogSequenceShot::UDialogSequenceShot()
 	
 
 }
+
+void UDialogSequenceShot::ApplyShot()
+{
+}

@@ -40,10 +40,8 @@ UDialogBuilderGraph::UDialogBuilderGraph()
 	DefaultBoneToTrack = FName("head");
 	bAutoAdvanceDialogLine = false;
 	bLockPlayerMovement = true;
-	bCanInterruptDialog = false;
-	bUseDialogCameraFade = false;
-	FadeDuration = 0.25f;
-	FadeColor = FLinearColor::Black;
+	bCanInterruptDialog = true;
+	bFadeCameraOnDialogBegin = true;
 
 	BlendTime = 1.25f;
 	BlendFunc = VTBlend_Cubic;
@@ -98,7 +96,7 @@ bool UDialogBuilderGraph::Initialize(UDialogComponent* InitializingComp)
 			}
 		}
 		bAutoAdvanceDialogLine = bLockPlayerMovement ? bAutoAdvanceDialogLine : true; // if dialog is free movement, force auto advance dialog line -> true
-		bUseDialogCameraFade = bLockPlayerMovement ? bUseDialogCameraFade : false;
+		bFadeCameraOnDialogBegin = bLockPlayerMovement ? bFadeCameraOnDialogBegin : false;
 		
 	}
 	return false;
@@ -153,6 +151,7 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 	if(!InDialogStage || InDialogStage == CurrentDialogStage)
 		return;
 
+	SequencePivot->SetActorTransform(InDialogStage->PlacementTransform);
 	UDialogStage* LastDialogStage = CurrentDialogStage;
 	CurrentDialogStage = InDialogStage;
 	
@@ -236,7 +235,23 @@ void UDialogBuilderGraph::StartFromRoot()
 {
 	if (RootNodes.IsValidIndex(0))
 	{
-		BeginNode(RootNodes[0]);
+		if (bFadeCameraOnDialogBegin)
+		{
+			FTimerDelegate BeginNodeDelegate = FTimerDelegate::CreateLambda([this]()
+				{
+					BeginNode(RootNodes[0]);
+				});
+			if (GetWorld())
+			{
+				FTimerHandle UnfadeHandle;
+				GetWorld()->GetTimerManager().SetTimer(UnfadeHandle, BeginNodeDelegate, .75f, false);
+			}
+		}
+		else 
+		{
+			BeginNode(RootNodes[0]);
+		}
+		
 	}
 }
 

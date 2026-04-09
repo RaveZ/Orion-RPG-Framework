@@ -39,7 +39,8 @@ public class Dialog_System_Editor : ModuleRules
                 "AssetDefinition",
 				"GameplayTags",
 				"CinematicCamera",
-				"LevelEditor"
+				"LevelEditor",
+                "AssetRegistry"
             }
 			);
 		

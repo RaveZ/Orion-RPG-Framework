@@ -1,0 +1,244 @@
+#include "SDialogCameraPresets.h"
+
+#include "DialogBuilderEditor.h"
+#include "DialogSequenceShot.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetRegistry/IAssetRegistry.h"
+#include "Engine/Blueprint.h"
+#include "IDetailsView.h"
+#include "Modules/ModuleManager.h"
+#include "PropertyEditorModule.h"
+#include "Styling/AppStyle.h"
+#include "Widgets/Layout/SBorder.h"
+#include "Widgets/Layout/SSplitter.h"
+#include "Widgets/SBoxPanel.h"
+#include "Widgets/Text/STextBlock.h"
+
+#define LOCTEXT_NAMESPACE "DialogCameraPresets"
+
+namespace
+{
+	bool HasClassPathToken(const FString& InTagValue, const UClass* InClass)
+	{
+		if (!InClass)
+		{
+			return false;
+		}
+
+		const FString ClassName = InClass->GetName();
+		const FString ClassPath = InClass->GetPathName();
+
+		return InTagValue.Contains(ClassName) || InTagValue.Contains(ClassPath);
+	}
+}
+
+void SDialogCameraPresets::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEditor> InDialogEditor)
+{
+	DialogEditorPtr = InDialogEditor;
+
+	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+	FDetailsViewArgs DetailsArgs;
+	DetailsArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
+	DetailsArgs.bUpdatesFromSelection = false;
+	DetailsArgs.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Hide;
+
+	ShotDetailsView = PropertyModule.CreateDetailView(DetailsArgs);
+
+	ChildSlot
+	[
+		SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		[
+			SNew(SSplitter)
+			.Orientation(EOrientation::Orient_Vertical)
+
+			+ SSplitter::Slot()
+			.Value(0.35f)
+			[
+				SNew(SBorder)
+				.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+				.Padding(4.0f)
+				[
+					SNew(SVerticalBox)
+					+ SVerticalBox::Slot()
+					.AutoHeight()
+					.Padding(4.0f)
+					[
+						SNew(STextBlock)
+						.Text(LOCTEXT("CameraPresetListTitle", "Camera Presets"))
+						.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.5f))
+					]
+					+ SVerticalBox::Slot()
+					.FillHeight(1.0f)
+					.Padding(2.0f)
+					[
+						SAssignNew(CameraPresetListView, SListView<FDialogCameraPresetItemPtr>)
+						.ListItemsSource(&CameraPresetItems)
+						.OnGenerateRow(this, &SDialogCameraPresets::GenerateCameraPresetRow)
+						.OnSelectionChanged(this, &SDialogCameraPresets::OnCameraPresetSelectionChanged)
+						.SelectionMode(ESelectionMode::Single)
+					]
+				]
+			]
+
+			+ SSplitter::Slot()
+			.Value(0.65f)
+			[
+				SNew(SBorder)
+				.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+				.Padding(4.0f)
+				[
+					ShotDetailsView.ToSharedRef()
+				]
+			]
+		]
+	];
+
+	RebuildCameraPresetList();
+}
+
+SDialogCameraPresets::~SDialogCameraPresets()
+{
+	ReleaseSelectedShotInstance();
+}
+
+void SDialogCameraPresets::Refresh()
+{
+	RebuildCameraPresetList();
+}
+
+TSharedRef<ITableRow> SDialogCameraPresets::GenerateCameraPresetRow(
+	FDialogCameraPresetItemPtr InItem,
+	const TSharedRef<STableViewBase>& InOwnerTable)
+{
+	return SNew(STableRow<FDialogCameraPresetItemPtr>, InOwnerTable)
+	[
+		SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("NoBorder"))
+			.Padding(FMargin(2.0f, 2.0f, 2.0f, 4.0f))
+			[
+				SNew(STextBlock)
+					.Text(InItem.IsValid() ? InItem->DisplayName : LOCTEXT("InvalidCameraPreset", "Invalid"))
+					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.0f))
+			]
+	];
+}
+
+void SDialogCameraPresets::OnCameraPresetSelectionChanged(FDialogCameraPresetItemPtr InItem, ESelectInfo::Type InSelectInfo)
+{
+	ReleaseSelectedShotInstance();
+
+	if (!InItem.IsValid() || !ShotDetailsView.IsValid())
+	{
+		return;
+	}
+
+	if (UDialogSequenceShot* SelectedShot = CreateSelectedShotInstance(InItem->AssetData))
+	{
+		SelectedShotInstance = SelectedShot;
+		ShotDetailsView->SetObject(SelectedShot);
+	}
+}
+
+void SDialogCameraPresets::RebuildCameraPresetList()
+{
+	ReleaseSelectedShotInstance();
+	CameraPresetItems.Empty();
+
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
+
+	TArray<FAssetData> Assets;
+	AssetRegistry.GetAssetsByClass(UBlueprint::StaticClass()->GetClassPathName(), Assets);
+
+	for (const FAssetData& AssetData : Assets)
+	{
+		if (!IsCameraPresetBlueprint(AssetData))
+		{
+			continue;
+		}
+
+		FDialogCameraPresetItemPtr Item = MakeShared<FDialogCameraPresetItem>();
+		Item->DisplayName = FText::FromName(AssetData.AssetName);
+		Item->AssetData = AssetData;
+
+		CameraPresetItems.Add(Item);
+	}
+
+	CameraPresetItems.Sort([](const FDialogCameraPresetItemPtr& A, const FDialogCameraPresetItemPtr& B)
+	{
+		const FString AName = A.IsValid() ? A->DisplayName.ToString() : FString();
+		const FString BName = B.IsValid() ? B->DisplayName.ToString() : FString();
+		return AName < BName;
+	});
+
+	if (CameraPresetListView.IsValid())
+	{
+		CameraPresetListView->RequestListRefresh();
+
+		if (CameraPresetItems.Num() > 0)
+		{
+			CameraPresetListView->SetSelection(CameraPresetItems[0], ESelectInfo::Direct);
+		}
+	}
+}
+
+bool SDialogCameraPresets::IsCameraPresetBlueprint(const FAssetData& AssetData) const
+{
+	FString ParentClassPath;
+
+	if (!AssetData.GetTagValue(FName(TEXT("NativeParentClassPath")), ParentClassPath) &&
+		!AssetData.GetTagValue(FName(TEXT("ParentClass")), ParentClassPath))
+	{
+		return false;
+	}
+
+	return HasClassPathToken(ParentClassPath, UDialogSequenceShot::StaticClass());
+}
+
+UDialogSequenceShot* SDialogCameraPresets::CreateSelectedShotInstance(const FAssetData& AssetData) const
+{
+	UBlueprint* Blueprint = Cast<UBlueprint>(AssetData.GetAsset());
+	if (!Blueprint || !Blueprint->GeneratedClass)
+	{
+		return nullptr;
+	}
+
+	UDialogSequenceShot* SourceShot = Cast<UDialogSequenceShot>(Blueprint->GeneratedClass->GetDefaultObject());
+	if (!SourceShot)
+	{
+		return nullptr;
+	}
+
+	UDialogSequenceShot* DuplicatedShot = Cast<UDialogSequenceShot>(
+		StaticDuplicateObject(SourceShot, GetTransientPackage(), NAME_None, RF_Transient | RF_Transactional));
+
+	if (DuplicatedShot)
+	{
+		DuplicatedShot->AddToRoot();
+	}
+
+	return DuplicatedShot;
+}
+
+void SDialogCameraPresets::ReleaseSelectedShotInstance()
+{
+	if (UDialogSequenceShot* SelectedShot = SelectedShotInstance.Get())
+	{
+		if (SelectedShot->IsRooted())
+		{
+			SelectedShot->RemoveFromRoot();
+		}
+	}
+
+	SelectedShotInstance.Reset();
+
+	if (ShotDetailsView.IsValid())
+	{
+		ShotDetailsView->SetObject(nullptr);
+	}
+}
+
+#undef LOCTEXT_NAMESPACE

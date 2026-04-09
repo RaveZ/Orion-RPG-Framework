@@ -9,6 +9,7 @@
 #include "DialogBuilderEditorModes.h"
 #include "Components/StaticMeshComponent.h"
 #include "SDialogStageManager.h"
+#include "SDialogCameraPresets.h"
 #include "DialogSequencePlaybackContext.h"
 #include "DialogDefinition.h"
 #include "DialogSequence.h"
@@ -333,6 +334,7 @@ void FDialogBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& 
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogBuilderEditorSettingsID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogSequencerTabID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogSequencerViewportID);
+	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogCameraPresetsID);
 }
 
 void FDialogBuilderEditor::Tick(float DeltaTime)
@@ -1860,7 +1862,9 @@ TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_CameraPresets(const FSpawnTa
 	return SNew(SDockTab)
 		.Label(LOCTEXT("DialogSequencerViewport_Title", "Viewport"))
 		[
-			PropertyWidget.ToSharedRef()
+			DialogCameraPresetsWidget.IsValid()
+				? DialogCameraPresetsWidget.ToSharedRef()
+				: SNullWidget::NullWidget
 		];
 }
 
@@ -2479,6 +2483,7 @@ void FDialogBuilderEditor::CreateInternalWidgets()
 
 
 
+	DialogCameraPresetsWidget = SNew(SDialogCameraPresets, SharedThis(this));
 	this->DialogDefinitionsWidget = SNew(SDialogDefinitions, SharedThis(this));
 	DialogStageManagerWidget = SNew(SDialogStageManager, SharedThis(this), GetDialogBuilderGraph());
 
@@ -2556,7 +2561,9 @@ TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogCameraPresetsTab()
 		.FillHeight(1.0f)
 		.HAlign(HAlign_Fill)
 		[
-			PropertyWidget.ToSharedRef()
+			DialogCameraPresetsWidget.IsValid()
+				? DialogCameraPresetsWidget.ToSharedRef()
+				: SNullWidget::NullWidget
 		];
 }
 
@@ -3341,12 +3348,18 @@ void FDialogBuilderEditor::OnNodeDoubleClicked(UEdGraphNode* Node)
 			}
 
 			HostTabManager->TryInvokeTab(SequencerTabId);
+
+			FDialogBuilderViewportClient* ViewportClient = DialogViewportWidget->GetDialogViewportClientPtr();
+			if (!ViewportClient)
+			{
+				return;
+			}
+
+			ViewportClient->ResetCamera();
 		}
 
 		
 	}
-
-	
 
 
 	if (DialogEdNode && 

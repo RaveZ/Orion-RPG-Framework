@@ -50,7 +50,7 @@ FDialogCameraPresetsSummoner::FDialogCameraPresetsSummoner(TSharedPtr<class FDia
 	, DialogEditorPtr(InDialogEditorPtr)
 {
 	TabLabel = LOCTEXT("DialogCameraPresetsLabel", "Camera Presets");
-	TabIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Viewports");
+	TabIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "Sequencer.LockCamera");
 	bIsSingleton = true;
 	ViewMenuDescription = LOCTEXT("DialogCameraPresetsView", "Camera Presets");
 	ViewMenuTooltip = LOCTEXT("DialogCameraPresetsView_ToolTip", "Show the dialog camera presets tab");

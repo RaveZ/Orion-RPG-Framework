@@ -19,6 +19,30 @@ class ORIONRPG_API UDialogSequenceShot : public UObject {
 public:
 	UDialogSequenceShot();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Track & Focus Settings", meta = (Categories = "Dialog.Participant"))
+	FGameplayTag Speaker;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Track & Focus Settings", meta = (Categories = "Dialog.Participant"))
+	FGameplayTag Listener;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Track & Focus Settings", meta = (EditCondition = "bOverrideTrackedBone"))
+	FName TrackedBone;
+
+	/**Cinecam distance from the track location */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Settings")
+	float CameraDistance;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Settings")
+	FVector CameraOffset;
+
+
+	UFUNCTION(BlueprintImplementableEvent, DisplayName = "PreCameraSetup", Category = "Event")
+	void K2_PreCameraSetup();
+
+	UFUNCTION(BlueprintCallable, DisplayName = "PreCameraSetup", Category = "Event")
+	void ApplyShot();
+
 
 protected:
 	// Allows the Object to get a valid UWorld from it's outer.

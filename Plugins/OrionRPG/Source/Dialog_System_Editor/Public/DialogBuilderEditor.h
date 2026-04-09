@@ -20,6 +20,7 @@ class SDialogPreviewViewport;
 class ISequencer;
 class ULevelSequence;
 class SDialogDefinitions;
+class SDialogCameraPresets;
 class UDialogParticipant;
 class UDialogSequence;
 class UDialogSequenceSlot;
@@ -505,6 +506,7 @@ protected:
 	TSharedPtr<class IDetailsView> EditorSettingsWidget;
 	TSharedPtr<class SDialogDefinitions> DialogDefinitionsWidget;
 	TSharedPtr<class SDialogStageManager> DialogStageManagerWidget;
+	TSharedPtr<class SDialogCameraPresets> DialogCameraPresetsWidget;
 
 	/** The command list for this editor */
 	TSharedPtr<FUICommandList> GraphEditorCommands;

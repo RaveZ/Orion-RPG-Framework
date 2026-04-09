@@ -35,7 +35,7 @@ public:
 
 	FName GetID() const
 	{
-		FName OutName = ActorTag.IsValid() ? ActorTag.GetTagName() : FName(*ID.ToString());
+		FName OutName = FName(*ID.ToString());
 		return OutName;
 	}
 #if WITH_EDITOR
