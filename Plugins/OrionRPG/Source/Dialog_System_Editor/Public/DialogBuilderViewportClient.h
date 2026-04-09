@@ -7,6 +7,7 @@
 class FDialogBuilderEditor;
 class FPreviewScene;
 class SEditorViewport;
+class SWidget;
 
 class FDialogBuilderViewportClient final : public FEditorViewportClient, public TSharedFromThis<FDialogBuilderViewportClient>
 {
@@ -46,7 +47,7 @@ public:
 	virtual void PerspectiveCameraMoved() override;
 	virtual void BeginCameraMovement(bool bHasMovement) override;
 	virtual void EndCameraMovement() override;
-	virtual void SummonContextMenu(const FTypedElementHandle& HitProxyElement = FTypedElementHandle());
+	virtual void SummonContextMenu(const FTypedElementHandle& HitProxyElement = FTypedElementHandle()) override;
 
 	virtual ELevelViewportType GetViewportType() const override;
 	virtual void SetViewportType(ELevelViewportType InViewportType) override;
@@ -346,4 +347,7 @@ private:
 	TOptional<FTransform> CachedPilotTransform;
 
 	TOptional<EMouseCursor::Type> MouseCursor;
+
+private:
+	TWeakPtr<class SEditorViewport> ViewportWidgetAnchor;
 };

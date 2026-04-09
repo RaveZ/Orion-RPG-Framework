@@ -5,6 +5,7 @@
 #include "DialogBuilderSetting.h"
 
 #include "AdvancedPreviewScene.h"
+#include "Framework/Application/SlateApplication.h"
 #include "Editor.h"
 #include "EditorViewportClient.h"
 #include "Subsystems/AssetEditorSubsystem.h"
@@ -53,6 +54,7 @@ FDialogBuilderViewportClient::FDialogBuilderViewportClient(
 	, CurrentPreviewScene(InPreviewScene)
 	, bEditorCameraCut(false)
 	, bWasEditorCameraCut(false)
+	, ViewportWidgetAnchor(InViewport)
 {
 	bAlwaysShowModeWidgetAfterSelectionChanges = true;
 	ViewportType = LVT_Perspective;
@@ -317,6 +319,11 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 
 
 	if (!DialogEditor.IsValid()) return;
+	if (Key == EKeys::RightMouseButton && Event == IE_Released)
+	{
+		SummonContextMenu(HitProxy ? HitProxy->GetElementHandle() : FTypedElementHandle());
+		return;
+	}
 
 	if (!HitProxy)
 	{
@@ -560,12 +567,35 @@ bool FDialogBuilderViewportClient::ShouldLockPitch() const
 
 void FDialogBuilderViewportClient::SummonContextMenu(const FTypedElementHandle& HitProxyElement)
 {
-	/*if (TSharedPtr<ILevelEditor> ParentLevelEditorPinned = ParentLevelEditor.Pin())
+	TSharedPtr<FDialogBuilderEditor> DialogEditor = Editor.Pin();
+	if (!DialogEditor.IsValid())
 	{
-		ParentLevelEditorPinned->SummonLevelViewportContextMenu(HitProxyElement);
-	}*/
-}
+		return;
+	}
 
+	FMenuBuilder MenuBuilder(true, nullptr);
+
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("ResetCamera", "Reset Camera"),
+		LOCTEXT("ResetCamera_Tooltip", "Reset the dialog preview camera."),
+		FSlateIcon(),
+		FUIAction(FExecuteAction::CreateSP(this, &FDialogBuilderViewportClient::ResetCamera))
+	);
+
+	TSharedPtr<SWindow> ActiveWindow = FSlateApplication::Get().GetActiveTopLevelWindow();
+	if (!ActiveWindow.IsValid())
+	{
+		return;
+	}
+
+	FSlateApplication::Get().PushMenu(
+		ActiveWindow.ToSharedRef(),
+		FWidgetPath(),
+		MenuBuilder.MakeWidget(),
+		FSlateApplication::Get().GetCursorPos(),
+		FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu));
+
+}
 ELevelViewportType FDialogBuilderViewportClient::GetViewportType() const
 {
 	const UCameraComponent* ActiveCameraComponent = GetCameraComponentForView();
@@ -989,7 +1019,7 @@ void FDialogBuilderViewportClient::ResetCamera()
 
 	USceneThumbnailInfo* ThumbnailInfo = USceneThumbnailInfo::StaticClass()->GetDefaultObject<USceneThumbnailInfo>();
 
-	const float BoundsRadius = CombinedBounds.IsValid ? CombinedBounds.GetExtent().Length() : 256.0f;
+	const float BoundsRadius = CombinedBounds.IsValid ? CombinedBounds.GetExtent().Length() : 150.0f;
 	double OrbitZoom = ThumbnailInfo ? ThumbnailInfo->OrbitZoom : 0.0;
 
 	if (BoundsRadius + OrbitZoom < 0.0)
@@ -997,16 +1027,27 @@ void FDialogBuilderViewportClient::ResetCamera()
 		OrbitZoom = -BoundsRadius;
 	}
 
-	const double TargetDistance = BoundsRadius > 0.0f ? BoundsRadius : 256.0f;
+	const double TargetDistance = BoundsRadius > 0.0f ? BoundsRadius : 150.0f;
 	const FRotator ThumbnailAngle = ThumbnailInfo
 		? FRotator(ThumbnailInfo->OrbitPitch, ThumbnailInfo->OrbitYaw, 0.0f)
 		: FRotator(-15.0f, -135.0f, 0.0f);
 
 	ToggleOrbitCamera(true);
 	SetViewLocationForOrbiting(FocusLocation);
-	SetViewLocation(GetViewLocation() + FVector(0.0f, TargetDistance * 1.5f + OrbitZoom - 256.0f, 0.0f));
+	SetViewLocation(GetViewLocation() + FVector(0.0f, 200.0f, 0.0f));
 	SetViewRotation(ThumbnailAngle);
 
+	FBox BoundingBox(ForceInit);
+	if (SequencePivot)
+	{
+		BoundingBox = SequencePivot->GetRootComponent()->Bounds.GetBox();
+		float ExpandAmount = 125.0f;
+		BoundingBox = BoundingBox.ExpandBy(ExpandAmount);
+		if (BoundingBox.IsValid)
+		{
+			//FocusViewportOnBox(BoundingBox);
+		}
+	}
 	Invalidate();
 }
 
@@ -1014,7 +1055,7 @@ void FDialogBuilderViewportClient::FocusViewportToSelection()
 {
 	TSharedPtr<FDialogBuilderEditor> DialogEditor = Editor.Pin();
 
-	AActor* PivotActor = DialogEditor ? DialogEditor->SequencePivot.Get() : nullptr;
+	AActor* PivotActor = DialogEditor ? DialogEditor->GetSequencePivot() : nullptr;
 	USelection* SelectedActors = GEditor ? GEditor->GetSelectedActors() : nullptr;
 
 	FBox BoundingBox(ForceInit);
@@ -1022,7 +1063,7 @@ void FDialogBuilderViewportClient::FocusViewportToSelection()
 	if (SelectedActors->Num() == 0 && PivotActor)
 	{
 		BoundingBox = PivotActor->GetRootComponent()->Bounds.GetBox();
-		float ExpandAmount = 150.0f; 
+		float ExpandAmount = 125.0f; 
 		BoundingBox = BoundingBox.ExpandBy(ExpandAmount);
 		if (BoundingBox.IsValid)
 		{

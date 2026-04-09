@@ -516,6 +516,7 @@ protected:
 	//sequencer
 	TWeakObjectPtr<class UDialogBuilderNode_DialogSequence> CurrentSequenceNode;
 	TSharedPtr<ISequencer> Sequencer;
+	TWeakObjectPtr<AActor> SequencePivot;
 	TMap<UDialogSequenceSlot*, TWeakObjectPtr<AActor>> DialogSlotActors;
 	TWeakObjectPtr<AActor> DialogCamera;
 
@@ -534,8 +535,6 @@ protected:
 	TSharedPtr<class FDialogSequencePlaybackContext> PlaybackContext;
 
 public:
-	TWeakObjectPtr<AActor> SequencePivot;
-
 	/** Modes in mode switcher */
 	static const FName DialogEditorMode;
 	static const FName DialogSequencerMode;
