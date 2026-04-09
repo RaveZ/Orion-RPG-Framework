@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "Widgets/SCompoundWidget.h"
 #include "Widgets/Views/SListView.h"
+#include "DialogBuilderEditor.h"
 
 class IDetailsView;
 class UDialogBuilderGraph;
@@ -31,7 +32,7 @@ public:
 	SLATE_BEGIN_ARGS(SDialogStageManager) {}
 	SLATE_END_ARGS()
 
-	void Construct(const FArguments& InArgs, UDialogBuilderGraph* InDialogGraph);
+	void Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEditor> InDialogEditor, UDialogBuilderGraph* InDialogGraph);
 
 	// Keyboard commands (Delete)
 	virtual FReply OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent) override;
@@ -82,6 +83,9 @@ private:
 	TSharedPtr<FUICommandList> CommandList;
 
 	int32 SelectedSlotIndex = INDEX_NONE;
+
+	/** Pointer back to the Dialog editor that owns us */
+	TWeakPtr<FDialogBuilderEditor> DialogEditorPtr;
 
 private:
 	void RestoreSelection(const FName& InDialogStageObjectName, const FGuid& InSlotId);

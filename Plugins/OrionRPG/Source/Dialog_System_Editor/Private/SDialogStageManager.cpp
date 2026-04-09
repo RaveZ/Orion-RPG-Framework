@@ -139,10 +139,10 @@ private:
 // -----------------------------------------------------------------------------
 // SDialogStageManager
 // -----------------------------------------------------------------------------
-void SDialogStageManager::Construct(const FArguments& InArgs, UDialogBuilderGraph* InDialogGraph)
+void SDialogStageManager::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEditor> InDialogEditor,  UDialogBuilderGraph* InDialogGraph)
 {
 	DialogGraph = InDialogGraph;
-
+	DialogEditorPtr = InDialogEditor;
 	CommandList = MakeShareable(new FUICommandList);
 	CommandList->MapAction(
 		FGenericCommands::Get().Delete,
@@ -183,7 +183,7 @@ void SDialogStageManager::Construct(const FArguments& InArgs, UDialogBuilderGrap
 					.VAlign(VAlign_Center)
 					[
 						SNew(STextBlock)
-							.Text(LOCTEXT("DialogStageListTitle", "Dialog Sets"))
+							.Text(LOCTEXT("DialogStageListTitle", "Dialog Stages"))
 							.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.5f))
 					]
 					+ SHorizontalBox::Slot()
@@ -192,7 +192,7 @@ void SDialogStageManager::Construct(const FArguments& InArgs, UDialogBuilderGrap
 						SNew(SButton)
 						.ButtonStyle(FAppStyle::Get(), "SimpleButton")
 						.ContentPadding(FMargin(2.f))
-						.ToolTipText(LOCTEXT("AddDialogStageTooltip", "Add Dialog Set"))
+						.ToolTipText(LOCTEXT("AddDialogStageTooltip", "Add Dialog Stage"))
 						.OnClicked(this, &SDialogStageManager::OnAddDialogStage)
 						[
 							SNew(SImage).Image(FAppStyle::GetBrush("Icons.Plus"))
@@ -356,7 +356,7 @@ FReply SDialogStageManager::OnAddDialogStage()
 		return FReply::Handled();
 	}
 
-	const FScopedTransaction Transaction(LOCTEXT("AddDialogStageTransaction", "Add Dialog Set"));
+	const FScopedTransaction Transaction(LOCTEXT("AddDialogStageTransaction", "Add Dialog Stage"));
 	Graph->Modify();
 
 	UDialogStage* NewDialogStage = NewObject<UDialogStage>(Graph, NAME_None, RF_Transactional);
@@ -388,7 +388,7 @@ void SDialogStageManager::OnRemoveDialogStage(UDialogStage* InDialogStage)
 		return;
 	}
 
-	const FScopedTransaction Transaction(LOCTEXT("DeleteDialogStageTransaction", "Delete Dialog Set"));
+	const FScopedTransaction Transaction(LOCTEXT("DeleteDialogStageTransaction", "Delete Dialog Stage"));
 	Graph->Modify();
 	InDialogStage->Modify();
 
@@ -429,12 +429,18 @@ TSharedRef<ITableRow> SDialogStageManager::GenerateSlotRow(FDialogSlotListItemPt
 
 void SDialogStageManager::OnSlotSelectionChanged(FDialogSlotListItemPtr InItem, ESelectInfo::Type InSelectInfo)
 {
+	TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
 	SelectedSlot = InItem.IsValid() ? InItem->Slot.Get() : nullptr;
 	SelectedSlotIndex = InItem.IsValid() ? InItem->SlotIndex : INDEX_NONE;
 
 	if (SlotDetailsView.IsValid())
 	{
 		SlotDetailsView->SetObject(SelectedSlot.Get());
+
+		if (DialogEditor)
+		{
+			DialogEditor->SelectDialogSlotActor(SelectedSlotIndex);
+		}
 	}
 }
 
@@ -578,8 +584,8 @@ TSharedPtr<SWidget> SDialogStageManager::OnDialogStageContextMenuOpening()
 	FMenuBuilder MenuBuilder(true, nullptr);		
 
 	MenuBuilder.AddMenuEntry(
-		LOCTEXT("AddDialogStageCtx", "Add Dialog Set"),
-		LOCTEXT("AddDialogStageCtxTooltip", "Add a new Dialog Set"),
+		LOCTEXT("AddDialogStageCtx", "Add Dialog Stage"),
+		LOCTEXT("AddDialogStageCtxTooltip", "Add a new Dialog Stage"),
 		FSlateIcon(),
 		FUIAction(FExecuteAction::CreateLambda([this]()
 		{
@@ -591,7 +597,7 @@ TSharedPtr<SWidget> SDialogStageManager::OnDialogStageContextMenuOpening()
 	{
 		MenuBuilder.AddMenuEntry(
 			LOCTEXT("DeleteDialogStageCtx", "Delete"),
-			LOCTEXT("DeleteDialogStageCtxTooltip", "Delete selected Dialog Set"),
+			LOCTEXT("DeleteDialogStageCtxTooltip", "Delete selected Dialog Stage"),
 			FSlateIcon(),
 			FUIAction(FExecuteAction::CreateLambda([this]()
 			{

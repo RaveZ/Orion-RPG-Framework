@@ -17,14 +17,14 @@ class ORIONRPG_API UDialogSequenceSlot : public UObject
 public:
 	UDialogSequenceSlot();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detail")
+	UPROPERTY(BlueprintReadOnly, Category = "Detail")
 	TObjectPtr<UDialogBuilderGraph> OwningDialogGraph;
 
 	//id used for binding reference in sequence
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detail", meta = (DisplayPriority = -1))
+	UPROPERTY(BlueprintReadOnly, Category = "Detail", meta = (DisplayPriority = -1))
 	FGuid ID;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detail")
+	UPROPERTY(BlueprintReadOnly, Category = "Detail")
 	TObjectPtr<class UDialogDefinition> DialogDefinition;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail", meta = (Categories = "Dialog"))
@@ -55,7 +55,7 @@ class ORIONRPG_API UDialogStage : public UObject
 public:
 	UDialogStage();
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detail")
+	UPROPERTY(BlueprintReadOnly, Category = "Detail")
 	TObjectPtr<UDialogBuilderGraph> OwningDialogGraph;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Detail")
@@ -64,10 +64,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
 	FTransform PlacementTransform;
 
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Detail")
+	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Detail")
 	TArray<TObjectPtr<class UDialogSequenceSlot>> Slots;
 
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Detail")
+	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Detail")
 	TArray<TObjectPtr<class UDialogSequenceSlot>> CameraSlots;
 
 

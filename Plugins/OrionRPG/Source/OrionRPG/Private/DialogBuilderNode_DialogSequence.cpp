@@ -91,6 +91,22 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogStageData()
 	//Populate Dialog Definition Slots
 	{
 		const int32 SourceCount = DialogStageToUse->Slots.Num();
+		const int32 SlotCount = DialogStage->Slots.Num();
+
+		//remove possessable if there is excess slots
+		if (SlotCount > SourceCount)
+		{
+			for (int32 Index = SlotCount - 1; Index >= SourceCount; --Index)
+			{
+				if (UDialogSequenceSlot* Slot = DialogStage->Slots[Index])
+				{
+					DialogSequence->MovieScene->RemovePossessable(Slot->ID);
+				}
+
+			}
+		}
+		
+
 		DialogStage->Slots.SetNum(SourceCount);
 		for (int32 idx = 0; idx < SourceCount; ++idx)
 		{

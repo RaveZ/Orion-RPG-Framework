@@ -320,6 +320,7 @@ public:
 	FGuid CreateDialogCamera(const bool bSpawnable, class ACineCameraActor*& OutActor);
 	void UpdateTrackModelRule();
 	void UpdateSectionRule();
+	void OnSequencerSelectionChangedObjectGuids(TArray<FGuid> Guids);
 
 	/** Called whenever sequencer has received focus */
 	void OnSequencerReceivedFocus();
@@ -338,16 +339,19 @@ public:
 	//DialogDefinitions
 	void UpdateDialogStage();
 	void DestroyDialogStage();
+	UDialogSequenceSlot* GetDialogSlotKey(AActor* InActor);
+	//Get the slot which is being used as a template for the opened dialogset
+	UDialogSequenceSlot* GetTemplateSlot(AActor* InActor);
 	void SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AActor*& OutActor);
 	void CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot);
 	TArray<AActor*> GetDialogSlotActors() const;
 	void SelectDialogDefinitionActor(UDialogDefinition* InDialogDefinition);
 	void SelectDialogDefinition(UDialogDefinition* InDialogDefinition);
+	void SelectDialogSlotActor(int32 index);
 	UDialogDefinition* FindDialogDefinitionByActor(const AActor* InActor) const;
 
 	void OnDialogDefinitionAdded(UDialogDefinition* InDialogDefinition);
 	void OnDialogDefinitionRemoved(UDialogDefinition* InDialogDefinition);
-	void RemoveDialogTrackDefinition(UDialogDefinition* InDialogDefinition);
 
 	void ResolveDialogBoundObjects();
 
@@ -512,10 +516,10 @@ protected:
 	//sequencer
 	TWeakObjectPtr<class UDialogBuilderNode_DialogSequence> CurrentSequenceNode;
 	TSharedPtr<ISequencer> Sequencer;
-	TWeakObjectPtr<AActor> SequencePivot;
 	TMap<UDialogSequenceSlot*, TWeakObjectPtr<AActor>> DialogSlotActors;
 	TWeakObjectPtr<AActor> DialogCamera;
 
+	//sequencer
 	FDelegateHandle SequencerGlobalTimeChangedHandle;
 	FDelegateHandle SequencerMovieSceneDataChangedHandle;
 	TWeakObjectPtr<AActor> LastSequencerCameraCutActor;
@@ -530,6 +534,8 @@ protected:
 	TSharedPtr<class FDialogSequencePlaybackContext> PlaybackContext;
 
 public:
+	TWeakObjectPtr<AActor> SequencePivot;
+
 	/** Modes in mode switcher */
 	static const FName DialogEditorMode;
 	static const FName DialogSequencerMode;

@@ -42,14 +42,14 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialog Sequence")
 	TObjectPtr<UDialogSequence> DialogSequence = nullptr;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog Sequence")
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog Sequence")
 	FMovieSceneSequencePlaybackSettings PlaybackSettings;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Sequence")
+	UPROPERTY(BlueprintReadOnly, Category = "Dialog Sequence")
 	TObjectPtr<UDialogStage> DialogStageToUse;
 
 	/**Dialog Set for this sequence node*/
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Dialog Sequence")
+	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Dialog Sequence")
 	TObjectPtr<UDialogStage> DialogStage;
 
 

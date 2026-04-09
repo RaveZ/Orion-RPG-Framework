@@ -647,6 +647,7 @@ void SDialogPreviewViewport::ToggleGameView()
 	// Need to turn it back to "true" 
 	DialogViewportClient->ShowWidget(true);
 	DialogViewportClient->EngineShowFlags.SetBillboardSprites(true);
+	DialogViewportClient->EngineShowFlags.SetCameras(true);
 	DialogViewportClient->EngineShowFlags.SetSelection(true);
 	DialogViewportClient->EngineShowFlags.SetSelectionOutline(true);
 

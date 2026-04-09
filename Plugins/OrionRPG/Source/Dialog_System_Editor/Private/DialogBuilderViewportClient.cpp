@@ -1,6 +1,7 @@
 #include "DialogBuilderViewportClient.h"
 
 #include "DialogBuilderEditor.h"
+#include "DialogStage.h"
 #include "DialogBuilderSetting.h"
 
 #include "AdvancedPreviewScene.h"
@@ -137,6 +138,23 @@ void FDialogBuilderViewportClient::RefreshRenderFeature()
 	else
 	{
 		EngineShowFlags.DisableAdvancedFeatures();
+		EngineShowFlags.SetLensFlares(true);
+		EngineShowFlags.SetColorGrading(true);
+		EngineShowFlags.SetCameraImperfections(true);
+		EngineShowFlags.SetDepthOfField(true);
+		EngineShowFlags.SetVignette(true);
+		EngineShowFlags.SetGrain(true);
+		EngineShowFlags.SetSeparateTranslucency(true);
+		EngineShowFlags.SetScreenSpaceReflections(true);
+		EngineShowFlags.SetTemporalAA(true);
+		EngineShowFlags.SetAmbientOcclusion(true);
+
+		EngineShowFlags.SetIndirectLightingCache(true);
+
+		EngineShowFlags.SetLightShafts(true);
+		EngineShowFlags.SetPostProcessMaterial(true);
+		EngineShowFlags.SetDistanceFieldAO(true);
+
 	}
 
 	EngineShowFlags.SetSelectionOutline(true);
@@ -362,10 +380,11 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 		}
 
 		UDialogDefinition* DialogDefinition = DialogEditor->FindDialogDefinitionByActor(ActorToSelect);
+		UDialogSequenceSlot* Slot = DialogEditor->GetTemplateSlot(ActorToSelect);
 
-		if (DialogDefinition)
+		if (Slot)
 		{
-			DialogEditor->SetDetailsObject(DialogDefinition);
+			DialogEditor->SetDetailsObject(Slot);
 		}
 		else
 		{
@@ -510,6 +529,43 @@ void FDialogBuilderViewportClient::EndCameraMovement()
 	}
 }
 
+void FDialogBuilderViewportClient::RotateViewportType()
+{
+	SetActorLock(nullptr);
+	UpdateViewForLockedActor();
+
+	FEditorViewportClient::RotateViewportType();
+}
+
+void FDialogBuilderViewportClient::OverridePostProcessSettings(FSceneView& View)
+{
+	const UCameraComponent* CameraComponent = GetCameraComponentForView();
+	if (CameraComponent)
+	{
+		View.OverridePostProcessSettings(CameraComponent->PostProcessSettings, CameraComponent->PostProcessBlendWeight);
+	}
+}
+
+bool FDialogBuilderViewportClient::ShouldLockPitch() const
+{
+	// If we have somehow gotten out of the locked rotation
+	if ((GetViewRotation().Pitch < -90.f + KINDA_SMALL_NUMBER || GetViewRotation().Pitch > 90.f - KINDA_SMALL_NUMBER)
+		&& FMath::Abs(GetViewRotation().Roll) > (90.f - KINDA_SMALL_NUMBER))
+	{
+		return false;
+	}
+	// Else use the standard rules
+	return FEditorViewportClient::ShouldLockPitch();
+}
+
+void FDialogBuilderViewportClient::SummonContextMenu(const FTypedElementHandle& HitProxyElement)
+{
+	/*if (TSharedPtr<ILevelEditor> ParentLevelEditorPinned = ParentLevelEditor.Pin())
+	{
+		ParentLevelEditorPinned->SummonLevelViewportContextMenu(HitProxyElement);
+	}*/
+}
+
 ELevelViewportType FDialogBuilderViewportClient::GetViewportType() const
 {
 	const UCameraComponent* ActiveCameraComponent = GetCameraComponentForView();
@@ -534,6 +590,7 @@ void FDialogBuilderViewportClient::SetViewportType(ELevelViewportType InViewport
 
 	FEditorViewportClient::SetViewportType(InViewportType);
 }
+
 
 
 void FDialogBuilderViewportClient::MoveLockedActorToCamera()
@@ -955,9 +1012,24 @@ void FDialogBuilderViewportClient::ResetCamera()
 
 void FDialogBuilderViewportClient::FocusViewportToSelection()
 {
+	TSharedPtr<FDialogBuilderEditor> DialogEditor = Editor.Pin();
+
+	AActor* PivotActor = DialogEditor ? DialogEditor->SequencePivot.Get() : nullptr;
 	USelection* SelectedActors = GEditor ? GEditor->GetSelectedActors() : nullptr;
 
 	FBox BoundingBox(ForceInit);
+
+	if (SelectedActors->Num() == 0 && PivotActor)
+	{
+		BoundingBox = PivotActor->GetRootComponent()->Bounds.GetBox();
+		float ExpandAmount = 150.0f; 
+		BoundingBox = BoundingBox.ExpandBy(ExpandAmount);
+		if (BoundingBox.IsValid)
+		{
+			FocusViewportOnBox(BoundingBox);
+		}
+		return;
+	}
 
 	for (FSelectionIterator It(*SelectedActors); It; ++It)
 	{
