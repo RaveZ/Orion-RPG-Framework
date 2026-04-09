@@ -194,8 +194,5 @@ void UDialogCameraShot::Play(UDialogBuilderGraph* InDialog, AActor* InSpeaker)
 				CinecamComp->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
 			}
 		}
-
-		
-
     }
 }

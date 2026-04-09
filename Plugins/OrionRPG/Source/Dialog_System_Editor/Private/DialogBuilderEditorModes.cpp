@@ -98,7 +98,7 @@ void FDialogBuilderEditorApplicationMode::PostActivateMode()
 /////////////////////////////////////////////////////
 // FDialogBuilderSequencerApplicationMode
 
-#define LOCTEXT_NAMESPACE "BlackboardApplicationMode"
+#define LOCTEXT_NAMESPACE "DialogSequencerApplicationMode"
 
 FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(TSharedPtr<class FDialogBuilderEditor> InDialogBuilderEditor)
 	: FApplicationMode(FDialogBuilderEditor::DialogSequencerMode, FDialogBuilderEditor::GetLocalizedMode)
@@ -110,6 +110,7 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogEditorDetailsSummoner(InDialogBuilderEditor)));
 	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new DialogDefinitionsSummoner(InDialogBuilderEditor)));
 	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogStageSettingsSummoner(InDialogBuilderEditor)));
+	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogCameraPresetsSummoner(InDialogBuilderEditor)));
 
 	TabLayout = FTabManager::NewLayout("Standalone_DialogSequencer_Layout_v2")
 		->AddArea
@@ -146,6 +147,7 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 						FTabManager::NewStack()
 						->SetSizeCoefficient(0.6f)
 						->AddTab(FDialogBuilderEditorTabs::DialogBuilderPropertyID, ETabState::OpenedTab)
+						->AddTab(FDialogBuilderEditorTabs::DialogCameraPresetsID, ETabState::OpenedTab)
 					)
 					->Split
 					(

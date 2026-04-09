@@ -29,6 +29,18 @@ protected:
 	TWeakPtr<class FDialogBuilderEditor> DialogEditorPtr;
 };
 
+struct FDialogCameraPresetsSummoner : public FWorkflowTabFactory
+{
+public:
+	FDialogCameraPresetsSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr);
+
+	virtual TSharedRef<SWidget> CreateTabBody(const FWorkflowTabSpawnInfo& Info) const override;
+	virtual FText GetTabToolTipText(const FWorkflowTabSpawnInfo& Info) const override;
+
+protected:
+	TWeakPtr<class FDialogBuilderEditor> DialogEditorPtr;
+};
+
 struct FDialogStageSettingsSummoner : public FWorkflowTabFactory
 {
 public:

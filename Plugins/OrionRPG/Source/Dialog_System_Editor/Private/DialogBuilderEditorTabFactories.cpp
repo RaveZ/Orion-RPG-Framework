@@ -45,6 +45,29 @@ FText FDialogEditorDetailsSummoner::GetTabToolTipText(const FWorkflowTabSpawnInf
 	return LOCTEXT("DialogEditorDetailsTabTooltip", "The dialog editor details tab allows editing of the properties of dialog nodes");
 }
 
+FDialogCameraPresetsSummoner::FDialogCameraPresetsSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr)
+	: FWorkflowTabFactory(FDialogBuilderEditorTabs::DialogCameraPresetsID, InDialogEditorPtr)
+	, DialogEditorPtr(InDialogEditorPtr)
+{
+	TabLabel = LOCTEXT("DialogCameraPresetsLabel", "Camera Presets");
+	TabIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Viewports");
+	bIsSingleton = true;
+	ViewMenuDescription = LOCTEXT("DialogCameraPresetsView", "Camera Presets");
+	ViewMenuTooltip = LOCTEXT("DialogCameraPresetsView_ToolTip", "Show the dialog camera presets tab");
+}
+
+TSharedRef<SWidget> FDialogCameraPresetsSummoner::CreateTabBody(const FWorkflowTabSpawnInfo& Info) const
+{
+	check(DialogEditorPtr.IsValid());
+	return DialogEditorPtr.Pin()->SpawnDialogCameraPresetsTab();
+}
+
+FText FDialogCameraPresetsSummoner::GetTabToolTipText(const FWorkflowTabSpawnInfo& Info) const
+{
+	return LOCTEXT("DialogCameraPresetsTabToolTip", "Show the dialog camera presets tab");
+}
+
+
 FDialogStageSettingsSummoner::FDialogStageSettingsSummoner(TSharedPtr<class FDialogBuilderEditor> InDialogEditorPtr)
 	: FWorkflowTabFactory(FDialogBuilderEditorTabs::DialogStageSettingsID, InDialogEditorPtr)
 	, DialogEditorPtr(InDialogEditorPtr)

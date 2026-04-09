@@ -63,6 +63,7 @@ struct FDialogBuilderEditorTabs
 	static const FName DialogBuilderEditorSettingsID;
 	static const FName DialogSequencerTabID;
 	static const FName DialogSequencerViewportID;
+	static const FName DialogCameraPresetsID;
 
 };
 
@@ -196,6 +197,8 @@ public:
 	/** Spawns the dialog viewport tab*/
 	TSharedRef<SWidget> SpawnDialogSequencerViewportTab();
 
+	/** Spawns the dialog camera presets tab*/
+	TSharedRef<SWidget> SpawnDialogCameraPresetsTab();
 
 	//Toolbar
 	void UpdateToolbar();
@@ -367,7 +370,7 @@ public:
 	//Getter
 	TSharedPtr<SDialogDefinitions> GetDialogDefinitionsWidget() const { return DialogDefinitionsWidget; }
 	AActor* GetSequencePivot() { return SequencePivot.Get(); };
-
+	AActor* GetDialogCamera() { return DialogCamera.Get(); }
 
 	FGraphAppearanceInfo GetGraphAppearance() const;
 	bool InEditingMode(bool bGraphIsEditable) const;
@@ -390,6 +393,7 @@ protected:
 	TSharedRef<SDockTab> SpawnTab_DialogDefinitions(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_Sequencer(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_SequencerViewport(const FSpawnTabArgs& Args);
+	TSharedRef<SDockTab> SpawnTab_CameraPresets(const FSpawnTabArgs& Args);
 	
 	void CreateInternalWidgets();
 

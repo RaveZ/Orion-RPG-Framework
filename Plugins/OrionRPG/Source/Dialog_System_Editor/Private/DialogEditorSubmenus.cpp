@@ -123,7 +123,7 @@ namespace UE::DialogEditor::Private
 
 		if (UWorld* World = DialogViewport->GetWorld())
 		{
-			for (TActorIterator<ACameraActor> It(World); It; ++It)
+			/*for (TActorIterator<ACameraActor> It(World); It; ++It)
 			{
 				LookThroughActors.Add(Cast<AActor>(*It));
 			}
@@ -131,6 +131,12 @@ namespace UE::DialogEditor::Private
 			for (TActorIterator<ASceneCapture> It(World); It; ++It)
 			{
 				LookThroughActors.Add(Cast<AActor>(*It));
+			}*/
+			
+			FDialogBuilderEditor* DialogEditor = DialogViewport->GetDialogEditor().Get();
+			if (DialogEditor && DialogEditor->GetDialogCamera())
+			{
+				LookThroughActors.Add(DialogEditor->GetDialogCamera());
 			}
 		}
 

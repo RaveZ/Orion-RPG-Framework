@@ -106,6 +106,7 @@ const FName FDialogBuilderEditorTabs::DialogBuilderEditorSettingsID(TEXT("Dialog
 const FName FDialogBuilderEditorTabs::DialogSequencerTabID(TEXT("DialogSequencerTab"));
 const FName FDialogBuilderEditorTabs::DialogStageSettingsID(TEXT("DialogStageSettingsID"));
 const FName FDialogBuilderEditorTabs::DialogSequencerViewportID(TEXT("DialogSequencerViewport"));
+const FName FDialogBuilderEditorTabs::DialogCameraPresetsID(TEXT("DialogCameraPresets"));
 
 const FName DialogBuilderEditorAppName = FName(TEXT("DialogBuilderEditorApp"));
 
@@ -313,7 +314,12 @@ void FDialogBuilderEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 		.SetDisplayName(LOCTEXT("DialogSequencerViewportTab", "Viewport"))
 		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "LevelEditor.Tabs.Viewports"));
+	
 
+	InTabManager->RegisterTabSpawner(FDialogBuilderEditorTabs::DialogCameraPresetsID, FOnSpawnTab::CreateSP(this, &FDialogBuilderEditor::SpawnTab_CameraPresets))
+		.SetDisplayName(LOCTEXT("DialogCameraPresetsTab", "Camera Presets"))
+		.SetGroup(WorkspaceMenuCategoryRef)
+		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Sequencer.LockCamera"));
 }
 
 void FDialogBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
@@ -1719,11 +1725,9 @@ void FDialogBuilderEditor::UpdateTrackModelRule()
 					//ensure pin camera binding
 					if (!CameraSlot) continue;
 					FMovieSceneBinding* Binding = MovieScene->FindBinding(CameraSlot->ID);
-					if (BindingModel->GetObjectGuid() == CameraSlot->ID &&
-						(!bPinned))
+					if (BindingModel->GetObjectGuid() == CameraSlot->ID)
 					{
-						BindingModel->SetPinned(true);
-						continue;
+						BindingModel->SetCustomOrder(0);
 					}
 				}
 			}
@@ -1849,9 +1853,21 @@ TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_Sequencer(const FSpawnTabArg
 		];
 }
 
-TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_SequencerViewport(const FSpawnTabArgs& Args)
+TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_CameraPresets(const FSpawnTabArgs& Args)
 {
 	check(Args.GetTabId() == FDialogBuilderEditorTabs::DialogSequencerViewportID);
+
+	return SNew(SDockTab)
+		.Label(LOCTEXT("DialogSequencerViewport_Title", "Viewport"))
+		[
+			PropertyWidget.ToSharedRef()
+		];
+}
+
+
+TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_SequencerViewport(const FSpawnTabArgs& Args)
+{
+	check(Args.GetTabId() == FDialogBuilderEditorTabs::DialogCameraPresetsID);
 
 	return SNew(SDockTab)
 		.Label(LOCTEXT("DialogSequencerViewport_Title", "Viewport"))
@@ -2529,6 +2545,18 @@ TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogSequencerViewportTab()
 			DialogViewportWidget.IsValid()
 				? DialogViewportWidget.ToSharedRef()
 				: SNullWidget::NullWidget
+		];
+}
+
+TSharedRef<SWidget> FDialogBuilderEditor::SpawnDialogCameraPresetsTab()
+{
+	return
+		SNew(SVerticalBox)
+		+ SVerticalBox::Slot()
+		.FillHeight(1.0f)
+		.HAlign(HAlign_Fill)
+		[
+			PropertyWidget.ToSharedRef()
 		];
 }
 
