@@ -1950,13 +1950,11 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 			if (SkeletalMesh->DoesSocketExist(InSequenceShot->TrackedBone))
 			{
 				const FTransform SocketTransform = SkeletalMesh->GetSocketTransform(InSequenceShot->TrackedBone, ERelativeTransformSpace::RTS_World);
-				FocusLocation = SocketTransform.GetLocation() + InSequenceShot->TargetOffset;
-				//ForwardVector = SocketTransform.GetUnitAxis(EAxis::X);
+				FocusLocation = SocketTransform.GetLocation();
 			}
 		}
 	}
 
-	// Flatten the direction so the camera stays level and does not look from above.
 	ForwardVector.Z = 0.0f;
 	ForwardVector = ForwardVector.GetSafeNormal();
 
@@ -1969,7 +1967,6 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 
 	const FVector WorldOffset = ActorToFocus->GetActorTransform().TransformVectorNoScale(InSequenceShot->CameraOffset);
 
-	// Front view: place camera in front of the character, not behind or above.
 	const FVector DesiredLocation = FocusLocation + (ForwardVector * InSequenceShot->CameraDistance) + WorldOffset;
 	const FRotator DesiredRotation = (FocusLocation - DesiredLocation).Rotation();
 
