@@ -7,6 +7,8 @@
 #include "DialogBuilderEdGraph.h"
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderEditorModes.h"
+#include "MovieSceneDialogSection.h"
+#include "DialogSequenceShot.h"
 #include "Components/StaticMeshComponent.h"
 #include "SDialogStageManager.h"
 #include "SDialogCameraPresets.h"
@@ -765,18 +767,25 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 		{
 			if (UCineCameraComponent* CineCameraComponent = CineCam->GetCineCameraComponent())
 			{
+				CineCameraComponent->FocusSettings.FocusMethod = ECameraFocusMethod::Manual;
+				CineCameraComponent->FocusSettings.ManualFocusDistance = 10000.0f;
+				CineCameraComponent->CurrentAperture = 16.0f;
+
+				CineCameraComponent->bOverride_CustomNearClippingPlane = true;
+				CineCameraComponent->CustomNearClippingPlane = 1.0f;
+
 				UStaticMeshComponent* ProxyMeshComponent = NewObject<UCameraProxyMeshComponent>(CineCam, NAME_None, RF_Transactional | RF_TextExportTransient);
 				ProxyMeshComponent->SetupAttachment(CineCameraComponent);
 				ProxyMeshComponent->SetIsVisualizationComponent(true);
 				ProxyMeshComponent->SetCanEverAffectNavigation(false);
-				
+
 				if (UStaticMesh* CameraMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/EditorMeshes/Camera/SM_CineCam.SM_CineCam")))
 				{
 					ProxyMeshComponent->SetStaticMesh(CameraMesh);
 				}
 				ProxyMeshComponent->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
 				ProxyMeshComponent->bHiddenInGame = false;
-				ProxyMeshComponent->CastShadow = false; 
+				ProxyMeshComponent->CastShadow = false;
 				ProxyMeshComponent->SetRelativeRotation(FRotator(0.0f, 90.0f, 0.0f));
 				ProxyMeshComponent->SetRelativeLocation(FVector(-50.0f, 0.0f, -15.0f));
 				ProxyMeshComponent->RegisterComponent();
@@ -1838,6 +1847,134 @@ void FDialogBuilderEditor::OnSequencerSelectionChangedObjectGuids(TArray<FGuid> 
 			
 		}
 	}
+}
+
+void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot)
+{
+	if (!InSequenceShot || !EditingDialogGraph || !Sequencer.IsValid() || !EditingDialogSequence)
+	{
+		return;
+	}
+
+	UMovieScene* MovieScene = EditingDialogSequence->GetMovieScene();
+	if (!MovieScene)
+	{
+		return;
+	}
+
+	const FFrameNumber CurrentFrame = Sequencer->GetLocalTime().Time.FloorToFrame();
+
+	FGameplayTag SpeakerTag;
+	FGameplayTag ListenerTag;
+
+	for (UMovieSceneTrack* Track : MovieScene->GetTracks())
+	{
+		UMovieSceneDialogTrack* DialogTrack = Cast<UMovieSceneDialogTrack>(Track);
+		if (!DialogTrack)
+		{
+			continue;
+		}
+
+		for (UMovieSceneSection* Section : DialogTrack->GetAllSections())
+		{
+			UMovieSceneDialogSection* DialogSection = Cast<UMovieSceneDialogSection>(Section);
+			if (!DialogSection || !DialogSection->GetRange().Contains(CurrentFrame))
+			{
+				continue;
+			}
+
+			SpeakerTag = DialogSection->DialogLine.SpeakerTag;
+			ListenerTag = DialogSection->DialogLine.ListenerTag;
+			break;
+		}
+
+		if (SpeakerTag.IsValid())
+		{
+			break;
+		}
+	}
+
+	if (!SpeakerTag.IsValid())
+	{
+		SpeakerTag = InSequenceShot->Speaker;
+	}
+	if (!ListenerTag.IsValid())
+	{
+		ListenerTag = InSequenceShot->Listener;
+	}
+
+	if (!SpeakerTag.IsValid())
+	{
+		return;
+	}
+
+	UDialogDefinition* InDialogDefinition = EditingDialogGraph->GetDialogDefinitionByTag(SpeakerTag);
+	if (!InDialogDefinition)
+	{
+		return;
+	}
+
+	AActor* ActorToFocus = nullptr;
+	for (const TPair<UDialogSequenceSlot*, TWeakObjectPtr<AActor>>& Pair : DialogSlotActors)
+	{
+		if (UDialogSequenceSlot* Slot = Pair.Key)
+		{
+			if (Slot->DialogDefinition == InDialogDefinition)
+			{
+				ActorToFocus = Pair.Value.Get();
+				break;
+			}
+		}
+	}
+
+	if (!IsValid(ActorToFocus))
+	{
+		return;
+	}
+
+	AActor* CameraActor = DialogCamera.Get();
+	if (!IsValid(CameraActor))
+	{
+		return;
+	}
+
+	InSequenceShot->K2_PreCameraSetup();
+
+	FVector FocusLocation = ActorToFocus->GetActorLocation();
+	FVector ForwardVector = ActorToFocus->GetActorForwardVector();
+
+	if (InSequenceShot->TrackedBone != NAME_None)
+	{
+		if (USkeletalMeshComponent* SkeletalMesh = ActorToFocus->FindComponentByClass<USkeletalMeshComponent>())
+		{
+			if (SkeletalMesh->DoesSocketExist(InSequenceShot->TrackedBone))
+			{
+				const FTransform SocketTransform = SkeletalMesh->GetSocketTransform(InSequenceShot->TrackedBone, ERelativeTransformSpace::RTS_World);
+				FocusLocation = SocketTransform.GetLocation();
+				//ForwardVector = SocketTransform.GetUnitAxis(EAxis::X);
+			}
+		}
+	}
+
+	// Flatten the direction so the camera stays level and does not look from above.
+	ForwardVector.Z = 0.0f;
+	ForwardVector = ForwardVector.GetSafeNormal();
+
+	if (ForwardVector.IsNearlyZero())
+	{
+		ForwardVector = ActorToFocus->GetActorForwardVector();
+		ForwardVector.Z = 0.0f;
+		ForwardVector = ForwardVector.GetSafeNormal();
+	}
+
+	const FVector WorldOffset = ActorToFocus->GetActorTransform().TransformVectorNoScale(InSequenceShot->CameraOffset);
+
+	// Front view: place camera in front of the character, not behind or above.
+	const FVector DesiredLocation = FocusLocation + (ForwardVector * InSequenceShot->CameraDistance) + WorldOffset;
+	const FRotator DesiredRotation = (FocusLocation - DesiredLocation).Rotation();
+
+	CameraActor->SetActorLocation(DesiredLocation, false);
+	CameraActor->SetActorRotation(DesiredRotation);
 }
 
 TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_Sequencer(const FSpawnTabArgs& Args)

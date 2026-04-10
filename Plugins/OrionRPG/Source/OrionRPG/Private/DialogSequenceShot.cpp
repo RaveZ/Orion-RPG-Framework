@@ -9,7 +9,7 @@
 
 UDialogSequenceShot::UDialogSequenceShot()
 {
-	
+	TrackedBone = FName("head");
 
 }
 

@@ -82,17 +82,6 @@ void SDialogCameraPresets::Construct(const FArguments& InArgs, TWeakPtr<FDialogB
 					]
 				]
 			]
-
-			+ SSplitter::Slot()
-			.Value(0.65f)
-			[
-				SNew(SBorder)
-				.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-				.Padding(4.0f)
-				[
-					ShotDetailsView.ToSharedRef()
-				]
-			]
 		]
 	];
 
@@ -101,7 +90,7 @@ void SDialogCameraPresets::Construct(const FArguments& InArgs, TWeakPtr<FDialogB
 
 SDialogCameraPresets::~SDialogCameraPresets()
 {
-	ReleaseSelectedShotInstance();
+	ReleaseShotDuplicates();
 }
 
 void SDialogCameraPresets::Refresh()
@@ -116,35 +105,36 @@ TSharedRef<ITableRow> SDialogCameraPresets::GenerateCameraPresetRow(
 	return SNew(STableRow<FDialogCameraPresetItemPtr>, InOwnerTable)
 	[
 		SNew(SBorder)
-			.BorderImage(FAppStyle::GetBrush("NoBorder"))
-			.Padding(FMargin(2.0f, 2.0f, 2.0f, 4.0f))
-			[
-				SNew(STextBlock)
-					.Text(InItem.IsValid() ? InItem->DisplayName : LOCTEXT("InvalidCameraPreset", "Invalid"))
-					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.0f))
-			]
+		.BorderImage(FAppStyle::GetBrush("NoBorder"))
+		.Padding(FMargin(2.0f, 2.0f, 2.0f, 4.0f))
+		[
+			SNew(STextBlock)
+			.Text(InItem.IsValid() ? InItem->DisplayName : LOCTEXT("InvalidCameraPreset", "Invalid"))
+			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.0f))
+		]
 	];
 }
 
 void SDialogCameraPresets::OnCameraPresetSelectionChanged(FDialogCameraPresetItemPtr InItem, ESelectInfo::Type InSelectInfo)
 {
-	ReleaseSelectedShotInstance();
-
-	if (!InItem.IsValid() || !ShotDetailsView.IsValid())
+	FDialogBuilderEditor* DialogEditor = DialogEditorPtr.Pin().Get();
+	if (!InItem.IsValid() || !ShotDetailsView.IsValid() || !InItem->ShotInstance)
 	{
 		return;
 	}
 
-	if (UDialogSequenceShot* SelectedShot = CreateSelectedShotInstance(InItem->AssetData))
+	ShotDetailsView->SetObject(InItem->ShotInstance);
+
+	if (DialogEditor)
 	{
-		SelectedShotInstance = SelectedShot;
-		ShotDetailsView->SetObject(SelectedShot);
+		DialogEditor->SetDetailsObject(InItem->ShotInstance);
+		DialogEditor->ApplyCameraPreset(InItem->ShotInstance);
 	}
 }
 
 void SDialogCameraPresets::RebuildCameraPresetList()
 {
-	ReleaseSelectedShotInstance();
+	ReleaseShotDuplicates();
 	CameraPresetItems.Empty();
 
 	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
@@ -160,9 +150,27 @@ void SDialogCameraPresets::RebuildCameraPresetList()
 			continue;
 		}
 
+		UBlueprint* Blueprint = Cast<UBlueprint>(AssetData.GetAsset());
+		if (!Blueprint || !Blueprint->GeneratedClass)
+		{
+			continue;
+		}
+
+		UDialogSequenceShot* SelectedShot = CreateSelectedShotInstance(AssetData);
+		if (!SelectedShot)
+		{
+			continue;
+		}
+
+		SelectedShot->AddToRoot();
+		ShotDuplicates.Add(SelectedShot);
+
 		FDialogCameraPresetItemPtr Item = MakeShared<FDialogCameraPresetItem>();
-		Item->DisplayName = FText::FromName(AssetData.AssetName);
+		Item->DisplayName = !Blueprint->BlueprintDisplayName.IsEmpty()
+			? FText::FromString(Blueprint->BlueprintDisplayName)
+			: FText::FromName(AssetData.AssetName);
 		Item->AssetData = AssetData;
+		Item->ShotInstance = SelectedShot;
 
 		CameraPresetItems.Add(Item);
 	}
@@ -212,33 +220,27 @@ UDialogSequenceShot* SDialogCameraPresets::CreateSelectedShotInstance(const FAss
 		return nullptr;
 	}
 
-	UDialogSequenceShot* DuplicatedShot = Cast<UDialogSequenceShot>(
+	return Cast<UDialogSequenceShot>(
 		StaticDuplicateObject(SourceShot, GetTransientPackage(), NAME_None, RF_Transient | RF_Transactional));
-
-	if (DuplicatedShot)
-	{
-		DuplicatedShot->AddToRoot();
-	}
-
-	return DuplicatedShot;
 }
 
-void SDialogCameraPresets::ReleaseSelectedShotInstance()
+void SDialogCameraPresets::ReleaseShotDuplicates()
 {
-	if (UDialogSequenceShot* SelectedShot = SelectedShotInstance.Get())
-	{
-		if (SelectedShot->IsRooted())
-		{
-			SelectedShot->RemoveFromRoot();
-		}
-	}
-
-	SelectedShotInstance.Reset();
-
 	if (ShotDetailsView.IsValid())
 	{
 		ShotDetailsView->SetObject(nullptr);
 	}
+
+	for (UDialogSequenceShot* Shot : ShotDuplicates)
+	{
+		if (IsValid(Shot) && Shot->IsRooted())
+		{
+			Shot->RemoveFromRoot();
+		}
+	}
+
+	ShotDuplicates.Empty();
+	CameraPresetItems.Empty();
 }
 
 #undef LOCTEXT_NAMESPACE

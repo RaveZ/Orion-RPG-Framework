@@ -326,6 +326,8 @@ public:
 	void UpdateSectionRule();
 	void OnSequencerSelectionChangedObjectGuids(TArray<FGuid> Guids);
 
+	void ApplyCameraPreset(class UDialogSequenceShot* InSequenceShot);
+
 	/** Called whenever sequencer has received focus */
 	void OnSequencerReceivedFocus();
 
