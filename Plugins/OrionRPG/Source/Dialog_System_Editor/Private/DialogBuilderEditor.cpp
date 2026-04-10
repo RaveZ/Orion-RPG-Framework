@@ -1950,7 +1950,7 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 			if (SkeletalMesh->DoesSocketExist(InSequenceShot->TrackedBone))
 			{
 				const FTransform SocketTransform = SkeletalMesh->GetSocketTransform(InSequenceShot->TrackedBone, ERelativeTransformSpace::RTS_World);
-				FocusLocation = SocketTransform.GetLocation();
+				FocusLocation = SocketTransform.GetLocation() + InSequenceShot->TargetOffset;
 				//ForwardVector = SocketTransform.GetUnitAxis(EAxis::X);
 			}
 		}
@@ -2467,7 +2467,6 @@ void FDialogBuilderEditor::OnGraphEditorFocused(const TSharedRef<class SGraphEdi
 			DialogDefinitionsWidget->Refresh();
 		}
 	}
-
 	
 }
 

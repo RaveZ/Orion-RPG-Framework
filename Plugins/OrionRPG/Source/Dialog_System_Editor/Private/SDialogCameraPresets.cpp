@@ -9,6 +9,7 @@
 #include "Modules/ModuleManager.h"
 #include "PropertyEditorModule.h"
 #include "Styling/AppStyle.h"
+#include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SSplitter.h"
 #include "Widgets/SBoxPanel.h"
@@ -61,6 +62,7 @@ void SDialogCameraPresets::Construct(const FArguments& InArgs, TWeakPtr<FDialogB
 				.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
 				.Padding(4.0f)
 				[
+
 					SNew(SVerticalBox)
 					+ SVerticalBox::Slot()
 					.AutoHeight()
@@ -104,18 +106,46 @@ TSharedRef<ITableRow> SDialogCameraPresets::GenerateCameraPresetRow(
 {
 	return SNew(STableRow<FDialogCameraPresetItemPtr>, InOwnerTable)
 	[
-		SNew(SBorder)
-		.BorderImage(FAppStyle::GetBrush("NoBorder"))
-		.Padding(FMargin(2.0f, 2.0f, 2.0f, 4.0f))
+		SNew(SButton)
+		.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+		.ContentPadding(FMargin(0.0f))
+		.OnClicked_Lambda([this, InItem]()
+		{
+			if (!InItem.IsValid() || !InItem->ShotInstance.IsValid())
+			{
+				return FReply::Handled();
+			}
+
+			if (CameraPresetListView.IsValid() && CameraPresetListView->IsItemSelected(InItem))
+			{
+				ApplyCameraPresetItem(InItem);
+			}
+			else if (CameraPresetListView.IsValid())
+			{
+				CameraPresetListView->SetSelection(InItem, ESelectInfo::Direct);
+			}
+
+			return FReply::Handled();
+		})
 		[
-			SNew(STextBlock)
-			.Text(InItem.IsValid() ? InItem->DisplayName : LOCTEXT("InvalidCameraPreset", "Invalid"))
-			.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.0f))
+			SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("NoBorder"))
+			.Padding(FMargin(2.0f, 2.0f, 2.0f, 4.0f))
+			[
+				SNew(STextBlock)
+				.Text(InItem.IsValid() ? InItem->DisplayName : LOCTEXT("InvalidCameraPreset", "Invalid"))
+				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.0f))
+			]
 		]
 	];
 }
 
 void SDialogCameraPresets::OnCameraPresetSelectionChanged(FDialogCameraPresetItemPtr InItem, ESelectInfo::Type InSelectInfo)
+{
+	ApplyCameraPresetItem(InItem);
+}
+
+void SDialogCameraPresets::ApplyCameraPresetItem(FDialogCameraPresetItemPtr InItem)
 {
 	FDialogBuilderEditor* DialogEditor = DialogEditorPtr.Pin().Get();
 
@@ -126,10 +156,20 @@ void SDialogCameraPresets::OnCameraPresetSelectionChanged(FDialogCameraPresetIte
 			DialogEditor->SetDetailsObject(nullptr);
 		}
 
+		if (ShotDetailsView.IsValid())
+		{
+			ShotDetailsView->SetObject(nullptr);
+		}
+
 		return;
 	}
 
 	UDialogSequenceShot* Shot = InItem->ShotInstance.Get();
+
+	if (ShotDetailsView.IsValid())
+	{
+		ShotDetailsView->SetObject(Shot);
+	}
 
 	if (DialogEditor)
 	{
@@ -169,6 +209,7 @@ void SDialogCameraPresets::RebuildCameraPresetList()
 		}
 
 		ShotDuplicates.Add(MoveTemp(SelectedShot));
+
 		FDialogCameraPresetItemPtr Item = MakeShared<FDialogCameraPresetItem>();
 		Item->DisplayName = !Blueprint->BlueprintDisplayName.IsEmpty()
 			? FText::FromString(Blueprint->BlueprintDisplayName)
@@ -233,14 +274,6 @@ void SDialogCameraPresets::ReleaseShotDuplicates()
 	if (ShotDetailsView.IsValid())
 	{
 		ShotDetailsView->SetObject(nullptr);
-	}
-
-	for (TStrongObjectPtr<UDialogSequenceShot>& Shot : ShotDuplicates)
-	{
-		if (Shot.IsValid() && Shot->IsRooted())
-		{
-			Shot->RemoveFromRoot();
-		}
 	}
 
 	ShotDuplicates.Empty();

@@ -35,6 +35,7 @@ private:
 		const TSharedRef<STableViewBase>& InOwnerTable);
 
 	void OnCameraPresetSelectionChanged(FDialogCameraPresetItemPtr InItem, ESelectInfo::Type InSelectInfo);
+	void ApplyCameraPresetItem(FDialogCameraPresetItemPtr InItem);
 
 	void RebuildCameraPresetList();
 	UDialogSequenceShot* CreateSelectedShotInstance(const FAssetData& AssetData) const;
@@ -46,6 +47,8 @@ private:
 
 	TArray<FDialogCameraPresetItemPtr> CameraPresetItems;
 	TArray<TStrongObjectPtr<UDialogSequenceShot>> ShotDuplicates;
+	FSoftObjectPath SelectedPresetPath;
+	bool bIsRebuildingCameraPresetList = false;
 
 	TSharedPtr<SListView<FDialogCameraPresetItemPtr>> CameraPresetListView;
 	TSharedPtr<IDetailsView> ShotDetailsView;

@@ -12,7 +12,3 @@ UDialogSequenceShot::UDialogSequenceShot()
 	TrackedBone = FName("head");
 
 }
-
-void UDialogSequenceShot::ApplyShot()
-{
-}

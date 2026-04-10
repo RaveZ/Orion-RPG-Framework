@@ -33,15 +33,18 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Settings")
 	float CameraDistance;
 
+	/**Offset for camera shot*/
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Settings")
 	FVector CameraOffset;
+
+	/**Offset for target the camera focus on*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera Settings")
+	FVector TargetOffset;
 
 
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "PreCameraSetup", Category = "Event")
 	void K2_PreCameraSetup();
 
-	UFUNCTION(BlueprintCallable, DisplayName = "PreCameraSetup", Category = "Event")
-	void ApplyShot();
 
 
 protected:
