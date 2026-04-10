@@ -13,7 +13,7 @@ struct FDialogCameraPresetItem
 {
 	FText DisplayName;
 	FAssetData AssetData;
-	TObjectPtr<UDialogSequenceShot> ShotInstance = nullptr;
+	TStrongObjectPtr<UDialogSequenceShot> ShotInstance;
 };
 
 using FDialogCameraPresetItemPtr = TSharedPtr<FDialogCameraPresetItem>;
@@ -45,7 +45,7 @@ private:
 	TWeakPtr<FDialogBuilderEditor> DialogEditorPtr;
 
 	TArray<FDialogCameraPresetItemPtr> CameraPresetItems;
-	TArray<TObjectPtr<UDialogSequenceShot>> ShotDuplicates;
+	TArray<TStrongObjectPtr<UDialogSequenceShot>> ShotDuplicates;
 
 	TSharedPtr<SListView<FDialogCameraPresetItemPtr>> CameraPresetListView;
 	TSharedPtr<IDetailsView> ShotDetailsView;

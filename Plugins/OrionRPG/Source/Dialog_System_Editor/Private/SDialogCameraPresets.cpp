@@ -118,17 +118,23 @@ TSharedRef<ITableRow> SDialogCameraPresets::GenerateCameraPresetRow(
 void SDialogCameraPresets::OnCameraPresetSelectionChanged(FDialogCameraPresetItemPtr InItem, ESelectInfo::Type InSelectInfo)
 {
 	FDialogBuilderEditor* DialogEditor = DialogEditorPtr.Pin().Get();
-	if (!InItem.IsValid() || !ShotDetailsView.IsValid() || !InItem->ShotInstance)
+
+	if (!InItem.IsValid() || !InItem->ShotInstance.IsValid())
 	{
+		if (DialogEditor)
+		{
+			DialogEditor->SetDetailsObject(nullptr);
+		}
+
 		return;
 	}
 
-	ShotDetailsView->SetObject(InItem->ShotInstance);
+	UDialogSequenceShot* Shot = InItem->ShotInstance.Get();
 
 	if (DialogEditor)
 	{
-		DialogEditor->SetDetailsObject(InItem->ShotInstance);
-		DialogEditor->ApplyCameraPreset(InItem->ShotInstance);
+		DialogEditor->SetDetailsObject(Shot);
+		DialogEditor->ApplyCameraPreset(Shot);
 	}
 }
 
@@ -156,21 +162,19 @@ void SDialogCameraPresets::RebuildCameraPresetList()
 			continue;
 		}
 
-		UDialogSequenceShot* SelectedShot = CreateSelectedShotInstance(AssetData);
-		if (!SelectedShot)
+		TStrongObjectPtr<UDialogSequenceShot> SelectedShot(CreateSelectedShotInstance(AssetData));
+		if (!SelectedShot.IsValid())
 		{
 			continue;
 		}
 
-		SelectedShot->AddToRoot();
-		ShotDuplicates.Add(SelectedShot);
-
+		ShotDuplicates.Add(MoveTemp(SelectedShot));
 		FDialogCameraPresetItemPtr Item = MakeShared<FDialogCameraPresetItem>();
 		Item->DisplayName = !Blueprint->BlueprintDisplayName.IsEmpty()
 			? FText::FromString(Blueprint->BlueprintDisplayName)
 			: FText::FromName(AssetData.AssetName);
 		Item->AssetData = AssetData;
-		Item->ShotInstance = SelectedShot;
+		Item->ShotInstance = ShotDuplicates.Last();
 
 		CameraPresetItems.Add(Item);
 	}
@@ -220,8 +224,8 @@ UDialogSequenceShot* SDialogCameraPresets::CreateSelectedShotInstance(const FAss
 		return nullptr;
 	}
 
-	return Cast<UDialogSequenceShot>(
-		StaticDuplicateObject(SourceShot, GetTransientPackage(), NAME_None, RF_Transient | RF_Transactional));
+	return NewObject<UDialogSequenceShot>(
+		GetTransientPackage(), Blueprint->GeneratedClass, NAME_None, RF_Transient | RF_Transactional);
 }
 
 void SDialogCameraPresets::ReleaseShotDuplicates()
@@ -231,9 +235,9 @@ void SDialogCameraPresets::ReleaseShotDuplicates()
 		ShotDetailsView->SetObject(nullptr);
 	}
 
-	for (UDialogSequenceShot* Shot : ShotDuplicates)
+	for (TStrongObjectPtr<UDialogSequenceShot>& Shot : ShotDuplicates)
 	{
-		if (IsValid(Shot) && Shot->IsRooted())
+		if (Shot.IsValid() && Shot->IsRooted())
 		{
 			Shot->RemoveFromRoot();
 		}
