@@ -68,10 +68,10 @@ public:
 		bool bLockPlayerMovement;
 
 	/**
-	* Keep participant position after the dialog ends
+	* Restore all actor transform after the dialog ends
 	*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration|Dialog")
-		bool bKeepPosition;
+		bool bRestoreState;
 
 	/**
 	* Can this dialog be interrupted by another dialog (if another dialog is triggered while this one is active)
@@ -280,6 +280,14 @@ protected:
 	void InitializeDialogActors();
 	void SetDialogStage(class UDialogStage* InDialogStage);	
 
+	/** Cached actor original transforms, used to restore actor transforms after dialog ends */
+	UPROPERTY(Transient, BlueprintReadOnly, Category = "Dialog")
+	TMap<FName, FTransform> CachedActorOriginalTransforms;
+
+protected:
+	void CacheOriginalActorTransform(const FName& ActorId, AActor* Actor);
+	void RestoreCachedActorTransforms();
+
 #if WITH_EDITORONLY_DATA
 public:
 	/** Set of dialog-graph pages */
@@ -320,6 +328,7 @@ public:
 
 	void GetNodesOfType(TSubclassOf<UDialogBuilderNode> NodeType, TArray<UDialogBuilderNode*>& Nodes) const;
 };
+
 
 
 

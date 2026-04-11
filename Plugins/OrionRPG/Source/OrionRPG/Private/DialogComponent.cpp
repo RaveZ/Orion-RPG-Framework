@@ -94,7 +94,7 @@ bool UDialogComponent::BeginDialog(UDialogBuilderGraph* DialogAsset)
 							if (PCM)
 							{
 								// Fade from black (1.0) back to clear (0.0)
-								PCM->StartCameraFade(1.0f, 0.0f, 2.0f, FLinearColor::Black, false, true);
+								PCM->StartCameraFade(1.0f, 0.0f, 0.75f, FLinearColor::Black, false, true);
 							}
 						});
 

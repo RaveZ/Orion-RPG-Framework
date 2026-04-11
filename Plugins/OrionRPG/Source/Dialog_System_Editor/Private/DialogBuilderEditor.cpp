@@ -1722,12 +1722,11 @@ void FDialogBuilderEditor::UpdateTrackModelRule()
 					bool bPinned = TrackModel->IsPinned();
 
 					//ensure lock and pin camera cut track
-					/*if (TrackModel->GetTrack() == EditingDialogSequence->GetMovieScene()->GetCameraCutTrack() &&
-						(!bPinned))
+					if (TrackModel->GetTrack() == EditingDialogSequence->GetMovieScene()->GetCameraCutTrack())
 					{
 						TrackModel->SetPinned(true);
 						continue;
-					}*/
+					}
 
 					//ensure pin dialog track
 					if (TrackModel->GetTrack()->IsA(UMovieSceneDialogTrack::StaticClass()) &&
