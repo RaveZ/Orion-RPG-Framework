@@ -19,6 +19,9 @@ class ORIONRPG_API UDialogSequenceShot : public UObject {
 public:
 	UDialogSequenceShot();
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Track & Focus Settings")
+	bool bDrawTargetFocus = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Track & Focus Settings", meta = (Categories = "Dialog.Participant"))
 	FGameplayTag Speaker;
 

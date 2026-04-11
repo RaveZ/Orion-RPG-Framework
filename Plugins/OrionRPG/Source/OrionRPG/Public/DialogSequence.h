@@ -35,6 +35,15 @@ public:
 public:
 	void RefreshSequence();
 
+
+#if WITH_EDITOR
+	/**
+	 * Get a Dialog sequence.
+	 *
+	 * @return Placeholder sequence.
+	 */
+	static UDialogSequence* GetNullDialogSequence();
+#endif
 #if WITH_EDITOR
 	//virtual ETrackSupport IsTrackSupportedImpl(TSubclassOf<class UMovieSceneTrack> InTrackClass) const override;
 #endif

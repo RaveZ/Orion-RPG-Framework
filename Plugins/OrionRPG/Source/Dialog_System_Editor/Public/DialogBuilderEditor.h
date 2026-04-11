@@ -65,6 +65,7 @@ struct FDialogBuilderEditorTabs
 	static const FName DialogSequencerTabID;
 	static const FName DialogSequencerViewportID;
 	static const FName DialogCameraPresetsID;
+	static const FName SequencerGraphEditor;
 
 };
 
@@ -348,7 +349,7 @@ public:
 	UDialogSequenceSlot* GetDialogSlotKey(AActor* InActor);
 	//Get the slot which is being used as a template for the opened dialogset
 	UDialogSequenceSlot* GetTemplateSlot(AActor* InActor);
-	void SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AActor*& OutActor);
+	void SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AActor*& OutActor, bool bIsCamera = false);
 	void CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot);
 	TArray<AActor*> GetDialogSlotActors() const;
 	void SelectDialogDefinitionActor(UDialogDefinition* InDialogDefinition);
@@ -397,6 +398,7 @@ protected:
 	TSharedRef<SDockTab> SpawnTab_Sequencer(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_SequencerViewport(const FSpawnTabArgs& Args);
 	TSharedRef<SDockTab> SpawnTab_CameraPresets(const FSpawnTabArgs& Args);
+	TSharedRef<SDockTab> SpawnTab_CurveEditor(const FSpawnTabArgs& Args);
 	
 	void CreateInternalWidgets();
 

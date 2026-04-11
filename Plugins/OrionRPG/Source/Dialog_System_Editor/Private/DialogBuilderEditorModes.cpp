@@ -4,6 +4,7 @@
 
 #include "DialogBuilderEditor.h"
 #include "DialogBuilderEditorToolbar.h"
+#include "HAL/PlatformApplicationMisc.h"
 #include "DialogBuilderEditorTabFactories.h"
 #include "Framework/Docking/TabManager.h"
 #include "Misc/AssertionMacros.h"
@@ -112,6 +113,16 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogStageSettingsSummoner(InDialogBuilderEditor)));
 	DialogSequencerTabFactories.RegisterFactory(MakeShareable(new FDialogCameraPresetsSummoner(InDialogBuilderEditor)));
 
+	FDisplayMetrics DisplayMetrics;
+	FSlateApplication::Get().GetDisplayMetrics(DisplayMetrics);
+	const double DPIScale = FPlatformApplicationMisc::GetDPIScaleFactorAtPoint(static_cast<float>(DisplayMetrics.PrimaryDisplayWorkAreaRect.Left), static_cast<float>(DisplayMetrics.PrimaryDisplayWorkAreaRect.Top));
+
+	const float CenterScale = 0.4f;
+	const FVector2D DisplaySize(
+		DisplayMetrics.PrimaryDisplayWorkAreaRect.Right - DisplayMetrics.PrimaryDisplayWorkAreaRect.Left,
+		DisplayMetrics.PrimaryDisplayWorkAreaRect.Bottom - DisplayMetrics.PrimaryDisplayWorkAreaRect.Top);
+	const FVector2D WindowSize = (CenterScale * DisplaySize) / DPIScale;
+
 	TabLayout = FTabManager::NewLayout("Standalone_DialogSequencer_Layout_v2")
 		->AddArea
 		(
@@ -170,6 +181,18 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 				)
 			)
 			
+		)
+		->AddArea
+		(
+			// Sequencer popup
+			FTabManager::NewArea(WindowSize)
+			->SetOrientation(Orient_Vertical)
+			->Split
+			(
+				FTabManager::NewStack()
+				->SetSizeCoefficient(1.0f)
+				->AddTab("SequencerGraphEditor", ETabState::ClosedTab)
+			)
 		);
 
 	//InDialogBuilderEditor->GetToolbarBuilder()->AddModesToolbar(ToolbarExtender);

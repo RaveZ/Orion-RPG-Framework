@@ -114,4 +114,22 @@ void UDialogSequence::RefreshSequence()
 
 }
 
+#if WITH_EDITOR
+UDialogSequence* UDialogSequence::GetNullDialogSequence()
+{
+	static UDialogSequence* NullSequence = nullptr;
+
+	if (!NullSequence)
+	{
+		NullSequence = NewObject<UDialogSequence>(GetTransientPackage(), NAME_None);
+		NullSequence->AddToRoot();
+		NullSequence->MovieScene = NewObject<UMovieScene>(NullSequence, FName("No Animation"));
+		NullSequence->MovieScene->AddToRoot();
+
+		NullSequence->MovieScene->SetDisplayRate(FFrameRate(20, 1));
+	}
+
+	return NullSequence;
+}
+#endif
 

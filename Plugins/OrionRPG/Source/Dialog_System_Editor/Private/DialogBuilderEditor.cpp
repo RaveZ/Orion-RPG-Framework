@@ -25,6 +25,7 @@
 #include "EngineGlobals.h"
 #include "Editor/EditorEngine.h"
 #include "Editor.h"
+#include "DrawDebugHelpers.h"
 #include "UnrealEdGlobals.h"
 #include "Event/OrionEvent.h"
 #include "DialogCameraShot.h"
@@ -110,6 +111,7 @@ const FName FDialogBuilderEditorTabs::DialogSequencerTabID(TEXT("DialogSequencer
 const FName FDialogBuilderEditorTabs::DialogStageSettingsID(TEXT("DialogStageSettingsID"));
 const FName FDialogBuilderEditorTabs::DialogSequencerViewportID(TEXT("DialogSequencerViewport"));
 const FName FDialogBuilderEditorTabs::DialogCameraPresetsID(TEXT("DialogCameraPresets"));
+const FName FDialogBuilderEditorTabs::SequencerGraphEditor(TEXT("SequencerGraphEditor"));
 
 const FName DialogBuilderEditorAppName = FName(TEXT("DialogBuilderEditorApp"));
 
@@ -220,6 +222,7 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 		const bool bCreateDefaultToolbar = true;
 		InitAssetEditor(Mode, InitToolkitHost, DialogBuilderEditorAppName, FTabManager::FLayout::NullLayout, bCreateDefaultStandaloneMenu, bCreateDefaultToolbar, ObjectsToEdit);
 
+		EnsureSequencerCreated();
 		FDialog_System_EditorModule& DialogBuilderEditorModule = FModuleManager::LoadModuleChecked<FDialog_System_EditorModule>("Dialog_System_Editor");
 		AddMenuExtender(DialogBuilderEditorModule.GetMenuExtensibilityManager()->GetAllExtenders(GetToolkitCommands(), GetEditingObjects()));
 		AddToolbarExtender(DialogBuilderEditorModule.GetToolBarExtensibilityManager()->GetAllExtenders(GetToolkitCommands(), GetEditingObjects()));
@@ -323,6 +326,12 @@ void FDialogBuilderEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& In
 		.SetDisplayName(LOCTEXT("DialogCameraPresetsTab", "Camera Presets"))
 		.SetGroup(WorkspaceMenuCategoryRef)
 		.SetIcon(FSlateIcon(FAppStyle::GetAppStyleSetName(), "Sequencer.LockCamera"));
+
+
+	const FSlateIcon SequencerGraphIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "GenericCurveEditor.TabIcon");
+	InTabManager->RegisterTabSpawner(FDialogBuilderEditorTabs::SequencerGraphEditor, FOnSpawnTab::CreateSP(this, &FDialogBuilderEditor::SpawnTab_CurveEditor))
+		.SetMenuType(ETabSpawnerMenuType::Type::Hidden)
+		.SetIcon(SequencerGraphIcon);
 }
 
 void FDialogBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
@@ -337,6 +346,7 @@ void FDialogBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& 
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogSequencerTabID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogSequencerViewportID);
 	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::DialogCameraPresetsID);
+	InTabManager->UnregisterTabSpawner(FDialogBuilderEditorTabs::SequencerGraphEditor);
 }
 
 void FDialogBuilderEditor::Tick(float DeltaTime)
@@ -647,7 +657,7 @@ void FDialogBuilderEditor::UpdateDialogStage()
 	for (auto& DialogSlot : DialogStage->CameraSlots)
 	{
 		AActor* SpawnedCamera = nullptr;
-		SpawnDialogSlotActor(DialogSlot, SpawnedCamera);
+		SpawnDialogSlotActor(DialogSlot, SpawnedCamera, true);
 		DialogCamera = SpawnedCamera;
 	}
 
@@ -697,7 +707,7 @@ void FDialogBuilderEditor::UpdateDialogStage()
 
 
 
-void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AActor*& OutActor)
+void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AActor*& OutActor, bool bIsCamera)
 {
 	if (!InSlot)
 	{
@@ -741,7 +751,7 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 	if (ExistingActor && ExistingActor->IsA(ActorClass))
 	{
 		OutActor = ExistingActor;
-		ExistingActor->SetActorRelativeTransform(InSlot->SlotPlacement);
+		if(!bIsCamera) ExistingActor->SetActorRelativeTransform(InSlot->SlotPlacement);
 		
 		CreateDialogTrackFromSlot(InSlot);
 		return;
@@ -1224,17 +1234,22 @@ void FDialogBuilderEditor::OpenDialogSequence(UDialogSequence* InDialogSequence)
 
 	EditingDialogSequence = InDialogSequence;
 
-	UnbindSequencerDelegates();
-	Sequencer.Reset();
 
-	EnsureSequencerCreated();
-
-	// Ensure the sequencer UI has the latest data
 	if (Sequencer.IsValid())
 	{
+		Sequencer->ResetToNewRootSequence(*InDialogSequence);
+		Sequencer->GetSequencerWidget()->SetEnabled(true);
 		Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
 		Sequencer->ForceEvaluate();
+		UpdateTrackModelRule();
+		UpdateSectionRule();
+		RefreshSequencerCameraLock();
 	}
+	else
+	{
+		EnsureSequencerCreated();
+	}
+
 	ApplyViewportCameraMode();
 
 
@@ -1297,7 +1312,7 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 
 	if (!EditingDialogSequence)
 	{
-		return;
+		EditingDialogSequence = UDialogSequence::GetNullDialogSequence();
 	}
 
 	EditingDialogSequence->RefreshSequence();
@@ -1332,9 +1347,6 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		InitParams.ViewParams = ViewParams;
 
 		InitParams.HostCapabilities.bSupportsCurveEditor = true;
-		InitParams.HostCapabilities.bSupportsSaveMovieSceneAsset = true;
-		InitParams.HostCapabilities.bSupportsRecording = true;
-		InitParams.HostCapabilities.bSupportsRenderMovie = true;
 		InitParams.HostCapabilities.bSupportsAddFromContentBrowser = true;
 		InitParams.HostCapabilities.bSupportsSidebar = true;
 		InitParams.HostCapabilities.bSupportsViewportSelectability = true;
@@ -1343,7 +1355,6 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 	ExtendSequencerToolbar("DialogSequence.MainToolbar");
 
 	Sequencer = SequencerModule.CreateSequencer(InitParams);
-
 	SpawnRegister->SetSequencer(Sequencer);
 
 	if (Sequencer.IsValid())
@@ -1354,6 +1365,8 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		Sequencer->ForceEvaluate();
 
 		const TSharedRef<SWidget> SequencerWidget = Sequencer->GetSequencerWidget();
+
+		//trigger sequencer property widget docked tab
 		FSlateApplication::Get().SetKeyboardFocus(SequencerWidget, EFocusCause::SetDirectly);
 
 		const FModifierKeysState AltModifiers(
@@ -1366,11 +1379,11 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		FSlateApplication::Get().ProcessKeyDownEvent(KeyDownEvent);
 		FSlateApplication::Get().ProcessKeyUpEvent(KeyDownEvent);
 
-			Sequencer->GetSelectionChangedObjectGuids().AddRaw(
-				this,
-				&FDialogBuilderEditor::OnSequencerSelectionChangedObjectGuids);
+		Sequencer->GetSelectionChangedObjectGuids().AddRaw(
+			this,
+			&FDialogBuilderEditor::OnSequencerSelectionChangedObjectGuids);
 		
-
+		Sequencer->GetSequencerWidget()->SetEnabled(false);
 		
 
 
@@ -1709,12 +1722,12 @@ void FDialogBuilderEditor::UpdateTrackModelRule()
 					bool bPinned = TrackModel->IsPinned();
 
 					//ensure lock and pin camera cut track
-					if (TrackModel->GetTrack() == EditingDialogSequence->GetMovieScene()->GetCameraCutTrack() &&
+					/*if (TrackModel->GetTrack() == EditingDialogSequence->GetMovieScene()->GetCameraCutTrack() &&
 						(!bPinned))
 					{
 						TrackModel->SetPinned(true);
 						continue;
-					}
+					}*/
 
 					//ensure pin dialog track
 					if (TrackModel->GetTrack()->IsA(UMovieSceneDialogTrack::StaticClass()) &&
@@ -1955,6 +1968,7 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 		}
 	}
 
+	// Flatten the camera placement direction so the camera stays level.
 	ForwardVector.Z = 0.0f;
 	ForwardVector = ForwardVector.GetSafeNormal();
 
@@ -1965,13 +1979,48 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 		ForwardVector = ForwardVector.GetSafeNormal();
 	}
 
-	const FVector WorldOffset = ActorToFocus->GetActorTransform().TransformVectorNoScale(InSequenceShot->CameraOffset);
+	// TargetOffset now follows the actor axes:
+	// X = forward, Y = right, Z = up.
+	const FVector ActorForward = ActorToFocus->GetActorForwardVector().GetSafeNormal();
+	const FVector ActorRight = ActorToFocus->GetActorRightVector().GetSafeNormal();
+	const FVector ActorUp = ActorToFocus->GetActorUpVector().GetSafeNormal();
 
-	const FVector DesiredLocation = FocusLocation + (ForwardVector * InSequenceShot->CameraDistance) + WorldOffset;
-	const FRotator DesiredRotation = (FocusLocation - DesiredLocation).Rotation();
+	const FVector TargetOffsetWorld =
+		(ActorForward * InSequenceShot->TargetOffset.X) +
+		(ActorRight * InSequenceShot->TargetOffset.Y) +
+		(ActorUp * InSequenceShot->TargetOffset.Z);
+
+	const FVector AimLocation = FocusLocation + TargetOffsetWorld;
+
+	
+	const FVector CameraWorldOffset = ActorToFocus->GetActorTransform().TransformVectorNoScale(InSequenceShot->CameraOffset);
+	const FVector DesiredLocation = FocusLocation + (ForwardVector * InSequenceShot->CameraDistance) + CameraWorldOffset;
+	const FRotator DesiredRotation = (AimLocation - DesiredLocation).Rotation();
+
+	if (InSequenceShot->bDrawTargetFocus)
+	{
+		DrawDebugSphere(
+			ActorToFocus->GetWorld(),
+			AimLocation,
+			5.0f,
+			12,
+			FColor::Green,
+			false,
+			3.0f);
+	}
+	
 
 	CameraActor->SetActorLocation(DesiredLocation, false);
 	CameraActor->SetActorRotation(DesiredRotation);
+	if (DialogViewportWidget.IsValid())
+	{
+		if (FDialogBuilderViewportClient* ViewportClient = DialogViewportWidget->GetDialogViewportClientPtr())
+		{
+			ViewportClient->SetViewLocation(DesiredLocation);
+			ViewportClient->SetViewRotation(DesiredRotation);
+			ViewportClient->Invalidate();
+		}
+	}
 }
 
 TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_Sequencer(const FSpawnTabArgs& Args)
@@ -1986,6 +2035,17 @@ TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_Sequencer(const FSpawnTabArg
 			Sequencer.IsValid()
 				? Sequencer->GetSequencerWidget()
 				: SNullWidget::NullWidget
+		];
+}
+
+TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_CurveEditor(const FSpawnTabArgs& Args)
+{
+	check(Args.GetTabId() == FDialogBuilderEditorTabs::SequencerGraphEditor);
+
+	return SNew(SDockTab)
+		.Label(NSLOCTEXT("Sequencer", "SequencerMainGraphEditorTitle", "Sequencer Curves"))
+		[
+			SNullWidget::NullWidget
 		];
 }
 
@@ -3488,6 +3548,7 @@ void FDialogBuilderEditor::OnNodeDoubleClicked(UEdGraphNode* Node)
 				return;
 			}
 
+			
 			ViewportClient->ResetCamera();
 		}
 
