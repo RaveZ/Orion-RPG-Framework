@@ -52,6 +52,8 @@ public:
 	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Dialog Sequence")
 	TObjectPtr<UDialogStage> DialogStage;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Sequence", meta = (DisplayThumbnail = "true"))
+	TObjectPtr<class UTexture2D> Thumbnail = nullptr;
 
 #if WITH_EDITORONLY_DATA
 	TWeakPtr<ISequencer> Sequencer;

@@ -163,6 +163,7 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 	{
 		EditingDialogGraph = DialogGraphToEdit;
 	}
+	
 
 	if (GEditor)
 	{
@@ -253,9 +254,10 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 				{
 					if (EdGraph)
 					{
-						if (UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(EdGraph))
+						if (UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(EdGraph))
 						{
-							DialogGraph->AddOnGraphChangedHandler(FOnGraphChanged::FDelegate::CreateSP(this, &FDialogBuilderEditor::OnGraphChanged));
+							DialogEdGraph->DialogEditorPtr = SharedThis(this);
+							DialogEdGraph->AddOnGraphChangedHandler(FOnGraphChanged::FDelegate::CreateSP(this, &FDialogBuilderEditor::OnGraphChanged));
 						}
 					}
 				}
@@ -430,42 +432,6 @@ void FDialogBuilderEditor::PostRedo(bool bSuccess)
 	}
 }
 
-static UMovieSceneDialogTrack* FindDialogTrackForDefinition(UMovieScene* InMovieScene, const UDialogDefinition* InDialogDefinition)
-{
-	if (!InMovieScene || !InDialogDefinition)
-	{
-		return nullptr;
-	}
-
-	const UMovieScene* ConstMovieScene = InMovieScene;
-
-	// Master tracks
-	for (const UMovieSceneTrack* Track : ConstMovieScene->GetTracks())
-	{
-		const UMovieSceneDialogTrack* DialogTrack = Cast<UMovieSceneDialogTrack>(Track);
-		if (DialogTrack && DialogTrack->DialogDefinition == InDialogDefinition)
-		{
-			return const_cast<UMovieSceneDialogTrack*>(DialogTrack);
-		}
-	}
-
-	// Object-bound tracks
-	ConstMovieScene->FindBinding(InDialogDefinition->ID);
-
-	for (const FMovieSceneBinding& Binding : ConstMovieScene->GetBindings())
-	{
-		for (const UMovieSceneTrack* Track : Binding.GetTracks())
-		{
-			const UMovieSceneDialogTrack* DialogTrack = Cast<UMovieSceneDialogTrack>(Track);
-			if (DialogTrack && DialogTrack->DialogDefinition == InDialogDefinition)
-			{
-				return const_cast<UMovieSceneDialogTrack*>(DialogTrack);
-			}
-		}
-	}
-
-	return nullptr;
-}
 
 
 
@@ -1224,6 +1190,50 @@ void FDialogBuilderEditor::AddToSelection(UEdGraphNode* InNode)
 {
 }
 
+void FDialogBuilderEditor::OnOpenDialogSequenceNode(UDialogBuilderNode_DialogSequence* InSequenceNode)
+{
+	//invoke sequencer tab
+	TSharedPtr<FTabManager> HostTabManager;
+	HostTabManager = GetToolkitHost()->GetTabManager();
+
+
+	const FTabId SequencerTabId(FDialogBuilderEditorTabs::DialogSequencerTabID);
+
+	if (HostTabManager.IsValid())
+	{
+
+		if (CurrentSequenceNode == InSequenceNode)
+		{
+			HostTabManager->TryInvokeTab(SequencerTabId);
+			return;
+		}
+		DestroyDialogStage();
+		CurrentSequenceNode = InSequenceNode;
+		DialogStageWidget->SetObject(InSequenceNode->DialogStage);
+		OpenDialogSequence(InSequenceNode->DialogSequence);
+		UpdateDialogStage();
+
+
+		TSharedPtr<SDockTab> ExistingTab = HostTabManager->FindExistingLiveTab(SequencerTabId);
+		if (ExistingTab.IsValid())
+		{
+			ExistingTab->SetContent(Sequencer.IsValid() ? Sequencer->GetSequencerWidget() : SNullWidget::NullWidget);
+			ExistingTab->Invalidate(EInvalidateWidget::Layout);
+		}
+
+		HostTabManager->TryInvokeTab(SequencerTabId);
+
+		FDialogBuilderViewportClient* ViewportClient = DialogViewportWidget->GetDialogViewportClientPtr();
+		if (!ViewportClient)
+		{
+			return;
+		}
+
+
+		ViewportClient->ResetCamera();
+	}
+}
+
 //Sequencer
 void FDialogBuilderEditor::OpenDialogSequence(UDialogSequence* InDialogSequence)
 {
@@ -1314,8 +1324,6 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 	{
 		EditingDialogSequence = UDialogSequence::GetNullDialogSequence();
 	}
-
-	EditingDialogSequence->RefreshSequence();
 
 	PlaybackContext = MakeShared<FDialogSequencePlaybackContext>(EditingDialogSequence);
 	PlaybackContext->SetDialogViewport(DialogViewportWidget);
@@ -3510,49 +3518,7 @@ void FDialogBuilderEditor::OnNodeDoubleClicked(UEdGraphNode* Node)
 
 	if(UDialogBuilderNode_DialogSequence* DialogSequenceNode = Cast<UDialogBuilderNode_DialogSequence>(DialogEdNode ? DialogEdNode->NodeInstance : nullptr))
 	{
-		//invoke sequencer tab
-		TSharedPtr<FTabManager> HostTabManager;
-		HostTabManager = GetToolkitHost()->GetTabManager();
-
-
-		const FTabId SequencerTabId(FDialogBuilderEditorTabs::DialogSequencerTabID);
-
-		if (HostTabManager.IsValid())
-		{
-
-			if(CurrentSequenceNode == DialogSequenceNode)
-			{
-				HostTabManager->TryInvokeTab(SequencerTabId);
-				return;
-			}
-			DestroyDialogStage();
-			CurrentSequenceNode = DialogSequenceNode;	
-			DialogStageWidget->SetObject(DialogSequenceNode->DialogStage);
-			OpenDialogSequence(DialogSequenceNode->DialogSequence);
-			UpdateDialogStage();
-
-		
-			TSharedPtr<SDockTab> ExistingTab = HostTabManager->FindExistingLiveTab(SequencerTabId);
-			if (ExistingTab.IsValid())
-			{
-				ExistingTab->SetContent(Sequencer.IsValid() ? Sequencer->GetSequencerWidget() : SNullWidget::NullWidget);
-				ExistingTab->Invalidate(EInvalidateWidget::Layout);
-			}
-
-			HostTabManager->TryInvokeTab(SequencerTabId);
-
-			FDialogBuilderViewportClient* ViewportClient = DialogViewportWidget->GetDialogViewportClientPtr();
-			if (!ViewportClient)
-			{
-				return;
-			}
-
-			
-			ViewportClient->ResetCamera();
-		}
-
-		
-	}
+		OnOpenDialogSequenceNode(DialogSequenceNode);	}
 
 
 	if (DialogEdNode && 

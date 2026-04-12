@@ -2,6 +2,7 @@
 
 
 #include "SGraphNode_DialogBuilderNode.h"
+#include "DialogBuilderEditor.h"
 #include "DialogBuilder_EditorStyle.h"
 #include "SlateOptMacros.h"
 #include "Types/SlateStructs.h"
@@ -32,6 +33,9 @@
 #include "DialogBuilderEdSubNode_Decorator.h"
 #include "DialogBuilderEdSubNode_Event.h"
 #include "IDocumentation.h"
+#include "DialogBuilderNode_DialogSequence.h"
+#include "Subsystems/AssetEditorSubsystem.h"
+#include "Widgets/Input/SButton.h"
 
 #define LOCTEXT_NAMESPACE "EdNode_DialogBuilder"
 
@@ -55,42 +59,75 @@ public:
 
 	void Construct(const FArguments& InArgs, UEdGraphPin* InPin)
 	{
-		this->SetCursor(EMouseCursor::Default);
+		SetCursor(EMouseCursor::Default);
 
 		bShowLabel = true;
-
 		GraphPinObj = InPin;
 		check(GraphPinObj != nullptr);
 
 		const UEdGraphSchema* Schema = GraphPinObj->GetSchema();
 		check(Schema);
 
+		CachePinIcons();
+
 		SBorder::Construct(SBorder::FArguments()
-			.BorderImage(this, &SDialogSystemPin::GetPinBorder)
+			.BorderImage(this, &SDialogSystemPin::GetPinIcon)
 			.BorderBackgroundColor(this, &SDialogSystemPin::GetPinColor)
 			.OnMouseButtonDown(this, &SDialogSystemPin::OnPinMouseDown)
 			.Cursor(this, &SDialogSystemPin::GetPinCursor)
-			.Padding(FMargin(5.0f))
+			.Padding(FMargin(1.0f))
+			[
+				SNew(SBox)
+					.WidthOverride(10.0f)
+					.HeightOverride(14.0f)
+			]
 		);
 	}
 
 protected:
+	const FSlateBrush* CachedImg_Pin_ConnectedHovered;
+	const FSlateBrush* CachedImg_Pin_DisconnectedHovered;
+
+	void CachePinIcons()
+	{
+		CachedImg_Pin_ConnectedHovered = FAppStyle::GetBrush(TEXT("Graph.ExecPin.ConnectedHovered"));
+		CachedImg_Pin_Connected = FAppStyle::GetBrush(TEXT("Graph.ExecPin.Connected"));
+		CachedImg_Pin_DisconnectedHovered = FAppStyle::GetBrush(TEXT("Graph.ExecPin.DisconnectedHovered"));
+		CachedImg_Pin_Disconnected = FAppStyle::GetBrush(TEXT("Graph.ExecPin.Disconnected"));
+	}
+
+
+	const FSlateBrush* GetPinIcon() const
+	{
+		const FSlateBrush* Brush = NULL;
+
+		if (IsConnected())
+		{
+			Brush = IsHovered() ? CachedImg_Pin_ConnectedHovered : CachedImg_Pin_Connected;
+		}
+		else
+		{
+			Brush = IsHovered() ? CachedImg_Pin_ConnectedHovered : CachedImg_Pin_Disconnected;
+		}
+
+		return Brush;
+	}
 	virtual FSlateColor GetPinColor() const override
 	{
 		return bIsDiffHighlighted ? DialogBuilderColors::Pin::Diff :
-			IsHovered() ? DialogBuilderColors::Pin::Hover : DialogBuilderColors::Pin::Default;
+			IsHovered() ? FLinearColor(1.0f, 1.0f, 1.0f) : FLinearColor(.5f, .5f, .5f);
 	}
 
-	virtual TSharedRef<SWidget>	GetDefaultValueWidget() override
+	virtual TSharedRef<SWidget> GetDefaultValueWidget() override
 	{
-		return SNew(STextBlock);
+		return SNew(SSpacer);
 	}
 
 	const FSlateBrush* GetPinBorder() const
 	{
-		return FAppStyle::GetBrush(TEXT("Graph.StateNode.Body"));
+		const bool bIsConnected = GraphPinObj && GraphPinObj->LinkedTo.Num() > 0;
+		return FAppStyle::GetBrush(bIsConnected ? TEXT("Graph.Pin.Connected") : TEXT("Graph.Pin.Disconnected"));
 	}
-
 };
 
 
@@ -200,7 +237,7 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 	if (DecoratorsBox.IsValid())
 	{
 		DecoratorsBox->ClearChildren();
-	}
+	}		
 	else
 	{
 		SAssignNew(DecoratorsBox, SVerticalBox);
@@ -290,7 +327,7 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 
 	const FMargin PinPadding = (Cast<UDialogBuilderEdSubNode_Decorator>(GraphNode) || Cast<UDialogBuilderEdSubNode_Event>(GraphNode))
 		? FMargin(0.f)
-		: FMargin(2.f, 3.f, 2.f, 3.f);
+		: FMargin(5.f, 3.f, 5.f, 3.f);
 
 	UWorld* World = GEditor->GetEditorWorldContext().World();
 
@@ -634,14 +671,42 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 										]
 								]
 
-							// Blueprint indicator overlay
+							// Node action indicators overlay
 							+ SOverlay::Slot()
 								.HAlign(HAlign_Right)
 								.VAlign(VAlign_Top)
 								[
-									SNew(SImage)
-										.Image(FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Blueprint")))
-										.Visibility(this, &SGraphNode_DialogBuilderNode::GetBlueprintIconVisibility)
+									SNew(SHorizontalBox)
+										+ SHorizontalBox::Slot()
+										.AutoWidth()
+										[
+											SNew(SButton)
+												.ButtonStyle(FAppStyle::Get(), "NoBorder")
+												.ContentPadding(FMargin(-10.f, -15.f, 0.f, 0.f))
+												.ToolTipText(LOCTEXT("OpenDialogSequenceTooltip", "Open Dialog Sequence in Sequencer"))
+												.Visibility(this, &SGraphNode_DialogBuilderNode::GetSequencerIconVisibility)
+												.OnClicked(this, &SGraphNode_DialogBuilderNode::OnOpenSequencerClicked)
+												.OnHovered(this, &SGraphNode_DialogBuilderNode::OnSequencerButtonHovered)
+												.OnUnhovered(this, &SGraphNode_DialogBuilderNode::OnSequencerButtonUnhovered)
+												[
+													SNew(SBox)
+														.WidthOverride(30.0f)
+														.HeightOverride(30.0f)
+														[
+															SNew(SImage)
+																.Image(FAppStyle::GetBrush(TEXT("ClassIcon.LevelSequence")))
+																.ColorAndOpacity(this, &SGraphNode_DialogBuilderNode::GetSequencerButtonColor)
+														]
+												]
+										]
+										+ SHorizontalBox::Slot()
+										.AutoWidth()
+										[
+											SNew(SImage)
+											.Image(FAppStyle::GetBrush(TEXT("BTEditor.Graph.BTNode.Blueprint")))
+											.Visibility(this, &SGraphNode_DialogBuilderNode::GetBlueprintIconVisibility)
+										]
+
 								]
 
 						]
@@ -887,6 +952,23 @@ TArray<FOverlayWidgetInfo> SGraphNode_DialogBuilderNode::GetOverlayWidgets(bool 
 	return Widgets;
 }
 
+void SGraphNode_DialogBuilderNode::OnSequencerButtonHovered()
+{
+	bSequencerButtonHovered = true;
+}
+
+void SGraphNode_DialogBuilderNode::OnSequencerButtonUnhovered()
+{
+	bSequencerButtonHovered = false;
+}
+
+FSlateColor SGraphNode_DialogBuilderNode::GetSequencerButtonColor() const
+{
+	return bSequencerButtonHovered
+		? FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f))
+		: FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
+}
+
 void SGraphNode_DialogBuilderNode::CreatePinWidgets()
 {
 	UDialogBuilderEdNode* StateNode = CastChecked<UDialogBuilderEdNode>(GraphNode);
@@ -942,10 +1024,8 @@ void SGraphNode_DialogBuilderNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 	if (PinBox)
 	{
 		PinBox->AddSlot()
-			.HAlign(HAlign_Fill)
-			.VAlign(VAlign_Fill)
-			.FillHeight(1.0f)
-			//.Padding(6.0f, 0.0f)
+			.HAlign(HAlign_Center)
+			.VAlign(VAlign_Center)
 			[
 				PinToAdd
 			];
@@ -1343,6 +1423,46 @@ EVisibility SGraphNode_DialogBuilderNode::GetBlueprintIconVisibility() const
 
 }
 
+EVisibility SGraphNode_DialogBuilderNode::GetSequencerIconVisibility() const
+{
+	const UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+	const UDialogBuilderNode_DialogSequence* DialogSequenceNode = DialogEdNode
+		? Cast<UDialogBuilderNode_DialogSequence>(DialogEdNode->NodeInstance)
+		: nullptr;
+
+	const bool bCanShowIcon = DialogSequenceNode && DialogSequenceNode->DialogSequence != nullptr;
+
+	TSharedPtr<SGraphPanel> MyOwnerPanel = GetOwnerPanel();
+	return (bCanShowIcon && (!MyOwnerPanel.IsValid() || MyOwnerPanel->GetCurrentLOD() > EGraphRenderingLOD::LowDetail))
+		? EVisibility::Visible
+		: EVisibility::Collapsed;
+}
+
+FReply SGraphNode_DialogBuilderNode::OnOpenSequencerClicked()
+{
+	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+	UDialogBuilderNode_DialogSequence* DialogSequenceNode = DialogEdNode
+		? Cast<UDialogBuilderNode_DialogSequence>(DialogEdNode->NodeInstance)
+		: nullptr;
+
+	if (!DialogSequenceNode || !DialogSequenceNode->DialogSequence)
+	{
+		return FReply::Unhandled();
+	}
+
+	UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(GraphNode ? GraphNode->GetGraph() : nullptr);
+	if (DialogEdGraph)
+	{
+		if (TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEdGraph->DialogEditorPtr.Pin())
+		{
+			DialogEditor->OnOpenDialogSequenceNode(DialogSequenceNode);
+			return FReply::Handled();
+		}
+	}
+
+	return FReply::Unhandled();
+}
+
 EVisibility SGraphNode_DialogBuilderNode::GetIndexVisibility() const
 {
 	// always hide the index on the root node
@@ -1359,7 +1479,7 @@ EVisibility SGraphNode_DialogBuilderNode::GetIndexVisibility() const
 		MyParentOutputPin = MyInputPin->LinkedTo[0];
 	}
 
-	
+
 	// LOD this out once things get too small
 	TSharedPtr<SGraphPanel> MyOwnerPanel = GetOwnerPanel();
 
@@ -1383,8 +1503,8 @@ EVisibility SGraphNode_DialogBuilderNode::GetIndexVisibility() const
 
 	// Visible if ((we are in PIE || if we have siblings) && (SelectedNodes only one && Matching parent with selected nodes))
 	const bool bCanShowIndex = (ShouldShowExecutionIndex() || (MyParentOutputPin && MyParentOutputPin->LinkedTo.Num() > 1)) &&
-        (SelectedNodes.Num() == 1 && (FirstSelectedNode && DialogNode) &&
-        (DialogNode->ParentNodes.Contains(FirstSelectedNode) || DialogNode == FirstSelectedNode));
+		(SelectedNodes.Num() == 1 && (FirstSelectedNode && DialogNode) &&
+			(DialogNode->ParentNodes.Contains(FirstSelectedNode) || DialogNode == FirstSelectedNode));
 	return (bCanShowIndex && (!MyOwnerPanel.IsValid() || MyOwnerPanel->GetCurrentLOD() > EGraphRenderingLOD::LowDetail)) ? EVisibility::Visible : EVisibility::Collapsed;
 }
 
@@ -1430,8 +1550,8 @@ FText SGraphNode_DialogBuilderNode::GetIndexText() const
 			}
 		}
 	}
-	
-	
+
+
 	return FText::AsNumber(Index);
 }
 

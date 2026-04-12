@@ -44,6 +44,7 @@ void UDialogBuilderNode_DialogSequence::EnsureSequenceCreated()
 		DialogSequence->OwningDialogGraph = GetOwningDialogGraph();	
 		DialogSequence->MovieScene = NewObject<UMovieScene>(DialogSequence, FName("DialogSequence"), RF_Transactional);
 		DialogSequence->MovieScene->SetDisplayRate(FFrameRate(30, 1));
+		DialogSequence->RefreshSequence();
 	}
 
 	

@@ -132,6 +132,9 @@ public:
 		return DialogEditor.Pin();
 	}
 
+public:
+	UTexture2D* CaptureViewportThumbnail() const;
+
 protected:
 
 	virtual TSharedRef<FEditorViewportClient> MakeEditorViewportClient() override;

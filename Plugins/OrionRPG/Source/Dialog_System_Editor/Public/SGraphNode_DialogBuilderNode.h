@@ -120,14 +120,19 @@ public:
 
 	/** sets drag marker visible or collapsed on this node */
 	void SetDragMarker(bool bEnabled);
+public:
+	void OnSequencerButtonHovered();
+	void OnSequencerButtonUnhovered();
+	FSlateColor GetSequencerButtonColor() const;
+
 protected:
+	uint32 bSequencerButtonHovered : 1;
 	/** The node body widget, cached here so we can determine its size when we want ot position our overlays */
 	TSharedPtr<SBorder> NodeBody;
 
 	TArray< TSharedPtr<SGraphNode> > SubNodes;
 
 	uint32 bDragMarkerVisible : 1;
-
 
 	TArray< TSharedPtr<SGraphNode> > DecoratorWidgets;
 	TArray< TSharedPtr<SGraphNode> > EventsWidgets;
@@ -140,6 +145,12 @@ protected:
 	TSharedPtr<SWidget> IndexOverlay;
 
 	EVisibility GetBlueprintIconVisibility() const;
+
+	/** Sequencer quick-open icon visibility */
+	EVisibility GetSequencerIconVisibility() const;
+
+	/** Open sequence asset in Sequencer */
+	FReply OnOpenSequencerClicked();
 
 	//Dialog Node Index
 

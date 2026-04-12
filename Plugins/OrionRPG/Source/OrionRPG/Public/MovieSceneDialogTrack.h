@@ -34,10 +34,6 @@ public:
 		FFrameNumber InStartFrame,
 		int32 InDurationFrames = 1);
 
-	/**Which dialog definition this track belong to*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog")
-	TObjectPtr<class UDialogDefinition> DialogDefinition;
-
 public:
 	virtual bool IsEmpty() const override;
 	virtual void AddSection(UMovieSceneSection& Section) override;
