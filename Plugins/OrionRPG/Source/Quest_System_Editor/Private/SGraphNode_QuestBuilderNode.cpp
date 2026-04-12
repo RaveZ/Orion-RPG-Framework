@@ -54,42 +54,75 @@ public:
 
 	void Construct(const FArguments& InArgs, UEdGraphPin* InPin)
 	{
-		this->SetCursor(EMouseCursor::Default);
+		SetCursor(EMouseCursor::Default);
 
 		bShowLabel = true;
-
 		GraphPinObj = InPin;
 		check(GraphPinObj != nullptr);
 
 		const UEdGraphSchema* Schema = GraphPinObj->GetSchema();
 		check(Schema);
 
+		CachePinIcons();
+
 		SBorder::Construct(SBorder::FArguments()
-			.BorderImage(this, &SQuestSystemPin::GetPinBorder)
+			.BorderImage(this, &SQuestSystemPin::GetPinIcon)
 			.BorderBackgroundColor(this, &SQuestSystemPin::GetPinColor)
 			.OnMouseButtonDown(this, &SQuestSystemPin::OnPinMouseDown)
 			.Cursor(this, &SQuestSystemPin::GetPinCursor)
-			.Padding(FMargin(5.0f))
+			.Padding(FMargin(1.0f))
+			[
+				SNew(SBox)
+					.WidthOverride(10.0f)
+					.HeightOverride(14.0f)
+			]
 		);
 	}
 
 protected:
+	const FSlateBrush* CachedImg_Pin_ConnectedHovered;
+	const FSlateBrush* CachedImg_Pin_DisconnectedHovered;
+
+	void CachePinIcons()
+	{
+		CachedImg_Pin_ConnectedHovered = FAppStyle::GetBrush(TEXT("Graph.ExecPin.ConnectedHovered"));
+		CachedImg_Pin_Connected = FAppStyle::GetBrush(TEXT("Graph.ExecPin.Connected"));
+		CachedImg_Pin_DisconnectedHovered = FAppStyle::GetBrush(TEXT("Graph.ExecPin.DisconnectedHovered"));
+		CachedImg_Pin_Disconnected = FAppStyle::GetBrush(TEXT("Graph.ExecPin.Disconnected"));
+	}
+
+
+	const FSlateBrush* GetPinIcon() const
+	{
+		const FSlateBrush* Brush = NULL;
+
+		if (IsConnected())
+		{
+			Brush = IsHovered() ? CachedImg_Pin_ConnectedHovered : CachedImg_Pin_Connected;
+		}
+		else
+		{
+			Brush = IsHovered() ? CachedImg_Pin_ConnectedHovered : CachedImg_Pin_Disconnected;
+		}
+
+		return Brush;
+	}
 	virtual FSlateColor GetPinColor() const override
 	{
 		return bIsDiffHighlighted ? QuestBuilderColors::Pin::Diff :
-			IsHovered() ? QuestBuilderColors::Pin::Hover : QuestBuilderColors::Pin::Default;
+			IsHovered() ? FLinearColor(1.0f, 1.0f, 1.0f) : FLinearColor(.5f, .5f, .5f);
 	}
 
-	virtual TSharedRef<SWidget>	GetDefaultValueWidget() override
+	virtual TSharedRef<SWidget> GetDefaultValueWidget() override
 	{
-		return SNew(STextBlock);
+		return SNew(SSpacer);
 	}
 
 	const FSlateBrush* GetPinBorder() const
 	{
-		return FAppStyle::GetBrush(TEXT("Graph.StateNode.Body"));
+		const bool bIsConnected = GraphPinObj && GraphPinObj->LinkedTo.Num() > 0;
+		return FAppStyle::GetBrush(bIsConnected ? TEXT("Graph.Pin.Connected") : TEXT("Graph.Pin.Disconnected"));
 	}
-
 };
 
 
@@ -292,7 +325,7 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 
 	const FMargin PinPadding = (Cast<UQuestBuilderEdSubNode_Decorator>(GraphNode) || Cast<UQuestBuilderEdSubNode_Event>(GraphNode))
 		? FMargin(0.f)
-		: FMargin(2.f, 3.f, 2.f, 3.f);
+		: FMargin(5.f, 3.f, 5.f, 3.f);
 	
 
 	UWorld* World = GEditor->GetEditorWorldContext().World();
@@ -910,10 +943,8 @@ void SGraphNode_QuestBuilderNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 	if (PinBox)
 	{
 		PinBox->AddSlot()
-			.HAlign(HAlign_Fill)
-			.VAlign(VAlign_Fill)
-			.FillHeight(1.0f)
-			//.Padding(6.0f, 0.0f)
+			.HAlign(HAlign_Center)
+			.VAlign(VAlign_Center)
 			[
 				PinToAdd
 			];

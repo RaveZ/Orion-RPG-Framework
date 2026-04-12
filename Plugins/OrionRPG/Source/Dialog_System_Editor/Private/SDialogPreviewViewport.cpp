@@ -33,6 +33,8 @@
 #include "Widgets/Text/SRichTextBlock.h"
 #include "DialogEditorSubmenus.h"
 #include "Widgets/Input/SCheckBox.h"
+#include "Engine/Texture2D.h"
+#include "RHI.h"
 
 #define LOCTEXT_NAMESPACE "DialogPreviewViewport"
 
@@ -704,6 +706,56 @@ void SDialogPreviewViewport::RemoveDialogOverlayWidget()
 
 	EditorViewportContainer.Reset();
 	DialogOverlayWidget.Reset();
+}
+
+UTexture2D* SDialogPreviewViewport::CaptureViewportThumbnail() const
+{
+	if (!SceneViewport.IsValid())
+	{
+		return nullptr;
+	}
+
+	const FIntPoint Size = SceneViewport->GetSizeXY();
+	if (Size.X <= 0 || Size.Y <= 0)
+	{
+		return nullptr;
+	}
+
+	TArray<FColor> Bitmap;
+	Bitmap.AddUninitialized(Size.X * Size.Y);
+
+	FReadSurfaceDataFlags ReadFlags(RCM_UNorm);
+	ReadFlags.SetLinearToGamma(true);
+
+	if (!SceneViewport->ReadPixels(Bitmap, ReadFlags))
+	{
+		return nullptr;
+	}
+
+	UTexture2D* Thumbnail = UTexture2D::CreateTransient(Size.X, Size.Y, PF_B8G8R8A8);
+	if (!Thumbnail)
+	{
+		return nullptr;
+	}
+
+	Thumbnail->SRGB = true;
+	Thumbnail->CompressionSettings = TC_Default;
+	Thumbnail->MipGenSettings = TMGS_NoMipmaps;
+	Thumbnail->NeverStream = true;
+
+	FTexturePlatformData* PlatformData = Thumbnail->GetPlatformData();
+	if (!PlatformData || PlatformData->Mips.Num() == 0)
+	{
+		return nullptr;
+	}
+
+	FTexture2DMipMap& Mip = PlatformData->Mips[0];
+	void* Data = Mip.BulkData.Lock(LOCK_READ_WRITE);
+	FMemory::Memcpy(Data, Bitmap.GetData(), Bitmap.Num() * sizeof(FColor));
+	Mip.BulkData.Unlock();
+
+	Thumbnail->UpdateResource();
+	return Thumbnail;
 }
 
 #undef LOCTEXT_NAMESPACE
