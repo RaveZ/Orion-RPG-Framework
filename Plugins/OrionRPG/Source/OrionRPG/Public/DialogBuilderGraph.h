@@ -207,7 +207,6 @@ public:
 	virtual void Deinitialize();
 	virtual UWorld* GetWorld() const override;
 
-	void UpdateDialogStagesReference();
 	void StartFromRoot();
 
 

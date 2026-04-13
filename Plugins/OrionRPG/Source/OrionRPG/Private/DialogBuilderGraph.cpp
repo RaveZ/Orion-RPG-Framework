@@ -199,22 +199,7 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 	}
 }
 
-void UDialogBuilderGraph::UpdateDialogStagesReference()
-{
-	for(auto& DialogStage : DialogStages)
-	{
-		if (DialogStage)
-		{
-			for(auto& Slot : DialogStage->Slots)
-			{
-				if (Slot)
-				{
-					Slot->DialogDefinition = GetDialogDefinitionByTag(Slot->ActorTag);
-				}
-			}
-		}
-	}
-}
+
 
 void UDialogBuilderGraph::Deinitialize()
 {

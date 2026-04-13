@@ -603,7 +603,6 @@ void FDialogBuilderEditor::UpdateDialogStage()
 	
 	if (!EditingDialogGraph || !CurrentSequenceNode.IsValid()) return;
 
-	EditingDialogGraph->UpdateDialogStagesReference();
 	UDialogStage* DialogStage = CurrentSequenceNode.Get()->DialogStage;
 	if (!DialogStage)
 	{
