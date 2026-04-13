@@ -137,7 +137,7 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 					->Split
 					(
 						FTabManager::NewSplitter()->SetOrientation(Orient_Horizontal)
-						->SetSizeCoefficient(0.6f)
+						->SetSizeCoefficient(0.55f)
 						->Split
 						(
 							FTabManager::NewStack()
@@ -156,7 +156,7 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 					->Split
 					(
 						FTabManager::NewStack()
-						->SetSizeCoefficient(0.4f)
+						->SetSizeCoefficient(0.45f)
 						->AddTab("Document", ETabState::ClosedTab)
 						->AddTab(FDialogBuilderEditorTabs::DialogSequencerTabID, ETabState::OpenedTab)
 						->AddTab(FDialogBuilderEditorTabs::DialogStageSettingsID, ETabState::OpenedTab)
@@ -169,13 +169,13 @@ FDialogBuilderSequencerApplicationMode::FDialogBuilderSequencerApplicationMode(T
 					->Split
 					(
 						FTabManager::NewStack()
-						->SetSizeCoefficient(0.6f)
+						->SetSizeCoefficient(0.55f)
 						->AddTab(FDialogBuilderEditorTabs::DialogBuilderPropertyID, ETabState::OpenedTab)
 					)
 					->Split
 					(
 						FTabManager::NewStack()
-						->SetSizeCoefficient(0.4f)
+						->SetSizeCoefficient(0.45f)
 						->AddTab(FDialogBuilderEditorTabs::DialogDefinitionsID, ETabState::OpenedTab)
 					)
 				)

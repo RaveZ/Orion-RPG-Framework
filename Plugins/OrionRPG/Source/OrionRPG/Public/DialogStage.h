@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "DialogData.h"
+#include "NativeGameplayTags.h"
 #include "UObject/NoExportTypes.h"
 #include "DialogStage.generated.h"
 
@@ -27,17 +28,21 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Detail")
 	TObjectPtr<class UDialogDefinition> DialogDefinition;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Detail", meta = (Categories = "Dialog"))
-	FGameplayTag ActorTag;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
-	FTransform SlotPlacement;
+	FVector SlotLocation;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
+	FRotator SlotRotation;
 
 	FName GetID() const
 	{
 		FName OutName = FName(*ID.ToString());
 		return OutName;
 	}
+
+	FGameplayTag GetActorTag() const;
+
 #if WITH_EDITOR
 	//~ Begin UObject Interface
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
@@ -62,7 +67,10 @@ public:
 	FText Name;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
-	FTransform PlacementTransform;
+	FVector Location;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
+	FRotator Rotation;
 
 	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Detail")
 	TArray<TObjectPtr<class UDialogSequenceSlot>> Slots;

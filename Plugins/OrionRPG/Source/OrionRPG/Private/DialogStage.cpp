@@ -12,20 +12,23 @@ UDialogSequenceSlot::UDialogSequenceSlot()
 {
 }
 
+FGameplayTag UDialogSequenceSlot::GetActorTag() const
+{
+	if (DialogDefinition)
+	{
+		return DialogDefinition->Tag;
+	}
+	return FGameplayTag::EmptyTag;
+}
+
 #if WITH_EDITOR
+
+
 void UDialogSequenceSlot::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	// Keep ActorTag synchronized from DialogDefinition reference
-	if (UDialogParticipant* Participant = Cast<UDialogParticipant>(DialogDefinition))
-	{
-		ActorTag = Participant->Tag;
-	}
-	else
-	{
-		ActorTag = FGameplayTag();
-	}
+	
 }
 #endif
 

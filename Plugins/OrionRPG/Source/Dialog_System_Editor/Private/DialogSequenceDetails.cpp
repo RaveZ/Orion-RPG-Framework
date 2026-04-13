@@ -4,6 +4,7 @@
 
 #include "DialogBuilderGraph.h"
 #include "DialogDefinition.h"
+#include "DialogSequenceShot.h"
 #include "DialogStage.h"
 #include "DetailCategoryBuilder.h"
 #include "DetailLayoutBuilder.h"
@@ -100,6 +101,7 @@ TSharedRef<IDetailCustomization> FDialogSequenceDetails::MakeInstance()
 void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
 	DialogSequenceSlot.Reset();
+	DialogSequenceShot.Reset();
 	MovieSceneDialogSection.Reset();
 
 	const TArray<TWeakObjectPtr<UObject>>& SelectedObjects = DetailBuilder.GetSelectedObjects();
@@ -115,6 +117,14 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 			if (UDialogSequenceSlot* SlotPtr = Cast<UDialogSequenceSlot>(CurrentObject.Get()))
 			{
 				DialogSequenceSlot = SlotPtr;
+			}
+		}
+
+		if (!DialogSequenceShot.IsValid())
+		{
+			if (UDialogSequenceShot* SequenceShotPtr = Cast<UDialogSequenceShot>(CurrentObject.Get()))
+			{
+				DialogSequenceShot = SequenceShotPtr;
 			}
 		}
 
@@ -135,27 +145,13 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 	// Slot customization
 	if (UDialogSequenceSlot* Slot = DialogSequenceSlot.Get())
 	{
-		if (!IsParticipantInGraph(Slot->OwningDialogGraph, Cast<UDialogParticipant>(Slot->DialogDefinition)))
-		{
-			Slot->Modify();
-			Slot->DialogDefinition = nullptr;
-			Slot->ActorTag = FGameplayTag();
-		}
-
 		if (!IsDialogDefinitionInGraph(Slot->OwningDialogGraph, Slot->DialogDefinition))
 		{
 			Slot->Modify();
 			Slot->DialogDefinition = nullptr;
-			Slot->ActorTag = FGameplayTag();
 		}
 
 		IDetailCategoryBuilder& DetailCategory = DetailBuilder.EditCategory("Detail", LOCTEXT("DetailCategoryTitle", "Detail"));
-
-		TSharedPtr<IPropertyHandle> ActorTagHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceSlot, ActorTag));
-		if (ActorTagHandle.IsValid())
-		{
-			ActorTagHandle->MarkHiddenByCustomization();
-		}
 
 		TSharedPtr<IPropertyHandle> DialogDefinitionHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceSlot, DialogDefinition));
 		if (DialogDefinitionHandle.IsValid())
@@ -178,7 +174,43 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 					FOnGetContent::CreateSP(this, &FDialogSequenceDetails::OnGetSlotParticipantListMenu))
 			];
 
-		DetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceSlot, SlotPlacement)).DisplayName(LOCTEXT("SlotPlacementLabel", "Slot Placement"));
+		DetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceSlot, SlotLocation)).DisplayName(LOCTEXT("SlotLocationLabel", "Slot Location"));
+		DetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceSlot, SlotRotation)).DisplayName(LOCTEXT("SlotRotationLabel", "Slot Rotation"));
+		return;
+	}
+
+	// Sequence shot customization
+	if (UDialogSequenceShot* SequenceShot = DialogSequenceShot.Get())
+	{
+		if (!IsDialogDefinitionInGraph(SequenceShot->OwningDialogGraph, SequenceShot->ActorToFocus))
+		{
+			SequenceShot->Modify();
+			SequenceShot->ActorToFocus = nullptr;
+		}
+
+		IDetailCategoryBuilder& ShotCategory = DetailBuilder.EditCategory("Track & Focus Settings", LOCTEXT("ShotTrackFocusCategoryTitle", "Track & Focus Settings"));
+
+		TSharedPtr<IPropertyHandle> ActorToFocusHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceShot, ActorToFocus));
+		if (ActorToFocusHandle.IsValid())
+		{
+			ActorToFocusHandle->MarkHiddenByCustomization();
+		}
+
+		ShotCategory.AddCustomRow(LOCTEXT("ShotActorToFocusRowLabel", "Actor To Focus"))
+			.NameContent()
+			[
+				SNew(STextBlock)
+					.Text(LOCTEXT("ShotActorToFocusText", "Actor To Focus"))
+					.Font(IDetailLayoutBuilder::GetDetailFont())
+			]
+			.ValueContent()
+			.MaxDesiredWidth(300.0f)
+			[
+				GetWidgetForShotActorToFocusPicker(
+					TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateSP(this, &FDialogSequenceDetails::GetShotActorToFocusDisplayText)),
+					FOnGetContent::CreateSP(this, &FDialogSequenceDetails::OnGetShotActorToFocusListMenu))
+			];
+
 		return;
 	}
 
@@ -251,13 +283,6 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 					continue;
 				}
 
-				const FName ChildPropertyName = ChildHandle->GetProperty()->GetFName();
-				if (ChildPropertyName == GET_MEMBER_NAME_CHECKED(FOrionDialogLine, SpeakerTag) ||
-					ChildPropertyName == GET_MEMBER_NAME_CHECKED(FOrionDialogLine, ListenerTag))
-				{
-					continue;
-				}
-
 				SectionCategory.AddProperty(ChildHandle.ToSharedRef());
 			}
 		}
@@ -292,6 +317,122 @@ FText FDialogSequenceDetails::GetSectionListenerDisplayText() const
 	return IsParticipantInGraph(Graph, Section ? Section->ListenerParticipantDefinition.Get() : nullptr)
 		? GetParticipantText(Section->ListenerParticipantDefinition.Get())
 		: LOCTEXT("ListenerNone", "None");
+}
+
+//sequence shot focus
+FText FDialogSequenceDetails::GetShotActorToFocusDisplayText() const
+{
+	const UDialogSequenceShot* SequenceShot = DialogSequenceShot.Get();
+	if (!SequenceShot || !SequenceShot->OwningDialogGraph)
+	{
+		return LOCTEXT("ShotActorToFocusNone", "None");
+	}
+
+	const UDialogDefinition* Selected = SequenceShot->ActorToFocus;
+	return IsDialogDefinitionInGraph(SequenceShot->OwningDialogGraph, Selected)
+		? GetDialogDefinitionText(Selected)
+		: LOCTEXT("ShotActorToFocusNoneMissing", "None");
+}
+
+TSharedRef<SWidget> FDialogSequenceDetails::GetWidgetForShotActorToFocusPicker(const TAttribute<FText>& InDefinitionText, FOnGetContent GetContentMenu)
+{
+	return SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot().AutoWidth()
+		[
+			SNew(SComboButton)
+				.ContentPadding(FMargin(4.0f, 2.0f))
+				.OnGetMenuContent(GetContentMenu)
+				.ButtonContent()
+				[
+					SNew(STextBlock)
+						.Text_Lambda([InDefinitionText]() { return InDefinitionText.Get(); })
+						.Font(IDetailLayoutBuilder::GetDetailFont())
+				]
+		];
+}
+
+TSharedRef<SWidget> FDialogSequenceDetails::OnGetShotActorToFocusListMenu()
+{
+	FMenuBuilder MenuBuilder(true, nullptr);
+
+	MenuBuilder.BeginSection("ShotActorToFocusParticipants", LOCTEXT("ShotActorToFocusParticipantsSection", "Participant Definitions"));
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("ShotActorToFocusNoneEntry", "None"),
+		FText(),
+		FSlateIcon(),
+		FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::ClearShotActorToFocusDefinition)));
+
+	if (const UDialogSequenceShot* SequenceShot = DialogSequenceShot.Get())
+	{
+		if (const UDialogBuilderGraph* Graph = SequenceShot->OwningDialogGraph)
+		{
+			for (const TObjectPtr<UDialogParticipant>& Participant : Graph->ParticipantDefinitions)
+			{
+				if (!Participant)
+				{
+					continue;
+				}
+
+				MenuBuilder.AddMenuEntry(
+					GetDialogDefinitionText(Participant.Get()),
+					FText::FromString(Participant->Tag.ToString()),
+					FSlateIcon(),
+					FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseShotActorToFocusDefinition, static_cast<UDialogDefinition*>(Participant.Get()))));
+			}
+		}
+	}
+	MenuBuilder.EndSection();
+
+	MenuBuilder.BeginSection("ShotActorToFocusProps", LOCTEXT("ShotActorToFocusPropsSection", "Prop Definitions"));
+	if (const UDialogSequenceShot* SequenceShot = DialogSequenceShot.Get())
+	{
+		if (const UDialogBuilderGraph* Graph = SequenceShot->OwningDialogGraph)
+		{
+			for (const TObjectPtr<UDialogProp>& Prop : Graph->PropDefinitions)
+			{
+				if (!Prop)
+				{
+					continue;
+				}
+
+				MenuBuilder.AddMenuEntry(
+					GetDialogDefinitionText(Prop.Get()),
+					FText::FromString(Prop->Tag.ToString()),
+					FSlateIcon(),
+					FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseShotActorToFocusDefinition, static_cast<UDialogDefinition*>(Prop.Get()))));
+			}
+		}
+	}
+	MenuBuilder.EndSection();
+
+	return MenuBuilder.MakeWidget();
+}
+
+void FDialogSequenceDetails::UseShotActorToFocusDefinition(UDialogDefinition* InDialogDefinition)
+{
+	if (!DialogSequenceShot.IsValid())
+	{
+		return;
+	}
+
+	UDialogSequenceShot* SequenceShot = DialogSequenceShot.Get();
+	if (!InDialogDefinition || !IsDialogDefinitionInGraph(SequenceShot->OwningDialogGraph, InDialogDefinition))
+	{
+		ClearShotActorToFocusDefinition();
+		return;
+	}
+
+	SequenceShot->Modify();
+	SequenceShot->ActorToFocus = InDialogDefinition;
+}
+
+void FDialogSequenceDetails::ClearShotActorToFocusDefinition()
+{
+	if (UDialogSequenceShot* SequenceShot = DialogSequenceShot.Get())
+	{
+		SequenceShot->Modify();
+		SequenceShot->ActorToFocus = nullptr;
+	}
 }
 
 // Slot
@@ -385,7 +526,6 @@ void FDialogSequenceDetails::UseSlotParticipantDefinition(UDialogDefinition* InD
 
 	Slot->Modify();
 	Slot->DialogDefinition = InDialogDefinition;
-	Slot->ActorTag = InDialogDefinition->Tag;
 }
 
 void FDialogSequenceDetails::ClearSlotParticipantDefinition()
@@ -394,7 +534,6 @@ void FDialogSequenceDetails::ClearSlotParticipantDefinition()
 	{
 		Slot->Modify();
 		Slot->DialogDefinition = nullptr;
-		Slot->ActorTag = FGameplayTag();
 	}
 }
 

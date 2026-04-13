@@ -87,7 +87,8 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogStageData()
 	}
 
 	DialogStage->Name = DialogStageToUse->Name;
-	DialogStage->PlacementTransform = DialogStageToUse->PlacementTransform;
+	DialogStage->Location = DialogStageToUse->Location;
+	DialogStage->Rotation = DialogStageToUse->Rotation;
 
 	//Populate Dialog Definition Slots
 	{
@@ -125,9 +126,9 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogStageData()
 			}
 
 			Target->OwningDialogGraph = GetOwningDialogGraph();
-			Target->ActorTag = Source->ActorTag;
 			Target->DialogDefinition = Source->DialogDefinition;
-			Target->SlotPlacement = Source->SlotPlacement;
+			Target->SlotLocation = Source->SlotLocation;
+			Target->SlotRotation = Source->SlotRotation	;
 
 			DialogStage->Slots[idx] = Target;
 		}

@@ -1,6 +1,7 @@
 #include "SDialogCameraPresets.h"
 
 #include "DialogBuilderEditor.h"
+#include "DialogBuilderGraph.h"
 #include "DialogSequenceShot.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "AssetRegistry/IAssetRegistry.h"
@@ -265,8 +266,13 @@ UDialogSequenceShot* SDialogCameraPresets::CreateSelectedShotInstance(const FAss
 		return nullptr;
 	}
 
-	return NewObject<UDialogSequenceShot>(
-		GetTransientPackage(), Blueprint->GeneratedClass, NAME_None, RF_Transient | RF_Transactional);
+	UDialogSequenceShot* OutShot = NewObject<UDialogSequenceShot>(
+		GetTransientPackage(), UDialogSequenceShot::StaticClass(), NAME_None, RF_Transient | RF_Transactional);
+
+	FDialogBuilderEditor* DialogEditor = DialogEditorPtr.Pin().Get();
+	UDialogBuilderGraph* DialogGraph = DialogEditor ? DialogEditor->GetDialogBuilderGraph() : nullptr;
+	OutShot->OwningDialogGraph = DialogGraph;
+	return OutShot;
 }
 
 void SDialogCameraPresets::ReleaseShotDuplicates()

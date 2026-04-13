@@ -57,22 +57,12 @@ void UMovieSceneDialogSection::RefreshDialogContent()
 	if (!IsParticipantInGraph(DialogGraph, SpeakerParticipantDefinition))
 	{
 		SpeakerParticipantDefinition = nullptr;
-		DialogLine.SpeakerTag = FGameplayTag();
-	}
-	else
-	{
-		DialogLine.SpeakerTag = SpeakerParticipantDefinition->Tag;
 	}
 
 	// Listener reference validity
 	if (!IsParticipantInGraph(DialogGraph, ListenerParticipantDefinition))
 	{
 		ListenerParticipantDefinition = nullptr;
-		DialogLine.ListenerTag = FGameplayTag();
-	}
-	else
-	{
-		DialogLine.ListenerTag = ListenerParticipantDefinition->Tag;
 	}
 
 	//DialogLine.SpeakerName = DialogGraph ? DialogGraph->GetParticipantName(DialogLine.SpeakerTag) : FText();

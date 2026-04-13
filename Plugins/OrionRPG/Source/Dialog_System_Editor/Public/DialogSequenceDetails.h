@@ -15,6 +15,7 @@ class IDetailLayoutBuilder;
 class SWidget;
 class UDialogDefinition;
 class UDialogParticipant;
+class UDialogSequenceShot;
 class UDialogSequenceSlot;
 class UMovieSceneDialogSection;
 
@@ -34,6 +35,12 @@ protected:
 	void UseSlotParticipantDefinition(UDialogDefinition* InDialogDefinition);
 	void ClearSlotParticipantDefinition();
 
+	// Sequence Shot - ActorToFocus
+	TSharedRef<SWidget> GetWidgetForShotActorToFocusPicker(const TAttribute<FText>& InDefinitionText, FOnGetContent GetContentMenu);
+	TSharedRef<SWidget> OnGetShotActorToFocusListMenu();
+	void UseShotActorToFocusDefinition(UDialogDefinition* InDialogDefinition);
+	void ClearShotActorToFocusDefinition();
+
 	// Section - Speaker
 	TSharedRef<SWidget> GetWidgetForSpeakerParticipantPicker(const TAttribute<FText>& InParticipantNameText, FOnGetContent GetContentMenu);
 	TSharedRef<SWidget> OnGetSpeakerParticipantListMenu();
@@ -48,10 +55,12 @@ protected:
 
 private:
 	FText GetSlotParticipantDisplayText() const;
+	FText GetShotActorToFocusDisplayText() const;
 	FText GetSectionSpeakerDisplayText() const;
 	FText GetSectionListenerDisplayText() const;
 
 private:
 	TWeakObjectPtr<UDialogSequenceSlot> DialogSequenceSlot;
+	TWeakObjectPtr<UDialogSequenceShot> DialogSequenceShot;
 	TWeakObjectPtr<UMovieSceneDialogSection> MovieSceneDialogSection;
 };

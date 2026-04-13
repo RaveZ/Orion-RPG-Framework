@@ -276,8 +276,6 @@ void UDialogBuilderNode_DialogLine::Serialize(FArchive& Ar)
 FOrionDialogLine UDialogBuilderNode_DialogLine::GetDialogLine()
 {
 	FOrionDialogLine DialogLine;
-	DialogLine.SpeakerTag = ParticipantInfo.ParticipantTag;
-	DialogLine.ListenerTag = ListenerTag;
 	DialogLine.SpeakerImage = GetParticipantImage();
 	DialogLine.SpeakerName = ParticipantInfo.ParticipantName;
 	DialogLine.Line = DialogLineData.Line;

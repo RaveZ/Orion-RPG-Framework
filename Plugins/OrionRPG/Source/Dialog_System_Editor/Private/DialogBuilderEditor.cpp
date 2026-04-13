@@ -610,7 +610,8 @@ void FDialogBuilderEditor::UpdateDialogStage()
 	}
 
 	CurrentSequenceNode.Get()->UpdateDialogStageData();
-	PivotActor->SetActorTransform(DialogStage->PlacementTransform);
+	PivotActor->SetActorLocation(DialogStage->Location);
+	PivotActor->SetActorRotation(DialogStage->Rotation);
 
 	if (DialogStage->CameraSlots.Num() == 0)
 	{
@@ -716,7 +717,11 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 	if (ExistingActor && ExistingActor->IsA(ActorClass))
 	{
 		OutActor = ExistingActor;
-		if(!bIsCamera) ExistingActor->SetActorRelativeTransform(InSlot->SlotPlacement);
+		if(!bIsCamera)
+		{
+			ExistingActor->SetActorRelativeLocation(InSlot->SlotLocation);
+			ExistingActor->SetActorRelativeRotation(InSlot->SlotRotation);
+		}
 		
 		CreateDialogTrackFromSlot(InSlot);
 		return;
@@ -768,7 +773,8 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 		}
 		// Preserve the actor's world transform when attaching to the pivot.
 		NewActor->AttachToActor(SequencePivot.Get(), FAttachmentTransformRules::KeepWorldTransform);
-		NewActor->SetActorRelativeTransform(InSlot->SlotPlacement);
+		NewActor->SetActorRelativeLocation(InSlot->SlotLocation);
+		NewActor->SetActorRelativeRotation(InSlot->SlotRotation);
 		DialogSlotActors.Emplace(InSlot, NewActor);
 		CreateDialogTrackFromSlot(InSlot);
 	}
@@ -1881,53 +1887,38 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 		return;
 	}
 
+	UDialogDefinition* InDialogDefinition = nullptr;
 	const FFrameNumber CurrentFrame = Sequencer->GetLocalTime().Time.FloorToFrame();
 
-	FGameplayTag SpeakerTag;
-	FGameplayTag ListenerTag;
-
-	for (UMovieSceneTrack* Track : MovieScene->GetTracks())
+	if(InSequenceShot->ActorToFocus)
 	{
-		UMovieSceneDialogTrack* DialogTrack = Cast<UMovieSceneDialogTrack>(Track);
-		if (!DialogTrack)
+		InDialogDefinition = InSequenceShot->ActorToFocus;
+	}
+	else
+	{
+		for (UMovieSceneTrack* Track : MovieScene->GetTracks())
 		{
-			continue;
-		}
-
-		for (UMovieSceneSection* Section : DialogTrack->GetAllSections())
-		{
-			UMovieSceneDialogSection* DialogSection = Cast<UMovieSceneDialogSection>(Section);
-			if (!DialogSection || !DialogSection->GetRange().Contains(CurrentFrame))
+			UMovieSceneDialogTrack* DialogTrack = Cast<UMovieSceneDialogTrack>(Track);
+			if (!DialogTrack)
 			{
 				continue;
 			}
 
-			SpeakerTag = DialogSection->DialogLine.SpeakerTag;
-			ListenerTag = DialogSection->DialogLine.ListenerTag;
-			break;
+			for (UMovieSceneSection* Section : DialogTrack->GetAllSections())
+			{
+				UMovieSceneDialogSection* DialogSection = Cast<UMovieSceneDialogSection>(Section);
+				if (!DialogSection || !DialogSection->GetRange().Contains(CurrentFrame))
+				{
+					continue;
+				}
+
+				InDialogDefinition = DialogSection->SpeakerParticipantDefinition;
+				break;
+			}
 		}
-
-		if (SpeakerTag.IsValid())
-		{
-			break;
-		}
 	}
+	
 
-	if (!SpeakerTag.IsValid())
-	{
-		SpeakerTag = InSequenceShot->Speaker;
-	}
-	if (!ListenerTag.IsValid())
-	{
-		ListenerTag = InSequenceShot->Listener;
-	}
-
-	if (!SpeakerTag.IsValid())
-	{
-		return;
-	}
-
-	UDialogDefinition* InDialogDefinition = EditingDialogGraph->GetDialogDefinitionByTag(SpeakerTag);
 	if (!InDialogDefinition)
 	{
 		return;

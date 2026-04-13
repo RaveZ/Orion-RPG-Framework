@@ -120,7 +120,7 @@ public:
 						return LOCTEXT("InvalidSlot", "Invalid");
 					}
 
-					const FString Label = LocalSlot->ActorTag.IsValid() && DialogDef
+					const FString Label = LocalSlot->GetActorTag().IsValid() && DialogDef
 						? DialogDef->DisplayName.ToString()
 						: "None";
 
