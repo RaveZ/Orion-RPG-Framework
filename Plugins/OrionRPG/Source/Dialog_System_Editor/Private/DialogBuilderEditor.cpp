@@ -65,6 +65,7 @@
 #include "MovieSceneDialogTrack.h"
 #include "Tracks/MovieSceneSkeletalAnimationTrack.h"
 #include "LevelSequence.h"
+#include "GameFramework/Character.h"
 #include "CineCameraComponent.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/SNullWidget.h"
@@ -139,6 +140,7 @@ FDialogBuilderEditor::~FDialogBuilderEditor()
 		GEditor->UnregisterForUndo(this);
 	}
 	UnbindSequencerDelegates();
+	UnbindDelegates();
 
 	// Release sequencer/editor references early
 	Sequencer.Reset();
@@ -280,9 +282,61 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 	RebuildDialogBuilderGraphPages();
 
 	UpdateDialogStage();
+
+	BindDelegates();
 }
 
 
+void FDialogBuilderEditor::BindDelegates()
+{
+	FEditorDelegates::MapChange.AddRaw(this, &FDialogBuilderEditor::OnMapChange);
+	FWorldDelegates::OnWorldCleanup.AddRaw(this, &FDialogBuilderEditor::OnWorldCleanup);
+
+	if (GEngine)
+	{
+		GEngine->OnWorldAdded().AddRaw(this, &FDialogBuilderEditor::OnWorldAdded);
+		GEngine->OnWorldDestroyed().AddRaw(this, &FDialogBuilderEditor::OnWorldDestroyed);
+	}
+}
+
+void FDialogBuilderEditor::UnbindDelegates()
+{
+	FEditorDelegates::MapChange.RemoveAll(this);
+	FWorldDelegates::OnWorldCleanup.RemoveAll(this);
+	if (GEngine)
+	{
+		GEngine->OnWorldAdded().RemoveAll(this);
+		GEngine->OnWorldDestroyed().RemoveAll(this);
+	}
+}
+
+
+void FDialogBuilderEditor::OnMapChange(uint32)
+{
+
+}
+
+
+void FDialogBuilderEditor::OnWorldAdded(UWorld*)
+{
+	UpdateDialogStage();
+}
+
+void FDialogBuilderEditor::OnWorldDestroyed(UWorld*)
+{
+}
+
+
+void FDialogBuilderEditor::OnWorldCleanup(UWorld* World, bool bSessionEnded, bool bCleanupResources)
+{
+	if (!World)
+	{
+		return;
+	}
+
+	DestroyDialogStage();
+
+}
 void FDialogBuilderEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
 {
 	DocumentManager->SetTabManager(InTabManager);
@@ -444,7 +498,59 @@ void FDialogBuilderEditor::OnDialogDefinitionRemoved(UDialogDefinition* InDialog
 {
 	
 }
-void FDialogBuilderEditor::CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot)
+
+namespace
+{
+	template<typename TrackType>
+	static void AddTrackIfMissing(UMovieScene* MovieScene, const FGuid& BindingId)
+	{
+		if (!MovieScene || !BindingId.IsValid())
+		{
+			return;
+		}
+
+		const FMovieSceneBinding* Binding = MovieScene->FindBinding(BindingId);
+		if (Binding)
+		{
+			for (UMovieSceneTrack* Track : Binding->GetTracks())
+			{
+				if (Track && Track->IsA(TrackType::StaticClass()))
+				{
+					return;
+				}
+			}
+		}
+
+		MovieScene->AddTrack<TrackType>(BindingId);
+	}
+
+	static void AddDefaultTracksForBinding(UMovieScene* MovieScene, const FGuid& BindingId, AActor* BoundActor, bool bIsCamera)
+	{
+		if (!MovieScene || !BoundActor || !BindingId.IsValid())
+		{
+			return;
+		}
+
+		MovieScene->Modify();
+
+		if (bIsCamera || BoundActor->IsA(ACineCameraActor::StaticClass()))
+		{
+			AddTrackIfMissing<UMovieScene3DTransformTrack>(MovieScene, BindingId);
+			return;
+		}
+
+		if (BoundActor && BoundActor->IsA(ACharacter::StaticClass()))
+		{
+			AddTrackIfMissing<UMovieScene3DTransformTrack>(MovieScene, BindingId);
+			AddTrackIfMissing<UMovieSceneSkeletalAnimationTrack>(MovieScene, BindingId);
+			return;
+		}
+
+		AddTrackIfMissing<UMovieScene3DTransformTrack>(MovieScene, BindingId);
+	}
+}
+
+void FDialogBuilderEditor::CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot, bool bIsCamera)
 {
 	if (!InSlot)
 	{
@@ -501,12 +607,15 @@ void FDialogBuilderEditor::CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot
 			}
 		}
 
+		AddDefaultTracksForBinding(MovieScene, NewBindingId, BoundActor, bIsCamera);
+
 		InSlot->ID = NewBindingId;
 		MovieScene->Modify();
 		return;
 		
 	}
 }
+
 
 
 void FDialogBuilderEditor::ResolveDialogBoundObjects()
@@ -562,7 +671,6 @@ void FDialogBuilderEditor::UpdateDialogStage()
 	if (!IsValid(PivotActor))
 	{
 		FActorSpawnParameters SpawnParams;
-		SpawnParams.Name = TEXT("DialogSequencePivot");
 		SpawnParams.ObjectFlags = RF_Transient | RF_Transactional;
 		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 
@@ -613,6 +721,12 @@ void FDialogBuilderEditor::UpdateDialogStage()
 	PivotActor->SetActorLocation(DialogStage->Location);
 	PivotActor->SetActorRotation(DialogStage->Rotation);
 
+	for (auto& DialogSlot : DialogStage->Slots)
+	{
+		AActor* SpawnedActor = nullptr;
+		SpawnDialogSlotActor(DialogSlot, SpawnedActor);
+	}
+
 	if (DialogStage->CameraSlots.Num() == 0)
 	{
 		UDialogSequenceSlot* NewCameraSlot = NewObject<UDialogSequenceSlot>(DialogGraph, NAME_None, RF_Transactional);
@@ -627,11 +741,7 @@ void FDialogBuilderEditor::UpdateDialogStage()
 		DialogCamera = SpawnedCamera;
 	}
 
-	for(auto& DialogSlot : DialogStage->Slots)
-	{
-		AActor* SpawnedActor = nullptr;
-		SpawnDialogSlotActor(DialogSlot, SpawnedActor);
-	}
+	
 
 	
 
@@ -723,7 +833,7 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 			ExistingActor->SetActorRelativeRotation(InSlot->SlotRotation);
 		}
 		
-		CreateDialogTrackFromSlot(InSlot);
+		CreateDialogTrackFromSlot(InSlot, bIsCamera);
 		return;
 	}
 	else if (ExistingActor)
@@ -776,7 +886,7 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 		NewActor->SetActorRelativeLocation(InSlot->SlotLocation);
 		NewActor->SetActorRelativeRotation(InSlot->SlotRotation);
 		DialogSlotActors.Emplace(InSlot, NewActor);
-		CreateDialogTrackFromSlot(InSlot);
+		CreateDialogTrackFromSlot(InSlot, bIsCamera);
 	}
 }
 
@@ -793,7 +903,7 @@ void FDialogBuilderEditor::DestroyDialogStage()
 
 			if (EditingDialogSequence)
 			{
-				EditingDialogSequence->UnbindInvalidObjects(Pair.Key->ID, PreviewWorld);
+				EditingDialogSequence->UnbindPossessableObjects(Pair.Key->ID);
 			}
 		}
 
@@ -804,7 +914,13 @@ void FDialogBuilderEditor::DestroyDialogStage()
 		PreviewWorld->EditorDestroyActor(CameraActor, false);
 	}
 
+	if (AActor* PivotActor = SequencePivot.Get())
+	{
+		PreviewWorld->EditorDestroyActor(PivotActor, false);
+	}
+
 	DialogCamera.Reset();
+	SequencePivot.Reset();
 	DialogSlotActors.Empty();
 }
 

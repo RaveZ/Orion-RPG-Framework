@@ -182,6 +182,14 @@ public:
 	virtual TSharedPtr<SGraphEditor> OpenGraphAndBringToFront(UEdGraph* Graph, bool bSetFocus = true) override;
 	// End of IDialogEditor
 
+	void BindDelegates();
+	void UnbindDelegates();
+
+
+	void OnMapChange(uint32);
+	void OnWorldAdded(UWorld*);
+	void OnWorldDestroyed(UWorld*);
+	void OnWorldCleanup(UWorld* World, bool bSessionEnded, bool bCleanupResources);
 
 	//Tabs
 	/** Spawns the detail property tab */
@@ -351,7 +359,7 @@ public:
 	//Get the slot which is being used as a template for the opened dialogset
 	UDialogSequenceSlot* GetTemplateSlot(AActor* InActor);
 	void SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AActor*& OutActor, bool bIsCamera = false);
-	void CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot);
+	void CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot, bool bIsCamera = false);
 	TArray<AActor*> GetDialogSlotActors() const;
 	void SelectDialogDefinitionActor(UDialogDefinition* InDialogDefinition);
 	void SelectDialogDefinition(UDialogDefinition* InDialogDefinition);
