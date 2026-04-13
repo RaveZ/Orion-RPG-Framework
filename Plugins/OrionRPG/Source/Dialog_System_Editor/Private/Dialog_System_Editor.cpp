@@ -23,6 +23,7 @@
 #include "ISequencerModule.h"
 #include "Modules/ModuleManager.h"
 #include "Sequencer/DialogTrackEditor.h"
+#include "DialogSequenceDetails.h"
 
 
 #define LOCTEXT_NAMESPACE "FDialog_System_EditorModule"
@@ -141,6 +142,7 @@ void FDialog_System_EditorModule::RegisterObjectCustomizations()
 {
 	RegisterCustomClassLayout("DialogBuilderNode_DialogLine", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogNodeDetails::MakeInstance));
 	RegisterCustomClassLayout("DialogBuilderNode_DialogSequence", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogNodeDetails::MakeInstance));
+	RegisterCustomClassLayout("DialogSequenceSlot", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogSequenceDetails::MakeInstance));
 }
 
 void FDialog_System_EditorModule::RegisterCustomClassLayout(FName ClassName, FOnGetDetailCustomizationInstance DetailLayoutDelegate)

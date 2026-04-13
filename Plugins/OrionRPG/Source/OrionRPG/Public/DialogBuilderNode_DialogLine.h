@@ -49,7 +49,7 @@ public:
 	UPROPERTY()
 		bool bIsPlayerLine = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog", meta = (EditCondition = "bIsPlayerLine == false", HideEditConditionToggle, EditConditionHides))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog", meta = (EditCondition = "bIsPlayerLine == false", HideEditConditionToggle, EditConditionHides, DisplayAfter = "TimeLimit"))
 		FParticipantInfo ParticipantInfo;
 
 	UPROPERTY()
