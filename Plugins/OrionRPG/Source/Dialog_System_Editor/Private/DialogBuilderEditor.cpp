@@ -1214,6 +1214,7 @@ void FDialogBuilderEditor::OnOpenDialogSequenceNode(UDialogBuilderNode_DialogSeq
 		}
 		DestroyDialogStage();
 		CurrentSequenceNode = InSequenceNode;
+		GetDialogBuilderGraph()->CurrentEditingSequenceNode = CurrentSequenceNode.Get();
 		DialogStageWidget->SetObject(InSequenceNode->DialogStage);
 		OpenDialogSequence(InSequenceNode->DialogSequence);
 		UpdateDialogStage();

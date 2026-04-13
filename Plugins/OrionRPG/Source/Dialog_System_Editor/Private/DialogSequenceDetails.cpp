@@ -3,6 +3,7 @@
 #include "DialogSequenceDetails.h"
 
 #include "DialogBuilderGraph.h"
+#include "DialogBuilderNode_DialogSequence.h"
 #include "DialogBuilderEdGraph.h"
 #include "DialogBuilderEditor.h"
 #include "DialogDefinition.h"
@@ -357,55 +358,39 @@ TSharedRef<SWidget> FDialogSequenceDetails::OnGetShotActorToFocusListMenu()
 {
 	FMenuBuilder MenuBuilder(true, nullptr);
 
-	MenuBuilder.BeginSection("ShotActorToFocusParticipants", LOCTEXT("ShotActorToFocusParticipantsSection", "Participant Definitions"));
+	MenuBuilder.BeginSection("ShotActorToFocusParticipants", LOCTEXT("ShotActorToFocusParticipantsSection", "Actor To Focus"));
 	MenuBuilder.AddMenuEntry(
 		LOCTEXT("ShotActorToFocusNoneEntry", "None"),
 		FText(),
 		FSlateIcon(),
 		FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::ClearShotActorToFocusDefinition)));
 
-	if (const UDialogSequenceShot* SequenceShot = DialogSequenceShot.Get())
-	{
-		if (const UDialogBuilderGraph* Graph = SequenceShot->OwningDialogGraph)
-		{
-			for (const TObjectPtr<UDialogParticipant>& Participant : Graph->ParticipantDefinitions)
-			{
-				if (!Participant)
-				{
-					continue;
-				}
+	const UDialogSequenceShot* SequenceShot = DialogSequenceShot.Get();
+	const UDialogBuilderGraph* Graph = SequenceShot ? SequenceShot->OwningDialogGraph : nullptr;
 
+	UDialogBuilderNode_DialogSequence* SequenceNode = Graph ? Graph->CurrentEditingSequenceNode : nullptr;
+	UDialogStage* CurrentStage = SequenceNode ? SequenceNode->DialogStage: nullptr;
+
+
+	if (CurrentStage)
+	{
+		for(auto& Slot : CurrentStage->Slots)
+		{
+			if (Slot && Slot->DialogDefinition)
+			{
 				MenuBuilder.AddMenuEntry(
-					GetDialogDefinitionText(Participant.Get()),
-					FText::FromString(Participant->Tag.ToString()),
+					GetDialogDefinitionText(Slot->DialogDefinition.Get()),
+					FText::FromString(Slot->DialogDefinition->Tag.ToString()),
 					FSlateIcon(),
-					FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseShotActorToFocusDefinition, static_cast<UDialogDefinition*>(Participant.Get()))));
+					FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseShotActorToFocusDefinition, static_cast<UDialogDefinition*>(Slot->DialogDefinition.Get()))));
 			}
 		}
+		
+		
 	}
 	MenuBuilder.EndSection();
 
-	MenuBuilder.BeginSection("ShotActorToFocusProps", LOCTEXT("ShotActorToFocusPropsSection", "Prop Definitions"));
-	if (const UDialogSequenceShot* SequenceShot = DialogSequenceShot.Get())
-	{
-		if (const UDialogBuilderGraph* Graph = SequenceShot->OwningDialogGraph)
-		{
-			for (const TObjectPtr<UDialogProp>& Prop : Graph->PropDefinitions)
-			{
-				if (!Prop)
-				{
-					continue;
-				}
-
-				MenuBuilder.AddMenuEntry(
-					GetDialogDefinitionText(Prop.Get()),
-					FText::FromString(Prop->Tag.ToString()),
-					FSlateIcon(),
-					FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseShotActorToFocusDefinition, static_cast<UDialogDefinition*>(Prop.Get()))));
-			}
-		}
-	}
-	MenuBuilder.EndSection();
+	
 
 	return MenuBuilder.MakeWidget();
 }
@@ -428,7 +413,7 @@ void FDialogSequenceDetails::UseShotActorToFocusDefinition(UDialogDefinition* In
 
 	if (SequenceShot->OwningDialogGraph->DialogGraphPages.IsValidIndex(0))
 	{
-		UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(SequenceShot->OwningDialogGraph->DialogGraphPages[0]);
+		UDialogBuilderEdGraph* DialogGraph = SequenceShot->OwningDialogGraph->DialogGraphPages.IsValidIndex(0) ? Cast<UDialogBuilderEdGraph>(SequenceShot->OwningDialogGraph->DialogGraphPages[0]) : nullptr;
 		FDialogBuilderEditor* DialogBuilderEditor = DialogGraph->DialogEditorPtr.Pin().Get();
 		if (DialogBuilderEditor)
 		{

@@ -289,6 +289,8 @@ protected:
 
 #if WITH_EDITORONLY_DATA
 public:
+	UPROPERTY(Transient)
+	TObjectPtr<class UDialogBuilderNode_DialogSequence> CurrentEditingSequenceNode;
 	/** Set of dialog-graph pages */
 	UPROPERTY()
 	TArray<TObjectPtr<UEdGraph>> DialogGraphPages;
