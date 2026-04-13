@@ -124,8 +124,12 @@ public:
 	void OnSequencerButtonHovered();
 	void OnSequencerButtonUnhovered();
 	FSlateColor GetSequencerButtonColor() const;
+	const FSlateBrush* GetDialogSequenceThumbnail() const;
 
 protected:
+	mutable FSlateBrush SequenceThumbnailBrush;
+	mutable FSlateBrush SequenceThumbnailFallbackBrush;
+
 	uint32 bSequencerButtonHovered : 1;
 	/** The node body widget, cached here so we can determine its size when we want ot position our overlays */
 	TSharedPtr<SBorder> NodeBody;

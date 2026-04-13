@@ -3575,13 +3575,13 @@ void FDialogBuilderEditor::OnPackageSaved(const FString& PackageFileName, UObjec
 void FDialogBuilderEditor::OnPackageSavedWithContext(const FString& PackageFileName, UPackage* Package, FObjectPostSaveContext ObjectSaveContext)
 {
 	RebuildDialogBuilderGraphPages();
-	if (DialogViewportWidget.IsValid())
+	/*if (DialogViewportWidget.IsValid() && CurrentSequenceNode.IsValid())
 	{
 		if (UTexture2D* Thumbnail = DialogViewportWidget->CaptureViewportThumbnail())
 		{
 			CurrentSequenceNode->Thumbnail = Thumbnail;
 		}
-	}
+	}*/
 }
 
 

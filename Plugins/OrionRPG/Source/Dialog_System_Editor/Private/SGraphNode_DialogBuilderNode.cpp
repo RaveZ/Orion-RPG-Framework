@@ -224,6 +224,10 @@ void SGraphNode_DialogBuilderNode::Construct(const FArguments& InArgs, UDialogBu
 	UpdateGraphNode();
 	InNode->SGraphNode = this;
 	bDragMarkerVisible = false;
+	SequenceThumbnailFallbackBrush = FSlateBrush();
+	SequenceThumbnailFallbackBrush.DrawAs = ESlateBrushDrawType::Image;
+	SequenceThumbnailFallbackBrush.TintColor = FSlateColor(FLinearColor::Black);
+	SequenceThumbnailFallbackBrush.ImageSize = FVector2D(32.0f, 32.0f);
 }
 
 
@@ -546,6 +550,18 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 																]
 														]
 												]
+											/*+ SVerticalBox::Slot()
+												.AutoHeight()
+												.Padding(FMargin(0.0f, 6.0f, 0.0f, 0.0f))
+												[
+													SNew(SBox)
+														.WidthOverride(180.0f)
+														.HeightOverride(100.0f)
+														[
+															SNew(SImage)
+																.Image(this, &SGraphNode_DialogBuilderNode::GetDialogSequenceThumbnail)
+														]
+												]*/
 											+ SVerticalBox::Slot()
 												.AutoHeight()
 												[
@@ -967,6 +983,26 @@ FSlateColor SGraphNode_DialogBuilderNode::GetSequencerButtonColor() const
 	return bSequencerButtonHovered
 		? FSlateColor(FLinearColor(1.0f, 1.0f, 1.0f, 1.0f))
 		: FSlateColor(FLinearColor(0.5f, 0.5f, 0.5f, 1.0f));
+}
+
+const FSlateBrush* SGraphNode_DialogBuilderNode::GetDialogSequenceThumbnail() const
+{
+	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+	UDialogBuilderNode_DialogSequence* DialogSequenceNode = DialogEdNode
+		? Cast<UDialogBuilderNode_DialogSequence>(DialogEdNode->NodeInstance)
+		: nullptr;
+	if (!DialogSequenceNode) return nullptr;
+
+	if (DialogSequenceNode->Thumbnail)
+	{
+		SequenceThumbnailBrush = FSlateBrush();
+		SequenceThumbnailBrush.DrawAs = ESlateBrushDrawType::Image;
+		SequenceThumbnailBrush.SetResourceObject(DialogSequenceNode->Thumbnail);
+		SequenceThumbnailBrush.ImageSize = FVector2D(180.0f, 100.0f);
+		return &SequenceThumbnailBrush;
+	}
+
+	return &SequenceThumbnailFallbackBrush;
 }
 
 void SGraphNode_DialogBuilderNode::CreatePinWidgets()
