@@ -16,6 +16,7 @@ class IPropertyHandle;
 class SWidget;
 class UDialogParticipant;
 class UDialogSequenceSlot;
+class UMovieSceneDialogSection;
 
 class FDialogSequenceDetails : public IDetailCustomization
 {
@@ -27,11 +28,32 @@ public:
 	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
 
 protected:
-	TSharedRef<SWidget> GetWidgetForParticipantPicker(const TAttribute<FText>& InParticipantNameText, FOnGetContent GetContentMenu);
-	TSharedRef<SWidget> OnGetParticipantListMenu();
-	void UseParticipantDefinition(UDialogParticipant* InParticipantDefinition);
+	// DialogSequenceSlot
+	TSharedRef<SWidget> GetWidgetForSlotParticipantPicker(const TAttribute<FText>& InParticipantNameText, FOnGetContent GetContentMenu);
+	TSharedRef<SWidget> OnGetSlotParticipantListMenu();
+	void UseSlotParticipantDefinition(UDialogParticipant* InParticipantDefinition);
+
+	// MovieSceneDialogSection - Speaker
+	TSharedRef<SWidget> GetWidgetForSpeakerParticipantPicker(const TAttribute<FText>& InParticipantNameText, FOnGetContent GetContentMenu);
+	TSharedRef<SWidget> OnGetSpeakerParticipantListMenu();
+	void UseSpeakerParticipantDefinition(UDialogParticipant* InParticipantDefinition);
+
+	// MovieSceneDialogSection - Listener
+	TSharedRef<SWidget> GetWidgetForListenerParticipantPicker(const TAttribute<FText>& InParticipantNameText, FOnGetContent GetContentMenu);
+	TSharedRef<SWidget> OnGetListenerParticipantListMenu();
+	void UseListenerParticipantDefinition(UDialogParticipant* InParticipantDefinition);
+
+private:
+	FText GetSlotParticipantDisplayText() const;
+	FText GetSectionSpeakerDisplayText() const;
+	FText GetSectionListenerDisplayText() const;
 
 private:
 	TWeakObjectPtr<UDialogSequenceSlot> DialogSequenceSlot;
+	TWeakObjectPtr<UMovieSceneDialogSection> MovieSceneDialogSection;
+
 	TSharedPtr<IPropertyHandle> ActorTagPropertyHandle;
+	TSharedPtr<IPropertyHandle> DialogLinePropertyHandle;
+	TSharedPtr<IPropertyHandle> SpeakerTagPropertyHandle;
+	TSharedPtr<IPropertyHandle> ListenerTagPropertyHandle;
 };
