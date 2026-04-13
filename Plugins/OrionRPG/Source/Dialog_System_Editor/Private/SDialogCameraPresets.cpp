@@ -46,6 +46,7 @@ void SDialogCameraPresets::Construct(const FArguments& InArgs, TWeakPtr<FDialogB
 	DetailsArgs.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Hide;
 
 	ShotDetailsView = PropertyModule.CreateDetailView(DetailsArgs);
+	ShotDetailsView->OnFinishedChangingProperties().AddSP(this, &SDialogCameraPresets::OnShotPropertyChanged);
 
 	ChildSlot
 	[
@@ -152,6 +153,8 @@ void SDialogCameraPresets::ApplyCameraPresetItem(FDialogCameraPresetItemPtr InIt
 
 	if (!InItem.IsValid() || !InItem->ShotInstance.IsValid())
 	{
+		ActiveShot.Reset();
+
 		if (DialogEditor)
 		{
 			DialogEditor->SetDetailsObject(nullptr);
@@ -166,6 +169,7 @@ void SDialogCameraPresets::ApplyCameraPresetItem(FDialogCameraPresetItemPtr InIt
 	}
 
 	UDialogSequenceShot* Shot = InItem->ShotInstance.Get();
+	ActiveShot = Shot;
 
 	if (ShotDetailsView.IsValid())
 	{
@@ -177,6 +181,18 @@ void SDialogCameraPresets::ApplyCameraPresetItem(FDialogCameraPresetItemPtr InIt
 		DialogEditor->SetDetailsObject(Shot);
 		DialogEditor->ApplyCameraPreset(Shot);
 	}
+}
+
+void SDialogCameraPresets::OnShotPropertyChanged(const FPropertyChangedEvent& PropertyChangedEvent)
+{
+	FDialogBuilderEditor* DialogEditor = DialogEditorPtr.Pin().Get();
+	UDialogSequenceShot* Shot = ActiveShot.Get();
+	if (!DialogEditor || !Shot)
+	{
+		return;
+	}
+
+	DialogEditor->ApplyCameraPreset(Shot);
 }
 
 void SDialogCameraPresets::RebuildCameraPresetList()
@@ -267,7 +283,7 @@ UDialogSequenceShot* SDialogCameraPresets::CreateSelectedShotInstance(const FAss
 	}
 
 	UDialogSequenceShot* OutShot = NewObject<UDialogSequenceShot>(
-		GetTransientPackage(), UDialogSequenceShot::StaticClass(), NAME_None, RF_Transient | RF_Transactional);
+		GetTransientPackage(), Blueprint->GeneratedClass, NAME_None, RF_Transient | RF_Transactional);
 
 	FDialogBuilderEditor* DialogEditor = DialogEditorPtr.Pin().Get();
 	UDialogBuilderGraph* DialogGraph = DialogEditor ? DialogEditor->GetDialogBuilderGraph() : nullptr;
