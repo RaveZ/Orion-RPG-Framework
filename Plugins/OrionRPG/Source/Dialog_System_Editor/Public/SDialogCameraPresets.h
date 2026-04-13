@@ -37,7 +37,9 @@ private:
 
 	void OnCameraPresetSelectionChanged(FDialogCameraPresetItemPtr InItem, ESelectInfo::Type InSelectInfo);
 	void ApplyCameraPresetItem(FDialogCameraPresetItemPtr InItem);
-	void OnShotPropertyChanged(const FPropertyChangedEvent& PropertyChangedEvent);
+	void BindShotPropertyChanged(UDialogSequenceShot* InShot);
+	void UnbindShotPropertyChanged();
+	void OnShotPropertyChanged(UObject* ObjectBeingModified, FPropertyChangedEvent& PropertyChangedEvent);
 
 	void RebuildCameraPresetList();
 	UDialogSequenceShot* CreateSelectedShotInstance(const FAssetData& AssetData) const;
@@ -55,4 +57,5 @@ private:
 	TSharedPtr<SListView<FDialogCameraPresetItemPtr>> CameraPresetListView;
 	TSharedPtr<IDetailsView> ShotDetailsView;
 	TWeakObjectPtr<UDialogSequenceShot> ActiveShot;
+	FDelegateHandle ShotPropertyChangedHandle;
 };

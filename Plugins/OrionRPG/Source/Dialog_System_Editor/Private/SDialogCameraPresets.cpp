@@ -46,7 +46,6 @@ void SDialogCameraPresets::Construct(const FArguments& InArgs, TWeakPtr<FDialogB
 	DetailsArgs.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Hide;
 
 	ShotDetailsView = PropertyModule.CreateDetailView(DetailsArgs);
-	ShotDetailsView->OnFinishedChangingProperties().AddSP(this, &SDialogCameraPresets::OnShotPropertyChanged);
 
 	ChildSlot
 	[
@@ -94,6 +93,7 @@ void SDialogCameraPresets::Construct(const FArguments& InArgs, TWeakPtr<FDialogB
 
 SDialogCameraPresets::~SDialogCameraPresets()
 {
+	UnbindShotPropertyChanged();
 	ReleaseShotDuplicates();
 }
 
@@ -154,6 +154,7 @@ void SDialogCameraPresets::ApplyCameraPresetItem(FDialogCameraPresetItemPtr InIt
 	if (!InItem.IsValid() || !InItem->ShotInstance.IsValid())
 	{
 		ActiveShot.Reset();
+		UnbindShotPropertyChanged();
 
 		if (DialogEditor)
 		{
@@ -176,6 +177,8 @@ void SDialogCameraPresets::ApplyCameraPresetItem(FDialogCameraPresetItemPtr InIt
 		ShotDetailsView->SetObject(Shot);
 	}
 
+	BindShotPropertyChanged(Shot);
+
 	if (DialogEditor)
 	{
 		DialogEditor->SetDetailsObject(Shot);
@@ -183,11 +186,35 @@ void SDialogCameraPresets::ApplyCameraPresetItem(FDialogCameraPresetItemPtr InIt
 	}
 }
 
-void SDialogCameraPresets::OnShotPropertyChanged(const FPropertyChangedEvent& PropertyChangedEvent)
+void SDialogCameraPresets::BindShotPropertyChanged(UDialogSequenceShot* InShot)
+{
+	UnbindShotPropertyChanged();
+
+	if (!InShot)
+	{
+		return;
+	}
+
+	ShotPropertyChangedHandle = FCoreUObjectDelegates::OnObjectPropertyChanged.AddSP(
+		this,
+		&SDialogCameraPresets::OnShotPropertyChanged);
+}
+
+void SDialogCameraPresets::UnbindShotPropertyChanged()
+{
+	if (ShotPropertyChangedHandle.IsValid())
+	{
+		FCoreUObjectDelegates::OnObjectPropertyChanged.Remove(ShotPropertyChangedHandle);
+		ShotPropertyChangedHandle.Reset();
+	}
+}
+
+void SDialogCameraPresets::OnShotPropertyChanged(UObject* ObjectBeingModified, FPropertyChangedEvent& PropertyChangedEvent)
 {
 	FDialogBuilderEditor* DialogEditor = DialogEditorPtr.Pin().Get();
 	UDialogSequenceShot* Shot = ActiveShot.Get();
-	if (!DialogEditor || !Shot)
+
+	if (!DialogEditor || !Shot || ObjectBeingModified != Shot)
 	{
 		return;
 	}
@@ -287,17 +314,21 @@ UDialogSequenceShot* SDialogCameraPresets::CreateSelectedShotInstance(const FAss
 
 	FDialogBuilderEditor* DialogEditor = DialogEditorPtr.Pin().Get();
 	UDialogBuilderGraph* DialogGraph = DialogEditor ? DialogEditor->GetDialogBuilderGraph() : nullptr;
+
 	OutShot->OwningDialogGraph = DialogGraph;
 	return OutShot;
 }
 
 void SDialogCameraPresets::ReleaseShotDuplicates()
 {
+	UnbindShotPropertyChanged();
+
 	if (ShotDetailsView.IsValid())
 	{
 		ShotDetailsView->SetObject(nullptr);
 	}
 
+	ActiveShot.Reset();
 	ShotDuplicates.Empty();
 	CameraPresetItems.Empty();
 }

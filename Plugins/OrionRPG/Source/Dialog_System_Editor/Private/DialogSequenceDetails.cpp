@@ -3,6 +3,8 @@
 #include "DialogSequenceDetails.h"
 
 #include "DialogBuilderGraph.h"
+#include "DialogBuilderEdGraph.h"
+#include "DialogBuilderEditor.h"
 #include "DialogDefinition.h"
 #include "DialogSequenceShot.h"
 #include "DialogStage.h"
@@ -422,15 +424,24 @@ void FDialogSequenceDetails::UseShotActorToFocusDefinition(UDialogDefinition* In
 		return;
 	}
 
-	SequenceShot->Modify();
 	SequenceShot->ActorToFocus = InDialogDefinition;
+
+	if (SequenceShot->OwningDialogGraph->DialogGraphPages.IsValidIndex(0))
+	{
+		UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(SequenceShot->OwningDialogGraph->DialogGraphPages[0]);
+		FDialogBuilderEditor* DialogBuilderEditor = DialogGraph->DialogEditorPtr.Pin().Get();
+		if (DialogBuilderEditor)
+		{
+			DialogBuilderEditor->ApplyCameraPreset(SequenceShot);
+		}
+
+	}
 }
 
 void FDialogSequenceDetails::ClearShotActorToFocusDefinition()
 {
 	if (UDialogSequenceShot* SequenceShot = DialogSequenceShot.Get())
 	{
-		SequenceShot->Modify();
 		SequenceShot->ActorToFocus = nullptr;
 	}
 }
