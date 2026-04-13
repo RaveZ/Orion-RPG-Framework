@@ -705,6 +705,8 @@ void SDialogPreviewViewport::RemoveDialogOverlayWidget()
 	}
 
 	EditorViewportContainer.Reset();
+	
+
 	DialogOverlayWidget.Reset();
 }
 

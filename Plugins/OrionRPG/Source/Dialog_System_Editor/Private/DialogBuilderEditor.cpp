@@ -36,6 +36,7 @@
 #include "Kismet2/KismetEditorUtilities.h"
 #include "MovieScenePossessable.h"
 #include "K2Node.h"
+#include "Containers/Ticker.h"
 #include "GraphEditAction.h"
 #include "DialogBuilderEdNode_Edge.h"
 #include "AssetRegistry/AssetRegistryModule.h"
@@ -313,13 +314,24 @@ void FDialogBuilderEditor::UnbindDelegates()
 
 void FDialogBuilderEditor::OnMapChange(uint32)
 {
-
 }
 
 
 void FDialogBuilderEditor::OnWorldAdded(UWorld*)
 {
-	UpdateDialogStage();
+	//For some reason, sequencer won't immediately resolve the binding, add a delay instead
+	const TWeakPtr<FDialogBuilderEditor> EditorWeak = SharedThis(this);
+
+	FTSTicker::GetCoreTicker().AddTicker(
+		FTickerDelegate::CreateLambda([EditorWeak](float)
+			{
+				if (const TSharedPtr<FDialogBuilderEditor> EditorPinned = EditorWeak.Pin())
+				{
+					EditorPinned->UpdateDialogStage();
+				}
+				return false;
+			}),
+		1.0f);
 }
 
 void FDialogBuilderEditor::OnWorldDestroyed(UWorld*)
@@ -334,7 +346,7 @@ void FDialogBuilderEditor::OnWorldCleanup(UWorld* World, bool bSessionEnded, boo
 		return;
 	}
 
-	DestroyDialogStage();
+	DialogViewportWidget->RemoveDialogOverlayWidget();
 
 }
 void FDialogBuilderEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
