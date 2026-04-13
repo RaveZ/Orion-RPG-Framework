@@ -13,6 +13,7 @@
 class FText;
 class IDetailLayoutBuilder;
 class SWidget;
+class UDialogDefinition;
 class UDialogParticipant;
 class UDialogSequenceSlot;
 class UMovieSceneDialogSection;
@@ -30,7 +31,7 @@ protected:
 	// Slot
 	TSharedRef<SWidget> GetWidgetForSlotParticipantPicker(const TAttribute<FText>& InParticipantNameText, FOnGetContent GetContentMenu);
 	TSharedRef<SWidget> OnGetSlotParticipantListMenu();
-	void UseSlotParticipantDefinition(UDialogParticipant* InParticipantDefinition);
+	void UseSlotParticipantDefinition(UDialogDefinition* InDialogDefinition);
 	void ClearSlotParticipantDefinition();
 
 	// Section - Speaker
