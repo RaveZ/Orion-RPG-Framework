@@ -21,6 +21,39 @@
 
 #define LOCTEXT_NAMESPACE "DialogSequenceDetails"
 
+namespace
+{
+static bool IsParticipantInGraph(const UDialogBuilderGraph* Graph, const UDialogParticipant* Participant)
+{
+	if (!Graph || !Participant)
+	{
+		return false;
+	}
+
+	for (const TObjectPtr<UDialogParticipant>& Entry : Graph->ParticipantDefinitions)
+	{
+		if (Entry.Get() == Participant)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+static FText GetParticipantText(const UDialogParticipant* Participant)
+{
+	if (!Participant)
+	{
+		return LOCTEXT("NoneText", "None");
+	}
+
+	return !Participant->DisplayName.IsEmpty()
+		? Participant->DisplayName
+		: FText::FromString(Participant->Tag.ToString());
+}
+}
+
 TSharedRef<IDetailCustomization> FDialogSequenceDetails::MakeInstance()
 {
 	return MakeShareable(new FDialogSequenceDetails);
@@ -30,11 +63,6 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 {
 	DialogSequenceSlot.Reset();
 	MovieSceneDialogSection.Reset();
-
-	ActorTagPropertyHandle.Reset();
-	DialogLinePropertyHandle.Reset();
-	SpeakerTagPropertyHandle.Reset();
-	ListenerTagPropertyHandle.Reset();
 
 	const TArray<TWeakObjectPtr<UObject>>& SelectedObjects = DetailBuilder.GetSelectedObjects();
 	for (const TWeakObjectPtr<UObject>& CurrentObject : SelectedObjects)
@@ -66,15 +94,28 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 		return;
 	}
 
-	// DialogSequenceSlot customization
-	if (DialogSequenceSlot.IsValid())
+	// Slot customization
+	if (UDialogSequenceSlot* Slot = DialogSequenceSlot.Get())
 	{
+		if (!IsParticipantInGraph(Slot->OwningDialogGraph, Cast<UDialogParticipant>(Slot->DialogDefinition)))
+		{
+			Slot->Modify();
+			Slot->DialogDefinition = nullptr;
+			Slot->ActorTag = FGameplayTag();
+		}
+
 		IDetailCategoryBuilder& DetailCategory = DetailBuilder.EditCategory("Detail", LOCTEXT("DetailCategoryTitle", "Detail"));
 
-		ActorTagPropertyHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceSlot, ActorTag));
-		if (ActorTagPropertyHandle.IsValid())
+		TSharedPtr<IPropertyHandle> ActorTagHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceSlot, ActorTag));
+		if (ActorTagHandle.IsValid())
 		{
-			ActorTagPropertyHandle->MarkHiddenByCustomization();
+			ActorTagHandle->MarkHiddenByCustomization();
+		}
+
+		TSharedPtr<IPropertyHandle> DialogDefinitionHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceSlot, DialogDefinition));
+		if (DialogDefinitionHandle.IsValid())
+		{
+			DialogDefinitionHandle->MarkHiddenByCustomization();
 		}
 
 		DetailCategory.AddCustomRow(LOCTEXT("ParticipantToBindLabel", "Participant To Bind"))
@@ -83,7 +124,6 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 				SNew(STextBlock)
 					.Text(LOCTEXT("ParticipantToBindText", "Participant To Bind"))
 					.Font(IDetailLayoutBuilder::GetDetailFont())
-					.ToolTipText(LOCTEXT("ParticipantToBindTooltip", "Pick a participant definition from the owning dialog graph. This sets ActorTag on the slot."))
 			]
 			.ValueContent()
 			.MaxDesiredWidth(300.0f)
@@ -93,23 +133,34 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 					FOnGetContent::CreateSP(this, &FDialogSequenceDetails::OnGetSlotParticipantListMenu))
 			];
 
-		DetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceSlot, DialogDefinition)).DisplayName(LOCTEXT("DialogDefinitionLabel", "Dialog Definition"));
 		DetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceSlot, SlotPlacement)).DisplayName(LOCTEXT("SlotPlacementLabel", "Slot Placement"));
 		return;
 	}
 
-	// MovieSceneDialogSection customization
-	if (MovieSceneDialogSection.IsValid())
+	// Section customization
+	if (UMovieSceneDialogSection* Section = MovieSceneDialogSection.Get())
 	{
+		Section->Modify();
+		Section->RefreshDialogContent();
+
 		IDetailCategoryBuilder& SectionCategory = DetailBuilder.EditCategory("Section", LOCTEXT("SectionCategoryTitle", "Section"));
 
-		DialogLinePropertyHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UMovieSceneDialogSection, DialogLine));
-		if (DialogLinePropertyHandle.IsValid())
+		TSharedPtr<IPropertyHandle> DialogLineHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UMovieSceneDialogSection, DialogLine));
+		if (DialogLineHandle.IsValid())
 		{
-			DialogLinePropertyHandle->MarkHiddenByCustomization();
+			DialogLineHandle->MarkHiddenByCustomization();
+		}
 
-			SpeakerTagPropertyHandle = DialogLinePropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FOrionDialogLine, SpeakerTag));
-			ListenerTagPropertyHandle = DialogLinePropertyHandle->GetChildHandle(GET_MEMBER_NAME_CHECKED(FOrionDialogLine, ListenerTag));
+		TSharedPtr<IPropertyHandle> SpeakerRefHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UMovieSceneDialogSection, SpeakerParticipantDefinition));
+		if (SpeakerRefHandle.IsValid())
+		{
+			SpeakerRefHandle->MarkHiddenByCustomization();
+		}
+
+		TSharedPtr<IPropertyHandle> ListenerRefHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UMovieSceneDialogSection, ListenerParticipantDefinition));
+		if (ListenerRefHandle.IsValid())
+		{
+			ListenerRefHandle->MarkHiddenByCustomization();
 		}
 
 		SectionCategory.AddCustomRow(LOCTEXT("SpeakerParticipantRowLabel", "Speaker Participant"))
@@ -118,7 +169,6 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 				SNew(STextBlock)
 					.Text(LOCTEXT("SpeakerParticipantText", "Speaker"))
 					.Font(IDetailLayoutBuilder::GetDetailFont())
-					.ToolTipText(LOCTEXT("SpeakerParticipantTooltip", "Pick participant for SpeakerTag."))
 			]
 			.ValueContent()
 			.MaxDesiredWidth(300.0f)
@@ -134,7 +184,6 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 				SNew(STextBlock)
 					.Text(LOCTEXT("ListenerParticipantText", "Listener"))
 					.Font(IDetailLayoutBuilder::GetDetailFont())
-					.ToolTipText(LOCTEXT("ListenerParticipantTooltip", "Pick participant for ListenerTag."))
 			]
 			.ValueContent()
 			.MaxDesiredWidth(300.0f)
@@ -144,15 +193,14 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 					FOnGetContent::CreateSP(this, &FDialogSequenceDetails::OnGetListenerParticipantListMenu))
 			];
 
-		// Re-add DialogLine children except SpeakerTag and ListenerTag
-		if (DialogLinePropertyHandle.IsValid())
+		if (DialogLineHandle.IsValid())
 		{
 			uint32 NumChildren = 0;
-			DialogLinePropertyHandle->GetNumChildren(NumChildren);
+			DialogLineHandle->GetNumChildren(NumChildren);
 
 			for (uint32 ChildIndex = 0; ChildIndex < NumChildren; ++ChildIndex)
 			{
-				TSharedPtr<IPropertyHandle> ChildHandle = DialogLinePropertyHandle->GetChildHandle(ChildIndex);
+				TSharedPtr<IPropertyHandle> ChildHandle = DialogLineHandle->GetChildHandle(ChildIndex);
 				if (!ChildHandle.IsValid() || !ChildHandle->GetProperty())
 				{
 					continue;
@@ -174,96 +222,41 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 FText FDialogSequenceDetails::GetSlotParticipantDisplayText() const
 {
 	const UDialogSequenceSlot* Slot = DialogSequenceSlot.Get();
-	if (!Slot)
+	if (!Slot || !Slot->OwningDialogGraph)
 	{
-		return LOCTEXT("NoSlotSelected", "None");
+		return LOCTEXT("SlotNone", "None");
 	}
 
-	const UDialogBuilderGraph* Graph = Slot->OwningDialogGraph;
-	if (Graph)
-	{
-		for (const TObjectPtr<UDialogParticipant>& ParticipantDefinition : Graph->ParticipantDefinitions)
-		{
-			if (ParticipantDefinition && ParticipantDefinition->Tag == Slot->ActorTag)
-			{
-				return !ParticipantDefinition->DisplayName.IsEmpty()
-					? ParticipantDefinition->DisplayName
-					: FText::FromString(ParticipantDefinition->Tag.ToString());
-			}
-		}
-	}
-
-	return Slot->ActorTag.IsValid()
-		? FText::FromString(Slot->ActorTag.ToString())
-		: LOCTEXT("NoParticipantSelected", "None");
+	const UDialogParticipant* Selected = Cast<UDialogParticipant>(Slot->DialogDefinition);
+	return IsParticipantInGraph(Slot->OwningDialogGraph, Selected) ? GetParticipantText(Selected) : LOCTEXT("SlotNoneMissing", "None");
 }
 
 FText FDialogSequenceDetails::GetSectionSpeakerDisplayText() const
 {
 	const UMovieSceneDialogSection* Section = MovieSceneDialogSection.Get();
-	if (!Section)
-	{
-		return LOCTEXT("NoSectionSpeakerSelected", "None");
-	}
-
-	const UDialogBuilderGraph* Graph = Section->GetOwningDialogGraph();
-	if (Graph)
-	{
-		for (const TObjectPtr<UDialogParticipant>& ParticipantDefinition : Graph->ParticipantDefinitions)
-		{
-			if (ParticipantDefinition && ParticipantDefinition->Tag == Section->DialogLine.SpeakerTag)
-			{
-				return !ParticipantDefinition->DisplayName.IsEmpty()
-					? ParticipantDefinition->DisplayName
-					: FText::FromString(ParticipantDefinition->Tag.ToString());
-			}
-		}
-	}
-
-	return Section->DialogLine.SpeakerTag.IsValid()
-		? FText::FromString(Section->DialogLine.SpeakerTag.ToString())
-		: LOCTEXT("NoSpeakerParticipantSelected", "None");
+	const UDialogBuilderGraph* Graph = Section ? Section->GetOwningDialogGraph() : nullptr;
+	return IsParticipantInGraph(Graph, Section ? Section->SpeakerParticipantDefinition.Get() : nullptr)
+		? GetParticipantText(Section->SpeakerParticipantDefinition.Get())
+		: LOCTEXT("SpeakerNone", "None");
 }
 
 FText FDialogSequenceDetails::GetSectionListenerDisplayText() const
 {
 	const UMovieSceneDialogSection* Section = MovieSceneDialogSection.Get();
-	if (!Section)
-	{
-		return LOCTEXT("NoSectionListenerSelected", "None");
-	}
-
-	const UDialogBuilderGraph* Graph = Section->GetOwningDialogGraph();
-	if (Graph)
-	{
-		for (const TObjectPtr<UDialogParticipant>& ParticipantDefinition : Graph->ParticipantDefinitions)
-		{
-			if (ParticipantDefinition && ParticipantDefinition->Tag == Section->DialogLine.ListenerTag)
-			{
-				return !ParticipantDefinition->DisplayName.IsEmpty()
-					? ParticipantDefinition->DisplayName
-					: FText::FromString(ParticipantDefinition->Tag.ToString());
-			}
-		}
-	}
-
-	return Section->DialogLine.ListenerTag.IsValid()
-		? FText::FromString(Section->DialogLine.ListenerTag.ToString())
-		: LOCTEXT("NoListenerParticipantSelected", "None");
+	const UDialogBuilderGraph* Graph = Section ? Section->GetOwningDialogGraph() : nullptr;
+	return IsParticipantInGraph(Graph, Section ? Section->ListenerParticipantDefinition.Get() : nullptr)
+		? GetParticipantText(Section->ListenerParticipantDefinition.Get())
+		: LOCTEXT("ListenerNone", "None");
 }
 
-// DialogSequenceSlot ----------------------------------------------------------
-
+// Slot
 TSharedRef<SWidget> FDialogSequenceDetails::GetWidgetForSlotParticipantPicker(const TAttribute<FText>& InParticipantNameText, FOnGetContent GetContentMenu)
 {
-	return
-		SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
+	return SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot().AutoWidth()
 		[
 			SNew(SComboButton)
 				.ContentPadding(FMargin(4.0f, 2.0f))
-				.ToolTipText(LOCTEXT("SlotParticipantPickerTooltip", "Participant definition to bind to this slot"))
 				.OnGetMenuContent(GetContentMenu)
 				.ButtonContent()
 				[
@@ -277,27 +270,30 @@ TSharedRef<SWidget> FDialogSequenceDetails::GetWidgetForSlotParticipantPicker(co
 TSharedRef<SWidget> FDialogSequenceDetails::OnGetSlotParticipantListMenu()
 {
 	FMenuBuilder MenuBuilder(true, nullptr);
-	MenuBuilder.BeginSection("DialogSequenceSlotParticipants", LOCTEXT("SlotParticipantDefinitionsSectionLabel", "Participant Definitions"));
+	MenuBuilder.BeginSection("SlotParticipants", LOCTEXT("SlotParticipantsSection", "Participant Definitions"));
+
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("SlotParticipantNone", "None"),
+		FText(),
+		FSlateIcon(),
+		FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::ClearSlotParticipantDefinition)));
 
 	if (const UDialogSequenceSlot* Slot = DialogSequenceSlot.Get())
 	{
 		if (const UDialogBuilderGraph* Graph = Slot->OwningDialogGraph)
 		{
-			for (const TObjectPtr<UDialogParticipant>& ParticipantDefinition : Graph->ParticipantDefinitions)
+			for (const TObjectPtr<UDialogParticipant>& Participant : Graph->ParticipantDefinitions)
 			{
-				if (!ParticipantDefinition)
+				if (!Participant)
 				{
 					continue;
 				}
 
-				const FText EntryText = !ParticipantDefinition->DisplayName.IsEmpty()
-					? ParticipantDefinition->DisplayName
-					: FText::FromString(ParticipantDefinition->Tag.ToString());
-
-				const FText EntryToolTip = FText::FromString(ParticipantDefinition->Tag.ToString());
-
-				FUIAction Action(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseSlotParticipantDefinition, ParticipantDefinition.Get()));
-				MenuBuilder.AddMenuEntry(EntryText, EntryToolTip, FSlateIcon(), Action);
+				MenuBuilder.AddMenuEntry(
+					GetParticipantText(Participant.Get()),
+					FText::FromString(Participant->Tag.ToString()),
+					FSlateIcon(),
+					FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseSlotParticipantDefinition, Participant.Get())));
 			}
 		}
 	}
@@ -308,26 +304,41 @@ TSharedRef<SWidget> FDialogSequenceDetails::OnGetSlotParticipantListMenu()
 
 void FDialogSequenceDetails::UseSlotParticipantDefinition(UDialogParticipant* InParticipantDefinition)
 {
-	if (!InParticipantDefinition || !ActorTagPropertyHandle.IsValid())
+	if (!InParticipantDefinition || !DialogSequenceSlot.IsValid())
 	{
 		return;
 	}
 
-	ActorTagPropertyHandle->SetValueFromFormattedString(InParticipantDefinition->Tag.ToString());
+	UDialogSequenceSlot* Slot = DialogSequenceSlot.Get();
+	if (!IsParticipantInGraph(Slot->OwningDialogGraph, InParticipantDefinition))
+	{
+		ClearSlotParticipantDefinition();
+		return;
+	}
+
+	Slot->Modify();
+	Slot->DialogDefinition = InParticipantDefinition;
+	Slot->ActorTag = InParticipantDefinition->Tag;
 }
 
-// MovieSceneDialogSection - Speaker ------------------------------------------
+void FDialogSequenceDetails::ClearSlotParticipantDefinition()
+{
+	if (UDialogSequenceSlot* Slot = DialogSequenceSlot.Get())
+	{
+		Slot->Modify();
+		Slot->DialogDefinition = nullptr;
+		Slot->ActorTag = FGameplayTag();
+	}
+}
 
+// Speaker
 TSharedRef<SWidget> FDialogSequenceDetails::GetWidgetForSpeakerParticipantPicker(const TAttribute<FText>& InParticipantNameText, FOnGetContent GetContentMenu)
 {
-	return
-		SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
+	return SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot().AutoWidth()
 		[
 			SNew(SComboButton)
 				.ContentPadding(FMargin(4.0f, 2.0f))
-				.ToolTipText(LOCTEXT("SpeakerParticipantPickerTooltip", "Participant definition for speaker"))
 				.OnGetMenuContent(GetContentMenu)
 				.ButtonContent()
 				[
@@ -341,27 +352,30 @@ TSharedRef<SWidget> FDialogSequenceDetails::GetWidgetForSpeakerParticipantPicker
 TSharedRef<SWidget> FDialogSequenceDetails::OnGetSpeakerParticipantListMenu()
 {
 	FMenuBuilder MenuBuilder(true, nullptr);
-	MenuBuilder.BeginSection("DialogSectionSpeakerParticipants", LOCTEXT("SpeakerParticipantDefinitionsSectionLabel", "Participant Definitions"));
+	MenuBuilder.BeginSection("SpeakerParticipants", LOCTEXT("SpeakerParticipantsSection", "Participant Definitions"));
+
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("SpeakerParticipantNone", "None"),
+		FText(),
+		FSlateIcon(),
+		FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::ClearSpeakerParticipantDefinition)));
 
 	if (const UMovieSceneDialogSection* Section = MovieSceneDialogSection.Get())
 	{
 		if (const UDialogBuilderGraph* Graph = Section->GetOwningDialogGraph())
 		{
-			for (const TObjectPtr<UDialogParticipant>& ParticipantDefinition : Graph->ParticipantDefinitions)
+			for (const TObjectPtr<UDialogParticipant>& Participant : Graph->ParticipantDefinitions)
 			{
-				if (!ParticipantDefinition)
+				if (!Participant)
 				{
 					continue;
 				}
 
-				const FText EntryText = !ParticipantDefinition->DisplayName.IsEmpty()
-					? ParticipantDefinition->DisplayName
-					: FText::FromString(ParticipantDefinition->Tag.ToString());
-
-				const FText EntryToolTip = FText::FromString(ParticipantDefinition->Tag.ToString());
-
-				FUIAction Action(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseSpeakerParticipantDefinition, ParticipantDefinition.Get()));
-				MenuBuilder.AddMenuEntry(EntryText, EntryToolTip, FSlateIcon(), Action);
+				MenuBuilder.AddMenuEntry(
+					GetParticipantText(Participant.Get()),
+					FText::FromString(Participant->Tag.ToString()),
+					FSlateIcon(),
+					FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseSpeakerParticipantDefinition, Participant.Get())));
 			}
 		}
 	}
@@ -372,31 +386,41 @@ TSharedRef<SWidget> FDialogSequenceDetails::OnGetSpeakerParticipantListMenu()
 
 void FDialogSequenceDetails::UseSpeakerParticipantDefinition(UDialogParticipant* InParticipantDefinition)
 {
-	if (!InParticipantDefinition || !SpeakerTagPropertyHandle.IsValid())
+	if (!InParticipantDefinition || !MovieSceneDialogSection.IsValid())
 	{
 		return;
 	}
 
-	SpeakerTagPropertyHandle->SetValueFromFormattedString(InParticipantDefinition->Tag.ToString());
+	UMovieSceneDialogSection* Section = MovieSceneDialogSection.Get();
+	if (!IsParticipantInGraph(Section->GetOwningDialogGraph(), InParticipantDefinition))
+	{
+		ClearSpeakerParticipantDefinition();
+		return;
+	}
 
+	Section->Modify();
+	Section->SpeakerParticipantDefinition = InParticipantDefinition;
+	Section->RefreshDialogContent();
+}
+
+void FDialogSequenceDetails::ClearSpeakerParticipantDefinition()
+{
 	if (UMovieSceneDialogSection* Section = MovieSceneDialogSection.Get())
 	{
+		Section->Modify();
+		Section->SpeakerParticipantDefinition = nullptr;
 		Section->RefreshDialogContent();
 	}
 }
 
-// MovieSceneDialogSection - Listener -----------------------------------------
-
+// Listener
 TSharedRef<SWidget> FDialogSequenceDetails::GetWidgetForListenerParticipantPicker(const TAttribute<FText>& InParticipantNameText, FOnGetContent GetContentMenu)
 {
-	return
-		SNew(SHorizontalBox)
-		+ SHorizontalBox::Slot()
-		.AutoWidth()
+	return SNew(SHorizontalBox)
+		+ SHorizontalBox::Slot().AutoWidth()
 		[
 			SNew(SComboButton)
 				.ContentPadding(FMargin(4.0f, 2.0f))
-				.ToolTipText(LOCTEXT("ListenerParticipantPickerTooltip", "Participant definition for listener"))
 				.OnGetMenuContent(GetContentMenu)
 				.ButtonContent()
 				[
@@ -410,27 +434,30 @@ TSharedRef<SWidget> FDialogSequenceDetails::GetWidgetForListenerParticipantPicke
 TSharedRef<SWidget> FDialogSequenceDetails::OnGetListenerParticipantListMenu()
 {
 	FMenuBuilder MenuBuilder(true, nullptr);
-	MenuBuilder.BeginSection("DialogSectionListenerParticipants", LOCTEXT("ListenerParticipantDefinitionsSectionLabel", "Participant Definitions"));
+	MenuBuilder.BeginSection("ListenerParticipants", LOCTEXT("ListenerParticipantsSection", "Participant Definitions"));
+
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("ListenerParticipantNone", "None"),
+		FText(),
+		FSlateIcon(),
+		FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::ClearListenerParticipantDefinition)));
 
 	if (const UMovieSceneDialogSection* Section = MovieSceneDialogSection.Get())
 	{
 		if (const UDialogBuilderGraph* Graph = Section->GetOwningDialogGraph())
 		{
-			for (const TObjectPtr<UDialogParticipant>& ParticipantDefinition : Graph->ParticipantDefinitions)
+			for (const TObjectPtr<UDialogParticipant>& Participant : Graph->ParticipantDefinitions)
 			{
-				if (!ParticipantDefinition)
+				if (!Participant)
 				{
 					continue;
 				}
 
-				const FText EntryText = !ParticipantDefinition->DisplayName.IsEmpty()
-					? ParticipantDefinition->DisplayName
-					: FText::FromString(ParticipantDefinition->Tag.ToString());
-
-				const FText EntryToolTip = FText::FromString(ParticipantDefinition->Tag.ToString());
-
-				FUIAction Action(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseListenerParticipantDefinition, ParticipantDefinition.Get()));
-				MenuBuilder.AddMenuEntry(EntryText, EntryToolTip, FSlateIcon(), Action);
+				MenuBuilder.AddMenuEntry(
+					GetParticipantText(Participant.Get()),
+					FText::FromString(Participant->Tag.ToString()),
+					FSlateIcon(),
+					FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseListenerParticipantDefinition, Participant.Get())));
 			}
 		}
 	}
@@ -441,12 +468,31 @@ TSharedRef<SWidget> FDialogSequenceDetails::OnGetListenerParticipantListMenu()
 
 void FDialogSequenceDetails::UseListenerParticipantDefinition(UDialogParticipant* InParticipantDefinition)
 {
-	if (!InParticipantDefinition || !ListenerTagPropertyHandle.IsValid())
+	if (!InParticipantDefinition || !MovieSceneDialogSection.IsValid())
 	{
 		return;
 	}
 
-	ListenerTagPropertyHandle->SetValueFromFormattedString(InParticipantDefinition->Tag.ToString());
+	UMovieSceneDialogSection* Section = MovieSceneDialogSection.Get();
+	if (!IsParticipantInGraph(Section->GetOwningDialogGraph(), InParticipantDefinition))
+	{
+		ClearListenerParticipantDefinition();
+		return;
+	}
+
+	Section->Modify();
+	Section->ListenerParticipantDefinition = InParticipantDefinition;
+	Section->RefreshDialogContent();
+}
+
+void FDialogSequenceDetails::ClearListenerParticipantDefinition()
+{
+	if (UMovieSceneDialogSection* Section = MovieSceneDialogSection.Get())
+	{
+		Section->Modify();
+		Section->ListenerParticipantDefinition = nullptr;
+		Section->RefreshDialogContent();
+	}
 }
 
 #undef LOCTEXT_NAMESPACE

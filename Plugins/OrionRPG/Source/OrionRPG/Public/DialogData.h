@@ -61,10 +61,10 @@ struct FOrionDialogLine
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog", meta = (Categories = "Dialog.Participant"))
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog", meta = (Categories = "Dialog.Participant"))
 	FGameplayTag SpeakerTag;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog", meta = (Categories = "Dialog.Participant"))
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog", meta = (Categories = "Dialog.Participant"))
 	FGameplayTag ListenerTag;
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true", Category = "Override", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))

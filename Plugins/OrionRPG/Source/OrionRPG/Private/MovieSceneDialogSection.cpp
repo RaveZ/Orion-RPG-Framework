@@ -3,14 +3,36 @@
 #include "MovieSceneDialogSection.h"
 #include "DialogSequence.h"
 #include "DialogBuilderGraph.h"
+#include "DialogDefinition.h"
 
 #define LOCTEXT_NAMESPACE "DialogSection"
+
+namespace
+{
+static bool IsParticipantInGraph(const UDialogBuilderGraph* Graph, const UDialogParticipant* Participant)
+{
+	if (!Graph || !Participant)
+	{
+		return false;
+	}
+
+	for (const TObjectPtr<UDialogParticipant>& Entry : Graph->ParticipantDefinitions)
+	{
+		if (Entry.Get() == Participant)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+}
+
 UMovieSceneDialogSection::UMovieSceneDialogSection(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	SetIsActive(true);
 	SetIsLocked(false);
-	
 }
 
 UDialogSequence* UMovieSceneDialogSection::GetOwningDialogSequence() const
@@ -30,7 +52,31 @@ UDialogBuilderGraph* UMovieSceneDialogSection::GetOwningDialogGraph() const
 void UMovieSceneDialogSection::RefreshDialogContent()
 {
 	UDialogBuilderGraph* DialogGraph = GetOwningDialogGraph();
-	DialogLine.SpeakerName = DialogGraph ? DialogGraph->GetParticipantName(DialogLine.SpeakerTag) : FText();
+
+	// Speaker reference validity
+	if (!IsParticipantInGraph(DialogGraph, SpeakerParticipantDefinition))
+	{
+		SpeakerParticipantDefinition = nullptr;
+		DialogLine.SpeakerTag = FGameplayTag();
+	}
+	else
+	{
+		DialogLine.SpeakerTag = SpeakerParticipantDefinition->Tag;
+	}
+
+	// Listener reference validity
+	if (!IsParticipantInGraph(DialogGraph, ListenerParticipantDefinition))
+	{
+		ListenerParticipantDefinition = nullptr;
+		DialogLine.ListenerTag = FGameplayTag();
+	}
+	else
+	{
+		DialogLine.ListenerTag = ListenerParticipantDefinition->Tag;
+	}
+
+	//DialogLine.SpeakerName = DialogGraph ? DialogGraph->GetParticipantName(DialogLine.SpeakerTag) : FText();
+	DialogLine.SpeakerName = SpeakerParticipantDefinition ? SpeakerParticipantDefinition->DisplayName : FText();
 }
 
 #if WITH_EDITOR
@@ -38,11 +84,7 @@ void UMovieSceneDialogSection::PostEditChangeProperty(FPropertyChangedEvent& Pro
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	FName DialogLineProperty = FName("DialogLine");
-	if (DialogLineProperty == GET_MEMBER_NAME_CHECKED(UMovieSceneDialogSection, DialogLine))
-	{
-		RefreshDialogContent();
-	}
+	RefreshDialogContent();
 }
 #endif
 

@@ -15,7 +15,7 @@ class ORIONRPG_API UMovieSceneDialogSection : public UMovieSceneSection
 public:
 	UMovieSceneDialogSection(const FObjectInitializer& ObjectInitializer);
 
-	class  UDialogSequence* GetOwningDialogSequence() const;
+	class UDialogSequence* GetOwningDialogSequence() const;
 	class UDialogBuilderGraph* GetOwningDialogGraph() const;
 
 	void RefreshDialogContent();
@@ -23,10 +23,14 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Section", meta = (ShowOnlyInnerProperties))
 	FOrionDialogLine DialogLine;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Section")
+	TObjectPtr<class UDialogParticipant> SpeakerParticipantDefinition;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Section")
+	TObjectPtr<class UDialogParticipant> ListenerParticipantDefinition;
 
 public:
 #if WITH_EDITOR
-
 	//~ Begin UObject Interface
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;
 	//~ End UObject Interface

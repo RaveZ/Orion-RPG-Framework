@@ -12,7 +12,6 @@
 
 class FText;
 class IDetailLayoutBuilder;
-class IPropertyHandle;
 class SWidget;
 class UDialogParticipant;
 class UDialogSequenceSlot;
@@ -28,20 +27,23 @@ public:
 	virtual void CustomizeDetails(IDetailLayoutBuilder& DetailBuilder) override;
 
 protected:
-	// DialogSequenceSlot
+	// Slot
 	TSharedRef<SWidget> GetWidgetForSlotParticipantPicker(const TAttribute<FText>& InParticipantNameText, FOnGetContent GetContentMenu);
 	TSharedRef<SWidget> OnGetSlotParticipantListMenu();
 	void UseSlotParticipantDefinition(UDialogParticipant* InParticipantDefinition);
+	void ClearSlotParticipantDefinition();
 
-	// MovieSceneDialogSection - Speaker
+	// Section - Speaker
 	TSharedRef<SWidget> GetWidgetForSpeakerParticipantPicker(const TAttribute<FText>& InParticipantNameText, FOnGetContent GetContentMenu);
 	TSharedRef<SWidget> OnGetSpeakerParticipantListMenu();
 	void UseSpeakerParticipantDefinition(UDialogParticipant* InParticipantDefinition);
+	void ClearSpeakerParticipantDefinition();
 
-	// MovieSceneDialogSection - Listener
+	// Section - Listener
 	TSharedRef<SWidget> GetWidgetForListenerParticipantPicker(const TAttribute<FText>& InParticipantNameText, FOnGetContent GetContentMenu);
 	TSharedRef<SWidget> OnGetListenerParticipantListMenu();
 	void UseListenerParticipantDefinition(UDialogParticipant* InParticipantDefinition);
+	void ClearListenerParticipantDefinition();
 
 private:
 	FText GetSlotParticipantDisplayText() const;
@@ -51,9 +53,4 @@ private:
 private:
 	TWeakObjectPtr<UDialogSequenceSlot> DialogSequenceSlot;
 	TWeakObjectPtr<UMovieSceneDialogSection> MovieSceneDialogSection;
-
-	TSharedPtr<IPropertyHandle> ActorTagPropertyHandle;
-	TSharedPtr<IPropertyHandle> DialogLinePropertyHandle;
-	TSharedPtr<IPropertyHandle> SpeakerTagPropertyHandle;
-	TSharedPtr<IPropertyHandle> ListenerTagPropertyHandle;
 };
