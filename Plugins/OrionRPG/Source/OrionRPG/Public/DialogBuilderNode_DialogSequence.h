@@ -39,7 +39,7 @@ public:
 public:
 	virtual void Serialize(FArchive& Ar) override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialog Sequence")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detail")
 	TObjectPtr<UDialogSequence> DialogSequence = nullptr;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog Sequence")

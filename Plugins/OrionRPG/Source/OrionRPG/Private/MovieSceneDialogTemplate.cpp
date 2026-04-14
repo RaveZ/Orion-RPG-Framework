@@ -105,6 +105,19 @@ namespace OrionDialogTemplate
 								}
 							}
 						}
+
+						const TWeakObjectPtr<UUserWidget> DialogWidgetWeak = DialogWidget;
+						FWorldDelegates::OnWorldCleanup.AddLambda(
+							[this, DialogWidgetWeak](UWorld*, bool, bool)
+							{
+								if (DialogWidgetWeak.IsValid())
+								{
+									DialogWidgetWeak->RemoveFromParent();
+								}
+
+								DialogWidgetSlateWidget.Reset();
+								DialogWidget = nullptr;
+							});
 					}
 
 					NotifyDialogInterface(DialogWidget);
@@ -121,7 +134,6 @@ namespace OrionDialogTemplate
 						}
 					}
 
-					EditorViewportContainer.Reset();
 					DialogWidgetSlateWidget.Reset();
 					DialogWidget = nullptr;
 				}
@@ -163,7 +175,6 @@ namespace OrionDialogTemplate
 		TSharedPtr<SWidget> DialogWidgetSlateWidget;
 
 #if WITH_EDITOR
-		TWeakPtr<SWidget> EditorViewportContainer;
 #endif
 	};
 

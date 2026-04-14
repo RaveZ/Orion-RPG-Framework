@@ -328,6 +328,7 @@ void FDialogBuilderEditor::OnWorldAdded(UWorld*)
 				if (const TSharedPtr<FDialogBuilderEditor> EditorPinned = EditorWeak.Pin())
 				{
 					EditorPinned->UpdateDialogStage();
+					EditorPinned->ApplyViewportCameraMode();
 				}
 				return false;
 			}),
@@ -865,38 +866,47 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 	if (NewActor)
 	{
 		OutActor = NewActor;
-		if (ACineCameraActor* CineCam = Cast<ACineCameraActor>(NewActor))
-		{
-			if (UCineCameraComponent* CineCameraComponent = CineCam->GetCineCameraComponent())
-			{
-				CineCameraComponent->FocusSettings.FocusMethod = ECameraFocusMethod::Manual;
-				CineCameraComponent->FocusSettings.ManualFocusDistance = 10000.0f;
-				CineCameraComponent->CurrentAperture = 16.0f;
-
-				CineCameraComponent->bOverride_CustomNearClippingPlane = true;
-				CineCameraComponent->CustomNearClippingPlane = 1.0f;
-
-				UStaticMeshComponent* ProxyMeshComponent = NewObject<UCameraProxyMeshComponent>(CineCam, NAME_None, RF_Transactional | RF_TextExportTransient);
-				ProxyMeshComponent->SetupAttachment(CineCameraComponent);
-				ProxyMeshComponent->SetIsVisualizationComponent(true);
-				ProxyMeshComponent->SetCanEverAffectNavigation(false);
-
-				if (UStaticMesh* CameraMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/EditorMeshes/Camera/SM_CineCam.SM_CineCam")))
-				{
-					ProxyMeshComponent->SetStaticMesh(CameraMesh);
-				}
-				ProxyMeshComponent->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-				ProxyMeshComponent->bHiddenInGame = false;
-				ProxyMeshComponent->CastShadow = false;
-				ProxyMeshComponent->SetRelativeRotation(FRotator(0.0f, 90.0f, 0.0f));
-				ProxyMeshComponent->SetRelativeLocation(FVector(-50.0f, 0.0f, -15.0f));
-				ProxyMeshComponent->RegisterComponent();
-			}
-		}
 		// Preserve the actor's world transform when attaching to the pivot.
 		NewActor->AttachToActor(SequencePivot.Get(), FAttachmentTransformRules::KeepWorldTransform);
-		NewActor->SetActorRelativeLocation(InSlot->SlotLocation);
-		NewActor->SetActorRelativeRotation(InSlot->SlotRotation);
+
+		if (bIsCamera)
+		{
+			if (ACineCameraActor* CineCam = Cast<ACineCameraActor>(NewActor))
+			{
+				if (UCineCameraComponent* CineCameraComponent = CineCam->GetCineCameraComponent())
+				{
+					CineCameraComponent->FocusSettings.FocusMethod = ECameraFocusMethod::Manual;
+					CineCameraComponent->FocusSettings.ManualFocusDistance = 10000.0f;
+					CineCameraComponent->CurrentAperture = 16.0f;
+
+					CineCameraComponent->bOverride_CustomNearClippingPlane = true;
+					CineCameraComponent->CustomNearClippingPlane = 1.0f;
+
+					UStaticMeshComponent* ProxyMeshComponent = NewObject<UCameraProxyMeshComponent>(CineCam, NAME_None, RF_Transactional | RF_TextExportTransient);
+					ProxyMeshComponent->SetupAttachment(CineCameraComponent);
+					ProxyMeshComponent->SetIsVisualizationComponent(true);
+					ProxyMeshComponent->SetCanEverAffectNavigation(false);
+
+					if (UStaticMesh* CameraMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/EditorMeshes/Camera/SM_CineCam.SM_CineCam")))
+					{
+						ProxyMeshComponent->SetStaticMesh(CameraMesh);
+					}
+					ProxyMeshComponent->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+					ProxyMeshComponent->bHiddenInGame = false;
+					ProxyMeshComponent->CastShadow = false;
+					ProxyMeshComponent->SetRelativeRotation(FRotator(0.0f, 90.0f, 0.0f));
+					ProxyMeshComponent->SetRelativeLocation(FVector(-50.0f, 0.0f, -15.0f));
+					ProxyMeshComponent->RegisterComponent();
+				}
+			}
+
+			NewActor->SetActorTransform(CachedCameraTransform);
+		}
+		else
+		{
+			NewActor->SetActorRelativeLocation(InSlot->SlotLocation);
+			NewActor->SetActorRelativeRotation(InSlot->SlotRotation);
+		}
 		DialogSlotActors.Emplace(InSlot, NewActor);
 		CreateDialogTrackFromSlot(InSlot, bIsCamera);
 	}
@@ -906,6 +916,11 @@ void FDialogBuilderEditor::DestroyDialogStage()
 {
 	UWorld* PreviewWorld = GetPreviewWorld();
 	check(PreviewWorld);
+
+	if (AActor* CameraActor = DialogCamera.Get())
+	{
+		CachedCameraTransform = CameraActor->GetActorTransform();
+	}
 
 	for (auto& Pair : DialogSlotActors)
 	{
@@ -921,10 +936,7 @@ void FDialogBuilderEditor::DestroyDialogStage()
 
 	}
 
-	if (AActor* CameraActor = DialogCamera.Get())
-	{
-		PreviewWorld->EditorDestroyActor(CameraActor, false);
-	}
+	
 
 	if (AActor* PivotActor = SequencePivot.Get())
 	{
@@ -3584,10 +3596,10 @@ void FDialogBuilderEditor::ApplyViewportCameraMode()
 		{
 			Sequencer->SetPerspectiveViewportCameraCutEnabled(true);
 		}
+		RefreshSequencerCameraLock();
 		break;
 	}
 
-	RefreshSequencerCameraLock();
 }
 
 void FDialogBuilderEditor::SetDetailsObject(UObject* InObject)

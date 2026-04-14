@@ -15,9 +15,12 @@ public:
     UDialogBuilderNode_PlayerChoice();
     virtual void BeginNode() override;
 
-
     UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Detail")
     FText ChoiceText;
+
+    UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Detail")
+    TArray<FText> ChoiceList;
+
 #if WITH_EDITOR
     virtual FText GetNodeTitle() const override;
     virtual void SetNodeTitle(const FText& NewTitle);

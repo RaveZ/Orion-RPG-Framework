@@ -7,6 +7,9 @@
 #include "DialogBuilderNode_DialogSequence.h"
 #include "DialogBuilderEdNode_PlayerLine.h"
 #include "DialogBuilderNode_PlayerLine.h"
+#include "DialogBuilderGraph.h"
+#include "DialogBuilderEdGraph.h"
+#include "DialogBuilderEditor.h"
 #include "DialogStage.h"
 #include "Containers/Array.h"
 #include "Containers/EnumAsByte.h"
@@ -105,7 +108,6 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 	
 	//Option Selection Category
 	IDetailCategoryBuilder& OptionSelectionCategory = DetailBuilder.EditCategory("Selection Rule", LOCTEXT("OptionSelectionCategoryLabel", "Selection Rule"));
-	OptionSelectionCategory.SetSortOrder(0);
 	OptionSelectionCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, SelectingChoiceShotOverride)).DisplayName(LOCTEXT("SelectingChoiceShotOverrideLabel", "Selecting Shot Override"));
 	OptionSelectionCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, SelectionTimeLimit)).DisplayName(LOCTEXT("SelectionTimeLimitLabel", "Selection Time Limit"));
 	OptionSelectionCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, TimeLimit)).DisplayName(LOCTEXT("TimeLimitLabel", "Time Limit"));
@@ -114,7 +116,6 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 
 	//Dialog Line - Participant Category
 	IDetailCategoryBuilder& DialogParticipantCategory = DetailBuilder.EditCategory("Participant", LOCTEXT("ParticipantCategoryTitle", "Participant Settings"));
-	DialogParticipantCategory.SetSortOrder(1);
 	if (PlayerLineNode == NULL && DialogLineNode != NULL && SelectedObjects.Num() == 1)
 	{
 		UDialogBuilderNode_DialogLine* DialogLineNodeInstance = DialogLineNode.Get();
@@ -176,8 +177,36 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 					FOnGetContent::CreateSP(this, &FDialogNodeDetails::OnGetDialogStageListMenu))
 			];
 
-		DialogSequenceCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogSequence, DialogSequence)).DisplayName(LOCTEXT("DialogSequenceLabel", "Dialog Sequence"));
-		DialogSequenceCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogSequence, PlaybackSettings)).DisplayName(LOCTEXT("PlaybackSettingsLabel", "Playback Settings"));
+		DialogSequenceCategory.AddCustomRow(LOCTEXT("OpenSequenceRowLabel", "Open Sequence"))
+			.WholeRowContent()
+			[
+				SNew(SBorder)
+				.Padding(FMargin(0.0f, 6.0f, 0.0f, 5.0f))
+				.BorderImage(FAppStyle::GetBrush("NoBorder"))
+				[
+					SNew(SButton)
+						.HAlign(HAlign_Center)
+						.Text(LOCTEXT("OpenSequenceButtonLabel", "Open Sequence"))
+						.OnClicked_Lambda([DialogSequenceNodeInstance]()
+							{
+								if (DialogSequenceNodeInstance && DialogSequenceNodeInstance->GetOwningDialogGraph())
+								{
+									UDialogBuilderEdGraph* DialogGraph =
+										DialogSequenceNodeInstance->GetOwningDialogGraph()->DialogGraphPages.IsValidIndex(0)
+										? Cast<UDialogBuilderEdGraph>(DialogSequenceNodeInstance->GetOwningDialogGraph()->DialogGraphPages[0])
+										: nullptr;
+
+									FDialogBuilderEditor* DialogBuilderEditor = DialogGraph ? DialogGraph->DialogEditorPtr.Pin().Get() : nullptr;
+									if (DialogBuilderEditor)
+									{
+										DialogBuilderEditor->OnOpenDialogSequenceNode(DialogSequenceNodeInstance);
+									}
+								}
+
+								return FReply::Handled();
+							})
+				]
+			];
 	}
 
 

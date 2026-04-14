@@ -538,6 +538,7 @@ protected:
 	TWeakObjectPtr<AActor> SequencePivot;
 	TMap<UDialogSequenceSlot*, TWeakObjectPtr<AActor>> DialogSlotActors;
 	TWeakObjectPtr<AActor> DialogCamera;
+	FTransform CachedCameraTransform;
 
 	//sequencer
 	FDelegateHandle SequencerGlobalTimeChangedHandle;
