@@ -26,7 +26,7 @@ UDialogBuilderSetting::UDialogBuilderSetting()
 	PlayerLineNodeColor = FLinearColor(.06f, .135f, .175f);
 	RerouteNodeColor = FLinearColor(.063f, .096f, .1875f);
 	EndDialogNodeColor = FLinearColor(.34f, .024f, .024f);
-	PlayerOptionNodeColor = FLinearColor(.123f, .274f, .34f);
+	PlayerOptionNodeColor = FLinearColor(0.023f, 0.026f, 0.031f);
 	SubNodeColor = FLinearColor(0.05f, 0.05f, 0.05f, 0.7f);
 	RootNodeColor = FLinearColor(0.5f, 0.5f, 0.5f, 0.2f);
 	bEdgeEnabled = false;            

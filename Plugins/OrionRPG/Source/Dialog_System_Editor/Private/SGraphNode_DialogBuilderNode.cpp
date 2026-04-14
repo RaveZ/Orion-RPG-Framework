@@ -661,16 +661,17 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 										]
 
 									// OUTPUT PIN AREA
-									+ SHorizontalBox::Slot()
-										.Padding(PinPadding)
-										.AutoWidth()
-										[
-											SNew(SBox)
-												.MinDesiredWidth(NodePadding.Right)
-												[
-													SAssignNew(RightNodeBox, SVerticalBox)
-												]
-										]
+										+ SHorizontalBox::Slot()
+											.Padding(PinPadding)
+											.AutoWidth()
+											[
+												SNew(SBox)
+													.Padding(FMargin(0.0f, 5.0f, 0.0f, 0.0f))
+													.MinDesiredWidth(NodePadding.Right)
+													[
+														SAssignNew(RightNodeBox, SVerticalBox)
+													]
+											]
 								]
 							// Drag marker overlay
 							+ SOverlay::Slot()
@@ -1072,23 +1073,31 @@ void SGraphNode_DialogBuilderNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 			PinBox->AddSlot()
 				.HAlign(HAlign_Right)
 				.VAlign(VAlign_Center)
+				.Padding(FMargin(0.0f, 0.0f, 0.0f, 5.0f))
 				[
-					SNew(SHorizontalBox)
-						+ SHorizontalBox::Slot()
-						.AutoWidth()
-						.VAlign(VAlign_Center)
-						.Padding(FMargin(0.0f, 0.0f, 6.0f, 0.0f))
+					SNew(SBorder)
+						.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+						.BorderBackgroundColor(FLinearColor(.05f, .05f, .05f))
+						.Padding(FMargin(4.0f, 2.0f))
 						[
-							SNew(STextBlock)
-								.Text(PinLabel)
-								.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
-								.Font(FCoreStyle::GetDefaultFontStyle("Regular", 9))
-						]
-						+ SHorizontalBox::Slot()
-						.AutoWidth()
-						.VAlign(VAlign_Center)
-						[
-							PinToAdd
+							SNew(SHorizontalBox)
+								+ SHorizontalBox::Slot()
+								.AutoWidth()
+								.VAlign(VAlign_Center)
+								.Padding(FMargin(0.0f, 0.0f, 6.0f, 0.0f))
+								[
+									SNew(STextBlock)
+										.Text(PinLabel)
+										.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+										.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10))
+										.ColorAndOpacity(FLinearColor::White)
+								]
+							+ SHorizontalBox::Slot()
+								.AutoWidth()
+								.VAlign(VAlign_Center)
+								[
+									PinToAdd
+								]
 						]
 				];
 		}
@@ -1439,9 +1448,8 @@ EVisibility SGraphNode_DialogBuilderNode::GetParentNodeVisibility() const
 EVisibility SGraphNode_DialogBuilderNode::GetSelectorVisibility() const
 {
 	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
-	UDialogBuilderNode_DialogLine* DialogLineNode = DialogEdNode ? Cast<UDialogBuilderNode_DialogLine>(DialogEdNode->NodeInstance) : nullptr;
 
-	if (DialogLineNode && DialogLineNode->bIsSelector)
+	if (DialogEdNode && DialogEdNode->IsA(UDialogBuilderEdNode_PlayerChoice::StaticClass()))
 	{
 		return EVisibility::Visible;
 	}

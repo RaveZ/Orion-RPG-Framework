@@ -627,24 +627,28 @@ bool UEdGraphSchema_DialogBuilder::TryCreateConnection(UEdGraphPin* A, UEdGraphP
 		return false;
 	}
 
-	// Check duplicate child connection from any output pin on the source node
-	for (UEdGraphPin* SourcePin : OutputNode->Pins)
+	if (!OutputNode->IsA(UDialogBuilderEdNode_PlayerChoice::StaticClass()))
 	{
-		if (!SourcePin || SourcePin->Direction != EGPD_Output)
+		// Prevent duplicate child connections for normal nodes.
+		for (UEdGraphPin* SourcePin : OutputNode->Pins)
 		{
-			continue;
-		}
-
-		for (UEdGraphPin* TestPin : SourcePin->LinkedTo)
-		{
-			UEdGraphNode* ChildNode = TestPin ? TestPin->GetOwningNode() : nullptr;
-			if (UDialogBuilderEdNode_Edge* EdNode_Edge = Cast<UDialogBuilderEdNode_Edge>(ChildNode))
+			if (!SourcePin || SourcePin->Direction != EGPD_Output)
 			{
-				ChildNode = EdNode_Edge->GetEndNode();
+				continue;
 			}
-			if (ChildNode == InputNode)
+
+			for (UEdGraphPin* TestPin : SourcePin->LinkedTo)
 			{
-				return false;
+				UEdGraphNode* ChildNode = TestPin ? TestPin->GetOwningNode() : nullptr;
+				if (UDialogBuilderEdNode_Edge* EdNode_Edge = Cast<UDialogBuilderEdNode_Edge>(ChildNode))
+				{
+					ChildNode = EdNode_Edge->GetEndNode();
+				}
+
+				if (ChildNode == InputNode)
+				{
+					return false;
+				}
 			}
 		}
 	}
