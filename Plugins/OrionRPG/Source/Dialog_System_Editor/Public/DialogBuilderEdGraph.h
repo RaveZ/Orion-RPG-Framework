@@ -66,6 +66,8 @@ protected:
 	 */
 	uint32 bLockUpdates : 1;
 
+	bool SynchronizePlayerChoicePins();
+
 	void SortNodes(UDialogBuilderNode* RootNode);
 	double LastRebuildTime = 0.f;
 	double LastSortTime = 0.f;

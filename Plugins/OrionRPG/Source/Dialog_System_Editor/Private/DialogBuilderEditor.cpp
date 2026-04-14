@@ -3674,6 +3674,12 @@ void FDialogBuilderEditor::OnFinishedChangingProperties(const FPropertyChangedEv
 	for (UEdGraph* EdGraph : EditingDialogGraph->DialogGraphPages)
 	{
 		EdGraph->GetSchema()->ForceVisualizationCacheClear();
+
+		if (UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(EdGraph))
+		{
+			DialogEdGraph->UpdateAsset(true);
+			DialogEdGraph->NotifyGraphChanged();
+		}
 	}
 	DocumentManager->RefreshAllTabs();
 

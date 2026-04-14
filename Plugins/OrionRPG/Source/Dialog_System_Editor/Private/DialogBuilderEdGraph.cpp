@@ -1,6 +1,5 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
-
 #include "DialogBuilderEdGraph.h"
 #include "NativeGameplayTags.h"
 #include "DialogData.h"
@@ -13,6 +12,7 @@
 #include "DialogBuilderNode.h"
 #include "DialogBuilderNode_DialogLine.h"
 #include "DialogBuilderNode_PlayerLine.h"
+#include "DialogBuilderNode_PlayerChoice.h"
 #include "DialogBuilderEditorUtils.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
@@ -66,6 +66,7 @@ void UDialogBuilderEdGraph::UpdateAsset(bool bForce)
 	DialogGraph->ID = FDialogBuilderEditorUtils::FindUniqueDialogGraphName("DialogAsset_");
 	Clear();
 
+	SynchronizePlayerChoicePins();
 	UpdateAllSubnodeDependencies();
 
 
@@ -404,22 +405,79 @@ void UDialogBuilderEdGraph::RebuildChildOrder(UEdGraphNode* ParentNode)
 {
 	UDialogBuilderEdNode* DialogParentEdNode = Cast<UDialogBuilderEdNode>(ParentNode);
 	UDialogBuilderNode* DialogParentNode = DialogParentEdNode ? Cast<UDialogBuilderNode>(DialogParentEdNode->NodeInstance) : nullptr;
-	if (DialogParentNode)
+	if (DialogParentNode == nullptr)
 	{
-		DialogParentNode->ChildrenNodes.Sort([&](const UDialogBuilderNode& B, const UDialogBuilderNode& T)
-		{
-			UDialogBuilderEdNode* EdNode_BNode = NodeMap.FindRef(&B);
-			UDialogBuilderEdNode* EdNode_TNode = NodeMap.FindRef(&T);
-			if (EdNode_BNode && EdNode_TNode)
-			{
-				return EdNode_TNode->NodePosY > EdNode_BNode->NodePosY;
-			}
-			else
-			{
-				return false;
-			}
-		});
+		return;
 	}
+
+	// For player-choice nodes, child order must follow output pin order (Choice_0, Choice_1, ...)
+	if (Cast<UDialogBuilderNode_PlayerChoice>(DialogParentNode))
+	{
+		TArray<UDialogBuilderNode*> OrderedChildren;
+
+		auto ResolveChildNodeFromLinkedPin = [](UEdGraphPin* LinkedPin) -> UDialogBuilderNode*
+		{
+			if (!LinkedPin)
+			{
+				return nullptr;
+			}
+
+			if (UDialogBuilderEdNode* ChildEdNode = Cast<UDialogBuilderEdNode>(LinkedPin->GetOwningNode()))
+			{
+				return ChildEdNode->NodeInstance ? Cast<UDialogBuilderNode>(ChildEdNode->NodeInstance) : nullptr;
+			}
+
+			if (UDialogBuilderEdNode_Edge* EdgeEdNode = Cast<UDialogBuilderEdNode_Edge>(LinkedPin->GetOwningNode()))
+			{
+				if (UDialogBuilderEdNode* EndNode = EdgeEdNode->GetEndNode())
+				{
+					return EndNode->NodeInstance ? Cast<UDialogBuilderNode>(EndNode->NodeInstance) : nullptr;
+				}
+			}
+
+			return nullptr;
+		};
+
+		for (UEdGraphPin* Pin : DialogParentEdNode->Pins)
+		{
+			if (!Pin || Pin->Direction != EGPD_Output)
+			{
+				continue;
+			}
+
+			for (UEdGraphPin* LinkedPin : Pin->LinkedTo)
+			{
+				if (UDialogBuilderNode* ChildNode = ResolveChildNodeFromLinkedPin(LinkedPin))
+				{
+					if (!OrderedChildren.Contains(ChildNode))
+					{
+						OrderedChildren.Add(ChildNode);
+					}
+				}
+			}
+		}
+
+		if (OrderedChildren.Num() > 0)
+		{
+			DialogParentNode->ChildrenNodes = OrderedChildren;
+		}
+
+		return;
+	}
+
+	DialogParentNode->ChildrenNodes.Sort([&](const UDialogBuilderNode& B, const UDialogBuilderNode& T)
+	{
+		UDialogBuilderEdNode* EdNode_BNode = NodeMap.FindRef(&B);
+		UDialogBuilderEdNode* EdNode_TNode = NodeMap.FindRef(&T);
+		if (EdNode_BNode && EdNode_TNode)
+		{
+			return EdNode_TNode->NodePosY > EdNode_BNode->NodePosY;
+		}
+		else
+		{
+			return false;
+		}
+	});
 }
 
 UDialogBuilderGraph* UDialogBuilderEdGraph::GetDialogBuilderGraph() const
@@ -557,4 +615,38 @@ void UDialogBuilderEdGraph::SortNodes(UDialogBuilderNode* RootNode)
 		NextLevelNodes.Reset();
 		++Level;
 	}
+}
+
+bool UDialogBuilderEdGraph::SynchronizePlayerChoicePins()
+{
+	bool bAnyChanged = false;
+
+	for (UEdGraphNode* Node : Nodes)
+	{
+		UDialogBuilderEdNode_PlayerChoice* PlayerChoiceEdNode = Cast<UDialogBuilderEdNode_PlayerChoice>(Node);
+		if (!PlayerChoiceEdNode)
+		{
+			continue;
+		}
+
+		const UDialogBuilderNode_PlayerChoice* PlayerChoiceNode = Cast<UDialogBuilderNode_PlayerChoice>(PlayerChoiceEdNode->NodeInstance);
+		const int32 DesiredOutputPins = PlayerChoiceNode ? FMath::Max(1, PlayerChoiceNode->ChoiceList.Num()) : 1;
+
+		int32 ExistingOutputPins = 0;
+		for (UEdGraphPin* Pin : PlayerChoiceEdNode->Pins)
+		{
+			if (Pin && Pin->Direction == EGPD_Output)
+			{
+				++ExistingOutputPins;
+			}
+		}
+
+		if (ExistingOutputPins != DesiredOutputPins)
+		{
+			PlayerChoiceEdNode->ReconstructNode();
+			bAnyChanged = true;
+		}
+	}
+
+	return bAnyChanged;
 }

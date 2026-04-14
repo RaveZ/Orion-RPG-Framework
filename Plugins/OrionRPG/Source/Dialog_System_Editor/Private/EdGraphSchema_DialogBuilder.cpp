@@ -594,52 +594,71 @@ const FPinConnectionResponse UEdGraphSchema_DialogBuilder::CanMergeNodes(const U
 
 bool UEdGraphSchema_DialogBuilder::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const
 {
-	// We don't actually care about the pin, we want the node that is being dragged between
-	UDialogBuilderEdNode* NodeA = Cast<UDialogBuilderEdNode>(A->GetOwningNode());
-	UDialogBuilderEdNode* NodeB = Cast<UDialogBuilderEdNode>(B->GetOwningNode());
+	UDialogBuilderEdNode* NodeA = Cast<UDialogBuilderEdNode>(A ? A->GetOwningNode() : nullptr);
+	UDialogBuilderEdNode* NodeB = Cast<UDialogBuilderEdNode>(B ? B->GetOwningNode() : nullptr);
 
-	if(NodeA == NodeB)
+	if (!NodeA || !NodeB || NodeA == NodeB)
 	{
 		return false;
 	}
 
-	// Check that this edge doesn't already exist
-	if (NodeA->GetOutputPin())
+	UEdGraphPin* OutputPin = nullptr;
+	UEdGraphPin* InputPin = nullptr;
+
+	if (A->Direction == EGPD_Output && B->Direction == EGPD_Input)
 	{
-		for (UEdGraphPin* TestPin : NodeA->GetOutputPin()->LinkedTo)
+		OutputPin = A;
+		InputPin = B;
+	}
+	else if (B->Direction == EGPD_Output && A->Direction == EGPD_Input)
+	{
+		OutputPin = B;
+		InputPin = A;
+	}
+	else
+	{
+		return false;
+	}
+
+	UDialogBuilderEdNode* OutputNode = Cast<UDialogBuilderEdNode>(OutputPin->GetOwningNode());
+	UDialogBuilderEdNode* InputNode = Cast<UDialogBuilderEdNode>(InputPin->GetOwningNode());
+	if (!OutputNode || !InputNode)
+	{
+		return false;
+	}
+
+	// Check duplicate child connection from any output pin on the source node
+	for (UEdGraphPin* SourcePin : OutputNode->Pins)
+	{
+		if (!SourcePin || SourcePin->Direction != EGPD_Output)
 		{
-			UEdGraphNode* ChildNode = TestPin->GetOwningNode();
+			continue;
+		}
+
+		for (UEdGraphPin* TestPin : SourcePin->LinkedTo)
+		{
+			UEdGraphNode* ChildNode = TestPin ? TestPin->GetOwningNode() : nullptr;
 			if (UDialogBuilderEdNode_Edge* EdNode_Edge = Cast<UDialogBuilderEdNode_Edge>(ChildNode))
 			{
 				ChildNode = EdNode_Edge->GetEndNode();
 			}
-			if (ChildNode == NodeB)
+			if (ChildNode == InputNode)
+			{
 				return false;
+			}
 		}
 	}
-	bool bSuccesful = false;
-	if (UDialogBuilderEdNode_Root* RootNode = Cast<UDialogBuilderEdNode_Root>(NodeB))
+
+	const bool bSuccessful = Super::TryCreateConnection(OutputPin, InputPin);
+	if (bSuccessful)
 	{
-		Super::TryCreateConnection(NodeB->GetOutputPin(), NodeA->GetInputPin());
-		bSuccesful =  true;
-	}
-	else if (NodeA && NodeB)
-	{
-		if (A->Direction == EGPD_Output && B->Direction == EGPD_Input)
+		if (UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(OutputNode->GetGraph()))
 		{
-			// Always create connections from node A to B, don't allow adding in reverse
-			Super::TryCreateConnection(NodeA->GetOutputPin(), NodeB->GetInputPin());
-			bSuccesful =  true;
+			DialogEdGraph->UpdateAsset(true);
 		}
 	}
 
-	if (UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(NodeA->GetGraph()))
-	{
-		DialogEdGraph->UpdateAsset(true);
-	}
-
-	
-	return bSuccesful;
+	return bSuccessful;
 }
 
 bool UEdGraphSchema_DialogBuilder::CreateAutomaticConversionNodeAndConnections(UEdGraphPin* A, UEdGraphPin* B) const

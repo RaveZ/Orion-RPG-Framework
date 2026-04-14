@@ -5,6 +5,7 @@
 #include "DialogBuilderEditor.h"
 #include "DialogBuilder_EditorStyle.h"
 #include "SlateOptMacros.h"
+#include "DialogBuilderEdNode_PlayerChoice.h"
 #include "Types/SlateStructs.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Images/SImage.h"
@@ -1051,7 +1052,7 @@ void SGraphNode_DialogBuilderNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 		PinBox = LeftNodeBox;
 		InputPins.Add(PinToAdd);
 	}
-	else // Direction == EEdGraphPinDirection::EGPD_Output
+	else
 	{
 		PinBox = RightNodeBox;
 		OutputPins.Add(PinToAdd);
@@ -1059,12 +1060,47 @@ void SGraphNode_DialogBuilderNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 
 	if (PinBox)
 	{
-		PinBox->AddSlot()
-			.HAlign(HAlign_Center)
-			.VAlign(VAlign_Center)
-			[
-				PinToAdd
-			];
+		const bool bIsPlayerChoiceOutputPin =
+			(PinObj != nullptr) &&
+			(PinObj->Direction == EEdGraphPinDirection::EGPD_Output) &&
+			Cast<UDialogBuilderEdNode_PlayerChoice>(GraphNode) != nullptr;
+
+		if (bIsPlayerChoiceOutputPin)
+		{
+			const FText PinLabel = PinObj->PinFriendlyName.IsEmpty() ? FText::FromName(PinObj->PinName) : PinObj->PinFriendlyName;
+
+			PinBox->AddSlot()
+				.HAlign(HAlign_Right)
+				.VAlign(VAlign_Center)
+				[
+					SNew(SHorizontalBox)
+						+ SHorizontalBox::Slot()
+						.AutoWidth()
+						.VAlign(VAlign_Center)
+						.Padding(FMargin(0.0f, 0.0f, 6.0f, 0.0f))
+						[
+							SNew(STextBlock)
+								.Text(PinLabel)
+								.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+								.Font(FCoreStyle::GetDefaultFontStyle("Regular", 9))
+						]
+						+ SHorizontalBox::Slot()
+						.AutoWidth()
+						.VAlign(VAlign_Center)
+						[
+							PinToAdd
+						]
+				];
+		}
+		else
+		{
+			PinBox->AddSlot()
+				.HAlign(HAlign_Center)
+				.VAlign(VAlign_Center)
+				[
+					PinToAdd
+				];
+		}
 	}
 }
 
@@ -1147,6 +1183,7 @@ EVisibility SGraphNode_DialogBuilderNode::GetDecoratorVisibility() const
 void SGraphNode_DialogBuilderNode::Tick(const FGeometry& AllottedGeometry, const double InCurrentTime, const float InDeltaTime)
 {
 	SGraphNode::Tick(AllottedGeometry, InCurrentTime, InDeltaTime);
+
 }
 
 void SGraphNode_DialogBuilderNode::AddDecorator(TSharedPtr<SGraphNode> DecoratorWidget)
