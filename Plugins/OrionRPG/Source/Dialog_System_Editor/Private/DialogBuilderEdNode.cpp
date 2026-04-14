@@ -257,7 +257,7 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 				if (UDialogBuilderNode_PlayerChoice* PlayerOptionNode = Cast<UDialogBuilderNode_PlayerChoice>(NodeInstance))
 				{
 					FindUniqueNodeName("PlayerChoice");
-					PlayerOptionNode->ChoiceText = FText::FromString("Choice");
+					PlayerOptionNode->ChoiceList.Add(FText::FromString("Option 1"));
 
 				}
 				if (UOrionDecorator* OrionDecorator = Cast<UOrionDecorator>(NodeInstance))

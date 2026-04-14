@@ -217,7 +217,6 @@ void UDialogComponent::EnterChoiceSelection(const TArray<class UDialogBuilderNod
 
 void UDialogComponent::PlayerChoiceSelected(UDialogBuilderNode_PlayerChoice* PlayerOption)
 {
-    UE_LOG(LogTemp, Log, TEXT("Dialog Option Selected: %s"), *PlayerOption->ChoiceText.ToString());
 }
 
 void UDialogComponent::DialogBegin(UDialogBuilderGraph* Dialog)

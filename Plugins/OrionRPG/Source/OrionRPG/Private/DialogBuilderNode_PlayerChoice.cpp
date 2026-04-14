@@ -20,7 +20,7 @@ void UDialogBuilderNode_PlayerChoice::BeginNode()
 
 FText UDialogBuilderNode_PlayerChoice::GetNodeTitle() const
 {
-	return ChoiceText;
+	return FText::FromString("Player Choice");
 }
 void UDialogBuilderNode_PlayerChoice::SetNodeTitle(const FText& NewTitle)
 {
@@ -29,7 +29,7 @@ void UDialogBuilderNode_PlayerChoice::SetNodeTitle(const FText& NewTitle)
 
 FText UDialogBuilderNode_PlayerChoice::GetNodeDescription() const
 {
-	return ChoiceText.IsEmpty() ? FText::FromString("Choice Text") : ChoiceText;
+	return FText();
 }
 
 #endif
