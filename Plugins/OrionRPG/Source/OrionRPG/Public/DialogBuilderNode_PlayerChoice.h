@@ -29,8 +29,13 @@ public:
 	UDialogBuilderNode_PlayerChoice();
 	virtual void BeginNode() override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Choice Selection", meta = (DisplayPriority = -1))
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Choice Selection", meta = (DisplayPriority = -1))
+	EDialogSelectionType SelectionType;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Choice Selection", meta = (EditCondition = "SelectionType == EDialogSelectionType::E_CameraShot", HideEditConditionToggle, EditConditionHides, DisplayPriority = -1))
 	TObjectPtr<UDialogCameraShot> SelectingChoiceShotOverride;
+
+
 	/**
 	* Entering selection mode will have it's time limit setting.
 	* Selection will have no time limit by default

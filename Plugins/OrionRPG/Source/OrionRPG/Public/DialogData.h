@@ -28,6 +28,13 @@ enum class ESelectionTimeLimit : uint8
 };
 
 UENUM(BlueprintType)
+enum class EDialogSelectionType : uint8
+{
+	E_Sequence			UMETA(DisplayName = "Sequence"),
+	E_CameraShot		UMETA(DisplayName = "Camera Shot")
+};
+
+UENUM(BlueprintType)
 enum class EParticipantSetup : uint8
 {
 	/**

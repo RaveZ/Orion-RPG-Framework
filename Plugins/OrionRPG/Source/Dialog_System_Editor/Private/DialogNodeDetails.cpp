@@ -5,6 +5,7 @@
 #include "DialogBuilderEdNode_DialogLine.h"
 #include "DialogBuilderNode_DialogLine.h"
 #include "DialogBuilderNode_DialogSequence.h"
+#include "DialogBuilderNode_PlayerChoice.h"
 #include "DialogBuilderEdNode_PlayerLine.h"
 #include "DialogBuilderNode_PlayerLine.h"
 #include "DialogBuilderGraph.h"
@@ -57,6 +58,7 @@
 #include "Widgets/SWindow.h"
 #include "Widgets/Text/STextBlock.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "IPropertyUtilities.h"
 
 #define LOCTEXT_NAMESPACE "DetailsCustomization"
 
@@ -72,41 +74,52 @@ TSharedRef<IDetailCustomization> FDialogNodeDetails::MakeInstance()
 BEGIN_SLATE_FUNCTION_BUILD_OPTIMIZATION
 void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 {
+	DialogSequenceNode.Reset();
+	DialogLineNode.Reset();
+	PlayerLineNode.Reset();
+	PlayerChoiceNode.Reset();
+
 	// Get a handle to the node we're viewing
-	const TArray< TWeakObjectPtr<UObject> >& SelectedObjects = DetailBuilder.GetSelectedObjects();
+	const TArray<TWeakObjectPtr<UObject>>& SelectedObjects = DetailBuilder.GetSelectedObjects();
 	for (int32 ObjectIndex = 0; ObjectIndex < SelectedObjects.Num(); ++ObjectIndex)
 	{
 		const TWeakObjectPtr<UObject>& CurrentObject = SelectedObjects[ObjectIndex];
 		if (CurrentObject.IsValid())
 		{
+			if (UDialogBuilderNode_PlayerChoice* PlayerChoiceNodePtr = Cast<UDialogBuilderNode_PlayerChoice>(CurrentObject.Get()))
+			{
+				if (!PlayerChoiceNode.IsValid())
+				{
+					PlayerChoiceNode = PlayerChoiceNodePtr;
+				}
+			}
+
 			if (UDialogBuilderNode_DialogSequence* SequenceNodePtr = Cast<UDialogBuilderNode_DialogSequence>(CurrentObject.Get()))
 			{
 				if (!DialogSequenceNode.IsValid())
 				{
 					DialogSequenceNode = SequenceNodePtr;
 				}
-
 			}
+
 			if (UDialogBuilderNode_DialogLine* DialogLineNodePtr = Cast<UDialogBuilderNode_DialogLine>(CurrentObject.Get()))
 			{
 				if (!DialogLineNode.IsValid())
 				{
 					DialogLineNode = DialogLineNodePtr;
 				}
-
 			}
+
 			if (UDialogBuilderNode_PlayerLine* PlayerLineNodePtr = Cast<UDialogBuilderNode_PlayerLine>(CurrentObject.Get()))
 			{
 				if (!PlayerLineNode.IsValid())
 				{
 					PlayerLineNode = PlayerLineNodePtr;
 				}
-
 			}
 		}
 	}
-	
-	
+
 
 	//Dialog Line - Participant Category
 	IDetailCategoryBuilder& DialogParticipantCategory = DetailBuilder.EditCategory("Participant", LOCTEXT("ParticipantCategoryTitle", "Participant Settings"));
@@ -148,59 +161,155 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 	}
 
 
-	//Dialog Sequence - Dialog Set 
-	IDetailCategoryBuilder& DialogSequenceCategory = DetailBuilder.EditCategory("Dialog Sequence", LOCTEXT("DialogSqeuenceTitle", "Dialog Sequence"));
-	if(DialogSequenceNode != NULL && SelectedObjects.Num() == 1)
+	// Dialog Sequence - Dialog Set
+	
+	const bool bIsSingleSelection = SelectedObjects.Num() == 1;
+	const bool bCanShowSequenceMenu = DialogSequenceNode.IsValid();
+
+
+
+	// Dialog Sequence / Choice Selection
+
+	if (bIsSingleSelection)
 	{
+		if (PlayerChoiceNode.IsValid())
+		{
+			IDetailCategoryBuilder& ChoiceSelectionCategory = DetailBuilder.EditCategory("Choice Selection", LOCTEXT("ChoiceSelectionTitle", "Choice Selection"));
 
-		UDialogBuilderNode_DialogSequence* DialogSequenceNodeInstance = DialogSequenceNode.Get();
-		DialogSequenceCategory.AddCustomRow(LOCTEXT("DialogStageSettingsLabel", "DialogStage To Use"))
-			.NameContent()
-			[
-				SNew(STextBlock)
-					.Text(LOCTEXT("DialogStageLabel", "DialogStage To Use"))
-					.Font(IDetailLayoutBuilder::GetDetailFont())
-					.ToolTipText(LOCTEXT("DialogStageSettings_ToolTip", "Pick which dialog set to use for this sequence"))
-			]
-			.ValueContent()
-			.MaxDesiredWidth(300.0f)
-			[
-				GetWidgetForDialogStagePicker(
-					TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateLambda([DialogSequenceNodeInstance]() { return FText::FromString(DialogSequenceNodeInstance->DialogStageToUse ? DialogSequenceNodeInstance->DialogStageToUse->Name.ToString() : "None"); })),
-					FOnClicked::CreateSP(this, &FDialogNodeDetails::OnPromoteToSharedClick),
-					FOnGetContent::CreateSP(this, &FDialogNodeDetails::OnGetDialogStageListMenu))
-			];
+			const TSharedRef<IPropertyHandle> SelectionTypeHandle =
+				DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_PlayerChoice, SelectionType));
 
-		DialogSequenceCategory.AddCustomRow(LOCTEXT("OpenSequenceRowLabel", "Open Sequence"))
-			.WholeRowContent()
-			[
-				SNew(SBorder)
-				.Padding(FMargin(0.0f, 6.0f, 0.0f, 5.0f))
-				.BorderImage(FAppStyle::GetBrush("NoBorder"))
-				[
-					SNew(SButton)
-						.HAlign(HAlign_Center)
-						.Text(LOCTEXT("OpenSequenceButtonLabel", "Open Sequence"))
-						.OnClicked_Lambda([DialogSequenceNodeInstance]()
+			const TSharedRef<IPropertyHandle> SelectingChoiceShotOverrideHandle =
+				DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_PlayerChoice, SelectingChoiceShotOverride));
+
+			const TSharedRef<IPropertyHandle> SelectionTimeLimitHandle =
+				DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_PlayerChoice, SelectionTimeLimit));
+
+			const TSharedRef<IPropertyHandle> TimeLimitHandle =
+				DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_PlayerChoice, TimeLimit));
+
+			SelectionTypeHandle->SetOnPropertyValueChanged(FSimpleDelegate::CreateLambda([&DetailBuilder]()
+			{
+				DetailBuilder.ForceRefreshDetails();
+			}));
+
+			ChoiceSelectionCategory.AddProperty(SelectionTypeHandle);
+			ChoiceSelectionCategory.AddProperty(SelectingChoiceShotOverrideHandle);
+			ChoiceSelectionCategory.AddProperty(SelectionTimeLimitHandle);
+			ChoiceSelectionCategory.AddProperty(TimeLimitHandle);
+
+			if (PlayerChoiceNode->SelectionType == EDialogSelectionType::E_Sequence)
+			{
+				UDialogBuilderNode_DialogSequence* DialogSequenceNodeInstance = DialogSequenceNode.Get();
+
+				ChoiceSelectionCategory.AddCustomRow(LOCTEXT("DialogStageSettingsLabel", "DialogStage To Use"))
+					.NameContent()
+					[
+						SNew(STextBlock)
+							.Text(LOCTEXT("DialogStageLabel", "DialogStage To Use"))
+							.Font(IDetailLayoutBuilder::GetDetailFont())
+							.ToolTipText(LOCTEXT("DialogStageSettings_ToolTip", "Pick which dialog set to use for this sequence"))
+					]
+					.ValueContent()
+					.MaxDesiredWidth(300.0f)
+					[
+						GetWidgetForDialogStagePicker(
+							TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateLambda([DialogSequenceNodeInstance]()
 							{
-								if (DialogSequenceNodeInstance && DialogSequenceNodeInstance->GetOwningDialogGraph())
-								{
-									UDialogBuilderEdGraph* DialogGraph =
-										DialogSequenceNodeInstance->GetOwningDialogGraph()->DialogGraphPages.IsValidIndex(0)
-										? Cast<UDialogBuilderEdGraph>(DialogSequenceNodeInstance->GetOwningDialogGraph()->DialogGraphPages[0])
-										: nullptr;
+								return FText::FromString(DialogSequenceNodeInstance->DialogStageToUse ? DialogSequenceNodeInstance->DialogStageToUse->Name.ToString() : "None");
+							})),
+							FOnClicked::CreateSP(this, &FDialogNodeDetails::OnPromoteToSharedClick),
+							FOnGetContent::CreateSP(this, &FDialogNodeDetails::OnGetDialogStageListMenu))
+					];
 
-									FDialogBuilderEditor* DialogBuilderEditor = DialogGraph ? DialogGraph->DialogEditorPtr.Pin().Get() : nullptr;
-									if (DialogBuilderEditor)
+				ChoiceSelectionCategory.AddCustomRow(LOCTEXT("OpenSequenceRowLabel", "Open Sequence"))
+					.WholeRowContent()
+					[
+						SNew(SBorder)
+							.Padding(FMargin(0.0f, 6.0f, 0.0f, 5.0f))
+							.BorderImage(FAppStyle::GetBrush("NoBorder"))
+							[
+								SNew(SButton)
+									.HAlign(HAlign_Center)
+									.Text(LOCTEXT("OpenSequenceButtonLabel", "Open Sequence"))
+									.OnClicked_Lambda([DialogSequenceNodeInstance]()
 									{
-										DialogBuilderEditor->OnOpenDialogSequenceNode(DialogSequenceNodeInstance);
-									}
-								}
+										if (DialogSequenceNodeInstance && DialogSequenceNodeInstance->GetOwningDialogGraph())
+										{
+											UDialogBuilderEdGraph* DialogGraph =
+												DialogSequenceNodeInstance->GetOwningDialogGraph()->DialogGraphPages.IsValidIndex(0)
+												? Cast<UDialogBuilderEdGraph>(DialogSequenceNodeInstance->GetOwningDialogGraph()->DialogGraphPages[0])
+												: nullptr;
 
-								return FReply::Handled();
-							})
+											FDialogBuilderEditor* DialogBuilderEditor = DialogGraph ? DialogGraph->DialogEditorPtr.Pin().Get() : nullptr;
+											if (DialogBuilderEditor)
+											{
+												DialogBuilderEditor->OnOpenDialogSequenceNode(DialogSequenceNodeInstance);
+											}
+										}
+
+										return FReply::Handled();
+									})
+							]
+					];
+			}
+		}
+		else if (DialogSequenceNode.IsValid())
+		{
+			IDetailCategoryBuilder& DialogSequenceCategory = DetailBuilder.EditCategory("Dialog Sequence", LOCTEXT("DialogSqeuenceTitle", "Dialog Sequence"));
+			UDialogBuilderNode_DialogSequence* DialogSequenceNodeInstance = DialogSequenceNode.Get();
+
+			DialogSequenceCategory.AddCustomRow(LOCTEXT("DialogStageSettingsLabel", "DialogStage To Use"))
+				.NameContent()
+				[
+					SNew(STextBlock)
+						.Text(LOCTEXT("DialogStageLabel", "DialogStage To Use"))
+						.Font(IDetailLayoutBuilder::GetDetailFont())
+						.ToolTipText(LOCTEXT("DialogStageSettings_ToolTip", "Pick which dialog set to use for this sequence"))
 				]
-			];
+				.ValueContent()
+				.MaxDesiredWidth(300.0f)
+				[
+					GetWidgetForDialogStagePicker(
+						TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateLambda([DialogSequenceNodeInstance]()
+						{
+							return FText::FromString(DialogSequenceNodeInstance->DialogStageToUse ? DialogSequenceNodeInstance->DialogStageToUse->Name.ToString() : "None");
+						})),
+						FOnClicked::CreateSP(this, &FDialogNodeDetails::OnPromoteToSharedClick),
+						FOnGetContent::CreateSP(this, &FDialogNodeDetails::OnGetDialogStageListMenu))
+				];
+
+			DialogSequenceCategory.AddCustomRow(LOCTEXT("OpenSequenceRowLabel", "Open Sequence"))
+				.WholeRowContent()
+				[
+					SNew(SBorder)
+						.Padding(FMargin(0.0f, 6.0f, 0.0f, 5.0f))
+						.BorderImage(FAppStyle::GetBrush("NoBorder"))
+						[
+							SNew(SButton)
+								.HAlign(HAlign_Center)
+								.Text(LOCTEXT("OpenSequenceButtonLabel", "Open Sequence"))
+								.OnClicked_Lambda([DialogSequenceNodeInstance]()
+								{
+									if (DialogSequenceNodeInstance && DialogSequenceNodeInstance->GetOwningDialogGraph())
+									{
+										UDialogBuilderEdGraph* DialogGraph =
+											DialogSequenceNodeInstance->GetOwningDialogGraph()->DialogGraphPages.IsValidIndex(0)
+											? Cast<UDialogBuilderEdGraph>(DialogSequenceNodeInstance->GetOwningDialogGraph()->DialogGraphPages[0])
+											: nullptr;
+
+										FDialogBuilderEditor* DialogBuilderEditor = DialogGraph ? DialogGraph->DialogEditorPtr.Pin().Get() : nullptr;
+										if (DialogBuilderEditor)
+										{
+											DialogBuilderEditor->OnOpenDialogSequenceNode(DialogSequenceNodeInstance);
+										}
+									}
+
+									return FReply::Handled();
+								})
+						]
+				];
+		}
 	}
 
 

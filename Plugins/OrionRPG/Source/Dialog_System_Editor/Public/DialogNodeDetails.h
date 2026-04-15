@@ -15,7 +15,6 @@
 #include "UObject/WeakObjectPtrTemplates.h"
 #include "DialogBuilder_EditorStyle.h"
 
-
 class FText;
 class IDetailCategoryBuilder;
 class IDetailLayoutBuilder;
@@ -24,6 +23,7 @@ class STextEntryPopup;
 class SWidget;
 class UDialogBuilderNode_DialogLine;
 class UDialogBuilderNode_DialogSequence;
+class UDialogBuilderNode_PlayerChoice;
 class UDialogBuilderNode_PlayerLine;
 class UBlendProfile;
 class UEdGraph;
@@ -40,7 +40,7 @@ public:
 protected:
 
 	TSharedRef<SWidget> GetWidgetForInlineShareMenu(const TAttribute<FText>& InSharedNameText, const TAttribute<bool>& bInIsCurrentlyShared, FOnClicked PromoteClick, FOnClicked DemoteClick, FOnGetContent GetContentMenu);
-	
+
 	FReply OnPromoteToSharedClick();
 	void PromoteToShared(const FText& NewTransitionName, ETextCommit::Type CommitInfo);
 	FReply OnUnshareClick();
@@ -51,10 +51,10 @@ protected:
 	TSharedRef<SWidget> OnGetDialogStageListMenu();
 	void UseDialogStage(class UDialogStage* InDialogStage);
 
-
 private:
 	TWeakObjectPtr<UDialogBuilderNode_DialogSequence> DialogSequenceNode;
 	TWeakObjectPtr<UDialogBuilderNode_DialogLine> DialogLineNode;
 	TWeakObjectPtr<UDialogBuilderNode_DialogLine> PlayerLineNode;
+	TWeakObjectPtr<UDialogBuilderNode_PlayerChoice> PlayerChoiceNode;
 	TSharedPtr<STextEntryPopup> TextEntryWidget;
 };

@@ -7,6 +7,7 @@
 
 UDialogBuilderNode_PlayerChoice::UDialogBuilderNode_PlayerChoice()
 {
+	SelectionType = EDialogSelectionType::E_Sequence;
 	SelectionTimeLimit = ESelectionTimeLimit::E_NoTimeLimit;
 	TimeLimit = 5.0f;
 }
