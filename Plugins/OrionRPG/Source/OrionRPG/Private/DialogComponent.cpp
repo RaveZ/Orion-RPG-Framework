@@ -118,13 +118,12 @@ bool UDialogComponent::BeginDialog(UDialogBuilderGraph* DialogAsset)
 	return bSuccess;
 }
 
-void UDialogComponent::SelectDialogChoice(UDialogBuilderNode_PlayerChoice* InOption)
+void UDialogComponent::SelectDialogChoice(UDialogBuilderNode_PlayerChoice* PlayerChoice, int32 ChoiceIndex)
 {
-	if (CurrentActiveDialog && InOption)
+	if (CurrentActiveDialog && PlayerChoice)
 	{
-		CurrentActiveDialog->bOptionSelectionActive = false;
-		CurrentActiveDialog->BeginNode((UDialogBuilderNode*)InOption);
-		OnPLayerChoiceSelected.Broadcast(InOption);
+		PlayerChoice->SelectChoice(ChoiceIndex);
+		OnPLayerChoiceSelected.Broadcast(PlayerChoice, ChoiceIndex);
 	}
 }
 
@@ -211,11 +210,11 @@ void UDialogComponent::DialogLineUpdated(UDialogBuilderNode* DialogNode)
 {
 }
 
-void UDialogComponent::EnterChoiceSelection(const TArray<class UDialogBuilderNode_PlayerChoice*>& PlayerOptions)
+void UDialogComponent::EnterChoiceSelection(UDialogBuilderNode_PlayerChoice* InPLayerChoice)
 {
 }
 
-void UDialogComponent::PlayerChoiceSelected(UDialogBuilderNode_PlayerChoice* PlayerOption)
+void UDialogComponent::PlayerChoiceSelected(UDialogBuilderNode_PlayerChoice* PlayerOption, int32 ChoiceIndex)
 {
 }
 

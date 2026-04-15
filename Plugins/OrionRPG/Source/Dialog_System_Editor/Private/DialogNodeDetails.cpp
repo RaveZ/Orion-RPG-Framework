@@ -106,12 +106,6 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 		}
 	}
 	
-	//Option Selection Category
-	IDetailCategoryBuilder& OptionSelectionCategory = DetailBuilder.EditCategory("Selection Rule", LOCTEXT("OptionSelectionCategoryLabel", "Selection Rule"));
-	OptionSelectionCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, SelectingChoiceShotOverride)).DisplayName(LOCTEXT("SelectingChoiceShotOverrideLabel", "Selecting Shot Override"));
-	OptionSelectionCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, SelectionTimeLimit)).DisplayName(LOCTEXT("SelectionTimeLimitLabel", "Selection Time Limit"));
-	OptionSelectionCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_DialogLine, TimeLimit)).DisplayName(LOCTEXT("TimeLimitLabel", "Time Limit"));
-
 	
 
 	//Dialog Line - Participant Category

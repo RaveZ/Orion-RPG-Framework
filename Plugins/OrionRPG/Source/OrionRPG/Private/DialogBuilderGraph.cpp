@@ -14,6 +14,7 @@
 #include "LevelSequenceActor.h"
 #include "DialogBuilderNode_RerouteNode.h"
 #include "DialogBuilderNode_DialogLine.h"
+#include "DialogBuilderNode_PlayerChoice.h"
 #include "DialogBuilderNode_DialogSequence.h"
 #include "EngineUtils.h"
 #include "GameFramework/Character.h"
@@ -401,24 +402,24 @@ void UDialogBuilderGraph::DetermineDialogShot(UDialogBuilderNode_DialogLine* InD
 	CachedLastShot = DialogShot;
 }
 
-void UDialogBuilderGraph::BeginChoiceSelection(UDialogBuilderNode_DialogLine* InDialogLine)
+void UDialogBuilderGraph::BeginChoiceSelection(UDialogBuilderNode_PlayerChoice* InPlayerChoice)
 {
 	if (!bLockPlayerMovement)
 	{
 		EndDialog();
 		return;
 	}
-	if (InDialogLine == nullptr)
+	if (InPlayerChoice == nullptr)
 		return;
 
 	UDialogCameraShot* DialogShot = DefaultSelectingChoiceShot;
 	AActor* Speaker = CachedActorMap.FindRef(TAG_Dialog_Participant_Player.GetTag().GetTagName());
 	Speaker = Speaker ? Speaker : GetOwningPawn();
 
-	if (!DialogShot || InDialogLine->SelectingChoiceShotOverride)
+	if (!DialogShot || InPlayerChoice->SelectingChoiceShotOverride)
 	{
 		//if default shot not valid, try use override shot data instead
-		DialogShot = InDialogLine->SelectingChoiceShotOverride;
+		DialogShot = InPlayerChoice->SelectingChoiceShotOverride;
 	}
 
 	PlayDialogShot(DialogShot, Speaker);
@@ -635,8 +636,18 @@ UDialogComponent* UDialogBuilderGraph::GetDialogComponent()
 	return DialogComponent;
 }
 
+bool UDialogBuilderGraph::IsChoiceSelectionActive() const
+{
+	return CurrentNode ? CurrentNode->IsA(UDialogBuilderNode_PlayerChoice::StaticClass()) : false;
+}
+
 void UDialogBuilderGraph::AdvanceDialogLine()
 {
+	if(IsChoiceSelectionActive())
+	{
+		return;
+	}
+
 	if (CurrentLine && !CurrentLine->bCanSkipDialogLine 
 		&& DialogLineTimer.IsValid() 
 		&& GetWorld() && GetWorld()->GetTimerManager().GetTimerRemaining(DialogLineTimer) > .0f)

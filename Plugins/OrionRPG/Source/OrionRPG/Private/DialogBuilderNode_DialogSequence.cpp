@@ -27,6 +27,12 @@ void UDialogBuilderNode_DialogSequence::BeginNode()
 {
 	Super::BeginNode();
 
+	if (!DialogSequence || GetSequenceDuration() <= KINDA_SMALL_NUMBER)
+	{
+		EvaluateNextNode();
+		return;
+	}
+
 	GetOwningDialogGraph()->BeginDialogSequence(this);
 }
 

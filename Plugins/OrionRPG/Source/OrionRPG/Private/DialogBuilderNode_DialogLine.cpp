@@ -21,8 +21,6 @@ UDialogBuilderNode_DialogLine::UDialogBuilderNode_DialogLine()
 {
 	bCanSkipDialogLine = true;
 	bRotateToListener = false;
-	SelectionTimeLimit = ESelectionTimeLimit::E_NoTimeLimit;
-	TimeLimit = 5.0f;
 
 	ParticipantInfo.NodeColor = GetDefault<UDialogBuilderSetting>()->DialogLineNodeColor;
 }
@@ -38,52 +36,30 @@ void UDialogBuilderNode_DialogLine::BeginNode()
 
 void UDialogBuilderNode_DialogLine::EvaluateNextNode()
 {
-	if (GetOwningDialogGraph()->bOptionSelectionActive)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Player in dialog selection mode"));
-		return;
-	}
 
 	//Check if there is any player options 
 	//If found pany player options, halt evaluation node until option has been selected.
-	if (EvaluateAnyPlayerOptions())
-		return;
+	EvaluateAnyPlayerOptions();
 
 	Super::EvaluateNextNode();
 }
 
-bool UDialogBuilderNode_DialogLine::EvaluateAnyPlayerOptions()
+void UDialogBuilderNode_DialogLine::EvaluateAnyPlayerOptions()
 {
 	//Check for any player options
-	TArray<UDialogBuilderNode_PlayerChoice*> PlayerChoices;
 	if (ChildrenNodes.IsValidIndex(0) && ChildrenNodes[0].IsA(UDialogBuilderNode_PlayerChoice::StaticClass()))
 	{
 		for (auto& ChildNode : ChildrenNodes)
 		{
-			if (UDialogBuilderNode_PlayerChoice* PlayerOption = Cast<UDialogBuilderNode_PlayerChoice>(ChildNode))
+			if (ChildNode->IsA(UDialogBuilderNode_PlayerChoice::StaticClass()))
 			{
-				if (PlayerOption->DecoratorConditionMet())
-				{
-					PlayerChoices.AddUnique(PlayerOption);
-				}
+				GetOwningDialogGraph()->LatestRootSelectionNode = this;
+				return;
 			}
 		}
 
-		// No valid player choices found, end dialog immediately
-		if (PlayerChoices.IsEmpty())
-		{
-			Deinitialize();
-			GetOwningDialogGraph()->EndDialog();
-			return true; 
-		}
 
-		GetOwningDialogGraph()->LatestRootSelectionNode = this;
-		GetOwningDialogGraph()->bOptionSelectionActive = true;
-		GetOwningDialogGraph()->BeginChoiceSelection(this);
-		GetDialogComponent()->OnEnterChoiceSelection.Broadcast(PlayerChoices);
-		return true;
 	}
-	return false;
 }
 
 UObject* UDialogBuilderNode_DialogLine::GetParticipantImage()

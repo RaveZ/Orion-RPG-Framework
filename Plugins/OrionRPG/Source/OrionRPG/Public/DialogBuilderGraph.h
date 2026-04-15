@@ -184,9 +184,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
 		TObjectPtr<class ALevelSequenceActor> DialogSequenceActor;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
-		bool bOptionSelectionActive;
-
 	//The cinecam spawned in by the sequence 
 	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
 		TWeakObjectPtr<class ACineCameraActor> Cinecam;
@@ -223,7 +220,7 @@ public:
 	virtual void DetermineDialogShot(class UDialogBuilderNode_DialogLine* InDialogLine, AActor* Speaker, AActor* Listener);
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
-	virtual void BeginChoiceSelection(class UDialogBuilderNode_DialogLine* InDialogLine);
+	virtual void BeginChoiceSelection(class UDialogBuilderNode_PlayerChoice* InPlayerChoice);
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 	virtual void BeginDialogSequence(class UDialogBuilderNode_DialogSequence* InDialogSequence);
@@ -253,6 +250,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	UDialogComponent* GetDialogComponent();
+
+	UFUNCTION(BlueprintPure, Category = "Dialogue")
+	bool IsChoiceSelectionActive() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 		virtual void AdvanceDialogLine();

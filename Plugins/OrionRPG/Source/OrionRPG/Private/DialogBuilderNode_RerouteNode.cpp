@@ -34,13 +34,12 @@ void UDialogBuilderNode_RerouteNode::BeginNode()
 				}
 				else
 				{
-					GetOwningDialogGraph()->CurrentNode = LatestRootSelectionNode;
-					bSuccess = LatestRootSelectionNode->EvaluateAnyPlayerOptions();
+					LatestRootSelectionNode->EvaluateNextNode();
 				}
 			}
 			if (!bSuccess)
 			{
-				GetDialogComponent()->OnEndDialog.Broadcast(GetOwningDialogGraph());
+				GetOwningDialogGraph()->EndDialog();
 			}
 			break;
 		}

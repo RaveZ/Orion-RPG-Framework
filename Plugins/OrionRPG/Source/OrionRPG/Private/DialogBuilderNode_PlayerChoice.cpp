@@ -7,15 +7,32 @@
 
 UDialogBuilderNode_PlayerChoice::UDialogBuilderNode_PlayerChoice()
 {
+	SelectionTimeLimit = ESelectionTimeLimit::E_NoTimeLimit;
+	TimeLimit = 5.0f;
 }
 
 void UDialogBuilderNode_PlayerChoice::BeginNode()
 {
 	Super::BeginNode();
+
+	GetOwningDialogGraph()->BeginChoiceSelection(this);
+	GetDialogComponent()->OnEnterChoiceSelection.Broadcast(this);
+}
+
+void UDialogBuilderNode_PlayerChoice::SelectChoice(int32 ChoiceIndex)
+{
+	UE_LOG(LogTemp, Log, TEXT("PlayerChoice selected: ChoiceIndex = %d, Node = %s"), ChoiceIndex, *GetNameSafe(this));
 	EvaluateNextNode();
 }
 
+void UDialogBuilderNode_PlayerChoice::DetermineNextNode()
+{
+	
+}
+
+
 #if WITH_EDITOR
+
 FText UDialogBuilderNode_PlayerChoice::GetNodeTitle() const
 {
 	return FText::FromString("Player Choice");

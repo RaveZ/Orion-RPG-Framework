@@ -89,7 +89,7 @@ public:
 	virtual void EvaluateNextNode() override;
 
 	UFUNCTION()
-	bool EvaluateAnyPlayerOptions();
+	void EvaluateAnyPlayerOptions();
 
 
 	UFUNCTION(BlueprintPure, Category="DialogLine")
