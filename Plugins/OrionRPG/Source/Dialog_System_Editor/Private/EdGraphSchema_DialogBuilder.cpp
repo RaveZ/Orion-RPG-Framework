@@ -276,7 +276,7 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 
 
 	//DialogLine
-	if (bAllowDialogLine)
+	//if (bAllowDialogLine)
 	{
 		FCategorizedGraphActionListBuilder DialogLineBuilder(TEXT("Dialog Line"));
 
@@ -307,7 +307,7 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 	}
 
 	//Dialog Sequemce Node
-	if (bAllowDialogSequence)
+	//if (bAllowDialogSequence)
 	{
 		FCategorizedGraphActionListBuilder DialogSequenceBuilder(TEXT("Dialog Sequence"));
 
@@ -328,7 +328,7 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 
 	//Reroute Node
 	FCategorizedGraphActionListBuilder RerouteNodeBuilder(TEXT("Reroute Node"));
-	if (bAllowRerouteNode)
+	//if (bAllowRerouteNode)
 	{
 		UClass* RerouteEdNodeClass = UDialogBuilderEdNode_RerouteNode::StaticClass();
 		UClass* RerouteNodeClass = UDialogBuilderNode_RerouteNode::StaticClass();
@@ -346,7 +346,7 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 
 	//Player Choice
 	FCategorizedGraphActionListBuilder PlayerChoiceBuilder(TEXT("Player Choice"));
-	if (bAllowPlayerChoice)
+	//if (bAllowPlayerChoice)
 	{
 		//Player Choice
 		UClass* PlayerChoiceEdNodeClass = UDialogBuilderEdNode_PlayerChoice::StaticClass();
@@ -536,7 +536,7 @@ const FPinConnectionResponse UEdGraphSchema_DialogBuilder::CanCreateConnection(c
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Invalid Node Connections"));
 	}
 
-	if ((bNodeAIsDialogLine || bNodeAIsDialogSequence || bNodeAIsPlayerOption) && bNodeAChildrenHasDialogLine && bNodeBIsPlayerOption)
+	/*if ((bNodeAIsDialogLine || bNodeAIsDialogSequence || bNodeAIsPlayerOption) && bNodeAChildrenHasDialogLine && bNodeBIsPlayerOption)
 	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Invalid Node Connections, Only the same type children node can make connections"));
 	}
@@ -544,7 +544,7 @@ const FPinConnectionResponse UEdGraphSchema_DialogBuilder::CanCreateConnection(c
 	if ((bNodeAIsDialogLine || bNodeAIsDialogSequence|| bNodeAIsPlayerOption) && bNodeAChildrenHasPlayerOption && bNodeBIsDialogLine)
 	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Invalid Node Connections, Only the same type children node can make connections"));
-	}
+	}*/
 
 	if (In->Direction == EGPD_Input && Out->Direction == EGPD_Input)
 	{

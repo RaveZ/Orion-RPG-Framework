@@ -22,11 +22,24 @@ void UDialogBuilderNode_PlayerChoice::BeginNode()
 void UDialogBuilderNode_PlayerChoice::SelectChoice(int32 ChoiceIndex)
 {
 	UE_LOG(LogTemp, Log, TEXT("PlayerChoice selected: ChoiceIndex = %d, Node = %s"), ChoiceIndex, *GetNameSafe(this));
+	SelectedChoiceIndex = ChoiceIndex;
 	EvaluateNextNode();
 }
 
 void UDialogBuilderNode_PlayerChoice::DetermineNextNode()
 {
+	if (ChoiceBranches.IsValidIndex(SelectedChoiceIndex))
+	{
+		TArray<TObjectPtr<UDialogBuilderNode>>& NodesToBranch = ChoiceBranches[SelectedChoiceIndex].ChildrenNodes;
+		for (auto& NodeToBranch : NodesToBranch)
+		{
+			if (NodeToBranch->DecoratorConditionMet())
+			{
+				NextNode = NodeToBranch;
+				break;
+			}
+		}
+	}
 	
 }
 

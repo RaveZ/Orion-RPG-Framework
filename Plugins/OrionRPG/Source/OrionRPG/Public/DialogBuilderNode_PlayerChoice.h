@@ -58,6 +58,9 @@ public:
 
 	virtual void DetermineNextNode() override;
 
+private:
+	int32 SelectedChoiceIndex = -1;
+
 #if WITH_EDITOR
 public:
 	virtual FText GetNodeTitle() const override;
