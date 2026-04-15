@@ -5,7 +5,9 @@
 #include "DialogBuilderEditor.h"
 #include "DialogBuilder_EditorStyle.h"
 #include "SlateOptMacros.h"
+#include "DialogBuilderNode_DialogSequence.h"
 #include "DialogBuilderEdNode_PlayerChoice.h"
+#include "DialogBuilderEdNode_DialogSequence.h"
 #include "Types/SlateStructs.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Images/SImage.h"
@@ -34,7 +36,6 @@
 #include "DialogBuilderEdSubNode_Decorator.h"
 #include "DialogBuilderEdSubNode_Event.h"
 #include "IDocumentation.h"
-#include "DialogBuilderNode_DialogSequence.h"
 #include "Subsystems/AssetEditorSubsystem.h"
 #include "Widgets/Input/SButton.h"
 
@@ -356,7 +357,7 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 				SNew(SBorder)
 					.BorderImage(FAppStyle::GetBrush("Graph.StateNode.Body"))
 					.BorderBackgroundColor(this, &SGraphNode_DialogBuilderNode::GetSelectorColor)
-					.Visibility(this, &SGraphNode_DialogBuilderNode::GetSelectorVisibility)
+					.Visibility(this, &SGraphNode_DialogBuilderNode::GetNodeHeaderTitleVisibility)
 					[
 						SNew(SOverlay)
 							// Pins and node details
@@ -371,7 +372,7 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 									.AutoWidth()
 									[
 										SNew(STextBlock)
-											.Text(FText::FromString("SELECTOR"))
+											.Text(this, &SGraphNode_DialogBuilderNode::GetNodeHeaderTitleText)
 											.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
 											.Font(FCoreStyle::GetDefaultFontStyle("Bold", 9.5))
 											.Clipping(EWidgetClipping::ClipToBounds)
@@ -700,7 +701,7 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 										[
 											SNew(SButton)
 												.ButtonStyle(FAppStyle::Get(), "NoBorder")
-												.ContentPadding(FMargin(-10.f, -15.f, 0.f, 0.f))
+												.ContentPadding(FMargin(-10.f, -32.5f, 0.f, 0.f))
 												.ToolTipText(LOCTEXT("OpenDialogSequenceTooltip", "Open Dialog Sequence in Sequencer"))
 												.Visibility(this, &SGraphNode_DialogBuilderNode::GetSequencerIconVisibility)
 												.OnClicked(this, &SGraphNode_DialogBuilderNode::OnOpenSequencerClicked)
@@ -1445,11 +1446,12 @@ EVisibility SGraphNode_DialogBuilderNode::GetParentNodeVisibility() const
 	return EVisibility::Visible;
 }
 
-EVisibility SGraphNode_DialogBuilderNode::GetSelectorVisibility() const
+EVisibility SGraphNode_DialogBuilderNode::GetNodeHeaderTitleVisibility() const
 {
 	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
 
-	if (DialogEdNode && DialogEdNode->IsA(UDialogBuilderEdNode_PlayerChoice::StaticClass()))
+	bool bVisible = DialogEdNode && (DialogEdNode->IsA(UDialogBuilderEdNode_PlayerChoice::StaticClass()) || DialogEdNode->IsA(UDialogBuilderEdNode_DialogSequence::StaticClass()));
+	if (bVisible)
 	{
 		return EVisibility::Visible;
 	}
@@ -1634,6 +1636,26 @@ FText SGraphNode_DialogBuilderNode::GetIndexText() const
 
 
 	return FText::AsNumber(Index);
+}
+
+FText SGraphNode_DialogBuilderNode::GetNodeHeaderTitleText() const
+{
+	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+
+	bool bIsSelector = DialogEdNode && DialogEdNode->IsA(UDialogBuilderEdNode_PlayerChoice::StaticClass());
+	bool bIsSequence = DialogEdNode && DialogEdNode->IsA(UDialogBuilderEdNode_DialogSequence::StaticClass());
+	FText HeaderTitle = FText::GetEmpty();
+	if (bIsSelector)
+	{
+		HeaderTitle = LOCTEXT("PlayerChoiceNodeHeader", "SELECTOR");
+	}
+	else if (bIsSequence)
+	{
+		HeaderTitle = LOCTEXT("DialogSequenceNodeHeader", "SEQUENCE");
+	}
+
+
+	return HeaderTitle;
 }
 
 FText SGraphNode_DialogBuilderNode::GetIndexTooltipText() const

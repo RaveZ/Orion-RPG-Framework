@@ -35,7 +35,7 @@ FText UDialogBuilderEdNode_DialogSequence::GetNodeTitle(ENodeTitleType::Type Tit
 
 FLinearColor UDialogBuilderEdNode_DialogSequence::GetBackgroundColor() const
 {
-	return GetDefault<UDialogBuilderSetting>()->DialogLineNodeColor;
+	return GetDefault<UDialogBuilderSetting>()->DialogSequenceNodeColor;
 }
 
 FText UDialogBuilderEdNode_DialogSequence::GetTooltipText() const

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "DialogBuilderNode.h"
+#include "DialogBuilderNode_DialogSequence.h"
 #include "DialogBuilderNode_PlayerChoice.generated.h"
 
 DECLARE_MULTICAST_DELEGATE(FOnPlayerChoiceDataChanged);
@@ -21,7 +22,7 @@ struct FDialogChoiceBranch
 };
 
 UCLASS(BlueprintType)
-class ORIONRPG_API UDialogBuilderNode_PlayerChoice : public UDialogBuilderNode
+class ORIONRPG_API UDialogBuilderNode_PlayerChoice : public UDialogBuilderNode_DialogSequence
 {
 	GENERATED_BODY()
 public:

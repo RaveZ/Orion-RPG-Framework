@@ -20,7 +20,6 @@
 
 UDialogBuilderNode_DialogSequence::UDialogBuilderNode_DialogSequence()
 {
-	
 }
 
 void UDialogBuilderNode_DialogSequence::BeginNode()
@@ -45,7 +44,6 @@ void UDialogBuilderNode_DialogSequence::EnsureSequenceCreated()
 {
 	if (!DialogSequence)
 	{
-		Modify();
 		DialogSequence = NewObject<UDialogSequence>(this, NAME_None, RF_Transactional);
 		DialogSequence->OwningDialogGraph = GetOwningDialogGraph();	
 		DialogSequence->MovieScene = NewObject<UMovieScene>(DialogSequence, FName("DialogSequence"), RF_Transactional);
@@ -196,6 +194,7 @@ void UDialogBuilderNode_DialogSequence::PostEditChangeProperty(FPropertyChangedE
 void UDialogBuilderNode_DialogSequence::PostLoad()
 {
 	Super::PostLoad();
+	EnsureSequenceCreated();
 }
 
 #endif

@@ -109,7 +109,7 @@ public:
 	virtual EVisibility GetNodeIDVisibility() const;
 	virtual EVisibility GetTitleVisibility() const;
 	virtual EVisibility GetParentNodeVisibility() const;
-	virtual EVisibility GetSelectorVisibility() const;
+	virtual EVisibility GetNodeHeaderTitleVisibility() const;
 	virtual EVisibility GetSubNodeVisibility() const;
 	virtual EVisibility GetDragOverMarkerVisibility() const;
 
@@ -163,6 +163,9 @@ protected:
 
 	/** Get the text to display in the index overlay */
 	FText GetIndexText() const;
+
+	/** Get the text to display top of node title */
+	FText GetNodeHeaderTitleText() const;
 
 	/** Get the tooltip for the index overlay */
 	FText GetIndexTooltipText() const;

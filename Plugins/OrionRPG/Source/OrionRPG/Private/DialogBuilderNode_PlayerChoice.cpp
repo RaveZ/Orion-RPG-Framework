@@ -13,7 +13,7 @@ UDialogBuilderNode_PlayerChoice::UDialogBuilderNode_PlayerChoice()
 
 void UDialogBuilderNode_PlayerChoice::BeginNode()
 {
-	Super::BeginNode();
+	//Super::BeginNode();
 
 	GetOwningDialogGraph()->BeginChoiceSelection(this);
 	GetDialogComponent()->OnEnterChoiceSelection.Broadcast(this);
