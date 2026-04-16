@@ -40,6 +40,17 @@ namespace OrionDialogTemplate
 		{
 		}
 
+		~FDialogSharedTrackData()
+		{
+			if (DialogWidget)
+			{
+				DialogWidget->RemoveFromParent();
+			}
+
+			DialogWidgetSlateWidget.Reset();
+			DialogWidget = nullptr;
+		}
+
 		bool HasAnythingToDo() const
 		{
 			return bNeedExecute;
@@ -152,7 +163,7 @@ namespace OrionDialogTemplate
 			UDialogComponent* DialogComponent = UDialogBuilderFunctionLibrary::GetDialogComponent(World);
 
 			if (!DialogComponent) return;
-			if (bShow)
+			if (bShow && !DialogLine.Line.IsEmpty())
 			{
 				DialogComponent->OnDialogLineUpdated.Broadcast(DialogLine);
 			}

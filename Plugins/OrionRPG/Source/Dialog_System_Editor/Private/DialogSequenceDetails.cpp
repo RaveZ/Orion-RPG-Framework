@@ -138,6 +138,14 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 				MovieSceneDialogSection = SectionPtr;
 			}
 		}
+
+		if (UDialogPlayerParticipant* PlayerParticipant = Cast<UDialogPlayerParticipant>(CurrentObject.Get()))
+		{
+			if (TSharedPtr<IPropertyHandle> TagHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogDefinition, Tag)))
+			{
+				TagHandle->MarkHiddenByCustomization();
+			}
+		}
 	}
 
 	if (SelectedObjects.Num() != 1)

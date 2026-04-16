@@ -145,6 +145,8 @@ void FDialog_System_EditorModule::RegisterObjectCustomizations()
 	RegisterCustomClassLayout("DialogSequenceSlot", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogSequenceDetails::MakeInstance));
 	RegisterCustomClassLayout("MovieSceneDialogSection", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogSequenceDetails::MakeInstance));
 	RegisterCustomClassLayout("DialogSequenceShot", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogSequenceDetails::MakeInstance));
+	RegisterCustomClassLayout("DialogDefinition", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogSequenceDetails::MakeInstance));
+
 }
 
 void FDialog_System_EditorModule::RegisterCustomClassLayout(FName ClassName, FOnGetDetailCustomizationInstance DetailLayoutDelegate)

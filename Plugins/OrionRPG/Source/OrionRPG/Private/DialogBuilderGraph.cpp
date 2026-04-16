@@ -43,6 +43,7 @@ UDialogBuilderGraph::UDialogBuilderGraph()
 	bLockPlayerMovement = true;
 	bCanInterruptDialog = true;
 	bFadeCameraOnDialogBegin = true;
+	bBlendCameraOnDialogEnd = true;
 
 	BlendTime = 1.25f;
 	BlendFunc = VTBlend_Cubic;
@@ -198,6 +199,19 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 
 			CurrentDialogSequence->BindPossessableObject(ObjectBinding, *DialogActor, DialogActor->GetClass());
 		}
+	}
+}
+
+void UDialogBuilderGraph::DestroyDialogSequenceActor()
+{
+	if (DialogSequenceActor)
+	{
+		if (ULevelSequencePlayer* SP = DialogSequenceActor->GetSequencePlayer())
+		{
+			SP->Stop();
+		}
+		DialogSequenceActor->Destroy();
+		DialogSequenceActor = nullptr;
 	}
 }
 
@@ -412,6 +426,8 @@ void UDialogBuilderGraph::BeginChoiceSelection(UDialogBuilderNode_PlayerChoice* 
 	if (InPlayerChoice == nullptr)
 		return;
 
+	bool bShouldUseSequence = InPlayerChoice->SelectionType == EDialogSelectionType::E_Sequence && InPlayerChoice->ShouldPlaySequence();
+
 	UDialogCameraShot* DialogShot = DefaultSelectingChoiceShot;
 	AActor* Speaker = CachedActorMap.FindRef(TAG_Dialog_Participant_Player.GetTag().GetTagName());
 	Speaker = Speaker ? Speaker : GetOwningPawn();
@@ -422,7 +438,19 @@ void UDialogBuilderGraph::BeginChoiceSelection(UDialogBuilderNode_PlayerChoice* 
 		DialogShot = InPlayerChoice->SelectingChoiceShotOverride;
 	}
 
-	PlayDialogShot(DialogShot, Speaker);
+	if (bShouldUseSequence)
+	{
+		CurrentDialogSequence = InPlayerChoice->DialogSequence;
+		InPlayerChoice->UpdateDialogStageData();
+
+		SetDialogStage(InPlayerChoice->DialogStage);
+
+		PlaySequence(Cast<ULevelSequence>(InPlayerChoice->DialogSequence.Get()), InPlayerChoice->PlaybackSettings);
+	}
+	else
+	{
+		PlayDialogShot(DialogShot, Speaker);
+	}
 
 	CachedLastSpeaker = Speaker;
 	CachedLastShot = DialogShot;
@@ -437,16 +465,14 @@ void UDialogBuilderGraph::BeginDialogSequence(UDialogBuilderNode_DialogSequence*
 		UE_LOG(LogTemp, Warning, TEXT("BeginDialogSequence: DialogSequence is null for Node ID: %s"), *InDialogSequence->ID.ToString());
 		return;
 	}
+	DetermineAdvanceDialogRule(InDialogSequence);
+
 	CurrentDialogSequence = InDialogSequence->DialogSequence;
 	InDialogSequence->UpdateDialogStageData();
 
 	SetDialogStage(InDialogSequence->DialogStage);
 
-
-	DetermineAdvanceDialogRule(InDialogSequence);
-
 	PlaySequence(Cast<ULevelSequence>(InDialogSequence->DialogSequence.Get()), InDialogSequence->PlaybackSettings);
-
 }
 
 void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot, AActor* InSpeaker)
@@ -456,14 +482,7 @@ void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot, AActor
 		return;
 	}
 	//Shot method changed, make sure sequencer is destroyed
-	if (DialogSequenceActor)
-	{
-		if (ULevelSequencePlayer* SP = DialogSequenceActor->GetSequencePlayer())
-		{
-			SP->Stop();
-		}
-		DialogSequenceActor->Destroy();
-	}
+	DestroyDialogSequenceActor();
 
 	// Spawn cinecam if it does not exist
 	if (!Cinecam.IsValid())
@@ -486,6 +505,8 @@ void UDialogBuilderGraph::PlaySequence(class ULevelSequence* InSequence, FMovieS
 		Cinecam = nullptr;
 	}
 
+	DestroyDialogSequenceActor();
+
 	if (!DialogSequenceActor)
 	{
 		ALevelSequenceActor* OutActor = nullptr;
@@ -500,11 +521,11 @@ void UDialogBuilderGraph::PlaySequence(class ULevelSequence* InSequence, FMovieS
 	{
 		if (ULevelSequencePlayer* SP = DialogSequenceActor->GetSequencePlayer())
 		{
-			SP->OnFinished.RemoveAll(this);
 			if (SP->IsPlaying())
 			{
 				SP->Stop();
 			}
+			SP->SetPlaybackPosition(FMovieSceneSequencePlaybackParams(0.0f, EUpdatePositionMethod::Jump));
 			if (InSequence)
 			{
 				DialogSequenceActor->PlaybackSettings = InPlaybackSetting;
@@ -715,19 +736,12 @@ void UDialogBuilderGraph::EndDialog()
 	//clear shot and sequence
 	CurrentDialogSequence = nullptr;
 	SequencePivot = nullptr;
-	if (DialogSequenceActor)
-	{
-		if (ULevelSequencePlayer* SP = DialogSequenceActor->GetSequencePlayer())
-		{
-			SP->Stop();
-		}
-
-		DialogSequenceActor->Destroy();
-	}
 
 	if (Cinecam.IsValid())
 	{
-		if (bBlendCameraOnDialogEnd)
+		//TODO: blend to player when sequence ends
+		bShouldBlendCameraOnDialogEnd = bBlendCameraOnDialogEnd && !DialogSequenceActor;
+		if (bShouldBlendCameraOnDialogEnd)
 		{
 			OwningController->SetViewTargetWithBlend(
 				GetOwningPawn(),
@@ -744,7 +758,8 @@ void UDialogBuilderGraph::EndDialog()
 		}
 		Cinecam = nullptr;
 	}
-
+	DestroyDialogSequenceActor();
+	
 	if (DialogCameraShake && OwningController)
 	{
 		OwningController->ClientStopCameraShake(DialogCameraShake);
@@ -847,6 +862,27 @@ FVector UDialogBuilderGraph::GetSpeakerBoneLocation(AActor* Actor, bool bOverrid
 	}
 
 	return BoneLoc;
+}
+
+void UDialogBuilderGraph::EnsurePlayerDefinition()
+{
+	if (!PlayerParticipantDefinition)
+	{
+		PlayerParticipantDefinition = NewObject<UDialogPlayerParticipant>(this, UDialogPlayerParticipant::StaticClass(), NAME_None, RF_Transactional);
+		PlayerParticipantDefinition->DisplayName = LOCTEXT("Player", "Player");
+	}
+
+	PlayerParticipantDefinition->Tag = TAG_Dialog_Participant_Player;
+	const int32 PlayerDefinitionIndex = ParticipantDefinitions.IndexOfByKey(PlayerParticipantDefinition);
+	if (PlayerDefinitionIndex == INDEX_NONE)
+	{
+		ParticipantDefinitions.Insert(PlayerParticipantDefinition, 0);
+	}
+	else if (PlayerDefinitionIndex != 0)
+	{
+		ParticipantDefinitions.RemoveAt(PlayerDefinitionIndex);
+		ParticipantDefinitions.Insert(PlayerParticipantDefinition, 0);
+	}
 }
 
 AActor* UDialogBuilderGraph::RetrieveParticipant(FParticipantInfo& Info)
@@ -955,6 +991,18 @@ AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot)
 	AActor* NewActor = World->SpawnActor<AActor>(ActorClass, FTransform::Identity, SpawnParams);
 	if (NewActor)
 	{
+		if (ACineCameraActor* CineCam = Cast<ACineCameraActor>(NewActor))
+		{
+			if (UCineCameraComponent* CineCameraComponent = CineCam->GetCineCameraComponent())
+			{
+				CineCameraComponent->FocusSettings.FocusMethod = ECameraFocusMethod::Manual;
+				CineCameraComponent->FocusSettings.ManualFocusDistance = 10000.0f;
+				CineCameraComponent->CurrentAperture = 16.0f;
+
+				CineCameraComponent->bOverride_CustomNearClippingPlane = true;
+				CineCameraComponent->CustomNearClippingPlane = 1.0f;
+			}
+		}
 		NewActor->AttachToActor(SequencePivot, FAttachmentTransformRules::KeepWorldTransform);
 		NewActor->SetActorRelativeLocation(InSlot->SlotLocation);
 		NewActor->SetActorRelativeRotation(InSlot->SlotRotation);

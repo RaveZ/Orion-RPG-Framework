@@ -93,6 +93,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
 		bool bBlendCameraOnDialogEnd;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
+		bool bShouldBlendCameraOnDialogEnd = false;
+
 	/**time taken to blend*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (EditCondition = "bBlendCameraOnDialogEnd == true", HideEditConditionToggle, EditConditionHides))
 		float BlendTime;
@@ -130,6 +133,9 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 		TArray<TObjectPtr<class UDialogParticipant>> ParticipantDefinitions;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
+		TObjectPtr<class UDialogPlayerParticipant> PlayerParticipantDefinition;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 		TArray<TObjectPtr<class UDialogProp>> PropDefinitions;
@@ -272,12 +278,17 @@ public:
 	UFUNCTION()
 	virtual FVector GetSpeakerBoneLocation(class AActor* Actor, bool bOverrideTrackedBone = false, FName BoneOverride = NAME_None) const;
 
+	/**Ensure player definition exist for this graph, create a new one if null*/
+	UFUNCTION()
+	void EnsurePlayerDefinition();
+
 protected:
 	virtual AActor* RetrieveParticipant(FParticipantInfo& Info);
 	virtual AActor* RetrieveActorFromSlot(class UDialogSequenceSlot* InSlot);
 
 	void InitializeDialogActors();
 	void SetDialogStage(class UDialogStage* InDialogStage);	
+	void DestroyDialogSequenceActor();
 
 	/** Cached actor original transforms, used to restore actor transforms after dialog ends */
 	UPROPERTY(Transient, BlueprintReadOnly, Category = "Dialog")

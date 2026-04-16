@@ -691,6 +691,17 @@ void SDialogDefinitions::OnDeleteEntry()
 
 bool SDialogDefinitions::CanDeleteEntry() const
 {
+	if (const FAssetSchemaAction_Participant* ParticipantAction = SelectionAsParticipant())
+	{
+		if (const UDialogParticipant* DialogParticipant = ParticipantAction->Participant)
+		{
+			if (DialogParticipant->IsA(UDialogPlayerParticipant::StaticClass()))
+			{
+				return false;
+			}
+		}
+	}
+
 	return true;
 }
 

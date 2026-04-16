@@ -186,6 +186,7 @@ public:
 	void UnbindDelegates();
 
 
+	void OnPieEvent(bool);
 	void OnMapChange(uint32);
 	void OnWorldAdded(UWorld*);
 	void OnWorldDestroyed(UWorld*);

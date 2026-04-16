@@ -146,6 +146,8 @@ FDialogBuilderEditor::~FDialogBuilderEditor()
 	// Release sequencer/editor references early
 	Sequencer.Reset();
 	PlaybackContext.Reset();
+
+	DialogViewportWidget->RemoveDialogOverlayWidget();
 	DialogViewportWidget.Reset();
 
 	// Optional but recommended if you extend tool menus with this owner
@@ -240,18 +242,19 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 			SetCurrentMode(DialogSequencerMode);
 		}
 
-		if (EditingDialogGraph && EditingDialogGraph->bIsNewlyCreated)
+		if (EditingDialogGraph)
 		{
-			NewDocument_OnClicked(CGT_NewDialogGraph);
-			EditingDialogGraph->bIsNewlyCreated = false;
-			EditingDialogGraph->Modify();
-		}
-		else
-		{
-			if (GetDialogBuilderGraph()->DialogGraphPages.Num() > 0)
+			EditingDialogGraph->EnsurePlayerDefinition();
+			if (EditingDialogGraph->bIsNewlyCreated)
 			{
-				OpenDocument(GetDialogBuilderGraph()->DialogGraphPages[0], FDocumentTracker::OpenNewDocument);
-				
+				NewDocument_OnClicked(CGT_NewDialogGraph);
+				EditingDialogGraph->bIsNewlyCreated = false;
+				EditingDialogGraph->Modify();
+			}
+			else if (EditingDialogGraph->DialogGraphPages.Num() > 0)
+			{
+				OpenDocument(EditingDialogGraph->DialogGraphPages[0], FDocumentTracker::OpenNewDocument);
+
 				//bind on graph changes
 				for (UEdGraph* EdGraph : EditingDialogGraph->DialogGraphPages)
 				{
@@ -264,8 +267,10 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 						}
 					}
 				}
+
 			}
 		}
+		
 	}
 	else
 	{
@@ -291,6 +296,9 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 void FDialogBuilderEditor::BindDelegates()
 {
 	FEditorDelegates::MapChange.AddRaw(this, &FDialogBuilderEditor::OnMapChange);
+
+	FEditorDelegates::PostPIEStarted.AddRaw(this, &FDialogBuilderEditor::OnPieEvent);
+	FEditorDelegates::PrePIEEnded.AddRaw(this, &FDialogBuilderEditor::OnPieEvent);
 	FWorldDelegates::OnWorldCleanup.AddRaw(this, &FDialogBuilderEditor::OnWorldCleanup);
 
 	if (GEngine)
@@ -303,6 +311,8 @@ void FDialogBuilderEditor::BindDelegates()
 void FDialogBuilderEditor::UnbindDelegates()
 {
 	FEditorDelegates::MapChange.RemoveAll(this);
+	FEditorDelegates::PostPIEStarted.RemoveAll(this);
+	FEditorDelegates::PrePIEEnded.RemoveAll(this);
 	FWorldDelegates::OnWorldCleanup.RemoveAll(this);
 	if (GEngine)
 	{
@@ -311,6 +321,28 @@ void FDialogBuilderEditor::UnbindDelegates()
 	}
 }
 
+void FDialogBuilderEditor::OnPieEvent(bool)
+{
+	if (!Sequencer.IsValid())
+	{
+		return;
+	}
+
+	const TSharedRef<SWidget> SequencerWidget = Sequencer->GetSequencerWidget();
+
+	if (SequencerWidget->IsEnabled())
+	{
+		Sequencer->Pause();
+		SequencerWidget->SetEnabled(false);
+	}
+	else
+	{
+		SequencerWidget->SetEnabled(true);
+		Sequencer->ForceEvaluate();
+		RefreshSequencerCameraLock();
+	}
+
+}
 
 void FDialogBuilderEditor::OnMapChange(uint32)
 {

@@ -26,7 +26,7 @@ void UDialogBuilderNode_DialogSequence::BeginNode()
 {
 	Super::BeginNode();
 
-	if (!DialogSequence || GetSequenceDuration() <= KINDA_SMALL_NUMBER)
+	if (!ShouldPlaySequence())
 	{
 		EvaluateNextNode();
 		return;
@@ -38,6 +38,11 @@ void UDialogBuilderNode_DialogSequence::BeginNode()
 void UDialogBuilderNode_DialogSequence::EvaluateNextNode()
 {
 	Super::EvaluateNextNode();
+}
+
+bool UDialogBuilderNode_DialogSequence::ShouldPlaySequence()
+{
+	return DialogSequence && DialogStage && GetSequenceDuration() > KINDA_SMALL_NUMBER;
 }
 
 void UDialogBuilderNode_DialogSequence::EnsureSequenceCreated()
@@ -166,6 +171,8 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogStageData()
 		}
 	}*/
 }
+
+
 
 
 #if WITH_EDITOR

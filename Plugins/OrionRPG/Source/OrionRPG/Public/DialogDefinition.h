@@ -25,6 +25,8 @@ public:
 	FText DisplayName;
 
 public:
+
+	virtual FText GetDisplayName() const { return DisplayName; }
 	virtual TSubclassOf< class AActor> GetActorClass() const { return nullptr; }
 	FGuid GetOrCreateID();
 
@@ -53,12 +55,24 @@ class ORIONRPG_API UDialogParticipant : public UDialogDefinition
 public:
 	UDialogParticipant();
 
-
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayAfter = "DisplayName"))
 	TSubclassOf<class APawn> PawnClass;
 
 	virtual TSubclassOf< class AActor> GetActorClass() const { return PawnClass; }
 };
+
+UCLASS(Blueprintable, BlueprintType)
+class ORIONRPG_API UDialogPlayerParticipant : public UDialogParticipant
+{
+	GENERATED_BODY()
+
+public:
+	UDialogPlayerParticipant();
+
+
+	virtual FText GetDisplayName() const { return FText::FromString("PLAYER - " + DisplayName.ToString()); }
+};
+
 
 UCLASS(Blueprintable, BlueprintType)
 class ORIONRPG_API UDialogProp : public UDialogDefinition
@@ -67,6 +81,7 @@ class ORIONRPG_API UDialogProp : public UDialogDefinition
 
 public:
 	UDialogProp();
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayAfter = "DisplayName"))
 	TSubclassOf<class AActor> PropClass;

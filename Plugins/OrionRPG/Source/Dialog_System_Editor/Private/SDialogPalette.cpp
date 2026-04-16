@@ -182,20 +182,26 @@ FText SDialogPaletteItem::GetDisplayText() const
 	{
 		TSharedPtr< FEdGraphSchemaAction > GraphAction = ActionPtr.Pin();
 		FAssetSchemaAction_Participant* GraphAction_Participant = (FAssetSchemaAction_Participant*)GraphAction.Get();
-		if (UDialogParticipant* DialogParticipant = Cast<UDialogParticipant>(GraphAction_Participant->Participant))
-		{
-			FText ParticipantName = DialogParticipant->DisplayName;
-			FText FinalParticipantName = ParticipantName.IsEmpty() ? FText::FromString("Participant") : ParticipantName;
-			MenuDescriptionCache.SetCachedText(ParticipantName, DialogSchema);
-		}
-
-
 		FAssetSchemaAction_Prop* GraphAction_Prop = (FAssetSchemaAction_Prop*)GraphAction.Get();
-		if (UDialogProp* DialogProp = Cast<UDialogProp>(GraphAction_Prop->Prop))
+
+
+		if (UDialogPlayerParticipant* PlayerParticipant = Cast<UDialogPlayerParticipant>(GraphAction_Participant->Participant))
 		{
-			FText ParticipantName = DialogProp->DisplayName;
-			FText FinalParticipantName = ParticipantName.IsEmpty() ? FText::FromString("Prop") : ParticipantName;
-			MenuDescriptionCache.SetCachedText(ParticipantName, DialogSchema);
+			FText ParticipantName = FText::FromString("PLAYER - " + PlayerParticipant->DisplayName.ToString());
+			FText FinalParticipantName = ParticipantName.IsEmpty() ? FText::FromString("PLAYER - EMPTY") : ParticipantName;
+			MenuDescriptionCache.SetCachedText(FinalParticipantName, DialogSchema);
+		}
+		else if (UDialogParticipant* DialogParticipant = Cast<UDialogParticipant>(GraphAction_Participant->Participant))
+		{
+			FText ParticipantName = DialogParticipant->GetDisplayName();
+			FText FinalParticipantName = ParticipantName.IsEmpty() ? FText::FromString("Empty") : ParticipantName;
+			MenuDescriptionCache.SetCachedText(FinalParticipantName, DialogSchema);
+		}
+		else if (UDialogProp* DialogProp = Cast<UDialogProp>(GraphAction_Prop->Prop))
+		{
+			FText PropName = DialogProp->DisplayName;
+			FText FinalPropName = PropName.IsEmpty() ? FText::FromString("Empty") : PropName;
+			MenuDescriptionCache.SetCachedText(FinalPropName, DialogSchema);
 		}
 	}
 

@@ -29,6 +29,10 @@ UDialogPivot::UDialogPivot()
 	ActorClass = AActor::StaticClass();	
 }
 
+UDialogPlayerParticipant::UDialogPlayerParticipant()
+{
+
+}
 
 UDialogParticipant::UDialogParticipant()
 {

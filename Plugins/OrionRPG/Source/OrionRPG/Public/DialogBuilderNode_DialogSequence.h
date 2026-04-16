@@ -34,7 +34,7 @@ public:
 
 	void UseDialogStage(UDialogStage* InDialogStage);
 	void UpdateDialogStageData();
-
+	bool ShouldPlaySequence();
 
 public:
 	virtual void Serialize(FArchive& Ar) override;
