@@ -107,20 +107,11 @@ void UDialogSequence::RefreshSequence()
 		{
 			Section->Modify();
 
-			if (SectionEnd > PreviousEndFrame)
-			{
-				// Partial overlap: keep the non-overlapping tail, trim only the intersecting front part.
-				SectionStart = PreviousEndFrame;
-				Section->SetRange(TRange<FFrameNumber>(SectionStart, SectionEnd));
-			}
-			else
-			{
-				// Fully overlapped: move the section forward so it remains valid.
-				const FFrameNumber SectionLength = FMath::Max<FFrameNumber>(1, SectionEnd - SectionStart);
-				SectionStart = PreviousEndFrame;
-				SectionEnd = SectionStart + SectionLength;
-				Section->SetRange(TRange<FFrameNumber>(SectionStart, SectionEnd));
-			}
+			// Fully overlapped: move the section forward so it remains valid.
+			const FFrameNumber SectionLength = FMath::Max<FFrameNumber>(1, SectionEnd - SectionStart);
+			SectionStart = PreviousEndFrame;
+			SectionEnd = SectionStart + SectionLength;
+			Section->SetRange(TRange<FFrameNumber>(SectionStart, SectionEnd));
 		}
 
 		if (!bHasSections)
