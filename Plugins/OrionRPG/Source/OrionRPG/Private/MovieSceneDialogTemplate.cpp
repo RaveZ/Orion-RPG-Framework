@@ -240,16 +240,6 @@ namespace OrionDialogTemplate
 				{
 					NotifyDialogInterface(DialogWidget);
 
-					if (UObject* PlaybackContextObject = Player.GetPlaybackContext())
-					{
-						if (IDialogContext* DialogContext = Cast<IDialogContext>(PlaybackContextObject))
-						{
-							DialogContext->RemoveDialogFromViewport();
-						}
-					}
-
-					DialogWidgetSlateWidget.Reset();
-					DialogWidget = nullptr;
 				}
 
 				return;

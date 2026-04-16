@@ -42,5 +42,5 @@ FText FDialogSection::GetSectionTitle() const
 		return SectionObject.DialogLine.Line;
 	}
 
-	return FText::FromString(TEXT("Dialog"));
+	return FText::FromString(TEXT("None"));
 }
