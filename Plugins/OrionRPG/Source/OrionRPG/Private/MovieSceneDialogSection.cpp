@@ -4,6 +4,9 @@
 #include "DialogSequence.h"
 #include "DialogBuilderGraph.h"
 #include "DialogDefinition.h"
+#include "Audio.h"
+#include "MovieScene.h"
+#include "Sound/SoundBase.h"
 
 #define LOCTEXT_NAMESPACE "DialogSection"
 
@@ -49,6 +52,46 @@ UDialogBuilderGraph* UMovieSceneDialogSection::GetOwningDialogGraph() const
 	return nullptr;
 }
 
+bool UMovieSceneDialogSection::TryGetDialogSoundDurationFrames(int32& OutDurationFrames) const
+{
+	OutDurationFrames = 0;
+
+	if (!DialogLine.DialogSound)
+	{
+		return false;
+	}
+
+	const float SoundDuration = DialogLine.DialogSound->GetDuration();
+	if (SoundDuration <= 0.f || SoundDuration == INDEFINITELY_LOOPING_DURATION)
+	{
+		return false;
+	}
+
+	const UMovieScene* MovieScene = GetTypedOuter<UMovieScene>();
+	if (!MovieScene)
+	{
+		return false;
+	}
+
+	const FFrameTime DurationInFrames = SoundDuration * MovieScene->GetTickResolution();
+	OutDurationFrames = FMath::Max(1, DurationInFrames.CeilToFrame().Value);
+	return true;
+}
+
+void UMovieSceneDialogSection::SyncRangeToDialogSoundDuration()
+{
+	int32 DurationFrames = 0;
+	if (!TryGetDialogSoundDurationFrames(DurationFrames))
+	{
+		return;
+	}
+
+	const FFrameNumber StartFrame = HasStartFrame() ? GetInclusiveStartFrame() : FFrameNumber(0);
+	SetRange(TRange<FFrameNumber>(
+		TRangeBound<FFrameNumber>::Inclusive(StartFrame),
+		TRangeBound<FFrameNumber>::Exclusive(StartFrame + DurationFrames)));
+}
+
 void UMovieSceneDialogSection::RefreshDialogContent()
 {
 	UDialogBuilderGraph* DialogGraph = GetOwningDialogGraph();
@@ -65,8 +108,10 @@ void UMovieSceneDialogSection::RefreshDialogContent()
 		ListenerParticipantDefinition = nullptr;
 	}
 
-	//DialogLine.SpeakerName = DialogGraph ? DialogGraph->GetParticipantName(DialogLine.SpeakerTag) : FText();
 	DialogLine.SpeakerName = SpeakerParticipantDefinition ? SpeakerParticipantDefinition->DisplayName : FText();
+
+	// Keep section duration synced to dialog audio duration (if valid).
+	SyncRangeToDialogSoundDuration();
 }
 
 #if WITH_EDITOR

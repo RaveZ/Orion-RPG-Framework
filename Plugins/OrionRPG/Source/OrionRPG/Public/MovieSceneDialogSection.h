@@ -19,6 +19,8 @@ public:
 	class UDialogBuilderGraph* GetOwningDialogGraph() const;
 
 	void RefreshDialogContent();
+	void SyncRangeToDialogSoundDuration();
+	bool TryGetDialogSoundDurationFrames(int32& OutDurationFrames) const;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Section", meta = (ShowOnlyInnerProperties))
 	FOrionDialogLine DialogLine;

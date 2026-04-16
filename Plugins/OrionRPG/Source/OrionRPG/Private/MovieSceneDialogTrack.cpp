@@ -71,6 +71,9 @@ UMovieSceneDialogSection* UMovieSceneDialogTrack::AddDialogSection(
 		TRangeBound<FFrameNumber>::Inclusive(InStartFrame),
 		TRangeBound<FFrameNumber>::Exclusive(InStartFrame + ClampedDurationFrames)));
 
+	// If DialogSound is valid, this overrides manual duration to always match sound length.
+	NewSection->SyncRangeToDialogSoundDuration();
+
 	AddSection(*NewSection);
 
 	return NewSection;
