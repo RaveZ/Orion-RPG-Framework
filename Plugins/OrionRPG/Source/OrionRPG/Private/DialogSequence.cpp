@@ -55,16 +55,44 @@ void UDialogSequence::RefreshSequence()
 		return;
 	}
 
+	TArray<UMovieSceneSection*> SortedSections = DialogTrack->GetAllSections();
+
+	//Sync duration range to match dialog sound
+	for (UMovieSceneSection* Section : SortedSections)
+	{
+		if (!Section) continue;
+		if (UMovieSceneDialogSection* DialogSection = Cast<UMovieSceneDialogSection>(Section))
+		{
+			DialogSection->SyncRangeToDialogSoundDuration();
+		}
+	}
+
+
+	//sort sections by start time, and remove any null entries
+	SortedSections.RemoveAll([](UMovieSceneSection* Section)
+		{
+			return Section == nullptr;
+		});
+
+	SortedSections.Sort([](const UMovieSceneSection& A, const UMovieSceneSection& B)
+		{
+			const TRange<FFrameNumber> RangeA = A.GetRange();
+			const TRange<FFrameNumber> RangeB = B.GetRange();
+
+			const FFrameNumber StartA = RangeA.HasLowerBound() ? RangeA.GetLowerBoundValue() : FFrameNumber(0);
+			const FFrameNumber StartB = RangeB.HasLowerBound() ? RangeB.GetLowerBoundValue() : FFrameNumber(0);
+
+			return StartA < StartB;
+		});
+
 	bool bHasSections = false;
 	FFrameNumber MinFrame = 0;
 	MaxFrame = 0;
+	FFrameNumber PreviousEndFrame = 0;
 
-	for (UMovieSceneSection* Section : DialogTrack->GetAllSections())
+	for (UMovieSceneSection* Section : SortedSections)
 	{
-		if (!Section)
-		{
-			continue;
-		}
+		if (!Section) continue;
 
 		const TRange<FFrameNumber> SectionRange = Section->GetRange();
 		if (!SectionRange.HasLowerBound() || !SectionRange.HasUpperBound())
@@ -72,8 +100,28 @@ void UDialogSequence::RefreshSequence()
 			continue;
 		}
 
-		const FFrameNumber SectionStart = SectionRange.GetLowerBoundValue();
-		const FFrameNumber SectionEnd = SectionRange.GetUpperBoundValue();
+		FFrameNumber SectionStart = SectionRange.GetLowerBoundValue();
+		FFrameNumber SectionEnd = SectionRange.GetUpperBoundValue();
+
+		if (bHasSections && SectionStart < PreviousEndFrame)
+		{
+			Section->Modify();
+
+			if (SectionEnd > PreviousEndFrame)
+			{
+				// Partial overlap: keep the non-overlapping tail, trim only the intersecting front part.
+				SectionStart = PreviousEndFrame;
+				Section->SetRange(TRange<FFrameNumber>(SectionStart, SectionEnd));
+			}
+			else
+			{
+				// Fully overlapped: move the section forward so it remains valid.
+				const FFrameNumber SectionLength = FMath::Max<FFrameNumber>(1, SectionEnd - SectionStart);
+				SectionStart = PreviousEndFrame;
+				SectionEnd = SectionStart + SectionLength;
+				Section->SetRange(TRange<FFrameNumber>(SectionStart, SectionEnd));
+			}
+		}
 
 		if (!bHasSections)
 		{
@@ -86,8 +134,9 @@ void UDialogSequence::RefreshSequence()
 			MinFrame = SectionStart < MinFrame ? SectionStart : MinFrame;
 			MaxFrame = MaxFrame < SectionEnd ? SectionEnd : MaxFrame;
 		}
-	}
 
+		PreviousEndFrame = SectionEnd;
+	}
 
 	if (bHasSections)
 	{
@@ -98,8 +147,11 @@ void UDialogSequence::RefreshSequence()
 		{
 			for (UMovieSceneSection* Section : CameraCutTrack->GetAllSections())
 			{
-				if (!Section) continue;
-				
+				if (!Section)
+				{
+					continue;
+				}
+
 				const TRange<FFrameNumber> SectionRange = Section->GetRange();
 				if (!SectionRange.HasUpperBound() || SectionRange.GetUpperBoundValue() != MaxFrame)
 				{
@@ -109,7 +161,6 @@ void UDialogSequence::RefreshSequence()
 		}
 	}
 
-	
 	MovieScene->SetPlaybackRangeLocked(true);
 
 }

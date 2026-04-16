@@ -119,7 +119,6 @@ void UMovieSceneDialogSection::PostEditChangeProperty(FPropertyChangedEvent& Pro
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-	RefreshDialogContent();
 }
 #endif
 
