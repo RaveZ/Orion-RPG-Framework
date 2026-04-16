@@ -1426,11 +1426,13 @@ void FDialogBuilderEditor::OpenDialogSequence(UDialogSequence* InDialogSequence)
 	if (Sequencer.IsValid())
 	{
 		Sequencer->ResetToNewRootSequence(*InDialogSequence);
+
+		UpdateTrackModelRule();
+		UpdateSectionRule();
+
 		Sequencer->GetSequencerWidget()->SetEnabled(true);
 		Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
 		Sequencer->ForceEvaluate();
-		UpdateTrackModelRule();
-		UpdateSectionRule();
 		RefreshSequencerCameraLock();
 	}
 	else
