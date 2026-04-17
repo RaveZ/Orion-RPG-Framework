@@ -159,6 +159,9 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 	if(!InDialogStage || InDialogStage == CurrentDialogStage)
 		return;
 
+	UMovieScene* MovieScene = CurrentDialogSequence ? CurrentDialogSequence->GetMovieScene() : nullptr;
+	if (!MovieScene) return;
+
 	SequencePivot->SetActorLocation(InDialogStage->Location);
 	SequencePivot->SetActorRotation(InDialogStage->Rotation);
 	UDialogStage* LastDialogStage = CurrentDialogStage;
@@ -171,6 +174,8 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 			const FName SlotId = Slot->GetActorTag().GetTagName();
 			CachedActorMap.Emplace(SlotId, DialogActor);
 			CacheOriginalActorTransform(SlotId, DialogActor);
+
+			CurrentDialogSequence->BindPossessableObject(Slot->ID, *DialogActor, DialogActor->GetClass());
 		}
 	}
 		
@@ -182,28 +187,11 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 			const FName SlotId = Slot->GetID();
 			CachedActorMap.Emplace(SlotId, DialogActor);
 			CacheOriginalActorTransform(SlotId, DialogActor);
+
+			CurrentDialogSequence->BindPossessableObject(Slot->ID, *DialogActor, DialogActor->GetClass());
 		}
 	}
 	
-	UMovieScene* MovieScene = CurrentDialogSequence ? CurrentDialogSequence->GetMovieScene() : nullptr;
-	if (!MovieScene) return;
-	TArray<UDialogSequenceSlot*> DialogSlots;
-
-	DialogSlots.Append(CurrentDialogStage->Slots);
-	DialogSlots.Append(CurrentDialogStage->CameraSlots);
-
-	for (int32 i = 0; i < DialogSlots.Num(); i++)
-	{
-		UDialogSequenceSlot* DialogSlot = DialogSlots[i];
-		AActor* DialogActor = CachedActorMap.FindRef(DialogSlot->GetID());
-
-		if (DialogSlot && DialogActor)
-		{
-			FGuid ObjectBinding = DialogSlot->ID;
-
-			CurrentDialogSequence->BindPossessableObject(ObjectBinding, *DialogActor, DialogActor->GetClass());
-		}
-	}
 }
 
 void UDialogBuilderGraph::DestroyDialogSequenceActor()
@@ -1105,6 +1093,8 @@ AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot)
 	AActor* NewActor = World->SpawnActor<AActor>(ActorClass, FTransform::Identity, SpawnParams);
 	if (NewActor)
 	{
+		NewActor->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+		
 		if (ACineCameraActor* CineCam = Cast<ACineCameraActor>(NewActor))
 		{
 			if (UCineCameraComponent* CineCameraComponent = CineCam->GetCineCameraComponent())

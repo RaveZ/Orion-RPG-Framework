@@ -587,7 +587,7 @@ namespace
 		if (BoundActor && BoundActor->IsA(ACharacter::StaticClass()))
 		{
 			AddTrackIfMissing<UMovieScene3DTransformTrack>(MovieScene, BindingId);
-			AddTrackIfMissing<UMovieSceneSkeletalAnimationTrack>(MovieScene, BindingId);
+			//AddTrackIfMissing<UMovieSceneSkeletalAnimationTrack>(MovieScene, BindingId);
 			return;
 		}
 
@@ -898,6 +898,24 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 	if (NewActor)
 	{
 		OutActor = NewActor;
+		NewActor->SetActorTickEnabled(true);
+		NewActor->SetTickableWhenPaused(true);
+		NewActor->PrimaryActorTick.bStartWithTickEnabled = true;
+
+		TArray<USkeletalMeshComponent*> SkeletalMeshComponents;
+		NewActor->GetComponents(SkeletalMeshComponents);
+
+		for (USkeletalMeshComponent* SkeletalMeshComponent : SkeletalMeshComponents)
+		{
+			if (!SkeletalMeshComponent)
+			{
+				continue;
+			}
+
+			SkeletalMeshComponent->SetComponentTickEnabled(true);
+			SkeletalMeshComponent->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+			SkeletalMeshComponent->SetUpdateAnimationInEditor(true);
+		}
 		// Preserve the actor's world transform when attaching to the pivot.
 		NewActor->AttachToActor(SequencePivot.Get(), FAttachmentTransformRules::KeepWorldTransform);
 
@@ -1421,15 +1439,15 @@ void FDialogBuilderEditor::OpenDialogSequence(UDialogSequence* InDialogSequence)
 	}
 
 	EditingDialogSequence = InDialogSequence;
+	DialogViewportWidget->RemoveDialogOverlayWidget();
 
 
 	if (Sequencer.IsValid())
 	{
 		Sequencer->ResetToNewRootSequence(*InDialogSequence);
-
+		
 		UpdateTrackModelRule();
 		UpdateSectionRule();
-
 		Sequencer->GetSequencerWidget()->SetEnabled(true);
 		Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
 		Sequencer->ForceEvaluate();

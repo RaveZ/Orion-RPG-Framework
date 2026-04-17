@@ -45,14 +45,14 @@ namespace OrionDialogTemplate
 
 		~FDialogSharedTrackData()
 		{
-			if (DialogWidget)
+			if (DialogWidget.IsValid())
 			{
 				DialogWidget->RemoveFromParent();
 			}
 
 			StopDialogAudio();
 
-			DialogWidget = nullptr;
+			DialogWidget.Reset();
 		}
 
 		void StopDialogAudio()
@@ -207,11 +207,16 @@ namespace OrionDialogTemplate
 			{
 				if (bShow)
 				{
-					if (!DialogWidget)
+					if (DialogWidget.IsValid() && !DialogWidget->GetCachedWidget().IsValid())
 					{
-
+						DialogWidget->RemoveFromParent();
+						
+						DialogWidget.Reset();
+					}
+					if (!DialogWidget.IsValid())
+					{
 						DialogWidget = CreateWidget<UUserWidget>(World, DialogWidgetClass);
-						if (DialogWidget)
+						if (DialogWidget.IsValid())
 						{
 							DialogWidget->GetRootWidget()->SetVisibility(ESlateVisibility::HitTestInvisible);
 
@@ -219,29 +224,28 @@ namespace OrionDialogTemplate
 							{
 								if (IDialogContext* DialogContext = Cast<IDialogContext>(PlaybackContextObject))
 								{
-									DialogContext->AddDialogToViewport(DialogWidget);
+									DialogContext->AddDialogToViewport(DialogWidget.Get());
 								}
 							}
 						}
 
-						const TWeakObjectPtr<UUserWidget> DialogWidgetWeak = DialogWidget;
 						FWorldDelegates::OnWorldCleanup.AddLambda(
-							[this, DialogWidgetWeak](UWorld*, bool, bool)
+							[this](UWorld*, bool, bool)
 							{
-								/*if (DialogWidgetWeak.IsValid())
+								if (DialogWidget.IsValid())
 								{
-									DialogWidgetWeak->RemoveFromParent();
+									DialogWidget->RemoveFromParent();
 								}
-								DialogWidget = nullptr;*/
+								DialogWidget.Reset();
+								
 							});
 					}
 
-					NotifyDialogInterface(DialogWidget);
+					NotifyDialogInterface(DialogWidget.Get());
 				}
 				else
 				{
-					NotifyDialogInterface(DialogWidget);
-
+					NotifyDialogInterface(DialogWidget.Get());
 				}
 
 				return;
@@ -275,8 +279,7 @@ namespace OrionDialogTemplate
 		FGameplayTag SpeakerTag;
 		FGameplayTag ListenerTag;
 
-		UPROPERTY()
-		TObjectPtr<UUserWidget> DialogWidget = nullptr;
+		TWeakObjectPtr<UUserWidget> DialogWidget;
 
 		TWeakObjectPtr<UAudioComponent> DialogAudioComponent;
 
