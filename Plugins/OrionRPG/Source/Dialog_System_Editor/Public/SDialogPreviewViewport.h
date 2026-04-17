@@ -18,7 +18,7 @@ public:
 
 	void SetUseLevelWorld(bool bInUseLevelWorld);
 
-	void AddDialogOverlayWidget(const TSharedRef<SWidget>& InWidget);
+	void AddDialogOverlayWidget(UUserWidget* InWidget);
 	void RemoveDialogOverlayWidget();
 
 	void AddOverlayViewportMenu();

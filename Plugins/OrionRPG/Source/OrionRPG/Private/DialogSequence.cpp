@@ -1,6 +1,7 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #include "DialogSequence.h"
+#include "DialogBuilderGraph.h"
 #include "MovieScene.h"
 #include "MovieSceneDialogSection.h"
 #include "MovieSceneDialogTrack.h"
@@ -33,7 +34,9 @@ UMovieSceneDialogTrack* UDialogSequence::GetOrCreateDialogTrack()
 	Modify();
 	MovieScene->Modify();
 	UMovieSceneDialogTrack* NewDialogTrack = MovieScene->AddTrack<UMovieSceneDialogTrack>();
+#if WITH_EDITORONLY_DATA
 	NewDialogTrack->SetDisplayName(FText::FromString("Dialog"));
+#endif
 	return NewDialogTrack;
 }
 
@@ -152,9 +155,12 @@ void UDialogSequence::RefreshSequence()
 		}
 	}
 
+#if WITH_EDITORONLY_DATA
 	MovieScene->SetPlaybackRangeLocked(true);
-
+#endif
 }
+
+
 
 #if WITH_EDITOR
 UDialogSequence* UDialogSequence::GetNullDialogSequence()

@@ -2130,12 +2130,19 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 
 	if (InSequenceShot->TrackedBone != NAME_None)
 	{
-		if (USkeletalMeshComponent* SkeletalMesh = ActorToFocus->FindComponentByClass<USkeletalMeshComponent>())
+		TArray<USkeletalMeshComponent*> SkeletalMeshComponents;
+		ActorToFocus->GetComponents<USkeletalMeshComponent>(SkeletalMeshComponents);
+
+		for (USkeletalMeshComponent* SkeletalMesh : SkeletalMeshComponents)
 		{
-			if (SkeletalMesh->DoesSocketExist(InSequenceShot->TrackedBone))
+			if (SkeletalMesh && SkeletalMesh->DoesSocketExist(InSequenceShot->TrackedBone))
 			{
-				const FTransform SocketTransform = SkeletalMesh->GetSocketTransform(InSequenceShot->TrackedBone, ERelativeTransformSpace::RTS_World);
+				const FTransform SocketTransform = SkeletalMesh->GetSocketTransform(
+					InSequenceShot->TrackedBone,
+					ERelativeTransformSpace::RTS_World);
+
 				FocusLocation = SocketTransform.GetLocation();
+				break;
 			}
 		}
 	}

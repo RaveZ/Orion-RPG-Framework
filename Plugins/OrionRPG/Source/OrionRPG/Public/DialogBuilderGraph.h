@@ -204,7 +204,10 @@ public:
 		class UAudioComponent* DialogAudio;
 
 protected:
-		FTimerHandle DialogLineTimer;
+	UFUNCTION()
+	void HandleDialogSequenceFinished();
+
+	FTimerHandle DialogLineTimer;
 public:
 	virtual bool Initialize(UDialogComponent* InitializingComp);
 	virtual void Deinitialize();
@@ -236,6 +239,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 	virtual void PlaySequence(class ULevelSequence* InSequence, FMovieSceneSequencePlaybackSettings InPlaybackSetting);
+
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	virtual void JumpToNextDialogSection();
 
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 	FText GetParticipantName(FGameplayTag ParticipantTag) const;

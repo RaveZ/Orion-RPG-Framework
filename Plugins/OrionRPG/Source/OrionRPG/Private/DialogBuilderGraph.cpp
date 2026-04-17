@@ -3,6 +3,8 @@
 
 #include "DialogBuilderGraph.h"
 #include "DialogComponent.h"
+#include "MovieSceneDialogSection.h"
+#include "MovieSceneDialogTrack.h"
 #include "DialogBuilderNode.h"
 #include "DialogBuilderEdge.h"
 #include "DialogCameraShot.h"
@@ -54,6 +56,8 @@ UDialogBuilderGraph::~UDialogBuilderGraph()
 {
 	
 }
+
+
 
 bool UDialogBuilderGraph::Initialize(UDialogComponent* InitializingComp)
 {
@@ -208,6 +212,7 @@ void UDialogBuilderGraph::DestroyDialogSequenceActor()
 	{
 		if (ULevelSequencePlayer* SP = DialogSequenceActor->GetSequencePlayer())
 		{
+			SP->OnFinished.RemoveAll(this);
 			SP->Stop();
 		}
 		DialogSequenceActor->Destroy();
@@ -475,6 +480,92 @@ void UDialogBuilderGraph::BeginDialogSequence(UDialogBuilderNode_DialogSequence*
 	PlaySequence(Cast<ULevelSequence>(InDialogSequence->DialogSequence.Get()), InDialogSequence->PlaybackSettings);
 }
 
+void UDialogBuilderGraph::JumpToNextDialogSection()
+{
+	if (!CurrentDialogSequence || !DialogSequenceActor)
+	{
+		return;
+	}
+
+	const UMovieSceneDialogTrack* DialogTrack = CurrentDialogSequence->FindDialogTrack();
+	if (!DialogTrack)
+	{
+		return;
+	}
+
+	ULevelSequencePlayer* SequencePlayer = DialogSequenceActor->GetSequencePlayer();
+	if (!SequencePlayer)
+	{
+		return;
+	}
+	const UMovieScene* MovieScene = CurrentDialogSequence ? CurrentDialogSequence->GetMovieScene() : nullptr;
+	if (!MovieScene)
+	{
+		return;
+	}
+	const FFrameRate TickResolution = MovieScene->GetTickResolution();
+	const FFrameRate DisplayRate = MovieScene->GetDisplayRate();
+
+
+	TArray<UMovieSceneSection*> SortedSections = DialogTrack->GetAllSections();
+	SortedSections.RemoveAll([](UMovieSceneSection* Section)
+		{
+			return Section == nullptr;
+		});
+
+	SortedSections.Sort([](const UMovieSceneSection& A, const UMovieSceneSection& B)
+		{
+			const TRange<FFrameNumber> RangeA = A.GetRange();
+			const TRange<FFrameNumber> RangeB = B.GetRange();
+
+			const FFrameNumber StartA = RangeA.HasLowerBound() ? RangeA.GetLowerBoundValue() : FFrameNumber(0);
+			const FFrameNumber StartB = RangeB.HasLowerBound() ? RangeB.GetLowerBoundValue() : FFrameNumber(0);
+
+			return StartA < StartB;
+		});
+
+	const FFrameNumber CurrentFrame = SequencePlayer->GetCurrentTime().Time.FloorToFrame();
+
+	for (UMovieSceneSection* Section : SortedSections)
+	{
+		if (!Section)
+		{
+			continue;
+		}
+
+		const TRange<FFrameNumber> SectionRange = Section->GetRange();
+		if (!SectionRange.HasLowerBound())
+		{
+			continue;
+		}
+		else
+		{
+			const FFrameNumber StartTick = SectionRange.GetLowerBoundValue();
+			const double StartSeconds = TickResolution.AsSeconds(FFrameTime(StartTick));
+			const FFrameTime StartTime = FFrameRate::TransformTime(
+				FFrameTime(StartTick),
+				TickResolution,
+				DisplayRate);
+
+
+			const FFrameNumber SectionStart = StartTime.FloorToFrame();
+			if (SectionStart > CurrentFrame)
+			{
+				SequencePlayer->SetPlaybackPosition(
+					FMovieSceneSequencePlaybackParams(
+						FFrameTime(SectionStart),
+						EUpdatePositionMethod::Jump));
+
+				return;
+			}
+		}
+		
+	}
+	
+	HandleDialogSequenceFinished();
+
+}
+
 void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot, AActor* InSpeaker)
 {
 	if(!InDialogShot || !InSpeaker)
@@ -520,7 +611,9 @@ void UDialogBuilderGraph::PlaySequence(class ULevelSequence* InSequence, FMovieS
 	if (DialogSequenceActor)
 	{
 		if (ULevelSequencePlayer* SP = DialogSequenceActor->GetSequencePlayer())
-		{
+		{	
+			SP->OnFinished.AddDynamic(this, &ThisClass::HandleDialogSequenceFinished);
+
 			if (SP->IsPlaying())
 			{
 				SP->Stop();
@@ -533,6 +626,21 @@ void UDialogBuilderGraph::PlaySequence(class ULevelSequence* InSequence, FMovieS
 			}
 			SP->Play();
 		}
+	}
+}
+
+void UDialogBuilderGraph::HandleDialogSequenceFinished()
+{
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(DialogLineTimer);
+	}
+
+	DestroyDialogSequenceActor();
+
+	if (CurrentNode)
+	{
+		CurrentNode->EvaluateNextNode();
 	}
 }
 
@@ -666,6 +774,12 @@ void UDialogBuilderGraph::AdvanceDialogLine()
 {
 	if(IsChoiceSelectionActive())
 	{
+		return;
+	}
+
+	if (DialogSequenceActor)
+	{
+		JumpToNextDialogSection();
 		return;
 	}
 
@@ -811,10 +925,10 @@ void UDialogBuilderGraph::DetermineAdvanceDialogRule(UDialogBuilderNode* InDialo
 		}
 		
 	}
-	if (UDialogBuilderNode_DialogSequence* InDialogSequence = Cast< UDialogBuilderNode_DialogSequence>(InDialogNode))
+	/*if (UDialogBuilderNode_DialogSequence* InDialogSequence = Cast< UDialogBuilderNode_DialogSequence>(InDialogNode))
 	{
 		GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, this, &ThisClass::AdvanceDialogLine, InDialogSequence->GetSequenceDuration(), false);
-	}
+	}*/
 
 }
 

@@ -377,8 +377,20 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 
 	if (HitProxy->IsA(HActor::StaticGetType()))
 	{
-		if (!CanSelectActorFromHitProxy(HitProxy)) return;
+		if (!CanSelectActorFromHitProxy(HitProxy))
+		{
+			if (GEditor)
+			{
+				GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
+				if (ActorToSelect)
+				{
+					GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
+				}
 
+				GEditor->NoteSelectionChange();
+			}
+			return;
+		}
 		HActor* ActorProxy = (HActor*)HitProxy;
 		if (ActorProxy && ActorProxy->Actor && ActorProxy->PrimComponent)
 		{

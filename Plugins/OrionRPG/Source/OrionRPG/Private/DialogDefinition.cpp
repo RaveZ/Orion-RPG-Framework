@@ -53,3 +53,6 @@ UDialogCamera::UDialogCamera()
 
 #undef LOCTEXT_NAMESPACE
 
+UDialogLight::UDialogLight()
+{
+}

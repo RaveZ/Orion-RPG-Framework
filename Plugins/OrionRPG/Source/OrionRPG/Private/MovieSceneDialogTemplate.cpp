@@ -52,7 +52,6 @@ namespace OrionDialogTemplate
 
 			StopDialogAudio();
 
-			DialogWidgetSlateWidget.Reset();
 			DialogWidget = nullptr;
 		}
 
@@ -168,11 +167,17 @@ namespace OrionDialogTemplate
 
 		void NotifyDialogInterface(UObject* TargetObject) const
 		{
-			if (!TargetObject || !TargetObject->GetClass()->ImplementsInterface(UOrionDialogInterface::StaticClass()))
+			if (!IsValid(TargetObject))
 			{
 				return;
 			}
-			 
+
+			UClass* TargetClass = TargetObject->GetClass();
+			if (!TargetClass || !TargetClass->ImplementsInterface(UOrionDialogInterface::StaticClass()))
+			{
+				return;
+			}
+
 			if (bShow)
 			{
 				IOrionDialogInterface::Execute_OnDialogLineStarted(TargetObject, DialogLine);
@@ -209,13 +214,12 @@ namespace OrionDialogTemplate
 						if (DialogWidget)
 						{
 							DialogWidget->GetRootWidget()->SetVisibility(ESlateVisibility::HitTestInvisible);
-							DialogWidgetSlateWidget = DialogWidget->TakeWidget();
 
 							if (UObject* PlaybackContextObject = Player.GetPlaybackContext())
 							{
 								if (IDialogContext* DialogContext = Cast<IDialogContext>(PlaybackContextObject))
 								{
-									DialogContext->AddDialogToViewport(DialogWidgetSlateWidget.ToSharedRef());
+									DialogContext->AddDialogToViewport(DialogWidget);
 								}
 							}
 						}
@@ -224,13 +228,11 @@ namespace OrionDialogTemplate
 						FWorldDelegates::OnWorldCleanup.AddLambda(
 							[this, DialogWidgetWeak](UWorld*, bool, bool)
 							{
-								if (DialogWidgetWeak.IsValid())
+								/*if (DialogWidgetWeak.IsValid())
 								{
 									DialogWidgetWeak->RemoveFromParent();
 								}
-
-								DialogWidgetSlateWidget.Reset();
-								DialogWidget = nullptr;
+								DialogWidget = nullptr;*/
 							});
 					}
 
@@ -277,7 +279,6 @@ namespace OrionDialogTemplate
 		TObjectPtr<UUserWidget> DialogWidget = nullptr;
 
 		TWeakObjectPtr<UAudioComponent> DialogAudioComponent;
-		TSharedPtr<SWidget> DialogWidgetSlateWidget;
 
 		FFrameTime LastAudioEvalTime = FFrameTime(TNumericLimits<int32>::Lowest());
 		EPlayDirection LastAudioEvalDirection = EPlayDirection::Forwards;

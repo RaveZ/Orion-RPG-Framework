@@ -58,7 +58,7 @@ class DIALOG_SYSTEM_EDITOR_API UDialogPlaybackContextObject : public UObject, pu
 public:
 	void SetDialogViewport(TWeakPtr<SDialogPreviewViewport> InDialogViewport);
 
-	virtual void AddDialogToViewport(const TSharedRef<SWidget>& InWidget) override;
+	virtual void AddDialogToViewport(class UUserWidget* InWidget) override;
 	virtual void RemoveDialogFromViewport() override;
 
 private:

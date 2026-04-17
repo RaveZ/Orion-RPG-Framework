@@ -41,6 +41,6 @@ class ORIONRPG_API IDialogContext
 	GENERATED_BODY()
 
 public:
-	virtual void AddDialogToViewport(const TSharedRef<SWidget>& InWidget) = 0;
+	virtual void AddDialogToViewport(class UUserWidget* InWidget) = 0;
 	virtual void RemoveDialogFromViewport() = 0;
 };

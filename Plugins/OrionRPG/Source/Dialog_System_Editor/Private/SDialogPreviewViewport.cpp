@@ -5,6 +5,7 @@
 #include "DialogBuilder_EditorCommands.h"
 #include "AdvancedPreviewScene.h"
 #include "Types/SlateEnums.h"
+#include "Blueprint/UserWidget.h"
 #include "Slate/SceneViewport.h"
 #include "Editor.h"
 #include "Widgets/SOverlay.h"
@@ -671,15 +672,14 @@ void SDialogPreviewViewport::ResetCameraSetting()
 	DialogViewportClient->ViewFOV = DialogViewportClient->FOVAngle;
 }
 
-void SDialogPreviewViewport::AddDialogOverlayWidget(const TSharedRef<SWidget>& InWidget)
+void SDialogPreviewViewport::AddDialogOverlayWidget(UUserWidget* InWidget)
 {
 	if (!SceneViewport.IsValid())
 	{
 		return;
 	}
 
-
-	DialogOverlayWidget = InWidget;
+	DialogOverlayWidget = InWidget->TakeWidget();
 	TWeakPtr<SWidget> EditorViewportContainer = SceneViewport->GetViewportWidget().Pin()->GetContent();
 	if (TSharedPtr<SOverlay> Overlay = StaticCastSharedPtr<SOverlay>(EditorViewportContainer.Pin()))
 	{
@@ -690,7 +690,7 @@ void SDialogPreviewViewport::AddDialogOverlayWidget(const TSharedRef<SWidget>& I
 
 void SDialogPreviewViewport::RemoveDialogOverlayWidget()
 {
-	if (!SceneViewport.IsValid() || !DialogOverlayWidget.IsValid())
+	if (!SceneViewport.IsValid())
 	{
 		return;
 	}
@@ -705,9 +705,11 @@ void SDialogPreviewViewport::RemoveDialogOverlayWidget()
 	}
 
 	EditorViewportContainer.Reset();
-	
+
 
 	DialogOverlayWidget.Reset();
+	
+
 }
 
 UTexture2D* SDialogPreviewViewport::CaptureViewportThumbnail() const

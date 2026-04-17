@@ -177,7 +177,7 @@ void UDialogPlaybackContextObject::SetDialogViewport(TWeakPtr<SDialogPreviewView
 	DialogViewport = InDialogViewport;
 }
 
-void UDialogPlaybackContextObject::AddDialogToViewport(const TSharedRef<SWidget>& InWidget)
+void UDialogPlaybackContextObject::AddDialogToViewport(UUserWidget* InWidget)
 {
 	if (TSharedPtr<SDialogPreviewViewport> Pinned = DialogViewport.Pin())
 	{
