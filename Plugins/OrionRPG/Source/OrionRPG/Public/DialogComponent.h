@@ -103,6 +103,9 @@ public:
 	virtual bool DeleteSave(const FString& SaveName = "DialogBuilderSaveData", const int32 Slot = 0);
 
 public:
+	UFUNCTION(BlueprintCallable, Category = "DialogComponent")
+	AActor* GetDialogDefinitionActor(UDialogDefinition* InDialogDefinition);
+
 	UFUNCTION(BlueprintPure, Category = "DialogComponent")
 	virtual APawn* GetOwningPawn() const;
 

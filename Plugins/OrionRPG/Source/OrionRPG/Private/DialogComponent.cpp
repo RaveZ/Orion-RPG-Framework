@@ -139,6 +139,15 @@ class UDialogBuilderGraph* UDialogComponent::MakeDialogGraphInstance(UDialogBuil
 	return nullptr;
 }
 
+AActor* UDialogComponent::GetDialogDefinitionActor(UDialogDefinition* InDialogDefinition)
+{
+	if(CurrentActiveDialog)
+	{
+		return CurrentActiveDialog->GetDialogDefinitionActor(InDialogDefinition);
+	}
+	return nullptr;
+}
+
 APawn* UDialogComponent::GetOwningPawn() const
 {
 	if (OwningController)

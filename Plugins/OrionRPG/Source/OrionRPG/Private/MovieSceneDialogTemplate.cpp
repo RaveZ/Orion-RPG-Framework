@@ -197,7 +197,7 @@ namespace OrionDialogTemplate
 				}
 
 				UWorld* World = Player.GetPlaybackContext() ? Player.GetPlaybackContext()->GetWorld() : nullptr;
-				if (!World || World->IsGameWorld())
+				if (!World)
 				{
 					StopDialogFacialAnimation();
 					return;
@@ -210,18 +210,28 @@ namespace OrionDialogTemplate
 					return;
 				}
 
-				UObject* PlaybackContextObject = Player.GetPlaybackContext();
-				IDialogContext* DialogContext = PlaybackContextObject ? Cast<IDialogContext>(PlaybackContextObject) : nullptr;
-				if (!DialogContext)
-				{
-					StopDialogFacialAnimation();
-					return;
-				}
+				
 
 #if WITH_EDITOR
-				SpeakerActor = SpeakerActor.IsValid() ? SpeakerActor : DialogContext->GetDialogDefinitionActor(InDialogSection->SpeakerParticipantDefinition);
+				if (!GEditor || !GEditor->PlayWorld || GEditor->IsSimulateInEditorInProgress())
+				{
+					UObject* PlaybackContextObject = Player.GetPlaybackContext();
+					IDialogContext* DialogContext = PlaybackContextObject ? Cast<IDialogContext>(PlaybackContextObject) : nullptr;
+					if (!DialogContext)
+					{
+						StopDialogFacialAnimation();
+						return;
+					}
+					SpeakerActor = SpeakerActor.IsValid() ? SpeakerActor : DialogContext->GetDialogDefinitionActor(InDialogSection->SpeakerParticipantDefinition);
+				}
 #endif
-				
+
+				UDialogComponent* DialogComponent = UDialogBuilderFunctionLibrary::GetDialogComponent(World);
+				if(DialogComponent)
+				{
+					SpeakerActor = DialogComponent->GetDialogDefinitionActor(InDialogSection->SpeakerParticipantDefinition);
+				}
+
 				if (!SpeakerActor.IsValid())
 				{
 					StopDialogFacialAnimation();

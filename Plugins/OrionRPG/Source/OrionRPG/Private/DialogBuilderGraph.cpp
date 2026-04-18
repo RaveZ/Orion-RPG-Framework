@@ -173,6 +173,7 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 		{
 			const FName SlotId = Slot->GetActorTag().GetTagName();
 			CachedActorMap.Emplace(SlotId, DialogActor);
+			DialogSlotActors.Emplace(Slot, DialogActor);
 			CacheOriginalActorTransform(SlotId, DialogActor);
 
 			CurrentDialogSequence->BindPossessableObject(Slot->ID, *DialogActor, DialogActor->GetClass());
@@ -186,6 +187,7 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 		{
 			const FName SlotId = Slot->GetID();
 			CachedActorMap.Emplace(SlotId, DialogActor);
+			DialogSlotActors.Emplace(Slot, DialogActor);
 			CacheOriginalActorTransform(SlotId, DialogActor);
 
 			CurrentDialogSequence->BindPossessableObject(Slot->ID, *DialogActor, DialogActor->GetClass());
@@ -734,6 +736,23 @@ void UDialogBuilderGraph::ClearGraph()
 	NodeMap.Empty();
 }
 
+AActor* UDialogBuilderGraph::GetDialogDefinitionActor(UDialogDefinition* InDialogDefinition)
+{
+	AActor* OutActor = nullptr;
+	for (const TPair<UDialogSequenceSlot*, TWeakObjectPtr<AActor>>& Pair : DialogSlotActors)
+	{
+		if (UDialogSequenceSlot* Slot = Pair.Key)
+		{
+			if (Slot->DialogDefinition == InDialogDefinition)
+			{
+				OutActor = Pair.Value.Get();
+				break;
+			}
+		}
+	}
+	return OutActor;
+}
+
 APlayerController* UDialogBuilderGraph::GetOwningController()
 {
 	return OwningController;
@@ -867,7 +886,7 @@ void UDialogBuilderGraph::EndDialog()
 		OwningController->ClientStopCameraShake(DialogCameraShake);
 	}
 
-	
+	DialogSlotActors.Empty();
 
 	StopCurrentDialogLine();
 	GetDialogComponent()->OnEndDialog.Broadcast(this);

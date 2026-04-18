@@ -11,6 +11,8 @@
 #include "DialogBuilderGraph.generated.h"
 
 class UDialogComponent;
+class UDialogDefinition;
+class UDialogSequenceSlot;
 class UDialogBuilderNode;
 class UDialogBuilderEdge;
 class AController;
@@ -150,6 +152,8 @@ public:
 	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Detail")
 		TObjectPtr<class UDialogStage> CurrentDialogStage;
 
+	UPROPERTY(Transient)
+		TMap<UDialogSequenceSlot*, TWeakObjectPtr<AActor>> DialogSlotActors;
 
 	/*------------------------End Dialog Sequence------------------------*/
 
@@ -266,16 +270,19 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Dialogue")
 	bool IsChoiceSelectionActive() const;
 
-	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
 		virtual void AdvanceDialogLine();
 
-	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
 		virtual void StopCurrentDialogLine();
 
-	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
 		virtual void EndDialog();
 
-	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
+		AActor* GetDialogDefinitionActor(UDialogDefinition* InDialogDefinition);
+
+	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	UDialogDefinition* GetDialogDefinitionByTag(FGameplayTag InTag);
 
 	UFUNCTION()
