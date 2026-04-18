@@ -60,6 +60,7 @@ public:
 
 	virtual void AddDialogToViewport(class UUserWidget* InWidget) override;
 	virtual void RemoveDialogFromViewport() override;
+	virtual AActor* GetDialogDefinitionActor(class UDialogDefinition* InDialogDefinition) const override;
 
 private:
 	TWeakPtr<SDialogPreviewViewport> DialogViewport;

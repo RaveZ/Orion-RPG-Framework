@@ -29,6 +29,8 @@ public:
 */
 
 class SWidget;
+class UDialogDefinition;
+class AActor;
 
 UINTERFACE()
 class ORIONRPG_API UDialogContext : public UInterface
@@ -43,4 +45,5 @@ class ORIONRPG_API IDialogContext
 public:
 	virtual void AddDialogToViewport(class UUserWidget* InWidget) = 0;
 	virtual void RemoveDialogFromViewport() = 0;
+	virtual AActor* GetDialogDefinitionActor(UDialogDefinition* InDialogDefinition) const = 0;
 };

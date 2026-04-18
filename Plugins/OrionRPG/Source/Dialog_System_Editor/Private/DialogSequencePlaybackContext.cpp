@@ -1,6 +1,7 @@
 #include "DialogSequencePlaybackContext.h"
 #include "SDialogPreviewViewport.h"
 #include "DialogSequence.h"
+#include "DialogBuilderEditor.h"
 
 #include "Editor.h"
 #include "Engine/Engine.h"
@@ -186,4 +187,22 @@ void UDialogPlaybackContextObject::RemoveDialogFromViewport()
 	{
 		Pinned->RemoveDialogOverlayWidget();
 	}
+}
+
+AActor* UDialogPlaybackContextObject::GetDialogDefinitionActor(UDialogDefinition* InDialogDefinition) const
+{
+	if (!InDialogDefinition)
+	{
+		return nullptr;
+	}
+
+	if (TSharedPtr<SDialogPreviewViewport> PinnedViewport = DialogViewport.Pin())
+	{
+		if (TSharedPtr<FDialogBuilderEditor> DialogEditor = PinnedViewport->GetDialogEditor())
+		{
+			return DialogEditor->GetDialogDefinitionActor(InDialogDefinition);
+		}
+	}
+
+	return nullptr;
 }

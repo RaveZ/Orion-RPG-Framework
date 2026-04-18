@@ -362,6 +362,8 @@ public:
 	void SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AActor*& OutActor, bool bIsCamera = false);
 	void CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot, bool bIsCamera = false);
 	TArray<AActor*> GetDialogSlotActors() const;
+
+	AActor* GetDialogDefinitionActor(UDialogDefinition* InDialogDefinition);
 	void SelectDialogDefinitionActor(UDialogDefinition* InDialogDefinition);
 	void SelectDialogDefinition(UDialogDefinition* InDialogDefinition);
 	void SelectDialogSlotActor(int32 index);

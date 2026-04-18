@@ -1015,24 +1015,30 @@ TArray<AActor*> FDialogBuilderEditor::GetDialogSlotActors() const
 	return Result;
 }
 
-void FDialogBuilderEditor::SelectDialogDefinitionActor(UDialogDefinition* InDialogDefinition)
+AActor* FDialogBuilderEditor::GetDialogDefinitionActor(UDialogDefinition* InDialogDefinition)
 {
-	const bool bNoteSelectionChange = true;
-	const bool bDeselectBSPSurfs = true;
-	const bool bWarnAboutManyActors = false;
-
-	AActor* ActorToSelect = nullptr;
+	AActor* OutActor = nullptr;
 	for (const TPair<UDialogSequenceSlot*, TWeakObjectPtr<AActor>>& Pair : DialogSlotActors)
 	{
 		if (UDialogSequenceSlot* Slot = Pair.Key)
 		{
 			if (Slot->DialogDefinition == InDialogDefinition)
 			{
-				ActorToSelect = Pair.Value.Get();
+				OutActor = Pair.Value.Get();
 				break;
 			}
 		}
 	}
+	return OutActor;
+}
+
+void FDialogBuilderEditor::SelectDialogDefinitionActor(UDialogDefinition* InDialogDefinition)
+{
+	const bool bNoteSelectionChange = true;
+	const bool bDeselectBSPSurfs = true;
+	const bool bWarnAboutManyActors = false;
+
+	AActor* ActorToSelect = GetDialogDefinitionActor(InDialogDefinition);
 
 	if (GEditor)
 	{
