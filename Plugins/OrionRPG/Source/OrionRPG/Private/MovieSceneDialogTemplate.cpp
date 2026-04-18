@@ -6,6 +6,7 @@
 
 #include "Engine/Engine.h"
 #include "DialogBuilderSetting.h"
+#include "DialogDefinition.h"
 #include "DialogComponent.h"
 #include "DialogBuilderFunctionLibrary.h"
 #include "Engine/GameViewportClient.h"
@@ -17,6 +18,10 @@
 #include "CommonActivatableWidget.h"
 #include "Blueprint/UserWidget.h"
 #include "Components/AudioComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Animation/AnimSequence.h"
+#include "Animation/Skeleton.h"
+#include "Engine/SkeletalMesh.h"
 #include "Kismet/GameplayStatics.h"
 #include "Sound/SoundBase.h"
 
@@ -51,6 +56,7 @@ namespace OrionDialogTemplate
 			}
 
 			StopDialogAudio();
+			StopDialogFacialAnimation();
 
 			DialogWidget.Reset();
 		}
@@ -67,6 +73,21 @@ namespace OrionDialogTemplate
 			bHasLastAudioEvalTime = false;
 			LastAudioEvalTime = FFrameTime(TNumericLimits<int32>::Lowest());
 			LastAudioEvalDirection = EPlayDirection::Forwards;
+		}
+
+		void StopDialogFacialAnimation()
+		{
+			if (FacialMeshComponent.IsValid())
+			{
+				FacialMeshComponent->Stop();
+				FacialMeshComponent.Reset();
+			}
+
+			SpeakerActor.Reset();
+			FacialAnimationAsset.Reset();
+			bHasLastFacialEvalTime = false;
+			LastFacialEvalTime = FFrameTime(TNumericLimits<int32>::Lowest());
+			LastFacialEvalDirection = EPlayDirection::Forwards;
 		}
 
 		void UpdateDialogAudio(const FMovieSceneContext& Context, IMovieScenePlayer& Player, const UMovieSceneDialogSection* InDialogSection, const FOrionDialogLine& InDialogLine)
@@ -151,6 +172,152 @@ namespace OrionDialogTemplate
 			bHasLastAudioEvalTime = true;
 			LastAudioEvalTime = Context.GetTime();
 			LastAudioEvalDirection = Context.GetDirection();
+		}
+
+		void UpdateDialogFacialAnimation(const FMovieSceneContext& Context, IMovieScenePlayer& Player, const UMovieSceneDialogSection* InDialogSection, const FOrionDialogLine& InDialogLine)
+		{
+			if (bShow)
+			{
+				if (!InDialogSection || !InDialogSection->SpeakerParticipantDefinition || !InDialogLine.FacialAnimation || !InDialogSection->HasStartFrame() || !InDialogSection->HasEndFrame())
+				{
+					StopDialogFacialAnimation();
+					return;
+				}
+
+				const EMovieScenePlayerStatus::Type Status = Context.GetStatus();
+				const bool bIsPlayingLike =
+					Status == EMovieScenePlayerStatus::Playing ||
+					Status == EMovieScenePlayerStatus::Scrubbing ||
+					Status == EMovieScenePlayerStatus::Stepping;
+
+				if (Context.IsSilent() || !bIsPlayingLike)
+				{
+					StopDialogFacialAnimation();
+					return;
+				}
+
+				UWorld* World = Player.GetPlaybackContext() ? Player.GetPlaybackContext()->GetWorld() : nullptr;
+				if (!World || World->IsGameWorld())
+				{
+					StopDialogFacialAnimation();
+					return;
+				}
+
+				const FFrameNumber CurrentFrame = Context.GetTime().FloorToFrame();
+				if (CurrentFrame < InDialogSection->GetInclusiveStartFrame() || CurrentFrame >= InDialogSection->GetExclusiveEndFrame())
+				{
+					StopDialogFacialAnimation();
+					return;
+				}
+
+				UObject* PlaybackContextObject = Player.GetPlaybackContext();
+				IDialogContext* DialogContext = PlaybackContextObject ? Cast<IDialogContext>(PlaybackContextObject) : nullptr;
+				if (!DialogContext)
+				{
+					StopDialogFacialAnimation();
+					return;
+				}
+
+#if WITH_EDITOR
+				SpeakerActor = SpeakerActor.IsValid() ? SpeakerActor : DialogContext->GetDialogDefinitionActor(InDialogSection->SpeakerParticipantDefinition);
+#endif
+				
+				if (!SpeakerActor.IsValid())
+				{
+					StopDialogFacialAnimation();
+					return;
+				}
+
+				TArray<USkeletalMeshComponent*> SkeletalMeshComponents;
+				SpeakerActor->GetComponents(SkeletalMeshComponents);
+
+				USkeletalMeshComponent* TargetMesh = nullptr;
+				const USkeleton* TargetSkeleton = InDialogLine.FacialAnimation->GetSkeleton();
+
+				for (USkeletalMeshComponent* SkeletalMeshComponent : SkeletalMeshComponents)
+				{
+					if (!SkeletalMeshComponent)
+					{
+						continue;
+					}
+
+					if (!TargetMesh)
+					{
+						TargetMesh = SkeletalMeshComponent;
+					}
+
+					const USkeletalMesh* SkeletalMesh = SkeletalMeshComponent->GetSkeletalMeshAsset();
+					if (SkeletalMesh && TargetSkeleton && SkeletalMesh->GetSkeleton() == TargetSkeleton)
+					{
+						TargetMesh = SkeletalMeshComponent;
+						break;
+					}
+				}
+
+				if (!TargetMesh)
+				{
+					StopDialogFacialAnimation();
+					return;
+				}
+
+				const FFrameTime RelativeFrameTime = Context.GetTime() - InDialogSection->GetInclusiveStartFrame();
+
+				float StartTimeSeconds = FMath::Max(0.0f, Context.GetFrameRate().AsSeconds(RelativeFrameTime));
+				const float AnimationLength = InDialogLine.FacialAnimation->GetPlayLength();
+				if (AnimationLength > 0.f)
+				{
+					StartTimeSeconds = FMath::Min(StartTimeSeconds, FMath::Max(0.0f, AnimationLength - KINDA_SMALL_NUMBER));
+				}
+
+				const bool bIsBackwards = Context.GetDirection() == EPlayDirection::Backwards;
+				const bool bIsScrubbing =
+					Context.GetStatus() == EMovieScenePlayerStatus::Scrubbing ||
+					Context.GetStatus() == EMovieScenePlayerStatus::Stepping;
+
+				const bool bDirectionChanged = !bHasLastFacialEvalTime || (LastFacialEvalDirection != Context.GetDirection());
+
+				const bool bNeedsRestart =
+					!FacialMeshComponent.IsValid() ||
+					FacialMeshComponent.Get() != TargetMesh ||
+					!FacialAnimationAsset.IsValid() ||
+					FacialAnimationAsset.Get() != InDialogLine.FacialAnimation ||
+					Context.HasJumped() ||
+					Context.HasLooped() ||
+					bDirectionChanged;
+
+				if (bNeedsRestart)
+				{
+					if (FacialMeshComponent.IsValid() && FacialMeshComponent.Get() != TargetMesh)
+					{
+						FacialMeshComponent->Stop();
+					}
+
+					FacialMeshComponent = TargetMesh;
+					FacialAnimationAsset = InDialogLine.FacialAnimation;
+					TargetMesh->PlayAnimation(InDialogLine.FacialAnimation, false);
+				}
+
+				if (FacialMeshComponent.IsValid())
+				{
+					FacialMeshComponent->SetPosition(StartTimeSeconds, false);
+
+					const float PlayRate = bIsScrubbing ? 0.0f : (bIsBackwards ? -1.0f : 1.0f);
+					FacialMeshComponent->SetPlayRate(PlayRate);
+
+					if (!FacialMeshComponent->IsPlaying())
+					{
+						FacialMeshComponent->Play(false);
+					}
+				}
+
+				bHasLastFacialEvalTime = true;
+				LastFacialEvalTime = Context.GetTime();
+				LastFacialEvalDirection = Context.GetDirection();
+			}
+			else
+			{
+				StopDialogFacialAnimation();
+			}
 		}
 
 		bool HasAnythingToDo() const
@@ -280,12 +447,21 @@ namespace OrionDialogTemplate
 		FGameplayTag ListenerTag;
 
 		TWeakObjectPtr<UUserWidget> DialogWidget;
+		TWeakObjectPtr<AActor> SpeakerActor;
+
 
 		TWeakObjectPtr<UAudioComponent> DialogAudioComponent;
+
+		TWeakObjectPtr<USkeletalMeshComponent> FacialMeshComponent;
+		TWeakObjectPtr<UAnimSequence> FacialAnimationAsset;
 
 		FFrameTime LastAudioEvalTime = FFrameTime(TNumericLimits<int32>::Lowest());
 		EPlayDirection LastAudioEvalDirection = EPlayDirection::Forwards;
 		bool bHasLastAudioEvalTime = false;
+
+		FFrameTime LastFacialEvalTime = FFrameTime(TNumericLimits<int32>::Lowest());
+		EPlayDirection LastFacialEvalDirection = EPlayDirection::Forwards;
+		bool bHasLastFacialEvalTime = false;
 	};
 
 	struct FDialogExecutionToken : IMovieSceneSharedExecutionToken
@@ -317,6 +493,24 @@ namespace OrionDialogTemplate
 		UMovieSceneDialogSection* DialogSection;
 		FOrionDialogLine DialogLine;
 	};
+
+	struct FDialogFacialAnimationExecutionToken : IMovieSceneExecutionToken
+	{
+		FDialogFacialAnimationExecutionToken(UMovieSceneDialogSection* InDialogSection, const FOrionDialogLine& InDialogLine)
+			: DialogSection(InDialogSection)
+			, DialogLine(InDialogLine)
+		{
+		}
+
+		virtual void Execute(const FMovieSceneContext& Context, const FMovieSceneEvaluationOperand&, FPersistentEvaluationData& PersistentData, IMovieScenePlayer& Player) override
+		{
+			FDialogSharedTrackData& TrackData = PersistentData.GetOrAdd<FDialogSharedTrackData>(GetSharedDataKey());
+			TrackData.UpdateDialogFacialAnimation(Context, Player, DialogSection, DialogLine);
+		}
+
+		UMovieSceneDialogSection* DialogSection;
+		FOrionDialogLine DialogLine;
+	};
 }
 
 FMovieSceneDialogSectionTemplate::FMovieSceneDialogSectionTemplate(const UMovieSceneDialogSection& InSection)
@@ -336,6 +530,7 @@ void FMovieSceneDialogSectionTemplate::Evaluate(
 	DialogSection->RefreshDialogContent();
 
 	ExecutionTokens.Add(FDialogAudioExecutionToken(DialogSection, DialogSection->DialogLine));
+	ExecutionTokens.Add(FDialogFacialAnimationExecutionToken(DialogSection, DialogSection->DialogLine));
 
 	const FDialogSharedTrackData* TrackData = PersistentData.Find<FDialogSharedTrackData>(GetSharedDataKey());
 	if (TrackData)

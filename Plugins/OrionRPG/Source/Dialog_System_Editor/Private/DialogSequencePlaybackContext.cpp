@@ -189,7 +189,7 @@ void UDialogPlaybackContextObject::RemoveDialogFromViewport()
 	}
 }
 
-AActor* UDialogPlaybackContextObject::GetDialogDefinitionActor(UDialogDefinition* InDialogDefinition) const
+AActor* UDialogPlaybackContextObject::GetDialogDefinitionActor(UDialogDefinition* InDialogDefinition)
 {
 	if (!InDialogDefinition)
 	{

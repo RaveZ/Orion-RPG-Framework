@@ -45,5 +45,5 @@ class ORIONRPG_API IDialogContext
 public:
 	virtual void AddDialogToViewport(class UUserWidget* InWidget) = 0;
 	virtual void RemoveDialogFromViewport() = 0;
-	virtual AActor* GetDialogDefinitionActor(UDialogDefinition* InDialogDefinition) const = 0;
+	virtual AActor* GetDialogDefinitionActor(UDialogDefinition* InDialogDefinition) = 0;
 };
