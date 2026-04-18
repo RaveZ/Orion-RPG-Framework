@@ -529,9 +529,9 @@ namespace OrionDialogTemplate
 }
 
 FMovieSceneDialogSectionTemplate::FMovieSceneDialogSectionTemplate(const UMovieSceneDialogSection& InSection)
-	: DialogLine(InSection.DialogLine)
+	: DialogSection(const_cast<UMovieSceneDialogSection*>(&InSection))
+	, DialogLine(InSection.DialogLine)
 {
-	DialogSection = const_cast<UMovieSceneDialogSection*>(& InSection);
 }
 
 void FMovieSceneDialogSectionTemplate::Evaluate(

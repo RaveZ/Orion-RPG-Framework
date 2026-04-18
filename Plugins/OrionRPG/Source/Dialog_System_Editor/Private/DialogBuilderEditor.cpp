@@ -3618,14 +3618,14 @@ void FDialogBuilderEditor::ApplyViewportCameraMode()
 		{
 			if (ViewportClient->IsLockedToCinematic())
 			{
-				DialogViewportWidget->ResetCameraSetting();
-				ViewportClient->SetCinematicActorLock(nullptr);
-				ViewportClient->UpdateViewForLockedActor();
-				ViewportClient->Invalidate();
 			}
 
+			ViewportClient->SetCinematicActorLock(nullptr);
+			ViewportClient->UpdateViewForLockedActor();
+			DialogViewportWidget->ResetCameraSetting();
 			DialogViewportWidget->OnActorUnlock();
 			ViewportClient->SetViewportType(LVT_Perspective);
+			ViewportClient->Invalidate();
 
 			LastSequencerCameraCutActor.Reset();
 		};

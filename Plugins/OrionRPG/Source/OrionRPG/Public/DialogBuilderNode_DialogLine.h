@@ -88,9 +88,6 @@ public:
 
 	virtual void EvaluateNextNode() override;
 
-	UFUNCTION()
-	void EvaluateAnyPlayerOptions();
-
 
 	UFUNCTION(BlueprintPure, Category="DialogLine")
 	UObject* GetParticipantImage();

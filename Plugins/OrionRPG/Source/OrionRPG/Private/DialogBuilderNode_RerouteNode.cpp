@@ -24,7 +24,7 @@ void UDialogBuilderNode_RerouteNode::BeginNode()
 	{
 		case EDialogRerouteRule::E_BackToLastSelection:
 		{
-			if (UDialogBuilderNode_DialogLine* LatestRootSelectionNode = Cast<UDialogBuilderNode_DialogLine>(GetOwningDialogGraph()->LatestRootSelectionNode))
+			if (UDialogBuilderNode* LatestRootSelectionNode = GetOwningDialogGraph()->LatestRootSelectionNode)
 			{
 				if (bPlayDialogLine)
 				{

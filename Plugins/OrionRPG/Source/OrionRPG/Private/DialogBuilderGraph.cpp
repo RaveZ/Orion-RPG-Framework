@@ -159,13 +159,24 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 	if(!InDialogStage || InDialogStage == CurrentDialogStage)
 		return;
 
-	UMovieScene* MovieScene = CurrentDialogSequence ? CurrentDialogSequence->GetMovieScene() : nullptr;
-	if (!MovieScene) return;
+	const UMovieScene* MovieScene = CurrentDialogSequence ? CurrentDialogSequence->GetMovieScene() : nullptr;
+	if (!MovieScene)
+	{
+		return;
+	}
+
+	for (const FMovieSceneBinding& Binding : MovieScene->GetBindings())
+	{
+		//Unbind to ensure there is no duplicate binding
+		CurrentDialogSequence->UnbindPossessableObjects(Binding.GetObjectGuid());
+	}
 
 	SequencePivot->SetActorLocation(InDialogStage->Location);
 	SequencePivot->SetActorRotation(InDialogStage->Rotation);
 	UDialogStage* LastDialogStage = CurrentDialogStage;
 	CurrentDialogStage = InDialogStage;
+
+
 	
 	for (auto& Slot : CurrentDialogStage->Slots)
 	{
@@ -552,6 +563,7 @@ void UDialogBuilderGraph::JumpToNextDialogSection()
 		
 	}
 	
+	SequencePlayer->GoToEndAndStop();
 	HandleDialogSequenceFinished();
 
 }
@@ -604,16 +616,13 @@ void UDialogBuilderGraph::PlaySequence(class ULevelSequence* InSequence, FMovieS
 		{	
 			SP->OnFinished.AddDynamic(this, &ThisClass::HandleDialogSequenceFinished);
 
-			if (SP->IsPlaying())
-			{
-				SP->Stop();
-			}
-			SP->SetPlaybackPosition(FMovieSceneSequencePlaybackParams(0.0f, EUpdatePositionMethod::Jump));
+			SP->Stop();
 			if (InSequence)
 			{
 				DialogSequenceActor->PlaybackSettings = InPlaybackSetting;
 				DialogSequenceActor->SetSequence(InSequence);
 			}
+
 			SP->Play();
 		}
 	}
@@ -887,6 +896,10 @@ void UDialogBuilderGraph::EndDialog()
 	}
 
 	DialogSlotActors.Empty();
+	VisitedNodeIDs.Empty();
+	CachedActorMap.Empty();
+	CachedActorOriginalTransforms.Empty();
+	NodeMap.Empty();
 
 	StopCurrentDialogLine();
 	GetDialogComponent()->OnEndDialog.Broadcast(this);

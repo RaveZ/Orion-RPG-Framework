@@ -36,30 +36,7 @@ void UDialogBuilderNode_DialogLine::BeginNode()
 
 void UDialogBuilderNode_DialogLine::EvaluateNextNode()
 {
-
-	//Check if there is any player options 
-	//If found pany player options, halt evaluation node until option has been selected.
-	EvaluateAnyPlayerOptions();
-
 	Super::EvaluateNextNode();
-}
-
-void UDialogBuilderNode_DialogLine::EvaluateAnyPlayerOptions()
-{
-	//Check for any player options
-	if (ChildrenNodes.IsValidIndex(0) && ChildrenNodes[0].IsA(UDialogBuilderNode_PlayerChoice::StaticClass()))
-	{
-		for (auto& ChildNode : ChildrenNodes)
-		{
-			if (ChildNode->IsA(UDialogBuilderNode_PlayerChoice::StaticClass()))
-			{
-				GetOwningDialogGraph()->LatestRootSelectionNode = this;
-				return;
-			}
-		}
-
-
-	}
 }
 
 UObject* UDialogBuilderNode_DialogLine::GetParticipantImage()

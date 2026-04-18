@@ -1029,6 +1029,8 @@ void FDialogBuilderViewportClient::ResetCamera()
 		FocusLocation = CombinedBounds.GetCenter();
 	}
 
+	FocusLocation.Z += 75.0f;
+
 	USceneThumbnailInfo* ThumbnailInfo = USceneThumbnailInfo::StaticClass()->GetDefaultObject<USceneThumbnailInfo>();
 
 	const float BoundsRadius = CombinedBounds.IsValid ? CombinedBounds.GetExtent().Length() : 150.0f;

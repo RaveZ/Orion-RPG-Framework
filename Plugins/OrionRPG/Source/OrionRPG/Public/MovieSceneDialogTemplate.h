@@ -15,7 +15,11 @@ struct ORIONRPG_API FMovieSceneDialogSectionTemplate : public FMovieSceneEvalTem
 {
 	GENERATED_BODY()
 
-	FMovieSceneDialogSectionTemplate() = default;
+	FMovieSceneDialogSectionTemplate()
+		: DialogSection(nullptr)
+	{
+	}
+
 	FMovieSceneDialogSectionTemplate(const UMovieSceneDialogSection& InSection);
 
 private:
