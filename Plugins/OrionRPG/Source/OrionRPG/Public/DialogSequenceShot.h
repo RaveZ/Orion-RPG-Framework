@@ -29,7 +29,7 @@ public:
 	class UDialogDefinition* ActorToFocus;
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Track & Focus Settings", meta = (EditCondition = "bOverrideTrackedBone"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Track & Focus Settings")
 	FName TrackedBone;
 
 	/**Cinecam distance from the track location */

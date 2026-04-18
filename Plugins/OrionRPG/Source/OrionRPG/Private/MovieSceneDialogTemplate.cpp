@@ -84,6 +84,7 @@ namespace OrionDialogTemplate
 			}
 
 			SpeakerActor.Reset();
+			TargetMesh.Reset();
 			FacialAnimationAsset.Reset();
 			bHasLastFacialEvalTime = false;
 			LastFacialEvalTime = FFrameTime(TNumericLimits<int32>::Lowest());
@@ -241,30 +242,33 @@ namespace OrionDialogTemplate
 				TArray<USkeletalMeshComponent*> SkeletalMeshComponents;
 				SpeakerActor->GetComponents(SkeletalMeshComponents);
 
-				USkeletalMeshComponent* TargetMesh = nullptr;
+
 				const USkeleton* TargetSkeleton = InDialogLine.FacialAnimation->GetSkeleton();
 
-				for (USkeletalMeshComponent* SkeletalMeshComponent : SkeletalMeshComponents)
+				if (!TargetMesh.IsValid())
 				{
-					if (!SkeletalMeshComponent)
+					for (USkeletalMeshComponent* SkeletalMeshComponent : SkeletalMeshComponents)
 					{
-						continue;
-					}
+						if (!SkeletalMeshComponent)
+						{
+							continue;
+						}
 
-					if (!TargetMesh)
-					{
-						TargetMesh = SkeletalMeshComponent;
-					}
+						if (!TargetMesh.IsValid())
+						{
+							TargetMesh = SkeletalMeshComponent;
+						}
 
-					const USkeletalMesh* SkeletalMesh = SkeletalMeshComponent->GetSkeletalMeshAsset();
-					if (SkeletalMesh && TargetSkeleton && SkeletalMesh->GetSkeleton() == TargetSkeleton)
-					{
-						TargetMesh = SkeletalMeshComponent;
-						break;
+						const USkeletalMesh* SkeletalMesh = SkeletalMeshComponent->GetSkeletalMeshAsset();
+						if (SkeletalMesh && TargetSkeleton && SkeletalMesh->GetSkeleton() == TargetSkeleton)
+						{
+							TargetMesh = SkeletalMeshComponent;
+							break;
+						}
 					}
 				}
 
-				if (!TargetMesh)
+				if (!TargetMesh.IsValid())
 				{
 					StopDialogFacialAnimation();
 					return;
@@ -461,6 +465,7 @@ namespace OrionDialogTemplate
 
 
 		TWeakObjectPtr<UAudioComponent> DialogAudioComponent;
+		TWeakObjectPtr< USkeletalMeshComponent> TargetMesh;
 
 		TWeakObjectPtr<USkeletalMeshComponent> FacialMeshComponent;
 		TWeakObjectPtr<UAnimSequence> FacialAnimationAsset;
