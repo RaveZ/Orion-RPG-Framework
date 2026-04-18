@@ -32,6 +32,7 @@
 #include "TimerManager.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraShakeBase.h"
+#include "Engine/AssetManager.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderGraph"
 
@@ -91,6 +92,11 @@ bool UDialogBuilderGraph::Initialize(UDialogComponent* InitializingComp)
 				NodeMap.Emplace(Node->ID, Node);
 			}
 		}
+
+		bSetupCompleted = false;
+		bPrerequisitesRequested = false;
+		PrerequisiteDefinitions.Empty();
+		OnDialogSetupFinished.Clear();
 
 		InitializeDialogActors();
 		
@@ -248,24 +254,175 @@ void UDialogBuilderGraph::StartFromRoot()
 {
 	if (RootNodes.IsValidIndex(0))
 	{
-		if (bFadeCameraOnDialogBegin)
+		BeginNode(RootNodes[0]);
+	}
+}
+
+void UDialogBuilderGraph::StartSetupPrerequisites()
+{
+	bSetupCompleted = false;
+	bPrerequisitesRequested = false;
+	PrerequisiteDefinitions.Empty();
+
+	if (UWorld* World = GetWorld())
+	{
+		if (!World->GetTimerManager().IsTimerActive(TimerHandle_CheckPrerequisites))
 		{
-			FTimerDelegate BeginNodeDelegate = FTimerDelegate::CreateLambda([this]()
-				{
-					BeginNode(RootNodes[0]);
-				});
-			if (GetWorld())
+			World->GetTimerManager().SetTimer(TimerHandle_CheckPrerequisites, this, &ThisClass::CheckDialogPrerequisites, 0.05f, true);
+		}
+	}
+
+	CheckDialogPrerequisites();
+}
+
+void UDialogBuilderGraph::CheckDialogPrerequisites()
+{
+	if (!bPrerequisitesRequested)
+	{
+		SetupPrerequisites();
+	}
+
+	if (!bSetupCompleted)
+	{
+		return;
+	}
+
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().ClearTimer(TimerHandle_CheckPrerequisites);
+	}
+
+	OnDialogSetupFinished.Broadcast();
+	OnDialogSetupFinished.Clear();
+}
+
+void UDialogBuilderGraph::CollectDialogDefinitionsForSetup(TArray<UDialogDefinition*>& OutDefinitions) const
+{
+	for (UDialogParticipant* Participant : ParticipantDefinitions)
+	{
+		if (Participant)
+		{
+			OutDefinitions.AddUnique(Participant);
+		}
+	}
+
+	for (UDialogProp* Prop : PropDefinitions)
+	{
+		if (Prop)
+		{
+			OutDefinitions.AddUnique(Prop);
+		}
+	}
+
+	for (UDialogCamera* Camera : CameraDefinitions)
+	{
+		if (Camera)
+		{
+			OutDefinitions.AddUnique(Camera);
+		}
+	}
+
+	for (UDialogStage* DialogStage : DialogStages)
+	{
+		if (!DialogStage)
+		{
+			continue;
+		}
+
+		for (UDialogSequenceSlot* Slot : DialogStage->Slots)
+		{
+			if (Slot && Slot->DialogDefinition)
 			{
-				FTimerHandle UnfadeHandle;
-				GetWorld()->GetTimerManager().SetTimer(UnfadeHandle, BeginNodeDelegate, .75f, false);
+				OutDefinitions.AddUnique(Slot->DialogDefinition);
 			}
 		}
-		else 
+
+		for (UDialogSequenceSlot* Slot : DialogStage->CameraSlots)
 		{
-			BeginNode(RootNodes[0]);
+			if (Slot && Slot->DialogDefinition)
+			{
+				OutDefinitions.AddUnique(Slot->DialogDefinition);
+			}
 		}
-		
 	}
+}
+
+void UDialogBuilderGraph::SetupPrerequisites()
+{
+	bPrerequisitesRequested = true;
+
+	TArray<UDialogDefinition*> DefinitionsToLoad;
+	CollectDialogDefinitionsForSetup(DefinitionsToLoad);
+
+	PrerequisiteDefinitions.Reset();
+	for (UDialogDefinition* DialogDefinition : DefinitionsToLoad)
+	{
+		PrerequisiteDefinitions.Add(DialogDefinition);
+	}
+
+	TArray<FSoftObjectPath> SoftPathsToLoad;
+	for (UDialogDefinition* DialogDefinition : DefinitionsToLoad)
+	{
+		if (!DialogDefinition)
+		{
+			continue;
+		}
+
+		const TSoftClassPtr<AActor> ActorSoftClass = DialogDefinition->GetActorSoftClass();
+		if (ActorSoftClass.IsNull())
+		{
+			continue;
+		}
+
+		if (UClass* LoadedClass = ActorSoftClass.Get())
+		{
+			DialogDefinition->SetActorClass(LoadedClass);
+			continue;
+		}
+
+		SoftPathsToLoad.AddUnique(ActorSoftClass.ToSoftObjectPath());
+	}
+
+	if (SoftPathsToLoad.Num() == 0)
+	{
+		bSetupCompleted = true;
+		return;
+	}
+
+	const TWeakObjectPtr<UDialogBuilderGraph> WeakThis(this);
+	UAssetManager::GetStreamableManager().RequestAsyncLoad(
+		SoftPathsToLoad,
+		FStreamableDelegate::CreateLambda([WeakThis]
+			{
+				if (UDialogBuilderGraph* DialogGraph = WeakThis.Get())
+				{
+					DialogGraph->OnSoftClassesLoaded();
+				}
+			}));
+}
+
+void UDialogBuilderGraph::OnSoftClassesLoaded()
+{
+	for (UDialogDefinition* DialogDefinition : PrerequisiteDefinitions)
+	{
+		if (!DialogDefinition)
+		{
+			continue;
+		}
+
+		const TSoftClassPtr<AActor> ActorSoftClass = DialogDefinition->GetActorSoftClass();
+		if (ActorSoftClass.IsNull())
+		{
+			continue;
+		}
+
+		if (UClass* LoadedClass = ActorSoftClass.Get())
+		{
+			DialogDefinition->SetActorClass(LoadedClass);
+		}
+	}
+
+	bSetupCompleted = true;
 }
 
 void UDialogBuilderGraph::BeginNode(UDialogBuilderNode* InNode, bool bLaunchEventOnLoad)
@@ -1106,6 +1263,10 @@ AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot)
 	}
 
 	const TSubclassOf<AActor> ActorClass = InDialogDefinition->GetActorClass();
+	if (!ActorClass)
+	{
+		return nullptr;
+	}
 
 	// Look up by the slot's ID (FName) which is the map's key type
 	if (TObjectPtr<AActor> ExistingActor = CachedActorMap.FindRef(InSlot->GetActorTag().GetTagName()))

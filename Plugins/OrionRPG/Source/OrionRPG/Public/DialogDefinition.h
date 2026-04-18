@@ -29,23 +29,10 @@ public:
 public:
 
 	virtual FText GetDisplayName() const { return DisplayName; }
-	virtual TSubclassOf< class AActor> GetActorClass() const { return nullptr; }
+	virtual TSubclassOf<class AActor> GetActorClass() const { return nullptr; }
+	virtual void SetActorClass(TSubclassOf<class AActor> InActorClass) { }
+	virtual TSoftClassPtr<class AActor> GetActorSoftClass() const { return nullptr; }
 	FGuid GetOrCreateID();
-
-};
-
-/**Pivot for all dialog definition*/
-UCLASS(Blueprintable, BlueprintType)
-class ORIONRPG_API UDialogPivot : public UDialogDefinition
-{
-	GENERATED_BODY()
-public:
-	UDialogPivot();
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayAfter = "DisplayName"))
-	TSubclassOf<class AActor> ActorClass;
-
-	virtual TSubclassOf< class AActor> GetActorClass() const { return ActorClass; }
 };
 
 
@@ -57,10 +44,15 @@ class ORIONRPG_API UDialogParticipant : public UDialogDefinition
 public:
 	UDialogParticipant();
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayAfter = "DisplayName"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayAfter = "DisplayName", DisplayName = "Pawn Class"))
+	TSoftClassPtr<class APawn> PawnClassSoft;
+	
+	UPROPERTY(Transient)
 	TSubclassOf<class APawn> PawnClass;
 
-	virtual TSubclassOf< class AActor> GetActorClass() const { return PawnClass.Get(); }
+	virtual TSubclassOf<class AActor> GetActorClass() const override { return PawnClass.Get(); }
+	virtual void SetActorClass(TSubclassOf<class AActor> InActorClass) override { PawnClass = Cast<UClass>(InActorClass.Get()); }
+	virtual TSoftClassPtr<class AActor> GetActorSoftClass() const override { return TSoftClassPtr<AActor>(PawnClassSoft.ToSoftObjectPath()); }
 };
 
 UCLASS(Blueprintable, BlueprintType)
@@ -85,24 +77,15 @@ public:
 	UDialogProp();
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayAfter = "DisplayName"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayAfter = "DisplayName", DisplayName = "Prop Class"))
+	TSoftClassPtr<class AActor> PropClassSoft;
+
+	UPROPERTY(Transient)
 	TSubclassOf<class AActor> PropClass;
 
-	virtual TSubclassOf< class AActor> GetActorClass() const { return PropClass; }
-};
-
-UCLASS(Blueprintable, BlueprintType)
-class ORIONRPG_API UDialogLight : public UDialogDefinition
-{
-	GENERATED_BODY()
-
-public:
-	UDialogLight();
-
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayAfter = "DisplayName"))
-	TSubclassOf<class AActor> LightClass;
-	virtual TSubclassOf< class AActor> GetActorClass() const { return LightClass; }
+	virtual TSubclassOf<class AActor> GetActorClass() const override { return PropClass; }
+	virtual void SetActorClass(TSubclassOf<class AActor> InActorClass) override { PropClass = InActorClass; }
+	virtual TSoftClassPtr<class AActor> GetActorSoftClass() const override { return PropClassSoft; }
 };
 
 UCLASS(Blueprintable, BlueprintType)
@@ -114,10 +97,16 @@ public:
 	UDialogCamera();
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayAfter = "DisplayName"))
+	TSoftClassPtr<class AActor> CameraClassSoft;
+
+	UPROPERTY(Transient)
 	TSubclassOf<class AActor> CameraClass;
 
-	virtual TSubclassOf< class AActor> GetActorClass() const { return CameraClass; }
+	virtual TSubclassOf<class AActor> GetActorClass() const override { return CameraClass; }
+	virtual void SetActorClass(TSubclassOf<class AActor> InActorClass) override { CameraClass = InActorClass; }
+	virtual TSoftClassPtr<class AActor> GetActorSoftClass() const override { return CameraClassSoft; }
 
 };
+
 
 

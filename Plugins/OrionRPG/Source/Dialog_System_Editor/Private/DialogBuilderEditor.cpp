@@ -95,6 +95,7 @@
 #include "MVVM/ViewModels/SequenceModel.h"
 #include "Framework/Application/SlateApplication.h"
 #include "Input/Events.h"
+#include "Engine/AssetManager.h"
 #include <Kismet2/KismetEditorUtilities.h>
 
 #define LOCTEXT_NAMESPACE "DialogBuilderEditor"
@@ -783,7 +784,6 @@ void FDialogBuilderEditor::UpdateDialogStage()
 	{
 		AActor* SpawnedCamera = nullptr;
 		SpawnDialogSlotActor(DialogSlot, SpawnedCamera, true);
-		DialogCamera = SpawnedCamera;
 	}
 
 	
@@ -794,7 +794,7 @@ void FDialogBuilderEditor::UpdateDialogStage()
 	for (auto It = DialogSlotActors.CreateIterator(); It; ++It)
 	{
 		const UDialogSequenceSlot* Key = It.Key();
-		if (!Key) return;
+		if (!Key) continue;
 		bool bSlotNotFound = (!DialogStage->Slots.Contains(Key) && !DialogStage->CameraSlots.Contains(Key));
 
 		if (bSlotNotFound)
@@ -842,13 +842,15 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 
 	UDialogDefinition* InDialogDefinition = InSlot->DialogDefinition;
 
+	const TSoftClassPtr<AActor> ActorSoftClass = InDialogDefinition ? InDialogDefinition->GetActorSoftClass() : nullptr;
+
 	AActor* ExistingActor = nullptr;
 	if (TWeakObjectPtr<AActor>* ExistingActorPtr = DialogSlotActors.Find(InSlot))
 	{
 		ExistingActor = ExistingActorPtr->Get();
 	}
 	
-	if (!InDialogDefinition && ExistingActor)
+	if ((!InDialogDefinition || !ActorSoftClass.IsValid()) && ExistingActor)
 	{
 		PreviewWorld->EditorDestroyActor(ExistingActor, false);
 		DialogSlotActors.Remove(InSlot);
@@ -856,109 +858,147 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 	}
 
 
-	const TSubclassOf<AActor> ActorClass = InDialogDefinition ? InDialogDefinition->GetActorClass() : nullptr;
-	
 
-	// If participant has no class assigned, destroy any existing preview actor and remove the track entry.
-	if (!ActorClass && ExistingActor)
+	if (!ActorSoftClass.IsNull())
 	{
-		PreviewWorld->EditorDestroyActor(ExistingActor, false);
+		const TSoftObjectPtr<UDialogSequenceSlot> SlotWeak = InSlot;
+		const TWeakPtr<FDialogBuilderEditor> EditorWeak = SharedThis(this);
+		const FSoftObjectPath ClassPath = ActorSoftClass.ToSoftObjectPath();
 
-		DialogSlotActors.Remove(InSlot);
-		return;
-	}
-
-	// Reuse existing actor if it matches the desired class; otherwise respawn.
-	if (ExistingActor && ExistingActor->IsA(ActorClass))
-	{
-		OutActor = ExistingActor;
-		if(!bIsCamera)
-		{
-			ExistingActor->SetActorRelativeLocation(InSlot->SlotLocation);
-			ExistingActor->SetActorRelativeRotation(InSlot->SlotRotation);
-		}
-		
-		CreateDialogTrackFromSlot(InSlot, bIsCamera);
-		return;
-	}
-	else if (ExistingActor)
-	{
-		PreviewWorld->EditorDestroyActor(ExistingActor, false);
-
-		DialogSlotActors.Remove(InSlot);
-	}
-
-
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-	SpawnParams.bNoFail = true;
-	SpawnParams.ObjectFlags = RF_Transient | RF_Transactional;
-
-	AActor* NewActor = PreviewWorld->SpawnActor<AActor>(ActorClass, FTransform::Identity, SpawnParams);
-	if (NewActor)
-	{
-		OutActor = NewActor;
-		NewActor->SetActorTickEnabled(true);
-		NewActor->SetTickableWhenPaused(true);
-		NewActor->PrimaryActorTick.bStartWithTickEnabled = true;
-
-		TArray<USkeletalMeshComponent*> SkeletalMeshComponents;
-		NewActor->GetComponents(SkeletalMeshComponents);
-
-		for (USkeletalMeshComponent* SkeletalMeshComponent : SkeletalMeshComponents)
-		{
-			if (!SkeletalMeshComponent)
+		auto SpawnWithClass = [EditorWeak, SlotWeak, bIsCamera](TSubclassOf<AActor> LoadedActorClass)
 			{
-				continue;
-			}
+				const TSharedPtr<FDialogBuilderEditor> EditorPinned = EditorWeak.Pin();
+				UDialogSequenceSlot* Slot = SlotWeak.Get();
 
-			SkeletalMeshComponent->SetComponentTickEnabled(true);
-			SkeletalMeshComponent->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
-			SkeletalMeshComponent->SetUpdateAnimationInEditor(true);
-		}
-		// Preserve the actor's world transform when attaching to the pivot.
-		NewActor->AttachToActor(SequencePivot.Get(), FAttachmentTransformRules::KeepWorldTransform);
-
-		if (bIsCamera)
-		{
-			if (ACineCameraActor* CineCam = Cast<ACineCameraActor>(NewActor))
-			{
-				if (UCineCameraComponent* CineCameraComponent = CineCam->GetCineCameraComponent())
+				if (!EditorPinned.IsValid() || !Slot || !LoadedActorClass)
 				{
-					CineCameraComponent->FocusSettings.FocusMethod = ECameraFocusMethod::Manual;
-					CineCameraComponent->FocusSettings.ManualFocusDistance = 10000.0f;
-					CineCameraComponent->CurrentAperture = 16.0f;
-
-					CineCameraComponent->bOverride_CustomNearClippingPlane = true;
-					CineCameraComponent->CustomNearClippingPlane = 1.0f;
-
-					UStaticMeshComponent* ProxyMeshComponent = NewObject<UCameraProxyMeshComponent>(CineCam, NAME_None, RF_Transactional | RF_TextExportTransient);
-					ProxyMeshComponent->SetupAttachment(CineCameraComponent);
-					ProxyMeshComponent->SetIsVisualizationComponent(true);
-					ProxyMeshComponent->SetCanEverAffectNavigation(false);
-
-					if (UStaticMesh* CameraMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/EditorMeshes/Camera/SM_CineCam.SM_CineCam")))
-					{
-						ProxyMeshComponent->SetStaticMesh(CameraMesh);
-					}
-					ProxyMeshComponent->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
-					ProxyMeshComponent->bHiddenInGame = false;
-					ProxyMeshComponent->CastShadow = false;
-					ProxyMeshComponent->SetRelativeRotation(FRotator(0.0f, 90.0f, 0.0f));
-					ProxyMeshComponent->SetRelativeLocation(FVector(-50.0f, 0.0f, -15.0f));
-					ProxyMeshComponent->RegisterComponent();
+					return;
 				}
-			}
 
-			NewActor->SetActorTransform(CachedCameraTransform);
-		}
-		else
+				UWorld* PreviewWorld = EditorPinned->GetPreviewWorld();
+				if (!PreviewWorld)
+				{
+					return;
+				}
+
+				AActor* ExistingActor = nullptr;
+				if (TWeakObjectPtr<AActor>* ExistingActorPtr = EditorPinned->DialogSlotActors.Find(Slot))
+				{
+					ExistingActor = ExistingActorPtr->Get();
+				}
+
+				if (ExistingActor && ExistingActor->IsA(LoadedActorClass))
+				{
+					if (!bIsCamera)
+					{
+						ExistingActor->SetActorRelativeLocation(Slot->SlotLocation);
+						ExistingActor->SetActorRelativeRotation(Slot->SlotRotation);
+					}
+
+					EditorPinned->CreateDialogTrackFromSlot(Slot, bIsCamera);
+					return;
+				}
+
+				if (ExistingActor)
+				{
+					PreviewWorld->EditorDestroyActor(ExistingActor, false);
+					EditorPinned->DialogSlotActors.Remove(Slot);
+				}
+
+				FActorSpawnParameters SpawnParams;
+				SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+				SpawnParams.bNoFail = true;
+				SpawnParams.ObjectFlags = RF_Transient | RF_Transactional;
+
+				AActor* NewActor = PreviewWorld->SpawnActor<AActor>(LoadedActorClass, FTransform::Identity, SpawnParams);
+				if (!NewActor)
+				{
+					return;
+				}
+
+				NewActor->SetActorTickEnabled(true);
+				NewActor->SetTickableWhenPaused(true);
+				NewActor->PrimaryActorTick.bStartWithTickEnabled = true;
+				TArray<USkeletalMeshComponent*> SkeletalMeshComponents;
+				NewActor->GetComponents(SkeletalMeshComponents);
+
+				for (USkeletalMeshComponent* SkeletalMeshComponent : SkeletalMeshComponents)
+				{
+					if (!SkeletalMeshComponent)
+					{
+						continue;
+					}
+
+					SkeletalMeshComponent->SetComponentTickEnabled(true);
+					SkeletalMeshComponent->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
+					SkeletalMeshComponent->SetUpdateAnimationInEditor(true);
+				}
+
+				// Preserve the actor's world transform when attaching to the pivot.
+				NewActor->AttachToActor(EditorPinned->SequencePivot.Get(), FAttachmentTransformRules::KeepWorldTransform);
+
+				if (bIsCamera)
+				{
+					EditorPinned->DialogCamera = NewActor;
+					if (ACineCameraActor* CineCam = Cast<ACineCameraActor>(NewActor))
+					{
+						if (UCineCameraComponent* CineCameraComponent = CineCam->GetCineCameraComponent())
+						{
+							CineCameraComponent->FocusSettings.FocusMethod = ECameraFocusMethod::Manual;
+							CineCameraComponent->FocusSettings.ManualFocusDistance = 10000.0f;
+							CineCameraComponent->CurrentAperture = 16.0f;
+
+							CineCameraComponent->bOverride_CustomNearClippingPlane = true;
+							CineCameraComponent->CustomNearClippingPlane = 1.0f;
+
+							UStaticMeshComponent* ProxyMeshComponent = NewObject<UCameraProxyMeshComponent>(CineCam, NAME_None, RF_Transactional | RF_TextExportTransient);
+							ProxyMeshComponent->SetupAttachment(CineCameraComponent);
+							ProxyMeshComponent->SetIsVisualizationComponent(true);
+							ProxyMeshComponent->SetCanEverAffectNavigation(false);
+
+							if (UStaticMesh* CameraMesh = LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/EditorMeshes/Camera/SM_CineCam.SM_CineCam")))
+							{
+								ProxyMeshComponent->SetStaticMesh(CameraMesh);
+							}
+							ProxyMeshComponent->SetCollisionProfileName(UCollisionProfile::NoCollision_ProfileName);
+							ProxyMeshComponent->bHiddenInGame = false;
+							ProxyMeshComponent->CastShadow = false;
+							ProxyMeshComponent->SetRelativeRotation(FRotator(0.0f, 90.0f, 0.0f));
+							ProxyMeshComponent->SetRelativeLocation(FVector(-50.0f, 0.0f, -15.0f));
+							ProxyMeshComponent->RegisterComponent();
+						}
+					}
+
+					NewActor->SetActorTransform(EditorPinned->CachedCameraTransform);
+				}
+				else
+				{
+					NewActor->SetActorRelativeLocation(Slot->SlotLocation);
+					NewActor->SetActorRelativeRotation(Slot->SlotRotation);
+				}
+
+				EditorPinned->DialogSlotActors.Emplace(Slot, NewActor);
+				EditorPinned->CreateDialogTrackFromSlot(Slot, bIsCamera);
+			};
+
+		if (UClass* LoadedClass = ActorSoftClass.Get())
 		{
-			NewActor->SetActorRelativeLocation(InSlot->SlotLocation);
-			NewActor->SetActorRelativeRotation(InSlot->SlotRotation);
+			SpawnWithClass(LoadedClass);
+			return;
 		}
-		DialogSlotActors.Emplace(InSlot, NewActor);
-		CreateDialogTrackFromSlot(InSlot, bIsCamera);
+
+		UAssetManager::GetStreamableManager().RequestAsyncLoad(
+			ClassPath,
+			FStreamableDelegate::CreateLambda([SpawnWithClass, ActorSoftClass]()
+				{
+					UClass* LoadedClass = ActorSoftClass.Get();
+
+					// local variable holds the loaded class here
+					TSubclassOf<AActor> LoadedActorClass = LoadedClass;
+
+					SpawnWithClass(LoadedActorClass);
+				}));
+		return;
 	}
 }
 

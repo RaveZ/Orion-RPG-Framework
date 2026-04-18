@@ -60,7 +60,6 @@ bool UDialogComponent::BeginDialog(UDialogBuilderGraph* DialogAsset)
 	}
 	if (CurrentActiveDialog && CurrentActiveDialog->bCanInterruptDialog == false)
 	{
-		//UE_LOG(LogTemp, Warning, TEXT("Can't begin dialog, make sure current active dialog has finished before starting another dialog"));
 		return false;
 	}
 
@@ -73,48 +72,80 @@ bool UDialogComponent::BeginDialog(UDialogBuilderGraph* DialogAsset)
 		{
 			CurrentActiveDialog->EndDialog();
 		}
+
 		NewDialogGraph->Initialize(this);
 		CurrentActiveDialog = NewDialogGraph;
 
-		if (NewDialogGraph->bFadeCameraOnDialogBegin)
-		{
-			if (OwningController && OwningController->IsLocalPlayerController())
+		const TWeakObjectPtr<UDialogComponent> WeakThis(this);
+		const TWeakObjectPtr<UDialogBuilderGraph> WeakDialogGraph(NewDialogGraph);
+
+		NewDialogGraph->OnDialogSetupFinished.Clear();
+		NewDialogGraph->OnDialogSetupFinished.AddLambda([WeakThis, WeakDialogGraph]()
 			{
-				if (APlayerCameraManager* PCM = OwningController->PlayerCameraManager)
+				UDialogComponent* DialogComponent = WeakThis.Get();
+				UDialogBuilderGraph* DialogGraph = WeakDialogGraph.Get();
+
+				if (!DialogComponent || !DialogGraph || DialogComponent->CurrentActiveDialog != DialogGraph)
 				{
-					PCM->StartCameraFade(1.0f, 1.0f, .1f, FLinearColor::Black , false, true);
+					return;
+				}
 
-					NewDialogGraph->StartFromRoot();
-					OnBeginDialog.Broadcast(NewDialogGraph);
-
-					const float HoldDurationSeconds = 1.0f;
-
-					FTimerDelegate FadeDel = FTimerDelegate::CreateLambda([this, PCM, NewDialogGraph]()
-						{
-							if (PCM)
-							{
-								// Fade from black (1.0) back to clear (0.0)
-								PCM->StartCameraFade(1.0f, 0.0f, 0.75f, FLinearColor::Black, false, true);
-							}
-						});
-
-					if (GetWorld())
+				auto BeginDialogFlow = [DialogComponent, DialogGraph]()
 					{
-						FTimerHandle FadeHandle;
-						GetWorld()->GetTimerManager().SetTimer(FadeHandle, FadeDel, HoldDurationSeconds, false);
+						DialogGraph->StartFromRoot();
+						DialogComponent->OnBeginDialog.Broadcast(DialogGraph);
+					};
+
+				if (DialogGraph->bFadeCameraOnDialogBegin)
+				{
+					DialogComponent->OnBeginDialog.Broadcast(DialogGraph);
+					APlayerController* LocalController = DialogComponent->OwningController;
+					if (LocalController && LocalController->IsLocalPlayerController())
+					{
+						if (APlayerCameraManager* PCM = LocalController->PlayerCameraManager)
+						{
+							PCM->StartCameraFade(1.0f, 1.0f, 0.1f, FLinearColor::Black, false, true);
+
+							const float HoldDurationSeconds = 1.0f;
+							FTimerDelegate FadeDel = FTimerDelegate::CreateLambda([WeakThis, WeakDialogGraph]()
+								{
+									UDialogComponent* FadeDialogComponent = WeakThis.Get();
+									UDialogBuilderGraph* FadeDialogGraph = WeakDialogGraph.Get();
+
+									if (!FadeDialogComponent || !FadeDialogGraph || FadeDialogComponent->CurrentActiveDialog != FadeDialogGraph)
+									{
+										return;
+									}
+
+									if (APlayerController* FadeController = FadeDialogComponent->OwningController)
+									{
+										if (APlayerCameraManager* FadePCM = FadeController->PlayerCameraManager)
+										{
+											// Unfade first, then begin node
+											FadePCM->StartCameraFade(1.0f, 0.0f, 0.75f, FLinearColor::Black, false, true);
+										}
+									}
+
+									FadeDialogGraph->StartFromRoot();
+								});
+
+							if (DialogComponent->GetWorld())
+							{
+								FTimerHandle FadeHandle;
+								DialogComponent->GetWorld()->GetTimerManager().SetTimer(FadeHandle, FadeDel, HoldDurationSeconds, false);
+							}
+							return;
+						}
 					}
 				}
-			}
-		}
-		else
-		{
-			NewDialogGraph->StartFromRoot();
-			OnBeginDialog.Broadcast(NewDialogGraph);
-		}
 
+				BeginDialogFlow();
+			});
+
+		NewDialogGraph->StartSetupPrerequisites();
 		bSuccess = true;
 	}
-	
+
 	return bSuccess;
 }
 

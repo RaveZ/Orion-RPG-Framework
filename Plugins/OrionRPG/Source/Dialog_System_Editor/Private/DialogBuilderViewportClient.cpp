@@ -2,6 +2,7 @@
 
 #include "DialogBuilderEditor.h"
 #include "DialogStage.h"
+#include "Camera/CameraActor.h"
 #include "DialogBuilderSetting.h"
 
 #include "AdvancedPreviewScene.h"
@@ -397,20 +398,11 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 			ActorToSelect = ActorProxy->Actor;
 			ObjectForDetails = ActorToSelect;
 		}
-
+		bool bIsCamera = ActorToSelect->IsA(ACameraActor::StaticClass());
 		UDialogDefinition* DialogDefinition = DialogEditor->FindDialogDefinitionByActor(ActorToSelect);
 		UDialogSequenceSlot* Slot = DialogEditor->GetTemplateSlot(ActorToSelect);
 
-		if (Slot)
-		{
-			DialogEditor->SetDetailsObject(Slot);
-		}
-		else
-		{
-			DialogEditor->SetDetailsObject(ObjectForDetails);
-
-			
-		}
+		
 		if (GEditor)
 		{
 			GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
@@ -422,6 +414,18 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 			GEditor->NoteSelectionChange();
 		}
 
+		if (bIsCamera)
+		{
+			DialogEditor->SetDetailsObject(ObjectForDetails);
+		}
+		else if (Slot)
+		{
+			DialogEditor->SetDetailsObject(Slot);
+		}
+		else
+		{
+			DialogEditor->SetDetailsObject(ObjectForDetails);
+		}
 		
 
 

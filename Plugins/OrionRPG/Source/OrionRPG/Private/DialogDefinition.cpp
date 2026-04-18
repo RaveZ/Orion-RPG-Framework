@@ -23,12 +23,6 @@ FGuid UDialogDefinition::GetOrCreateID()
 	return ID;
 }
 
-UDialogPivot::UDialogPivot()
-{
-	DisplayName = FText::FromString("Dialog Pivot");
-	ActorClass = AActor::StaticClass();	
-}
-
 UDialogPlayerParticipant::UDialogPlayerParticipant()
 {
 
@@ -48,11 +42,9 @@ UDialogProp::UDialogProp()
 UDialogCamera::UDialogCamera()
 {
 	DisplayName = FText::FromString("Camera");
+	CameraClassSoft = ACineCameraActor::StaticClass();
 	CameraClass = ACineCameraActor::StaticClass();
 }
 
 #undef LOCTEXT_NAMESPACE
 
-UDialogLight::UDialogLight()
-{
-}

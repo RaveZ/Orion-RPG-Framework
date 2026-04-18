@@ -207,9 +207,30 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
 		class UAudioComponent* DialogAudio;
 
+public:
+	FSimpleMulticastDelegate OnDialogSetupFinished;
+
+	public:
+	void StartSetupPrerequisites();
+	void CheckDialogPrerequisites();
+
+protected:
+	void SetupPrerequisites();
+
+protected:
+	FTimerHandle TimerHandle_CheckPrerequisites;
+	bool bSetupCompleted = false;
+	bool bPrerequisitesRequested = false;
+
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UDialogDefinition>> PrerequisiteDefinitions;
+
 protected:
 	UFUNCTION()
 	void HandleDialogSequenceFinished();
+
+	void CollectDialogDefinitionsForSetup(TArray<UDialogDefinition*>& OutDefinitions) const;
+	void OnSoftClassesLoaded();
 
 	FTimerHandle DialogLineTimer;
 public:
@@ -353,6 +374,15 @@ public:
 
 	void GetNodesOfType(TSubclassOf<UDialogBuilderNode> NodeType, TArray<UDialogBuilderNode*>& Nodes) const;
 };
+
+
+
+
+
+
+
+
+
 
 
 
