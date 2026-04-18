@@ -80,6 +80,9 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog")
 	class USoundBase* DialogSound = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog")
+	TObjectPtr<class UAnimSequence> FacialAnimation;
 	
 	FOrionDialogLine()
 	{

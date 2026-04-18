@@ -165,11 +165,6 @@ void FDialogSequencePlaybackContext::RefreshDialogContextObject()
 	{
 		DialogContextObject->SetDialogViewport(DialogViewport);
 	}
-
-	if (TSharedPtr<SDialogPreviewViewport> Pinned = DialogViewport.Pin())
-	{
-		Pinned->RemoveDialogOverlayWidget();
-	}
 }
 
 void UDialogPlaybackContextObject::SetDialogViewport(TWeakPtr<SDialogPreviewViewport> InDialogViewport)
