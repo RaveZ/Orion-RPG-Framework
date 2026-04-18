@@ -1430,7 +1430,7 @@ void FDialogBuilderEditor::OnOpenDialogSequenceNode(UDialogBuilderNode_DialogSeq
 		{
 			return;
 		}
-
+		SetViewportCameraMode(EDialogViewportCameraMode::Perspective);
 
 		ViewportClient->ResetCamera();
 	}

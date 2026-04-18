@@ -95,7 +95,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
 		bool bBlendCameraOnDialogEnd;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
+	UPROPERTY(BlueprintReadOnly, Category = "Camera")
 		bool bShouldBlendCameraOnDialogEnd = false;
 
 	/**time taken to blend*/
@@ -146,10 +146,10 @@ public:
 		TArray<TObjectPtr<class UDialogCamera>> CameraDefinitions;
 
 	/**List of dialog set used in this graph*/
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Detail")
+	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Detail")
 		TArray<TObjectPtr<class UDialogStage>> DialogStages;
 
-	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Detail")
+	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Detail")
 		TObjectPtr<class UDialogStage> CurrentDialogStage;
 
 	UPROPERTY(Transient)

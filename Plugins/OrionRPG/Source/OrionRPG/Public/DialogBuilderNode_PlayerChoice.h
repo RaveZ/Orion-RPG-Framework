@@ -62,6 +62,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category=Dialog)
 	void SelectChoice(int32 ChoiceIndex);
 
+	UFUNCTION(BlueprintPure, Category = Dialog)
+	bool IsChoiceVisible(int32 ChoiceIndex);
+
+
+
+
 	virtual void DetermineNextNode() override;
 
 private:

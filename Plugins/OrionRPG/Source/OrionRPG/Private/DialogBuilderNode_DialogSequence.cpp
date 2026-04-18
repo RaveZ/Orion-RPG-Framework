@@ -179,7 +179,7 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogStageData()
 
 FText UDialogBuilderNode_DialogSequence::GetNodeTitle() const
 {
-    return FText::FromString("Dialog Sequence");
+    return NodeDisplayName.IsEmpty() ? FText::FromString("Dialog Sequence") : FText::FromString(NodeDisplayName);
 }
 
 void UDialogBuilderNode_DialogSequence::SetNodeTitle(const FText& NewTitle)
@@ -189,7 +189,7 @@ void UDialogBuilderNode_DialogSequence::SetNodeTitle(const FText& NewTitle)
 
 FText UDialogBuilderNode_DialogSequence::GetNodeDescription() const
 {
-    return FText::FromString("Desc");
+    return FText::FromString("");
 }
 
 

@@ -42,6 +42,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detail")
 	TObjectPtr<UDialogSequence> DialogSequence = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
+	FString NodeDisplayName;
+
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog Sequence")
 	FMovieSceneSequencePlaybackSettings PlaybackSettings;
 

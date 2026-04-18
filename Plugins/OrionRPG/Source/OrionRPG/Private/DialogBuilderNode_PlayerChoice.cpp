@@ -28,6 +28,28 @@ void UDialogBuilderNode_PlayerChoice::SelectChoice(int32 ChoiceIndex)
 	EvaluateNextNode();
 }
 
+bool UDialogBuilderNode_PlayerChoice::IsChoiceVisible(int32 ChoiceIndex)
+{
+	TArray<TObjectPtr<UDialogBuilderNode>>& NodesToBranch = ChoiceBranches[ChoiceIndex].ChildrenNodes;
+
+	//Node is empty, choosing this will end the dialog
+	if (NodesToBranch.IsEmpty()) return true;
+
+	bool bVisible = false;
+
+	for (auto& NodeToBranch : NodesToBranch)
+	{
+		//Node will not visible if they have connected nodes, but cant branch to any of them
+		if (NodeToBranch->DecoratorConditionMet())
+		{
+			bVisible = true;
+			break;
+		}
+	}
+
+	return bVisible;
+}
+
 void UDialogBuilderNode_PlayerChoice::DetermineNextNode()
 {
 	if (ChoiceBranches.IsValidIndex(SelectedChoiceIndex))
