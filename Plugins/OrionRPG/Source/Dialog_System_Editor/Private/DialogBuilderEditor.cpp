@@ -1510,36 +1510,6 @@ void FDialogBuilderEditor::OpenDialogSequence(UDialogSequence* InDialogSequence)
 }
 
 
-void FDialogBuilderEditor::ExtendSequencerToolbar(FName InToolMenuName)
-{
-	FToolMenuOwnerScoped OwnerScoped(this);
-
-	UToolMenu* ToolMenu = UToolMenus::Get()->ExtendMenu(InToolMenuName);
-
-	const FToolMenuInsert SectionInsertLocation("BaseCommands", EToolMenuInsertType::Before);
-
-	{
-		ToolMenu->AddDynamicSection("LevelSequenceEditorDynamic", FNewToolMenuDelegate::CreateLambda([](UToolMenu* InMenu)
-			{
-				UDialogSequenceEditorMenuContext* DialogSequenceEditorMenuContext = InMenu->FindContext<UDialogSequenceEditorMenuContext>();
-				if (DialogSequenceEditorMenuContext && DialogSequenceEditorMenuContext->DialogEditor.IsValid())
-				{
-					const FName SequencerToolbarStyleName = "SequencerToolbar";
-
-					FToolMenuEntry PlaybackContextEntry = FToolMenuEntry::InitWidget(
-						"PlaybackContext",
-						DialogSequenceEditorMenuContext->DialogEditor.Pin()->PlaybackContext->BuildWorldPickerCombo(),
-						LOCTEXT("PlaybackContext", "PlaybackContext")
-					);
-					PlaybackContextEntry.StyleNameOverride = SequencerToolbarStyleName;
-
-					FToolMenuSection& Section = InMenu->AddSection("LevelSequenceEditor");
-					Section.AddEntry(PlaybackContextEntry);
-				}
-			}), SectionInsertLocation);
-	}
-}
-
 void FDialogBuilderEditor::OnSequencerReceivedFocus()
 {
 	if (!Sequencer.IsValid())
@@ -1604,7 +1574,6 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		InitParams.HostCapabilities.bSupportsViewportSelectability = true;
 	}
 
-	ExtendSequencerToolbar("DialogSequence.MainToolbar");
 
 	Sequencer = SequencerModule.CreateSequencer(InitParams);
 	SpawnRegister->SetSequencer(Sequencer);

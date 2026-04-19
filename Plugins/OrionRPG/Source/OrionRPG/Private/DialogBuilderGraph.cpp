@@ -98,7 +98,6 @@ bool UDialogBuilderGraph::Initialize(UDialogComponent* InitializingComp)
 		PrerequisiteDefinitions.Empty();
 		OnDialogSetupFinished.Clear();
 
-		InitializeDialogActors();
 		
 
 		if (OwningController && OwningController->IsLocalPlayerController())
@@ -252,6 +251,7 @@ UWorld* UDialogBuilderGraph::GetWorld() const
 
 void UDialogBuilderGraph::StartFromRoot()
 {
+	InitializeDialogActors();
 	if (RootNodes.IsValidIndex(0))
 	{
 		BeginNode(RootNodes[0]);
@@ -268,7 +268,7 @@ void UDialogBuilderGraph::StartSetupPrerequisites()
 	{
 		if (!World->GetTimerManager().IsTimerActive(TimerHandle_CheckPrerequisites))
 		{
-			World->GetTimerManager().SetTimer(TimerHandle_CheckPrerequisites, this, &ThisClass::CheckDialogPrerequisites, 0.05f, true);
+			World->GetTimerManager().SetTimer(TimerHandle_CheckPrerequisites, this, &ThisClass::CheckDialogPrerequisites, 0.1f, true);
 		}
 	}
 
@@ -350,6 +350,7 @@ void UDialogBuilderGraph::CollectDialogDefinitionsForSetup(TArray<UDialogDefinit
 void UDialogBuilderGraph::SetupPrerequisites()
 {
 	bPrerequisitesRequested = true;
+	const TWeakObjectPtr<UDialogBuilderGraph> WeakThis(this);
 
 	TArray<UDialogDefinition*> DefinitionsToLoad;
 	CollectDialogDefinitionsForSetup(DefinitionsToLoad);
@@ -361,6 +362,7 @@ void UDialogBuilderGraph::SetupPrerequisites()
 	}
 
 	TArray<FSoftObjectPath> SoftPathsToLoad;
+
 	for (UDialogDefinition* DialogDefinition : DefinitionsToLoad)
 	{
 		if (!DialogDefinition)
@@ -374,13 +376,26 @@ void UDialogBuilderGraph::SetupPrerequisites()
 			continue;
 		}
 
-		if (UClass* LoadedClass = ActorSoftClass.Get())
+
+		SoftPathsToLoad.AddUnique(ActorSoftClass.ToSoftObjectPath());
+	}
+
+	for (TPair<FGameplayTag, FParticipantInfo>& Pair : ParticipantInfoMap)
+	{
+		FParticipantInfo& ParticipantInfo = Pair.Value;
+		if (ParticipantInfo.ParticipantSetup != EParticipantSetup::E_SpawnParticipant)
 		{
-			DialogDefinition->SetActorClass(LoadedClass);
 			continue;
 		}
 
-		SoftPathsToLoad.AddUnique(ActorSoftClass.ToSoftObjectPath());
+		const TSoftClassPtr<AActor> ParticipantSoftClass = ParticipantInfo.ParticipantToSpawnSoft;
+		if (ParticipantSoftClass.IsNull())
+		{
+			continue;
+		}
+
+
+		SoftPathsToLoad.AddUnique(ParticipantSoftClass.ToSoftObjectPath());
 	}
 
 	if (SoftPathsToLoad.Num() == 0)
@@ -389,7 +404,6 @@ void UDialogBuilderGraph::SetupPrerequisites()
 		return;
 	}
 
-	const TWeakObjectPtr<UDialogBuilderGraph> WeakThis(this);
 	UAssetManager::GetStreamableManager().RequestAsyncLoad(
 		SoftPathsToLoad,
 		FStreamableDelegate::CreateLambda([WeakThis]
@@ -419,6 +433,26 @@ void UDialogBuilderGraph::OnSoftClassesLoaded()
 		if (UClass* LoadedClass = ActorSoftClass.Get())
 		{
 			DialogDefinition->SetActorClass(LoadedClass);
+		}
+	}
+
+	for (TPair<FGameplayTag, FParticipantInfo>& Pair : ParticipantInfoMap)
+	{
+		FParticipantInfo& ParticipantInfo = Pair.Value;
+		if (ParticipantInfo.ParticipantSetup != EParticipantSetup::E_SpawnParticipant)
+		{
+			continue;
+		}
+
+		const TSoftClassPtr<AActor> ParticipantSoftClass = ParticipantInfo.ParticipantToSpawnSoft;
+		if (ParticipantSoftClass.IsNull())
+		{
+			continue;
+		}
+
+		if (UClass* LoadedClass = ParticipantSoftClass.Get())
+		{
+			ParticipantInfo.ParticipantToSpawn = LoadedClass;
 		}
 	}
 

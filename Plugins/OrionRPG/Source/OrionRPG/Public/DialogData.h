@@ -161,8 +161,10 @@ public:
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Dialog")
 	EParticipantSetup ParticipantSetup = EParticipantSetup::E_LinkedToWorld;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayName = "Participant To Spawn", EditCondition = "ParticipantSetup == EParticipantSetup::E_SpawnParticipant", HideEditConditionToggle, EditConditionHides))
+	TSoftClassPtr<class AActor> ParticipantToSpawnSoft;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog",  meta = (EditCondition = "ParticipantSetup == EParticipantSetup::E_SpawnParticipant", HideEditConditionToggle, EditConditionHides))
+	UPROPERTY(Transient)
 	TSubclassOf<class AActor> ParticipantToSpawn;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog", meta = (EditCondition = "ParticipantSetup == EParticipantSetup::E_SpawnParticipant", HideEditConditionToggle, EditConditionHides))
@@ -191,6 +193,7 @@ public:
 public:
 	FParticipantInfo()
 	{
+		ParticipantToSpawn = nullptr;
 		ParticipantName = FText::FromString("Participant");
 		NodeColor = FLinearColor(0.3f, 0.3f, 0.3f);
 	}

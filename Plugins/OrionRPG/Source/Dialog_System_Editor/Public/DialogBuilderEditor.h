@@ -329,7 +329,6 @@ public:
 	//Sequencer
 	void OnOpenDialogSequenceNode(class UDialogBuilderNode_DialogSequence* InSequenceNode);
 	void OpenDialogSequence(UDialogSequence* InDialogSequence);
-	void ExtendSequencerToolbar(FName InToolMenuName);
 	void EnsureSequencerCreated();
 	void EnsureDialogCameraCutSection();
 	FGuid CreateDialogCamera(const bool bSpawnable, class ACineCameraActor*& OutActor);
