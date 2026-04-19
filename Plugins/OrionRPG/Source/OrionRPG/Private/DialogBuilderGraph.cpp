@@ -1331,7 +1331,7 @@ AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot)
 				CineCameraComponent->CurrentAperture = 16.0f;
 
 				CineCameraComponent->bOverride_CustomNearClippingPlane = true;
-				CineCameraComponent->CustomNearClippingPlane = 1.0f;
+				CineCameraComponent->CustomNearClippingPlane = 20.0f;
 			}
 		}
 		NewActor->AttachToActor(SequencePivot, FAttachmentTransformRules::KeepWorldTransform);

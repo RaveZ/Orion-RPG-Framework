@@ -961,7 +961,7 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 							CineCameraComponent->CurrentAperture = 16.0f;
 
 							CineCameraComponent->bOverride_CustomNearClippingPlane = true;
-							CineCameraComponent->CustomNearClippingPlane = 1.0f;
+							CineCameraComponent->CustomNearClippingPlane = 20.0f;
 
 							UStaticMeshComponent* ProxyMeshComponent = NewObject<UCameraProxyMeshComponent>(CineCam, NAME_None, RF_Transactional | RF_TextExportTransient);
 							ProxyMeshComponent->SetupAttachment(CineCameraComponent);
@@ -1788,7 +1788,7 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 	}
 
 	
-
+	const bool bRandomizeCameraAngles = InSettings ? InSettings->bRandomizeCameraAngles : false;
 	const bool bRandomizeCameraPresets = InSettings ? InSettings->bRandomizeCameraPresets : true;
 	const EMovieSceneKeyInterpolation KeyInterpolationType = InSettings ? InSettings->KeyInterpolation : EMovieSceneKeyInterpolation::Constant;
 	const TArray<UDialogSequenceShot*> CameraPresets = InSettings ? InSettings->DefaultShots : CameraPresets;
@@ -1833,7 +1833,7 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 			return StartA < StartB;
 		});
 
-	FScopedSlowTask SlowTask(static_cast<float>(DialogSections.Num()), LOCTEXT("GenerateDialogSequenceCamera_Progress", "Generating camera keys..."));
+	FScopedSlowTask SlowTask(static_cast<float>(DialogSections.Num()) + 1.0f, LOCTEXT("GenerateDialogSequenceCamera_Progress", "Generating camera keys..."));
 	SlowTask.MakeDialog(true);
 
 	TArrayView<FMovieSceneDoubleChannel*> Channels = TransformSection->GetChannelProxy().GetChannels<FMovieSceneDoubleChannel>();
@@ -1851,7 +1851,15 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 
 	for (int32 Index = 0; Index < DialogSections.Num(); ++Index)
 	{
-		SlowTask.EnterProgressFrame(1.0f);
+		const float ProgressPercent = DialogSections.Num() > 0
+			? ((Index + 1) / static_cast<float>(DialogSections.Num())) * 100.0f
+			: 100.0f;
+
+		SlowTask.EnterProgressFrame(
+			1.0f,
+			FText::Format(
+				LOCTEXT("GenerateDialogSequenceCamera_ProgressPercent", "Generating camera keys... {0}%"),
+				FText::AsNumber(FMath::RoundToInt(ProgressPercent))));
 
 		UMovieSceneSection* Section = DialogSections[Index];
 		if (!Section || !Section->GetRange().HasLowerBound())
@@ -1868,13 +1876,14 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 
 		const FFrameNumber StartFrame = Section->GetRange().GetLowerBoundValue();
 
-		ApplyCameraPreset(Preset, StartFrame.Value);
+		ApplyCameraPreset(Preset, StartFrame.Value, bRandomizeCameraAngles);
 
 		const USceneComponent* RootComponent = CameraActor->GetRootComponent();
 		if (!RootComponent)
 		{
 			return;
 		}
+
 		const FVector Location = RootComponent->GetRelativeLocation();
 		const FRotator Rotation = RootComponent->GetRelativeRotation();
 		const FVector Scale = RootComponent->GetRelativeScale3D();
@@ -1927,9 +1936,19 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 		AddKey(Channels[8], StartFrame, Scale.Z);
 	}
 
+	SlowTask.EnterProgressFrame(1.0f, LOCTEXT("GenerateDialogSequenceCamera_Finished", "Generating..."));
+
+	const double EndTime = FPlatformTime::Seconds() + 0.5;
+	while (FPlatformTime::Seconds() < EndTime)
+	{
+		FSlateApplication::Get().Tick();
+		FPlatformProcess::Sleep(0.01f);
+	}
+
 	TransformSection->SetRange(MovieScene->GetPlaybackRange());
 	Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshAllImmediately);
 	Sequencer->ForceEvaluate();
+	SetViewportCameraMode(EDialogViewportCameraMode::DialogCameraLock);
 }
 
 void FDialogBuilderEditor::UnbindSequencerDelegates()
@@ -2400,8 +2419,7 @@ void FDialogBuilderEditor::OnSequencerSelectionChangedObjectGuids(TArray<FGuid> 
 		}
 	}
 }
-
-void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot, int32 InFrameNumber)
+void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot, int32 InFrameNumber, bool bRandomizeAngle)
 {
 	if (!InSequenceShot || !EditingDialogGraph || !Sequencer.IsValid() || !EditingDialogSequence)
 	{
@@ -2417,7 +2435,7 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 	UDialogDefinition* InDialogDefinition = nullptr;
 	const FFrameNumber CurrentFrame = InFrameNumber >= 0 ? InFrameNumber : Sequencer->GetLocalTime().Time.FloorToFrame();
 
-	if(InSequenceShot->ActorToFocus)
+	if (InSequenceShot->ActorToFocus)
 	{
 		InDialogDefinition = InSequenceShot->ActorToFocus;
 	}
@@ -2444,7 +2462,7 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 			}
 		}
 	}
-	
+
 
 	if (!InDialogDefinition)
 	{
@@ -2523,9 +2541,30 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 
 	const FVector AimLocation = FocusLocation + TargetOffsetWorld;
 
-	
 	const FVector CameraWorldOffset = ActorToFocus->GetActorTransform().TransformVectorNoScale(InSequenceShot->CameraOffset);
-	const FVector DesiredLocation = FocusLocation + (ForwardVector * InSequenceShot->CameraDistance) + CameraWorldOffset;
+	FVector DesiredLocation = FocusLocation + (ForwardVector * InSequenceShot->CameraDistance) + CameraWorldOffset;
+
+	if (bRandomizeAngle)
+	{
+		constexpr float MinYaw = -20.0f;
+		constexpr float MaxYaw = 20.0f;
+		constexpr float MinPitch = -5.0f;
+		constexpr float MaxPitch = 10.0f;
+
+		const FVector OrbitOffset = DesiredLocation - AimLocation;
+		const float OrbitDistance = OrbitOffset.Size();
+
+		if (OrbitDistance > KINDA_SMALL_NUMBER)
+		{
+			FRotator OrbitRotation = OrbitOffset.Rotation();
+			OrbitRotation.Yaw += FMath::RandRange(MinYaw, MaxYaw);
+			OrbitRotation.Pitch += FMath::RandRange(MinPitch, MaxPitch);
+
+			const FVector RandomizedDirection = OrbitRotation.Vector();
+			DesiredLocation = AimLocation + (RandomizedDirection * OrbitDistance);
+		}
+	}
+
 	const FRotator DesiredRotation = (AimLocation - DesiredLocation).Rotation();
 
 	if (InSequenceShot->bDrawTargetFocus)
@@ -2539,7 +2578,7 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 			false,
 			3.0f);
 	}
-	
+
 
 	CameraActor->SetActorLocation(DesiredLocation, false);
 	CameraActor->SetActorRotation(DesiredRotation);
