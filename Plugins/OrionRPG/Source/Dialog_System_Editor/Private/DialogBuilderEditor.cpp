@@ -1569,7 +1569,7 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		ViewParams.AddMenuExtender = MakeShared<FExtender>();
 
 		ViewParams.ToolbarExtender->AddToolBarExtension(
-			"BaseCommands",
+			"CurveEditor",
 			EExtensionHook::After,
 			nullptr,
 			FToolBarExtensionDelegate::CreateSP(this, &FDialogBuilderEditor::ExtendSequencerToolbar));
@@ -1661,6 +1661,7 @@ bool FDialogBuilderEditor::CanGenerateSequenceCameraFromDialogSections() const
 void FDialogBuilderEditor::OpenGenerateSequenceCameraDialog()
 {
 	UDialogGenerateCameraSettings* GenerateSettings = NewObject<UDialogGenerateCameraSettings>(GetTransientPackage(), NAME_None, RF_Transient);
+	GenerateSettings->Initialize();
 	GenerateSettings->AddToRoot();
 
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
@@ -1786,15 +1787,12 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 		return;
 	}
 
-	TArray<UDialogSequenceShot*> Presets = DialogCameraPresetsWidget->GetShotDuplicates();
-	Presets.RemoveAll([](UDialogSequenceShot* Shot) { return Shot == nullptr; });
-
-	if (Presets.Num() == 0)
-	{
-		return;
-	}
+	
 
 	const bool bRandomizeCameraPresets = InSettings ? InSettings->bRandomizeCameraPresets : true;
+	const EMovieSceneKeyInterpolation KeyInterpolationType = InSettings ? InSettings->KeyInterpolation : EMovieSceneKeyInterpolation::Constant;
+	const TArray<UDialogSequenceShot*> CameraPresets = InSettings ? InSettings->DefaultShots : CameraPresets;
+
 
 	UMovieScene3DTransformTrack* TransformTrack = MovieScene->FindTrack<UMovieScene3DTransformTrack>(CameraBindingId);
 	if (!TransformTrack)
@@ -1861,8 +1859,8 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 			continue;
 		}
 
-		const int32 PresetIndex = FMath::RandHelper(Presets.Num());
-		UDialogSequenceShot* Preset = Presets[PresetIndex];
+		const int32 PresetIndex = FMath::RandHelper(CameraPresets.Num());
+		UDialogSequenceShot* Preset = bRandomizeCameraPresets ? CameraPresets[PresetIndex] : InSettings->ShotToUse.Get();
 		if (!Preset)
 		{
 			continue;
@@ -1870,24 +1868,63 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 
 		const FFrameNumber StartFrame = Section->GetRange().GetLowerBoundValue();
 
-		ApplyCameraPreset(Preset);
+		ApplyCameraPreset(Preset, StartFrame.Value);
 
-		const FTransform CameraTransform = CameraActor->GetActorTransform();
-		const FVector Location = CameraTransform.GetLocation();
-		const FRotator Rotation = CameraTransform.Rotator();
-		const FVector Scale = CameraTransform.GetScale3D();
+		const USceneComponent* RootComponent = CameraActor->GetRootComponent();
+		if (!RootComponent)
+		{
+			return;
+		}
+		const FVector Location = RootComponent->GetRelativeLocation();
+		const FRotator Rotation = RootComponent->GetRelativeRotation();
+		const FVector Scale = RootComponent->GetRelativeScale3D();
 
-		Channels[0]->AddConstantKey(StartFrame, Location.X);
-		Channels[1]->AddConstantKey(StartFrame, Location.Y);
-		Channels[2]->AddConstantKey(StartFrame, Location.Z);
+		
+		auto AddKey = [KeyInterpolationType](FMovieSceneDoubleChannel* Channel, FFrameNumber Frame, double Value)
+			{
+				if (!Channel)
+				{
+					return;
+				}
 
-		Channels[3]->AddConstantKey(StartFrame, Rotation.Roll);
-		Channels[4]->AddConstantKey(StartFrame, Rotation.Pitch);
-		Channels[5]->AddConstantKey(StartFrame, Rotation.Yaw);
+				switch (KeyInterpolationType)
+				{
+				case EMovieSceneKeyInterpolation::Constant:
+					Channel->AddConstantKey(Frame, Value);
+					break;
 
-		Channels[6]->AddConstantKey(StartFrame, Scale.X);
-		Channels[7]->AddConstantKey(StartFrame, Scale.Y);
-		Channels[8]->AddConstantKey(StartFrame, Scale.Z);
+				case EMovieSceneKeyInterpolation::Linear:
+					Channel->AddLinearKey(Frame, Value);
+					break;
+				case EMovieSceneKeyInterpolation::Auto:
+					Channel->AddCubicKey(Frame, Value, RCTM_Auto);
+					break;
+				case EMovieSceneKeyInterpolation::User:
+					Channel->AddCubicKey(Frame, Value, RCTM_User);
+					break;
+				case EMovieSceneKeyInterpolation::Break:
+					Channel->AddCubicKey(Frame, Value, RCTM_Break);
+					break;
+				case EMovieSceneKeyInterpolation::SmartAuto:
+					Channel->AddCubicKey(Frame, Value, RCTM_SmartAuto);
+					break;
+				default:
+					Channel->AddCubicKey(Frame, Value);
+					break;
+				}
+			};
+
+		AddKey(Channels[0], StartFrame, Location.X);
+		AddKey(Channels[1], StartFrame, Location.Y);
+		AddKey(Channels[2], StartFrame, Location.Z);
+
+		AddKey(Channels[3], StartFrame, Rotation.Roll);
+		AddKey(Channels[4], StartFrame, Rotation.Pitch);
+		AddKey(Channels[5], StartFrame, Rotation.Yaw);
+
+		AddKey(Channels[6], StartFrame, Scale.X);
+		AddKey(Channels[7], StartFrame, Scale.Y);
+		AddKey(Channels[8], StartFrame, Scale.Z);
 	}
 
 	TransformSection->SetRange(MovieScene->GetPlaybackRange());
@@ -2364,7 +2401,7 @@ void FDialogBuilderEditor::OnSequencerSelectionChangedObjectGuids(TArray<FGuid> 
 	}
 }
 
-void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot)
+void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot, int32 InFrameNumber)
 {
 	if (!InSequenceShot || !EditingDialogGraph || !Sequencer.IsValid() || !EditingDialogSequence)
 	{
@@ -2378,7 +2415,7 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 	}
 
 	UDialogDefinition* InDialogDefinition = nullptr;
-	const FFrameNumber CurrentFrame = Sequencer->GetLocalTime().Time.FloorToFrame();
+	const FFrameNumber CurrentFrame = InFrameNumber >= 0 ? InFrameNumber : Sequencer->GetLocalTime().Time.FloorToFrame();
 
 	if(InSequenceShot->ActorToFocus)
 	{

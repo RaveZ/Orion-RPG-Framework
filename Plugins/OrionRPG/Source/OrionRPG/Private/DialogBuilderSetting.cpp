@@ -3,6 +3,7 @@
 
 #include "DialogBuilderSetting.h"
 #include "Blueprint/UserWidget.h"
+#include "DialogSequenceShot.h"
 #include "UObject/ConstructorHelpers.h"
 
 UDialogBuilderSetting::UDialogBuilderSetting()
@@ -21,6 +22,25 @@ UDialogBuilderSetting::UDialogBuilderSetting()
 	{
 		DefaultFreeMovementDialogWidget = DialogueFreeMovementWidgetFinder.Class;
 	}
+
+	auto CloseUpShot = ConstructorHelpers::FClassFinder<UDialogSequenceShot>(TEXT("'/OrionRPG/DefaultShot/SequenceShot/CloseUp.CloseUp_C'"));
+	if (CloseUpShot.Succeeded())
+	{
+		DefaultCameraPresetsToGenerate.AddUnique(CloseUpShot.Class);
+	}
+
+	auto MediumShot = ConstructorHelpers::FClassFinder<UDialogSequenceShot>(TEXT("'/OrionRPG/DefaultShot/SequenceShot/MediumShot.MediumShot_C'"));
+	if (MediumShot.Succeeded())
+	{
+		DefaultCameraPresetsToGenerate.AddUnique(MediumShot.Class);
+	}
+
+	auto OTS_CloseUp = ConstructorHelpers::FClassFinder<UDialogSequenceShot>(TEXT("'/OrionRPG/DefaultShot/SequenceShot/OTS_CloseUp.OTS_CloseUp_C'"));
+	if (OTS_CloseUp.Succeeded())
+	{
+		DefaultCameraPresetsToGenerate.AddUnique(OTS_CloseUp.Class);
+	}
+
 
 	DialogSequenceNodeColor = FLinearColor(0.023f, 0.026f, 0.031f);
 	DialogLineNodeColor = FLinearColor(0.15f, 0.15f, 0.15f);

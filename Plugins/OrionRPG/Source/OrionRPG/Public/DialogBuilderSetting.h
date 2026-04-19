@@ -34,6 +34,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options", noclear)
 	TSubclassOf<class UCommonActivatableWidget> DefaultFreeMovementDialogWidget;
 
+	/**Default camera preset when generating shots*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Generation", noclear)
+	TArray<TSubclassOf<class UDialogSequenceShot>> DefaultCameraPresetsToGenerate;
+
 	UPROPERTY(EditAnywhere, config, Category = "Graph Style")
 	FLinearColor DialogSequenceNodeColor;
 
