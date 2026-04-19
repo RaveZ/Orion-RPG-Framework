@@ -319,6 +319,22 @@ UDialogSequenceShot* SDialogCameraPresets::CreateSelectedShotInstance(const FAss
 	return OutShot;
 }
 
+TArray<UDialogSequenceShot*> SDialogCameraPresets::GetShotDuplicates() const
+{
+	TArray<UDialogSequenceShot*> Result;
+	Result.Reserve(ShotDuplicates.Num());
+
+	for (const TStrongObjectPtr<UDialogSequenceShot>& Shot : ShotDuplicates)
+	{
+		if (Shot.IsValid())
+		{
+			Result.Add(Shot.Get());
+		}
+	}
+
+	return Result;
+}
+
 void SDialogCameraPresets::ReleaseShotDuplicates()
 {
 	UnbindShotPropertyChanged();

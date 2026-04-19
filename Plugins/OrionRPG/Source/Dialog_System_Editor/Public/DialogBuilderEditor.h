@@ -26,6 +26,7 @@ class UDialogSequence;
 class UDialogSequenceSlot;
 class UDialogDefinition;
 class ACineCameraActor;
+class FToolBarBuilder;
 
 enum class EMovieSceneDataChangeType;
 
@@ -399,6 +400,13 @@ private:
 
 	/** A callback every time graph changed */
 	void OnGraphChanged(const FEdGraphEditAction& Action);
+
+private:
+	//Sequencer toolbar
+	void ExtendSequencerToolbar(FToolBarBuilder& InToolbarBuilder);
+	void OpenGenerateSequenceCameraDialog();
+	void GenerateSequenceCameraFromDialogSections(const class UDialogGenerateCameraSettings* InSettings);
+	bool CanGenerateSequenceCameraFromDialogSections() const;
 
 protected:
 	TSharedRef<SDockTab> SpawnTab_Viewport(const FSpawnTabArgs& Args);

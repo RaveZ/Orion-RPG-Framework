@@ -97,6 +97,18 @@
 #include "Input/Events.h"
 #include "Engine/AssetManager.h"
 #include <Kismet2/KismetEditorUtilities.h>
+#include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "Misc/ScopedSlowTask.h"
+#include "Widgets/SWindow.h"
+#include "Widgets/Layout/SBorder.h"
+#include "Widgets/Layout/SBox.h"
+#include "Widgets/Input/SButton.h"
+#include "Widgets/Text/STextBlock.h"
+#include "Sections/MovieScene3DTransformSection.h"
+#include "Channels/MovieSceneDoubleChannel.h"
+#include "DialogGenerateCameraSettings.h"
+#include "PropertyEditorModule.h"
+#include "IDetailsView.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderEditor"
 
@@ -1495,7 +1507,7 @@ void FDialogBuilderEditor::OpenDialogSequence(UDialogSequence* InDialogSequence)
 		UpdateTrackModelRule();
 		UpdateSectionRule();
 		Sequencer->GetSequencerWidget()->SetEnabled(true);
-		Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
+		Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshAllImmediately);
 		Sequencer->ForceEvaluate();
 		RefreshSequencerCameraLock();
 	}
@@ -1553,6 +1565,14 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		ViewParams.ScrubberStyle = ESequencerScrubberStyle::FrameBlock;
 		ViewParams.OnReceivedFocus.BindRaw(this, &FDialogBuilderEditor::OnSequencerReceivedFocus);
 		ViewParams.OnInitToolMenuContext.BindRaw(this, &FDialogBuilderEditor::OnInitToolMenuContext);
+		ViewParams.ToolbarExtender = MakeShared<FExtender>();
+		ViewParams.AddMenuExtender = MakeShared<FExtender>();
+
+		ViewParams.ToolbarExtender->AddToolBarExtension(
+			"BaseCommands",
+			EExtensionHook::After,
+			nullptr,
+			FToolBarExtensionDelegate::CreateSP(this, &FDialogBuilderEditor::ExtendSequencerToolbar));
 	}
 
 	FSequencerInitParams InitParams;
@@ -1572,6 +1592,7 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		InitParams.HostCapabilities.bSupportsAddFromContentBrowser = true;
 		InitParams.HostCapabilities.bSupportsSidebar = true;
 		InitParams.HostCapabilities.bSupportsViewportSelectability = true;
+
 	}
 
 
@@ -1611,6 +1632,267 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		RefreshSequencerCameraLock();
 	}
 
+}
+
+void FDialogBuilderEditor::ExtendSequencerToolbar(FToolBarBuilder& InToolbarBuilder)
+{
+	InToolbarBuilder.BeginSection("DialogCameraGenerate");
+	{
+		InToolbarBuilder.AddToolBarButton(
+			FUIAction(
+				FExecuteAction::CreateSP(this, &FDialogBuilderEditor::OpenGenerateSequenceCameraDialog),
+				FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanGenerateSequenceCameraFromDialogSections)),
+			NAME_None,
+			LOCTEXT("GenerateDialogSequenceCamera_Label", ""),
+			LOCTEXT("GenerateDialogSequenceCamera_Tooltip", "Generate camera keys from dialog track section start frames."),
+			FSlateIcon(FAppStyle::GetAppStyleSetName(), "Sequencer.LockCamera"));
+	}
+	InToolbarBuilder.EndSection();
+}
+
+bool FDialogBuilderEditor::CanGenerateSequenceCameraFromDialogSections() const
+{
+	return Sequencer.IsValid()
+		&& EditingDialogSequence != nullptr
+		&& CurrentSequenceNode.IsValid()
+		&& DialogCameraPresetsWidget.IsValid();
+}
+
+void FDialogBuilderEditor::OpenGenerateSequenceCameraDialog()
+{
+	UDialogGenerateCameraSettings* GenerateSettings = NewObject<UDialogGenerateCameraSettings>(GetTransientPackage(), NAME_None, RF_Transient);
+	GenerateSettings->AddToRoot();
+
+	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
+
+	FDetailsViewArgs SettingsDetailsViewArgs;
+	SettingsDetailsViewArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
+	SettingsDetailsViewArgs.bHideSelectionTip = true;
+	SettingsDetailsViewArgs.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Hide;
+	SettingsDetailsViewArgs.bAllowSearch = false;
+
+	const TSharedRef<IDetailsView> SettingsDetailsView = PropertyModule.CreateDetailView(SettingsDetailsViewArgs);
+	SettingsDetailsView->SetObject(GenerateSettings);
+
+	TSharedPtr<SWindow> DialogWindow = SNew(SWindow)
+		.Title(LOCTEXT("GenerateDialogSequenceCamera_Title", "Generate Sequence Camera"))
+		.SizingRule(ESizingRule::UserSized)
+		.ClientSize(FVector2D(500.0f, 320.0f))
+		.SupportsMinimize(false)
+		.SupportsMaximize(false);
+
+	TWeakPtr<SWindow> DialogWindowWeak = DialogWindow;
+
+	DialogWindow->SetContent(
+		SNew(SBorder)
+		.Padding(12.0f)
+		[
+			SNew(SVerticalBox)
+
+				+ SVerticalBox::Slot()
+				.FillHeight(1.0f)
+				.Padding(0.f, 0.f, 0.f, 10.f)
+				[
+					SettingsDetailsView
+				]
+
+				+ SVerticalBox::Slot()
+				.AutoHeight()
+				.HAlign(HAlign_Right)
+				[
+					SNew(SHorizontalBox)
+
+						+ SHorizontalBox::Slot()
+						.AutoWidth()
+						.Padding(0.f, 0.f, 8.f, 0.f)
+						[
+							SNew(SButton)
+								.Text(LOCTEXT("GenerateDialogSequenceCamera_Cancel", "Cancel"))
+								.OnClicked_Lambda([DialogWindowWeak]()
+									{
+										if (TSharedPtr<SWindow> PinnedWindow = DialogWindowWeak.Pin())
+										{
+											PinnedWindow->RequestDestroyWindow();
+										}
+										return FReply::Handled();
+									})
+						]
+
+					+ SHorizontalBox::Slot()
+						.AutoWidth()
+						[
+							SNew(SButton)
+								.Text(LOCTEXT("GenerateDialogSequenceCamera_Generate", "Generate"))
+								.OnClicked_Lambda([this, DialogWindowWeak, GenerateSettings]()
+									{
+										GenerateSequenceCameraFromDialogSections(GenerateSettings);
+
+										if (TSharedPtr<SWindow> PinnedWindow = DialogWindowWeak.Pin())
+										{
+											PinnedWindow->RequestDestroyWindow();
+										}
+										return FReply::Handled();
+									})
+						]
+				]
+		]
+	);
+
+	DialogWindow->SetOnWindowClosed(FOnWindowClosed::CreateLambda([GenerateSettings](const TSharedRef<SWindow>&)
+		{
+			if (IsValid(GenerateSettings) && GenerateSettings->IsRooted())
+			{
+				GenerateSettings->RemoveFromRoot();
+			}
+		}));
+
+	FSlateApplication::Get().AddModalWindow(DialogWindow.ToSharedRef(), FSlateApplication::Get().GetActiveTopLevelWindow(), false);
+}
+
+void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialogGenerateCameraSettings* InSettings)
+{
+	if (!Sequencer.IsValid() || !EditingDialogSequence || !CurrentSequenceNode.IsValid() || !DialogCameraPresetsWidget.IsValid())
+	{
+		return;
+	}
+
+	UDialogStage* DialogStage = CurrentSequenceNode.Get()->DialogStage;
+	if (!DialogStage || !DialogStage->CameraSlots.IsValidIndex(0) || !DialogStage->CameraSlots[0])
+	{
+		return;
+	}
+
+	UMovieScene* MovieScene = EditingDialogSequence->GetMovieScene();
+	if (!MovieScene)
+	{
+		return;
+	}
+
+	const FGuid CameraBindingId = DialogStage->CameraSlots[0]->ID;
+	if (!CameraBindingId.IsValid())
+	{
+		return;
+	}
+
+	UMovieSceneDialogTrack* DialogTrack = MovieScene->FindTrack<UMovieSceneDialogTrack>();
+	if (!DialogTrack)
+	{
+		return;
+	}
+
+	AActor* CameraActor = DialogSlotActors.FindRef(DialogStage->CameraSlots[0]).Get();
+	if (!IsValid(CameraActor))
+	{
+		return;
+	}
+
+	TArray<UDialogSequenceShot*> Presets = DialogCameraPresetsWidget->GetShotDuplicates();
+	Presets.RemoveAll([](UDialogSequenceShot* Shot) { return Shot == nullptr; });
+
+	if (Presets.Num() == 0)
+	{
+		return;
+	}
+
+	const bool bRandomizeCameraPresets = InSettings ? InSettings->bRandomizeCameraPresets : true;
+
+	UMovieScene3DTransformTrack* TransformTrack = MovieScene->FindTrack<UMovieScene3DTransformTrack>(CameraBindingId);
+	if (!TransformTrack)
+	{
+		TransformTrack = MovieScene->AddTrack<UMovieScene3DTransformTrack>(CameraBindingId);
+	}
+	if (!TransformTrack)
+	{
+		return;
+	}
+
+	UMovieScene3DTransformSection* TransformSection = nullptr;
+	if (TransformTrack->GetAllSections().Num() == 0)
+	{
+		TransformSection = Cast<UMovieScene3DTransformSection>(TransformTrack->CreateNewSection());
+		TransformTrack->AddSection(*TransformSection);
+	}
+	else
+	{
+		TransformSection = Cast<UMovieScene3DTransformSection>(TransformTrack->GetAllSections()[0]);
+	}
+	if (!TransformSection)
+	{
+		return;
+	}
+
+	TransformSection->Modify();
+	TransformSection->SetBlendType(EMovieSceneBlendType::Absolute);
+	
+
+	TArray<UMovieSceneSection*> DialogSections = DialogTrack->GetAllSections();
+	DialogSections.RemoveAll([](UMovieSceneSection* Section) { return Section == nullptr; });
+
+	DialogSections.Sort([](const UMovieSceneSection& A, const UMovieSceneSection& B)
+		{
+			const FFrameNumber StartA = A.GetRange().HasLowerBound() ? A.GetRange().GetLowerBoundValue() : FFrameNumber(0);
+			const FFrameNumber StartB = B.GetRange().HasLowerBound() ? B.GetRange().GetLowerBoundValue() : FFrameNumber(0);
+			return StartA < StartB;
+		});
+
+	FScopedSlowTask SlowTask(static_cast<float>(DialogSections.Num()), LOCTEXT("GenerateDialogSequenceCamera_Progress", "Generating camera keys..."));
+	SlowTask.MakeDialog(true);
+
+	TArrayView<FMovieSceneDoubleChannel*> Channels = TransformSection->GetChannelProxy().GetChannels<FMovieSceneDoubleChannel>();
+	for (FMovieSceneDoubleChannel* Channel : Channels)
+	{
+		if (Channel)
+		{
+			Channel->Reset();
+		}
+	}
+	if (Channels.Num() < 9)
+	{
+		return;
+	}
+
+	for (int32 Index = 0; Index < DialogSections.Num(); ++Index)
+	{
+		SlowTask.EnterProgressFrame(1.0f);
+
+		UMovieSceneSection* Section = DialogSections[Index];
+		if (!Section || !Section->GetRange().HasLowerBound())
+		{
+			continue;
+		}
+
+		const int32 PresetIndex = FMath::RandHelper(Presets.Num());
+		UDialogSequenceShot* Preset = Presets[PresetIndex];
+		if (!Preset)
+		{
+			continue;
+		}
+
+		const FFrameNumber StartFrame = Section->GetRange().GetLowerBoundValue();
+
+		ApplyCameraPreset(Preset);
+
+		const FTransform CameraTransform = CameraActor->GetActorTransform();
+		const FVector Location = CameraTransform.GetLocation();
+		const FRotator Rotation = CameraTransform.Rotator();
+		const FVector Scale = CameraTransform.GetScale3D();
+
+		Channels[0]->AddConstantKey(StartFrame, Location.X);
+		Channels[1]->AddConstantKey(StartFrame, Location.Y);
+		Channels[2]->AddConstantKey(StartFrame, Location.Z);
+
+		Channels[3]->AddConstantKey(StartFrame, Rotation.Roll);
+		Channels[4]->AddConstantKey(StartFrame, Rotation.Pitch);
+		Channels[5]->AddConstantKey(StartFrame, Rotation.Yaw);
+
+		Channels[6]->AddConstantKey(StartFrame, Scale.X);
+		Channels[7]->AddConstantKey(StartFrame, Scale.Y);
+		Channels[8]->AddConstantKey(StartFrame, Scale.Z);
+	}
+
+	TransformSection->SetRange(MovieScene->GetPlaybackRange());
+	Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshAllImmediately);
+	Sequencer->ForceEvaluate();
 }
 
 void FDialogBuilderEditor::UnbindSequencerDelegates()

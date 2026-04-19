@@ -46,6 +46,9 @@ private:
 	bool IsCameraPresetBlueprint(const FAssetData& AssetData) const;
 	void ReleaseShotDuplicates();
 
+public:
+	TArray<UDialogSequenceShot*> GetShotDuplicates() const;
+
 private:
 	TWeakPtr<FDialogBuilderEditor> DialogEditorPtr;
 
