@@ -1644,7 +1644,7 @@ void FDialogBuilderEditor::ExtendSequencerToolbar(FToolBarBuilder& InToolbarBuil
 				FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanGenerateSequenceCameraFromDialogSections)),
 			NAME_None,
 			LOCTEXT("GenerateDialogSequenceCamera_Label", ""),
-			LOCTEXT("GenerateDialogSequenceCamera_Tooltip", "Generate camera keys from dialog track section start frames."),
+			LOCTEXT("GenerateDialogSequenceCamera_Tooltip", "Generate camera keys from each dialog section"),
 			FSlateIcon(FAppStyle::GetAppStyleSetName(), "Sequencer.LockCamera"));
 	}
 	InToolbarBuilder.EndSection();
