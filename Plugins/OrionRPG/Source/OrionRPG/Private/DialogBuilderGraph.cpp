@@ -170,11 +170,7 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 		return;
 	}
 
-	for (const FMovieSceneBinding& Binding : MovieScene->GetBindings())
-	{
-		//Unbind to ensure there is no duplicate binding
-		CurrentDialogSequence->UnbindPossessableObjects(Binding.GetObjectGuid());
-	}
+	
 
 	SequencePivot->SetActorLocation(InDialogStage->Location);
 	SequencePivot->SetActorRotation(InDialogStage->Rotation);
@@ -191,7 +187,7 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 			CachedActorMap.Emplace(SlotId, DialogActor);
 			DialogSlotActors.Emplace(Slot, DialogActor);
 			CacheOriginalActorTransform(SlotId, DialogActor);
-
+			CurrentDialogSequence->UnbindPossessableObjects(Slot->ID);
 			CurrentDialogSequence->BindPossessableObject(Slot->ID, *DialogActor, DialogActor->GetClass());
 		}
 	}
@@ -206,6 +202,7 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 			DialogSlotActors.Emplace(Slot, DialogActor);
 			CacheOriginalActorTransform(SlotId, DialogActor);
 
+			CurrentDialogSequence->UnbindPossessableObjects(Slot->ID);
 			CurrentDialogSequence->BindPossessableObject(Slot->ID, *DialogActor, DialogActor->GetClass());
 		}
 	}
