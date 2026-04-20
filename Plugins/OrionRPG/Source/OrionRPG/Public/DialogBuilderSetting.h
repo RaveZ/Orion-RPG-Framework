@@ -28,7 +28,7 @@ public:
 		float DialogLineWordsPerSecond;
 
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options", noclear)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options")
 	TSubclassOf<class UCommonActivatableWidget> DefaultDialogWidget;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, config, Category = "Dialog Options", noclear)

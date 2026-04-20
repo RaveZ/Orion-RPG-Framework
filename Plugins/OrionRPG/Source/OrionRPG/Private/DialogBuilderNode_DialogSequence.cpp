@@ -111,14 +111,18 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogStageData()
 			{
 				if (UDialogSequenceSlot* Slot = DialogStage->Slots[Index])
 				{
-					DialogSequence->MovieScene->RemovePossessable(Slot->ID);
+					Slot->DialogDefinition = nullptr;
+					//TODO: for now, dont remove possessable, as changing empty dialog set will delete all your progress
+					//DialogSequence->MovieScene->RemovePossessable(Slot->ID);
 				}
 
 			}
 		}
 		
-
-		DialogStage->Slots.SetNum(SourceCount);
+		if (SlotCount < SourceCount)
+		{
+			DialogStage->Slots.SetNum(SourceCount);
+		}
 		for (int32 idx = 0; idx < SourceCount; ++idx)
 		{
 			UDialogSequenceSlot* Source = DialogStageToUse->Slots[idx];

@@ -1223,9 +1223,9 @@ void FDialogBuilderEditor::BindCommands()
 		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanCreateDialogCameraShot)
 	);
 
-	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().DialogStageting,
-		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::OpenDialogStageting),
-		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanOpenDialogStageting)
+	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().DialogSetting,
+		FExecuteAction::CreateSP(this, &FDialogBuilderEditor::OpenDialogSetting),
+		FCanExecuteAction::CreateSP(this, &FDialogBuilderEditor::CanOpenDialogSetting)
 	);
 	
 	ToolkitCommands->MapAction(FDialogBuilder_EditorCommands::Get().AddNewDialogGraph,
@@ -1306,9 +1306,9 @@ void FDialogBuilderEditor::CreateCommandList()
 		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CreateNewDialogEvent),
 		FCanExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CanCreateDialogEvent));
 
-	GraphEditorCommands->MapAction(FDialogBuilder_EditorCommands::Get().DialogStageting,
-		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::OpenDialogStageting),
-		FCanExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CanOpenDialogStageting));
+	GraphEditorCommands->MapAction(FDialogBuilder_EditorCommands::Get().DialogSetting,
+		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::OpenDialogSetting),
+		FCanExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CanOpenDialogSetting));
 
 	GraphEditorCommands->MapAction(FDialogBuilder_EditorCommands::Get().NewDialogCameraShot,
 		FExecuteAction::CreateRaw(this, &FDialogBuilderEditor::CreateNewDialogCameraShot),
@@ -3880,11 +3880,11 @@ bool FDialogBuilderEditor::CanCreateDialogCameraShot() const
 {
 	return true;
 }
-void FDialogBuilderEditor::OpenDialogStageting()
+void FDialogBuilderEditor::OpenDialogSetting()
 {
 	PropertyWidget->SetObject(GetDialogBuilderGraph());
 }
-bool FDialogBuilderEditor::CanOpenDialogStageting() const
+bool FDialogBuilderEditor::CanOpenDialogSetting() const
 {
 	return true;
 }

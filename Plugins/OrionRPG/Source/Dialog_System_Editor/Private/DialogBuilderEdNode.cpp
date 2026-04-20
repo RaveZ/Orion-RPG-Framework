@@ -743,8 +743,8 @@ void UDialogBuilderEdNode::AddContextMenuActionsDecorators(UToolMenu* Menu, cons
 	FToolMenuSection& Section = Menu->FindOrAddSection(SectionName);
 	Section.AddSubMenu(
 		"AddDecorator",
-		LOCTEXT("AddDecorator", "Add Decorator..."),
-		LOCTEXT("AddDecoratorTooltip", "Adds new decorator as a subnode"),
+		LOCTEXT("AddDecorator", "Add Enter Condition..."),
+		LOCTEXT("AddDecoratorTooltip", "Adds new condition as a subnode"),
 		FNewToolMenuDelegate::CreateUObject(this, &UDialogBuilderEdNode::CreateAddDecoratorSubMenu, (UEdGraph*)Context->Graph));
 
 }

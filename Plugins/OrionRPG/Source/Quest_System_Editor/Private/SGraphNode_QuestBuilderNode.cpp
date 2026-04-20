@@ -591,7 +591,7 @@ void SGraphNode_QuestBuilderNode::UpdateGraphNode()
 																	.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 																	[
 																		SNew(STextBlock)
-																			.Text(LOCTEXT("TaskLabel", "Decorators"))
+																			.Text(LOCTEXT("TaskLabel", "Conditions"))
 																			.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
 																			.Clipping(EWidgetClipping::Inherit)
 																	]

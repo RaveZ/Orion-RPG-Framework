@@ -26,6 +26,8 @@
 #include "Widgets/Layout/SSpacer.h"
 #include "Widgets/Text/STextBlock.h"
 #include "WorkflowOrientedApp/SModeWidget.h"
+#include "Widgets/Images/SImage.h"
+#include "Widgets/SBoxPanel.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderEditorToolbar"
 
@@ -95,64 +97,50 @@ void FDialogBuilderEditorToolbar::FillDialogSystemToolbar(FToolBarBuilder& Toolb
 
 	ToolbarBuilder.BeginSection("Dialog System");
 	{
-		const FText NewDecoratorLabel = LOCTEXT("NewOrionDecorator_Label", "New Orion Decorator");
-		const FText NewDecoratorTooltip = LOCTEXT("NewOrionDecorator_Tooltip", "Create a new Decorator Blueprint from a base class");
-		const FSlateIcon NewDecoratorIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "BTEditor.Graph.BTNode.Decorator.Conditional.Icon");
+		const TWeakPtr<FDialogBuilderEditor> DialogBuilderEditorWeak = DialogBuilderEditor;
 
+		ToolbarBuilder.AddComboButton(
+			FUIAction(),
+			FOnGetContent::CreateLambda([DialogBuilderEditorWeak]()
+				{
+					TSharedPtr<FDialogBuilderEditor> DialogBuilderEditorPtr = DialogBuilderEditorWeak.Pin();
+					if (!DialogBuilderEditorPtr.IsValid())
+					{
+						return SNullWidget::NullWidget;
+					}
 
-		ToolbarBuilder.AddToolBarButton(FDialogBuilder_EditorCommands::Get().NewDialogDecorator,
-			NAME_None,
-			NewDecoratorLabel,
-			NewDecoratorTooltip,
-			NewDecoratorIcon
+					FMenuBuilder MenuBuilder(true, DialogBuilderEditorPtr->GetToolkitCommands());
+
+					MenuBuilder.AddMenuEntry(FDialogBuilder_EditorCommands::Get().NewDialogDecorator);
+					MenuBuilder.AddMenuEntry(FDialogBuilder_EditorCommands::Get().NewDialogEvent);
+					MenuBuilder.AddMenuEntry(FDialogBuilder_EditorCommands::Get().NewDialogCameraShot);
+
+					return MenuBuilder.MakeWidget();
+				}),
+			LOCTEXT("AddNewClass_Label", "Add New Class"),
+			LOCTEXT("AddNewClass_ToolTip", "Create a new dialog class."),
+			FSlateIcon(FAppStyle::GetAppStyleSetName(), "Icons.Plus"),
+			false,
+			FName("AddNewClass"),
+			EVisibility::All,
+			LOCTEXT("AddNewClass_Label", "Add New Class")
+
 		);
 	}
 	ToolbarBuilder.EndSection();
 
 	ToolbarBuilder.BeginSection("Dialog System");
 	{
-		const FText NewEventLabel = LOCTEXT("NewDialogEvent_Label", "New Orion Event");
-		const FText NewEventTooltip = LOCTEXT("NewDialogEvent_ToolTip", "Create a new Dialog Event Blueprint from a base class");
-		const FSlateIcon NewEventIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "GraphEditor.CustomEvent_16x");
+		const FText DialogSettingLabel = LOCTEXT("DialogSetting_Label", "Dialog Default Info");
+		const FText DialogSettingTooltip = LOCTEXT("DialogSetting_ToolTip", "Access Dialog Default Info");
+		const FSlateIcon DialogSettingIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "ProjectSettings.TabIcon");
 
-
-		ToolbarBuilder.AddToolBarButton(FDialogBuilder_EditorCommands::Get().NewDialogEvent,
+		ToolbarBuilder.AddToolBarButton(
+			FDialogBuilder_EditorCommands::Get().DialogSetting,
 			NAME_None,
-			NewEventLabel,
-			NewEventTooltip,
-			NewEventIcon
-		);
-	}
-	ToolbarBuilder.EndSection();
-
-	ToolbarBuilder.BeginSection("Dialog System");
-	{
-		const FText DialogShotLabel = LOCTEXT("DialogShot_Label", "New Dialog Camera Shot");
-		const FText DialogShotTooltip = LOCTEXT("DialogShot_ToolTip", "Create a new Dialog Camera Shot Blueprint from a base class");
-		const FSlateIcon DialogShotIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "Sequencer.LockCamera");
-
-
-		ToolbarBuilder.AddToolBarButton(FDialogBuilder_EditorCommands::Get().NewDialogCameraShot,
-			NAME_None,
-			DialogShotLabel,
-			DialogShotTooltip,
-			DialogShotIcon
-		);
-	}
-	ToolbarBuilder.EndSection();
-
-	ToolbarBuilder.BeginSection("Dialog System");
-	{
-		const FText DialogStagetingLabel = LOCTEXT("DialogStageting_Label", "Dialog Default Info");
-		const FText DialogStagetingTooltip = LOCTEXT("DialogStageting_ToolTip", "Access Dialog Default Info");
-		const FSlateIcon DialogStagetingIcon = FSlateIcon(FAppStyle::GetAppStyleSetName(), "ProjectSettings.TabIcon");
-
-
-		ToolbarBuilder.AddToolBarButton(FDialogBuilder_EditorCommands::Get().DialogStageting,
-			NAME_None,
-			DialogStagetingLabel,
-			DialogStagetingTooltip,
-			DialogStagetingIcon
+			DialogSettingLabel,
+			DialogSettingTooltip,
+			DialogSettingIcon
 		);
 	}
 	ToolbarBuilder.EndSection();

@@ -466,8 +466,8 @@ protected:
 	void CreateNewDialogCameraShot();
 	bool CanCreateDialogCameraShot() const;
 	
-	void OpenDialogStageting();
-	bool CanOpenDialogStageting() const;
+	void OpenDialogSetting();
+	bool CanOpenDialogSetting() const;
 
 	void OnRenameNode();
 	bool CanRenameNodes() const;

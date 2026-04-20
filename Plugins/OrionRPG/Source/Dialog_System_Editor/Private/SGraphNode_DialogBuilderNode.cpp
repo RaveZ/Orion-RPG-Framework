@@ -644,7 +644,7 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 																				.Padding(FMargin(4.0f, 0.0f, 4.0f, 0.0f))
 																				[
 																					SNew(STextBlock)
-																						.Text(LOCTEXT("DecoratorLabel", "Decorators"))
+																						.Text(LOCTEXT("DecoratorLabel", "Conditions"))
 																						.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
 																						.Clipping(EWidgetClipping::Inherit)
 																				]
