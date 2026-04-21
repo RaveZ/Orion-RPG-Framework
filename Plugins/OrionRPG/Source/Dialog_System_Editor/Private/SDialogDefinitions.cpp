@@ -775,6 +775,7 @@ void SDialogDefinitions::CreateNewProp()
 	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
 	if (DialogGraph)
 	{
+		const FScopedTransaction Transaction(LOCTEXT("AddParticipant", "Add Participant"));
 		UDialogProp* NewProp = NewObject<UDialogProp>(DialogGraph, NAME_None, RF_Transactional);
 		DialogGraph->PropDefinitions.Add(NewProp);
 

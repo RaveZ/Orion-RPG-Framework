@@ -2,6 +2,7 @@
 
 #include "DialogStage.h"
 #include "DialogBuilderGraph.h"
+#include "DialogBuilderNode_DialogSequence.h"
 #include "DialogDefinition.h"
 #include "CineCameraActor.h"
 #include "Misc/Guid.h"
@@ -19,6 +20,26 @@ FGameplayTag UDialogSequenceSlot::GetActorTag() const
 		return DialogDefinition->Tag;
 	}
 	return FGameplayTag::EmptyTag;
+}
+
+void UDialogSequenceSlot::SetDialogDefinition(UDialogDefinition* InDialogDefinition)
+{
+	Modify();
+	DialogDefinition = InDialogDefinition;
+
+	if(OwningDialogGraph)
+	{
+		TArray<UDialogBuilderNode_DialogSequence*> OutNodes;
+		OwningDialogGraph->GetNodesOfType<UDialogBuilderNode_DialogSequence>(OutNodes);
+		for (UDialogBuilderNode_DialogSequence* SequenceNode : OutNodes)
+		{
+			if (SequenceNode)
+			{
+				SequenceNode->Modify();
+				SequenceNode->UpdateDialogStageData();
+			}
+		}
+	}
 }
 
 #if WITH_EDITOR

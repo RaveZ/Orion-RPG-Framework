@@ -753,6 +753,22 @@ bool FDialogBuilderViewportClient::HandleEndTransform()
 	if (bIsManipulating)
 	{
 		bIsManipulating = false;
+
+		USelection* SelectedActors = GEditor ? GEditor->GetSelectedActors() : nullptr;
+		AActor* SelectedActor = SelectedActors ? Cast<AActor>(SelectedActors->GetSelectedObject(0)) : nullptr;
+		TSharedPtr<FDialogBuilderEditor> DialogEditor = Editor.Pin();
+		UDialogSequenceSlot* Slot = DialogEditor ? DialogEditor->GetTemplateSlot(SelectedActor) : nullptr;
+		
+		if (Slot)
+		{
+			const FVector Location = SelectedActor->GetActorLocation();
+			const FRotator Rotation = SelectedActor->GetActorRotation();
+			Slot->Modify();
+			Slot->SlotLocation = Location;
+			Slot->SlotRotation = Rotation;
+			
+		}
+
 		EndTransaction();
 
 		// Restore component delta modification
@@ -887,8 +903,7 @@ FMatrix FDialogBuilderViewportClient::GetWidgetCoordSystem() const
 
 UE::Widget::EWidgetMode FDialogBuilderViewportClient::GetWidgetMode() const
 {
-	if (GUnrealEd->ComponentVisManager.IsActive() &&
-		GUnrealEd->ComponentVisManager.IsVisualizingArchetype())
+	if (GUnrealEd && GUnrealEd->ComponentVisManager.IsActive() && GUnrealEd->ComponentVisManager.IsVisualizingArchetype())
 	{
 		return WidgetMode;
 	}
@@ -899,13 +914,10 @@ UE::Widget::EWidgetMode FDialogBuilderViewportClient::GetWidgetMode() const
 		return UE::Widget::WM_None;
 	}
 
-	for (FSelectionIterator It(*SelectedActors); It; ++It)
+	AActor* SelectedActor = Cast<AActor>(SelectedActors->GetSelectedObject(0));
+	if (IsValid(SelectedActor))
 	{
-		AActor* SelectedActor = Cast<AActor>(*It);
-		if (IsValid(SelectedActor))
-		{
-			return WidgetMode;
-		}
+		return WidgetMode;
 	}
 
 	return UE::Widget::WM_None;

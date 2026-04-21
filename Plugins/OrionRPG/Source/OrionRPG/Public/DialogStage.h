@@ -43,6 +43,8 @@ public:
 
 	FGameplayTag GetActorTag() const;
 
+	void SetDialogDefinition(UDialogDefinition* InDialogDefinition);
+
 #if WITH_EDITOR
 	//~ Begin UObject Interface
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;

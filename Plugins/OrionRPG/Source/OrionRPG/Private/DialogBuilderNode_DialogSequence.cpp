@@ -73,11 +73,18 @@ float UDialogBuilderNode_DialogSequence::GetSequenceDuration()
 
 void UDialogBuilderNode_DialogSequence::UseDialogStage(UDialogStage* InDialogStage)
 {
-
+	Modify();
 	DialogStageToUse = InDialogStage;
 
 	UpdateDialogStageData();
-	Modify();
+
+	UMovieScene* MovieScene = DialogSequence ? DialogSequence->GetMovieScene() : nullptr;
+	if (!MovieScene)
+	{
+		return;
+	}
+	DialogSequence->Modify();
+	MovieScene->Modify();
 }
 
 void UDialogBuilderNode_DialogSequence::UpdateDialogStageData()
@@ -94,6 +101,13 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogStageData()
 		DialogStage = NewObject<UDialogStage>(this, NAME_None, RF_Transactional);
 		DialogStage->OwningDialogGraph = GetOwningDialogGraph();
 	}
+	UMovieScene* MovieScene = DialogSequence ? DialogSequence->GetMovieScene() : nullptr;
+	if (!MovieScene)
+	{
+		return;
+	}
+
+
 
 	DialogStage->Name = DialogStageToUse->Name;
 	DialogStage->Location = DialogStageToUse->Location;
@@ -137,15 +151,19 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogStageData()
 			{
 				Target = NewObject<UDialogSequenceSlot>(DialogStage, NAME_None, RF_Transactional);
 			}
-
+			UDialogDefinition* SourceDialogDefinition = Source->DialogDefinition;
 			Target->OwningDialogGraph = GetOwningDialogGraph();
-			Target->DialogDefinition = Source->DialogDefinition;
+			Target->DialogDefinition = SourceDialogDefinition;
 			Target->SlotLocation = Source->SlotLocation;
 			Target->SlotRotation = Source->SlotRotation	;
 
 			DialogStage->Slots[idx] = Target;
+
+			
+
 		}
 	}
+
 
 	//Populate Camera Slots
 	/*{

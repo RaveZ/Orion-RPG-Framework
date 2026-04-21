@@ -515,6 +515,11 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 
 		FSlateApplication::Get().DismissAllMenus();
 		UpdateDialogStage();
+
+		if (Sequencer)
+		{
+			Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshAllImmediately);
+		}
 	}
 }
 
@@ -638,9 +643,10 @@ void FDialogBuilderEditor::CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot
 	{
 		return;
 	}
+
 	FGuid ObjectBinding = InSlot->ID;
 	FMovieScenePossessable* BoundDialogDefinition = MovieScene->FindPossessable(ObjectBinding);
-	TArrayView<TWeakObjectPtr<>> BoundObjects = Sequencer->FindBoundObjects(ObjectBinding, Sequencer->GetRootTemplateID());
+	//TArrayView<TWeakObjectPtr<>> BoundObjects = Sequencer->FindBoundObjects(ObjectBinding, Sequencer->GetRootTemplateID());
 
 	if (BoundDialogDefinition)
 	{
@@ -653,7 +659,6 @@ void FDialogBuilderEditor::CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot
 
 	if (Sequencer.IsValid())
 	{
-
 		FGuid NewBindingId = MovieScene->AddPossessable(BindingName, BoundActor->GetClass());
 		FMovieScenePossessable* Possessable = MovieScene->FindPossessable(NewBindingId);
 
@@ -668,7 +673,6 @@ void FDialogBuilderEditor::CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot
 		AddDefaultTracksForBinding(MovieScene, NewBindingId, BoundActor, bIsCamera);
 
 		InSlot->ID = NewBindingId;
-		MovieScene->Modify();
 		return;
 		
 	}
@@ -702,7 +706,9 @@ void FDialogBuilderEditor::ResolveDialogBoundObjects()
 					FMovieSceneBindingProxy BindingProxy(DialogSlot->ID, Sequencer->GetFocusedMovieSceneSequence());
 					TArray<AActor*> Actors;
 					Actors.Add(DialogActor);
-					FSequencerUtilities::ReplaceBindingWithActors(Sequencer.ToSharedRef(), Actors, BindingProxy);
+
+					EditingDialogSequence->BindPossessableObject(DialogSlot->ID, *DialogActor, GetPreviewWorld());
+					//FSequencerUtilities::ReplaceBindingWithActors(Sequencer.ToSharedRef(), Actors, BindingProxy);
 				}
 			}
 		}
@@ -769,9 +775,11 @@ void FDialogBuilderEditor::UpdateDialogStage()
 	
 	if (!EditingDialogGraph || !CurrentSequenceNode.IsValid()) return;
 
+	UDialogStage* DialogStageToUse = CurrentSequenceNode.Get()->DialogStageToUse;
 	UDialogStage* DialogStage = CurrentSequenceNode.Get()->DialogStage;
-	if (!DialogStage)
+	if (!DialogStage || !DialogStageToUse)
 	{
+		DestroyDialogStage();
 		return;
 	}
 

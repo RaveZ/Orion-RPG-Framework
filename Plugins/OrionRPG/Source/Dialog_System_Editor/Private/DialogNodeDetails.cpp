@@ -59,6 +59,7 @@
 #include "Widgets/Text/STextBlock.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "IPropertyUtilities.h"
+#include "ScopedTransaction.h"
 
 #define LOCTEXT_NAMESPACE "DetailsCustomization"
 
@@ -376,10 +377,10 @@ TSharedRef<SWidget> FDialogNodeDetails::OnGetDialogStageListMenu()
 
 void FDialogNodeDetails::UseDialogStage(UDialogStage* InDialogStage)
 {
-	if (DialogSequenceNode.Get())
+	if (UDialogBuilderNode_DialogSequence* SequenceNode = DialogSequenceNode.Get())
 	{
-		DialogSequenceNode.Get()->UseDialogStage(InDialogStage);
-
+		const FScopedTransaction Transaction(LOCTEXT("SetDialogStage", "Set Dialog Stage"));
+		SequenceNode->UseDialogStage(InDialogStage);
 	}
 }
 
@@ -563,10 +564,11 @@ TSharedRef<SWidget> FDialogNodeDetails::OnGetShareableNodesMenu()
 
 void FDialogNodeDetails::BecomeSharedWith(UDialogBuilderNode_DialogLine* NewNode)
 {
-	if (DialogLineNode.Get())
+	if (UDialogBuilderNode_DialogLine* DialogLine = DialogLineNode.Get())
 	{
-		DialogLineNode.Get()->UseSharedParticipant(NewNode);
-		
+		const FScopedTransaction Transaction(LOCTEXT("BecomeSharedWith", "Set Shared Participant"));
+		DialogLine->Modify();
+		DialogLine->UseSharedParticipant(NewNode);
 	}
 }
 

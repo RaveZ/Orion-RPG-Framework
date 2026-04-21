@@ -22,6 +22,7 @@
 #include "Widgets/Input/SComboButton.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Text/STextBlock.h"
+#include "ScopedTransaction.h"
 
 #define LOCTEXT_NAMESPACE "DialogSequenceDetails"
 
@@ -417,17 +418,20 @@ void FDialogSequenceDetails::UseShotActorToFocusDefinition(UDialogDefinition* In
 		return;
 	}
 
+	const FScopedTransaction Transaction(LOCTEXT("SetShotActorToFocus", "Set Shot Actor To Focus"));
+	SequenceShot->Modify();
 	SequenceShot->ActorToFocus = InDialogDefinition;
 
 	if (SequenceShot->OwningDialogGraph->DialogGraphPages.IsValidIndex(0))
 	{
-		UDialogBuilderEdGraph* DialogGraph = SequenceShot->OwningDialogGraph->DialogGraphPages.IsValidIndex(0) ? Cast<UDialogBuilderEdGraph>(SequenceShot->OwningDialogGraph->DialogGraphPages[0]) : nullptr;
-		FDialogBuilderEditor* DialogBuilderEditor = DialogGraph->DialogEditorPtr.Pin().Get();
+		UDialogBuilderEdGraph* DialogGraph = SequenceShot->OwningDialogGraph->DialogGraphPages.IsValidIndex(0)
+			? Cast<UDialogBuilderEdGraph>(SequenceShot->OwningDialogGraph->DialogGraphPages[0])
+			: nullptr;
+		FDialogBuilderEditor* DialogBuilderEditor = DialogGraph ? DialogGraph->DialogEditorPtr.Pin().Get() : nullptr;
 		if (DialogBuilderEditor)
 		{
 			DialogBuilderEditor->ApplyCameraPreset(SequenceShot);
 		}
-
 	}
 }
 
@@ -435,6 +439,8 @@ void FDialogSequenceDetails::ClearShotActorToFocusDefinition()
 {
 	if (UDialogSequenceShot* SequenceShot = DialogSequenceShot.Get())
 	{
+		const FScopedTransaction Transaction(LOCTEXT("ClearShotActorToFocus", "Clear Shot Actor To Focus"));
+		SequenceShot->Modify();
 		SequenceShot->ActorToFocus = nullptr;
 	}
 }
@@ -528,16 +534,16 @@ void FDialogSequenceDetails::UseSlotParticipantDefinition(UDialogDefinition* InD
 		return;
 	}
 
-	Slot->Modify();
-	Slot->DialogDefinition = InDialogDefinition;
+	const FScopedTransaction Transaction(LOCTEXT("SetSlotDefinition", "Set Slot Definition"));
+	Slot->SetDialogDefinition(InDialogDefinition);
 }
 
 void FDialogSequenceDetails::ClearSlotParticipantDefinition()
 {
 	if (UDialogSequenceSlot* Slot = DialogSequenceSlot.Get())
 	{
-		Slot->Modify();
-		Slot->DialogDefinition = nullptr;
+		const FScopedTransaction Transaction(LOCTEXT("ClearSlotDefinition", "Clear Slot Definition"));
+		Slot->SetDialogDefinition(nullptr);
 	}
 }
 
@@ -608,6 +614,7 @@ void FDialogSequenceDetails::UseSpeakerParticipantDefinition(UDialogParticipant*
 		return;
 	}
 
+	const FScopedTransaction Transaction(LOCTEXT("SetSpeakerParticipant", "Set Speaker Participant"));
 	Section->Modify();
 	Section->SpeakerParticipantDefinition = InParticipantDefinition;
 	Section->RefreshDialogContent();
@@ -617,6 +624,7 @@ void FDialogSequenceDetails::ClearSpeakerParticipantDefinition()
 {
 	if (UMovieSceneDialogSection* Section = MovieSceneDialogSection.Get())
 	{
+		const FScopedTransaction Transaction(LOCTEXT("ClearSpeakerParticipant", "Clear Speaker Participant"));
 		Section->Modify();
 		Section->SpeakerParticipantDefinition = nullptr;
 		Section->RefreshDialogContent();
@@ -690,6 +698,7 @@ void FDialogSequenceDetails::UseListenerParticipantDefinition(UDialogParticipant
 		return;
 	}
 
+	const FScopedTransaction Transaction(LOCTEXT("SetListenerParticipant", "Set Listener Participant"));
 	Section->Modify();
 	Section->ListenerParticipantDefinition = InParticipantDefinition;
 	Section->RefreshDialogContent();
@@ -699,6 +708,7 @@ void FDialogSequenceDetails::ClearListenerParticipantDefinition()
 {
 	if (UMovieSceneDialogSection* Section = MovieSceneDialogSection.Get())
 	{
+		const FScopedTransaction Transaction(LOCTEXT("ClearListenerParticipant", "Clear Listener Participant"));
 		Section->Modify();
 		Section->ListenerParticipantDefinition = nullptr;
 		Section->RefreshDialogContent();
