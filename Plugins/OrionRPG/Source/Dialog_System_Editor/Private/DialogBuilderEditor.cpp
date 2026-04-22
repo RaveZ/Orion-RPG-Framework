@@ -853,6 +853,9 @@ void FDialogBuilderEditor::UpdateDialogStage()
 
 	//update section rule
 	UpdateSectionRule();
+
+	Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshAllImmediately);
+	Sequencer->ForceEvaluate();
 }
 
 
@@ -1654,6 +1657,97 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 
 void FDialogBuilderEditor::ExtendSequencerToolbar(FToolBarBuilder& InToolbarBuilder)
 {
+	InToolbarBuilder.BeginSection("DialogStagePicker");
+	{
+		InToolbarBuilder.AddComboButton(
+			FUIAction(),
+			FOnGetContent::CreateLambda([this]() -> TSharedRef<SWidget>
+				{
+					FMenuBuilder MenuBuilder(true, nullptr);
+
+					MenuBuilder.BeginSection("DialogStageListSection", LOCTEXT("ToolbarDialogStageList", "Dialog Stage List"));
+
+					UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
+					if (DialogGraph && CurrentSequenceNode.IsValid())
+					{
+						for (UDialogStage* DialogStage : DialogGraph->DialogStages)
+						{
+							if (!DialogStage)
+							{
+								continue;
+							}
+
+							const FText DialogStageName = DialogStage->Name.IsEmpty()
+								? LOCTEXT("ToolbarDialogStageNoneLabel", "None")
+								: DialogStage->Name;
+
+							const FUIAction Action(
+								FExecuteAction::CreateLambda([this, DialogStage]()
+									{
+										if (!CurrentSequenceNode.IsValid() || !DialogStage)
+										{
+											return;
+										}
+
+										const FScopedTransaction Transaction(LOCTEXT("ToolbarSetDialogStageTransaction", "Set Dialog Stage"));
+										if (UDialogBuilderNode_DialogSequence* SequenceNode = CurrentSequenceNode.Get())
+										{
+											SequenceNode->Modify();
+											SequenceNode->UseDialogStage(DialogStage);
+										}
+
+										DialogStageTemplate = DialogStage;
+										UpdateDialogStage();
+
+										if (DialogStageManagerWidget.IsValid())
+										{
+											DialogStageManagerWidget->Refresh();
+										}
+									}),
+								FCanExecuteAction(),
+								FIsActionChecked::CreateLambda([this, DialogStage]() -> bool
+									{
+										return DialogStageTemplate.Get() == DialogStage;
+									})
+							);
+
+							MenuBuilder.AddMenuEntry(
+								DialogStageName,
+								LOCTEXT("ToolbarDialogStagePickerTooltip", "Pick which dialog stage to use for this sequence"),
+								FSlateIcon(),
+								Action,
+								NAME_None,
+								EUserInterfaceActionType::Check);
+						}
+					}
+
+					MenuBuilder.EndSection();
+					return MenuBuilder.MakeWidget();
+				}),
+			LOCTEXT("ToolbarDialogStagePicker_Label", "Dialog Stage"),
+			LOCTEXT("ToolbarDialogStagePicker_Tooltip", "Pick which dialog stage to use for this sequence"),
+			FSlateIcon(),
+			false,
+			FName("Dialog Stage"),
+			EVisibility::All,
+			TAttribute<FText>::CreateLambda([this]()
+				{
+					const UDialogStage* CurrentStage = DialogStageTemplate.Get();
+					if (!CurrentStage)
+					{
+						return LOCTEXT("ToolbarDialogStagePickerLabel_None", "Stage: None");
+					}
+
+					const FText CurrentStageName = CurrentStage->Name.IsEmpty()
+						? LOCTEXT("ToolbarDialogStagePickerLabel_Empty", "Stage: None")
+						: CurrentStage->Name;
+
+					return FText::Format(LOCTEXT("ToolbarDialogStagePickerLabel", "{0}"), CurrentStageName);
+				})
+		);
+	}
+	InToolbarBuilder.EndSection();
+
 	InToolbarBuilder.BeginSection("DialogCameraGenerate");
 	{
 		InToolbarBuilder.AddToolBarButton(
@@ -1744,6 +1838,7 @@ void FDialogBuilderEditor::OpenGenerateSequenceCameraDialog()
 								.Text(LOCTEXT("GenerateDialogSequenceCamera_Generate", "Generate"))
 								.OnClicked_Lambda([this, DialogWindowWeak, GenerateSettings]()
 									{
+										const FScopedTransaction Transaction(LOCTEXT("GenerateSequenceCameraTransaction", "Generate Sequence Camera"));
 										GenerateSequenceCameraFromDialogSections(GenerateSettings);
 
 										if (TSharedPtr<SWindow> PinnedWindow = DialogWindowWeak.Pin())
@@ -1768,206 +1863,6 @@ void FDialogBuilderEditor::OpenGenerateSequenceCameraDialog()
 	FSlateApplication::Get().AddModalWindow(DialogWindow.ToSharedRef(), FSlateApplication::Get().GetActiveTopLevelWindow(), false);
 }
 
-void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialogGenerateCameraSettings* InSettings)
-{
-	if (!Sequencer.IsValid() || !EditingDialogSequence || !CurrentSequenceNode.IsValid() || !DialogCameraPresetsWidget.IsValid())
-	{
-		return;
-	}
-
-	UDialogStage* DialogStage = CurrentSequenceNode.Get()->DialogStage;
-	if (!DialogStage || !DialogStage->CameraSlots.IsValidIndex(0) || !DialogStage->CameraSlots[0])
-	{
-		return;
-	}
-
-	UMovieScene* MovieScene = EditingDialogSequence->GetMovieScene();
-	if (!MovieScene)
-	{
-		return;
-	}
-
-	const FGuid CameraBindingId = DialogStage->CameraSlots[0]->ID;
-	if (!CameraBindingId.IsValid())
-	{
-		return;
-	}
-
-	UMovieSceneDialogTrack* DialogTrack = MovieScene->FindTrack<UMovieSceneDialogTrack>();
-	if (!DialogTrack)
-	{
-		return;
-	}
-
-	AActor* CameraActor = DialogSlotActors.FindRef(DialogStage->CameraSlots[0]).Get();
-	if (!IsValid(CameraActor))
-	{
-		return;
-	}
-
-	
-	const bool bRandomizeCameraAngles = InSettings ? InSettings->bRandomizeCameraAngles : false;
-	const bool bRandomizeCameraPresets = InSettings ? InSettings->bRandomizeCameraPresets : true;
-	const EMovieSceneKeyInterpolation KeyInterpolationType = InSettings ? InSettings->KeyInterpolation : EMovieSceneKeyInterpolation::Constant;
-	const TArray<UDialogSequenceShot*> CameraPresets = InSettings ? InSettings->DefaultShots : CameraPresets;
-
-
-	UMovieScene3DTransformTrack* TransformTrack = MovieScene->FindTrack<UMovieScene3DTransformTrack>(CameraBindingId);
-	if (!TransformTrack)
-	{
-		TransformTrack = MovieScene->AddTrack<UMovieScene3DTransformTrack>(CameraBindingId);
-	}
-	if (!TransformTrack)
-	{
-		return;
-	}
-
-	UMovieScene3DTransformSection* TransformSection = nullptr;
-	if (TransformTrack->GetAllSections().Num() == 0)
-	{
-		TransformSection = Cast<UMovieScene3DTransformSection>(TransformTrack->CreateNewSection());
-		TransformTrack->AddSection(*TransformSection);
-	}
-	else
-	{
-		TransformSection = Cast<UMovieScene3DTransformSection>(TransformTrack->GetAllSections()[0]);
-	}
-	if (!TransformSection)
-	{
-		return;
-	}
-
-	TransformSection->Modify();
-	TransformSection->SetBlendType(EMovieSceneBlendType::Absolute);
-	
-
-	TArray<UMovieSceneSection*> DialogSections = DialogTrack->GetAllSections();
-	DialogSections.RemoveAll([](UMovieSceneSection* Section) { return Section == nullptr; });
-
-	DialogSections.Sort([](const UMovieSceneSection& A, const UMovieSceneSection& B)
-		{
-			const FFrameNumber StartA = A.GetRange().HasLowerBound() ? A.GetRange().GetLowerBoundValue() : FFrameNumber(0);
-			const FFrameNumber StartB = B.GetRange().HasLowerBound() ? B.GetRange().GetLowerBoundValue() : FFrameNumber(0);
-			return StartA < StartB;
-		});
-
-	FScopedSlowTask SlowTask(static_cast<float>(DialogSections.Num()) + 1.0f, LOCTEXT("GenerateDialogSequenceCamera_Progress", "Generating camera keys..."));
-	SlowTask.MakeDialog(true);
-
-	TArrayView<FMovieSceneDoubleChannel*> Channels = TransformSection->GetChannelProxy().GetChannels<FMovieSceneDoubleChannel>();
-	for (FMovieSceneDoubleChannel* Channel : Channels)
-	{
-		if (Channel)
-		{
-			Channel->Reset();
-		}
-	}
-	if (Channels.Num() < 9)
-	{
-		return;
-	}
-
-	for (int32 Index = 0; Index < DialogSections.Num(); ++Index)
-	{
-		const float ProgressPercent = DialogSections.Num() > 0
-			? ((Index + 1) / static_cast<float>(DialogSections.Num())) * 100.0f
-			: 100.0f;
-
-		SlowTask.EnterProgressFrame(
-			1.0f,
-			FText::Format(
-				LOCTEXT("GenerateDialogSequenceCamera_ProgressPercent", "Generating camera keys... {0}%"),
-				FText::AsNumber(FMath::RoundToInt(ProgressPercent))));
-
-		UMovieSceneSection* Section = DialogSections[Index];
-		if (!Section || !Section->GetRange().HasLowerBound())
-		{
-			continue;
-		}
-
-		const int32 PresetIndex = FMath::RandHelper(CameraPresets.Num());
-		UDialogSequenceShot* Preset = bRandomizeCameraPresets ? CameraPresets[PresetIndex] : InSettings->ShotToUse.Get();
-		if (!Preset)
-		{
-			continue;
-		}
-
-		const FFrameNumber StartFrame = Section->GetRange().GetLowerBoundValue();
-
-		ApplyCameraPreset(Preset, StartFrame.Value, bRandomizeCameraAngles);
-
-		const USceneComponent* RootComponent = CameraActor->GetRootComponent();
-		if (!RootComponent)
-		{
-			return;
-		}
-
-		const FVector Location = RootComponent->GetRelativeLocation();
-		const FRotator Rotation = RootComponent->GetRelativeRotation();
-		const FVector Scale = RootComponent->GetRelativeScale3D();
-
-		
-		auto AddKey = [KeyInterpolationType](FMovieSceneDoubleChannel* Channel, FFrameNumber Frame, double Value)
-			{
-				if (!Channel)
-				{
-					return;
-				}
-
-				switch (KeyInterpolationType)
-				{
-				case EMovieSceneKeyInterpolation::Constant:
-					Channel->AddConstantKey(Frame, Value);
-					break;
-
-				case EMovieSceneKeyInterpolation::Linear:
-					Channel->AddLinearKey(Frame, Value);
-					break;
-				case EMovieSceneKeyInterpolation::Auto:
-					Channel->AddCubicKey(Frame, Value, RCTM_Auto);
-					break;
-				case EMovieSceneKeyInterpolation::User:
-					Channel->AddCubicKey(Frame, Value, RCTM_User);
-					break;
-				case EMovieSceneKeyInterpolation::Break:
-					Channel->AddCubicKey(Frame, Value, RCTM_Break);
-					break;
-				case EMovieSceneKeyInterpolation::SmartAuto:
-					Channel->AddCubicKey(Frame, Value, RCTM_SmartAuto);
-					break;
-				default:
-					Channel->AddCubicKey(Frame, Value);
-					break;
-				}
-			};
-
-		AddKey(Channels[0], StartFrame, Location.X);
-		AddKey(Channels[1], StartFrame, Location.Y);
-		AddKey(Channels[2], StartFrame, Location.Z);
-
-		AddKey(Channels[3], StartFrame, Rotation.Roll);
-		AddKey(Channels[4], StartFrame, Rotation.Pitch);
-		AddKey(Channels[5], StartFrame, Rotation.Yaw);
-
-		AddKey(Channels[6], StartFrame, Scale.X);
-		AddKey(Channels[7], StartFrame, Scale.Y);
-		AddKey(Channels[8], StartFrame, Scale.Z);
-	}
-
-	SlowTask.EnterProgressFrame(1.0f, LOCTEXT("GenerateDialogSequenceCamera_Finished", "Generating..."));
-
-	const double EndTime = FPlatformTime::Seconds() + 0.5;
-	while (FPlatformTime::Seconds() < EndTime)
-	{
-		FSlateApplication::Get().Tick();
-		FPlatformProcess::Sleep(0.01f);
-	}
-
-	TransformSection->SetRange(MovieScene->GetPlaybackRange());
-	Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshAllImmediately);
-	Sequencer->ForceEvaluate();
-	SetViewportCameraMode(EDialogViewportCameraMode::DialogCameraLock);
-}
 
 void FDialogBuilderEditor::UnbindSequencerDelegates()
 {
@@ -2436,6 +2331,155 @@ void FDialogBuilderEditor::OnSequencerSelectionChangedObjectGuids(TArray<FGuid> 
 		}
 	}
 }
+
+
+void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialogGenerateCameraSettings* InSettings)
+{
+	if (!Sequencer.IsValid() || !EditingDialogSequence || !CurrentSequenceNode.IsValid() || !DialogCameraPresetsWidget.IsValid())
+	{
+		return;
+	}
+
+	UDialogStage* DialogStage = CurrentSequenceNode.Get()->DialogStage;
+	if (!DialogStage || !DialogStage->CameraSlots.IsValidIndex(0) || !DialogStage->CameraSlots[0])
+	{
+		return;
+	}
+
+	UMovieScene* MovieScene = EditingDialogSequence->GetMovieScene();
+	if (!MovieScene)
+	{
+		return;
+	}
+
+	const FGuid CameraBindingId = DialogStage->CameraSlots[0]->ID;
+	if (!CameraBindingId.IsValid())
+	{
+		return;
+	}
+
+	UMovieSceneDialogTrack* DialogTrack = MovieScene->FindTrack<UMovieSceneDialogTrack>();
+	if (!DialogTrack)
+	{
+		return;
+	}
+
+	AActor* CameraActor = GetDialogCamera();
+	if (!IsValid(CameraActor))
+	{
+		return;
+	}
+
+
+	const bool bRandomizeCameraAngles = InSettings ? InSettings->bRandomizeCameraAngles : false;
+	const bool bRandomizeCameraPresets = InSettings ? InSettings->bRandomizeCameraPresets : true;
+	const EMovieSceneKeyInterpolation KeyInterpolationType = InSettings ? InSettings->KeyInterpolation : EMovieSceneKeyInterpolation::Constant;
+	const TArray<UDialogSequenceShot*> CameraPresets = InSettings ? InSettings->DefaultShots : CameraPresets;
+
+
+	UMovieScene3DTransformTrack* TransformTrack = MovieScene->FindTrack<UMovieScene3DTransformTrack>(CameraBindingId);
+	if (!TransformTrack)
+	{
+		TransformTrack = MovieScene->AddTrack<UMovieScene3DTransformTrack>(CameraBindingId);
+	}
+	if (!TransformTrack)
+	{
+		return;
+	}
+
+	UMovieScene3DTransformSection* TransformSection = nullptr;
+	if (TransformTrack->GetAllSections().Num() == 0)
+	{
+		TransformSection = Cast<UMovieScene3DTransformSection>(TransformTrack->CreateNewSection());
+		TransformTrack->AddSection(*TransformSection);
+	}
+	else
+	{
+		TransformSection = Cast<UMovieScene3DTransformSection>(TransformTrack->GetAllSections()[0]);
+	}
+	if (!TransformSection)
+	{
+		return;
+	}
+
+	TransformSection->Modify();
+	TransformSection->SetBlendType(EMovieSceneBlendType::Absolute);
+
+
+	TArray<UMovieSceneSection*> DialogSections = DialogTrack->GetAllSections();
+	DialogSections.RemoveAll([](UMovieSceneSection* Section) { return Section == nullptr; });
+
+	DialogSections.Sort([](const UMovieSceneSection& A, const UMovieSceneSection& B)
+		{
+			const FFrameNumber StartA = A.GetRange().HasLowerBound() ? A.GetRange().GetLowerBoundValue() : FFrameNumber(0);
+			const FFrameNumber StartB = B.GetRange().HasLowerBound() ? B.GetRange().GetLowerBoundValue() : FFrameNumber(0);
+			return StartA < StartB;
+		});
+
+	FScopedSlowTask SlowTask(static_cast<float>(DialogSections.Num()) + 1.0f, LOCTEXT("GenerateDialogSequenceCamera_Progress", "Generating camera keys..."));
+	SlowTask.MakeDialog(true);
+
+	TArrayView<FMovieSceneDoubleChannel*> Channels = TransformSection->GetChannelProxy().GetChannels<FMovieSceneDoubleChannel>();
+	for (FMovieSceneDoubleChannel* Channel : Channels)
+	{
+		if (Channel)
+		{
+			Channel->Reset();
+		}
+	}
+	if (Channels.Num() < 9)
+	{
+		return;
+	}
+
+	for (int32 Index = 0; Index < DialogSections.Num(); ++Index)
+	{
+		const float ProgressPercent = DialogSections.Num() > 0
+			? ((Index + 1) / static_cast<float>(DialogSections.Num())) * 100.0f
+			: 100.0f;
+
+		SlowTask.EnterProgressFrame(
+			1.0f,
+			FText::Format(
+				LOCTEXT("GenerateDialogSequenceCamera_ProgressPercent", "Generating camera keys... {0}%"),
+				FText::AsNumber(FMath::RoundToInt(ProgressPercent))));
+
+		UMovieSceneSection* Section = DialogSections[Index];
+		if (!Section || !Section->GetRange().HasLowerBound())
+		{
+			continue;
+		}
+
+		const int32 PresetIndex = FMath::RandHelper(CameraPresets.Num());
+		UDialogSequenceShot* Preset = bRandomizeCameraPresets ? CameraPresets[PresetIndex] : InSettings->ShotToUse.Get();
+		if (!Preset)
+		{
+			continue;
+		}
+
+		const FFrameNumber StartFrame = Section->GetRange().GetLowerBoundValue();
+
+		ApplyCameraPreset(Preset, StartFrame.Value, bRandomizeCameraAngles);
+
+		AddKeyFromCameraPreset(StartFrame.Value, KeyInterpolationType);
+		
+	}
+
+	SlowTask.EnterProgressFrame(1.0f, LOCTEXT("GenerateDialogSequenceCamera_Finished", "Generating..."));
+
+	const double EndTime = FPlatformTime::Seconds() + 0.5;
+	while (FPlatformTime::Seconds() < EndTime)
+	{
+		FSlateApplication::Get().Tick();
+		FPlatformProcess::Sleep(0.01f);
+	}
+
+	TransformSection->SetRange(MovieScene->GetPlaybackRange());
+	Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshAllImmediately);
+	Sequencer->ForceEvaluate();
+	SetViewportCameraMode(EDialogViewportCameraMode::DialogCameraLock);
+}
+
 void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot, int32 InFrameNumber, bool bRandomizeAngle)
 {
 	if (!InSequenceShot || !EditingDialogGraph || !Sequencer.IsValid() || !EditingDialogSequence)
@@ -2582,6 +2626,19 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 		}
 	}
 
+	const FVector RelativeOffset = ActorToFocus->GetActorTransform().InverseTransformPosition(FocusLocation);
+	if (ACineCameraActor* CineCam = Cast<ACineCameraActor>(CameraActor))
+	{
+		if (UCineCameraComponent* CinecamComp = CineCam->GetCineCameraComponent())
+		{
+			if (ActorToFocus)
+			{
+				CinecamComp->FocusSettings.FocusMethod = ECameraFocusMethod::Tracking;
+				CinecamComp->FocusSettings.TrackingFocusSettings.RelativeOffset = RelativeOffset;
+				CinecamComp->FocusSettings.TrackingFocusSettings.ActorToTrack = ActorToFocus;
+			}
+		}
+	}
 	const FRotator DesiredRotation = (AimLocation - DesiredLocation).Rotation();
 
 	if (InSequenceShot->bDrawTargetFocus)
@@ -2609,6 +2666,135 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 		}
 	}
 }
+
+void FDialogBuilderEditor::AddKeyFromCameraPreset(int32 InFrameNumber, EMovieSceneKeyInterpolation KeyInterpolationType)
+{
+	if (!Sequencer.IsValid() || !EditingDialogSequence || !CurrentSequenceNode.IsValid() || !DialogCameraPresetsWidget.IsValid())
+	{
+		return;
+	}
+
+	UDialogStage* DialogStage = CurrentSequenceNode.Get()->DialogStage;
+	if (!DialogStage || !DialogStage->CameraSlots.IsValidIndex(0) || !DialogStage->CameraSlots[0])
+	{
+		return;
+	}
+	UMovieScene* MovieScene = EditingDialogSequence->GetMovieScene();
+	if(!MovieScene)
+	{
+		return;
+	}
+
+	AActor* CameraActor = GetDialogCamera();
+	if (!IsValid(CameraActor))
+	{
+		return;
+	}
+
+	const USceneComponent* RootComponent = CameraActor->GetRootComponent();
+	if (!RootComponent)
+	{
+		return;
+	}
+
+	const FVector Location = RootComponent->GetRelativeLocation();
+	const FRotator Rotation = RootComponent->GetRelativeRotation();
+	const FVector Scale = RootComponent->GetRelativeScale3D();
+
+	const FGuid CameraBindingId = DialogStage->CameraSlots[0]->ID;
+	if (!CameraBindingId.IsValid())
+	{
+		return;
+	}
+
+	UMovieScene3DTransformTrack* TransformTrack = MovieScene->FindTrack<UMovieScene3DTransformTrack>(CameraBindingId);
+	if (!TransformTrack)
+	{
+		TransformTrack = MovieScene->AddTrack<UMovieScene3DTransformTrack>(CameraBindingId);
+	}
+	if (!TransformTrack)
+	{
+		return;
+	}
+
+	UMovieScene3DTransformSection* TransformSection = nullptr;
+	if (TransformTrack->GetAllSections().Num() == 0)
+	{
+		TransformSection = Cast<UMovieScene3DTransformSection>(TransformTrack->CreateNewSection());
+		TransformTrack->AddSection(*TransformSection);
+	}
+	else
+	{
+		TransformSection = Cast<UMovieScene3DTransformSection>(TransformTrack->GetAllSections()[0]);
+	}
+	if (!TransformSection)
+	{
+		return;
+	}
+
+	TArrayView<FMovieSceneDoubleChannel*> Channels = TransformSection->GetChannelProxy().GetChannels<FMovieSceneDoubleChannel>();
+
+	if (Channels.Num() < 9)
+	{
+		return;
+	}
+
+	//if frame number is not specified, use current sequencer time
+	const FFrameNumber InFrame = (InFrameNumber >= 0) ? FFrameNumber(InFrameNumber) : Sequencer->GetLocalTime().Time.FloorToFrame();
+
+	TransformSection->Modify();
+	TransformSection->SetBlendType(EMovieSceneBlendType::Absolute);
+
+
+	auto AddKey = [KeyInterpolationType](FMovieSceneDoubleChannel* Channel, FFrameNumber Frame, double Value)
+		{
+			if (!Channel)
+			{
+				return;
+			}
+
+			switch (KeyInterpolationType)
+			{
+			case EMovieSceneKeyInterpolation::Constant:
+				Channel->AddConstantKey(Frame, Value);
+				break;
+
+			case EMovieSceneKeyInterpolation::Linear:
+				Channel->AddLinearKey(Frame, Value);
+				break;
+			case EMovieSceneKeyInterpolation::Auto:
+				Channel->AddCubicKey(Frame, Value, RCTM_Auto);
+				break;
+			case EMovieSceneKeyInterpolation::User:
+				Channel->AddCubicKey(Frame, Value, RCTM_User);
+				break;
+			case EMovieSceneKeyInterpolation::Break:
+				Channel->AddCubicKey(Frame, Value, RCTM_Break);
+				break;
+			case EMovieSceneKeyInterpolation::SmartAuto:
+				Channel->AddCubicKey(Frame, Value, RCTM_SmartAuto);
+				break;
+			default:
+				Channel->AddCubicKey(Frame, Value);
+				break;
+			}
+		};
+
+
+	AddKey(Channels[0], InFrame, Location.X);
+	AddKey(Channels[1], InFrame, Location.Y);
+	AddKey(Channels[2], InFrame, Location.Z);
+
+	AddKey(Channels[3], InFrame, Rotation.Roll);
+	AddKey(Channels[4], InFrame, Rotation.Pitch);
+	AddKey(Channels[5], InFrame, Rotation.Yaw);
+
+	AddKey(Channels[6], InFrame, Scale.X);
+	AddKey(Channels[7], InFrame, Scale.Y);
+	AddKey(Channels[8], InFrame, Scale.Z);
+
+}
+
 
 TSharedRef<SDockTab> FDialogBuilderEditor::SpawnTab_Sequencer(const FSpawnTabArgs& Args)
 {

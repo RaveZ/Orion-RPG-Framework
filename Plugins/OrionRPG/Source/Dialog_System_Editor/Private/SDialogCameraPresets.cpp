@@ -10,6 +10,8 @@
 #include "Modules/ModuleManager.h"
 #include "PropertyEditorModule.h"
 #include "Styling/AppStyle.h"
+#include "Widgets/DeclarativeSyntaxSupport.h"
+#include "Widgets/Images/SImage.h"
 #include "Widgets/Input/SButton.h"
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SSplitter.h"
@@ -32,6 +34,74 @@ namespace
 
 		return InTagValue.Contains(ClassName) || InTagValue.Contains(ClassPath);
 	}
+
+	class SDialogCameraPresetItem : public SButton
+	{
+	public:
+		SLATE_BEGIN_ARGS(SDialogCameraPresetItem) {}
+			SLATE_ARGUMENT(FDialogCameraPresetItemPtr, Item)
+			SLATE_ARGUMENT(FText, DisplayName)
+			SLATE_EVENT(FOnClicked, OnClicked)
+			SLATE_EVENT(FOnClicked, OnKeyClicked)
+		SLATE_END_ARGS()
+
+		void Construct(const FArguments& InArgs)
+		{
+			Item = InArgs._Item;
+			OnKeyClicked = InArgs._OnKeyClicked;
+
+			SButton::Construct(
+				SButton::FArguments()
+				.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+				.ContentPadding(FMargin(0.0f))
+				.OnClicked(InArgs._OnClicked)
+				[
+					SNew(SBorder)
+						.BorderImage(FAppStyle::GetBrush("NoBorder"))
+						.Padding(FMargin(4.0f, 2.0f))
+						[
+							SNew(SHorizontalBox)
+
+								+ SHorizontalBox::Slot()
+								.FillWidth(1.0f)
+								.VAlign(VAlign_Center)
+								[
+									SNew(STextBlock)
+										.Text(InArgs._DisplayName)
+										.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.0f))
+								]
+
+								+ SHorizontalBox::Slot()
+								.AutoWidth()
+								.VAlign(VAlign_Center)
+								.Padding(FMargin(6.0f, 0.0f, 0.0f, 0.0f))
+								[
+									SAssignNew(KeyButton, SButton)
+										.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+										.ContentPadding(FMargin(0.0f))
+										.ToolTipText(LOCTEXT("KeyAtCurrentFrameTooltip", "Key at current frame"))
+										.OnClicked(OnKeyClicked)
+										[
+											SNew(SImage)
+												.Visibility(EVisibility::All)
+												.Image_Lambda([this]()
+													{
+														return (KeyButton.IsValid() && KeyButton->IsHovered())
+															? FAppStyle::GetBrush("Sequencer.KeyDiamond")
+															: FAppStyle::GetBrush("Sequencer.KeyDiamondBorder");
+													})
+										]
+								]
+						]
+				]
+			);
+		}
+
+	private:
+		FDialogCameraPresetItemPtr Item;
+		TSharedPtr<SButton> KeyButton;
+		FOnClicked OnKeyClicked;
+	};
 }
 
 void SDialogCameraPresets::Construct(const FArguments& InArgs, TWeakPtr<FDialogBuilderEditor> InDialogEditor)
@@ -107,39 +177,38 @@ TSharedRef<ITableRow> SDialogCameraPresets::GenerateCameraPresetRow(
 	const TSharedRef<STableViewBase>& InOwnerTable)
 {
 	return SNew(STableRow<FDialogCameraPresetItemPtr>, InOwnerTable)
-	[
-		SNew(SButton)
-		.ButtonStyle(FAppStyle::Get(), "SimpleButton")
-		.ContentPadding(FMargin(0.0f))
-		.OnClicked_Lambda([this, InItem]()
-		{
-			if (!InItem.IsValid() || !InItem->ShotInstance.IsValid())
-			{
-				return FReply::Handled();
-			}
-
-			if (CameraPresetListView.IsValid() && CameraPresetListView->IsItemSelected(InItem))
-			{
-				ApplyCameraPresetItem(InItem);
-			}
-			else if (CameraPresetListView.IsValid())
-			{
-				CameraPresetListView->SetSelection(InItem, ESelectInfo::Direct);
-			}
-
-			return FReply::Handled();
-		})
 		[
-			SNew(SBorder)
-			.BorderImage(FAppStyle::GetBrush("NoBorder"))
-			.Padding(FMargin(2.0f, 2.0f, 2.0f, 4.0f))
-			[
-				SNew(STextBlock)
-				.Text(InItem.IsValid() ? InItem->DisplayName : LOCTEXT("InvalidCameraPreset", "Invalid"))
-				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.0f))
-			]
-		]
-	];
+			SNew(SDialogCameraPresetItem)
+				.Item(InItem)
+				.DisplayName(InItem.IsValid() ? InItem->DisplayName : LOCTEXT("InvalidCameraPreset", "Invalid"))
+				.OnClicked_Lambda([this, InItem]()
+					{
+						if (!InItem.IsValid() || !InItem->ShotInstance.IsValid())
+						{
+							return FReply::Handled();
+						}
+
+						if (CameraPresetListView.IsValid() && CameraPresetListView->IsItemSelected(InItem))
+						{
+							ApplyCameraPresetItem(InItem);
+						}
+						else if (CameraPresetListView.IsValid())
+						{
+							CameraPresetListView->SetSelection(InItem, ESelectInfo::Direct);
+						}
+
+						return FReply::Handled();
+					})
+				.OnKeyClicked_Lambda([this]()
+					{
+						FDialogBuilderEditor* DialogEditor = DialogEditorPtr.Pin().Get();
+						if (DialogEditor)
+						{
+							DialogEditor->AddKeyFromCameraPreset(-1, EMovieSceneKeyInterpolation::Constant);
+						}
+						return FReply::Handled();
+					})
+		];
 }
 
 void SDialogCameraPresets::OnCameraPresetSelectionChanged(FDialogCameraPresetItemPtr InItem, ESelectInfo::Type InSelectInfo)

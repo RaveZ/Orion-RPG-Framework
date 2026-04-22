@@ -121,6 +121,41 @@ void FDialogNodeDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilder)
 		}
 	}
 
+	//Player Line - Player Configuration
+	IDetailCategoryBuilder& PlayerConfigurationCategory = DetailBuilder.EditCategory("PlayerConfiguration", LOCTEXT("PlayerConfigurationCategoryTitle", "Player Configuration"));
+	if (PlayerLineNode != NULL && SelectedObjects.Num() == 1)
+	{
+		UDialogBuilderNode_PlayerLine* PlayerLineNodeInstance = PlayerLineNode.Get();
+		UDialogBuilderGraph* DialogGraph = PlayerLineNodeInstance ? PlayerLineNodeInstance->GetOwningDialogGraph() : nullptr;
+
+		if (DialogGraph)
+		{
+			TArray<UObject*> ExternalObjects;
+			ExternalObjects.Add(DialogGraph);
+
+			PlayerConfigurationCategory.AddExternalObjectProperty(
+				ExternalObjects,
+				GET_MEMBER_NAME_CHECKED(UDialogBuilderGraph, PlayerName));
+
+			PlayerConfigurationCategory.AddExternalObjectProperty(
+				ExternalObjects,
+				GET_MEMBER_NAME_CHECKED(UDialogBuilderGraph, PlayerTransformOverride));
+
+
+			PlayerConfigurationCategory.AddExternalObjectProperty(
+				ExternalObjects,
+				GET_MEMBER_NAME_CHECKED(UDialogBuilderGraph, DefaultPlayerShot));
+
+			PlayerConfigurationCategory.AddExternalObjectProperty(
+				ExternalObjects,
+				GET_MEMBER_NAME_CHECKED(UDialogBuilderGraph, DefaultSelectingChoiceShot));
+
+			PlayerConfigurationCategory.AddExternalObjectProperty(
+				ExternalObjects,
+				GET_MEMBER_NAME_CHECKED(UDialogBuilderGraph, DefaultPlayerImage));
+		}
+
+	}
 
 	//Dialog Line - Participant Category
 	IDetailCategoryBuilder& DialogParticipantCategory = DetailBuilder.EditCategory("Participant", LOCTEXT("ParticipantCategoryTitle", "Participant Settings"));

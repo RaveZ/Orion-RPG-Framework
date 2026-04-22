@@ -54,7 +54,7 @@ protected:
 private:
 	TWeakObjectPtr<UDialogBuilderNode_DialogSequence> DialogSequenceNode;
 	TWeakObjectPtr<UDialogBuilderNode_DialogLine> DialogLineNode;
-	TWeakObjectPtr<UDialogBuilderNode_DialogLine> PlayerLineNode;
+	TWeakObjectPtr<UDialogBuilderNode_PlayerLine> PlayerLineNode;
 	TWeakObjectPtr<UDialogBuilderNode_PlayerChoice> PlayerChoiceNode;
 	TSharedPtr<STextEntryPopup> TextEntryWidget;
 };

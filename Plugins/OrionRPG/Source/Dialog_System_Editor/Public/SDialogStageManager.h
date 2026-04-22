@@ -93,4 +93,11 @@ private:
 	void SelectSlotById(const FGuid& InSlotId);
 	FDialogStageListItemPtr FindDialogStageItemByObjectName(const FName& InDialogStageObjectName) const;
 	FDialogSlotListItemPtr FindSlotItemById(const FGuid& InSlotId) const;
+
+private:
+	FReply OnDialogStageItemClicked(FDialogStageListItemPtr InItem);
+	FReply OnSlotItemClicked(FDialogSlotListItemPtr InItem);
+
+	void ApplyDialogStageSelection(FDialogStageListItemPtr InItem);
+	void ApplySlotSelection(FDialogSlotListItemPtr InItem);
 };

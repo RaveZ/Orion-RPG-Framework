@@ -33,49 +33,79 @@ class SDialogStagePaletteItem : public SCompoundWidget
 public:
 	SLATE_BEGIN_ARGS(SDialogStagePaletteItem) {}
 		SLATE_ARGUMENT(TWeakObjectPtr<UDialogStage>, DialogStage)
+		SLATE_ARGUMENT(TWeakPtr<FDialogBuilderEditor>, DialogEditorPtr)
 		SLATE_EVENT(FOnTextCommitted, OnNameCommitted)
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs)
 	{
 		DialogStage = InArgs._DialogStage;
+		DialogEditorPtr = InArgs._DialogEditorPtr;
 		OnNameCommitted = InArgs._OnNameCommitted;
 
 		ChildSlot
-		[
-			SNew(SHorizontalBox)
-
-			/*+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.VAlign(VAlign_Center)
-			.Padding(0.f, 0.f, 4.f, 0.f)
 			[
-				SNew(SImage).Image(FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.Dialog"))
-			]*/
+				SNew(SHorizontalBox)
 
-			+ SHorizontalBox::Slot()
-			.FillWidth(1.0f)
-			.Padding(FMargin(7.0f, 4.0f, 4.0f, 4.0f))
-			.VAlign(VAlign_Center)
-			[
-				SNew(SInlineEditableTextBlock)
-				.Text_Lambda([this]()
-				{
-					if (const UDialogStage* LocalSet = DialogStage.Get())
-					{
-						return LocalSet->Name.IsEmpty() ? LOCTEXT("UnnamedDialogStage", "None") : LocalSet->Name;
-					}
-					return LOCTEXT("InvalidDialogStage", "Invalid");
-				})
-				.OnTextCommitted(OnNameCommitted)
-				.IsReadOnly(false)
-				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.0f))
-			]
-		];
+					+ SHorizontalBox::Slot()
+					.FillWidth(1.0f)
+					.Padding(FMargin(7.0f, 4.0f, 4.0f, 4.0f))
+					.VAlign(VAlign_Center)
+					[
+						SNew(SInlineEditableTextBlock)
+							.Text_Lambda([this]()
+								{
+									const TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
+
+
+									if (const UDialogStage* LocalSet = DialogStage.Get())
+									{
+										const bool bIsCurrentStage =
+											DialogEditor.IsValid() &&
+											LocalSet == DialogEditor->GetDialogStageTemplate();
+
+										const FText StageName = LocalSet->Name.IsEmpty()
+											? LOCTEXT("UnnamedDialogStage", "None")
+											: LocalSet->Name;
+
+										return bIsCurrentStage
+											? FText::Format(LOCTEXT("CurrentDialogStageLabel", "{0} (current)"), StageName)
+											: StageName;
+									}
+
+									return LOCTEXT("InvalidDialogStage", "Invalid");
+								})
+							.ColorAndOpacity_Lambda([this]()
+								{
+									const TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
+
+
+									if (const UDialogStage* LocalSet = DialogStage.Get())
+									{
+										const bool bIsCurrentStage =
+											DialogEditor.IsValid() &&
+											LocalSet == DialogEditor->GetDialogStageTemplate();
+
+										const FText StageName = LocalSet->Name.IsEmpty()
+											? LOCTEXT("UnnamedDialogStage", "None")
+											: LocalSet->Name;
+
+										return bIsCurrentStage
+											? FSlateColor(FColor::Turquoise)
+											: FSlateColor::UseForeground();
+									}
+									return FSlateColor::UseForeground();
+								})
+							.OnTextCommitted(OnNameCommitted)
+							.IsReadOnly(false)
+							.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.0f))
+					]
+			];
 	}
 
 private:
 	TWeakObjectPtr<UDialogStage> DialogStage;
+	TWeakPtr<FDialogBuilderEditor> DialogEditorPtr;
 	FOnTextCommitted OnNameCommitted;
 };
 
@@ -307,12 +337,85 @@ TSharedRef<ITableRow> SDialogStageManager::GenerateDialogStageRow(FDialogStageLi
 {
 	const TWeakObjectPtr<UDialogStage> WeakDialogStage = InItem.IsValid() ? InItem->DialogStage : nullptr;
 
+	
+
 	return SNew(STableRow<FDialogStageListItemPtr>, InOwnerTable)
-	[
-		SNew(SDialogStagePaletteItem)
-		.DialogStage(WeakDialogStage)
-		.OnNameCommitted(FOnTextCommitted::CreateSP(this, &SDialogStageManager::OnDialogStageNameCommitted, WeakDialogStage))
-	];
+		[
+			SNew(SButton)
+				.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+				.ContentPadding(FMargin(0.0f))
+				.OnClicked_Lambda([this, InItem]()
+					{
+						return OnDialogStageItemClicked(InItem);
+					})
+				[
+					SNew(SDialogStagePaletteItem)
+						.DialogStage(WeakDialogStage)
+						.DialogEditorPtr(DialogEditorPtr)
+						.OnNameCommitted(FOnTextCommitted::CreateSP(this, &SDialogStageManager::OnDialogStageNameCommitted, WeakDialogStage))
+				]
+		];
+}
+
+FReply SDialogStageManager::OnDialogStageItemClicked(FDialogStageListItemPtr InItem)
+{
+	if (!InItem.IsValid())
+	{
+		return FReply::Handled();
+	}
+
+	if (DialogStageListView.IsValid())
+	{
+		const bool bWasSelected = DialogStageListView->IsItemSelected(InItem);
+		DialogStageListView->SetSelection(InItem, ESelectInfo::Direct);
+
+		if (bWasSelected)
+		{
+			ApplyDialogStageSelection(InItem);
+		}
+	}
+	else
+	{
+		ApplyDialogStageSelection(InItem);
+	}
+
+	return FReply::Handled();
+}
+
+void SDialogStageManager::ApplyDialogStageSelection(FDialogStageListItemPtr InItem)
+{
+	TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
+	SelectedDialogStage = InItem.IsValid() ? InItem->DialogStage.Get() : nullptr;
+	SelectedSlot.Reset();
+	SelectedSlotIndex = INDEX_NONE;
+
+	if (DialogStageDetailsView.IsValid())
+	{
+		
+			if (GEditor)
+			{
+				AActor* SequencePivot = DialogEditor ? DialogEditor->GetSequencePivot() : nullptr;
+				GEditor->SelectNone(true /*bNoteSelectionChange*/, true /*bDeselectBSPSurfs*/, false /*bWarnAboutManyActors*/);
+				if (SelectedDialogStage == DialogEditor->GetDialogStageTemplate())
+				{
+					if (SequencePivot)
+					{
+						GEditor->SelectActor(SequencePivot, true, true /*bNoteSelectionChange*/);
+					}
+				}
+
+				GEditor->NoteSelectionChange();
+			}
+
+		DialogStageDetailsView->SetObject(SelectedDialogStage.Get());
+	}
+
+	if (SlotDetailsView.IsValid())
+	{
+		SlotDetailsView->SetObject(nullptr);
+	}
+
+	RefreshSlotList();
 }
 
 void SDialogStageManager::OnDialogStageNameCommitted(const FText& InText, ETextCommit::Type InCommitType, TWeakObjectPtr<UDialogStage> InDialogStage)
@@ -323,6 +426,7 @@ void SDialogStageManager::OnDialogStageNameCommitted(const FText& InText, ETextC
 		return;
 	}
 
+	const FScopedTransaction Transaction(LOCTEXT("RenameDialogStageTransaction", "Rename Dialog Stage"));
 	DialogStage->Modify();
 	DialogStage->Name = InText;
 
@@ -332,35 +436,7 @@ void SDialogStageManager::OnDialogStageNameCommitted(const FText& InText, ETextC
 
 void SDialogStageManager::OnDialogStageSelectionChanged(FDialogStageListItemPtr InItem, ESelectInfo::Type InSelectInfo)
 {
-	TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
-	SelectedDialogStage = InItem.IsValid() ? InItem->DialogStage.Get() : nullptr;
-	SelectedSlot.Reset();
-	SelectedSlotIndex = INDEX_NONE;
-
-	if (DialogStageDetailsView.IsValid())
-	{
-		if (SelectedDialogStage == DialogEditor->GetDialogStageTemplate())
-		{
-			if (GEditor)
-			{
-				AActor* SequencePivot = DialogEditor ? DialogEditor->GetSequencePivot() : nullptr;
-				GEditor->SelectNone(true/*bNoteSelectionChange*/, true/*bDeselectBSPSurfs*/, false/*bWarnAboutManyActors*/);
-				if (SequencePivot)
-				{
-					GEditor->SelectActor(SequencePivot, true, true/*bNoteSelectionChange*/);
-				}
-
-				GEditor->NoteSelectionChange();
-			}
-		}
-		DialogStageDetailsView->SetObject(SelectedDialogStage.Get());
-	}
-	if (SlotDetailsView.IsValid())
-	{
-		SlotDetailsView->SetObject(nullptr);
-	}
-
-	RefreshSlotList();
+	ApplyDialogStageSelection(InItem);
 }
 
 FReply SDialogStageManager::OnAddDialogStage()
@@ -435,14 +511,48 @@ TSharedRef<ITableRow> SDialogStageManager::GenerateSlotRow(FDialogSlotListItemPt
 	const bool bCamera = InItem.IsValid() ? InItem->bIsCameraSlot : false;
 
 	return SNew(STableRow<FDialogSlotListItemPtr>, InOwnerTable)
-	[
-		SNew(SDialogSlotPaletteItem)
-		.Slot(WeakSlot)
-		.IsCameraSlot(bCamera)
-	];
+		[
+			SNew(SButton)
+				.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+				.ContentPadding(FMargin(0.0f))
+				.OnClicked_Lambda([this, InItem]()
+					{
+						return OnSlotItemClicked(InItem);
+					})
+				[
+					SNew(SDialogSlotPaletteItem)
+						.Slot(WeakSlot)
+						.IsCameraSlot(bCamera)
+				]
+		];
 }
 
-void SDialogStageManager::OnSlotSelectionChanged(FDialogSlotListItemPtr InItem, ESelectInfo::Type InSelectInfo)
+FReply SDialogStageManager::OnSlotItemClicked(FDialogSlotListItemPtr InItem)
+{
+	if (!InItem.IsValid())
+	{
+		return FReply::Handled();
+	}
+
+	if (SlotListView.IsValid())
+	{
+		const bool bWasSelected = SlotListView->IsItemSelected(InItem);
+		SlotListView->SetSelection(InItem, ESelectInfo::Direct);
+
+		if (bWasSelected)
+		{
+			ApplySlotSelection(InItem);
+		}
+	}
+	else
+	{
+		ApplySlotSelection(InItem);
+	}
+
+	return FReply::Handled();
+}
+
+void SDialogStageManager::ApplySlotSelection(FDialogSlotListItemPtr InItem)
 {
 	TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
 	SelectedSlot = InItem.IsValid() ? InItem->Slot.Get() : nullptr;
@@ -457,6 +567,11 @@ void SDialogStageManager::OnSlotSelectionChanged(FDialogSlotListItemPtr InItem, 
 			DialogEditor->SelectDialogSlotActor(SelectedSlotIndex);
 		}
 	}
+}
+
+void SDialogStageManager::OnSlotSelectionChanged(FDialogSlotListItemPtr InItem, ESelectInfo::Type InSelectInfo)
+{
+	ApplySlotSelection(InItem);
 }
 
 FReply SDialogStageManager::OnAddSlot()

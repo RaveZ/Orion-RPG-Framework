@@ -11,6 +11,7 @@
 #include "DialogBuilderGraph.h"
 #include "Tickable.h"
 #include "TickableEditorObject.h"
+#include "KeyParams.h"
 #include "Templates/SharedPointer.h"
 
 #include "DialogBuilderEditor.generated.h"
@@ -338,6 +339,7 @@ public:
 	void OnSequencerSelectionChangedObjectGuids(TArray<FGuid> Guids);
 
 	void ApplyCameraPreset(class UDialogSequenceShot* InSequenceShot, int32 InFrameNumber = -1, bool bRandomizeAngle = false);
+	void AddKeyFromCameraPreset(int32 InFrameNumber = -1, EMovieSceneKeyInterpolation KeyInterpolationType = EMovieSceneKeyInterpolation::Constant);
 
 	/** Called whenever sequencer has received focus */
 	void OnSequencerReceivedFocus();

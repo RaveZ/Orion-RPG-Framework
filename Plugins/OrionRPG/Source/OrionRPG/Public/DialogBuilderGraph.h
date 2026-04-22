@@ -35,22 +35,22 @@ public:
 		FName ID;
 
 	/** Your Player Name*/
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Configuration|Player")
+	UPROPERTY(BlueprintReadOnly, Category = "Configuration|Player")
 		FText PlayerName;
 
-	UPROPERTY(EditAnywhere, Category = "Configuration|Player", meta = (InlineEditConditionToggle))
+	UPROPERTY(BlueprintReadOnly, Category = "Configuration|Player", meta = (InlineEditConditionToggle))
 		bool bOverrideTransform;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration|Player", meta = (EditCondition = "bOverrideTransform"))
+	UPROPERTY(BlueprintReadOnly, Category = "Configuration|Player", meta = (EditCondition = "bOverrideTransform"))
 		FTransform PlayerTransformOverride;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Configuration|Player", meta = (NoResetToDefault))
+	UPROPERTY(BlueprintReadOnly, Instanced, Category = "Configuration|Player", meta = (NoResetToDefault))
 		TObjectPtr<class UDialogCameraShot> DefaultPlayerShot;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Instanced, Category = "Configuration|Player", meta = (NoResetToDefault))
+	UPROPERTY(BlueprintReadOnly, Instanced, Category = "Configuration|Player", meta = (NoResetToDefault))
 		TObjectPtr<class UDialogCameraShot> DefaultSelectingChoiceShot;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", Category = "Configuration|Player", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true", Category = "Configuration|Player", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
 		TObjectPtr<UObject> DefaultPlayerImage;
 
 	/*
