@@ -683,6 +683,9 @@ void FDialogBuilderEditor::CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot
 		AddDefaultTracksForBinding(MovieScene, NewBindingId, BoundActor, bIsCamera);
 
 		InSlot->ID = NewBindingId;
+
+		Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
+		Sequencer->ForceEvaluate();
 		return;
 		
 	}
@@ -697,6 +700,7 @@ void FDialogBuilderEditor::ResolveDialogBoundObjects()
 	TArray<UDialogSequenceSlot*> DialogSlots;
 	DialogSlotActors.GenerateKeyArray(DialogSlots);
 
+	bool bAnythingChanged = false;
 	for (int32 i = 0; i < DialogSlots.Num(); i++)
 	{
 		UDialogSequenceSlot* DialogSlot = DialogSlots[i];
@@ -712,16 +716,24 @@ void FDialogBuilderEditor::ResolveDialogBoundObjects()
 			{
 				if (!BoundObjects.Contains(DialogActor))
 				{
+					bAnythingChanged = true;
 					EditingDialogSequence->UnbindPossessableObjects(DialogSlot->ID);
 					FMovieSceneBindingProxy BindingProxy(DialogSlot->ID, Sequencer->GetFocusedMovieSceneSequence());
 					TArray<AActor*> Actors;
 					Actors.Add(DialogActor);
 
 					EditingDialogSequence->BindPossessableObject(DialogSlot->ID, *DialogActor, GetPreviewWorld());
+
 					//FSequencerUtilities::ReplaceBindingWithActors(Sequencer.ToSharedRef(), Actors, BindingProxy);
 				}
 			}
 		}
+	}
+
+	if (bAnythingChanged)
+	{
+		Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
+		Sequencer->ForceEvaluate();
 	}
 }
 
@@ -816,6 +828,7 @@ void FDialogBuilderEditor::UpdateDialogStage()
 		SpawnDialogSlotActor(DialogSlot, SpawnedCamera, true);
 	}
 
+
 	
 
 	
@@ -854,8 +867,6 @@ void FDialogBuilderEditor::UpdateDialogStage()
 	//update section rule
 	UpdateSectionRule();
 
-	Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshAllImmediately);
-	Sequencer->ForceEvaluate();
 }
 
 
@@ -922,7 +933,11 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 
 				if (ExistingActor && ExistingActor->IsA(LoadedActorClass))
 				{
-					if (!bIsCamera)
+					if (bIsCamera)
+					{
+						EditorPinned->ApplyDefaultCameraSetting();
+					}
+					else
 					{
 						ExistingActor->SetActorRelativeLocation(Slot->SlotLocation);
 						ExistingActor->SetActorRelativeRotation(Slot->SlotRotation);
@@ -977,12 +992,6 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 					{
 						if (UCineCameraComponent* CineCameraComponent = CineCam->GetCineCameraComponent())
 						{
-							CineCameraComponent->FocusSettings.FocusMethod = ECameraFocusMethod::Manual;
-							CineCameraComponent->FocusSettings.ManualFocusDistance = 10000.0f;
-							CineCameraComponent->CurrentAperture = 16.0f;
-
-							CineCameraComponent->bOverride_CustomNearClippingPlane = true;
-							CineCameraComponent->CustomNearClippingPlane = 20.0f;
 
 							UStaticMeshComponent* ProxyMeshComponent = NewObject<UCameraProxyMeshComponent>(CineCam, NAME_None, RF_Transactional | RF_TextExportTransient);
 							ProxyMeshComponent->SetupAttachment(CineCameraComponent);
@@ -1001,7 +1010,7 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 							ProxyMeshComponent->RegisterComponent();
 						}
 					}
-
+					EditorPinned->ApplyDefaultCameraSetting();
 					NewActor->SetActorTransform(EditorPinned->CachedCameraTransform);
 				}
 				else
@@ -1022,7 +1031,7 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 
 		UAssetManager::GetStreamableManager().RequestAsyncLoad(
 			ClassPath,
-			FStreamableDelegate::CreateLambda([SpawnWithClass, ActorSoftClass]()
+			FStreamableDelegate::CreateLambda([EditorWeak, SpawnWithClass, ActorSoftClass]()
 				{
 					UClass* LoadedClass = ActorSoftClass.Get();
 
@@ -1030,6 +1039,7 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 					TSubclassOf<AActor> LoadedActorClass = LoadedClass;
 
 					SpawnWithClass(LoadedActorClass);
+
 				}));
 		return;
 	}
@@ -2332,6 +2342,49 @@ void FDialogBuilderEditor::OnSequencerSelectionChangedObjectGuids(TArray<FGuid> 
 	}
 }
 
+void FDialogBuilderEditor::ApplyDefaultCameraSetting()
+{
+	AActor* CameraActor = DialogCamera.Get();
+	if (!IsValid(CameraActor))
+	{
+		return;
+	}
+
+	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
+	if (!DialogGraph)
+	{
+		return;
+	}
+
+	if (ACineCameraActor* CineCam = Cast<ACineCameraActor>(CameraActor))
+	{
+		if (UCineCameraComponent* CinecamComp = CineCam->GetCineCameraComponent())
+		{
+			CinecamComp->CropSettings = DialogGraph->CropSettings;
+			CinecamComp->SetCurrentFocalLength(DialogGraph->FocalLength);
+			CinecamComp->SetCurrentAperture(DialogGraph->Aperture);
+			CinecamComp->SetFilmback(DialogGraph->Filmback);
+			CinecamComp->SetLensSettings(DialogGraph->LensSettings);
+			CinecamComp->SetConstraintAspectRatio(DialogGraph->bConstrainAspectRatio);
+			CinecamComp->bOverride_CustomNearClippingPlane = DialogGraph->bOverride_CustomNearClippingPlane;
+			CinecamComp->CustomNearClippingPlane = DialogGraph->CustomNearClippingPlane;
+
+			CinecamComp->FocusSettings.bSmoothFocusChanges = true;
+			if (DialogGraph->bUsePostProcess)
+			{
+				CinecamComp->PostProcessSettings = DialogGraph->PostProcessSettings;
+			}
+			else
+			{
+				CinecamComp->PostProcessSettings = FPostProcessSettings();
+			}
+
+
+			
+		}
+	}
+}
+
 
 void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialogGenerateCameraSettings* InSettings)
 {
@@ -2626,7 +2679,7 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 		}
 	}
 
-	const FVector RelativeOffset = ActorToFocus->GetActorTransform().InverseTransformPosition(FocusLocation);
+	const FVector RelativeOffset = ActorToFocus->GetActorTransform().InverseTransformPosition(AimLocation);
 	if (ACineCameraActor* CineCam = Cast<ACineCameraActor>(CameraActor))
 	{
 		if (UCineCameraComponent* CinecamComp = CineCam->GetCineCameraComponent())

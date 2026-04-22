@@ -337,6 +337,7 @@ public:
 	void UpdateTrackModelRule();
 	void UpdateSectionRule();
 	void OnSequencerSelectionChangedObjectGuids(TArray<FGuid> Guids);
+	void ApplyDefaultCameraSetting();
 
 	void ApplyCameraPreset(class UDialogSequenceShot* InSequenceShot, int32 InFrameNumber = -1, bool bRandomizeAngle = false);
 	void AddKeyFromCameraPreset(int32 InFrameNumber = -1, EMovieSceneKeyInterpolation KeyInterpolationType = EMovieSceneKeyInterpolation::Constant);

@@ -51,6 +51,27 @@ UDialogBuilderGraph::UDialogBuilderGraph()
 	BlendTime = 1.25f;
 	BlendFunc = VTBlend_Cubic;
 	BlendExp = 2.0f;
+
+	//Camera Default Setting
+	bUsePostProcess = false;
+	FocalLength = 35.0f;
+	Aperture = 2.8f;
+	bOverride_CustomNearClippingPlane = true;
+	CustomNearClippingPlane = 20.f;
+
+	CropSettings.AspectRatio = 2.39f;
+	bConstrainAspectRatio = false;
+
+	Filmback.SensorWidth = 23.76f;
+	Filmback.SensorHeight = 13.365f;
+	Filmback.SensorAspectRatio = 1.777778f;
+
+	LensSettings.MinFocalLength = 4.0f;
+	LensSettings.MaxFocalLength = 1000.0f;
+	LensSettings.MinFStop = 1.2f;
+	LensSettings.MaxFStop = 22.0f;
+	LensSettings.SqueezeFactor = 1.0f;
+	LensSettings.DiaphragmBladeCount = 7;
 }
 
 UDialogBuilderGraph::~UDialogBuilderGraph()
@@ -1321,16 +1342,29 @@ AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot)
 		
 		if (ACineCameraActor* CineCam = Cast<ACineCameraActor>(NewActor))
 		{
-			if (UCineCameraComponent* CineCameraComponent = CineCam->GetCineCameraComponent())
+			if (UCineCameraComponent* CinecamComp = CineCam->GetCineCameraComponent())
 			{
-				CineCameraComponent->FocusSettings.FocusMethod = ECameraFocusMethod::Manual;
-				CineCameraComponent->FocusSettings.ManualFocusDistance = 10000.0f;
-				CineCameraComponent->CurrentAperture = 16.0f;
+				CinecamComp->CropSettings = CropSettings;
+				CinecamComp->SetCurrentFocalLength(FocalLength);
+				CinecamComp->SetCurrentAperture(Aperture);
+				CinecamComp->SetFilmback(Filmback);
+				CinecamComp->SetLensSettings(LensSettings);
+				CinecamComp->SetConstraintAspectRatio(bConstrainAspectRatio);
+				CinecamComp->bOverride_CustomNearClippingPlane = bOverride_CustomNearClippingPlane;
+				CinecamComp->CustomNearClippingPlane = CustomNearClippingPlane;
 
-				CineCameraComponent->bOverride_CustomNearClippingPlane = true;
-				CineCameraComponent->CustomNearClippingPlane = 20.0f;
+				CinecamComp->FocusSettings.bSmoothFocusChanges = true;
+				if (bUsePostProcess)
+				{
+					CinecamComp->PostProcessSettings = PostProcessSettings;
+				}
+				else
+				{
+					CinecamComp->PostProcessSettings = FPostProcessSettings();
+				}
 			}
 		}
+
 		NewActor->AttachToActor(SequencePivot, FAttachmentTransformRules::KeepWorldTransform);
 		NewActor->SetActorRelativeLocation(InSlot->SlotLocation);
 		NewActor->SetActorRelativeRotation(InSlot->SlotRotation);

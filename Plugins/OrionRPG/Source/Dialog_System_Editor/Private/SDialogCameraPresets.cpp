@@ -79,7 +79,7 @@ namespace
 									SAssignNew(KeyButton, SButton)
 										.ButtonStyle(FAppStyle::Get(), "SimpleButton")
 										.ContentPadding(FMargin(0.0f))
-										.ToolTipText(LOCTEXT("KeyAtCurrentFrameTooltip", "Key at current frame"))
+										.ToolTipText(LOCTEXT("KeyAtCurrentFrameTooltip", "Add key at current frame"))
 										.OnClicked(OnKeyClicked)
 										[
 											SNew(SImage)
@@ -201,6 +201,8 @@ TSharedRef<ITableRow> SDialogCameraPresets::GenerateCameraPresetRow(
 					})
 				.OnKeyClicked_Lambda([this]()
 					{
+						const FScopedTransaction Transaction(LOCTEXT("AddCameraPresetKeyTransaction", "Add Camera Preset Key"));
+
 						FDialogBuilderEditor* DialogEditor = DialogEditorPtr.Pin().Get();
 						if (DialogEditor)
 						{

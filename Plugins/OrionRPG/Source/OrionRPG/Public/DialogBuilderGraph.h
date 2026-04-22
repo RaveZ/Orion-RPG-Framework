@@ -22,7 +22,7 @@ class UDialogBuilderNode_DialogLine;
 
 
 
-UCLASS(Blueprintable, BlueprintType, AutoExpandCategories = "Configuration|Player", AutoExpandCategories = "Configuration|Dialog")
+UCLASS(Blueprintable, BlueprintType, AutoExpandCategories = "Camera|Config", AutoExpandCategories = "Configuration|Dialog")
 class ORIONRPG_API UDialogBuilderGraph : public UObject
 {
 	GENERATED_BODY()
@@ -206,6 +206,48 @@ public:
 		
 	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
 		class UAudioComponent* DialogAudio;
+
+
+public:
+	/*------------------------Default Camera Settings------------------------*/
+	/** Current focal length of the camera (i.e. controls FoV, zoom) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Config")
+	float FocalLength;
+
+	/** Current aperture, in terms of f-stop (e.g. 2.8 for f/2.8) */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Config")
+	float Aperture;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, AdvancedDisplay, Category = "Camera|Config", meta = (InlineEditConditionToggle))
+	bool bOverride_CustomNearClippingPlane;
+
+	/** Set bOverride_CustomNearClippingPlane to true if you want to use a custom clipping plane instead of GNearClippingPlane. */
+	UPROPERTY(Interp, EditAnywhere, BlueprintReadWrite, Category = "Camera|Config", meta = (UIMin = "0.00001", ClampMin = "0.00001", editcondition = "bOverride_CustomNearClippingPlane"))
+	float CustomNearClippingPlane;
+
+	/** If bConstrainAspectRatio is true, black bars will be added if the destination view has a different aspect ratio than this camera requested. */
+	UPROPERTY(Interp, EditAnywhere, BlueprintReadWrite, Category = "Camera|Config", meta = (InlineEditConditionToggle))
+	bool bConstrainAspectRatio;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Config", meta = (EditCondition = "bConstrainAspectRatio"))
+	struct FPlateCropSettings CropSettings;
+
+	/** Controls the filmback of the camera. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Config")
+	FCameraFilmbackSettings Filmback;
+
+	/** Controls the camera's lens. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Config")
+	FCameraLensSettings LensSettings;
+
+	UPROPERTY(EditAnywhere, meta = (InlineEditConditionToggle), Category = "Camera|Config")
+	bool bUsePostProcess = false;
+
+	/**Camera post process override*/
+	UPROPERTY(Interp, BlueprintReadWrite, Category = "Camera|Config", meta = (EditCondition = "bUsePostProcess"))
+	struct FPostProcessSettings PostProcessSettings;
+/*------------------------End Default Camera Settings------------------------*/
+
 
 public:
 	FSimpleMulticastDelegate OnDialogSetupFinished;
