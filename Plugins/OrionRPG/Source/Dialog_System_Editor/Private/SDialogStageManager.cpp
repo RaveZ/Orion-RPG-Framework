@@ -332,12 +332,27 @@ void SDialogStageManager::OnDialogStageNameCommitted(const FText& InText, ETextC
 
 void SDialogStageManager::OnDialogStageSelectionChanged(FDialogStageListItemPtr InItem, ESelectInfo::Type InSelectInfo)
 {
+	TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
 	SelectedDialogStage = InItem.IsValid() ? InItem->DialogStage.Get() : nullptr;
 	SelectedSlot.Reset();
 	SelectedSlotIndex = INDEX_NONE;
 
 	if (DialogStageDetailsView.IsValid())
 	{
+		if (SelectedDialogStage == DialogEditor->GetDialogStageTemplate())
+		{
+			if (GEditor)
+			{
+				AActor* SequencePivot = DialogEditor ? DialogEditor->GetSequencePivot() : nullptr;
+				GEditor->SelectNone(true/*bNoteSelectionChange*/, true/*bDeselectBSPSurfs*/, false/*bWarnAboutManyActors*/);
+				if (SequencePivot)
+				{
+					GEditor->SelectActor(SequencePivot, true, true/*bNoteSelectionChange*/);
+				}
+
+				GEditor->NoteSelectionChange();
+			}
+		}
 		DialogStageDetailsView->SetObject(SelectedDialogStage.Get());
 	}
 	if (SlotDetailsView.IsValid())

@@ -414,7 +414,16 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 			GEditor->NoteSelectionChange();
 		}
 
-		if (bIsCamera)
+		if (DialogEditor->GetSequencePivot() == ActorToSelect)
+		{
+			UDialogStage* InDialogStage = DialogEditor->GetDialogStageTemplate();
+			if (InDialogStage)
+			{
+				DialogEditor->SetDetailsObject(InDialogStage);
+			}
+			
+		}
+		else if (bIsCamera)
 		{
 			DialogEditor->SetDetailsObject(ObjectForDetails);
 		}
@@ -754,19 +763,34 @@ bool FDialogBuilderViewportClient::HandleEndTransform()
 	{
 		bIsManipulating = false;
 
+		TSharedPtr<FDialogBuilderEditor> DialogEditor = Editor.Pin();
 		USelection* SelectedActors = GEditor ? GEditor->GetSelectedActors() : nullptr;
 		AActor* SelectedActor = SelectedActors ? Cast<AActor>(SelectedActors->GetSelectedObject(0)) : nullptr;
-		TSharedPtr<FDialogBuilderEditor> DialogEditor = Editor.Pin();
 		UDialogSequenceSlot* Slot = DialogEditor ? DialogEditor->GetTemplateSlot(SelectedActor) : nullptr;
 		
+
+		const USceneComponent* RootComponent = SelectedActor ? SelectedActor->GetRootComponent() : nullptr;
+
+		const FVector Location = RootComponent ? RootComponent->GetRelativeLocation() : FVector::ZeroVector;
+		const FRotator Rotation = RootComponent ? RootComponent->GetRelativeRotation() : FRotator::ZeroRotator;
+
+		if (DialogEditor->GetSequencePivot() == SelectedActor)
+		{
+			UDialogStage* DialogStageTemplate = DialogEditor->GetDialogStageTemplate();
+			if(DialogStageTemplate)
+			{
+				DialogStageTemplate->Modify();
+				DialogStageTemplate->Location = Location;
+				DialogStageTemplate->Rotation = Rotation;
+			}
+			return true;
+		}
+
 		if (Slot)
 		{
-			const FVector Location = SelectedActor->GetActorLocation();
-			const FRotator Rotation = SelectedActor->GetActorRotation();
 			Slot->Modify();
 			Slot->SlotLocation = Location;
 			Slot->SlotRotation = Rotation;
-			
 		}
 
 		EndTransaction();

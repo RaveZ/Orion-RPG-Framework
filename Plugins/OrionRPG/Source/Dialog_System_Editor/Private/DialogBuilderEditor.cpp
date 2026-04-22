@@ -518,8 +518,18 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 
 		if (Sequencer)
 		{
-			Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshAllImmediately);
+			if (EditingDialogSequence)
+			{
+				Sequencer->ResetToNewRootSequence(*EditingDialogSequence);
+
+				Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshAllImmediately);
+				Sequencer->ForceEvaluate();
+			}
 		}
+
+		GEditor->SelectNone(true, true, false);
+
+		GEditor->NoteSelectionChange();
 	}
 }
 
@@ -775,9 +785,9 @@ void FDialogBuilderEditor::UpdateDialogStage()
 	
 	if (!EditingDialogGraph || !CurrentSequenceNode.IsValid()) return;
 
-	UDialogStage* DialogStageToUse = CurrentSequenceNode.Get()->DialogStageToUse;
+	DialogStageTemplate = CurrentSequenceNode.Get()->DialogStageToUse;
 	UDialogStage* DialogStage = CurrentSequenceNode.Get()->DialogStage;
-	if (!DialogStage || !DialogStageToUse)
+	if (!DialogStage || !DialogStageTemplate.IsValid())
 	{
 		DestroyDialogStage();
 		return;
@@ -2228,8 +2238,7 @@ UDialogSequenceSlot* FDialogBuilderEditor::GetTemplateSlot(AActor* InActor)
 	}
 
 	UDialogStage* DialogStage = CurrentSequenceNode.Get()->DialogStage;
-	UDialogStage* DialogStageTemplate = CurrentSequenceNode.Get()->DialogStageToUse;
-	if (!DialogStage || !DialogStageTemplate)
+	if (!DialogStage || !DialogStageTemplate.IsValid())
 	{
 		return nullptr;
 	}
@@ -2246,7 +2255,7 @@ UDialogSequenceSlot* FDialogBuilderEditor::GetTemplateSlot(AActor* InActor)
 		}
 	}
 
-	if (DialogStageTemplate->Slots.IsValidIndex(index))
+	if (DialogStageTemplate.Get()->Slots.IsValidIndex(index))
 	{
 		return DialogStageTemplate->Slots[index];
 	}

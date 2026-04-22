@@ -386,6 +386,7 @@ public:
 	//Getter
 	TSharedPtr<SDialogDefinitions> GetDialogDefinitionsWidget() const { return DialogDefinitionsWidget; }
 	AActor* GetSequencePivot() { return SequencePivot.Get(); };
+	class UDialogStage* GetDialogStageTemplate() { return DialogStageTemplate.Get(); };
 	AActor* GetDialogCamera() { return DialogCamera.Get(); }
 
 	FGraphAppearanceInfo GetGraphAppearance() const;
@@ -544,6 +545,7 @@ protected:
 	
 	//sequencer
 	TWeakObjectPtr<class UDialogBuilderNode_DialogSequence> CurrentSequenceNode;
+	TWeakObjectPtr<class UDialogStage> DialogStageTemplate;
 	TSharedPtr<ISequencer> Sequencer;
 	TWeakObjectPtr<AActor> SequencePivot;
 	TMap<UDialogSequenceSlot*, TWeakObjectPtr<AActor>> DialogSlotActors;
