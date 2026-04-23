@@ -5,6 +5,7 @@
 #include "OrionDialogInterface.h"
 
 #include "Engine/Engine.h"
+#include "DialogBuilderGraph.h"
 #include "DialogBuilderSetting.h"
 #include "DialogDefinition.h"
 #include "DialogComponent.h"
@@ -125,6 +126,7 @@ namespace OrionDialogTemplate
 				return;
 			}
 
+
 			const FFrameTime RelativeFrameTime = Context.GetTime() - InDialogSection->GetInclusiveStartFrame();
 
 			float StartTimeSeconds = FMath::Max(0.0f, Context.GetFrameRate().AsSeconds(RelativeFrameTime));
@@ -156,18 +158,46 @@ namespace OrionDialogTemplate
 				bForceResyncForScrub ||
 				bForceResyncForReverse;
 
+
+			UDialogComponent* DialogComponent = UDialogBuilderFunctionLibrary::GetDialogComponent(World);
+			AActor* CurrentSpeakerActor = DialogComponent ? DialogComponent->GetDialogDefinitionActor(InDialogSection->SpeakerParticipantDefinition) : nullptr;
+
+			UDialogBuilderGraph* DialogGraph = DialogComponent ? DialogComponent->CurrentActiveDialog : nullptr;
+
+
 			if (bNeedsRestart)
 			{
 				StopDialogAudio();
-				DialogAudioComponent = UGameplayStatics::SpawnSound2D(
-					World,
-					InDialogLine.DialogSound,
-					1.0f,
-					1.0f,
-					StartTimeSeconds,
-					nullptr,
-					false,
-					false);
+			
+				if (CurrentSpeakerActor)
+				{
+					DialogAudioComponent = UGameplayStatics::SpawnSoundAttached(
+						InDialogLine.DialogSound, 
+						CurrentSpeakerActor->GetRootComponent(),
+						NAME_None,
+						FVector::ZeroVector, 
+						EAttachLocation::SnapToTarget, 
+						false, 
+						1.f, 
+						1.f, 
+						0.f, 
+						DialogGraph ? DialogGraph->DialogSoundAttenuation : nullptr);
+
+				}
+				else
+				{
+					DialogAudioComponent = UGameplayStatics::SpawnSound2D(
+						World,
+						InDialogLine.DialogSound,
+						1.0f,
+						1.0f,
+						StartTimeSeconds,
+						nullptr,
+						false,
+						true);
+					DialogAudioComponent->SetUISound(false);
+				}
+				
 			}
 
 			bHasLastAudioEvalTime = true;

@@ -92,6 +92,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 		TSubclassOf<class UCameraShakeBase> DialogCameraShake;
 
+	/**Disable camera cuts for dialog sequence*/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
+		bool bDisableCameraCuts;
+
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
 		bool bBlendCameraOnDialogEnd;
 

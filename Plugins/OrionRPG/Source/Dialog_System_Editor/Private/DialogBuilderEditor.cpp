@@ -2680,7 +2680,7 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 	}
 
 	const FVector RelativeOffset = ActorToFocus->GetActorTransform().InverseTransformPosition(AimLocation);
-	if (ACineCameraActor* CineCam = Cast<ACineCameraActor>(CameraActor))
+	/*if (ACineCameraActor* CineCam = Cast<ACineCameraActor>(CameraActor))
 	{
 		if (UCineCameraComponent* CinecamComp = CineCam->GetCineCameraComponent())
 		{
@@ -2691,7 +2691,7 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 				CinecamComp->FocusSettings.TrackingFocusSettings.ActorToTrack = ActorToFocus;
 			}
 		}
-	}
+	}*/
 	const FRotator DesiredRotation = (AimLocation - DesiredLocation).Rotation();
 
 	if (InSequenceShot->bDrawTargetFocus)

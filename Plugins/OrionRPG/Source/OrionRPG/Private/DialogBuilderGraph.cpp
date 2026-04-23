@@ -45,6 +45,7 @@ UDialogBuilderGraph::UDialogBuilderGraph()
 	bAutoAdvanceDialogLine = false;
 	bLockPlayerMovement = true;
 	bCanInterruptDialog = true;
+	bDisableCameraCuts = false;
 	bFadeCameraOnDialogBegin = true;
 	bBlendCameraOnDialogEnd = true;
 
@@ -55,12 +56,12 @@ UDialogBuilderGraph::UDialogBuilderGraph()
 	//Camera Default Setting
 	bUsePostProcess = false;
 	FocalLength = 35.0f;
-	Aperture = 2.8f;
+	Aperture = 10.0f;
 	bOverride_CustomNearClippingPlane = true;
 	CustomNearClippingPlane = 20.f;
 
 	CropSettings.AspectRatio = 2.39f;
-	bConstrainAspectRatio = false;
+	bConstrainAspectRatio = true;
 
 	Filmback.SensorWidth = 23.76f;
 	Filmback.SensorHeight = 13.365f;
@@ -182,8 +183,9 @@ void UDialogBuilderGraph::InitializeDialogActors()
 void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 {
 	if (!CurrentDialogSequence) return;
-	if(!InDialogStage || InDialogStage == CurrentDialogStage)
-		return;
+	if (!InDialogStage) return;
+
+	if (InDialogStage->StageTemplate == CurrentDialogStage) return;
 
 	const UMovieScene* MovieScene = CurrentDialogSequence ? CurrentDialogSequence->GetMovieScene() : nullptr;
 	if (!MovieScene)
@@ -196,7 +198,7 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 	SequencePivot->SetActorLocation(InDialogStage->Location);
 	SequencePivot->SetActorRotation(InDialogStage->Rotation);
 	UDialogStage* LastDialogStage = CurrentDialogStage;
-	CurrentDialogStage = InDialogStage;
+	CurrentDialogStage = InDialogStage->StageTemplate;
 
 
 	
@@ -523,6 +525,8 @@ void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialo
 		else
 		{
 			DialogAudio = UGameplayStatics::SpawnSound2D(this, InDialogLine->DialogLineData.DialogSound);
+			//make sure sound is pauseable
+			DialogAudio->SetUISound(false);
 		}
 	}
 
@@ -812,6 +816,7 @@ void UDialogBuilderGraph::PlaySequence(class ULevelSequence* InSequence, FMovieS
 	if (!DialogSequenceActor)
 	{
 		ALevelSequenceActor* OutActor = nullptr;
+		InPlaybackSetting.bDisableCameraCuts = bDisableCameraCuts;
 		ULevelSequencePlayer::CreateLevelSequencePlayer(GetWorld(), InSequence, InPlaybackSetting, OutActor);
 		DialogSequenceActor = OutActor;
 		if (DialogSequenceActor)
@@ -825,7 +830,7 @@ void UDialogBuilderGraph::PlaySequence(class ULevelSequence* InSequence, FMovieS
 		{	
 			SP->OnFinished.AddDynamic(this, &ThisClass::HandleDialogSequenceFinished);
 
-			SP->Stop();
+
 			if (InSequence)
 			{
 				DialogSequenceActor->PlaybackSettings = InPlaybackSetting;
@@ -997,6 +1002,14 @@ bool UDialogBuilderGraph::IsChoiceSelectionActive() const
 
 void UDialogBuilderGraph::AdvanceDialogLine()
 {
+	if (UWorld* World = GetWorld())
+	{
+		if (World->IsPaused())
+		{
+			return;
+		}
+	}
+
 	if(IsChoiceSelectionActive())
 	{
 		return;

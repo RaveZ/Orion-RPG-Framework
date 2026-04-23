@@ -454,7 +454,7 @@ FReply SDialogStageManager::OnAddDialogStage()
 	if (NewDialogStage)
 	{
 		NewDialogStage->OwningDialogGraph = Graph;
-		NewDialogStage->Name = FText::FromString(FString::Printf(TEXT("DialogStage%d"), Graph->DialogStages.Num() + 1));
+		NewDialogStage->Name = FText::FromString(FString::Printf(TEXT("Stage %d"), Graph->DialogStages.Num() + 1));
 		Graph->DialogStages.Add(NewDialogStage);
 
 		MarkGraphDirty();

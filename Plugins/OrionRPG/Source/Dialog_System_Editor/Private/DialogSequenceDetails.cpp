@@ -223,6 +223,73 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 					FOnGetContent::CreateSP(this, &FDialogSequenceDetails::OnGetShotActorToFocusListMenu))
 			];
 
+		const TSharedRef<IPropertyHandle> DrawTargetFocusHandle =
+			DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceShot, bDrawTargetFocus));
+
+		const TSharedRef<IPropertyHandle> TrackedBoneHandle =
+			DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceShot, TrackedBone));
+
+
+		ShotCategory.AddProperty(DrawTargetFocusHandle);
+		ShotCategory.AddProperty(TrackedBoneHandle);
+
+		IDetailCategoryBuilder& PlacementCategory = DetailBuilder.EditCategory("Camera Placement", LOCTEXT("CameraPlacementCategoryTitle", "Camera Placement"));
+
+
+		const TSharedRef<IPropertyHandle> CameraDistanceHandle =
+			DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceShot, CameraDistance));
+
+		const TSharedRef<IPropertyHandle> CameraOffsetHandle =
+			DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceShot, CameraOffset));
+
+		const TSharedRef<IPropertyHandle> TargetOffsetHandle =
+			DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceShot, TargetOffset));
+
+
+		PlacementCategory.AddProperty(CameraDistanceHandle);
+		PlacementCategory.AddProperty(CameraOffsetHandle);
+		PlacementCategory.AddProperty(TargetOffsetHandle);
+
+		IDetailCategoryBuilder& CameraSettingsCategory = DetailBuilder.EditCategory("Camera Default Settings", LOCTEXT("CameraDefaultSettingsCategoryTitle", "Camera Default Settings"));
+
+		UDialogBuilderGraph* DialogGraph = SequenceShot->OwningDialogGraph;
+
+		if (DialogGraph)
+		{
+			TArray<UObject*> ExternalObjects;
+			ExternalObjects.Add(DialogGraph);
+
+			CameraSettingsCategory.AddExternalObjectProperty(
+				ExternalObjects,
+				GET_MEMBER_NAME_CHECKED(UDialogBuilderGraph, FocalLength));
+
+			CameraSettingsCategory.AddExternalObjectProperty(
+				ExternalObjects,
+				GET_MEMBER_NAME_CHECKED(UDialogBuilderGraph, Aperture));
+
+
+			CameraSettingsCategory.AddExternalObjectProperty(
+				ExternalObjects,
+				GET_MEMBER_NAME_CHECKED(UDialogBuilderGraph, CustomNearClippingPlane));
+
+			CameraSettingsCategory.AddExternalObjectProperty(
+				ExternalObjects,
+				GET_MEMBER_NAME_CHECKED(UDialogBuilderGraph, CropSettings));
+
+			CameraSettingsCategory.AddExternalObjectProperty(
+				ExternalObjects,
+				GET_MEMBER_NAME_CHECKED(UDialogBuilderGraph, Filmback));
+
+			CameraSettingsCategory.AddExternalObjectProperty(
+				ExternalObjects,
+				GET_MEMBER_NAME_CHECKED(UDialogBuilderGraph, LensSettings));
+
+			CameraSettingsCategory.AddExternalObjectProperty(
+				ExternalObjects,
+				GET_MEMBER_NAME_CHECKED(UDialogBuilderGraph, PostProcessSettings));
+		}
+
+		
 		return;
 	}
 

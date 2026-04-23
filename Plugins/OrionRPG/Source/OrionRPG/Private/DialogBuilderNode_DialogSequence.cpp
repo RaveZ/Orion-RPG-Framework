@@ -99,7 +99,6 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogStageData()
 	if (!DialogStage)
 	{
 		DialogStage = NewObject<UDialogStage>(this, NAME_None, RF_Transactional);
-		DialogStage->OwningDialogGraph = GetOwningDialogGraph();
 	}
 	UMovieScene* MovieScene = DialogSequence ? DialogSequence->GetMovieScene() : nullptr;
 	if (!MovieScene)
@@ -108,7 +107,8 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogStageData()
 	}
 
 
-
+	DialogStage->StageTemplate = DialogStageToUse;
+	DialogStage->OwningDialogGraph = GetOwningDialogGraph();
 	DialogStage->Name = DialogStageToUse->Name;
 	DialogStage->Location = DialogStageToUse->Location;
 	DialogStage->Rotation = DialogStageToUse->Rotation;

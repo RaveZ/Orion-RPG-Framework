@@ -16,7 +16,6 @@ UDialogSequence::UDialogSequence(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 	MaxFrame = 0;
-	
 }
 
 UMovieSceneDialogTrack* UDialogSequence::GetOrCreateDialogTrack()
