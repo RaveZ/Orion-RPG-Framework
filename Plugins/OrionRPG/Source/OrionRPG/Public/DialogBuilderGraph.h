@@ -150,6 +150,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 		TArray<TObjectPtr<class UDialogCamera>> CameraDefinitions;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
+		TArray<TObjectPtr<class UDialogLight>> LightDefinitions;
+
 	/**List of dialog set used in this graph*/
 	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Detail")
 		TArray<TObjectPtr<class UDialogStage>> DialogStages;

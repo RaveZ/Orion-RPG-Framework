@@ -52,6 +52,14 @@ public:
 #endif
 };
 
+UCLASS(Blueprintable, BlueprintType, EditInlineNew, AutoExpandCategories = "Detail")
+class ORIONRPG_API UDialogSequenceSlot_Light : public UObject
+{
+	GENERATED_BODY()
+
+public:
+	UDialogSequenceSlot_Light();
+};
 
 
 UCLASS(Blueprintable, BlueprintType, EditInlineNew, AutoExpandCategories = "Detail")
@@ -83,6 +91,9 @@ public:
 
 	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Detail")
 	TArray<TObjectPtr<class UDialogSequenceSlot>> CameraSlots;
+
+	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Detail")
+	TArray<TObjectPtr<class UDialogSequenceSlot_Light>> LightSlots;
 
 
 #if WITH_EDITOR

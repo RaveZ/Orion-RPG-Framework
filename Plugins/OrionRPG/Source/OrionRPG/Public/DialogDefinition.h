@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "DialogData.h"
+#include "Engine/Light.h"
 #include "UObject/NoExportTypes.h"
 #include "GameFramework/Pawn.h"
 #include "DialogDefinition.generated.h"
@@ -107,6 +108,28 @@ public:
 	virtual TSoftClassPtr<class AActor> GetActorSoftClass() const override { return CameraClassSoft; }
 
 };
+
+
+UCLASS(Blueprintable, BlueprintType)
+class ORIONRPG_API UDialogLight : public UDialogDefinition
+{
+	GENERATED_BODY()
+
+public:
+	UDialogLight();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayAfter = "DisplayName", DisplayName = "Light Class"))
+	TSoftClassPtr<class ALight> LightClassSoft;
+
+	UPROPERTY(Transient)
+	TSubclassOf<class ALight> LightClass;
+
+	virtual TSubclassOf<class AActor> GetActorClass() const override { return LightClass.Get(); }
+	virtual void SetActorClass(TSubclassOf<class AActor> InActorClass) override { LightClass = InActorClass; }
+	virtual TSoftClassPtr<class AActor> GetActorSoftClass() const override { return TSoftClassPtr<AActor>(LightClassSoft.ToSoftObjectPath()); }
+
+};
+
 
 
 

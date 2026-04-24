@@ -45,7 +45,6 @@ static bool IsParticipantInGraph(const UDialogBuilderGraph* Graph, const UDialog
 
 	return false;
 }
-
 static bool IsDialogDefinitionInGraph(const UDialogBuilderGraph* Graph, const UDialogDefinition* Definition)
 {
 	if (!Graph || !Definition)
@@ -62,6 +61,14 @@ static bool IsDialogDefinitionInGraph(const UDialogBuilderGraph* Graph, const UD
 	}
 
 	for (const TObjectPtr<UDialogProp>& Entry : Graph->PropDefinitions)
+	{
+		if (Entry.Get() == Definition)
+		{
+			return true;
+		}
+	}
+
+	for (const TObjectPtr<UDialogLight>& Entry : Graph->LightDefinitions)
 	{
 		if (Entry.Get() == Definition)
 		{
@@ -140,7 +147,7 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 			}
 		}
 
-		if (UDialogPlayerParticipant* PlayerParticipant = Cast<UDialogPlayerParticipant>(CurrentObject.Get()))
+		if (CurrentObject.Get()->IsA<UDialogPlayerParticipant>() || CurrentObject.Get()->IsA<UDialogLight>())
 		{
 			if (TSharedPtr<IPropertyHandle> TagHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogDefinition, Tag)))
 			{
@@ -579,6 +586,28 @@ TSharedRef<SWidget> FDialogSequenceDetails::OnGetSlotParticipantListMenu()
 					FText::FromString(Prop->Tag.ToString()),
 					FSlateIcon(),
 					FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseSlotParticipantDefinition, static_cast<UDialogDefinition*>(Prop.Get()))));
+			}
+		}
+	}
+	MenuBuilder.EndSection();
+
+	MenuBuilder.BeginSection("SlotLights", LOCTEXT("SlotLightsSection", "Light Definitions"));
+	if (const UDialogSequenceSlot* Slot = DialogSequenceSlot.Get())
+	{
+		if (const UDialogBuilderGraph* Graph = Slot->OwningDialogGraph)
+		{
+			for (const TObjectPtr<UDialogLight>& Light : Graph->LightDefinitions)
+			{
+				if (!Light)
+				{
+					continue;
+				}
+
+				MenuBuilder.AddMenuEntry(
+					GetDialogDefinitionText(Light.Get()),
+					FText::FromString(Light->Tag.ToString()),
+					FSlateIcon(),
+					FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseSlotParticipantDefinition, static_cast<UDialogDefinition*>(Light.Get()))));
 			}
 		}
 	}

@@ -15,6 +15,11 @@
 #include "DialogBuilderFunctionLibrary.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Event/OrionEvent.h"
+#include "GameFramework/Character.h"
+#include "GameFramework/Actor.h"
+#include "DialogDefinition.h"
+#include "ClassIconFinder.h"
+#include "Engine/Light.h"
 
 
 #define LOCTEXT_NAMESPACE "DialogPaletteItem"
@@ -76,7 +81,12 @@ void SDialogPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForAct
 		.Padding(FMargin(0.0f, 0.0f, 0.0f, 0.0f))
 		.VAlign(VAlign_Center)
 		[
-			IconWidget
+			SNew(SBox)
+				.WidthOverride(27.0f)
+				.HeightOverride(27.0f)
+				[
+					IconWidget
+				]
 		];
 
 
@@ -108,20 +118,63 @@ const FSlateBrush* SDialogPaletteItem::GetPaletteIconBrushForAction(const TShare
 		return FAppStyle::GetBrush(TEXT("NoBrush"));
 	}
 
-	// Preferred: use SectionID (since you asked “per section”)
+	UClass* IconClass = nullptr;
 	switch (Action->GetSectionID())
 	{
 	case DialogSectionID::PARTICIPANTS:
-		return FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.Dialog.Participant");
+	{
+		return FClassIconFinder::FindThumbnailForClass(ACharacter::StaticClass());
+		//return FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.Dialog.Participant");
+	}
 
 	case DialogSectionID::PROPS:
-		return FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.Dialog.Prop");
+	{
+		const FAssetSchemaAction_Prop* PropAction = static_cast<const FAssetSchemaAction_Prop*>(Action.Get());
+		if (PropAction && PropAction->Prop)
+		{
+			IconClass = PropAction->Prop->PropClassSoft.Get();
+			if (IconClass)
+			{
+				return FClassIconFinder::FindThumbnailForClass(IconClass);
+			}
+		}
+		return FClassIconFinder::FindThumbnailForClass(AActor::StaticClass());
+		//return FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.Dialog.Prop");
+	}
+
+	case DialogSectionID::LIGHTS:
+	{
+		if (Action->GetTypeId() == FAssetSchemaAction_Light::StaticGetTypeId())
+		{
+			const FAssetSchemaAction_Light* LightAction = static_cast<const FAssetSchemaAction_Light*>(Action.Get());
+			if (LightAction && LightAction->Light)
+			{
+				// 1) already resolved runtime class
+				if (TSubclassOf<AActor> ActorClass = LightAction->Light->GetActorClass())
+				{
+					IconClass = *ActorClass;
+				}
+				// 2) loaded soft class
+				else
+				{
+					IconClass = LightAction->Light->LightClassSoft.Get();
+				}
+
+				if (IconClass)
+				{
+					return FClassIconFinder::FindThumbnailForClass(IconClass);
+				}
+			}
+		}
+
+		// fallback if soft class is not loaded / unset
+		return FClassIconFinder::FindThumbnailForClass(ALight::StaticClass());
+	}
 
 	default:
 		break;
 	}
 
-	// Fallback
 	return FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.Dialog");
 }
 
@@ -178,30 +231,47 @@ TSharedRef<SWidget> SDialogPaletteItem::CreateTextSlotWidget(FCreateWidgetForAct
 FText SDialogPaletteItem::GetDisplayText() const
 {
 	const UEdGraphSchema_DialogBuilder* DialogSchema = GetDefault<UEdGraphSchema_DialogBuilder>();
-	if (MenuDescriptionCache.IsOutOfDate(DialogSchema))
+	if (!MenuDescriptionCache.IsOutOfDate(DialogSchema))
 	{
-		TSharedPtr< FEdGraphSchemaAction > GraphAction = ActionPtr.Pin();
-		FAssetSchemaAction_Participant* GraphAction_Participant = (FAssetSchemaAction_Participant*)GraphAction.Get();
-		FAssetSchemaAction_Prop* GraphAction_Prop = (FAssetSchemaAction_Prop*)GraphAction.Get();
+		return MenuDescriptionCache;
+	}
 
+	TSharedPtr<FEdGraphSchemaAction> GraphAction = ActionPtr.Pin();
+	if (!GraphAction.IsValid())
+	{
+		return FText::FromString("Empty");
+	}
 
-		if (UDialogPlayerParticipant* PlayerParticipant = Cast<UDialogPlayerParticipant>(GraphAction_Participant->Participant))
+	if (GraphAction->GetTypeId() == FAssetSchemaAction_Participant::StaticGetTypeId())
+	{
+		const FAssetSchemaAction_Participant* ParticipantAction = static_cast<const FAssetSchemaAction_Participant*>(GraphAction.Get());
+		if (const UDialogPlayerParticipant* PlayerParticipant = Cast<UDialogPlayerParticipant>(ParticipantAction ? ParticipantAction->Participant : nullptr))
 		{
-			FText ParticipantName = FText::FromString("PLAYER - " + PlayerParticipant->DisplayName.ToString());
-			FText FinalParticipantName = ParticipantName.IsEmpty() ? FText::FromString("PLAYER - EMPTY") : ParticipantName;
-			MenuDescriptionCache.SetCachedText(FinalParticipantName, DialogSchema);
+			const FText ParticipantName = FText::FromString("PLAYER - " + PlayerParticipant->DisplayName.ToString());
+			MenuDescriptionCache.SetCachedText(ParticipantName.IsEmpty() ? FText::FromString("PLAYER - EMPTY") : ParticipantName, DialogSchema);
 		}
-		else if (UDialogParticipant* DialogParticipant = Cast<UDialogParticipant>(GraphAction_Participant->Participant))
+		else if (const UDialogParticipant* DialogParticipant = Cast<UDialogParticipant>(ParticipantAction ? ParticipantAction->Participant : nullptr))
 		{
-			FText ParticipantName = DialogParticipant->GetDisplayName();
-			FText FinalParticipantName = ParticipantName.IsEmpty() ? FText::FromString("Empty") : ParticipantName;
-			MenuDescriptionCache.SetCachedText(FinalParticipantName, DialogSchema);
+			const FText ParticipantName = DialogParticipant->GetDisplayName();
+			MenuDescriptionCache.SetCachedText(ParticipantName.IsEmpty() ? FText::FromString("Empty") : ParticipantName, DialogSchema);
 		}
-		else if (UDialogProp* DialogProp = Cast<UDialogProp>(GraphAction_Prop->Prop))
+	}
+	else if (GraphAction->GetTypeId() == FAssetSchemaAction_Prop::StaticGetTypeId())
+	{
+		const FAssetSchemaAction_Prop* PropAction = static_cast<const FAssetSchemaAction_Prop*>(GraphAction.Get());
+		if (const UDialogProp* DialogProp = Cast<UDialogProp>(PropAction ? PropAction->Prop : nullptr))
 		{
-			FText PropName = DialogProp->DisplayName;
-			FText FinalPropName = PropName.IsEmpty() ? FText::FromString("Empty") : PropName;
-			MenuDescriptionCache.SetCachedText(FinalPropName, DialogSchema);
+			const FText PropName = DialogProp->DisplayName;
+			MenuDescriptionCache.SetCachedText(PropName.IsEmpty() ? FText::FromString("Empty") : PropName, DialogSchema);
+		}
+	}
+	else if (GraphAction->GetTypeId() == FAssetSchemaAction_Light::StaticGetTypeId())
+	{
+		const FAssetSchemaAction_Light* LightAction = static_cast<const FAssetSchemaAction_Light*>(GraphAction.Get());
+		if (const UDialogLight* DialogLight = Cast<UDialogLight>(LightAction ? LightAction->Light : nullptr))
+		{
+			const FText LightName = DialogLight->DisplayName;
+			MenuDescriptionCache.SetCachedText(LightName.IsEmpty() ? FText::FromString("Empty") : LightName, DialogSchema);
 		}
 	}
 

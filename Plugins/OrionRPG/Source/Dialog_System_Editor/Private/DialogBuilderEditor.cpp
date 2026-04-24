@@ -36,6 +36,7 @@
 #include "Kismet2/KismetEditorUtilities.h"
 #include "MovieScenePossessable.h"
 #include "K2Node.h"
+#include "Components/ArrowComponent.h"
 #include "Engine/PointLight.h"
 #include "Engine/SpotLight.h"
 #include "Engine/DirectionalLight.h"
@@ -648,6 +649,12 @@ void FDialogBuilderEditor::CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot
 
 	UDialogDefinition* InDialogDefinition = InSlot->DialogDefinition;
 
+	if(InDialogDefinition->IsA<UDialogLight>())
+	{
+		// no need tp create track for light,
+		return;
+	}
+
 	UMovieScene* MovieScene = EditingDialogSequence ? EditingDialogSequence->GetMovieScene() : nullptr;
 	if (!MovieScene || !InDialogDefinition)
 	{
@@ -1027,6 +1034,14 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 					}
 					else if (NewActor->IsA(ASpotLight::StaticClass()))
 					{
+
+						UArrowComponent* ArrowComponent = NewObject<UArrowComponent>(NewActor, TEXT("CameraArrow"));
+						ArrowComponent->SetupAttachment(NewActor->GetRootComponent());
+						ArrowComponent->bHiddenInGame = false;
+						ArrowComponent->ArrowColor = FColor::Cyan;
+						ArrowComponent->ArrowSize = .5f;
+						BillboardComponent->SetVisibility(true);
+						ArrowComponent->RegisterComponent();
 						if (UTexture2D* Sprite = LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EditorResources/LightIcons/S_LightSpot")))
 						{
 							BillboardComponent->SetSprite(Sprite);
@@ -1040,7 +1055,6 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 					{
 						if (UCineCameraComponent* CineCameraComponent = CineCam->GetCineCameraComponent())
 						{
-
 							UStaticMeshComponent* ProxyMeshComponent = NewObject<UCameraProxyMeshComponent>(CineCam, NAME_None, RF_Transactional | RF_TextExportTransient);
 							ProxyMeshComponent->SetupAttachment(CineCameraComponent);
 							ProxyMeshComponent->SetIsVisualizationComponent(true);

@@ -42,6 +42,11 @@ void UDialogSequenceSlot::SetDialogDefinition(UDialogDefinition* InDialogDefinit
 	}
 }
 
+UDialogSequenceSlot_Light::UDialogSequenceSlot_Light()
+{
+}
+
+
 #if WITH_EDITOR
 
 

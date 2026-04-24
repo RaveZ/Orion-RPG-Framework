@@ -174,6 +174,7 @@ void SDialogDefinitions::Construct(const FArguments& InArgs, TWeakPtr<FDialogBui
 	TMap<int32, bool> ExpandedSections;
 	ExpandedSections.Add(DialogSectionID::PARTICIPANTS, true);
 	ExpandedSections.Add(DialogSectionID::PROPS, true);
+	ExpandedSections.Add(DialogSectionID::LIGHTS, true);
 
 	GraphActionMenu->SetSectionExpansion(ExpandedSections);
 
@@ -231,6 +232,12 @@ FAssetSchemaAction_Prop* SDialogDefinitions::SelectionAsProp() const
 {
 	return SelectionAsType<FAssetSchemaAction_Prop>(GraphActionMenu);
 }
+
+FAssetSchemaAction_Light* SDialogDefinitions::SelectionAsLight() const
+{
+	return SelectionAsType<FAssetSchemaAction_Light>(GraphActionMenu);
+}
+
 void SDialogDefinitions::OnRequestRenameOnActionNode()
 {
 	// Attempt to rename in both menus, only one of them will have anything selected
@@ -302,32 +309,45 @@ void SDialogDefinitions::CollectAllActions(FGraphActionListBuilderBase& OutAllAc
 
 	TSharedPtr<FDialogBuilderEditor> DialogSystemEditor = DialogEditorPtr.Pin();
 
-	EFieldIteratorFlags::SuperClassFlags FieldIteratorSuperFlag = EFieldIteratorFlags::IncludeSuper;
-
 	if (DialogSystemEditor.IsValid())
 	{
-		// Grab participants
+		// Participants
 		for (int32 i = 0; i < DialogSystemObj->ParticipantDefinitions.Num(); i++)
 		{
 			UDialogParticipant* DialogParticipant = DialogSystemObj->ParticipantDefinitions[i];
-
 			if (!DialogParticipant) continue;
 
-			TSharedPtr<FAssetSchemaAction_Participant> NeUbergraphAction = MakeShareable(new FAssetSchemaAction_Participant(FText::GetEmpty(), FText::GetEmpty(), FText::GetEmpty(), 2, DialogSectionID::PARTICIPANTS));
-			NeUbergraphAction->FuncName = DialogParticipant->GetFName();
-			NeUbergraphAction->Participant = DialogParticipant;
-			OutAllActions.AddAction(NeUbergraphAction);
+			TSharedPtr<FAssetSchemaAction_Participant> NewAction =
+				MakeShareable(new FAssetSchemaAction_Participant(FText::GetEmpty(), FText::GetEmpty(), FText::GetEmpty(), 2, DialogSectionID::PARTICIPANTS));
+			NewAction->FuncName = DialogParticipant->GetFName();
+			NewAction->Participant = DialogParticipant;
+			OutAllActions.AddAction(NewAction);
 		}
 
-		//Grab props
+		// Props
 		for (int32 i = 0; i < DialogSystemObj->PropDefinitions.Num(); i++)
 		{
 			UDialogProp* DialogProp = DialogSystemObj->PropDefinitions[i];
 			if (!DialogProp) continue;
-			TSharedPtr<FAssetSchemaAction_Prop> NeUbergraphAction = MakeShareable(new FAssetSchemaAction_Prop(FText::GetEmpty(), FText::GetEmpty(), FText::GetEmpty(), 2, DialogSectionID::PROPS));
-			NeUbergraphAction->FuncName = DialogProp->GetFName();
-			NeUbergraphAction->Prop = DialogProp;
-			OutAllActions.AddAction(NeUbergraphAction);
+
+			TSharedPtr<FAssetSchemaAction_Prop> NewAction =
+				MakeShareable(new FAssetSchemaAction_Prop(FText::GetEmpty(), FText::GetEmpty(), FText::GetEmpty(), 2, DialogSectionID::PROPS));
+			NewAction->FuncName = DialogProp->GetFName();
+			NewAction->Prop = DialogProp;
+			OutAllActions.AddAction(NewAction);
+		}
+
+		// Lights
+		for (int32 i = 0; i < DialogSystemObj->LightDefinitions.Num(); i++)
+		{
+			UDialogLight* DialogLight = DialogSystemObj->LightDefinitions[i];
+			if (!DialogLight) continue;
+
+			TSharedPtr<FAssetSchemaAction_Light> NewAction =
+				MakeShareable(new FAssetSchemaAction_Light(FText::GetEmpty(), FText::GetEmpty(), FText::GetEmpty(), 2, DialogSectionID::LIGHTS));
+			NewAction->FuncName = DialogLight->GetFName();
+			NewAction->Light = DialogLight;
+			OutAllActions.AddAction(NewAction);
 		}
 	}
 }
@@ -335,6 +355,7 @@ void SDialogDefinitions::CollectStaticSections(TArray<int32>& StaticSectionIDs)
 {
 	StaticSectionIDs.Add(DialogSectionID::PARTICIPANTS);
 	StaticSectionIDs.Add(DialogSectionID::PROPS);
+	StaticSectionIDs.Add(DialogSectionID::LIGHTS);
 }
 FReply SDialogDefinitions::OnActionDragged(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions, const FPointerEvent& MouseEvent)
 {
@@ -347,30 +368,37 @@ FReply SDialogDefinitions::OnCategoryDragged(const FText& InCategory, const FPoi
 void SDialogDefinitions::OnActionSelected(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions)
 {
 	TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
-	TSharedPtr<FEdGraphSchemaAction> InAction(InActions.Num() > 0 ? InActions[0] : NULL);
-	if (InAction.IsValid())
+	TSharedPtr<FEdGraphSchemaAction> InAction(InActions.Num() > 0 ? InActions[0] : nullptr);
+	if (!InAction.IsValid())
 	{
-		//Participant
-		FAssetSchemaAction_Participant* ParticipantAction = (FAssetSchemaAction_Participant*)InAction.Get();
+		return;
+	}
 
-		UDialogParticipant* DialogParticipant = ParticipantAction->Participant;
-		if (DialogEditor && DialogParticipant)
+	if (FAssetSchemaAction_Participant* ParticipantAction = static_cast<FAssetSchemaAction_Participant*>(InAction.Get()))
+	{
+		if (DialogEditor && ParticipantAction->Participant)
 		{
-			DialogEditor->SetDetailsObject(DialogParticipant);
-			DialogEditor->SelectDialogDefinitionActor(DialogParticipant);
+			DialogEditor->SetDetailsObject(ParticipantAction->Participant);
+			DialogEditor->SelectDialogDefinitionActor(ParticipantAction->Participant);
 		}
-		
-		//Prop
-		FAssetSchemaAction_Prop* PropAction = (FAssetSchemaAction_Prop*)InAction.Get();
+	}
 
-		UDialogProp* DialogProp = PropAction->Prop;
-		if (DialogEditor && DialogProp)
+	if (FAssetSchemaAction_Prop* PropAction = static_cast<FAssetSchemaAction_Prop*>(InAction.Get()))
+	{
+		if (DialogEditor && PropAction->Prop)
 		{
-			DialogEditor->SetDetailsObject(DialogProp);
-			DialogEditor->SelectDialogDefinitionActor(DialogProp);
+			DialogEditor->SetDetailsObject(PropAction->Prop);
+			DialogEditor->SelectDialogDefinitionActor(PropAction->Prop);
 		}
-		
-		
+	}
+
+	if (FAssetSchemaAction_Light* LightAction = static_cast<FAssetSchemaAction_Light*>(InAction.Get()))
+	{
+		if (DialogEditor && LightAction->Light)
+		{
+			DialogEditor->SetDetailsObject(LightAction->Light);
+			DialogEditor->SelectDialogDefinitionActor(LightAction->Light);
+		}
 	}
 }
 
@@ -535,14 +563,16 @@ bool SDialogDefinitions::CanRequestRenameOnActionNode(TWeakPtr<struct FGraphActi
 FText SDialogDefinitions::OnGetSectionTitle(int32 InSectionID)
 {
 	FText SeperatorTitle;
-	/* Setup an appropriate name for the section for this node */
 	switch (InSectionID)
 	{
 	case DialogSectionID::PARTICIPANTS:
 		SeperatorTitle = NSLOCTEXT("GraphActionNode", "Participants", "Participants");
-		break; 
+		break;
 	case DialogSectionID::PROPS:
 		SeperatorTitle = NSLOCTEXT("GraphActionNode", "Props", "Props");
+		break;
+	case DialogSectionID::LIGHTS:
+		SeperatorTitle = NSLOCTEXT("GraphActionNode", "Lights", "Lights");
 		break;
 	case DialogSectionID::NONE:
 		SeperatorTitle = FText::GetEmpty();
@@ -550,7 +580,7 @@ FText SDialogDefinitions::OnGetSectionTitle(int32 InSectionID)
 	default:
 		break;
 	}
-	
+
 	return SeperatorTitle;
 }
 TSharedRef<SWidget> SDialogDefinitions::OnGetSectionWidget(TSharedRef<SWidget> RowWidget, int32 InSectionID)
@@ -570,6 +600,10 @@ TSharedRef<SWidget> SDialogDefinitions::OnGetSectionWidget(TSharedRef<SWidget> R
 		AddNewText = LOCTEXT("AddNewProps", "New Props");
 		MetaDataTag = TEXT("AddNewProps");
 		break;
+	case DialogSectionID::LIGHTS:
+		AddNewText = LOCTEXT("AddNewLights", "New Light");
+		MetaDataTag = TEXT("AddNewLights");
+		break;
 	default:
 		return SNullWidget::NullWidget;
 	}
@@ -578,8 +612,6 @@ TSharedRef<SWidget> SDialogDefinitions::OnGetSectionWidget(TSharedRef<SWidget> R
 }
 FReply SDialogDefinitions::OnAddButtonClickedOnSection(int32 InSectionID)
 {
-	TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
-
 	switch (InSectionID)
 	{
 	case DialogSectionID::PARTICIPANTS:
@@ -587,6 +619,9 @@ FReply SDialogDefinitions::OnAddButtonClickedOnSection(int32 InSectionID)
 		break;
 	case DialogSectionID::PROPS:
 		CreateNewProp();
+		break;
+	case DialogSectionID::LIGHTS:
+		CreateNewLight();
 		break;
 	}
 	return FReply::Handled();
@@ -676,13 +711,17 @@ void SDialogDefinitions::OnDeleteEntry()
 		{
 			DialogEditorPtr.Pin()->OnDialogDefinitionRemoved(ParticipantAction->Participant);
 		}
-
 		DialogGraph->ParticipantDefinitions.Remove(ParticipantAction->Participant);
 	}
 
 	if (FAssetSchemaAction_Prop* PropAction = SelectionAsProp())
 	{
 		DialogGraph->PropDefinitions.Remove(PropAction->Prop);
+	}
+
+	if (FAssetSchemaAction_Light* LightAction = SelectionAsLight())
+	{
+		DialogGraph->LightDefinitions.Remove(LightAction->Light);
 	}
 
 	Refresh();
@@ -760,6 +799,7 @@ void SDialogDefinitions::CreateNewParticipant()
 	DialogGraph->Modify();
 
 	UDialogParticipant* NewParticipant = NewObject<UDialogParticipant>(DialogGraph, NAME_None, RF_Transactional);
+	NewParticipant->DisplayName = FText::FromString(FString::Printf(TEXT("Participant %d"), DialogGraph->ParticipantDefinitions.Num()));
 	DialogGraph->ParticipantDefinitions.Add(NewParticipant);
 
 	if (DialogEditorPtr.IsValid())
@@ -777,12 +817,36 @@ void SDialogDefinitions::CreateNewProp()
 	{
 		const FScopedTransaction Transaction(LOCTEXT("AddParticipant", "Add Participant"));
 		UDialogProp* NewProp = NewObject<UDialogProp>(DialogGraph, NAME_None, RF_Transactional);
+		NewProp->DisplayName = FText::FromString(FString::Printf(TEXT("Prop %d"), DialogGraph->PropDefinitions.Num()));
 		DialogGraph->PropDefinitions.Add(NewProp);
 
 		DialogGraph->Modify();
 
 		Refresh();
 	}
+}
+
+void SDialogDefinitions::CreateNewLight()
+{
+	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
+	if (!DialogGraph)
+	{
+		return;
+	}
+
+	const FScopedTransaction Transaction(LOCTEXT("AddLight", "Add Light"));
+	DialogGraph->Modify();
+
+	UDialogLight* NewLight = NewObject<UDialogLight>(DialogGraph, NAME_None, RF_Transactional);
+	NewLight->DisplayName = FText::FromString(FString::Printf(TEXT("Light %d"), DialogGraph->LightDefinitions.Num()));
+	DialogGraph->LightDefinitions.Add(NewLight);
+
+	if (DialogEditorPtr.IsValid())
+	{
+		DialogEditorPtr.Pin()->OnDialogDefinitionAdded(NewLight);
+	}
+
+	Refresh();
 }
 
 void SDialogDefinitions::OnDeleteGraph(UEdGraph* InGraph)

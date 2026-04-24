@@ -3,6 +3,7 @@
 
 #include "DialogDefinition.h"
 #include "CineCameraActor.h"
+#include "Engine/PointLight.h"
 #include "Misc/Guid.h"
 
 
@@ -46,5 +47,12 @@ UDialogCamera::UDialogCamera()
 	CameraClass = ACineCameraActor::StaticClass();
 }
 
+UDialogLight::UDialogLight()
+{
+	DisplayName = FText::FromString("Light");
+	LightClassSoft = APointLight::StaticClass();
+	LightClass = APointLight::StaticClass();
+}
 #undef LOCTEXT_NAMESPACE
+
 

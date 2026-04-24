@@ -210,6 +210,7 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 			CachedActorMap.Emplace(SlotId, DialogActor);
 			DialogSlotActors.Emplace(Slot, DialogActor);
 			CacheOriginalActorTransform(SlotId, DialogActor);
+			
 			CurrentDialogSequence->UnbindPossessableObjects(Slot->ID);
 			CurrentDialogSequence->BindPossessableObject(Slot->ID, *DialogActor, DialogActor->GetClass());
 		}
@@ -339,6 +340,14 @@ void UDialogBuilderGraph::CollectDialogDefinitionsForSetup(TArray<UDialogDefinit
 		if (Camera)
 		{
 			OutDefinitions.AddUnique(Camera);
+		}
+	}
+
+	for (UDialogLight* Light : LightDefinitions)
+	{
+		if (Light)
+		{
+			OutDefinitions.AddUnique(Light);
 		}
 	}
 
