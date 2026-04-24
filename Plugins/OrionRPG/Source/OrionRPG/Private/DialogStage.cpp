@@ -61,6 +61,8 @@ UDialogStage::UDialogStage()
 void UDialogStage::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
+
+
 }
 #endif
 

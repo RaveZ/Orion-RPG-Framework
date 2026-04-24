@@ -5,6 +5,8 @@
 #include "DialogBuilderEdNode_PlayerChoice.h"
 #include "DialogBuilderNode_DialogSequence.h"
 #include "DialogBuilderSetting.h"
+#include "DialogBuilderGraph.h"
+#include "DialogStage.h"
 #include "DialogBuilderNode.h"
 
 
@@ -56,6 +58,21 @@ void UDialogBuilderEdNode_DialogSequence::PostPasteNode()
 	UDialogBuilderNode_DialogSequence* DialogSequenceNode = Cast<UDialogBuilderNode_DialogSequence>(NodeInstance);
 	if (DialogSequenceNode)
 	{
+		if (UDialogBuilderGraph* DialogGraph = DialogSequenceNode->GetOwningDialogGraph())
+		{
+			for (auto& DialogStage : DialogGraph->DialogStages)
+			{
+				UDialogStage* CurrentTemplateStage = DialogSequenceNode->DialogStageToUse;
+				if (DialogStage && CurrentTemplateStage)
+				{
+					if (CurrentTemplateStage->Name.ToString() == DialogStage->Name.ToString())
+					{
+						DialogSequenceNode->DialogStageToUse = DialogStage;
+						break;
+					}
+				}
+			}
+		}
 	}
 	GetGraph()->NotifyGraphChanged();
 }

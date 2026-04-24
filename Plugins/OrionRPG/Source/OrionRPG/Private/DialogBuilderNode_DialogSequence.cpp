@@ -194,7 +194,11 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogStageData()
 	}*/
 }
 
+void UDialogBuilderNode_DialogSequence::PostDuplicate(EDuplicateMode::Type DuplicateMode)
+{
+	Super::PostDuplicate(DuplicateMode);
 
+}
 
 
 #if WITH_EDITOR

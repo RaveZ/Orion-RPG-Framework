@@ -400,7 +400,7 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 		}
 		bool bIsCamera = ActorToSelect->IsA(ACameraActor::StaticClass());
 		UDialogDefinition* DialogDefinition = DialogEditor->FindDialogDefinitionByActor(ActorToSelect);
-		UDialogSequenceSlot* Slot = DialogEditor->GetTemplateSlot(ActorToSelect);
+		UDialogSequenceSlot* Slot =  DialogEditor->GetTemplateSlot(ActorToSelect);
 
 		
 		if (GEditor)

@@ -183,9 +183,9 @@ void UDialogBuilderGraph::InitializeDialogActors()
 void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 {
 	if (!CurrentDialogSequence) return;
-	if (!InDialogStage) return;
 
-	if (InDialogStage->StageTemplate == CurrentDialogStage) return;
+	if (!InDialogStage || InDialogStage == CurrentDialogStage)
+		return;
 
 	const UMovieScene* MovieScene = CurrentDialogSequence ? CurrentDialogSequence->GetMovieScene() : nullptr;
 	if (!MovieScene)
@@ -198,7 +198,7 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 	SequencePivot->SetActorLocation(InDialogStage->Location);
 	SequencePivot->SetActorRotation(InDialogStage->Rotation);
 	UDialogStage* LastDialogStage = CurrentDialogStage;
-	CurrentDialogStage = InDialogStage->StageTemplate;
+	CurrentDialogStage = InDialogStage;
 
 
 	
@@ -1336,7 +1336,7 @@ AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot)
 	// Look up by the slot's ID (FName) which is the map's key type
 	if (TObjectPtr<AActor> ExistingActor = CachedActorMap.FindRef(InSlot->GetActorTag().GetTagName()))
 	{
-		ExistingActor->AttachToActor(SequencePivot, FAttachmentTransformRules::KeepWorldTransform);
+		ExistingActor->AttachToActor(SequencePivot, FAttachmentTransformRules::KeepRelativeTransform);
 		ExistingActor->SetActorRelativeLocation(InSlot->SlotLocation);
 		ExistingActor->SetActorRelativeRotation(InSlot->SlotRotation);
 		return ExistingActor;

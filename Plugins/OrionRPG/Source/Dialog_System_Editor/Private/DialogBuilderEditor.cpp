@@ -36,6 +36,9 @@
 #include "Kismet2/KismetEditorUtilities.h"
 #include "MovieScenePossessable.h"
 #include "K2Node.h"
+#include "Engine/PointLight.h"
+#include "Engine/SpotLight.h"
+#include "Engine/DirectionalLight.h"
 #include "Containers/Ticker.h"
 #include "GraphEditAction.h"
 #include "DialogBuilderEdNode_Edge.h"
@@ -969,9 +972,9 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 					return;
 				}
 
-				NewActor->SetActorTickEnabled(true);
-				NewActor->SetTickableWhenPaused(true);
-				NewActor->PrimaryActorTick.bStartWithTickEnabled = true;
+				NewActor->SetActorTickEnabled(false);
+				NewActor->SetTickableWhenPaused(false);
+				NewActor->PrimaryActorTick.bStartWithTickEnabled = false;
 				TArray<USkeletalMeshComponent*> SkeletalMeshComponents;
 				NewActor->GetComponents(SkeletalMeshComponents);
 
@@ -988,8 +991,48 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 				}
 
 				// Preserve the actor's world transform when attaching to the pivot.
-				NewActor->AttachToActor(EditorPinned->SequencePivot.Get(), FAttachmentTransformRules::KeepWorldTransform);
+				NewActor->AttachToActor(EditorPinned->SequencePivot.Get(), FAttachmentTransformRules::KeepRelativeTransform);
 
+
+				if (NewActor->IsA(ALight::StaticClass()))
+				{
+					UBillboardComponent* BillboardComponent = NewObject<UBillboardComponent>(NewActor, TEXT("LightBillboard"));
+					BillboardComponent->SetupAttachment(NewActor->GetRootComponent());
+					BillboardComponent->SetMobility(EComponentMobility::Movable);
+					BillboardComponent->SetHiddenInGame(false);
+					BillboardComponent->SetVisibility(true);
+					BillboardComponent->SetUsingAbsoluteScale(true);
+					BillboardComponent->bIsScreenSizeScaled = true;
+					BillboardComponent->bUseInEditorScaling = true;
+
+					BillboardComponent->ScreenSize = 0.005f;
+					BillboardComponent->SpriteInfo.Category = TEXT("Dialog");
+					BillboardComponent->SetEditorScale(.3f);
+					BillboardComponent->SpriteInfo.DisplayName = LOCTEXT("DialogSequencePivotSprite", "Light Prop");
+					BillboardComponent->RegisterComponent();
+					NewActor->SetActorHiddenInGame(false);
+					if (NewActor->IsA(APointLight::StaticClass()))
+					{
+						if (UTexture2D* Sprite = LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EditorResources/LightIcons/S_LightPoint")))
+						{
+							BillboardComponent->SetSprite(Sprite);
+						}
+					}
+					else if(NewActor->IsA(ADirectionalLight::StaticClass()))
+					{
+						if (UTexture2D* Sprite = LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EditorResources/LightIcons/S_LightDirectional")))
+						{
+							BillboardComponent->SetSprite(Sprite);
+						}
+					}
+					else if (NewActor->IsA(ASpotLight::StaticClass()))
+					{
+						if (UTexture2D* Sprite = LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EditorResources/LightIcons/S_LightSpot")))
+						{
+							BillboardComponent->SetSprite(Sprite);
+						}
+					}
+				}
 				if (bIsCamera)
 				{
 					EditorPinned->DialogCamera = NewActor;
@@ -1500,6 +1543,7 @@ void FDialogBuilderEditor::OnOpenDialogSequenceNode(UDialogBuilderNode_DialogSeq
 		CurrentSequenceNode = InSequenceNode;
 		GetDialogBuilderGraph()->CurrentEditingSequenceNode = CurrentSequenceNode.Get();
 		DialogStageWidget->SetObject(InSequenceNode->DialogStage);
+		DialogStageTemplate = InSequenceNode->DialogStageToUse;
 		OpenDialogSequence(InSequenceNode->DialogSequence);
 		UpdateDialogStage();
 
