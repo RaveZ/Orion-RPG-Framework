@@ -282,6 +282,11 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 				}
 
 			}
+
+			if (EditingDialogGraph->CurrentEditingSequenceNode)
+			{
+				OnOpenDialogSequenceNode(EditingDialogGraph->CurrentEditingSequenceNode);
+			}
 		}
 		
 	}

@@ -195,7 +195,12 @@ namespace OrionDialogTemplate
 						nullptr,
 						false,
 						true);
-					DialogAudioComponent->SetUISound(false);
+					
+					if (DialogComponent)
+					{
+						//somehow in editor if setuisound to false, there wont be any sound at all
+						DialogAudioComponent->SetUISound(false);
+					}
 				}
 				
 			}
