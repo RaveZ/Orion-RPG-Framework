@@ -30,10 +30,10 @@ public:
 
 protected:
 	// Slot
-	TSharedRef<SWidget> GetWidgetForSlotParticipantPicker(const TAttribute<FText>& InParticipantNameText, FOnGetContent GetContentMenu);
-	TSharedRef<SWidget> OnGetSlotParticipantListMenu();
-	void UseSlotParticipantDefinition(UDialogDefinition* InDialogDefinition);
-	void ClearSlotParticipantDefinition();
+	TSharedRef<SWidget> GetWidgetForSlotPicker(const TAttribute<FText>& InParticipantNameText, FOnGetContent GetContentMenu);
+	TSharedRef<SWidget> OnGetSlotListMenu();
+	void UseSlotDefinition(UDialogDefinition* InDialogDefinition);
+	void ClearSlotDefinition();
 
 	// Sequence Shot - ActorToFocus
 	TSharedRef<SWidget> GetWidgetForShotActorToFocusPicker(const TAttribute<FText>& InDefinitionText, FOnGetContent GetContentMenu);

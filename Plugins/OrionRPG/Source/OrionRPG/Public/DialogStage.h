@@ -53,7 +53,7 @@ public:
 };
 
 UCLASS(Blueprintable, BlueprintType, EditInlineNew, AutoExpandCategories = "Detail")
-class ORIONRPG_API UDialogSequenceSlot_Light : public UObject
+class ORIONRPG_API UDialogSequenceSlot_Light : public UDialogSequenceSlot
 {
 	GENERATED_BODY()
 

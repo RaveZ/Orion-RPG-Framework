@@ -9,6 +9,7 @@ class IDetailsView;
 class UDialogBuilderGraph;
 class UDialogStage;
 class UDialogSequenceSlot;
+class UDialogSequenceSlot_Light;
 class FUICommandList;
 
 struct FDialogStageListItem
@@ -20,6 +21,7 @@ struct FDialogSlotListItem
 {
 	TWeakObjectPtr<UDialogSequenceSlot> Slot;
 	bool bIsCameraSlot = false;
+	bool bIsLightSlot = false;
 	int32 SlotIndex = INDEX_NONE;
 };
 
@@ -56,14 +58,24 @@ private:
 	void OnRemoveSlot(UDialogSequenceSlot* InSlot, int32 InSlotIndex, bool bIsCameraSlot);
 	TSharedPtr<SWidget> OnSlotContextMenuOpening();
 
+	// Light slot list
+	TSharedRef<ITableRow> GenerateLightSlotRow(FDialogSlotListItemPtr InItem, const TSharedRef<STableViewBase>& InOwnerTable);
+	void OnLightSlotSelectionChanged(FDialogSlotListItemPtr InItem, ESelectInfo::Type InSelectInfo);
+	FReply OnAddLightSlot();
+	void OnRemoveLightSlot(UDialogSequenceSlot_Light* InSlot, int32 InSlotIndex);
+	TSharedPtr<SWidget> OnLightSlotContextMenuOpening();
+
+
 	// Delete command helpers
 	void OnDeleteSelection();
 	bool CanDeleteSelection() const;
 	bool IsSelectedSlotCamera() const;
+	bool IsSelectedSlotLight() const;
 
 	// Refresh
 	void RefreshDialogStageList();
 	void RefreshSlotList();
+	void RefreshLightSlotList();
 	void MarkGraphDirty() const;
 
 private:
@@ -73,9 +85,11 @@ private:
 
 	TArray<FDialogStageListItemPtr> DialogStageItems;
 	TArray<FDialogSlotListItemPtr> SlotItems;
+	TArray<FDialogSlotListItemPtr> LightSlotItems;
 
 	TSharedPtr<SListView<FDialogStageListItemPtr>> DialogStageListView;
 	TSharedPtr<SListView<FDialogSlotListItemPtr>> SlotListView;
+	TSharedPtr<SListView<FDialogSlotListItemPtr>> LightSlotListView;
 
 	TSharedPtr<IDetailsView> DialogStageDetailsView;
 	TSharedPtr<IDetailsView> SlotDetailsView;
@@ -87,6 +101,8 @@ private:
 	/** Pointer back to the Dialog editor that owns us */
 	TWeakPtr<FDialogBuilderEditor> DialogEditorPtr;
 
+	bool bSelectedSlotIsLight = false;
+
 private:
 	void RestoreSelection(const FName& InDialogStageObjectName, const FGuid& InSlotId);
 	void SelectDialogStageByObjectName(const FName& InDialogStageObjectName);
@@ -97,6 +113,7 @@ private:
 private:
 	FReply OnDialogStageItemClicked(FDialogStageListItemPtr InItem);
 	FReply OnSlotItemClicked(FDialogSlotListItemPtr InItem);
+	FReply OnLightSlotItemClicked(FDialogSlotListItemPtr InItem);
 
 	void ApplyDialogStageSelection(FDialogStageListItemPtr InItem);
 	void ApplySlotSelection(FDialogSlotListItemPtr InItem);

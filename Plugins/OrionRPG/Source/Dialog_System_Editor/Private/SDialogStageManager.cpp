@@ -115,55 +115,54 @@ public:
 	SLATE_BEGIN_ARGS(SDialogSlotPaletteItem) {}
 		SLATE_ARGUMENT(TWeakObjectPtr<UDialogSequenceSlot>, Slot)
 		SLATE_ARGUMENT(bool, IsCameraSlot)
+		SLATE_ARGUMENT(bool, IsLightSlot)
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs)
 	{
 		Slot = InArgs._Slot;
 		bIsCameraSlot = InArgs._IsCameraSlot;
+		bIsLightSlot = InArgs._IsLightSlot;
 
 		ChildSlot
-		[
-			SNew(SHorizontalBox)
-
-			/*+ SHorizontalBox::Slot()
-			.AutoWidth()
-			.VAlign(VAlign_Center)
-			.Padding(0.f, 0.f, 4.f, 0.f)
 			[
-				SNew(SImage)
-				.Image(FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.Dialog.Prop"))
-			]*/
+				SNew(SHorizontalBox)
+					+ SHorizontalBox::Slot()
+					.FillWidth(1.0f)
+					.Padding(FMargin(7.0f, 4.0f, 4.0f, 4.0f))
+					.VAlign(VAlign_Center)
+					[
+						SNew(STextBlock)
+							.Text_Lambda([this]()
+								{
+									const UDialogSequenceSlot* LocalSlot = Slot.Get();
+									if (!LocalSlot)
+									{
+										return LOCTEXT("InvalidSlot", "Invalid");
+									}
 
-			+ SHorizontalBox::Slot()
-			.FillWidth(1.0f)
-			.Padding(FMargin(7.0f, 4.0f, 4.0f, 4.0f))
-			.VAlign(VAlign_Center)
-			[
-				SNew(STextBlock)
-				.Text_Lambda([this]()
-				{
-					const UDialogSequenceSlot* LocalSlot = Slot.Get();
-					UDialogDefinition* DialogDef = LocalSlot ? LocalSlot->DialogDefinition : nullptr;
-					if (!LocalSlot)
-					{
-						return LOCTEXT("InvalidSlot", "Invalid");
-					}
+									const UDialogDefinition* DialogDef = LocalSlot->DialogDefinition;
+									const FString Label = DialogDef ? DialogDef->DisplayName.ToString() : TEXT("None");
 
-					const FString Label = DialogDef
-						? DialogDef->DisplayName.ToString()
-						: "None";
-
-					return FText::FromString(Label);
-				})
-				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.0f))
-			]
-		];
+									if (bIsLightSlot)
+									{
+										return FText::FromString(FString::Printf(TEXT("%s"), *Label));
+									}
+									if (bIsCameraSlot)
+									{
+										return FText::FromString(FString::Printf(TEXT("%s"), *Label));
+									}
+									return FText::FromString(Label);
+								})
+							.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.0f))
+					]
+			];
 	}
 
 private:
 	TWeakObjectPtr<UDialogSequenceSlot> Slot;
 	bool bIsCameraSlot = false;
+	bool bIsLightSlot = false;
 };
 
 // -----------------------------------------------------------------------------
@@ -256,57 +255,111 @@ void SDialogStageManager::Construct(const FArguments& InArgs, TWeakPtr<FDialogBu
 			]
 		]
 
-		// 3) Slot List
 		+ SSplitter::Slot()
-		.Value(0.25f)
-		[
-			SNew(SBorder)
-			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
-			.Padding(4.0f)
+			.Value(0.25f)
 			[
-				SNew(SVerticalBox)
-
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				.Padding(4.0f)
-				[
-					SNew(SHorizontalBox)
-					+ SHorizontalBox::Slot()
-					.FillWidth(1.0f)
-					.VAlign(VAlign_Center)
+				SNew(SBorder)
+					.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+					.Padding(4.0f)
 					[
-						SNew(STextBlock)
-							.Text(LOCTEXT("SlotListTitle", "Slots"))
-							.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.5f))
-					]
-					+ SHorizontalBox::Slot()
-					.AutoWidth()
-					.Padding(0.f, 0.f, 2.f, 0.f)
-					[
-						SNew(SButton)
-						.ButtonStyle(FAppStyle::Get(), "SimpleButton")
-						.ContentPadding(FMargin(2.f))
-						.ToolTipText(LOCTEXT("AddSlotTooltip", "Add Slot"))
-						.OnClicked(this, &SDialogStageManager::OnAddSlot)
-						[
-							SNew(SImage).Image(FAppStyle::GetBrush("Icons.Plus"))
-						]
-					]
-				]
+						SNew(SSplitter)
+							.Orientation(Orient_Vertical)
 
-				+ SVerticalBox::Slot()
-				.FillHeight(1.0f)
-				.Padding(2.0f)
-				[
-					SAssignNew(SlotListView, SListView<FDialogSlotListItemPtr>)
-					.ListItemsSource(&SlotItems)
-					.OnGenerateRow(this, &SDialogStageManager::GenerateSlotRow)
-					.OnSelectionChanged(this, &SDialogStageManager::OnSlotSelectionChanged)
-					.OnContextMenuOpening(this, &SDialogStageManager::OnSlotContextMenuOpening)
-					.SelectionMode(ESelectionMode::Single)
-				]
+							// A) Regular Slots (participants/props/camera)
+							+ SSplitter::Slot()
+							.Value(0.5f)
+							[
+								SNew(SVerticalBox)
+
+									+ SVerticalBox::Slot()
+									.AutoHeight()
+									.Padding(4.0f)
+									[
+										SNew(SHorizontalBox)
+											+ SHorizontalBox::Slot()
+											.FillWidth(1.0f)
+											.VAlign(VAlign_Center)
+											[
+												SNew(STextBlock)
+													.Text(LOCTEXT("SlotListTitle", "Slots"))
+													.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.5f))
+											]
+											+ SHorizontalBox::Slot()
+											.AutoWidth()
+											.Padding(0.f, 0.f, 2.f, 0.f)
+											[
+												SNew(SButton)
+													.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+													.ContentPadding(FMargin(2.f))
+													.ToolTipText(LOCTEXT("AddSlotTooltip", "Add Slot"))
+													.OnClicked(this, &SDialogStageManager::OnAddSlot)
+													[
+														SNew(SImage).Image(FAppStyle::GetBrush("Icons.Plus"))
+													]
+											]
+									]
+
+								+ SVerticalBox::Slot()
+									.FillHeight(1.0f)
+									.Padding(2.0f)
+									[
+										SAssignNew(SlotListView, SListView<FDialogSlotListItemPtr>)
+											.ListItemsSource(&SlotItems)
+											.OnGenerateRow(this, &SDialogStageManager::GenerateSlotRow)
+											.OnSelectionChanged(this, &SDialogStageManager::OnSlotSelectionChanged)
+											.OnContextMenuOpening(this, &SDialogStageManager::OnSlotContextMenuOpening)
+											.SelectionMode(ESelectionMode::Single)
+									]
+							]
+
+						// B) Light Slots
+						+ SSplitter::Slot()
+							.Value(0.5f)
+							[
+								SNew(SVerticalBox)
+
+									+ SVerticalBox::Slot()
+									.AutoHeight()
+									.Padding(4.0f)
+									[
+										SNew(SHorizontalBox)
+											+ SHorizontalBox::Slot()
+											.FillWidth(1.0f)
+											.VAlign(VAlign_Center)
+											[
+												SNew(STextBlock)
+													.Text(LOCTEXT("LightSlotListTitle", "Light Slots"))
+													.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.5f))
+											]
+											+ SHorizontalBox::Slot()
+											.AutoWidth()
+											.Padding(0.f, 0.f, 2.f, 0.f)
+											[
+												SNew(SButton)
+													.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+													.ContentPadding(FMargin(2.f))
+													.ToolTipText(LOCTEXT("AddLightSlotTooltip", "Add Light Slot"))
+													.OnClicked(this, &SDialogStageManager::OnAddLightSlot)
+													[
+														SNew(SImage).Image(FAppStyle::GetBrush("Icons.Plus"))
+													]
+											]
+									]
+
+								+ SVerticalBox::Slot()
+									.FillHeight(1.0f)
+									.Padding(2.0f)
+									[
+										SAssignNew(LightSlotListView, SListView<FDialogSlotListItemPtr>)
+											.ListItemsSource(&LightSlotItems)
+											.OnGenerateRow(this, &SDialogStageManager::GenerateLightSlotRow)
+											.OnSelectionChanged(this, &SDialogStageManager::OnLightSlotSelectionChanged)
+											.OnContextMenuOpening(this, &SDialogStageManager::OnLightSlotContextMenuOpening)
+											.SelectionMode(ESelectionMode::Single)
+									]
+							]
+					]
 			]
-		]
 
 		// 4) Slot Details
 		+ SSplitter::Slot()
@@ -388,24 +441,24 @@ void SDialogStageManager::ApplyDialogStageSelection(FDialogStageListItemPtr InIt
 	SelectedDialogStage = InItem.IsValid() ? InItem->DialogStage.Get() : nullptr;
 	SelectedSlot.Reset();
 	SelectedSlotIndex = INDEX_NONE;
+	bSelectedSlotIsLight = false;
 
 	if (DialogStageDetailsView.IsValid())
 	{
-		
-			if (GEditor)
+		if (GEditor)
+		{
+			AActor* SequencePivot = DialogEditor ? DialogEditor->GetSequencePivot() : nullptr;
+			GEditor->SelectNone(true, true, false);
+			if (SelectedDialogStage == DialogEditor->GetDialogStageTemplate())
 			{
-				AActor* SequencePivot = DialogEditor ? DialogEditor->GetSequencePivot() : nullptr;
-				GEditor->SelectNone(true /*bNoteSelectionChange*/, true /*bDeselectBSPSurfs*/, false /*bWarnAboutManyActors*/);
-				if (SelectedDialogStage == DialogEditor->GetDialogStageTemplate())
+				if (SequencePivot)
 				{
-					if (SequencePivot)
-					{
-						GEditor->SelectActor(SequencePivot, true, true /*bNoteSelectionChange*/);
-					}
+					GEditor->SelectActor(SequencePivot, true, true);
 				}
-
-				GEditor->NoteSelectionChange();
 			}
+
+			GEditor->NoteSelectionChange();
+		}
 
 		DialogStageDetailsView->SetObject(SelectedDialogStage.Get());
 	}
@@ -416,6 +469,7 @@ void SDialogStageManager::ApplyDialogStageSelection(FDialogStageListItemPtr InIt
 	}
 
 	RefreshSlotList();
+	RefreshLightSlotList();
 }
 
 void SDialogStageManager::OnDialogStageNameCommitted(const FText& InText, ETextCommit::Type InCommitType, TWeakObjectPtr<UDialogStage> InDialogStage)
@@ -523,6 +577,7 @@ TSharedRef<ITableRow> SDialogStageManager::GenerateSlotRow(FDialogSlotListItemPt
 					SNew(SDialogSlotPaletteItem)
 						.Slot(WeakSlot)
 						.IsCameraSlot(bCamera)
+						.IsLightSlot(false)
 				]
 		];
 }
@@ -557,12 +612,13 @@ void SDialogStageManager::ApplySlotSelection(FDialogSlotListItemPtr InItem)
 	TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
 	SelectedSlot = InItem.IsValid() ? InItem->Slot.Get() : nullptr;
 	SelectedSlotIndex = InItem.IsValid() ? InItem->SlotIndex : INDEX_NONE;
+	bSelectedSlotIsLight = InItem.IsValid() ? InItem->bIsLightSlot : false;
 
 	if (SlotDetailsView.IsValid())
 	{
 		SlotDetailsView->SetObject(SelectedSlot.Get());
 
-		if (DialogEditor)
+		if (DialogEditor && !bSelectedSlotIsLight)
 		{
 			DialogEditor->SelectDialogSlotActor(SelectedSlotIndex);
 		}
@@ -634,6 +690,159 @@ FReply SDialogStageManager::OnAddCameraSlot()
 	}
 
 	return FReply::Handled();
+}
+
+TSharedRef<ITableRow> SDialogStageManager::GenerateLightSlotRow(FDialogSlotListItemPtr InItem, const TSharedRef<STableViewBase>& InOwnerTable)
+{
+	const TWeakObjectPtr<UDialogSequenceSlot> WeakSlot = InItem.IsValid() ? InItem->Slot : nullptr;
+
+	return SNew(STableRow<FDialogSlotListItemPtr>, InOwnerTable)
+		[
+			SNew(SButton)
+				.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+				.ContentPadding(FMargin(0.0f))
+				.OnClicked_Lambda([this, InItem]()
+					{
+						return OnLightSlotItemClicked(InItem);
+					})
+				[
+					SNew(SDialogSlotPaletteItem)
+						.Slot(WeakSlot)
+						.IsCameraSlot(false)
+						.IsLightSlot(true)
+				]
+		];
+}
+
+FReply SDialogStageManager::OnLightSlotItemClicked(FDialogSlotListItemPtr InItem)
+{
+	if (!InItem.IsValid())
+	{
+		return FReply::Handled();
+	}
+
+	if (LightSlotListView.IsValid())
+	{
+		const bool bWasSelected = LightSlotListView->IsItemSelected(InItem);
+		LightSlotListView->SetSelection(InItem, ESelectInfo::Direct);
+
+		if (bWasSelected)
+		{
+			ApplySlotSelection(InItem);
+		}
+	}
+	else
+	{
+		ApplySlotSelection(InItem);
+	}
+
+	return FReply::Handled();
+}
+
+void SDialogStageManager::OnLightSlotSelectionChanged(FDialogSlotListItemPtr InItem, ESelectInfo::Type InSelectInfo)
+{
+	ApplySlotSelection(InItem);
+}
+
+FReply SDialogStageManager::OnAddLightSlot()
+{
+	UDialogStage* DialogStage = SelectedDialogStage.Get();
+	UDialogBuilderGraph* Graph = DialogGraph.Get();
+	if (!DialogStage || !Graph)
+	{
+		return FReply::Handled();
+	}
+
+	const FScopedTransaction Transaction(LOCTEXT("AddLightSlotTransaction", "Add Light Slot"));
+	DialogStage->Modify();
+
+	UDialogSequenceSlot_Light* NewSlot = NewObject<UDialogSequenceSlot_Light>(DialogStage, NAME_None, RF_Transactional);
+	if (NewSlot)
+	{
+		NewSlot->OwningDialogGraph = Graph;
+		DialogStage->LightSlots.Add(NewSlot);
+
+		MarkGraphDirty();
+		RefreshLightSlotList();
+
+		SelectedSlot = NewSlot;
+		SelectedSlotIndex = DialogStage->LightSlots.Num() - 1;
+		bSelectedSlotIsLight = true;
+
+		if (SlotDetailsView.IsValid())
+		{
+			SlotDetailsView->SetObject(NewSlot);
+		}
+	}
+
+	return FReply::Handled();
+}
+
+void SDialogStageManager::OnRemoveLightSlot(UDialogSequenceSlot_Light* InSlot, int32 InSlotIndex)
+{
+	UDialogStage* DialogStage = SelectedDialogStage.Get();
+	if (!DialogStage || !InSlot)
+	{
+		return;
+	}
+
+	const FScopedTransaction Transaction(LOCTEXT("DeleteLightSlotTransaction", "Delete Light Slot"));
+	DialogStage->Modify();
+	InSlot->Modify();
+
+	if (DialogStage->LightSlots.IsValidIndex(InSlotIndex))
+	{
+		DialogStage->LightSlots.RemoveAt(InSlotIndex);
+	}
+	else
+	{
+		DialogStage->LightSlots.RemoveSingle(InSlot);
+	}
+
+	if (SelectedSlot.Get() == InSlot)
+	{
+		SelectedSlot.Reset();
+		SelectedSlotIndex = INDEX_NONE;
+		bSelectedSlotIsLight = false;
+
+		if (SlotDetailsView.IsValid())
+		{
+			SlotDetailsView->SetObject(nullptr);
+		}
+	}
+
+	MarkGraphDirty();
+	RefreshLightSlotList();
+}
+
+TSharedPtr<SWidget> SDialogStageManager::OnLightSlotContextMenuOpening()
+{
+	FMenuBuilder MenuBuilder(true, nullptr);
+
+	MenuBuilder.AddMenuEntry(
+		LOCTEXT("AddLightSlotCtx", "Add Light Slot"),
+		LOCTEXT("AddLightSlotCtxTooltip", "Add Light Slot"),
+		FSlateIcon(),
+		FUIAction(FExecuteAction::CreateLambda([this]()
+			{
+				OnAddLightSlot();
+			}))
+	);
+
+	if (SelectedSlot.IsValid() && SelectedDialogStage.IsValid() && IsSelectedSlotLight())
+	{
+		MenuBuilder.AddMenuEntry(
+			LOCTEXT("DeleteLightSlotCtx", "Delete"),
+			LOCTEXT("DeleteLightSlotCtxTooltip", "Delete selected light slot"),
+			FSlateIcon(),
+			FUIAction(FExecuteAction::CreateLambda([this]()
+				{
+					OnRemoveLightSlot(Cast<UDialogSequenceSlot_Light>(SelectedSlot.Get()), SelectedSlotIndex);
+				}))
+		);
+	}
+
+	return MenuBuilder.MakeWidget();
 }
 
 void SDialogStageManager::OnRemoveSlot(UDialogSequenceSlot* InSlot, int32 InSlotIndex, bool bIsCameraSlot)
@@ -806,6 +1015,13 @@ bool SDialogStageManager::IsSelectedSlotCamera() const
 	return DialogStage && Slot && DialogStage->CameraSlots.Contains(const_cast<UDialogSequenceSlot*>(Slot));
 }
 
+
+bool SDialogStageManager::IsSelectedSlotLight() const
+{
+	const UDialogStage* DialogStage = SelectedDialogStage.Get();
+	const UDialogSequenceSlot* Slot = SelectedSlot.Get();
+	return DialogStage && Slot && DialogStage->LightSlots.Contains(const_cast<UDialogSequenceSlot*>(Slot));
+}
 void SDialogStageManager::Refresh()
 {
 	const FName CachedDialogStageObjectName = SelectedDialogStage.IsValid() ? SelectedDialogStage->GetFName() : NAME_None;
@@ -813,6 +1029,7 @@ void SDialogStageManager::Refresh()
 
 	RefreshDialogStageList();
 	RestoreSelection(CachedDialogStageObjectName, CachedSlotId);
+	RefreshLightSlotList();
 }
 
 void SDialogStageManager::RefreshDialogStageList()
@@ -850,14 +1067,12 @@ void SDialogStageManager::RefreshSlotList()
 		for (int32 SlotIndex = 0; SlotIndex < DialogStage->Slots.Num(); ++SlotIndex)
 		{
 			UDialogSequenceSlot* Slot = DialogStage->Slots[SlotIndex];
-			if (!Slot)
-			{
-				continue;
-			}
+			if (!Slot) continue;
 
 			FDialogSlotListItemPtr NewItem = MakeShared<FDialogSlotListItem>();
 			NewItem->Slot = Slot;
 			NewItem->bIsCameraSlot = false;
+			NewItem->bIsLightSlot = false;
 			NewItem->SlotIndex = SlotIndex;
 			SlotItems.Add(NewItem);
 		}
@@ -865,14 +1080,12 @@ void SDialogStageManager::RefreshSlotList()
 		for (int32 CameraSlotIndex = 0; CameraSlotIndex < DialogStage->CameraSlots.Num(); ++CameraSlotIndex)
 		{
 			UDialogSequenceSlot* Slot = DialogStage->CameraSlots[CameraSlotIndex];
-			if (!Slot)
-			{
-				continue;
-			}
+			if (!Slot) continue;
 
 			FDialogSlotListItemPtr NewItem = MakeShared<FDialogSlotListItem>();
 			NewItem->Slot = Slot;
 			NewItem->bIsCameraSlot = true;
+			NewItem->bIsLightSlot = false;
 			NewItem->SlotIndex = CameraSlotIndex;
 			SlotItems.Add(NewItem);
 		}
@@ -881,6 +1094,33 @@ void SDialogStageManager::RefreshSlotList()
 	if (SlotListView.IsValid())
 	{
 		SlotListView->RequestListRefresh();
+	}
+}
+
+void SDialogStageManager::RefreshLightSlotList()
+{
+	LightSlotItems.Empty();
+
+	UDialogStage* DialogStage = SelectedDialogStage.Get();
+	if (DialogStage)
+	{
+		for (int32 LightSlotIndex = 0; LightSlotIndex < DialogStage->LightSlots.Num(); ++LightSlotIndex)
+		{
+			UDialogSequenceSlot_Light* Slot = DialogStage->LightSlots[LightSlotIndex];
+			if (!Slot) continue;
+
+			FDialogSlotListItemPtr NewItem = MakeShared<FDialogSlotListItem>();
+			NewItem->Slot = Slot;
+			NewItem->bIsCameraSlot = false;
+			NewItem->bIsLightSlot = true;
+			NewItem->SlotIndex = LightSlotIndex;
+			LightSlotItems.Add(NewItem);
+		}
+	}
+
+	if (LightSlotListView.IsValid())
+	{
+		LightSlotListView->RequestListRefresh();
 	}
 }
 

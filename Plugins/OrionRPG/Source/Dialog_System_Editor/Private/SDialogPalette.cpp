@@ -82,8 +82,8 @@ void SDialogPaletteItem::Construct(const FArguments& InArgs, FCreateWidgetForAct
 		.VAlign(VAlign_Center)
 		[
 			SNew(SBox)
-				.WidthOverride(27.0f)
-				.HeightOverride(27.0f)
+				.WidthOverride(22.0f)
+				.HeightOverride(22.0f)
 				[
 					IconWidget
 				]

@@ -188,9 +188,9 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 			.ValueContent()
 			.MaxDesiredWidth(300.0f)
 			[
-				GetWidgetForSlotParticipantPicker(
+				GetWidgetForSlotPicker(
 					TAttribute<FText>::Create(TAttribute<FText>::FGetter::CreateSP(this, &FDialogSequenceDetails::GetSlotParticipantDisplayText)),
-					FOnGetContent::CreateSP(this, &FDialogSequenceDetails::OnGetSlotParticipantListMenu))
+					FOnGetContent::CreateSP(this, &FDialogSequenceDetails::OnGetSlotListMenu))
 			];
 
 		DetailCategory.AddProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceSlot, SlotLocation)).DisplayName(LOCTEXT("SlotLocationLabel", "Slot Location"));
@@ -520,7 +520,7 @@ void FDialogSequenceDetails::ClearShotActorToFocusDefinition()
 }
 
 // Slot
-TSharedRef<SWidget> FDialogSequenceDetails::GetWidgetForSlotParticipantPicker(const TAttribute<FText>& InParticipantNameText, FOnGetContent GetContentMenu)
+TSharedRef<SWidget> FDialogSequenceDetails::GetWidgetForSlotPicker(const TAttribute<FText>& InParticipantNameText, FOnGetContent GetContentMenu)
 {
 	return SNew(SHorizontalBox)
 		+ SHorizontalBox::Slot().AutoWidth()
@@ -537,86 +537,87 @@ TSharedRef<SWidget> FDialogSequenceDetails::GetWidgetForSlotParticipantPicker(co
 		];
 }
 
-TSharedRef<SWidget> FDialogSequenceDetails::OnGetSlotParticipantListMenu()
+TSharedRef<SWidget> FDialogSequenceDetails::OnGetSlotListMenu()
 {
 	FMenuBuilder MenuBuilder(true, nullptr);
 
-	MenuBuilder.BeginSection("SlotParticipants", LOCTEXT("SlotParticipantsSection", "Participant Definitions"));
+	MenuBuilder.BeginSection("SlotCommon", LOCTEXT("SlotCommonSection", "Slot"));
 	MenuBuilder.AddMenuEntry(
 		LOCTEXT("SlotParticipantNone", "None"),
 		FText(),
 		FSlateIcon(),
-		FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::ClearSlotParticipantDefinition)));
-
-	if (const UDialogSequenceSlot* Slot = DialogSequenceSlot.Get())
-	{
-		if (const UDialogBuilderGraph* Graph = Slot->OwningDialogGraph)
-		{
-			for (const TObjectPtr<UDialogParticipant>& Participant : Graph->ParticipantDefinitions)
-			{
-				if (!Participant)
-				{
-					continue;
-				}
-
-				MenuBuilder.AddMenuEntry(
-					GetDialogDefinitionText(Participant.Get()),
-					FText::FromString(Participant->Tag.ToString()),
-					FSlateIcon(),
-					FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseSlotParticipantDefinition, static_cast<UDialogDefinition*>(Participant.Get()))));
-			}
-		}
-	}
+		FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::ClearSlotDefinition)));
 	MenuBuilder.EndSection();
 
-	MenuBuilder.BeginSection("SlotProps", LOCTEXT("SlotPropsSection", "Prop Definitions"));
-	if (const UDialogSequenceSlot* Slot = DialogSequenceSlot.Get())
+	const UDialogSequenceSlot* Slot = DialogSequenceSlot.Get();
+	const UDialogBuilderGraph* Graph = Slot ? Slot->OwningDialogGraph : nullptr;
+	if (!Slot || !Graph)
 	{
-		if (const UDialogBuilderGraph* Graph = Slot->OwningDialogGraph)
-		{
-			for (const TObjectPtr<UDialogProp>& Prop : Graph->PropDefinitions)
-			{
-				if (!Prop)
-				{
-					continue;
-				}
-
-				MenuBuilder.AddMenuEntry(
-					GetDialogDefinitionText(Prop.Get()),
-					FText::FromString(Prop->Tag.ToString()),
-					FSlateIcon(),
-					FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseSlotParticipantDefinition, static_cast<UDialogDefinition*>(Prop.Get()))));
-			}
-		}
+		return MenuBuilder.MakeWidget();
 	}
-	MenuBuilder.EndSection();
 
-	MenuBuilder.BeginSection("SlotLights", LOCTEXT("SlotLightsSection", "Light Definitions"));
-	if (const UDialogSequenceSlot* Slot = DialogSequenceSlot.Get())
+	// Light slot => only lights
+	if (Slot->IsA<UDialogSequenceSlot_Light>())
 	{
-		if (const UDialogBuilderGraph* Graph = Slot->OwningDialogGraph)
+		MenuBuilder.BeginSection("SlotLights", LOCTEXT("SlotLightsSection", "Light Definitions"));
+		for (const TObjectPtr<UDialogLight>& Light : Graph->LightDefinitions)
 		{
-			for (const TObjectPtr<UDialogLight>& Light : Graph->LightDefinitions)
+			if (!Light)
 			{
-				if (!Light)
-				{
-					continue;
-				}
-
-				MenuBuilder.AddMenuEntry(
-					GetDialogDefinitionText(Light.Get()),
-					FText::FromString(Light->Tag.ToString()),
-					FSlateIcon(),
-					FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseSlotParticipantDefinition, static_cast<UDialogDefinition*>(Light.Get()))));
+				continue;
 			}
+
+			MenuBuilder.AddMenuEntry(
+				GetDialogDefinitionText(Light.Get()),
+				FText::FromString(Light->Tag.ToString()),
+				FSlateIcon(),
+				FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseSlotDefinition, static_cast<UDialogDefinition*>(Light.Get()))));
 		}
+		MenuBuilder.EndSection();
+
+		return MenuBuilder.MakeWidget();
 	}
-	MenuBuilder.EndSection();
+
+	// Regular slot => participants + props
+	if (Slot->IsA<UDialogSequenceSlot>())
+	{
+		MenuBuilder.BeginSection("SlotParticipants", LOCTEXT("SlotParticipantsSection", "Participant Definitions"));
+		for (const TObjectPtr<UDialogParticipant>& Participant : Graph->ParticipantDefinitions)
+		{
+			if (!Participant)
+			{
+				continue;
+			}
+
+			MenuBuilder.AddMenuEntry(
+				GetDialogDefinitionText(Participant.Get()),
+				FText::FromString(Participant->Tag.ToString()),
+				FSlateIcon(),
+				FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseSlotDefinition, static_cast<UDialogDefinition*>(Participant.Get()))));
+		}
+		MenuBuilder.EndSection();
+
+		MenuBuilder.BeginSection("SlotProps", LOCTEXT("SlotPropsSection", "Prop Definitions"));
+		for (const TObjectPtr<UDialogProp>& Prop : Graph->PropDefinitions)
+		{
+			if (!Prop)
+			{
+				continue;
+			}
+
+			MenuBuilder.AddMenuEntry(
+				GetDialogDefinitionText(Prop.Get()),
+				FText::FromString(Prop->Tag.ToString()),
+				FSlateIcon(),
+				FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseSlotDefinition, static_cast<UDialogDefinition*>(Prop.Get()))));
+		}
+		MenuBuilder.EndSection();
+	}
 
 	return MenuBuilder.MakeWidget();
 }
 
-void FDialogSequenceDetails::UseSlotParticipantDefinition(UDialogDefinition* InDialogDefinition)
+void FDialogSequenceDetails::UseSlotDefinition(UDialogDefinition* InDialogDefinition)
 {
 	if (!InDialogDefinition || !DialogSequenceSlot.IsValid())
 	{
@@ -626,7 +627,7 @@ void FDialogSequenceDetails::UseSlotParticipantDefinition(UDialogDefinition* InD
 	UDialogSequenceSlot* Slot = DialogSequenceSlot.Get();
 	if (!IsDialogDefinitionInGraph(Slot->OwningDialogGraph, InDialogDefinition))
 	{
-		ClearSlotParticipantDefinition();
+		ClearSlotDefinition();
 		return;
 	}
 
@@ -634,7 +635,7 @@ void FDialogSequenceDetails::UseSlotParticipantDefinition(UDialogDefinition* InD
 	Slot->SetDialogDefinition(InDialogDefinition);
 }
 
-void FDialogSequenceDetails::ClearSlotParticipantDefinition()
+void FDialogSequenceDetails::ClearSlotDefinition()
 {
 	if (UDialogSequenceSlot* Slot = DialogSequenceSlot.Get())
 	{
