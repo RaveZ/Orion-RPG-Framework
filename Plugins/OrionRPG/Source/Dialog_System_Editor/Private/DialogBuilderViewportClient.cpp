@@ -329,6 +329,7 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 	if (!HitProxy)
 	{
 		GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
+		CachedSelectedActor = nullptr;
 		return;
 	}
 	if (HitProxy->IsA(HWidgetAxis::StaticGetType()))
@@ -409,6 +410,7 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 			if (ActorToSelect)
 			{
 				GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
+				CachedSelectedActor = ActorToSelect;
 			}
 
 			GEditor->NoteSelectionChange();
@@ -932,14 +934,8 @@ UE::Widget::EWidgetMode FDialogBuilderViewportClient::GetWidgetMode() const
 		return WidgetMode;
 	}
 
-	USelection* SelectedActors = GEditor ? GEditor->GetSelectedActors() : nullptr;
-	if (!SelectedActors || SelectedActors->Num() == 0)
-	{
-		return UE::Widget::WM_None;
-	}
 
-	AActor* SelectedActor = Cast<AActor>(SelectedActors->GetSelectedObject(0));
-	if (IsValid(SelectedActor))
+	if (CachedSelectedActor.IsValid())
 	{
 		return WidgetMode;
 	}

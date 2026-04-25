@@ -348,6 +348,8 @@ private:
 
 	TOptional<EMouseCursor::Type> MouseCursor;
 
+	TWeakObjectPtr<class AActor> CachedSelectedActor;
+
 private:
 	TWeakPtr<class SEditorViewport> ViewportWidgetAnchor;
 };

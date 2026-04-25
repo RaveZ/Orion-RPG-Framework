@@ -367,6 +367,7 @@ public:
 protected:
 	virtual AActor* RetrieveParticipant(FParticipantInfo& Info);
 	virtual AActor* RetrieveActorFromSlot(class UDialogSequenceSlot* InSlot, FName SlotID);
+	virtual AActor* RetrieveLightFromSlot(class UDialogSequenceSlot_Light* InSlot, FName SlotID);
 
 	void InitializeDialogActors();
 	void SetDialogStage(class UDialogStage* InDialogStage);	

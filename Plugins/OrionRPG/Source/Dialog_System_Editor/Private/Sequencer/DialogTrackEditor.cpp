@@ -175,29 +175,61 @@ void FDialogTrackEditor::AddNewSection(UMovieScene* MovieScene, UMovieSceneTrack
 	const FScopedTransaction Transaction(LOCTEXT("AddDialogSection_Transaction", "Add Dialog Section"));
 	DialogTrack->Modify();
 
-	FFrameNumber StartTime = MovieScene->GetPlaybackRange().GetLowerBoundValue();
-	FFrameNumber LastSectionEndTime = StartTime;
+	const FFrameRate TickResolution = MovieScene->GetTickResolution();
+	const FFrameNumber SectionLength = TickResolution.AsFrameNumber(3.0);
 
+	FFrameNumber LastSectionEndTime = MovieScene->GetPlaybackRange().GetLowerBoundValue();
 	for (UMovieSceneSection* Section : DialogTrack->GetAllSections())
 	{
-		TRange<FFrameNumber> SectionRange = Section->GetRange();
-		LastSectionEndTime = SectionRange.GetUpperBoundValue() > LastSectionEndTime ? SectionRange.GetUpperBoundValue() : LastSectionEndTime;
+		if (!Section)
+		{
+			continue;
+		}
+
+		const TRange<FFrameNumber> SectionRange = Section->GetRange();
+		if (SectionRange.HasUpperBound())
+		{
+			LastSectionEndTime = SectionRange.GetUpperBoundValue() > LastSectionEndTime
+				? SectionRange.GetUpperBoundValue()
+				: LastSectionEndTime;
+		}
+	}
+
+	const FFrameNumber CurrentFrame = GetSequencer().IsValid()
+		? GetSequencer()->GetLocalTime().Time.FloorToFrame()
+		: LastSectionEndTime;
+
+	FFrameNumber StartTime = CurrentFrame;
+	FFrameNumber EndTime = StartTime + SectionLength;
+
+	// Try to keep the section at the current frame, but shorten it if it overlaps.
+	for (UMovieSceneSection* Section : DialogTrack->GetAllSections())
+	{
+		if (!Section)
+		{
+			continue;
+		}
+
+		const TRange<FFrameNumber> SectionRange = Section->GetRange();
+		const TRange<FFrameNumber> CandidateRange(StartTime, TRangeBound<FFrameNumber>::Exclusive(EndTime));
+
+		if (SectionRange.Overlaps(CandidateRange))
+		{
+			if (SectionRange.HasLowerBound())
+			{
+				EndTime = FMath::Min(EndTime, SectionRange.GetLowerBoundValue());
+			}
+		}
+	}
+
+	// If the current frame is already too close/inside another section, fall back to the end.
+	if (EndTime <= StartTime)
+	{
+		StartTime = LastSectionEndTime;
+		EndTime = StartTime + SectionLength;
 	}
 
 	UMovieSceneDialogSection* DialogSection = CastChecked<UMovieSceneDialogSection>(DialogTrack->CreateNewSection());
-
-	StartTime = LastSectionEndTime;
-	const FFrameRate TickResolution = MovieScene->GetTickResolution();
-	const FFrameNumber SectionLength = (0.5 * TickResolution).FloorToFrame();
-
-	FFrameNumber EndTime = StartTime + SectionLength;
-	if (EndTime < StartTime)
-	{
-		const FFrameNumber Temp = StartTime;
-		StartTime = EndTime;
-		EndTime = Temp;
-	}
-
 	DialogSection->SetRange(TRange<FFrameNumber>(StartTime, TRangeBound<FFrameNumber>::Exclusive(EndTime)));
 	DialogSection->SetRowIndex(0);
 

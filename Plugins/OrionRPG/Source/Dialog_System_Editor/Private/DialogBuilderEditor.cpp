@@ -791,7 +791,8 @@ void FDialogBuilderEditor::UpdateDialogStage()
 			BillboardComponent->bIsScreenSizeScaled = true;
 			BillboardComponent->bUseInEditorScaling = true;
 
-			BillboardComponent->ScreenSize = 0.0025f;
+			BillboardComponent->SetEditorScale(1.5f);
+			BillboardComponent->ScreenSize = 0.025f;
 			BillboardComponent->SpriteInfo.Category = TEXT("Dialog");
 			BillboardComponent->SpriteInfo.DisplayName = LOCTEXT("DialogSequencePivotSprite", "Dialog Sequence Pivot");
 
@@ -803,8 +804,6 @@ void FDialogBuilderEditor::UpdateDialogStage()
 			BillboardComponent->RegisterComponent();
 
 			PivotActor->SetActorHiddenInGame(false);
-			PivotActor->SetActorEnableCollision(false);
-			PivotActor->bIsEditorOnlyActor = true;
 
 			SequencePivot = PivotActor;
 		}
@@ -1821,7 +1820,7 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		const TSharedRef<SWidget> SequencerWidget = Sequencer->GetSequencerWidget();
 
 		//trigger sequencer property widget docked tab
-		FSlateApplication::Get().SetKeyboardFocus(SequencerWidget, EFocusCause::SetDirectly);
+		/*FSlateApplication::Get().SetKeyboardFocus(SequencerWidget, EFocusCause::SetDirectly);
 
 		const FModifierKeysState AltModifiers(
 			false, false, false, false,
@@ -1831,7 +1830,7 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 
 		const FKeyEvent KeyDownEvent(EKeys::D, AltModifiers, 0, false, 0, 0);
 		FSlateApplication::Get().ProcessKeyDownEvent(KeyDownEvent);
-		FSlateApplication::Get().ProcessKeyUpEvent(KeyDownEvent);
+		FSlateApplication::Get().ProcessKeyUpEvent(KeyDownEvent);*/
 
 		Sequencer->GetSelectionChangedObjectGuids().AddRaw(
 			this,
@@ -2575,6 +2574,7 @@ void FDialogBuilderEditor::ApplyDefaultCameraSetting()
 			CinecamComp->CustomNearClippingPlane = DialogGraph->CustomNearClippingPlane;
 
 			CinecamComp->FocusSettings.bSmoothFocusChanges = true;
+			CinecamComp->FocusSettings.FocusMethod = ECameraFocusMethod::Tracking;
 			if (DialogGraph->bUsePostProcess)
 			{
 				CinecamComp->PostProcessSettings = DialogGraph->PostProcessSettings;

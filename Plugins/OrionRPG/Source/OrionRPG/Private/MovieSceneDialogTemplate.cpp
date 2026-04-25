@@ -81,6 +81,8 @@ namespace OrionDialogTemplate
 			if (FacialMeshComponent.IsValid())
 			{
 				FacialMeshComponent->Stop();
+				//FacialMeshComponent->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+				//FacialMeshComponent->RefreshBoneTransforms();
 				FacialMeshComponent.Reset();
 			}
 

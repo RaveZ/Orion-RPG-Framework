@@ -140,6 +140,11 @@ void UDialogBuilderGraph::InitializeDialogActors()
 {
 	UWorld* World = GetWorld();
 	check(World);
+	APawn* PlayerPawn = GetOwningPawn();
+	if(!OwningController || !PlayerPawn)
+	{
+		return;
+	}
 
 	//retrieve partcipant
 	for (TPair<FGameplayTag, FParticipantInfo>& Pair : ParticipantInfoMap)
@@ -194,6 +199,12 @@ void UDialogBuilderGraph::InitializeDialogActors()
 
 			AActor* OutActor = nullptr;
 			TArray<AActor*> FoundActors;
+			if (SlotId == TAG_Dialog_Participant_Player.GetTag().GetTagName())
+			{
+				CachedActorMap.Emplace(SlotId, PlayerPawn);
+				continue;
+			}
+
 			UGameplayStatics::GetAllActorsOfClassWithTag(GetWorld(), DialogDefinition->GetActorClass(), SlotId, FoundActors);
 
 			if (FoundActors.Num() > 1 && GetOwningPawn())
@@ -292,7 +303,7 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 		if (!Slot) continue;
 		//Camera uses slot ID for binding
 		const FName SlotId = Slot->GetID();
-		if (AActor* DialogActor = RetrieveActorFromSlot(Slot, SlotId))
+		if (AActor* DialogActor = RetrieveLightFromSlot(Slot, SlotId))
 		{
 			CachedActorMap.Emplace(SlotId, DialogActor);
 			DialogSlotActors.Emplace(Slot, DialogActor);
@@ -1419,6 +1430,7 @@ AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot, 
 				CinecamComp->CustomNearClippingPlane = CustomNearClippingPlane;
 
 				CinecamComp->FocusSettings.bSmoothFocusChanges = true;
+				CinecamComp->FocusSettings.FocusMethod = ECameraFocusMethod::Tracking;
 				if (bUsePostProcess)
 				{
 					CinecamComp->PostProcessSettings = PostProcessSettings;
@@ -1429,6 +1441,57 @@ AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot, 
 				}
 			}
 		}
+
+		NewActor->AttachToActor(SequencePivot, FAttachmentTransformRules::KeepWorldTransform);
+		NewActor->SetActorRelativeLocation(InSlot->SlotLocation);
+		NewActor->SetActorRelativeRotation(InSlot->SlotRotation);
+
+		SpawnedDialogActors.AddUnique(NewActor);
+	}
+
+	return NewActor;
+}
+
+AActor* UDialogBuilderGraph::RetrieveLightFromSlot(UDialogSequenceSlot_Light* InSlot, FName SlotID)
+{
+	if (!InSlot)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("RetrieveParticipant: Slot is null for Dialog ID: %s"), *SlotID.ToString());
+		return nullptr;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return nullptr;
+	}
+
+	const TSubclassOf<AActor> ActorClass = InSlot->LightClass;
+	if (!ActorClass)
+	{
+		return nullptr;
+	}
+
+
+	// Look up by the slot's ID (FName) which is the map's key type
+	if (TObjectPtr<AActor> ExistingActor = CachedActorMap.FindRef(SlotID))
+	{
+		ExistingActor->AttachToActor(SequencePivot, FAttachmentTransformRules::KeepRelativeTransform);
+		ExistingActor->SetActorRelativeLocation(InSlot->SlotLocation);
+		ExistingActor->SetActorRelativeRotation(InSlot->SlotRotation);
+		return ExistingActor;
+	}
+
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.bNoFail = true;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnParams.Owner = OwningController;
+
+	AActor* NewActor = World->SpawnActor<AActor>(ActorClass, FTransform::Identity, SpawnParams);
+	if (NewActor)
+	{
+		NewActor->GetRootComponent()->SetMobility(EComponentMobility::Movable);
 
 		NewActor->AttachToActor(SequencePivot, FAttachmentTransformRules::KeepWorldTransform);
 		NewActor->SetActorRelativeLocation(InSlot->SlotLocation);
