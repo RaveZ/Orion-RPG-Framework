@@ -38,7 +38,6 @@ namespace DialogSectionID
 		NONE = 0,
 		PARTICIPANTS,	// Participants
 		PROPS,			// Props actor 
-		LIGHTS,			// Lights
 		//Add More to populate the section
 	};
 };
@@ -362,7 +361,9 @@ public:
 	UDialogSequenceSlot* GetDialogSlotKey(AActor* InActor);
 	//Get the slot which is being used as a template for the opened dialogset
 	UDialogSequenceSlot* GetTemplateSlot(AActor* InActor);
-	void SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AActor*& OutActor, bool bIsCamera = false);
+	void RetrieveDialogSlotActor(UDialogSequenceSlot* InSlot, AActor*& OutActor, bool bIsCamera = false);
+	void RetrieveLightSlotActor(class UDialogSequenceSlot_Light* InLightSlot, AActor*& OutActor);
+	void InitializeLightActor(class AActor* InLightActor);
 	void CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot, bool bIsCamera = false);
 	TArray<AActor*> GetDialogSlotActors() const;
 
@@ -370,6 +371,7 @@ public:
 	void SelectDialogDefinitionActor(UDialogDefinition* InDialogDefinition);
 	void SelectDialogDefinition(UDialogDefinition* InDialogDefinition);
 	void SelectDialogSlotActor(int32 index);
+	void SelectLightSlotActor(int32 index);
 	UDialogDefinition* FindDialogDefinitionByActor(const AActor* InActor) const;
 
 	void OnDialogDefinitionAdded(UDialogDefinition* InDialogDefinition);

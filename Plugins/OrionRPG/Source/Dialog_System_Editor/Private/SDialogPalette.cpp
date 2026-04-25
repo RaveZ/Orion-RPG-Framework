@@ -129,7 +129,9 @@ const FSlateBrush* SDialogPaletteItem::GetPaletteIconBrushForAction(const TShare
 
 	case DialogSectionID::PROPS:
 	{
-		const FAssetSchemaAction_Prop* PropAction = static_cast<const FAssetSchemaAction_Prop*>(Action.Get());
+
+		return FClassIconFinder::FindThumbnailForClass(UObject::StaticClass());
+		/*const FAssetSchemaAction_Prop* PropAction = static_cast<const FAssetSchemaAction_Prop*>(Action.Get());
 		if (PropAction && PropAction->Prop)
 		{
 			IconClass = PropAction->Prop->PropClassSoft.Get();
@@ -137,40 +139,11 @@ const FSlateBrush* SDialogPaletteItem::GetPaletteIconBrushForAction(const TShare
 			{
 				return FClassIconFinder::FindThumbnailForClass(IconClass);
 			}
-		}
-		return FClassIconFinder::FindThumbnailForClass(AActor::StaticClass());
+		}*/
 		//return FDialogBuilder_EditorStyle::Get().GetBrush("ClassIcon.Dialog.Prop");
 	}
 
-	case DialogSectionID::LIGHTS:
-	{
-		if (Action->GetTypeId() == FAssetSchemaAction_Light::StaticGetTypeId())
-		{
-			const FAssetSchemaAction_Light* LightAction = static_cast<const FAssetSchemaAction_Light*>(Action.Get());
-			if (LightAction && LightAction->Light)
-			{
-				// 1) already resolved runtime class
-				if (TSubclassOf<AActor> ActorClass = LightAction->Light->GetActorClass())
-				{
-					IconClass = *ActorClass;
-				}
-				// 2) loaded soft class
-				else
-				{
-					IconClass = LightAction->Light->LightClassSoft.Get();
-				}
-
-				if (IconClass)
-				{
-					return FClassIconFinder::FindThumbnailForClass(IconClass);
-				}
-			}
-		}
-
-		// fallback if soft class is not loaded / unset
-		return FClassIconFinder::FindThumbnailForClass(ALight::StaticClass());
-	}
-
+	
 	default:
 		break;
 	}

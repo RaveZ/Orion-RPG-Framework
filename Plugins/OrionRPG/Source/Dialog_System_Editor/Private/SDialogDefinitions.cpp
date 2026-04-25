@@ -174,7 +174,6 @@ void SDialogDefinitions::Construct(const FArguments& InArgs, TWeakPtr<FDialogBui
 	TMap<int32, bool> ExpandedSections;
 	ExpandedSections.Add(DialogSectionID::PARTICIPANTS, true);
 	ExpandedSections.Add(DialogSectionID::PROPS, true);
-	ExpandedSections.Add(DialogSectionID::LIGHTS, true);
 
 	GraphActionMenu->SetSectionExpansion(ExpandedSections);
 
@@ -233,10 +232,6 @@ FAssetSchemaAction_Prop* SDialogDefinitions::SelectionAsProp() const
 	return SelectionAsType<FAssetSchemaAction_Prop>(GraphActionMenu);
 }
 
-FAssetSchemaAction_Light* SDialogDefinitions::SelectionAsLight() const
-{
-	return SelectionAsType<FAssetSchemaAction_Light>(GraphActionMenu);
-}
 
 void SDialogDefinitions::OnRequestRenameOnActionNode()
 {
@@ -337,25 +332,13 @@ void SDialogDefinitions::CollectAllActions(FGraphActionListBuilderBase& OutAllAc
 			OutAllActions.AddAction(NewAction);
 		}
 
-		// Lights
-		for (int32 i = 0; i < DialogSystemObj->LightDefinitions.Num(); i++)
-		{
-			UDialogLight* DialogLight = DialogSystemObj->LightDefinitions[i];
-			if (!DialogLight) continue;
-
-			TSharedPtr<FAssetSchemaAction_Light> NewAction =
-				MakeShareable(new FAssetSchemaAction_Light(FText::GetEmpty(), FText::GetEmpty(), FText::GetEmpty(), 2, DialogSectionID::LIGHTS));
-			NewAction->FuncName = DialogLight->GetFName();
-			NewAction->Light = DialogLight;
-			OutAllActions.AddAction(NewAction);
-		}
+		
 	}
 }
 void SDialogDefinitions::CollectStaticSections(TArray<int32>& StaticSectionIDs)
 {
 	StaticSectionIDs.Add(DialogSectionID::PARTICIPANTS);
 	StaticSectionIDs.Add(DialogSectionID::PROPS);
-	StaticSectionIDs.Add(DialogSectionID::LIGHTS);
 }
 FReply SDialogDefinitions::OnActionDragged(const TArray<TSharedPtr<FEdGraphSchemaAction>>& InActions, const FPointerEvent& MouseEvent)
 {
@@ -571,9 +554,7 @@ FText SDialogDefinitions::OnGetSectionTitle(int32 InSectionID)
 	case DialogSectionID::PROPS:
 		SeperatorTitle = NSLOCTEXT("GraphActionNode", "Props", "Props");
 		break;
-	case DialogSectionID::LIGHTS:
-		SeperatorTitle = NSLOCTEXT("GraphActionNode", "Lights", "Lights");
-		break;
+
 	case DialogSectionID::NONE:
 		SeperatorTitle = FText::GetEmpty();
 		break;
@@ -600,10 +581,6 @@ TSharedRef<SWidget> SDialogDefinitions::OnGetSectionWidget(TSharedRef<SWidget> R
 		AddNewText = LOCTEXT("AddNewProps", "New Props");
 		MetaDataTag = TEXT("AddNewProps");
 		break;
-	case DialogSectionID::LIGHTS:
-		AddNewText = LOCTEXT("AddNewLights", "New Light");
-		MetaDataTag = TEXT("AddNewLights");
-		break;
 	default:
 		return SNullWidget::NullWidget;
 	}
@@ -619,9 +596,6 @@ FReply SDialogDefinitions::OnAddButtonClickedOnSection(int32 InSectionID)
 		break;
 	case DialogSectionID::PROPS:
 		CreateNewProp();
-		break;
-	case DialogSectionID::LIGHTS:
-		CreateNewLight();
 		break;
 	}
 	return FReply::Handled();
@@ -717,11 +691,6 @@ void SDialogDefinitions::OnDeleteEntry()
 	if (FAssetSchemaAction_Prop* PropAction = SelectionAsProp())
 	{
 		DialogGraph->PropDefinitions.Remove(PropAction->Prop);
-	}
-
-	if (FAssetSchemaAction_Light* LightAction = SelectionAsLight())
-	{
-		DialogGraph->LightDefinitions.Remove(LightAction->Light);
 	}
 
 	Refresh();
@@ -824,29 +793,6 @@ void SDialogDefinitions::CreateNewProp()
 
 		Refresh();
 	}
-}
-
-void SDialogDefinitions::CreateNewLight()
-{
-	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
-	if (!DialogGraph)
-	{
-		return;
-	}
-
-	const FScopedTransaction Transaction(LOCTEXT("AddLight", "Add Light"));
-	DialogGraph->Modify();
-
-	UDialogLight* NewLight = NewObject<UDialogLight>(DialogGraph, NAME_None, RF_Transactional);
-	NewLight->DisplayName = FText::FromString(FString::Printf(TEXT("Light %d"), DialogGraph->LightDefinitions.Num()));
-	DialogGraph->LightDefinitions.Add(NewLight);
-
-	if (DialogEditorPtr.IsValid())
-	{
-		DialogEditorPtr.Pin()->OnDialogDefinitionAdded(NewLight);
-	}
-
-	Refresh();
 }
 
 void SDialogDefinitions::OnDeleteGraph(UEdGraph* InGraph)

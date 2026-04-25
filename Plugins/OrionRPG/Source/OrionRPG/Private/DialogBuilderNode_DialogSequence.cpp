@@ -165,33 +165,40 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogStageData()
 	}
 
 
-	//Populate Camera Slots
-	/*{
-		const int32 SourceCount = DialogStageToUse->CameraSlots.Num();
-		DialogStage->CameraSlots.SetNum(SourceCount);
+	
+	//Populate Light Slots
+	{
+		const int32 SourceCount = DialogStageToUse->LightSlots.Num();
+		const int32 SlotCount = DialogStage->LightSlots.Num();
+
+
+		DialogStage->LightSlots.SetNum(SourceCount);
 		for (int32 idx = 0; idx < SourceCount; ++idx)
 		{
-			UDialogSequenceSlot* Source = DialogStageToUse->CameraSlots[idx];
+			UDialogSequenceSlot_Light* Source = DialogStageToUse->LightSlots[idx];
 			if (!Source)
 			{
-				DialogStage->CameraSlots[idx] = nullptr;
+				DialogStage->LightSlots[idx] = nullptr;
 				continue;
 			}
 
-			UDialogSequenceSlot* Target = DialogStage->CameraSlots[idx];
+			UDialogSequenceSlot_Light* Target = DialogStage->LightSlots[idx];
 			if (!Target)
 			{
-				Target = NewObject<UDialogSequenceSlot>(DialogStage, NAME_None, RF_Transactional);
+				Target = NewObject<UDialogSequenceSlot_Light>(DialogStage, NAME_None, RF_Transactional);
 			}
-
+			if(!Target->ID.IsValid())
+			{
+				Target->ID = FGuid::NewGuid();
+			}
 			Target->OwningDialogGraph = GetOwningDialogGraph();
-			Target->ActorTag = Source->ActorTag;
-			Target->DialogDefinition = Source->DialogDefinition;
-			Target->SlotPlacement = Source->SlotPlacement;
+			Target->LightClass = Source->LightClass;
+			Target->SlotLocation = Source->SlotLocation;
+			Target->SlotRotation = Source->SlotRotation;
 
-			DialogStage->CameraSlots[idx] = Target;
+			DialogStage->LightSlots[idx] = Target;
 		}
-	}*/
+	}
 }
 
 void UDialogBuilderNode_DialogSequence::PostDuplicate(EDuplicateMode::Type DuplicateMode)

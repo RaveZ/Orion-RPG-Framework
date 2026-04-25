@@ -44,6 +44,7 @@ void UDialogSequenceSlot::SetDialogDefinition(UDialogDefinition* InDialogDefinit
 
 UDialogSequenceSlot_Light::UDialogSequenceSlot_Light()
 {
+	LightClass = APointLight::StaticClass();
 }
 
 

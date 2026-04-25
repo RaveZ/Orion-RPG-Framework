@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "DialogData.h"
 #include "NativeGameplayTags.h"
+#include "Engine/PointLight.h"
 #include "UObject/NoExportTypes.h"
 #include "DialogStage.generated.h"
 
@@ -59,6 +60,10 @@ class ORIONRPG_API UDialogSequenceSlot_Light : public UDialogSequenceSlot
 
 public:
 	UDialogSequenceSlot_Light();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
+	TSubclassOf<class ALight> LightClass;
+
 };
 
 

@@ -328,7 +328,7 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 
 	if (!HitProxy)
 	{
-		DialogEditor->SelectDialogDefinition(nullptr);
+		GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
 		return;
 	}
 	if (HitProxy->IsA(HWidgetAxis::StaticGetType()))

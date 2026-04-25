@@ -827,7 +827,7 @@ void FDialogBuilderEditor::UpdateDialogStage()
 	for (auto& DialogSlot : DialogStage->Slots)
 	{
 		AActor* SpawnedActor = nullptr;
-		SpawnDialogSlotActor(DialogSlot, SpawnedActor);
+		RetrieveDialogSlotActor(DialogSlot, SpawnedActor);
 	}
 
 	if (DialogStage->CameraSlots.Num() == 0)
@@ -840,9 +840,14 @@ void FDialogBuilderEditor::UpdateDialogStage()
 	for (auto& DialogSlot : DialogStage->CameraSlots)
 	{
 		AActor* SpawnedCamera = nullptr;
-		SpawnDialogSlotActor(DialogSlot, SpawnedCamera, true);
+		RetrieveDialogSlotActor(DialogSlot, SpawnedCamera, /*bIsCamera*/true);
 	}
 
+	for (auto& LightSlot : DialogStage->LightSlots)
+	{
+		AActor* SpawnedActor = nullptr;
+		RetrieveLightSlotActor(LightSlot, SpawnedActor);
+	}
 
 	
 
@@ -853,7 +858,7 @@ void FDialogBuilderEditor::UpdateDialogStage()
 	{
 		const UDialogSequenceSlot* Key = It.Key();
 		if (!Key) continue;
-		bool bSlotNotFound = (!DialogStage->Slots.Contains(Key) && !DialogStage->CameraSlots.Contains(Key));
+		bool bSlotNotFound = (!DialogStage->Slots.Contains(Key) && !DialogStage->CameraSlots.Contains(Key) && !DialogStage->LightSlots.Contains(Key));
 
 		if (bSlotNotFound)
 		{
@@ -887,7 +892,7 @@ void FDialogBuilderEditor::UpdateDialogStage()
 
 
 
-void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AActor*& OutActor, bool bIsCamera)
+void FDialogBuilderEditor::RetrieveDialogSlotActor(UDialogSequenceSlot* InSlot, AActor*& OutActor, bool bIsCamera)
 {
 	if (!InSlot)
 	{
@@ -1000,54 +1005,11 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 				// Preserve the actor's world transform when attaching to the pivot.
 				NewActor->AttachToActor(EditorPinned->SequencePivot.Get(), FAttachmentTransformRules::KeepRelativeTransform);
 
-
 				if (NewActor->IsA(ALight::StaticClass()))
 				{
-					UBillboardComponent* BillboardComponent = NewObject<UBillboardComponent>(NewActor, TEXT("LightBillboard"));
-					BillboardComponent->SetupAttachment(NewActor->GetRootComponent());
-					BillboardComponent->SetMobility(EComponentMobility::Movable);
-					BillboardComponent->SetHiddenInGame(false);
-					BillboardComponent->SetVisibility(true);
-					BillboardComponent->SetUsingAbsoluteScale(true);
-					BillboardComponent->bIsScreenSizeScaled = true;
-					BillboardComponent->bUseInEditorScaling = true;
-
-					BillboardComponent->ScreenSize = 0.005f;
-					BillboardComponent->SpriteInfo.Category = TEXT("Dialog");
-					BillboardComponent->SetEditorScale(.3f);
-					BillboardComponent->SpriteInfo.DisplayName = LOCTEXT("DialogSequencePivotSprite", "Light Prop");
-					BillboardComponent->RegisterComponent();
-					NewActor->SetActorHiddenInGame(false);
-					if (NewActor->IsA(APointLight::StaticClass()))
-					{
-						if (UTexture2D* Sprite = LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EditorResources/LightIcons/S_LightPoint")))
-						{
-							BillboardComponent->SetSprite(Sprite);
-						}
-					}
-					else if(NewActor->IsA(ADirectionalLight::StaticClass()))
-					{
-						if (UTexture2D* Sprite = LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EditorResources/LightIcons/S_LightDirectional")))
-						{
-							BillboardComponent->SetSprite(Sprite);
-						}
-					}
-					else if (NewActor->IsA(ASpotLight::StaticClass()))
-					{
-
-						UArrowComponent* ArrowComponent = NewObject<UArrowComponent>(NewActor, TEXT("CameraArrow"));
-						ArrowComponent->SetupAttachment(NewActor->GetRootComponent());
-						ArrowComponent->bHiddenInGame = false;
-						ArrowComponent->ArrowColor = FColor::Cyan;
-						ArrowComponent->ArrowSize = .5f;
-						BillboardComponent->SetVisibility(true);
-						ArrowComponent->RegisterComponent();
-						if (UTexture2D* Sprite = LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EditorResources/LightIcons/S_LightSpot")))
-						{
-							BillboardComponent->SetSprite(Sprite);
-						}
-					}
+					EditorPinned->InitializeLightActor(NewActor);
 				}
+
 				if (bIsCamera)
 				{
 					EditorPinned->DialogCamera = NewActor;
@@ -1082,7 +1044,9 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 				}
 
 				EditorPinned->DialogSlotActors.Emplace(Slot, NewActor);
+				
 				EditorPinned->CreateDialogTrackFromSlot(Slot, bIsCamera);
+				
 			};
 
 		if (UClass* LoadedClass = ActorSoftClass.Get())
@@ -1105,6 +1069,126 @@ void FDialogBuilderEditor::SpawnDialogSlotActor(UDialogSequenceSlot* InSlot, AAc
 				}));
 		return;
 	}
+}
+
+void FDialogBuilderEditor::RetrieveLightSlotActor(UDialogSequenceSlot_Light* InLightSlot, AActor*& OutActor)
+{
+	if(!InLightSlot)
+	{
+		return;
+	}
+
+	UWorld* PreviewWorld = GetPreviewWorld();
+	check(PreviewWorld);
+	const TSubclassOf<AActor> ActorClass = InLightSlot->LightClass;
+
+	AActor* ExistingActor = nullptr;
+	if (TWeakObjectPtr<AActor>* ExistingActorPtr = DialogSlotActors.Find(InLightSlot))
+	{
+		ExistingActor = ExistingActorPtr->Get();
+	}
+
+	if ((!InLightSlot || !ActorClass) && ExistingActor)
+	{
+		PreviewWorld->EditorDestroyActor(ExistingActor, false);
+		DialogSlotActors.Remove(InLightSlot);
+		return;
+	}
+
+	if (ExistingActor && ExistingActor->IsA(ActorClass))
+	{
+		ExistingActor->SetActorRelativeLocation(InLightSlot->SlotLocation);
+		ExistingActor->SetActorRelativeRotation(InLightSlot->SlotRotation);
+		
+
+		return;
+	}
+
+	if (ExistingActor)
+	{
+		PreviewWorld->EditorDestroyActor(ExistingActor, false);
+		DialogSlotActors.Remove(InLightSlot);
+	}
+
+
+	if (ActorClass)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		SpawnParams.bNoFail = true;
+		SpawnParams.ObjectFlags = RF_Transient | RF_Transactional;
+		AActor* NewActor = PreviewWorld->SpawnActor<AActor>(ActorClass, FTransform::Identity, SpawnParams);
+		if (!NewActor)
+		{
+			return;
+		}
+		NewActor->SetActorTickEnabled(false);
+		NewActor->SetTickableWhenPaused(false);
+		NewActor->PrimaryActorTick.bStartWithTickEnabled = false;
+
+		NewActor->SetActorRelativeLocation(InLightSlot->SlotLocation);
+		NewActor->SetActorRelativeRotation(InLightSlot->SlotRotation);
+		DialogSlotActors.Emplace(InLightSlot, NewActor);
+		NewActor->AttachToActor(SequencePivot.Get(), FAttachmentTransformRules::KeepRelativeTransform);
+		
+		if (NewActor->IsA(ALight::StaticClass()))
+		{
+			InitializeLightActor(NewActor);
+		}
+	}
+
+
+}
+
+void FDialogBuilderEditor::InitializeLightActor(AActor* InLightActor)
+{
+	UBillboardComponent* BillboardComponent = NewObject<UBillboardComponent>(InLightActor, TEXT("LightBillboard"));
+	BillboardComponent->SetupAttachment(InLightActor->GetRootComponent());
+	BillboardComponent->SetMobility(EComponentMobility::Movable);
+	BillboardComponent->SetHiddenInGame(false);
+	BillboardComponent->SetVisibility(true);
+	BillboardComponent->SetUsingAbsoluteScale(true);
+	BillboardComponent->bIsScreenSizeScaled = true;
+	BillboardComponent->bUseInEditorScaling = true;
+
+	BillboardComponent->ScreenSize = 0.005f;
+	BillboardComponent->SpriteInfo.Category = TEXT("Dialog");
+	BillboardComponent->SetEditorScale(.3f);
+	BillboardComponent->SpriteInfo.DisplayName = LOCTEXT("DialogSequencePivotSprite", "Light Prop");
+	BillboardComponent->RegisterComponent();
+	InLightActor->SetActorHiddenInGame(false);
+	if (InLightActor->IsA(APointLight::StaticClass()))
+	{
+		if (UTexture2D* Sprite = LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EditorResources/LightIcons/S_LightPoint")))
+		{
+			BillboardComponent->SetSprite(Sprite);
+		}
+	}
+	else if (InLightActor->IsA(ADirectionalLight::StaticClass()))
+	{
+		if (UTexture2D* Sprite = LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EditorResources/LightIcons/S_LightDirectional")))
+		{
+			BillboardComponent->SetSprite(Sprite);
+		}
+	}
+	else if (InLightActor->IsA(ASpotLight::StaticClass()))
+	{
+
+		UArrowComponent* ArrowComponent = NewObject<UArrowComponent>(InLightActor, TEXT("CameraArrow"));
+		ArrowComponent->SetupAttachment(InLightActor->GetRootComponent());
+		ArrowComponent->bHiddenInGame = false;
+		ArrowComponent->ArrowColor = FColor::Cyan;
+		ArrowComponent->ArrowSize = .5f;
+		BillboardComponent->SetVisibility(true);
+		ArrowComponent->RegisterComponent();
+		if (UTexture2D* Sprite = LoadObject<UTexture2D>(nullptr, TEXT("/Engine/EditorResources/LightIcons/S_LightSpot")))
+		{
+			BillboardComponent->SetSprite(Sprite);
+		}
+	}
+
+
+	
 }
 
 void FDialogBuilderEditor::DestroyDialogStage()
@@ -1240,6 +1324,40 @@ void FDialogBuilderEditor::SelectDialogSlotActor(int32 index)
 		return;
 	}
 	UDialogSequenceSlot* Slot = DialogStage->Slots[index];
+
+	const bool bNoteSelectionChange = true;
+	const bool bDeselectBSPSurfs = true;
+	const bool bWarnAboutManyActors = false;
+
+	AActor* ActorToSelect = DialogSlotActors.FindRef(Slot).Get();
+
+	if (GEditor)
+	{
+		GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
+		if (ActorToSelect)
+		{
+			GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
+		}
+
+		GEditor->NoteSelectionChange();
+	}
+}
+
+void FDialogBuilderEditor::SelectLightSlotActor(int32 index)
+{
+	if (!EditingDialogGraph || !CurrentSequenceNode.IsValid()) return;
+
+	UDialogStage* DialogStage = CurrentSequenceNode.Get()->DialogStage;
+	if (!DialogStage)
+	{
+		return;
+	}
+
+	if (!DialogStage->LightSlots.IsValidIndex(index))
+	{
+		return;
+	}
+	UDialogSequenceSlot* Slot = DialogStage->LightSlots[index];
 
 	const bool bNoteSelectionChange = true;
 	const bool bDeselectBSPSurfs = true;
@@ -2213,20 +2331,44 @@ UDialogSequenceSlot* FDialogBuilderEditor::GetTemplateSlot(AActor* InActor)
 
 	UDialogSequenceSlot* SlotToFind = GetDialogSlotKey(InActor);
 
-	int index = 0;
-	for(int i = 0; i < DialogStage->Slots.Num(); i++)
+	if(DialogStage->Slots.Contains(SlotToFind))
 	{
-		if (DialogStage->Slots.IsValidIndex(i) && DialogStage->Slots[i] == SlotToFind)
+		int index = 0;
+		for (int i = 0; i < DialogStage->Slots.Num(); i++)
 		{
-			index = i;
-			break;
+			if (DialogStage->Slots.IsValidIndex(i) && DialogStage->Slots[i] == SlotToFind)
+			{
+				index = i;
+				break;
+			}
+		}
+
+		if (DialogStageTemplate.Get()->Slots.IsValidIndex(index))
+		{
+			return DialogStageTemplate->Slots[index];
+		}
+	}
+	else
+	{
+		//if not found in slot, try to find in light slot
+		int index = 0;
+		for (int i = 0; i < DialogStage->LightSlots.Num(); i++)
+		{
+			if (DialogStage->LightSlots.IsValidIndex(i) && DialogStage->LightSlots[i] == SlotToFind)
+			{
+				index = i;
+				break;
+			}
+		}
+
+		if (DialogStageTemplate.Get()->LightSlots.IsValidIndex(index))
+		{
+			return DialogStageTemplate->LightSlots[index];
 		}
 	}
 
-	if (DialogStageTemplate.Get()->Slots.IsValidIndex(index))
-	{
-		return DialogStageTemplate->Slots[index];
-	}
+
+	
 
 
 

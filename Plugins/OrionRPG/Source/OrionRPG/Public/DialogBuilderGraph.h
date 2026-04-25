@@ -150,8 +150,6 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 		TArray<TObjectPtr<class UDialogCamera>> CameraDefinitions;
 
-	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
-		TArray<TObjectPtr<class UDialogLight>> LightDefinitions;
 
 	/**List of dialog set used in this graph*/
 	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Detail")
@@ -368,7 +366,7 @@ public:
 
 protected:
 	virtual AActor* RetrieveParticipant(FParticipantInfo& Info);
-	virtual AActor* RetrieveActorFromSlot(class UDialogSequenceSlot* InSlot);
+	virtual AActor* RetrieveActorFromSlot(class UDialogSequenceSlot* InSlot, FName SlotID);
 
 	void InitializeDialogActors();
 	void SetDialogStage(class UDialogStage* InDialogStage);	

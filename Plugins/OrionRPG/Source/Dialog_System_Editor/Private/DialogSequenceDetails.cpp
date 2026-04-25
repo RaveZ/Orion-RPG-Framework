@@ -68,14 +68,6 @@ static bool IsDialogDefinitionInGraph(const UDialogBuilderGraph* Graph, const UD
 		}
 	}
 
-	for (const TObjectPtr<UDialogLight>& Entry : Graph->LightDefinitions)
-	{
-		if (Entry.Get() == Definition)
-		{
-			return true;
-		}
-	}
-
 	return false;
 }
 
@@ -164,6 +156,10 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 	// Slot customization
 	if (UDialogSequenceSlot* Slot = DialogSequenceSlot.Get())
 	{
+		if (Slot->IsA<UDialogSequenceSlot_Light>())
+		{
+			return;
+		}
 		if (!IsDialogDefinitionInGraph(Slot->OwningDialogGraph, Slot->DialogDefinition))
 		{
 			Slot->Modify();
@@ -172,17 +168,12 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 
 		IDetailCategoryBuilder& DetailCategory = DetailBuilder.EditCategory("Detail", LOCTEXT("DetailCategoryTitle", "Detail"));
 
-		TSharedPtr<IPropertyHandle> DialogDefinitionHandle = DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceSlot, DialogDefinition));
-		if (DialogDefinitionHandle.IsValid())
-		{
-			DialogDefinitionHandle->MarkHiddenByCustomization();
-		}
-
-		DetailCategory.AddCustomRow(LOCTEXT("ParticipantToBindLabel", "Participant To Bind"))
+	
+		DetailCategory.AddCustomRow(LOCTEXT("ActorToBindLabel", "Actor To Bind"))
 			.NameContent()
 			[
 				SNew(STextBlock)
-					.Text(LOCTEXT("ParticipantToBindText", "Participant To Bind"))
+					.Text(LOCTEXT("ActorToBindText", "Actor To Bind"))
 					.Font(IDetailLayoutBuilder::GetDetailFont())
 			]
 			.ValueContent()
@@ -556,27 +547,7 @@ TSharedRef<SWidget> FDialogSequenceDetails::OnGetSlotListMenu()
 		return MenuBuilder.MakeWidget();
 	}
 
-	// Light slot => only lights
-	if (Slot->IsA<UDialogSequenceSlot_Light>())
-	{
-		MenuBuilder.BeginSection("SlotLights", LOCTEXT("SlotLightsSection", "Light Definitions"));
-		for (const TObjectPtr<UDialogLight>& Light : Graph->LightDefinitions)
-		{
-			if (!Light)
-			{
-				continue;
-			}
-
-			MenuBuilder.AddMenuEntry(
-				GetDialogDefinitionText(Light.Get()),
-				FText::FromString(Light->Tag.ToString()),
-				FSlateIcon(),
-				FUIAction(FExecuteAction::CreateSP(this, &FDialogSequenceDetails::UseSlotDefinition, static_cast<UDialogDefinition*>(Light.Get()))));
-		}
-		MenuBuilder.EndSection();
-
-		return MenuBuilder.MakeWidget();
-	}
+	
 
 	// Regular slot => participants + props
 	if (Slot->IsA<UDialogSequenceSlot>())

@@ -177,6 +177,43 @@ void UDialogBuilderGraph::InitializeDialogActors()
 		}
 	}
 
+	for (UDialogStage* DialogStage : DialogStages)
+	{
+		if (!DialogStage)
+		{
+			continue;
+		}
+
+		for (UDialogSequenceSlot* Slot : DialogStage->Slots)
+		{
+			//Find actor in world from slot information
+			UDialogDefinition* DialogDefinition = Slot ? Slot->DialogDefinition : nullptr;
+			if (!DialogDefinition) continue;
+
+			FName SlotId = Slot->GetActorTag().GetTagName();
+
+			AActor* OutActor = nullptr;
+			TArray<AActor*> FoundActors;
+			UGameplayStatics::GetAllActorsOfClassWithTag(GetWorld(), DialogDefinition->GetActorClass(), SlotId, FoundActors);
+
+			if (FoundActors.Num() > 1 && GetOwningPawn())
+			{
+				float Dist;
+
+				OutActor = UGameplayStatics::FindNearestActor(GetOwningPawn()->GetActorLocation(), FoundActors, Dist);
+			}
+			else if (FoundActors.IsValidIndex(0))
+			{
+				OutActor = FoundActors[0];
+			}
+
+			CachedActorMap.Emplace(SlotId, OutActor);
+
+		}
+
+	}
+
+
 	
 }
 
@@ -200,13 +237,30 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 	UDialogStage* LastDialogStage = CurrentDialogStage;
 	CurrentDialogStage = InDialogStage;
 
-
+	if(LastDialogStage)
+	{
+		//Reset last stage, destroy light setup
+		for (auto& Slot : CurrentDialogStage->LightSlots)
+		{
+			if (!Slot) continue;
+			const FName SlotId = Slot->GetID();
+			if (AActor* CachedActor = CachedActorMap.FindRef(SlotId))
+			{
+				CachedActor->Destroy();
+				CachedActorMap.Remove(SlotId);
+				DialogSlotActors.Remove(Slot);
+			}
+		}
+	}
 	
 	for (auto& Slot : CurrentDialogStage->Slots)
 	{
-		if (AActor* DialogActor = RetrieveActorFromSlot(Slot))
+		if (!Slot) continue;
+		//Regular slot uses actor tag for binding
+		FName SlotId = Slot->GetActorTag().GetTagName();
+		
+		if (AActor* DialogActor = RetrieveActorFromSlot(Slot, SlotId))
 		{
-			const FName SlotId = Slot->GetActorTag().GetTagName();
 			CachedActorMap.Emplace(SlotId, DialogActor);
 			DialogSlotActors.Emplace(Slot, DialogActor);
 			CacheOriginalActorTransform(SlotId, DialogActor);
@@ -219,9 +273,11 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 
 	for (auto& Slot : CurrentDialogStage->CameraSlots)
 	{
-		if (AActor* DialogActor = RetrieveActorFromSlot(Slot))
+		if (!Slot) continue;
+		//Camera uses slot ID for binding
+		const FName SlotId = Slot->GetID();
+		if (AActor* DialogActor = RetrieveActorFromSlot(Slot, SlotId))
 		{
-			const FName SlotId = Slot->GetID();
 			CachedActorMap.Emplace(SlotId, DialogActor);
 			DialogSlotActors.Emplace(Slot, DialogActor);
 			CacheOriginalActorTransform(SlotId, DialogActor);
@@ -230,6 +286,20 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 			CurrentDialogSequence->BindPossessableObject(Slot->ID, *DialogActor, DialogActor->GetClass());
 		}
 	}
+
+	for (auto& Slot : CurrentDialogStage->LightSlots)
+	{
+		if (!Slot) continue;
+		//Camera uses slot ID for binding
+		const FName SlotId = Slot->GetID();
+		if (AActor* DialogActor = RetrieveActorFromSlot(Slot, SlotId))
+		{
+			CachedActorMap.Emplace(SlotId, DialogActor);
+			DialogSlotActors.Emplace(Slot, DialogActor);
+
+		}
+	}
+
 	
 }
 
@@ -343,37 +413,9 @@ void UDialogBuilderGraph::CollectDialogDefinitionsForSetup(TArray<UDialogDefinit
 		}
 	}
 
-	for (UDialogLight* Light : LightDefinitions)
-	{
-		if (Light)
-		{
-			OutDefinitions.AddUnique(Light);
-		}
-	}
+	
 
-	for (UDialogStage* DialogStage : DialogStages)
-	{
-		if (!DialogStage)
-		{
-			continue;
-		}
-
-		for (UDialogSequenceSlot* Slot : DialogStage->Slots)
-		{
-			if (Slot && Slot->DialogDefinition)
-			{
-				OutDefinitions.AddUnique(Slot->DialogDefinition);
-			}
-		}
-
-		for (UDialogSequenceSlot* Slot : DialogStage->CameraSlots)
-		{
-			if (Slot && Slot->DialogDefinition)
-			{
-				OutDefinitions.AddUnique(Slot->DialogDefinition);
-			}
-		}
-	}
+	
 }
 
 void UDialogBuilderGraph::SetupPrerequisites()
@@ -1316,11 +1358,11 @@ AActor* UDialogBuilderGraph::RetrieveParticipant(FParticipantInfo& Info)
 }
 
 
-AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot)
+AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot, FName SlotID)
 {
 	if (!InSlot)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("RetrieveParticipant: Slot is null for Dialog ID: %s"), *ID.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("RetrieveParticipant: Slot is null for Dialog ID: %s"), *SlotID.ToString());
 		return nullptr;
 	}
 
@@ -1342,8 +1384,9 @@ AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot)
 		return nullptr;
 	}
 
+
 	// Look up by the slot's ID (FName) which is the map's key type
-	if (TObjectPtr<AActor> ExistingActor = CachedActorMap.FindRef(InSlot->GetActorTag().GetTagName()))
+	if (TObjectPtr<AActor> ExistingActor = CachedActorMap.FindRef(SlotID))
 	{
 		ExistingActor->AttachToActor(SequencePivot, FAttachmentTransformRules::KeepRelativeTransform);
 		ExistingActor->SetActorRelativeLocation(InSlot->SlotLocation);

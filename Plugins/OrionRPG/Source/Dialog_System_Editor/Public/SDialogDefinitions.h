@@ -57,8 +57,6 @@ public:
 	/** Accessor for getting the current selection as a prop */
 	FAssetSchemaAction_Prop* SelectionAsProp() const;
 
-	/** Accessor for getting the current selection as a light */
-	FAssetSchemaAction_Light* SelectionAsLight() const;
 
 	/** Accessor the blueprint object from the main editor */
 	UDialogBuilderGraph* GetDialogBuilderGraph() const { return DialogBuilderGraph; }
@@ -145,8 +143,6 @@ private:
 	//Create new prop definition
 	void CreateNewProp();
 
-	//Create new light definition
-	void CreateNewLight();
 
 	/** Helper function to delete a graph in the MyBlueprint window */
 	void OnDeleteGraph(UEdGraph* InGraph);

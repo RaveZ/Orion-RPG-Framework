@@ -116,6 +116,7 @@ public:
 		SLATE_ARGUMENT(TWeakObjectPtr<UDialogSequenceSlot>, Slot)
 		SLATE_ARGUMENT(bool, IsCameraSlot)
 		SLATE_ARGUMENT(bool, IsLightSlot)
+		SLATE_ARGUMENT(int32, SlotIndex)
 	SLATE_END_ARGS()
 
 	void Construct(const FArguments& InArgs)
@@ -123,6 +124,7 @@ public:
 		Slot = InArgs._Slot;
 		bIsCameraSlot = InArgs._IsCameraSlot;
 		bIsLightSlot = InArgs._IsLightSlot;
+		SlotIndex = InArgs._SlotIndex;
 
 		ChildSlot
 			[
@@ -146,7 +148,7 @@ public:
 
 									if (bIsLightSlot)
 									{
-										return FText::FromString(FString::Printf(TEXT("%s"), *Label));
+										return FText::FromString(FString::Printf(TEXT("Light %d"), SlotIndex +1));
 									}
 									if (bIsCameraSlot)
 									{
@@ -163,6 +165,7 @@ private:
 	TWeakObjectPtr<UDialogSequenceSlot> Slot;
 	bool bIsCameraSlot = false;
 	bool bIsLightSlot = false;
+	int32 SlotIndex = INDEX_NONE;
 };
 
 // -----------------------------------------------------------------------------
@@ -578,6 +581,7 @@ TSharedRef<ITableRow> SDialogStageManager::GenerateSlotRow(FDialogSlotListItemPt
 						.Slot(WeakSlot)
 						.IsCameraSlot(bCamera)
 						.IsLightSlot(false)
+						.SlotIndex(InItem->SlotIndex)
 				]
 		];
 }
@@ -621,6 +625,10 @@ void SDialogStageManager::ApplySlotSelection(FDialogSlotListItemPtr InItem)
 		if (DialogEditor && !bSelectedSlotIsLight)
 		{
 			DialogEditor->SelectDialogSlotActor(SelectedSlotIndex);
+		}
+		else
+		{
+			DialogEditor->SelectLightSlotActor(SelectedSlotIndex);
 		}
 	}
 }
@@ -710,6 +718,7 @@ TSharedRef<ITableRow> SDialogStageManager::GenerateLightSlotRow(FDialogSlotListI
 						.Slot(WeakSlot)
 						.IsCameraSlot(false)
 						.IsLightSlot(true)
+						.SlotIndex(InItem->SlotIndex)
 				]
 		];
 }
@@ -990,6 +999,11 @@ TSharedPtr<SWidget> SDialogStageManager::OnSlotContextMenuOpening()
 
 void SDialogStageManager::OnDeleteSelection()
 {
+	if (SelectedSlot.IsValid() && SelectedDialogStage.IsValid() && IsSelectedSlotLight())
+	{
+		OnRemoveLightSlot(Cast<UDialogSequenceSlot_Light>(SelectedSlot.Get()), SelectedSlotIndex);
+		return;
+	}
 	if (SelectedSlot.IsValid() && SelectedDialogStage.IsValid())
 	{
 		OnRemoveSlot(SelectedSlot.Get(), SelectedSlotIndex, IsSelectedSlotCamera());
