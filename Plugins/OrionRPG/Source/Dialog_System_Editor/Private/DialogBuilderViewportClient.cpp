@@ -314,9 +314,6 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 	const FViewportClick Click(&View, this, Key, Event, HitX, HitY);
 	TSharedPtr<FDialogBuilderEditor> DialogEditor = Editor.Pin();
 
-	const bool bNoteSelectionChange = true;
-	const bool bDeselectBSPSurfs = true;
-	const bool bWarnAboutManyActors = false;
 
 
 	if (!DialogEditor.IsValid()) return;
@@ -328,8 +325,7 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 
 	if (!HitProxy)
 	{
-		GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
-		CachedSelectedActor = nullptr;
+		SelectActor(nullptr);
 		return;
 	}
 	if (HitProxy->IsA(HWidgetAxis::StaticGetType()))
@@ -381,16 +377,8 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 	{
 		if (!CanSelectActorFromHitProxy(HitProxy))
 		{
-			if (GEditor)
-			{
-				GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
-				if (ActorToSelect)
-				{
-					GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
-				}
 
-				GEditor->NoteSelectionChange();
-			}
+			SelectActor(ActorToSelect);
 			return;
 		}
 		HActor* ActorProxy = (HActor*)HitProxy;
@@ -404,17 +392,7 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 		UDialogSequenceSlot* Slot =  DialogEditor->GetTemplateSlot(ActorToSelect);
 
 		
-		if (GEditor)
-		{
-			GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
-			if (ActorToSelect)
-			{
-				GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
-				CachedSelectedActor = ActorToSelect;
-			}
-
-			GEditor->NoteSelectionChange();
-		}
+		SelectActor(ActorToSelect);
 
 		if (DialogEditor->GetSequencePivot() == ActorToSelect)
 		{
@@ -441,6 +419,24 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 
 
 		Invalidate();
+	}
+}
+
+void FDialogBuilderViewportClient::SelectActor(AActor* ActorToSelect)
+{
+	const bool bNoteSelectionChange = true;
+	const bool bDeselectBSPSurfs = true;
+	const bool bWarnAboutManyActors = false;
+	if (GEditor)
+	{
+		GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
+		CachedSelectedActor = ActorToSelect;
+		if (ActorToSelect)
+		{
+			GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
+		}
+
+		GEditor->NoteSelectionChange();
 	}
 }
 

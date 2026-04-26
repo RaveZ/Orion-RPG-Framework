@@ -8,6 +8,8 @@ UDialogGenerateCameraSettings::UDialogGenerateCameraSettings()
 {
 	bRandomizeCameraPresets = true;
 	bRandomizeCameraAngles = true;
+	bOverridePlaybackRangeStart = false;
+	bOverridePlaybackRangeEnd = false;
 }
 
 

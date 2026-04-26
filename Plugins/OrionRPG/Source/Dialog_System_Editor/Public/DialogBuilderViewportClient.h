@@ -238,6 +238,7 @@ public:
 	 */
 	static UActorComponent* FindViewComponentForActor(AActor const* Actor);
 
+	void SelectActor(AActor* ActorToSelect);
 
 protected:
 	/**
@@ -269,6 +270,7 @@ protected:
 		const FLevelViewportActorLock& ActorLock = ActorLocks.GetLock(bLockedCameraView);
 		return Cast<UCameraComponent>(FindViewComponentForActor(ActorLock.GetLockedActor()));
 	}
+
 
 private:
 	/** Internal function for public FindViewComponentForActor, which finds a view component to use for the specified actor. */

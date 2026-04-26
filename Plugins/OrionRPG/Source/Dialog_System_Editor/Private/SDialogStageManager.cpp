@@ -448,20 +448,17 @@ void SDialogStageManager::ApplyDialogStageSelection(FDialogStageListItemPtr InIt
 
 	if (DialogStageDetailsView.IsValid())
 	{
-		if (GEditor)
-		{
-			AActor* SequencePivot = DialogEditor ? DialogEditor->GetSequencePivot() : nullptr;
-			GEditor->SelectNone(true, true, false);
-			if (SelectedDialogStage == DialogEditor->GetDialogStageTemplate())
-			{
-				if (SequencePivot)
-				{
-					GEditor->SelectActor(SequencePivot, true, true);
-				}
-			}
+		AActor* SequencePivot = DialogEditor ? DialogEditor->GetSequencePivot() : nullptr;
 
-			GEditor->NoteSelectionChange();
+		if (SelectedDialogStage == DialogEditor->GetDialogStageTemplate())
+		{
+			DialogEditor->SelectActor(SequencePivot);
 		}
+		else
+		{
+			DialogEditor->SelectActor(nullptr);
+		}
+		
 
 		DialogStageDetailsView->SetObject(SelectedDialogStage.Get());
 	}

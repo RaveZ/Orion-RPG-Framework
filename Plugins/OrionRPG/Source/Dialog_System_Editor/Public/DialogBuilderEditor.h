@@ -332,13 +332,12 @@ public:
 	void OpenDialogSequence(UDialogSequence* InDialogSequence);
 	void EnsureSequencerCreated();
 	void EnsureDialogCameraCutSection();
-	FGuid CreateDialogCamera(const bool bSpawnable, class ACineCameraActor*& OutActor);
 	void UpdateTrackModelRule();
 	void UpdateSectionRule();
 	void OnSequencerSelectionChangedObjectGuids(TArray<FGuid> Guids);
 	void ApplyDefaultCameraSetting();
 
-	void ApplyCameraPreset(class UDialogSequenceShot* InSequenceShot, int32 InFrameNumber = -1, bool bRandomizeAngle = false);
+	bool ApplyCameraPreset(class UDialogSequenceShot* InSequenceShot, int32 InFrameNumber = -1, bool bRandomizeAngle = false);
 	void AddKeyFromCameraPreset(int32 InFrameNumber = -1, EMovieSceneKeyInterpolation KeyInterpolationType = EMovieSceneKeyInterpolation::Constant);
 
 	/** Called whenever sequencer has received focus */
@@ -349,6 +348,8 @@ public:
 	void RefreshSequencerCameraLock();
 	void UnbindSequencerDelegates();
 	void ApplyViewportCameraMode();
+
+	void SelectActor(AActor* ActorToSelect);
 
 	/** Called whenever sequencer in initializing tool menu context */
 	void OnInitToolMenuContext(FToolMenuContext& MenuContext);

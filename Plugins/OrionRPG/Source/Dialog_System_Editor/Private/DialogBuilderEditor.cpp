@@ -527,18 +527,21 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 
 		if (Sequencer)
 		{
-			if (EditingDialogSequence)
+			TWeakObjectPtr<UDialogSequence> WeakDialogSequence = EditingDialogSequence;	
+			if (WeakDialogSequence.IsValid())
 			{
-				Sequencer->ResetToNewRootSequence(*EditingDialogSequence);
+				Sequencer->ResetToNewRootSequence(*WeakDialogSequence);
 
-				Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshAllImmediately);
-				Sequencer->ForceEvaluate();
 			}
+			else
+			{
+				Sequencer->ResetToNewRootSequence(*UDialogSequence::GetNullDialogSequence());
+
+			}
+			Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshAllImmediately);
+			Sequencer->ForceEvaluate();
 		}
 
-		GEditor->SelectNone(true, true, false);
-
-		GEditor->NoteSelectionChange();
 	}
 }
 
@@ -618,13 +621,21 @@ namespace
 		if (bIsCamera || BoundActor->IsA(ACineCameraActor::StaticClass()))
 		{
 			AddTrackIfMissing<UMovieScene3DTransformTrack>(MovieScene, BindingId);
+
+			if (ACineCameraActor* CineCam = Cast<ACineCameraActor>(BoundActor))
+			{
+				if (UCineCameraComponent* CineCameraComponent = CineCam->GetCineCameraComponent())
+				{
+					
+				}
+			}
+			
 			return;
 		}
 
 		if (BoundActor && BoundActor->IsA(ACharacter::StaticClass()))
 		{
 			AddTrackIfMissing<UMovieScene3DTransformTrack>(MovieScene, BindingId);
-			//AddTrackIfMissing<UMovieSceneSkeletalAnimationTrack>(MovieScene, BindingId);
 			return;
 		}
 
@@ -832,14 +843,19 @@ void FDialogBuilderEditor::UpdateDialogStage()
 	if (DialogStage->CameraSlots.Num() == 0)
 	{
 		UDialogSequenceSlot* NewCameraSlot = NewObject<UDialogSequenceSlot>(DialogGraph, NAME_None, RF_Transactional);
-		NewCameraSlot->DialogDefinition = NewObject<UDialogCamera>(DialogGraph, NAME_None, RF_Transactional);
 		DialogStage->CameraSlots.Add(NewCameraSlot);
 
 	}
-	for (auto& DialogSlot : DialogStage->CameraSlots)
+	for (auto& CameraSlot : DialogStage->CameraSlots)
 	{
+		if(!CameraSlot) continue;
+
+		if(!CameraSlot->DialogDefinition)
+		{
+			CameraSlot->DialogDefinition = NewObject<UDialogCamera>(DialogGraph, NAME_None, RF_Transactional);
+		}
 		AActor* SpawnedCamera = nullptr;
-		RetrieveDialogSlotActor(DialogSlot, SpawnedCamera, /*bIsCamera*/true);
+		RetrieveDialogSlotActor(CameraSlot, SpawnedCamera, /*bIsCamera*/true);
 	}
 
 	for (auto& LightSlot : DialogStage->LightSlots)
@@ -1262,22 +1278,10 @@ AActor* FDialogBuilderEditor::GetDialogDefinitionActor(UDialogDefinition* InDial
 
 void FDialogBuilderEditor::SelectDialogDefinitionActor(UDialogDefinition* InDialogDefinition)
 {
-	const bool bNoteSelectionChange = true;
-	const bool bDeselectBSPSurfs = true;
-	const bool bWarnAboutManyActors = false;
-
 	AActor* ActorToSelect = GetDialogDefinitionActor(InDialogDefinition);
 
-	if (GEditor)
-	{
-		GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
-		if (ActorToSelect)
-		{
-			GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
-		}
 
-		GEditor->NoteSelectionChange();
-	}
+	SelectActor(ActorToSelect);
 }
 
 void FDialogBuilderEditor::SelectDialogDefinition(UDialogDefinition* InDialogDefinition)
@@ -1324,22 +1328,11 @@ void FDialogBuilderEditor::SelectDialogSlotActor(int32 index)
 	}
 	UDialogSequenceSlot* Slot = DialogStage->Slots[index];
 
-	const bool bNoteSelectionChange = true;
-	const bool bDeselectBSPSurfs = true;
-	const bool bWarnAboutManyActors = false;
 
 	AActor* ActorToSelect = DialogSlotActors.FindRef(Slot).Get();
 
-	if (GEditor)
-	{
-		GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
-		if (ActorToSelect)
-		{
-			GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
-		}
 
-		GEditor->NoteSelectionChange();
-	}
+	SelectActor(ActorToSelect);
 }
 
 void FDialogBuilderEditor::SelectLightSlotActor(int32 index)
@@ -1358,22 +1351,21 @@ void FDialogBuilderEditor::SelectLightSlotActor(int32 index)
 	}
 	UDialogSequenceSlot* Slot = DialogStage->LightSlots[index];
 
-	const bool bNoteSelectionChange = true;
-	const bool bDeselectBSPSurfs = true;
-	const bool bWarnAboutManyActors = false;
 
 	AActor* ActorToSelect = DialogSlotActors.FindRef(Slot).Get();
 
-	if (GEditor)
-	{
-		GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
-		if (ActorToSelect)
-		{
-			GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
-		}
+	SelectActor(ActorToSelect);
+}
 
-		GEditor->NoteSelectionChange();
+void FDialogBuilderEditor::SelectActor(AActor* ActorToSelect)
+{
+	FDialogBuilderViewportClient* ViewportClient = DialogViewportWidget->GetDialogViewportClientPtr();
+	if (!ViewportClient)
+	{
+		return;
 	}
+
+	ViewportClient->SelectActor(ActorToSelect);
 }
 
 UDialogDefinition* FDialogBuilderEditor::FindDialogDefinitionByActor(const AActor* InActor) const
@@ -2244,64 +2236,6 @@ void NewCameraAdded(TSharedRef<ISequencer> Sequencer, ACameraActor* NewCamera, F
 	}
 }
 
-FGuid FDialogBuilderEditor::CreateDialogCamera(const bool bSpawnable, ACineCameraActor*& OutActor)
-{
-	FGuid CameraGuid;
-
-	if (!Sequencer.IsValid() || !EditingDialogSequence)
-	{
-		return CameraGuid;
-	}
-
-	UMovieSceneSequence* Sequence = Sequencer->GetFocusedMovieSceneSequence();
-	if (!Sequence)
-	{
-		return CameraGuid;
-	}
-
-	UMovieScene* MovieScene = Sequence->GetMovieScene();
-	if (!MovieScene || MovieScene->IsReadOnly())
-	{
-		return CameraGuid;
-	}
-
-	UWorld* World = GetPreviewWorld();
-	if (!World)
-	{
-		return CameraGuid;
-	}
-
-	const FScopedTransaction Transaction(LOCTEXT("CreateDialogCamera", "Create Dialog Camera"));
-
-	FActorSpawnParameters SpawnParams;
-	if (bSpawnable)
-	{
-		SpawnParams.ObjectFlags &= ~RF_Transactional;
-	}
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-
-	OutActor = World->SpawnActor<ACineCameraActor>(SpawnParams);
-	if (!OutActor)
-	{
-		return CameraGuid;
-	}
-
-
-	OutActor->SetActorLocation(FVector::ZeroVector, false);
-	OutActor->SetActorRotation(FRotator::ZeroRotator);
-	FActorLabelUtilities::SetActorLabelUnique(OutActor, ACineCameraActor::StaticClass()->GetName());
-
-	CameraGuid = FSequencerUtilities::CreateBinding(Sequencer.ToSharedRef(), *OutActor);
-
-	if (!CameraGuid.IsValid())
-	{
-		return CameraGuid;
-	}
-
-	NewCameraAdded(Sequencer.ToSharedRef(), OutActor, CameraGuid);
-
-	return CameraGuid;
-}
 
 UDialogSequenceSlot* FDialogBuilderEditor::GetDialogSlotKey(AActor* InActor)
 {
@@ -2515,20 +2449,8 @@ void FDialogBuilderEditor::OnSequencerSelectionChangedObjectGuids(TArray<FGuid> 
 		if (!BoundObjects.IsValidIndex(0)) return;
 		if (AActor* ActorToSelect = Cast<AActor>(BoundObjects[0]))
 		{
-			const bool bNoteSelectionChange = true;
-			const bool bDeselectBSPSurfs = true;
-			const bool bWarnAboutManyActors = false;
 
-			if (GEditor)
-			{
-				GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
-				if (ActorToSelect)
-				{
-					GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
-				}
-
-				GEditor->NoteSelectionChange();
-			}
+			SelectActor(ActorToSelect);
 
 			if (ActorToSelect == DialogCamera)
 			{
@@ -2633,7 +2555,26 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 	const bool bRandomizeCameraPresets = InSettings ? InSettings->bRandomizeCameraPresets : true;
 	const EMovieSceneKeyInterpolation KeyInterpolationType = InSettings ? InSettings->KeyInterpolation : EMovieSceneKeyInterpolation::Constant;
 	const TArray<UDialogSequenceShot*> CameraPresets = InSettings ? InSettings->DefaultShots : CameraPresets;
+	const bool bOverridePlaybackRangeStart = InSettings ? InSettings->bOverridePlaybackRangeStart : false;
+	const bool bOverridePlaybackRangeEnd = InSettings ? InSettings->bOverridePlaybackRangeEnd : false;
+	const float PlaybackRangeStart = InSettings ? InSettings->PlaybackRangeStart : 0.f;
+	const float PlaybackRangeEnd = InSettings ? InSettings->PlaybackRangeEnd : 0.f;
 
+	const FFrameNumber DefaultPlaybackRangeStart = MovieScene->GetPlaybackRange().GetLowerBoundValue();
+	const FFrameNumber DefaultPlaybackRangeEnd = MovieScene->GetPlaybackRange().GetUpperBoundValue();
+
+	FFrameNumber EffectivePlaybackRangeStart = bOverridePlaybackRangeStart
+		? FFrameNumber(FMath::RoundToInt(PlaybackRangeStart))
+		: DefaultPlaybackRangeStart;
+
+	FFrameNumber EffectivePlaybackRangeEnd = bOverridePlaybackRangeEnd
+		? FFrameNumber(FMath::RoundToInt(PlaybackRangeEnd))
+		: DefaultPlaybackRangeEnd;
+
+	if (EffectivePlaybackRangeEnd < EffectivePlaybackRangeStart)
+	{
+		Swap(EffectivePlaybackRangeStart, EffectivePlaybackRangeEnd);
+	}
 
 	UMovieScene3DTransformTrack* TransformTrack = MovieScene->FindTrack<UMovieScene3DTransformTrack>(CameraBindingId);
 	if (!TransformTrack)
@@ -2663,7 +2604,6 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 	TransformSection->Modify();
 	TransformSection->SetBlendType(EMovieSceneBlendType::Absolute);
 
-
 	TArray<UMovieSceneSection*> DialogSections = DialogTrack->GetAllSections();
 	DialogSections.RemoveAll([](UMovieSceneSection* Section) { return Section == nullptr; });
 
@@ -2680,11 +2620,25 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 	TArrayView<FMovieSceneDoubleChannel*> Channels = TransformSection->GetChannelProxy().GetChannels<FMovieSceneDoubleChannel>();
 	for (FMovieSceneDoubleChannel* Channel : Channels)
 	{
-		if (Channel)
+		if (!Channel)
 		{
-			Channel->Reset();
+			continue;
+		}
+
+		TArray<FFrameNumber> KeyTimes;
+		TArray<FKeyHandle> KeyHandles;
+
+		Channel->GetKeys(
+			TRange<FFrameNumber>(EffectivePlaybackRangeStart, EffectivePlaybackRangeEnd),
+			&KeyTimes,
+			&KeyHandles);
+
+		if (KeyHandles.Num() > 0)
+		{
+			Channel->DeleteKeys(KeyHandles);
 		}
 	}
+
 	if (Channels.Num() < 9)
 	{
 		return;
@@ -2708,6 +2662,12 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 			continue;
 		}
 
+		const FFrameNumber SectionStartFrame = Section->GetRange().GetLowerBoundValue();
+		if (SectionStartFrame < EffectivePlaybackRangeStart || SectionStartFrame > EffectivePlaybackRangeEnd)
+		{
+			continue;
+		}
+
 		const int32 PresetIndex = FMath::RandHelper(CameraPresets.Num());
 		UDialogSequenceShot* Preset = bRandomizeCameraPresets ? CameraPresets[PresetIndex] : InSettings->ShotToUse.Get();
 		if (!Preset)
@@ -2715,12 +2675,12 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 			continue;
 		}
 
-		const FFrameNumber StartFrame = Section->GetRange().GetLowerBoundValue();
+		const FFrameNumber StartFrame = SectionStartFrame;
 
-		ApplyCameraPreset(Preset, StartFrame.Value, bRandomizeCameraAngles);
-
-		AddKeyFromCameraPreset(StartFrame.Value, KeyInterpolationType);
-		
+		if (ApplyCameraPreset(Preset, StartFrame.Value, bRandomizeCameraAngles))
+		{
+			AddKeyFromCameraPreset(StartFrame.Value, KeyInterpolationType);
+		}
 	}
 
 	SlowTask.EnterProgressFrame(1.0f, LOCTEXT("GenerateDialogSequenceCamera_Finished", "Generating..."));
@@ -2732,23 +2692,23 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 		FPlatformProcess::Sleep(0.01f);
 	}
 
-	TransformSection->SetRange(MovieScene->GetPlaybackRange());
+	TransformSection->SetRange(TRange<FFrameNumber>(EffectivePlaybackRangeStart, EffectivePlaybackRangeEnd));
 	Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshAllImmediately);
 	Sequencer->ForceEvaluate();
 	SetViewportCameraMode(EDialogViewportCameraMode::DialogCameraLock);
 }
 
-void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot, int32 InFrameNumber, bool bRandomizeAngle)
+bool FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot, int32 InFrameNumber, bool bRandomizeAngle)
 {
 	if (!InSequenceShot || !EditingDialogGraph || !Sequencer.IsValid() || !EditingDialogSequence)
 	{
-		return;
+		return false;
 	}
 
 	UMovieScene* MovieScene = EditingDialogSequence->GetMovieScene();
 	if (!MovieScene)
 	{
-		return;
+		return false;
 	}
 
 	UDialogDefinition* InDialogDefinition = nullptr;
@@ -2785,7 +2745,7 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 
 	if (!InDialogDefinition)
 	{
-		return;
+		return false;
 	}
 
 	AActor* ActorToFocus = nullptr;
@@ -2803,13 +2763,13 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 
 	if (!IsValid(ActorToFocus))
 	{
-		return;
+		return false;
 	}
 
 	AActor* CameraActor = DialogCamera.Get();
 	if (!IsValid(CameraActor))
 	{
-		return;
+		return false;
 	}
 
 	InSequenceShot->K2_PreCameraSetup();
@@ -2923,6 +2883,7 @@ void FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 			ViewportClient->Invalidate();
 		}
 	}
+	return true;
 }
 
 void FDialogBuilderEditor::AddKeyFromCameraPreset(int32 InFrameNumber, EMovieSceneKeyInterpolation KeyInterpolationType)

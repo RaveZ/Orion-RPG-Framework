@@ -19,6 +19,18 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Sequence")
 	EMovieSceneKeyInterpolation KeyInterpolation = EMovieSceneKeyInterpolation::Constant;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Sequence", meta = (InlineEditConditionToggle))
+	bool bOverridePlaybackRangeStart;
+
+	UPROPERTY(EditAnywhere, Category = "Sequence", meta = (UIMin = "0.0", ClampMin = "0.0", EditCondition = "bOverridePlaybackRangeStart"))
+	float PlaybackRangeStart;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Sequence", meta = (InlineEditConditionToggle))
+	bool bOverridePlaybackRangeEnd;
+
+	UPROPERTY(EditAnywhere, Category = "Sequence", meta = (UIMin = "0.0", ClampMin = "0.0", EditCondition = "bOverridePlaybackRangeEnd"))
+	float PlaybackRangeEnd;
+
 	/** Randomize camera angle for each preset
 	* This will provide random variation for each shot
 	*/
