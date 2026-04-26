@@ -387,6 +387,9 @@ protected:
 #if WITH_EDITORONLY_DATA
 public:
 	UPROPERTY()
+	FTransform CachedCameraTransform;
+
+	UPROPERTY()
 	TObjectPtr<class UDialogBuilderNode_DialogSequence> CurrentEditingSequenceNode;
 	/** Set of dialog-graph pages */
 	UPROPERTY()

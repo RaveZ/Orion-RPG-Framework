@@ -1276,7 +1276,12 @@ void FDialogBuilderEditor::RetrieveDialogSlotActor(UDialogSequenceSlot* InSlot, 
 						}
 					}
 					EditorPinned->ApplyDefaultCameraSetting();
-					NewActor->SetActorTransform(EditorPinned->CachedCameraTransform);
+
+					if (UDialogBuilderGraph* DialogGraph = EditorPinned->GetDialogBuilderGraph())
+					{
+						NewActor->SetActorTransform(DialogGraph->CachedCameraTransform);
+					}
+
 				}
 				else
 				{
@@ -1434,12 +1439,18 @@ void FDialogBuilderEditor::InitializeLightActor(AActor* InLightActor)
 
 void FDialogBuilderEditor::DestroyDialogStage()
 {
+	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
 	UWorld* PreviewWorld = GetPreviewWorld();
 	check(PreviewWorld);
 
+	if(!DialogGraph)
+	{
+		return;
+	}
+
 	if (AActor* CameraActor = DialogCamera.Get())
 	{
-		CachedCameraTransform = CameraActor->GetActorTransform();
+		DialogGraph->CachedCameraTransform = CameraActor->GetActorTransform();
 	}
 
 	for (auto& Pair : DialogSlotActors)
