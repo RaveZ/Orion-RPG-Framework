@@ -254,6 +254,7 @@ void SDialogCameraPresets::ApplyCameraPresetItem(FDialogCameraPresetItemPtr InIt
 	{
 		DialogEditor->SetDetailsObject(Shot);
 		DialogEditor->ApplyCameraPreset(Shot);
+		DialogEditor->SetViewportCameraMode(EDialogViewportCameraMode::DialogCameraLock);
 	}
 }
 

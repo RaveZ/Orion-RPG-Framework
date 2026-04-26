@@ -3,6 +3,8 @@
 #include "DialogBuilderEdNode_PlayerChoice.h"
 #include "DialogBuilderSetting.h"
 #include "DialogBuilderNode.h"
+#include "DialogBuilderNode_DialogSequence.h"
+#include "DialogStage.h"
 #include "DialogBuilderNode_PlayerChoice.h"
 #include "EdGraph/EdGraphPin.h"
 
@@ -26,9 +28,42 @@ UDialogBuilderEdNode_PlayerChoice::UDialogBuilderEdNode_PlayerChoice()
 {
 }
 
+void UDialogBuilderEdNode_PlayerChoice::PostPasteNode()
+{
+	Super::PostPasteNode();
+	UDialogBuilderNode_DialogSequence* DialogSequenceNode = Cast<UDialogBuilderNode_DialogSequence>(NodeInstance);
+	if (DialogSequenceNode)
+	{
+		if (UDialogBuilderGraph* DialogGraph = DialogSequenceNode->GetOwningDialogGraph())
+		{
+			for (auto& DialogStage : DialogGraph->DialogStages)
+			{
+				UDialogStage* CurrentTemplateStage = DialogSequenceNode->DialogStageToUse;
+				if (DialogStage && CurrentTemplateStage)
+				{
+					if (CurrentTemplateStage->Name.ToString() == DialogStage->Name.ToString())
+					{
+						DialogSequenceNode->DialogStageToUse = DialogStage;
+						break;
+					}
+				}
+			}
+		}
+	}
+	GetGraph()->NotifyGraphChanged();
+}
+
 void UDialogBuilderEdNode_PlayerChoice::PostPlacedNewNode()
 {
 	Super::PostPlacedNewNode();
+
+	UDialogBuilderNode_DialogSequence* DialogSequenceNode = Cast<UDialogBuilderNode_DialogSequence>(NodeInstance);
+	if (DialogSequenceNode)
+	{
+		DialogSequenceNode->EnsureSequenceCreated();
+	}
+	GetGraph()->NotifyGraphChanged();
+
 	BindChoiceChangeDelegate();
 }
 

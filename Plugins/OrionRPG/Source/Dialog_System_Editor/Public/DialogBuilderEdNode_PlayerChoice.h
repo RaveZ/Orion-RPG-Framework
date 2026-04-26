@@ -23,6 +23,7 @@ public:
 	static FName GetChoiceOutputPinName(int32 ChoiceIndex);
 	static int32 GetChoiceIndexFromPin(const UEdGraphPin* Pin);
 
+	virtual void PostPasteNode() override;
 	virtual void PostPlacedNewNode() override;
 #if WITH_EDITOR
 	virtual void PostLoad() override;

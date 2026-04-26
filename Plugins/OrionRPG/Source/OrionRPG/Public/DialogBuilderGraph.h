@@ -216,6 +216,9 @@ public:
 
 public:
 	/*------------------------Default Camera Settings------------------------*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Config")
+	ECameraFocusMethod FocusMethod;
+
 	/** Current focal length of the camera (i.e. controls FoV, zoom) */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Config")
 	float FocalLength;

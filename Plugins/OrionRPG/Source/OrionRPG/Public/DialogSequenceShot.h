@@ -25,9 +25,11 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Track & Focus Settings")
 	bool bDrawTargetFocus = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Track & Focus Settings", meta = (Categories = "Dialog.Participant"))
+	UPROPERTY(BlueprintReadWrite, Category = "Track & Focus Settings", meta = (Categories = "Dialog.Participant"))
 	class UDialogDefinition* ActorToFocus;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Track & Focus Settings")
+	bool bFocusCameraOnActor;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Track & Focus Settings")
 	FName TrackedBone;

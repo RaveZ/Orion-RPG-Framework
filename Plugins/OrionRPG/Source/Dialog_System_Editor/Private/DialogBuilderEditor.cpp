@@ -85,8 +85,12 @@
 #include "CineCameraActor.h"
 #include "SequencerUtilities.h"
 #include "MovieSceneToolHelpers.h"
+#include "Tracks/MovieSceneObjectPropertyTrack.h"
+#include "Tracks/MovieSceneActorReferenceTrack.h"
 #include "Tracks/MovieScene3DTransformTrack.h"
 #include "Tracks/MovieSceneCameraCutTrack.h"
+#include "Tracks/MovieSceneFloatTrack.h"
+#include "Sections/MovieSceneActorReferenceSection.h"
 #include "Bindings/MovieSceneCustomBinding.h"
 #include "Bindings/MovieSceneSpawnableBinding.h"
 #include "Bindings/MovieSceneReplaceableBinding.h"
@@ -538,7 +542,7 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 				Sequencer->ResetToNewRootSequence(*UDialogSequence::GetNullDialogSequence());
 
 			}
-			Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshAllImmediately);
+			Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
 			Sequencer->ForceEvaluate();
 		}
 
@@ -609,7 +613,94 @@ namespace
 		MovieScene->AddTrack<TrackType>(BindingId);
 	}
 
-	static void AddDefaultTracksForBinding(UMovieScene* MovieScene, const FGuid& BindingId, AActor* BoundActor, bool bIsCamera)
+	static void AddFloatPropertyTrackIfMissing(
+		UMovieScene* MovieScene,
+		const FGuid& BindingId,
+		const FName PropertyName,
+		const TCHAR* PropertyPath)
+	{
+		if (!MovieScene || !BindingId.IsValid() || !PropertyPath)
+		{
+			return;
+		}
+
+		if (const FMovieSceneBinding* Binding = MovieScene->FindBinding(BindingId))
+		{
+			for (UMovieSceneTrack* Track : Binding->GetTracks())
+			{
+				if (const UMovieSceneFloatTrack* FloatTrack = Cast<UMovieSceneFloatTrack>(Track))
+				{
+					if (FloatTrack->GetPropertyPath() == PropertyPath)
+					{
+						return;
+					}
+				}
+			}
+		}
+
+		if (UMovieSceneFloatTrack* NewTrack = MovieScene->AddTrack<UMovieSceneFloatTrack>(BindingId))
+		{
+			NewTrack->SetPropertyNameAndPath(PropertyName, PropertyPath);
+		}
+	}
+
+
+	static void AddActorToTrackPropertyTrackIfMissing(UMovieScene* MovieScene, const FGuid& ComponentBindingId)
+	{
+		if (!MovieScene || !ComponentBindingId.IsValid())
+		{
+			return;
+		}
+
+		const FName PropertyName(TEXT("ActorToTrack"));
+		const FString PropertyPath(TEXT("FocusSettings.TrackingFocusSettings.ActorToTrack"));
+
+		UMovieSceneActorReferenceTrack* TrackToUse = nullptr;
+
+		if (const FMovieSceneBinding* Binding = MovieScene->FindBinding(ComponentBindingId))
+		{
+			for (UMovieSceneTrack* Track : Binding->GetTracks())
+			{
+				if (UMovieSceneActorReferenceTrack* Existing = Cast<UMovieSceneActorReferenceTrack>(Track))
+				{
+					if (Existing->GetPropertyPath().ToString() == PropertyPath)
+					{
+						TrackToUse = Existing;
+						break;
+					}
+				}
+			}
+		}
+
+		if (!TrackToUse)
+		{
+			TrackToUse = MovieScene->AddTrack<UMovieSceneActorReferenceTrack>(ComponentBindingId);
+			if (!TrackToUse)
+			{
+				return;
+			}
+
+			TrackToUse->SetPropertyNameAndPath(PropertyName, PropertyPath);
+		}
+
+		// Ensure section exists so Sequencer shows key area/actions immediately.
+		if (TrackToUse->GetAllSections().Num() == 0)
+		{
+			if (UMovieSceneSection* NewSection = TrackToUse->CreateNewSection())
+			{
+				TrackToUse->AddSection(*NewSection);
+				NewSection->SetRange(TRange<FFrameNumber>::All());
+			}
+		}
+	}
+
+	static void AddDefaultTracksForBinding(
+		UMovieScene* MovieScene,
+		UDialogSequence* OwningSequence,
+		ISequencer* InSequencer,
+		const FGuid& BindingId,
+		AActor* BoundActor,
+		bool bIsCamera)
 	{
 		if (!MovieScene || !BoundActor || !BindingId.IsValid())
 		{
@@ -626,20 +717,155 @@ namespace
 			{
 				if (UCineCameraComponent* CineCameraComponent = CineCam->GetCineCameraComponent())
 				{
-					
+					FGuid CineComponentBindingId;
+
+					// Same mechanism Sequencer uses when adding component bindings.
+					if (InSequencer)
+					{
+						CineComponentBindingId = InSequencer->GetHandleToObject(CineCameraComponent, true);
+					}
+
+					if (CineComponentBindingId.IsValid())
+					{
+						// Force component binding to be a child of camera actor binding.
+						if (FMovieScenePossessable* ComponentPossessable = MovieScene->FindPossessable(CineComponentBindingId))
+						{
+							if (ComponentPossessable->GetParent() != BindingId)
+							{
+								ComponentPossessable->SetParent(BindingId, MovieScene);
+							}
+						}
+
+						// Ensure object binding exists in sequence context.
+						if (OwningSequence && InSequencer)
+						{
+							OwningSequence->BindPossessableObject(
+								CineComponentBindingId,
+								*CineCameraComponent,
+								InSequencer->GetPlaybackContext());
+						}
+
+						// Focus settings property track on CineCameraComponent binding.
+						AddActorToTrackPropertyTrackIfMissing(
+							MovieScene,
+							CineComponentBindingId);
+
+						/*AddFloatPropertyTrackIfMissing(
+							MovieScene,
+							CineComponentBindingId,
+							FName(TEXT("Actor to Track (Tracking Focus Settings)")),
+							TEXT("FocusSettings.TrackingFocusSettings.ActorToTrack"));*/
+					}
 				}
 			}
-			
-			return;
-		}
 
-		if (BoundActor && BoundActor->IsA(ACharacter::StaticClass()))
-		{
-			AddTrackIfMissing<UMovieScene3DTransformTrack>(MovieScene, BindingId);
 			return;
 		}
 
 		AddTrackIfMissing<UMovieScene3DTransformTrack>(MovieScene, BindingId);
+	}
+
+	static UMovieSceneActorReferenceTrack* FindActorToTrackPropertyTrack(UMovieScene* MovieScene, const FGuid& ComponentBindingId)
+	{
+		if (!MovieScene || !ComponentBindingId.IsValid())
+		{
+			return nullptr;
+		}
+
+		const FMovieSceneBinding* Binding = MovieScene->FindBinding(ComponentBindingId);
+		if (!Binding)
+		{
+			return nullptr;
+		}
+
+		const FString PropertyPath(TEXT("FocusSettings.TrackingFocusSettings.ActorToTrack"));
+
+		for (UMovieSceneTrack* Track : Binding->GetTracks())
+		{
+			if (UMovieSceneActorReferenceTrack* ActorRefTrack = Cast<UMovieSceneActorReferenceTrack>(Track))
+			{
+				if (ActorRefTrack->GetPropertyPath().ToString() == PropertyPath)
+				{
+					return ActorRefTrack;
+				}
+			}
+		}
+
+		return nullptr;
+	}
+
+	static void AddActorToTrackKeyIfValid(
+		UMovieScene* MovieScene,
+		ISequencer* InSequencer,
+		UCineCameraComponent* CinecamComp,
+		const FFrameNumber InFrame)
+	{
+		if (!MovieScene || !InSequencer || !CinecamComp)
+		{
+			return;
+		}
+
+		AActor* ActorToTrack = CinecamComp->FocusSettings.TrackingFocusSettings.ActorToTrack.Get();
+		if (!IsValid(ActorToTrack))
+		{
+			return;
+		}
+
+		const FGuid ComponentBindingId = InSequencer->GetHandleToObject(CinecamComp, true);
+		if (!ComponentBindingId.IsValid())
+		{
+			return;
+		}
+
+		AddActorToTrackPropertyTrackIfMissing(MovieScene, ComponentBindingId);
+
+		UMovieSceneActorReferenceTrack* ActorRefTrack = FindActorToTrackPropertyTrack(MovieScene, ComponentBindingId);
+		if (!ActorRefTrack)
+		{
+			return;
+		}
+
+		UMovieSceneActorReferenceSection* ActorRefSection = nullptr;
+		if (ActorRefTrack->GetAllSections().Num() == 0)
+		{
+			ActorRefSection = Cast<UMovieSceneActorReferenceSection>(ActorRefTrack->CreateNewSection());
+			if (!ActorRefSection)
+			{
+				return;
+			}
+
+			ActorRefTrack->AddSection(*ActorRefSection);
+			ActorRefSection->SetRange(TRange<FFrameNumber>::All());
+		}
+		else
+		{
+			ActorRefSection = Cast<UMovieSceneActorReferenceSection>(ActorRefTrack->GetAllSections()[0]);
+			if (!ActorRefSection)
+			{
+				return;
+			}
+		}
+
+		const FGuid ActorBindingId = InSequencer->GetHandleToObject(ActorToTrack, true);
+		if (!ActorBindingId.IsValid())
+		{
+			return;
+		}
+
+		TArrayView<FMovieSceneActorReferenceData*> Channels =
+			ActorRefSection->GetChannelProxy().GetChannels<FMovieSceneActorReferenceData>();
+
+		if (!Channels.IsValidIndex(0) || !Channels[0])
+		{
+			return;
+		}
+
+		ActorRefSection->Modify();
+
+		FMovieSceneActorReferenceKey NewKey;
+		NewKey.Object = UE::MovieScene::FRelativeObjectBindingID(ActorBindingId);
+
+		Channels[0]->GetData().UpdateOrAddKey(InFrame, NewKey);
 	}
 }
 
@@ -705,8 +931,8 @@ void FDialogBuilderEditor::CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot
 				EditingDialogSequence->BindPossessableObject(NewBindingId, *BoundActor, Sequencer->GetPlaybackContext());
 			}
 		}
-
-		AddDefaultTracksForBinding(MovieScene, NewBindingId, BoundActor, bIsCamera);
+		// inside FDialogBuilderEditor::CreateDialogTrackFromSlot(...)
+		AddDefaultTracksForBinding(MovieScene, EditingDialogSequence, Sequencer.Get(), NewBindingId, BoundActor, bIsCamera);
 
 		InSlot->ID = NewBindingId;
 
@@ -2496,7 +2722,7 @@ void FDialogBuilderEditor::ApplyDefaultCameraSetting()
 			CinecamComp->CustomNearClippingPlane = DialogGraph->CustomNearClippingPlane;
 
 			CinecamComp->FocusSettings.bSmoothFocusChanges = true;
-			CinecamComp->FocusSettings.FocusMethod = ECameraFocusMethod::Tracking;
+			CinecamComp->FocusSettings.FocusMethod = DialogGraph->FocusMethod;
 			if (DialogGraph->bUsePostProcess)
 			{
 				CinecamComp->PostProcessSettings = DialogGraph->PostProcessSettings;
@@ -2743,16 +2969,27 @@ bool FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 	}
 
 
-	if (!InDialogDefinition)
-	{
-		return false;
-	}
+
 
 	AActor* ActorToFocus = nullptr;
+
+	for (const TPair<UDialogSequenceSlot*, TWeakObjectPtr<AActor>>& Pair : DialogSlotActors)
+	{
+		if (AActor* Actor = Pair.Value.Get())
+		{
+			if (Actor->IsA<ACharacter>())
+			{
+				ActorToFocus = Actor;
+				break;
+			}
+		}
+	}
+
 	for (const TPair<UDialogSequenceSlot*, TWeakObjectPtr<AActor>>& Pair : DialogSlotActors)
 	{
 		if (UDialogSequenceSlot* Slot = Pair.Key)
 		{
+			if (!Slot->DialogDefinition) continue;
 			if (Slot->DialogDefinition == InDialogDefinition)
 			{
 				ActorToFocus = Pair.Value.Get();
@@ -2845,18 +3082,24 @@ bool FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot
 	}
 
 	const FVector RelativeOffset = ActorToFocus->GetActorTransform().InverseTransformPosition(AimLocation);
-	/*if (ACineCameraActor* CineCam = Cast<ACineCameraActor>(CameraActor))
+	ACineCameraActor* CineCam = Cast<ACineCameraActor>(CameraActor);
+	UCineCameraComponent* CinecamComp = CineCam ? CineCam->GetCineCameraComponent() : nullptr;
+
+	if (CinecamComp)
 	{
-		if (UCineCameraComponent* CinecamComp = CineCam->GetCineCameraComponent())
+		//clear existing focus settings
+		CinecamComp->FocusSettings.TrackingFocusSettings.ActorToTrack = nullptr;
+		if (InSequenceShot->bFocusCameraOnActor)
 		{
 			if (ActorToFocus)
 			{
-				CinecamComp->FocusSettings.FocusMethod = ECameraFocusMethod::Tracking;
 				CinecamComp->FocusSettings.TrackingFocusSettings.RelativeOffset = RelativeOffset;
 				CinecamComp->FocusSettings.TrackingFocusSettings.ActorToTrack = ActorToFocus;
 			}
 		}
-	}*/
+
+	}
+	
 	const FRotator DesiredRotation = (AimLocation - DesiredLocation).Rotation();
 
 	if (InSequenceShot->bDrawTargetFocus)
@@ -2909,6 +3152,10 @@ void FDialogBuilderEditor::AddKeyFromCameraPreset(int32 InFrameNumber, EMovieSce
 	{
 		return;
 	}
+
+	ACineCameraActor* CineCam = Cast<ACineCameraActor>(CameraActor);
+	UCineCameraComponent* CinecamComp = CineCam ? CineCam->GetCineCameraComponent() : nullptr;
+
 
 	const USceneComponent* RootComponent = CameraActor->GetRootComponent();
 	if (!RootComponent)
@@ -3011,6 +3258,11 @@ void FDialogBuilderEditor::AddKeyFromCameraPreset(int32 InFrameNumber, EMovieSce
 	AddKey(Channels[6], InFrame, Scale.X);
 	AddKey(Channels[7], InFrame, Scale.Y);
 	AddKey(Channels[8], InFrame, Scale.Z);
+
+	if (CinecamComp && IsValid(CinecamComp->FocusSettings.TrackingFocusSettings.ActorToTrack.Get()))
+	{
+		AddActorToTrackKeyIfValid(MovieScene, Sequencer.Get(), CinecamComp, InFrame);
+	}
 
 }
 

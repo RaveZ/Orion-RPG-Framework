@@ -206,11 +206,11 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 			ActorToFocusHandle->MarkHiddenByCustomization();
 		}
 
-		ShotCategory.AddCustomRow(LOCTEXT("ShotActorToFocusRowLabel", "Actor To Focus"))
+		ShotCategory.AddCustomRow(LOCTEXT("ShotActorToFocusRowLabel", "Target Actor"))
 			.NameContent()
 			[
 				SNew(STextBlock)
-					.Text(LOCTEXT("ShotActorToFocusText", "Actor To Focus"))
+					.Text(LOCTEXT("ShotActorToFocusText", "Target Actor"))
 					.Font(IDetailLayoutBuilder::GetDetailFont())
 			]
 			.ValueContent()
@@ -227,8 +227,12 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 		const TSharedRef<IPropertyHandle> TrackedBoneHandle =
 			DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceShot, TrackedBone));
 
+		const TSharedRef<IPropertyHandle> FocusCameraOnActorHandle =
+			DetailBuilder.GetProperty(GET_MEMBER_NAME_CHECKED(UDialogSequenceShot, bFocusCameraOnActor));
+
 
 		ShotCategory.AddProperty(DrawTargetFocusHandle);
+		ShotCategory.AddProperty(FocusCameraOnActorHandle);
 		ShotCategory.AddProperty(TrackedBoneHandle);
 
 		IDetailCategoryBuilder& PlacementCategory = DetailBuilder.EditCategory("Camera Placement", LOCTEXT("CameraPlacementCategoryTitle", "Camera Placement"));
@@ -256,6 +260,11 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 		{
 			TArray<UObject*> ExternalObjects;
 			ExternalObjects.Add(DialogGraph);
+
+
+			CameraSettingsCategory.AddExternalObjectProperty(
+				ExternalObjects,
+				GET_MEMBER_NAME_CHECKED(UDialogBuilderGraph, FocusMethod));
 
 			CameraSettingsCategory.AddExternalObjectProperty(
 				ExternalObjects,

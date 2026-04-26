@@ -10,5 +10,5 @@
 UDialogSequenceShot::UDialogSequenceShot()
 {
 	TrackedBone = FName("head");
-
+	bFocusCameraOnActor = true;
 }

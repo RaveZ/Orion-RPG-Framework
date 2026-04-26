@@ -92,12 +92,7 @@ FDialogBuilderViewportClient::FDialogBuilderViewportClient(
 
 FDialogBuilderViewportClient::~FDialogBuilderViewportClient()
 {
-	if (GEditor)
-	{
-		GEditor->SelectNone(true, true, false);
 	
-		GEditor->NoteSelectionChange();
-	}
 	// Ensure that an in-progress transaction is ended
 	EndTransaction();
 }
@@ -879,13 +874,10 @@ FVector FDialogBuilderViewportClient::GetWidgetLocation() const
 		return ComponentVisWidgetLocation;
 	}
 
-	USelection* SelectedActors = GEditor ? GEditor->GetSelectedActors() : nullptr;
-	if (SelectedActors && SelectedActors->Num() > 0)
+	if (CachedSelectedActor.IsValid())
 	{
-		if (AActor* SelectedActor = Cast<AActor>(SelectedActors->GetTop(AActor::StaticClass())))
-		{
-			return SelectedActor->GetActorLocation();
-		}
+		return CachedSelectedActor.Get()->GetActorLocation();
+		
 	}
 
 	return FVector::ZeroVector;
@@ -904,14 +896,11 @@ FMatrix FDialogBuilderViewportClient::GetWidgetCoordSystem() const
 
 	if (GetWidgetCoordSystemSpace() == COORD_Local)
 	{
-		USelection* SelectedActors = GEditor ? GEditor->GetSelectedActors() : nullptr;
-		if (SelectedActors && SelectedActors->Num() > 0)
+		if (CachedSelectedActor.IsValid())
 		{
-			if (AActor* SelectedActor = Cast<AActor>(SelectedActors->GetTop(AActor::StaticClass())))
-			{
-				Matrix = FQuatRotationMatrix(SelectedActor->GetActorQuat());
-			}
+			Matrix = FQuatRotationMatrix(CachedSelectedActor.Get()->GetActorQuat());
 		}
+		
 	}
 
 	if (!Matrix.Equals(FMatrix::Identity))

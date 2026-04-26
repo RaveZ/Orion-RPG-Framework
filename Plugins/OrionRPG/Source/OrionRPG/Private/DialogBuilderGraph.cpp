@@ -55,8 +55,9 @@ UDialogBuilderGraph::UDialogBuilderGraph()
 
 	//Camera Default Setting
 	bUsePostProcess = false;
+	FocusMethod = ECameraFocusMethod::Tracking;
 	FocalLength = 35.0f;
-	Aperture = 10.0f;
+	Aperture = 2.8f;
 	bOverride_CustomNearClippingPlane = true;
 	CustomNearClippingPlane = 20.f;
 
@@ -282,31 +283,36 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 	}
 		
 
-	for (auto& Slot : CurrentDialogStage->CameraSlots)
+	for (auto& CameraSlot : CurrentDialogStage->CameraSlots)
 	{
-		if (!Slot) continue;
+		if (!CameraSlot) continue;
+
+		if (!CameraSlot->DialogDefinition)
+		{
+			CameraSlot->DialogDefinition = NewObject<UDialogCamera>(this, NAME_None, RF_Transactional);
+		}
 		//Camera uses slot ID for binding
-		const FName SlotId = Slot->GetID();
-		if (AActor* DialogActor = RetrieveActorFromSlot(Slot, SlotId))
+		const FName SlotId = CameraSlot->GetID();
+		if (AActor* DialogActor = RetrieveActorFromSlot(CameraSlot, SlotId))
 		{
 			CachedActorMap.Emplace(SlotId, DialogActor);
-			DialogSlotActors.Emplace(Slot, DialogActor);
+			DialogSlotActors.Emplace(CameraSlot, DialogActor);
 			CacheOriginalActorTransform(SlotId, DialogActor);
 
-			CurrentDialogSequence->UnbindPossessableObjects(Slot->ID);
-			CurrentDialogSequence->BindPossessableObject(Slot->ID, *DialogActor, DialogActor->GetClass());
+			CurrentDialogSequence->UnbindPossessableObjects(CameraSlot->ID);
+			CurrentDialogSequence->BindPossessableObject(CameraSlot->ID, *DialogActor, DialogActor->GetClass());
 		}
 	}
 
-	for (auto& Slot : CurrentDialogStage->LightSlots)
+	for (auto& LightSlot : CurrentDialogStage->LightSlots)
 	{
-		if (!Slot) continue;
+		if (!LightSlot) continue;
 		//Camera uses slot ID for binding
-		const FName SlotId = Slot->GetID();
-		if (AActor* DialogActor = RetrieveLightFromSlot(Slot, SlotId))
+		const FName SlotId = LightSlot->GetID();
+		if (AActor* DialogActor = RetrieveLightFromSlot(LightSlot, SlotId))
 		{
 			CachedActorMap.Emplace(SlotId, DialogActor);
-			DialogSlotActors.Emplace(Slot, DialogActor);
+			DialogSlotActors.Emplace(LightSlot, DialogActor);
 
 		}
 	}
@@ -1134,6 +1140,8 @@ void UDialogBuilderGraph::EndDialog()
 	//destroy spawned participant
 	for (auto& SpawnedParticipant : SpawnedDialogActors)
 	{
+		if(SpawnedParticipant->IsPendingKillPending() )
+			continue;
 		SpawnedParticipant->Destroy();
 	}
 
@@ -1430,7 +1438,7 @@ AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot, 
 				CinecamComp->CustomNearClippingPlane = CustomNearClippingPlane;
 
 				CinecamComp->FocusSettings.bSmoothFocusChanges = true;
-				CinecamComp->FocusSettings.FocusMethod = ECameraFocusMethod::Tracking;
+				CinecamComp->FocusSettings.FocusMethod = FocusMethod;
 				if (bUsePostProcess)
 				{
 					CinecamComp->PostProcessSettings = PostProcessSettings;
