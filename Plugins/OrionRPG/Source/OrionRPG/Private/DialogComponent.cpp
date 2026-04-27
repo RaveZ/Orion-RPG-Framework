@@ -153,8 +153,8 @@ void UDialogComponent::SelectDialogChoice(UDialogBuilderNode_PlayerChoice* Playe
 {
 	if (CurrentActiveDialog && PlayerChoice)
 	{
-		PlayerChoice->SelectChoice(ChoiceIndex);
 		OnPLayerChoiceSelected.Broadcast(PlayerChoice, ChoiceIndex);
+		PlayerChoice->SelectChoice(ChoiceIndex);
 	}
 }
 

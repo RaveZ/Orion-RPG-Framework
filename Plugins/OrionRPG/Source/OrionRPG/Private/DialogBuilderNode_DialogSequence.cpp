@@ -107,7 +107,6 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogStageData()
 	}
 
 
-	DialogStage->StageTemplate = DialogStageToUse;
 	DialogStage->OwningDialogGraph = GetOwningDialogGraph();
 	DialogStage->Name = DialogStageToUse->Name;
 	DialogStage->Location = DialogStageToUse->Location;

@@ -179,6 +179,9 @@ public:
 		TObjectPtr<AActor> SequencePivot;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
+		TObjectPtr<AActor> SequenceCameraActor;
+
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 		TObjectPtr<UDialogBuilderNode> CurrentNode;
 
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")

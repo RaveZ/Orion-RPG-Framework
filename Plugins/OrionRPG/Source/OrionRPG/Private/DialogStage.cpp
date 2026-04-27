@@ -13,6 +13,8 @@ UDialogSequenceSlot::UDialogSequenceSlot()
 {
 }
 
+
+
 UDialogStage* UDialogSequenceSlot::GetOwningDialogStage() const
 {
 	return GetTypedOuter<UDialogStage>();
@@ -66,6 +68,22 @@ void UDialogSequenceSlot::PostEditChangeProperty(FPropertyChangedEvent& Property
 
 UDialogStage::UDialogStage()
 {
+}
+
+UDialogBuilderNode_DialogSequence* UDialogStage::GetOwningDialogSequenceNode() const
+{
+	return GetTypedOuter<UDialogBuilderNode_DialogSequence>();
+}
+
+
+UDialogStage* UDialogStage::GetOwningDialogStage() const
+{
+	UDialogBuilderNode_DialogSequence* SequenceNode = GetOwningDialogSequenceNode();
+	if (SequenceNode)
+	{
+		return SequenceNode->DialogStage;
+	}
+	return nullptr;
 }
 
 #if WITH_EDITOR

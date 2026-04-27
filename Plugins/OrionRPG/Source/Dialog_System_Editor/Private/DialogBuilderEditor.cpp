@@ -2935,6 +2935,42 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 	SetViewportCameraMode(EDialogViewportCameraMode::DialogCameraLock);
 }
 
+bool FDialogBuilderEditor::HasBindingWithValid3DTransformSection(const FGuid& InBindingId) const
+{
+	if (!InBindingId.IsValid() || !EditingDialogSequence)
+	{
+		return false;
+	}
+
+	UMovieScene* MovieScene = EditingDialogSequence->GetMovieScene();
+	if (!MovieScene)
+	{
+		return false;
+	}
+
+	const FMovieSceneBinding* Binding = MovieScene->FindBinding(InBindingId);
+	if (!Binding)
+	{
+		return false;
+	}
+
+	const UMovieScene3DTransformTrack* TransformTrack = MovieScene->FindTrack<UMovieScene3DTransformTrack>(InBindingId);
+	if (!TransformTrack)
+	{
+		return false;
+	}
+
+	for (UMovieSceneSection* Section : TransformTrack->GetAllSections())
+	{
+		if (Section)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 bool FDialogBuilderEditor::ApplyCameraPreset(UDialogSequenceShot* InSequenceShot, int32 InFrameNumber, bool bRandomizeAngle)
 {
 	if (!InSequenceShot || !EditingDialogGraph || !Sequencer.IsValid() || !EditingDialogSequence)

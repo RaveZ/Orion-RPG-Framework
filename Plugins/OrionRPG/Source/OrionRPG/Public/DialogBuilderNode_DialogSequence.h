@@ -38,7 +38,7 @@ public:
 	virtual void Serialize(FArchive& Ar) override;
 	virtual void PostDuplicate(EDuplicateMode::Type DuplicateMode) override;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Detail")
+	UPROPERTY(BlueprintReadOnly, Category = "Detail")
 	TObjectPtr<UDialogSequence> DialogSequence = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")

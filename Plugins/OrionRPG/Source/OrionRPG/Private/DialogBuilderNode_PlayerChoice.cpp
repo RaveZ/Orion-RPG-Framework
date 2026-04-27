@@ -16,7 +16,10 @@ UDialogBuilderNode_PlayerChoice::UDialogBuilderNode_PlayerChoice()
 void UDialogBuilderNode_PlayerChoice::BeginNode()
 {
 	//Super::BeginNode();
-
+	if (this->IsA(UDialogBuilderNode_PlayerChoice::StaticClass()))
+	{
+		GetOwningDialogGraph()->LatestRootSelectionNode = this;
+	}
 	GetOwningDialogGraph()->BeginChoiceSelection(this);
 	GetDialogComponent()->OnEnterChoiceSelection.Broadcast(this);
 }

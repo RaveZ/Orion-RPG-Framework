@@ -124,10 +124,7 @@ void UDialogBuilderNode::EvaluateNextNode()
 
 	if (NextNode)
 	{
-		if (NextNode->IsA(UDialogBuilderNode_PlayerChoice::StaticClass()))
-		{
-			GetOwningDialogGraph()->LatestRootSelectionNode = this;
-		}
+		
 		Deinitialize();
 	}
 	else

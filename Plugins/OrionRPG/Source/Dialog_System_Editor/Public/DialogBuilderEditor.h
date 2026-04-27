@@ -337,6 +337,9 @@ public:
 	void OnSequencerSelectionChangedObjectGuids(TArray<FGuid> Guids);
 	void ApplyDefaultCameraSetting();
 
+	// Returns true when the binding exists and has at least one valid 3D transform section.
+	bool HasBindingWithValid3DTransformSection(const FGuid& InBindingId) const;
+
 	bool ApplyCameraPreset(class UDialogSequenceShot* InSequenceShot, int32 InFrameNumber = -1, bool bRandomizeAngle = false);
 	void AddKeyFromCameraPreset(int32 InFrameNumber = -1, EMovieSceneKeyInterpolation KeyInterpolationType = EMovieSceneKeyInterpolation::Constant);
 

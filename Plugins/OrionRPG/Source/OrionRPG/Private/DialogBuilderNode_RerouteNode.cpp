@@ -26,15 +26,7 @@ void UDialogBuilderNode_RerouteNode::BeginNode()
 		{
 			if (UDialogBuilderNode* LatestRootSelectionNode = GetOwningDialogGraph()->LatestRootSelectionNode)
 			{
-				if (bPlayDialogLine)
-				{
-					GetOwningDialogGraph()->BeginNode(LatestRootSelectionNode);
-					return;
-				}
-				else
-				{
- 					LatestRootSelectionNode->EvaluateNextNode();
-				}
+				GetOwningDialogGraph()->BeginNode(LatestRootSelectionNode);
 			}
 			break;
 		}

@@ -759,31 +759,46 @@ bool FDialogBuilderViewportClient::HandleEndTransform()
 		TSharedPtr<FDialogBuilderEditor> DialogEditor = Editor.Pin();
 		USelection* SelectedActors = GEditor ? GEditor->GetSelectedActors() : nullptr;
 		AActor* SelectedActor = SelectedActors ? Cast<AActor>(SelectedActors->GetSelectedObject(0)) : nullptr;
-		UDialogSequenceSlot* Slot = DialogEditor ? DialogEditor->GetTemplateSlot(SelectedActor) : nullptr;
-		
+		UDialogSequenceSlot* TemplateSlot = DialogEditor ? DialogEditor->GetTemplateSlot(SelectedActor) : nullptr;
+		UDialogSequenceSlot* ActorSlot = DialogEditor ? DialogEditor->GetDialogSlotKey(SelectedActor) : nullptr;
 
 		const USceneComponent* RootComponent = SelectedActor ? SelectedActor->GetRootComponent() : nullptr;
 
 		const FVector Location = RootComponent ? RootComponent->GetRelativeLocation() : FVector::ZeroVector;
 		const FRotator Rotation = RootComponent ? RootComponent->GetRelativeRotation() : FRotator::ZeroRotator;
 
-		if (DialogEditor->GetSequencePivot() == SelectedActor)
+		if (DialogEditor && DialogEditor->GetSequencePivot() == SelectedActor)
 		{
 			UDialogStage* DialogStageTemplate = DialogEditor->GetDialogStageTemplate();
-			if(DialogStageTemplate)
+			if (DialogStageTemplate)
 			{
 				DialogStageTemplate->Modify();
 				DialogStageTemplate->Location = Location;
 				DialogStageTemplate->Rotation = Rotation;
 			}
+
+			EndTransaction();
+
+			// Restore component delta modification
+			GEditor->DisableDeltaModification(false);
 			return true;
 		}
 
-		if (Slot)
+		bool bApplyToTemplateSlot = true;
+		if (DialogEditor && ActorSlot && ActorSlot->ID.IsValid())
 		{
-			Slot->Modify();
-			Slot->SlotLocation = Location;
-			Slot->SlotRotation = Rotation;
+			const bool bHasValidBindingAndTransformSection =
+				DialogEditor->HasBindingWithValid3DTransformSection(ActorSlot->ID);
+
+			// If binding + 3D transform section exists, do NOT apply to template slot.
+			bApplyToTemplateSlot = !bHasValidBindingAndTransformSection;
+		}
+
+		if (TemplateSlot && bApplyToTemplateSlot)
+		{
+			TemplateSlot->Modify();
+			TemplateSlot->SlotLocation = Location;
+			TemplateSlot->SlotRotation = Rotation;
 		}
 
 		EndTransaction();

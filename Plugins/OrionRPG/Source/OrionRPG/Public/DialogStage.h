@@ -77,10 +77,6 @@ class ORIONRPG_API UDialogStage : public UObject
 public:
 	UDialogStage();
 
-	//Parent template for this stage
-	UPROPERTY(BlueprintReadOnly, Category = "Detail")
-	TObjectPtr<UDialogStage> StageTemplate;
-
 	UPROPERTY(BlueprintReadOnly, Category = "Detail")
 	TObjectPtr<UDialogBuilderGraph> OwningDialogGraph;
 
@@ -101,6 +97,10 @@ public:
 
 	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Detail")
 	TArray<TObjectPtr<class UDialogSequenceSlot_Light>> LightSlots;
+
+public:
+	class UDialogBuilderNode_DialogSequence* GetOwningDialogSequenceNode() const;
+	UDialogStage* GetOwningDialogStage() const;
 
 
 #if WITH_EDITOR

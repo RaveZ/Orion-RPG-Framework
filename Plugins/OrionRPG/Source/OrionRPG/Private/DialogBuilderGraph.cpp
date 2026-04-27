@@ -249,23 +249,60 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 	UDialogStage* LastDialogStage = CurrentDialogStage;
 	CurrentDialogStage = InDialogStage;
 
-	if(LastDialogStage)
+
+	//================================Begin reset slots================================
+	if(LastDialogStage && CurrentDialogStage)
 	{
-		//Reset last stage, destroy light setup
-		for (auto& Slot : CurrentDialogStage->LightSlots)
+		UDialogStage* OwningLastDialogStage = LastDialogStage->GetOwningDialogStage();
+		UDialogStage* OwningCurrentDialogStage = CurrentDialogStage->GetOwningDialogStage();
+		if(OwningLastDialogStage != OwningCurrentDialogStage)
 		{
-			if (!Slot) continue;
-			const FName SlotId = Slot->GetID();
-			if (AActor* CachedActor = CachedActorMap.FindRef(SlotId))
+			for (auto& Slot : LastDialogStage->Slots)
 			{
-				SpawnedDialogActors.Remove(CachedActor);
-				CachedActorMap.Remove(SlotId);
-				DialogSlotActors.Remove(Slot);
-				CachedActor->Destroy();
+				if (!Slot) continue;
+				FName SlotId = Slot->GetActorTag().IsValid() ? Slot->GetActorTag().GetTagName() : Slot->GetID();
+				if (AActor* CachedActor = CachedActorMap.FindRef(SlotId))
+				{
+					//make sure only destroy actors that were spawned by this dialog
+					if (!SpawnedDialogActors.Contains(CachedActor)) continue;
+					SpawnedDialogActors.Remove(CachedActor);
+					CachedActorMap.Remove(SlotId);
+					DialogSlotActors.Remove(Slot);
+					CachedActor->Destroy();
+				}
 			}
 		}
+		
 	}
+
+	//reset camera
+	if (SequenceCameraActor)
+	{
+		SpawnedDialogActors.Remove(SequenceCameraActor);
+		SequenceCameraActor->Destroy();
+		SequenceCameraActor = nullptr;
+	}
+
+	//Reset last stage, destroy light setup
+	for (auto& LightSlot : CurrentDialogStage->LightSlots)
+	{
+		if (!LightSlot) continue;
+		const FName SlotId = LightSlot->GetID();
+		if (AActor* CachedActor = CachedActorMap.FindRef(SlotId))
+		{
+			SpawnedDialogActors.Remove(CachedActor);
+			CachedActorMap.Remove(SlotId);
+			DialogSlotActors.Remove(LightSlot);
+			CachedActor->Destroy();
+		}
+	}
+
 	
+	
+
+
+
+	//================================Begin retrieve slots================================
 	for (auto& Slot : CurrentDialogStage->Slots)
 	{
 		if (!Slot) continue;
@@ -294,14 +331,10 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 		}
 		//Camera uses slot ID for binding
 		const FName SlotId = CameraSlot->GetID();
-		if (AActor* DialogActor = RetrieveActorFromSlot(CameraSlot, SlotId))
+		if (SequenceCameraActor = RetrieveActorFromSlot(CameraSlot, SlotId))
 		{
-			CachedActorMap.Emplace(SlotId, DialogActor);
-			DialogSlotActors.Emplace(CameraSlot, DialogActor);
-			CacheOriginalActorTransform(SlotId, DialogActor);
-
 			CurrentDialogSequence->UnbindPossessableObjects(CameraSlot->ID);
-			CurrentDialogSequence->BindPossessableObject(CameraSlot->ID, *DialogActor, DialogActor->GetClass());
+			CurrentDialogSequence->BindPossessableObject(CameraSlot->ID, *SequenceCameraActor, SequenceCameraActor->GetClass());
 		}
 	}
 
@@ -314,7 +347,6 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 		{
 			CachedActorMap.Emplace(SlotId, DialogActor);
 			DialogSlotActors.Emplace(LightSlot, DialogActor);
-
 		}
 	}
 
@@ -1159,6 +1191,7 @@ void UDialogBuilderGraph::EndDialog()
 	//clear shot and sequence
 	CurrentDialogSequence = nullptr;
 	SequencePivot = nullptr;
+	SequenceCameraActor = nullptr;
 
 	if (Cinecam.IsValid())
 	{
