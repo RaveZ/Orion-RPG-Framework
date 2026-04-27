@@ -42,6 +42,8 @@ public:
 		return OutName;
 	}
 
+	UDialogStage* GetOwningDialogStage() const;
+
 	FGameplayTag GetActorTag() const;
 
 	void SetDialogDefinition(UDialogDefinition* InDialogDefinition);

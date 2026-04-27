@@ -258,9 +258,10 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 			const FName SlotId = Slot->GetID();
 			if (AActor* CachedActor = CachedActorMap.FindRef(SlotId))
 			{
-				CachedActor->Destroy();
+				SpawnedDialogActors.Remove(CachedActor);
 				CachedActorMap.Remove(SlotId);
 				DialogSlotActors.Remove(Slot);
+				CachedActor->Destroy();
 			}
 		}
 	}
@@ -269,7 +270,7 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 	{
 		if (!Slot) continue;
 		//Regular slot uses actor tag for binding
-		FName SlotId = Slot->GetActorTag().GetTagName();
+		FName SlotId = Slot->GetActorTag().IsValid() ? Slot->GetActorTag().GetTagName() : Slot->GetID();
 		
 		if (AActor* DialogActor = RetrieveActorFromSlot(Slot, SlotId))
 		{

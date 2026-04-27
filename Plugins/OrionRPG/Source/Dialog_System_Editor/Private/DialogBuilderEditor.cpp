@@ -1068,7 +1068,7 @@ void FDialogBuilderEditor::UpdateDialogStage()
 
 	if (DialogStage->CameraSlots.Num() == 0)
 	{
-		UDialogSequenceSlot* NewCameraSlot = NewObject<UDialogSequenceSlot>(DialogGraph, NAME_None, RF_Transactional);
+		UDialogSequenceSlot* NewCameraSlot = NewObject<UDialogSequenceSlot>(DialogStage, NAME_None, RF_Transactional);
 		DialogStage->CameraSlots.Add(NewCameraSlot);
 
 	}
@@ -1078,7 +1078,7 @@ void FDialogBuilderEditor::UpdateDialogStage()
 
 		if(!CameraSlot->DialogDefinition)
 		{
-			CameraSlot->DialogDefinition = NewObject<UDialogCamera>(DialogGraph, NAME_None, RF_Transactional);
+			CameraSlot->DialogDefinition = NewObject<UDialogCamera>(CameraSlot, NAME_None, RF_Transactional);
 		}
 		AActor* SpawnedCamera = nullptr;
 		RetrieveDialogSlotActor(CameraSlot, SpawnedCamera, /*bIsCamera*/true);

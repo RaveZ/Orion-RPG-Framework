@@ -1,5 +1,4 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
-
 #include "DialogSequenceDetails.h"
 
 #include "DialogBuilderGraph.h"
@@ -14,6 +13,8 @@
 #include "DetailWidgetRow.h"
 #include "Framework/Commands/UIAction.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "Framework/Notifications/NotificationManager.h"
+#include "Widgets/Notifications/SNotificationList.h"
 #include "Internationalization/Text.h"
 #include "Layout/Margin.h"
 #include "MovieSceneDialogSection.h"
@@ -609,6 +610,32 @@ void FDialogSequenceDetails::UseSlotDefinition(UDialogDefinition* InDialogDefini
 	{
 		ClearSlotDefinition();
 		return;
+	}
+
+	if (UDialogStage* OwningStage = Slot->GetOwningDialogStage())
+	{
+		for (const TObjectPtr<UDialogSequenceSlot>& OtherSlot : OwningStage->Slots)
+		{
+			if (!OtherSlot || OtherSlot.Get() == Slot)
+			{
+				continue;
+			}
+
+			if (OtherSlot->DialogDefinition.Get() == InDialogDefinition)
+			{
+				FNotificationInfo Info(LOCTEXT("DuplicateSlotDefinitionWarning", "This dialog definition is already assigned to another slot in this stage."));
+				Info.ExpireDuration = 3.0f;
+				Info.bUseLargeFont = false;
+
+				TSharedPtr<SNotificationItem> Notification = FSlateNotificationManager::Get().AddNotification(Info);
+				if (Notification.IsValid())
+				{
+					Notification->SetCompletionState(SNotificationItem::CS_Fail);
+				}
+
+				return;
+			}
+		}
 	}
 
 	const FScopedTransaction Transaction(LOCTEXT("SetSlotDefinition", "Set Slot Definition"));

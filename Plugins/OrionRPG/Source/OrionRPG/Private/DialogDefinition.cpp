@@ -32,7 +32,6 @@ UDialogPlayerParticipant::UDialogPlayerParticipant()
 UDialogParticipant::UDialogParticipant()
 {
 	DisplayName = FText::FromString("Participant");
-	Tag = FGameplayTag::RequestGameplayTag(FName("Dialog.Participant"));
 }
 
 UDialogProp::UDialogProp()

@@ -13,6 +13,11 @@ UDialogSequenceSlot::UDialogSequenceSlot()
 {
 }
 
+UDialogStage* UDialogSequenceSlot::GetOwningDialogStage() const
+{
+	return GetTypedOuter<UDialogStage>();
+}
+
 FGameplayTag UDialogSequenceSlot::GetActorTag() const
 {
 	if (DialogDefinition)
