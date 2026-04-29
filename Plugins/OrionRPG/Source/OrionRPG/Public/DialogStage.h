@@ -48,6 +48,13 @@ public:
 
 	void SetDialogDefinition(UDialogDefinition* InDialogDefinition);
 
+	// The serialized template object that stores saved properties
+	UPROPERTY(VisibleAnywhere, Instanced, Category = "Dialog")
+	TObjectPtr<AActor> ActorTemplate;
+
+	// Helper to create or update the template
+	void UpdateActorTemplate(AActor* InActor);
+
 #if WITH_EDITOR
 	//~ Begin UObject Interface
 	virtual void PostEditChangeProperty(struct FPropertyChangedEvent& PropertyChangedEvent) override;

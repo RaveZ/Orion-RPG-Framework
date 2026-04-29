@@ -58,6 +58,33 @@ UDialogSequenceSlot_Light::UDialogSequenceSlot_Light()
 #if WITH_EDITOR
 
 
+void UDialogSequenceSlot::UpdateActorTemplate(AActor* InActor)
+{
+	if (!InActor)
+	{
+		return;
+	}
+
+	if (ActorTemplate)
+	{
+		// Copy properties from the live actor back to the template
+		UEngine::CopyPropertiesForUnrelatedObjects(InActor, ActorTemplate);
+	}
+	else
+	{
+		// First time initialization: Duplicate the actor into this slot
+		ActorTemplate = Cast<AActor>(StaticDuplicateObject(InActor, this, NAME_None, RF_Transactional));
+		if (ActorTemplate)
+		{
+			// Strip unwanted flags like RF_Transient since this needs to be saved
+			ActorTemplate->ClearFlags(RF_Transient);
+			ActorTemplate->SetFlags(RF_Public | RF_Transactional);
+		}
+	}
+
+	MarkPackageDirty();
+}
+
 void UDialogSequenceSlot::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
