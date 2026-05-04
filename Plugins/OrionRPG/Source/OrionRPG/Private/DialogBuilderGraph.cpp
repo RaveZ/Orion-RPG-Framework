@@ -1122,13 +1122,7 @@ void UDialogBuilderGraph::AdvanceDialogLine()
 		return;
 	}
 
-	if (CurrentLine && !CurrentLine->bCanSkipDialogLine 
-		&& DialogLineTimer.IsValid() 
-		&& GetWorld() && GetWorld()->GetTimerManager().GetTimerRemaining(DialogLineTimer) > .0f)
-	{
-		return;
-	}
-
+	
 
 	if (GetWorld())
 	{

@@ -69,7 +69,7 @@ struct FOrionDialogLine
 
 public:
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true", Category = "Override", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
+	UPROPERTY()
 	TObjectPtr<UObject> SpeakerImage;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
@@ -84,6 +84,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog")
 	TObjectPtr<class UAnimSequence> FacialAnimation;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
+	bool bCanSkipDialogLine;
+
 	FOrionDialogLine()
 	{
 		Line = FText::FromString("");
@@ -106,6 +109,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Animation"), Category = "Default")
 	class UAnimMontage* DialogMontage = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
+	TObjectPtr<class UAnimSequence> FacialAnimation;
 
 
 	/**

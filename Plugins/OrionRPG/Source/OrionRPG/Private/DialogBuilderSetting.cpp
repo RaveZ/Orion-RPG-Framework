@@ -11,7 +11,7 @@ UDialogBuilderSetting::UDialogBuilderSetting()
 	MinDialogLineDuration = 2.5f;
 	DialogLineWordsPerSecond = 4.0f; // Default words per second for dialog lines
 
-	auto DialogueUserWidgetFinder = ConstructorHelpers::FClassFinder<UUserWidget>(TEXT("WidgetBlueprint'/OrionRPG/Widgets/Dialog/WBP_Dialog_Simple.WBP_Dialog_Simple_C'"));
+	auto DialogueUserWidgetFinder = ConstructorHelpers::FClassFinder<UUserWidget>(TEXT("WidgetBlueprint'/OrionRPG/Widgets/Dialog/WBP_Dialog.WBP_Dialog_C'"));
 	if (DialogueUserWidgetFinder.Succeeded())
 	{
 		DefaultDialogWidget = DialogueUserWidgetFinder.Class;

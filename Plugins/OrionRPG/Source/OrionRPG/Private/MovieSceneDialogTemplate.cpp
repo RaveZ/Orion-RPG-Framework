@@ -480,11 +480,11 @@ namespace OrionDialogTemplate
 			if (!DialogComponent) return;
 			if (bShow && !DialogLine.Line.IsEmpty())
 			{
-				DialogComponent->OnDialogLineUpdated.Broadcast(DialogLine);
+				DialogComponent->OnDialogLineBegin.Broadcast(DialogLine);
 			}
 			else
 			{
-				
+				DialogComponent->OnDialogLineEnded.Broadcast(DialogLine);
 			}
 		}
 
