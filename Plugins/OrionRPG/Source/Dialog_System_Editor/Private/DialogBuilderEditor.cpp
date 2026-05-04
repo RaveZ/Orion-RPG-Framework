@@ -61,7 +61,6 @@
 #include "Framework/Notifications/NotificationManager.h"
 #include "Widgets/Notifications/SNotificationList.h"
 #include "Misc/LevelSequenceEditorSpawnRegister.h"
-#include "Misc/LevelSequencePlaybackContext.h"
 #include "ISequencer.h"
 #include "ISequencerModule.h"
 #include "MovieScene.h"

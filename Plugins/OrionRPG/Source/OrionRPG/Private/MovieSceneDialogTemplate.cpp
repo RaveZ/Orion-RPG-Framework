@@ -155,7 +155,6 @@ namespace OrionDialogTemplate
 				AudioComponent->GetSound() != InDialogLine.DialogSound ||
 				!AudioComponent->IsPlaying() ||
 				Context.HasJumped() ||
-				Context.HasLooped() ||
 				bDirectionChanged ||
 				bForceResyncForScrub ||
 				bForceResyncForReverse;
@@ -333,7 +332,6 @@ namespace OrionDialogTemplate
 					!FacialAnimationAsset.IsValid() ||
 					FacialAnimationAsset.Get() != InDialogLine.FacialAnimation ||
 					Context.HasJumped() ||
-					Context.HasLooped() ||
 					bDirectionChanged;
 
 				if (bNeedsRestart)

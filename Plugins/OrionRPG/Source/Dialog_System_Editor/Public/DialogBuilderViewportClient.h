@@ -47,7 +47,7 @@ public:
 	virtual void PerspectiveCameraMoved() override;
 	virtual void BeginCameraMovement(bool bHasMovement) override;
 	virtual void EndCameraMovement() override;
-	virtual void SummonContextMenu(const FTypedElementHandle& HitProxyElement = FTypedElementHandle()) override;
+	virtual void SummonContextMenu(const FTypedElementHandle& HitProxyElement = FTypedElementHandle());
 
 	virtual ELevelViewportType GetViewportType() const override;
 	virtual void SetViewportType(ELevelViewportType InViewportType) override;
