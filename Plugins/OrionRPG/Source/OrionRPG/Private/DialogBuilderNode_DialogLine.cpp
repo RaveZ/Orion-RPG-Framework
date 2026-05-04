@@ -30,6 +30,7 @@ UDialogBuilderNode_DialogLine::UDialogBuilderNode_DialogLine()
 void UDialogBuilderNode_DialogLine::BeginNode()
 {
 	Super::BeginNode();
+	GetDialogComponent()->OnDialogLineBegin.Broadcast(this);
 	GetOwningDialogGraph()->BeginDialogLine(this);
 	GetDialogComponent()->OnDialogUpdated.Broadcast(this);
 }

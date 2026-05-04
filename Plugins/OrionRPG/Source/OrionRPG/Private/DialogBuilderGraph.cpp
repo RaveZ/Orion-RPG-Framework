@@ -387,6 +387,11 @@ void UDialogBuilderGraph::PlayDialogSequence(const FDialogLineData& InDialogLine
 	}
 }
 
+bool UDialogBuilderGraph::CanAdvanceDialog() const
+{
+	return bCanAdvanceDialog;
+}
+
 int UDialogBuilderGraph::GetLevelNum() const
 {
 	int Level = 0;
@@ -484,9 +489,7 @@ UDialogComponent* UDialogBuilderGraph::GetDialogComponent()
 
 void UDialogBuilderGraph::AdvanceDialogLine()
 {
-	if (CurrentLine && !CurrentLine->bCanSkipDialogLine 
-		&& DialogLineTimer.IsValid() 
-		&& GetWorld() && GetWorld()->GetTimerManager().GetTimerRemaining(DialogLineTimer) > .0f)
+	if (!CanAdvanceDialog())
 	{
 		return;
 	}
@@ -603,19 +606,33 @@ void UDialogBuilderGraph::DetermineAdvanceDialogRule(UDialogBuilderNode_DialogLi
 	if(!GetWorld())
 		return;
 	//Determine each dialog time before advance to the next line
-	if (bAutoAdvanceDialogLine)
-	{
-		GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, this, &ThisClass::AdvanceDialogLine, InDialogLine->GetLineDuration(), false);	
-	}
-	else
-    {		
-		FTimerDelegate TimerDel;
-		TimerDel = FTimerDelegate::CreateLambda([this]()
+	FTimerDelegate TimerDel;
+
+	const TWeakObjectPtr<UDialogBuilderGraph> WeakThis(this);
+	TimerDel = FTimerDelegate::CreateLambda([WeakThis, InDialogLine]()
 		{
-			//empty implementation, just to make sure timer is valid
+			if (!WeakThis.IsValid()) return;
+
+
+			WeakThis->bCanAdvanceDialog = true;
+
+			if (WeakThis->DialogComponent)
+			{
+				WeakThis->DialogComponent->OnDialogLineEnded.Broadcast(InDialogLine);
+			}
+
+			if (WeakThis->bAutoAdvanceDialogLine)
+			{
+				WeakThis->AdvanceDialogLine();
+			}
 		});
+
+
+
+	if (InDialogLine)
+	{
+		bCanAdvanceDialog = InDialogLine->bCanSkipDialogLine;
 		GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, TimerDel, InDialogLine->GetLineDuration(), false);
-    
 	}
 }
 

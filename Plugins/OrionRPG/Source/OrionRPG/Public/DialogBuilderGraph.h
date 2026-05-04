@@ -177,6 +177,7 @@ public:
 
 	protected:
 		FTimerHandle DialogLineTimer;
+		bool bCanAdvanceDialog = false;
 public:
 	virtual bool Initialize(UDialogComponent* InitializingComp);
 	virtual void Deinitialize();
@@ -205,6 +206,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 	virtual void PlayDialogSequence(const FDialogLineData& InDialogLineData);
 	
+	UFUNCTION(BlueprintPure, Category = "Dialogue")
+	bool CanAdvanceDialog() const;
+
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	int GetLevelNum() const;
 
