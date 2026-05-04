@@ -287,6 +287,7 @@ protected:
 	void OnSoftClassesLoaded();
 
 	FTimerHandle DialogLineTimer;
+	bool bCanAdvanceDialog = false;
 public:
 	virtual bool Initialize(UDialogComponent* InitializingComp);
 	virtual void Deinitialize();
@@ -344,6 +345,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Dialogue")
 	bool IsChoiceSelectionActive() const;
+
+	UFUNCTION(BlueprintPure, Category = "Dialogue")
+	bool CanAdvanceDialog() const;
 
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 		virtual void AdvanceDialogLine();
