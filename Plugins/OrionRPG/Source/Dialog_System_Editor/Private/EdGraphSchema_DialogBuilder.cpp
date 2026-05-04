@@ -12,6 +12,7 @@
 #include "DialogBuilderEditorUtils.h"
 #include "DialogBuilderEdNode.h"
 #include "DialogBuilderEdNode_DialogLine.h"
+#include "DialogBuilderEdNode_DialogSequence.h"
 #include "DialogBuilderEdNode_PlayerLine.h"
 #include "DialogBuilderEdNode_RerouteNode.h"
 #include "DialogBuilderEdNode_PlayerChoice.h"
@@ -26,6 +27,7 @@
 #include "DialogBuilderNode_RerouteNode.h"
 #include "DialogBuilderNode_PlayerChoice.h"
 #include "DialogBuilderNode_DialogLine.h"
+#include "DialogBuilderNode_DialogSequence.h"
 #include "DialogBuilderNode_PlayerLine.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
@@ -265,14 +267,16 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 	const bool bNoChild = ContextMenuBuilder.FromPin && ContextMenuBuilder.FromPin->LinkedTo.IsEmpty();
 	const bool bChildIsRerouteNode = ContextMenuBuilder.FromPin && ContextMenuBuilder.FromPin->LinkedTo.IsValidIndex(0) && Cast<UDialogBuilderEdNode_RerouteNode>(ContextMenuBuilder.FromPin->LinkedTo[0]->GetOwningNode());
 	const bool bChildIsDialogLine = ContextMenuBuilder.FromPin && ContextMenuBuilder.FromPin->LinkedTo.IsValidIndex(0) && (Cast<UDialogBuilderEdNode_DialogLine>(ContextMenuBuilder.FromPin->LinkedTo[0]->GetOwningNode()) || Cast<UDialogBuilderEdNode_PlayerLine>(ContextMenuBuilder.FromPin->LinkedTo[0]->GetOwningNode()));
+	const bool bChildIsDialogSequence = ContextMenuBuilder.FromPin && ContextMenuBuilder.FromPin->LinkedTo.IsValidIndex(0) && Cast<UDialogBuilderEdNode_DialogSequence>(ContextMenuBuilder.FromPin->LinkedTo[0]->GetOwningNode());
 	const bool bChildIsPlayerChoice = ContextMenuBuilder.FromPin && ContextMenuBuilder.FromPin->LinkedTo.IsValidIndex(0) && Cast<UDialogBuilderEdNode_PlayerChoice>(ContextMenuBuilder.FromPin->LinkedTo[0]->GetOwningNode());
-	const bool bAllowDialogLine = bNoParent || bNoChild || bChildIsDialogLine || bChildIsRerouteNode;
+	const bool bAllowDialogLine = bNoParent || bNoChild || bChildIsDialogLine || bChildIsDialogSequence || bChildIsRerouteNode;
+	const bool bAllowDialogSequence = bNoParent || bNoChild || bChildIsDialogLine || bChildIsDialogSequence || bChildIsRerouteNode;
 	const bool bAllowRerouteNode = bNoParent || bNoChild;
 	const bool bAllowPlayerChoice = bNoParent || bNoChild || bChildIsPlayerChoice;
 
 
 	//DialogLine
-	if (bAllowDialogLine)
+	//if (bAllowDialogLine)
 	{
 		FCategorizedGraphActionListBuilder DialogLineBuilder(TEXT("Dialog Line"));
 
@@ -301,11 +305,30 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 
 		ContextMenuBuilder.Append(DialogLineBuilder);
 	}
+
+	//Dialog Sequemce Node
+	//if (bAllowDialogSequence)
+	{
+		FCategorizedGraphActionListBuilder DialogSequenceBuilder(TEXT("Dialog Sequence"));
+
+		UClass* DialogSequenceEdNodeClass = UDialogBuilderEdNode_DialogSequence::StaticClass();
+		UClass* DialogSequenceNodeClass = UDialogBuilderNode_DialogSequence::StaticClass();
+
+		TSharedPtr<FAssetSchemaAction_DialogSystem_NewNode> AddOpAction = UEdGraphSchema_DialogBuilder::AddNewNodeAction(DialogSequenceBuilder, FText::GetEmpty(), LOCTEXT("DialogSystemGraphNodeAction", "Add Dialog Sequence..."), LOCTEXT("DialogSystemGraphNodeTooltip", "Create Dialog Sequence Node."));
+		UDialogBuilderEdNode* OpNode = NewObject<UDialogBuilderEdNode>(ContextMenuBuilder.OwnerOfTemporaries, DialogSequenceEdNodeClass);
+		FGraphNodeClassData DialogLineClassData = FGraphNodeClassData(DialogSequenceNodeClass, "DialogSequenceClassData");
+		OpNode->ClassData = DialogLineClassData;
+		AddOpAction->NodeTemplate = OpNode;
+		OpNode->NodeInstance = NewObject<UObject>(DialogGraph, DialogSequenceNodeClass);
+		OpNode->NodeInstance->SetFlags(RF_Transactional);
+
+		ContextMenuBuilder.Append(DialogSequenceBuilder);
+	}
 	
 
-
+	//Reroute Node
 	FCategorizedGraphActionListBuilder RerouteNodeBuilder(TEXT("Reroute Node"));
-	if (bAllowRerouteNode)
+	//if (bAllowRerouteNode)
 	{
 		UClass* RerouteEdNodeClass = UDialogBuilderEdNode_RerouteNode::StaticClass();
 		UClass* RerouteNodeClass = UDialogBuilderNode_RerouteNode::StaticClass();
@@ -323,7 +346,7 @@ void UEdGraphSchema_DialogBuilder::GetGraphContextActions(FGraphContextMenuBuild
 
 	//Player Choice
 	FCategorizedGraphActionListBuilder PlayerChoiceBuilder(TEXT("Player Choice"));
-	if (bAllowPlayerChoice)
+	//if (bAllowPlayerChoice)
 	{
 		//Player Choice
 		UClass* PlayerChoiceEdNodeClass = UDialogBuilderEdNode_PlayerChoice::StaticClass();
@@ -468,6 +491,7 @@ const FPinConnectionResponse UEdGraphSchema_DialogBuilder::CanCreateConnection(c
 
 	const bool bNodeAHasNoChild = A && A->LinkedTo.IsEmpty();
 	const bool bNodeAIsDialogLine = Cast<UDialogBuilderEdNode_DialogLine>(A->GetOwningNode()) || Cast<UDialogBuilderEdNode_PlayerLine>(A->GetOwningNode()) ? true : false;
+	const bool bNodeAIsDialogSequence = Cast<UDialogBuilderEdNode_DialogSequence>(A->GetOwningNode()) ? true : false;
 	const bool bNodeAIsRerouteNode = Cast<UDialogBuilderEdNode_RerouteNode>(A->GetOwningNode()) ? true : false;
 	const bool bNodeAIsPlayerOption = Cast<UDialogBuilderEdNode_PlayerChoice>(A->GetOwningNode()) ? true : false;
 	const bool bNodeAChildrenHasDialogLine = A && A->LinkedTo.IsValidIndex(0) && Cast<UDialogBuilderEdNode_DialogLine>(A->LinkedTo[0]->GetOwningNode());
@@ -475,6 +499,7 @@ const FPinConnectionResponse UEdGraphSchema_DialogBuilder::CanCreateConnection(c
 
 	const bool bNodeBHasNoChild = B && B->LinkedTo.IsEmpty();
 	const bool bNodeBIsDialogLine = Cast<UDialogBuilderEdNode_DialogLine>(B->GetOwningNode()) || Cast<UDialogBuilderEdNode_PlayerLine>(B->GetOwningNode()) ? true : false;
+	const bool bNodeBIsDialogSequence = Cast<UDialogBuilderEdNode_DialogSequence>(B->GetOwningNode()) ? true : false;
 	const bool bNodeBIsRerouteNode = Cast<UDialogBuilderEdNode_RerouteNode>(B->GetOwningNode()) ? true : false;
 	const bool bNodeBIsPlayerOption = Cast<UDialogBuilderEdNode_PlayerChoice>(B->GetOwningNode()) ? true : false;
 
@@ -511,15 +536,15 @@ const FPinConnectionResponse UEdGraphSchema_DialogBuilder::CanCreateConnection(c
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Invalid Node Connections"));
 	}
 
-	if ((bNodeAIsDialogLine || bNodeAIsPlayerOption) && bNodeAChildrenHasDialogLine && bNodeBIsPlayerOption)
+	/*if ((bNodeAIsDialogLine || bNodeAIsDialogSequence || bNodeAIsPlayerOption) && bNodeAChildrenHasDialogLine && bNodeBIsPlayerOption)
 	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Invalid Node Connections, Only the same type children node can make connections"));
 	}
 
-	if ((bNodeAIsDialogLine || bNodeAIsPlayerOption) && bNodeAChildrenHasPlayerOption && bNodeBIsDialogLine)
+	if ((bNodeAIsDialogLine || bNodeAIsDialogSequence|| bNodeAIsPlayerOption) && bNodeAChildrenHasPlayerOption && bNodeBIsDialogLine)
 	{
 		return FPinConnectionResponse(CONNECT_RESPONSE_DISALLOW, LOCTEXT("PinErrorCycle", "Invalid Node Connections, Only the same type children node can make connections"));
-	}
+	}*/
 
 	if (In->Direction == EGPD_Input && Out->Direction == EGPD_Input)
 	{
@@ -569,52 +594,75 @@ const FPinConnectionResponse UEdGraphSchema_DialogBuilder::CanMergeNodes(const U
 
 bool UEdGraphSchema_DialogBuilder::TryCreateConnection(UEdGraphPin* A, UEdGraphPin* B) const
 {
-	// We don't actually care about the pin, we want the node that is being dragged between
-	UDialogBuilderEdNode* NodeA = Cast<UDialogBuilderEdNode>(A->GetOwningNode());
-	UDialogBuilderEdNode* NodeB = Cast<UDialogBuilderEdNode>(B->GetOwningNode());
+	UDialogBuilderEdNode* NodeA = Cast<UDialogBuilderEdNode>(A ? A->GetOwningNode() : nullptr);
+	UDialogBuilderEdNode* NodeB = Cast<UDialogBuilderEdNode>(B ? B->GetOwningNode() : nullptr);
 
-	if(NodeA == NodeB)
+	if (!NodeA || !NodeB || NodeA == NodeB)
 	{
 		return false;
 	}
 
-	// Check that this edge doesn't already exist
-	if (NodeA->GetOutputPin())
+	UEdGraphPin* OutputPin = nullptr;
+	UEdGraphPin* InputPin = nullptr;
+
+	if (A->Direction == EGPD_Output && B->Direction == EGPD_Input)
 	{
-		for (UEdGraphPin* TestPin : NodeA->GetOutputPin()->LinkedTo)
+		OutputPin = A;
+		InputPin = B;
+	}
+	else if (B->Direction == EGPD_Output && A->Direction == EGPD_Input)
+	{
+		OutputPin = B;
+		InputPin = A;
+	}
+	else
+	{
+		return false;
+	}
+
+	UDialogBuilderEdNode* OutputNode = Cast<UDialogBuilderEdNode>(OutputPin->GetOwningNode());
+	UDialogBuilderEdNode* InputNode = Cast<UDialogBuilderEdNode>(InputPin->GetOwningNode());
+	if (!OutputNode || !InputNode)
+	{
+		return false;
+	}
+
+	if (!OutputNode->IsA(UDialogBuilderEdNode_PlayerChoice::StaticClass()))
+	{
+		// Prevent duplicate child connections for normal nodes.
+		for (UEdGraphPin* SourcePin : OutputNode->Pins)
 		{
-			UEdGraphNode* ChildNode = TestPin->GetOwningNode();
-			if (UDialogBuilderEdNode_Edge* EdNode_Edge = Cast<UDialogBuilderEdNode_Edge>(ChildNode))
+			if (!SourcePin || SourcePin->Direction != EGPD_Output)
 			{
-				ChildNode = EdNode_Edge->GetEndNode();
+				continue;
 			}
-			if (ChildNode == NodeB)
-				return false;
+
+			for (UEdGraphPin* TestPin : SourcePin->LinkedTo)
+			{
+				UEdGraphNode* ChildNode = TestPin ? TestPin->GetOwningNode() : nullptr;
+				if (UDialogBuilderEdNode_Edge* EdNode_Edge = Cast<UDialogBuilderEdNode_Edge>(ChildNode))
+				{
+					ChildNode = EdNode_Edge->GetEndNode();
+				}
+
+				if (ChildNode == InputNode)
+				{
+					return false;
+				}
+			}
 		}
 	}
-	bool bSuccesful = false;
-	if (UDialogBuilderEdNode_Root* RootNode = Cast<UDialogBuilderEdNode_Root>(NodeB))
+
+	const bool bSuccessful = Super::TryCreateConnection(OutputPin, InputPin);
+	if (bSuccessful)
 	{
-		Super::TryCreateConnection(NodeB->GetOutputPin(), NodeA->GetInputPin());
-		bSuccesful =  true;
-	}
-	else if (NodeA && NodeB)
-	{
-		if (A->Direction == EGPD_Output && B->Direction == EGPD_Input)
+		if (UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(OutputNode->GetGraph()))
 		{
-			// Always create connections from node A to B, don't allow adding in reverse
-			Super::TryCreateConnection(NodeA->GetOutputPin(), NodeB->GetInputPin());
-			bSuccesful =  true;
+			DialogEdGraph->UpdateAsset(true);
 		}
 	}
 
-	if (UDialogBuilderEdGraph* DialogEdGraph = Cast<UDialogBuilderEdGraph>(NodeA->GetGraph()))
-	{
-		DialogEdGraph->UpdateAsset(true);
-	}
-
-	
-	return bSuccesful;
+	return bSuccessful;
 }
 
 bool UEdGraphSchema_DialogBuilder::CreateAutomaticConversionNodeAndConnections(UEdGraphPin* A, UEdGraphPin* B) const

@@ -109,7 +109,7 @@ public:
 	virtual EVisibility GetNodeIDVisibility() const;
 	virtual EVisibility GetTitleVisibility() const;
 	virtual EVisibility GetParentNodeVisibility() const;
-	virtual EVisibility GetSelectorVisibility() const;
+	virtual EVisibility GetNodeHeaderTitleVisibility() const;
 	virtual EVisibility GetSubNodeVisibility() const;
 	virtual EVisibility GetDragOverMarkerVisibility() const;
 
@@ -120,14 +120,23 @@ public:
 
 	/** sets drag marker visible or collapsed on this node */
 	void SetDragMarker(bool bEnabled);
+public:
+	void OnSequencerButtonHovered();
+	void OnSequencerButtonUnhovered();
+	FSlateColor GetSequencerButtonColor() const;
+	const FSlateBrush* GetDialogSequenceThumbnail() const;
+
 protected:
+	mutable FSlateBrush SequenceThumbnailBrush;
+	mutable FSlateBrush SequenceThumbnailFallbackBrush;
+
+	uint32 bSequencerButtonHovered : 1;
 	/** The node body widget, cached here so we can determine its size when we want ot position our overlays */
 	TSharedPtr<SBorder> NodeBody;
 
 	TArray< TSharedPtr<SGraphNode> > SubNodes;
 
 	uint32 bDragMarkerVisible : 1;
-
 
 	TArray< TSharedPtr<SGraphNode> > DecoratorWidgets;
 	TArray< TSharedPtr<SGraphNode> > EventsWidgets;
@@ -141,6 +150,12 @@ protected:
 
 	EVisibility GetBlueprintIconVisibility() const;
 
+	/** Sequencer quick-open icon visibility */
+	EVisibility GetSequencerIconVisibility() const;
+
+	/** Open sequence asset in Sequencer */
+	FReply OnOpenSequencerClicked();
+
 	//Dialog Node Index
 
 	/** Get the visibility of the index overlay */
@@ -148,6 +163,9 @@ protected:
 
 	/** Get the text to display in the index overlay */
 	FText GetIndexText() const;
+
+	/** Get the text to display top of node title */
+	FText GetNodeHeaderTitleText() const;
 
 	/** Get the tooltip for the index overlay */
 	FText GetIndexTooltipText() const;

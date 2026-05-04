@@ -152,7 +152,6 @@ void UOrionInteractionTargetComponent::EndInteraction(bool bCompleted)
 		
 		
 		NotifyInteraction(EOrionInteractionResult::E_Completed, CurrentInteractor);
-		
 	}
 	else
 	{
@@ -226,6 +225,7 @@ void UOrionInteractionTargetComponent::NotifyInteraction(EOrionInteractionResult
 	{
 		case EOrionInteractionNetMode::E_Server:
 			CallInteractionResult(NewInteractionResult, InInteractor);
+			break;
 		case EOrionInteractionNetMode::E_All:
 			Multicast_NotifyInteraction(NewInteractionResult, InInteractor);
 			break;
@@ -264,6 +264,7 @@ void UOrionInteractionTargetComponent::Multicast_NotifyInteraction_Implementatio
 
 void UOrionInteractionTargetComponent::CallInteractionResult(EOrionInteractionResult NewInteractionResult, AActor* InInteractor)
 {
+
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	APawn* Pawn = PC ? PC->GetPawn() : nullptr;
 	switch (NewInteractionResult)

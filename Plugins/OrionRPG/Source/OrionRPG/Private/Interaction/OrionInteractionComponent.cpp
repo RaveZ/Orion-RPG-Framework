@@ -343,25 +343,19 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 	FRotator Rotation;
 	TArray<FHitResult> InteractionhitResults;
 	TArray<AActor*> InteractionActors;
-	APawn* OwningPawn = GetOwningPawn();
-	FCollisionQueryParams CollisionQueryParams(SCENE_QUERY_STAT(AOrionInteractionComponent_UpdateInteracionTrace));
-	CollisionQueryParams.AddIgnoredActor(OwningPawn);
 
-	
+	FCollisionQueryParams CollisionQueryParams(SCENE_QUERY_STAT(AOrionInteractionComponent_UpdateInteracionTrace));
+	CollisionQueryParams.AddIgnoredActor(GetOwningPawn());
 
 	switch (InteractionType)
 	{
 		case EOrionInteractionType::E_InteractionPawn:
 		{
-			if (!OwningPawn)
-			{
-				return nullptr;
-			}
-			TraceStart = OwningPawn->GetActorLocation();
-			Rotation = OwningPawn->GetActorRotation();
-			TraceStart += OwningPawn->GetActorForwardVector() * InteractionOffset.X;
-			TraceStart += OwningPawn->GetActorRightVector() * InteractionOffset.Y;
-			TraceStart += OwningPawn->GetActorUpVector() * InteractionOffset.Z;
+			TraceStart = GetOwningPawn()->GetActorLocation();
+			Rotation = GetOwningPawn()->GetActorRotation();
+			TraceStart += GetOwningPawn()->GetActorForwardVector() * InteractionOffset.X;
+			TraceStart += GetOwningPawn()->GetActorRightVector() * InteractionOffset.Y;
+			TraceStart += GetOwningPawn()->GetActorUpVector() * InteractionOffset.Z;
 			FCollisionShape Sphere = FCollisionShape::MakeSphere(InteractionRadius);
 
 			TArray<FHitResult> HitResults;
@@ -384,14 +378,14 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 					if (Hit.GetActor()->IsHidden())
 						continue;
 
-					FVector Direction = TargetInteractable->GetOwner()->GetActorLocation() - OwningPawn->GetActorLocation();
+					FVector Direction = TargetInteractable->GetOwner()->GetActorLocation() - GetOwningPawn()->GetActorLocation();
 					Direction.Normalize();
-					FVector InteractableDirection = OwningPawn->GetActorLocation() - TargetInteractable->GetOwner()->GetActorLocation();
+					FVector InteractableDirection =  GetOwningPawn()->GetActorLocation() - TargetInteractable->GetOwner()->GetActorLocation();
 					InteractableDirection.Normalize();
 
-					bool bPawnFacingInteractable = FVector::DotProduct(Direction, OwningPawn->GetActorForwardVector()) > 0.5f;
+					bool bPawnFacingInteractable = FVector::DotProduct(Direction, GetOwningPawn()->GetActorForwardVector()) > 0.5f;
 					bool bInteractableFacingPawn = FVector::DotProduct(InteractableDirection, TargetInteractable->GetOwner()->GetActorForwardVector()) > 0.5f;
-					bool bInteractableIsNotSelf = TargetInteractable->GetOwner() != OwningPawn;
+					bool bInteractableIsNotSelf = TargetInteractable->GetOwner() != GetOwningPawn();
 
 
 					bool bAllowInteractable = TargetInteractable->bFacingTarget
@@ -409,7 +403,7 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 			if (!InteractionActors.IsEmpty())
 			{
 				float Dist;
-				return UGameplayStatics::FindNearestActor(OwningPawn->GetActorLocation(), InteractionActors, Dist)->FindComponentByClass<UOrionInteractionTargetComponent>();
+				return UGameplayStatics::FindNearestActor(GetOwningPawn()->GetActorLocation(), InteractionActors, Dist)->FindComponentByClass<UOrionInteractionTargetComponent>();
 			}
 	#if WITH_EDITOR
 			if (bDebugTrace)
@@ -454,7 +448,7 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 				if (!TargetInteractable->IsActive()) return nullptr;
 
 				
-				bool bInteractableIsNotSelf = TargetInteractable->GetOwner() != OwningPawn;
+				bool bInteractableIsNotSelf = TargetInteractable->GetOwner() != GetOwningPawn();
 				if (bInteractableIsNotSelf)
 				{
 					return TargetInteractable;
