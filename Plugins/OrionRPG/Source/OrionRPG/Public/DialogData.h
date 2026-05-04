@@ -127,7 +127,7 @@ public:
 	/**Participant image override, will use this instead of default participant image.
 	* Useful if you want to have different expression for your participant.
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", Category = "Override", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true", Category = "Override", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
 	TObjectPtr<UObject> ParticipantImageOverride;
 
 	FDialogLineData()
@@ -172,7 +172,7 @@ public:
 
 	/**Participant image to be shown while participant line in progress. 
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog", meta = (AllowPrivateAccess = "true", DisplayThumbnail = "true", DisplayName = "Participant Image", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog", meta = (AllowPrivateAccess = "true", DisplayThumbnail = "true", DisplayName = "Participant Image", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
 	TObjectPtr<UObject> ParticipantImage;
 
 	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Dialog", meta = (NoResetToDefault))
