@@ -69,7 +69,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Animation"), Category = "Default")
 	class UAnimMontage* DialogMontage = nullptr;
 
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
+	TObjectPtr<class UAnimSequence> FacialAnimation;
 
 	/**
 	* Select ypur shot method to override.

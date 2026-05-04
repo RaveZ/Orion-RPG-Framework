@@ -26,6 +26,10 @@
 #include "TimerManager.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraShakeBase.h"
+#include "Engine/AssetManager.h"
+#include "Animation/AnimSequence.h"
+#include "Animation/Skeleton.h"
+#include "Engine/SkeletalMesh.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderGraph"
 
@@ -209,7 +213,40 @@ void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialo
 		}
 	}
 
-	
+	//Facial Animation
+	if (Speaker && InDialogLine->DialogLineData.FacialAnimation)
+	{
+		TArray<USkeletalMeshComponent*> SkeletalMeshComponents;
+		Speaker->GetComponents(SkeletalMeshComponents);
+
+		USkeletalMeshComponent* TargetMesh = nullptr;
+		const USkeleton* TargetSkeleton = InDialogLine->DialogLineData.FacialAnimation->GetSkeleton();
+
+		for (USkeletalMeshComponent* SkeletalMeshComponent : SkeletalMeshComponents)
+		{
+			if (!SkeletalMeshComponent)
+			{
+				continue;
+			}
+
+			if (!TargetMesh)
+			{
+				TargetMesh = SkeletalMeshComponent;
+			}
+
+			const USkeletalMesh* SkeletalMesh = SkeletalMeshComponent->GetSkeletalMeshAsset();
+			if (SkeletalMesh && TargetSkeleton && SkeletalMesh->GetSkeleton() == TargetSkeleton)
+			{
+				TargetMesh = SkeletalMeshComponent;
+				break;
+			}
+		}
+
+		if (TargetMesh)
+		{
+			TargetMesh->PlayAnimation(InDialogLine->DialogLineData.FacialAnimation, false);
+		}
+	}
 	
 	CachedLastSpeaker = Speaker;
 	
@@ -517,6 +554,8 @@ void UDialogBuilderGraph::StopCurrentDialogLine()
 		DialogAudio = nullptr;
 	}
 
+
+	//stop montage
 	UDialogBuilderNode_DialogLine* CurrentDialogLine = Cast<UDialogBuilderNode_DialogLine>(CurrentNode);
 	if (CurrentDialogLine && CurrentDialogLine->DialogLineData.DialogMontage && CachedLastSpeaker.IsValid())
 	{
@@ -530,6 +569,41 @@ void UDialogBuilderGraph::StopCurrentDialogLine()
 			}
 		}
 
+	}
+
+	//stop facial animation
+	if (CurrentDialogLine && CurrentDialogLine->DialogLineData.FacialAnimation && CachedLastSpeaker.IsValid())
+	{
+		TArray<USkeletalMeshComponent*> SkeletalMeshComponents;
+		CachedLastSpeaker->GetComponents(SkeletalMeshComponents);
+
+		USkeletalMeshComponent* TargetMesh = nullptr;
+		const USkeleton* TargetSkeleton = CurrentDialogLine->DialogLineData.FacialAnimation->GetSkeleton();
+
+		for (USkeletalMeshComponent* SkeletalMeshComponent : SkeletalMeshComponents)
+		{
+			if (!SkeletalMeshComponent)
+			{
+				continue;
+			}
+
+			if (!TargetMesh)
+			{
+				TargetMesh = SkeletalMeshComponent;
+			}
+
+			const USkeletalMesh* SkeletalMesh = SkeletalMeshComponent->GetSkeletalMeshAsset();
+			if (SkeletalMesh && TargetSkeleton && SkeletalMesh->GetSkeleton() == TargetSkeleton)
+			{
+				TargetMesh = SkeletalMeshComponent;
+				break;
+			}
+		}
+
+		if (TargetMesh)
+		{
+			TargetMesh->Stop();
+		}
 	}
 }
 
