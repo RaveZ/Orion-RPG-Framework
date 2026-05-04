@@ -1,7 +1,7 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
-
 #include "DialogBuilderGraph.h"
+
 #include "DialogComponent.h"
 #include "MovieSceneDialogSection.h"
 #include "MovieSceneDialogTrack.h"
@@ -33,6 +33,9 @@
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraShakeBase.h"
 #include "Engine/AssetManager.h"
+#include "Animation/AnimSequence.h"
+#include "Animation/Skeleton.h"
+#include "Engine/SkeletalMesh.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderGraph"
 
@@ -605,6 +608,7 @@ void UDialogBuilderGraph::BeginNode(UDialogBuilderNode* InNode, bool bLaunchEven
 	InNode->Initialize(bLaunchEventOnLoad);
 }
 
+
 void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialogLine)
 {
 	if (InDialogLine == nullptr)
@@ -615,6 +619,8 @@ void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialo
 	AActor* Listener = CachedActorMap.FindRef(InDialogLine->ListenerTag.GetTagName());
 
 	DetermineAdvanceDialogRule(InDialogLine);
+
+	
 
 	//Dialog Sound
 	if (InDialogLine->DialogLineData.DialogSound)
@@ -649,10 +655,42 @@ void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialo
 		}
 	}
 
-	
-	
+	//Facial Animation
+	if (Speaker && InDialogLine->DialogLineData.FacialAnimation)
+	{
+		TArray<USkeletalMeshComponent*> SkeletalMeshComponents;
+		Speaker->GetComponents(SkeletalMeshComponents);
+
+		USkeletalMeshComponent* TargetMesh = nullptr;
+		const USkeleton* TargetSkeleton = InDialogLine->DialogLineData.FacialAnimation->GetSkeleton();
+
+		for (USkeletalMeshComponent* SkeletalMeshComponent : SkeletalMeshComponents)
+		{
+			if (!SkeletalMeshComponent)
+			{
+				continue;
+			}
+
+			if (!TargetMesh)
+			{
+				TargetMesh = SkeletalMeshComponent;
+			}
+
+			const USkeletalMesh* SkeletalMesh = SkeletalMeshComponent->GetSkeletalMeshAsset();
+			if (SkeletalMesh && TargetSkeleton && SkeletalMesh->GetSkeleton() == TargetSkeleton)
+			{
+				TargetMesh = SkeletalMeshComponent;
+				break;
+			}
+		}
+
+		if (TargetMesh)
+		{
+			TargetMesh->PlayAnimation(InDialogLine->DialogLineData.FacialAnimation, false);
+		}
+	}
+
 	CachedLastSpeaker = Speaker;
-	
 }
 
 void UDialogBuilderGraph::ApplyRotationSetting(UDialogBuilderNode_DialogLine* InDialogLine, AActor* Speaker, AActor* Listener)
@@ -1101,8 +1139,18 @@ bool UDialogBuilderGraph::IsChoiceSelectionActive() const
 	return CurrentNode ? CurrentNode->IsA(UDialogBuilderNode_PlayerChoice::StaticClass()) : false;
 }
 
+bool UDialogBuilderGraph::CanAdvanceDialog() const
+{
+	return bCanAdvanceDialog;
+}
+
 void UDialogBuilderGraph::AdvanceDialogLine()
 {
+	if(!CanAdvanceDialog())
+	{
+		return;
+	}
+
 	if (UWorld* World = GetWorld())
 	{
 		if (World->IsPaused())
@@ -1121,14 +1169,7 @@ void UDialogBuilderGraph::AdvanceDialogLine()
 		JumpToNextDialogSection();
 		return;
 	}
-
-	if (CurrentLine && !CurrentLine->bCanSkipDialogLine 
-		&& DialogLineTimer.IsValid() 
-		&& GetWorld() && GetWorld()->GetTimerManager().GetTimerRemaining(DialogLineTimer) > .0f)
-	{
-		return;
-	}
-
+	
 
 	if (GetWorld())
 	{
@@ -1164,7 +1205,40 @@ void UDialogBuilderGraph::StopCurrentDialogLine()
 				BodyMesh->GetAnimInstance()->Montage_Stop(BlendOutTime, CurrentDialogLine->DialogLineData.DialogMontage);
 			}
 		}
+	}
 
+	if (CurrentDialogLine && CurrentDialogLine->DialogLineData.FacialAnimation && CachedLastSpeaker.IsValid())
+	{
+		TArray<USkeletalMeshComponent*> SkeletalMeshComponents;
+		CachedLastSpeaker->GetComponents(SkeletalMeshComponents);
+
+		USkeletalMeshComponent* TargetMesh = nullptr;
+		const USkeleton* TargetSkeleton = CurrentDialogLine->DialogLineData.FacialAnimation->GetSkeleton();
+
+		for (USkeletalMeshComponent* SkeletalMeshComponent : SkeletalMeshComponents)
+		{
+			if (!SkeletalMeshComponent)
+			{
+				continue;
+			}
+
+			if (!TargetMesh)
+			{
+				TargetMesh = SkeletalMeshComponent;
+			}
+
+			const USkeletalMesh* SkeletalMesh = SkeletalMeshComponent->GetSkeletalMeshAsset();
+			if (SkeletalMesh && TargetSkeleton && SkeletalMesh->GetSkeleton() == TargetSkeleton)
+			{
+				TargetMesh = SkeletalMeshComponent;
+				break;
+			}
+		}
+
+		if (TargetMesh)
+		{
+			TargetMesh->Stop();
+		}
 	}
 }
 
@@ -1262,19 +1336,38 @@ void UDialogBuilderGraph::DetermineAdvanceDialogRule(UDialogBuilderNode* InDialo
 {
 	if(!GetWorld())
 		return;
+
+	UDialogBuilderNode_DialogLine* InDialogLine = Cast<UDialogBuilderNode_DialogLine>(InDialogNode);
+
+
 	//Determine each dialog time before advance to the next line
-	if (bAutoAdvanceDialogLine)
-	{
-		if (UDialogBuilderNode_DialogLine* InDialogLine = Cast<UDialogBuilderNode_DialogLine>(InDialogNode))
+	FTimerDelegate TimerDel;
+
+	const TWeakObjectPtr<UDialogBuilderGraph> WeakThis(this);
+	TimerDel = FTimerDelegate::CreateLambda([WeakThis, InDialogLine]()
 		{
-			GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, this, &ThisClass::AdvanceDialogLine, InDialogLine->GetLineDuration(), false);
-		}
-		
-	}
-	/*if (UDialogBuilderNode_DialogSequence* InDialogSequence = Cast< UDialogBuilderNode_DialogSequence>(InDialogNode))
+			if (!WeakThis.IsValid()) return;
+
+			WeakThis->bCanAdvanceDialog = true;
+
+			if(WeakThis->DialogComponent)
+			{
+				WeakThis->DialogComponent->OnDialogLineEnded.Broadcast(InDialogLine->GetDialogLine());
+			}
+
+			if (WeakThis->bAutoAdvanceDialogLine)
+			{
+				WeakThis->AdvanceDialogLine();
+			}
+		});
+
+	
+
+	if (InDialogLine)
 	{
-		GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, this, &ThisClass::AdvanceDialogLine, InDialogSequence->GetSequenceDuration(), false);
-	}*/
+		bCanAdvanceDialog =  InDialogLine->GetDialogLine().bCanSkipDialogLine;
+		GetWorld()->GetTimerManager().SetTimer(DialogLineTimer, TimerDel, InDialogLine->GetLineDuration(), false);
+	}
 
 }
 

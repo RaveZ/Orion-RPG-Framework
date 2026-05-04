@@ -30,7 +30,7 @@ void UDialogBuilderNode_DialogLine::BeginNode()
 	Super::BeginNode();
 	GetOwningDialogGraph()->BeginDialogLine(this);
 
-	GetDialogComponent()->OnDialogLineUpdated.Broadcast(GetDialogLine());
+	GetDialogComponent()->OnDialogLineBegin.Broadcast(GetDialogLine());
 	GetDialogComponent()->OnDialogUpdated.Broadcast(this);
 }
 
@@ -233,6 +233,8 @@ FOrionDialogLine UDialogBuilderNode_DialogLine::GetDialogLine()
 	DialogLine.SpeakerName = ParticipantInfo.ParticipantName;
 	DialogLine.Line = DialogLineData.Line;
 	DialogLine.DialogSound = DialogLineData.DialogSound;
+	DialogLine.FacialAnimation = DialogLineData.FacialAnimation;
+	DialogLine.bCanSkipDialogLine = bCanSkipDialogLine;
 	return DialogLine;
 }
 void IDialogNodeSharedDataHelper::MakeSureGuidExists(UDialogBuilderNode_DialogLine* Node)

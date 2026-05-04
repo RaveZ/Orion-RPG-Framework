@@ -69,7 +69,7 @@ struct FOrionDialogLine
 
 public:
 
-	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true", Category = "Override", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
+	UPROPERTY()
 	TObjectPtr<UObject> SpeakerImage;
 
 	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
@@ -84,6 +84,9 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog")
 	TObjectPtr<class UAnimSequence> FacialAnimation;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
+	bool bCanSkipDialogLine;
+
 	FOrionDialogLine()
 	{
 		Line = FText::FromString("");
@@ -106,6 +109,8 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (DisplayName = "Animation"), Category = "Default")
 	class UAnimMontage* DialogMontage = nullptr;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Default")
+	TObjectPtr<class UAnimSequence> FacialAnimation;
 
 
 	/**
@@ -127,7 +132,7 @@ public:
 	/**Participant image override, will use this instead of default participant image.
 	* Useful if you want to have different expression for your participant.
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", Category = "Override", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true", Category = "Override", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
 	TObjectPtr<UObject> ParticipantImageOverride;
 
 	FDialogLineData()
@@ -172,7 +177,7 @@ public:
 
 	/**Participant image to be shown while participant line in progress. 
 	*/
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog", meta = (AllowPrivateAccess = "true", DisplayThumbnail = "true", DisplayName = "Participant Image", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog", meta = (AllowPrivateAccess = "true", DisplayThumbnail = "true", DisplayName = "Participant Image", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
 	TObjectPtr<UObject> ParticipantImage;
 
 	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Dialog", meta = (NoResetToDefault))

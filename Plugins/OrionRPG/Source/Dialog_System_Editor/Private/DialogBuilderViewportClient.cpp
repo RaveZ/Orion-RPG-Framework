@@ -835,7 +835,15 @@ bool FDialogBuilderViewportClient::InputWidgetDelta(FViewport* InViewport, EAxis
 	FVector ModifiedScale = Scale;
 	if (!Scale.IsNearlyZero())
 	{
-		FSnappingUtils::AdjustPercentageBasedScale(ModifiedScale);
+		// In both cases, the scale is assumed to be in the 0-100 range and is adjusted to 0-1.
+		if (GEditor->GetScaleGridSize() > 0.0f && GEditor->GetGridSize() > 0.0f)
+		{
+			ModifiedScale *= ((GEditor->GetScaleGridSize() / 100.0f) / GEditor->GetGridSize());
+		}
+		else
+		{
+			ModifiedScale /= 100.0f;
+		}
 	}
 	else
 	{

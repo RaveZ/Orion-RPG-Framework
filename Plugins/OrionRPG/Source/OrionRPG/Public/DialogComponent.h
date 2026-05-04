@@ -51,7 +51,10 @@ public:
 		FUpdateDialog OnDialogUpdated;
 
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
-	FUpdateDialogLine OnDialogLineUpdated;
+	FUpdateDialogLine OnDialogLineBegin;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
+	FUpdateDialogLine OnDialogLineEnded;
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
 		FEnterChoiceSelection OnEnterChoiceSelection;
