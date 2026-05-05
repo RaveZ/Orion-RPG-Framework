@@ -1595,7 +1595,7 @@ void FDialogBuilderEditor::SelectLightSlotActor(int32 index)
 
 void FDialogBuilderEditor::SelectActor(AActor* ActorToSelect)
 {
-	FDialogBuilderViewportClient* ViewportClient = DialogViewportWidget->GetDialogViewportClientPtr();
+	FDialogBuilderViewportClient* ViewportClient = DialogViewportWidget ? DialogViewportWidget->GetDialogViewportClientPtr() : nullptr;
 	if (!ViewportClient)
 	{
 		return;
@@ -2593,21 +2593,6 @@ void FDialogBuilderEditor::UpdateTrackModelRule()
 
 				}
 
-				for (TSharedPtr<UE::Sequencer::FObjectBindingModel> BindingModel :
-					RootSequenceModel->GetDescendantsOfType<UE::Sequencer::FObjectBindingModel>(true))
-				{
-
-					if (!BindingModel.IsValid()) continue;
-					bool bPinned = BindingModel->IsPinned();
-
-					//ensure pin camera binding
-					if (!CameraSlot) continue;
-					FMovieSceneBinding* Binding = MovieScene->FindBinding(CameraSlot->ID);
-					if (BindingModel->GetObjectGuid() == CameraSlot->ID)
-					{
-						BindingModel->SetCustomOrder(0);
-					}
-				}
 			}
 			
 		}
@@ -4529,7 +4514,7 @@ bool FDialogBuilderEditor::CanDuplicateNodes()
 	return CanCopyNodes();
 }
 
-void FDialogBuilderEditor::HandleNewNodeClassPicked(UClass* InClass) const
+void FDialogBuilderEditor::HandleNewClassPicked(UClass* InClass) const
 {
 
 	if (EditingDialogGraph != nullptr && InClass != nullptr && EditingDialogGraph->GetOutermost())
@@ -4578,7 +4563,7 @@ void FDialogBuilderEditor::HandleNewNodeClassPicked(UClass* InClass) const
 
 void FDialogBuilderEditor::CreateNewDialogDecorator()
 {
-	HandleNewNodeClassPicked(UOrionDecorator::StaticClass());
+	HandleNewClassPicked(UOrionDecorator::StaticClass());
 }
 bool FDialogBuilderEditor::CanCreateDialogDecorator() const
 {
@@ -4586,7 +4571,7 @@ bool FDialogBuilderEditor::CanCreateDialogDecorator() const
 }
 void FDialogBuilderEditor::CreateNewDialogEvent()
 {
-	HandleNewNodeClassPicked(UOrionEvent::StaticClass());
+	HandleNewClassPicked(UOrionEvent::StaticClass());
 }
 bool FDialogBuilderEditor::CanCreateDialogEvent() const
 {
@@ -4594,7 +4579,7 @@ bool FDialogBuilderEditor::CanCreateDialogEvent() const
 }
 void FDialogBuilderEditor::CreateNewDialogCameraShot()
 {
-	HandleNewNodeClassPicked(UDialogCameraShot::StaticClass());
+	HandleNewClassPicked(UDialogCameraShot::StaticClass());
 }
 bool FDialogBuilderEditor::CanCreateDialogCameraShot() const
 {

@@ -404,6 +404,9 @@ public:
 	static bool IsPIESimulating();
 	static bool IsPIENotSimulating();
 
+
+	//New class Functions
+	void HandleNewClassPicked(UClass* InClass) const;
 private:
 	/** Helper to move focused graph when clicking on graph breadcrumb */
 	void OnChangeBreadCrumbGraph(class UEdGraph* InGraph);
@@ -464,8 +467,6 @@ protected:
 	void DuplicateNodes();
 	bool CanDuplicateNodes();
 
-	//New Task Functions from toolbar
-	void HandleNewNodeClassPicked(UClass* InClass) const;
 
 	void CreateNewDialogDecorator();
 	bool CanCreateDialogDecorator() const;

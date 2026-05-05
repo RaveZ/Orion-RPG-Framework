@@ -378,6 +378,38 @@ void SDialogStageManager::Construct(const FArguments& InArgs, TWeakPtr<FDialogBu
 	];
 
 	RefreshDialogStageList();
+
+
+	//Try select when initialize
+	if (DialogStageItems.Num() > 0)
+	{
+		FDialogStageListItemPtr ItemToSelect = nullptr;
+		if (TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin())
+		{
+			if (UDialogStage* CurrentStage = DialogEditor->GetDialogStageTemplate())
+			{
+				for (const FDialogStageListItemPtr& Item : DialogStageItems)
+				{
+					if (Item->DialogStage.Get() == CurrentStage)
+					{
+						ItemToSelect = Item;
+						break;
+					}
+				}
+			}
+		}
+
+		if (!ItemToSelect.IsValid())
+		{
+			ItemToSelect = DialogStageItems[0];
+		}
+
+		if (DialogStageListView.IsValid())
+		{
+			DialogStageListView->SetSelection(ItemToSelect, ESelectInfo::Direct);
+			ApplyDialogStageSelection(ItemToSelect);
+		}
+	}
 }
 
 FReply SDialogStageManager::OnKeyDown(const FGeometry& MyGeometry, const FKeyEvent& InKeyEvent)

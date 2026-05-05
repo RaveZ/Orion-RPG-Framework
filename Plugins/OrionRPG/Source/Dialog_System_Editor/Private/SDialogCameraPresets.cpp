@@ -135,14 +135,40 @@ void SDialogCameraPresets::Construct(const FArguments& InArgs, TWeakPtr<FDialogB
 				[
 
 					SNew(SVerticalBox)
-					+ SVerticalBox::Slot()
-					.AutoHeight()
-					.Padding(4.0f)
-					[
-						SNew(STextBlock)
-						.Text(LOCTEXT("CameraPresetListTitle", "Camera Presets"))
-						.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.5f))
-					]
+						+ SVerticalBox::Slot()
+						.AutoHeight()
+						.Padding(4.0f)
+						[
+							SNew(SHorizontalBox)
+								+ SHorizontalBox::Slot()
+								.FillWidth(1.0f)
+								.VAlign(VAlign_Center)
+								[
+									SNew(STextBlock)
+										.Text(LOCTEXT("CameraPresetListTitle", "Camera Presets"))
+										.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.5f))
+								]
+								+ SHorizontalBox::Slot()
+								.AutoWidth()
+								[
+									SNew(SButton)
+										.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+										.ContentPadding(FMargin(2.f))
+										.ToolTipText(LOCTEXT("AddCameraPresetTooltip", "Create New Sequence Shot Class"))
+										.OnClicked_Lambda([this]()
+											{
+												if (TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin())
+												{
+													DialogEditor->HandleNewClassPicked(UDialogSequenceShot::StaticClass());
+													RebuildCameraPresetList();
+												}
+												return FReply::Handled();
+											})
+										[
+											SNew(SImage).Image(FAppStyle::GetBrush("Icons.Plus"))
+										]
+								]
+						]
 					+ SVerticalBox::Slot()
 					.FillHeight(1.0f)
 					.Padding(2.0f)
