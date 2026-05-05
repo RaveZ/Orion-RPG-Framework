@@ -10,6 +10,10 @@
 #include "IDetailsView.h"
 #include "Modules/ModuleManager.h"
 #include "ScopedTransaction.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetRegistry/IAssetRegistry.h"
+#include "AssetRegistry/AssetData.h"
+#include "Engine/Blueprint.h"
 
 #include "Framework/Commands/GenericCommands.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
@@ -18,6 +22,7 @@
 #include "Widgets/Layout/SSplitter.h"
 #include "Widgets/Images/SImage.h"
 #include "Widgets/Input/SButton.h"
+#include "Widgets/Input/SComboButton.h"
 #include "Widgets/Text/SInlineEditableTextBlock.h"
 #include "Widgets/Text/STextBlock.h"
 #include "Widgets/Views/SListView.h"
@@ -25,9 +30,22 @@
 
 #define LOCTEXT_NAMESPACE "DialogStageManager"
 
-// -----------------------------------------------------------------------------
-// Local palette row widgets (defined inside DialogStageManager, as requested)
-// -----------------------------------------------------------------------------
+namespace
+{
+	bool HasClassPathToken(const FString& InTagValue, const UClass* InClass)
+	{
+		if (!InClass)
+		{
+			return false;
+		}
+
+		const FString ClassName = InClass->GetName();
+		const FString ClassPath = InClass->GetPathName();
+
+		return InTagValue.Contains(ClassName) || InTagValue.Contains(ClassPath);
+	}
+}
+
 class SDialogStagePaletteItem : public SCompoundWidget
 {
 public:
@@ -220,6 +238,23 @@ void SDialogStageManager::Construct(const FArguments& InArgs, TWeakPtr<FDialogBu
 					]
 					+ SHorizontalBox::Slot()
 					.AutoWidth()
+					.Padding(2.0f, 0.0f, 0.0f, 0.0f)
+					[
+						SAssignNew(ImportDialogStageComboButton, SComboButton)
+							.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+							.ContentPadding(FMargin(2.f))
+							.ToolTipText(LOCTEXT("ImportDialogStageTooltip", "Import Dialog Stage"))
+							.HasDownArrow(false)
+							.ButtonContent()
+							[
+								SNew(SImage)
+									.Image(FAppStyle::GetBrush("Icons.Import"))
+							]
+							.OnGetMenuContent(this, &SDialogStageManager::BuildImportDialogStageMenu)
+
+					]
+					+ SHorizontalBox::Slot()
+					.AutoWidth()
 					[
 						SNew(SButton)
 						.ButtonStyle(FAppStyle::Get(), "SimpleButton")
@@ -230,8 +265,10 @@ void SDialogStageManager::Construct(const FArguments& InArgs, TWeakPtr<FDialogBu
 							SNew(SImage).Image(FAppStyle::GetBrush("Icons.Plus"))
 						]
 					]
-				]
+					
 
+				]
+				
 				+ SVerticalBox::Slot()
 				.FillHeight(1.0f)
 				.Padding(2.0f)
@@ -1223,6 +1260,19 @@ FDialogSlotListItemPtr SDialogStageManager::FindSlotItemById(const FGuid& InSlot
 	return nullptr;
 }
 
+bool SDialogStageManager::IsDialogStageBlueprint(const FAssetData& AssetData) const
+{
+	FString ParentClassPath;
+
+	if (!AssetData.GetTagValue(FName(TEXT("NativeParentClassPath")), ParentClassPath) &&
+		!AssetData.GetTagValue(FName(TEXT("ParentClass")), ParentClassPath))
+	{
+		return false;
+	}
+
+	return HasClassPathToken(ParentClassPath, UDialogStage::StaticClass());
+}
+
 void SDialogStageManager::SelectDialogStageByObjectName(const FName& InDialogStageObjectName)
 {
 	if (!DialogStageListView.IsValid())
@@ -1256,6 +1306,178 @@ void SDialogStageManager::RestoreSelection(const FName& InDialogStageObjectName,
 	SelectDialogStageByObjectName(InDialogStageObjectName);
 	RefreshSlotList();
 	SelectSlotById(InSlotId);
+}
+
+TSharedRef<SWidget> SDialogStageManager::BuildImportDialogStageMenu()
+{
+	RefreshDialogStageAssetList();
+
+	if (DialogStageAssetItems.Num() == 0)
+	{
+		return SNew(SBorder)
+			.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+			.Padding(6.0f)
+			[
+				SNew(STextBlock)
+					.Text(LOCTEXT("NoDialogStageAssets", "No dialog stage assets found."))
+			];
+	}
+
+	return SNew(SBorder)
+		.BorderImage(FAppStyle::GetBrush("ToolPanel.GroupBorder"))
+		.Padding(4.0f)
+		[
+			SAssignNew(DialogStageAssetListView, SListView<FDialogStageAssetItemPtr>)
+			.ListItemsSource(&DialogStageAssetItems)
+			.OnGenerateRow(this, &SDialogStageManager::GenerateDialogStageAssetRow)
+			.OnSelectionChanged(this, &SDialogStageManager::OnDialogStageAssetSelected)
+			.SelectionMode(ESelectionMode::Single)
+		];
+}
+
+void SDialogStageManager::RefreshDialogStageAssetList()
+{
+	DialogStageAssetItems.Empty();
+
+	FAssetRegistryModule& AssetRegistryModule = FModuleManager::LoadModuleChecked<FAssetRegistryModule>("AssetRegistry");
+	IAssetRegistry& AssetRegistry = AssetRegistryModule.Get();
+
+	TArray<FAssetData> Assets;
+	AssetRegistry.GetAssetsByClass(UBlueprint::StaticClass()->GetClassPathName(), Assets);
+
+	for (const FAssetData& AssetData : Assets)
+	{
+		if (!IsDialogStageBlueprint(AssetData))
+		{
+			continue;
+		}
+
+		UBlueprint* Blueprint = Cast<UBlueprint>(AssetData.GetAsset());
+		if (!Blueprint || !Blueprint->GeneratedClass || !Blueprint->GeneratedClass->IsChildOf(UDialogStage::StaticClass()))
+		{
+			continue;
+		}
+
+		FDialogStageAssetItemPtr Item = MakeShared<FDialogStageAssetItem>();
+		Item->AssetData = AssetData;
+		Item->DisplayName = !Blueprint->BlueprintDisplayName.IsEmpty()
+			? FText::FromString(Blueprint->BlueprintDisplayName)
+			: FText::FromName(AssetData.AssetName);
+
+		DialogStageAssetItems.Add(Item);
+	}
+
+	DialogStageAssetItems.Sort([](const FDialogStageAssetItemPtr& A, const FDialogStageAssetItemPtr& B)
+		{
+			const FString AName = A.IsValid() ? A->DisplayName.ToString() : FString();
+			const FString BName = B.IsValid() ? B->DisplayName.ToString() : FString();
+			return AName < BName;
+		});
+}
+
+
+TSharedRef<ITableRow> SDialogStageManager::GenerateDialogStageAssetRow(
+	FDialogStageAssetItemPtr InItem,
+	const TSharedRef<STableViewBase>& InOwnerTable)
+{
+	return SNew(STableRow<FDialogStageAssetItemPtr>, InOwnerTable)
+		[
+			SNew(STextBlock)
+				.Text(InItem.IsValid() ? InItem->DisplayName : LOCTEXT("InvalidDialogStageAsset", "Invalid"))
+				.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.0f))
+		];
+}
+
+void SDialogStageManager::OnDialogStageAssetSelected(FDialogStageAssetItemPtr InItem, ESelectInfo::Type InSelectInfo)
+{
+	if (!InItem.IsValid())
+	{
+		return;
+	}
+
+	ImportDialogStageAsset(InItem->AssetData);
+
+	if (ImportDialogStageComboButton.IsValid())
+	{
+		ImportDialogStageComboButton->SetIsOpen(false, false);
+	}
+}
+
+void SDialogStageManager::ImportDialogStageAsset(const FAssetData& AssetData)
+{
+	UDialogBuilderGraph* Graph = DialogGraph.Get();
+	if (!Graph)
+	{
+		return;
+	}
+
+	UBlueprint* Blueprint = Cast<UBlueprint>(AssetData.GetAsset());
+	if (!Blueprint || !Blueprint->GeneratedClass || !Blueprint->GeneratedClass->IsChildOf(UDialogStage::StaticClass()))
+	{
+		return;
+	}
+
+	UDialogStage* SourceStage = Cast<UDialogStage>(Blueprint->GeneratedClass->GetDefaultObject());
+	if (!SourceStage)
+	{
+		return;
+	}
+
+	const FScopedTransaction Transaction(LOCTEXT("ImportDialogStageTransaction", "Import Dialog Stage"));
+	Graph->Modify();
+
+	UDialogStage* NewDialogStage = DuplicateObject<UDialogStage>(SourceStage, Graph);
+	if (!NewDialogStage)
+	{
+		return;
+	}
+
+	NewDialogStage->Modify();
+	NewDialogStage->OwningDialogGraph = Graph;
+
+	ResetDialogStageSlotDefinitions(NewDialogStage);
+
+	Graph->DialogStages.Add(NewDialogStage);
+
+	MarkGraphDirty();
+	RefreshDialogStageList();
+}
+
+void SDialogStageManager::ResetDialogStageSlotDefinitions(UDialogStage* InStage)
+{
+	if (!InStage)
+	{
+		return;
+	}
+
+	UDialogBuilderGraph* Graph = DialogGraph.Get();
+
+	auto ResetSlot = [Graph](UDialogSequenceSlot* Slot)
+	{
+		if (!Slot)
+		{
+			return;
+		}
+
+		Slot->Modify();
+		Slot->DialogDefinition = nullptr;
+		Slot->OwningDialogGraph = Graph;
+	};
+
+	for (UDialogSequenceSlot* Slot : InStage->Slots)
+	{
+		ResetSlot(Slot);
+	}
+
+	for (UDialogSequenceSlot* Slot : InStage->CameraSlots)
+	{
+		ResetSlot(Slot);
+	}
+
+	for (UDialogSequenceSlot_Light* Slot : InStage->LightSlots)
+	{
+		ResetSlot(Slot);
+	}
 }
 
 #undef LOCTEXT_NAMESPACE
