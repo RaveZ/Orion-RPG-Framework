@@ -6,6 +6,7 @@
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/STextBlock.h"
+#include "Widgets/SNullWidget.h"
 #include "Styling/AppStyle.h"
 #include "SequencerSectionPainter.h"
 
@@ -21,13 +22,9 @@ UMovieSceneSection* FDialogSection::GetSectionObject()
 
 TSharedRef<SWidget> FDialogSection::GenerateSectionWidget()
 {
-	return SNew(SBorder)
-		.BorderImage(FAppStyle::GetBrush("Sequencer.Section.Background"))
-		.Padding(FMargin(4.0f, 2.0f))
-		[
-			SNew(STextBlock)
-			.Text(FText())
-		];
+	// Returning SNullWidget allows standard sequencer UI bounds calculation
+	// and prevents UI track collapse bugs inside 5.6 
+	return SNullWidget::NullWidget;
 }
 
 int32 FDialogSection::OnPaintSection(FSequencerSectionPainter& InPainter) const

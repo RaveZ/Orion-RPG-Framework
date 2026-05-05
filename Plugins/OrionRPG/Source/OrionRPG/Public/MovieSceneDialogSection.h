@@ -22,6 +22,9 @@ public:
 	void SyncRangeToDialogSoundDuration();
 	bool TryGetDialogSoundDurationFrames(int32& OutDurationFrames) const;
 
+
+	FOrionDialogLine GetDialogLine() const;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Section", meta = (ShowOnlyInnerProperties))
 	FOrionDialogLine DialogLine;
 

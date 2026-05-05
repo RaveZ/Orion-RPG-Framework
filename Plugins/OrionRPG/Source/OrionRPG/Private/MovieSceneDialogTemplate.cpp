@@ -484,7 +484,7 @@ namespace OrionDialogTemplate
 			}
 			else
 			{
-				DialogComponent->OnDialogLineEnded.Broadcast(DialogLine);
+				//DialogComponent->OnDialogLineEnded.Broadcast(DialogLine);
 			}
 		}
 
@@ -565,7 +565,7 @@ namespace OrionDialogTemplate
 
 FMovieSceneDialogSectionTemplate::FMovieSceneDialogSectionTemplate(const UMovieSceneDialogSection& InSection)
 	: DialogSection(const_cast<UMovieSceneDialogSection*>(&InSection))
-	, DialogLine(InSection.DialogLine)
+	, DialogLine(InSection.GetDialogLine())
 {
 }
 
