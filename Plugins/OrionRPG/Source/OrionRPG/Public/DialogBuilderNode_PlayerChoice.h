@@ -46,8 +46,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Choice Selection", meta = (EditCondition = "SelectionTimeLimit == ESelectionTimeLimit::E_HasTimeLimit", HideEditConditionToggle, EditConditionHides, DisplayPriority = -1))
 	float TimeLimit;
 
-	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Detail")
-	FText ChoiceText;
 
 	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Detail")
 	TArray<FText> ChoiceList;

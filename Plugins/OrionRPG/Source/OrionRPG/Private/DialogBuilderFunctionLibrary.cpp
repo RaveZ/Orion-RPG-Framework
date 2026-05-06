@@ -100,7 +100,7 @@ FOrionDialogLine UDialogBuilderFunctionLibrary::GetCurrentDialogLine(const UObje
     UDialogBuilderGraph* CurrentDialogGraph = GetCurrentActiveDialog(WorldContextObject);
     if (CurrentDialogGraph && CurrentDialogGraph->CurrentLine)
     {
-       return CurrentDialogGraph->CurrentLine->GetDialogLine();
+        return CurrentDialogGraph->CurrentDialogLine;
     }
 	return FOrionDialogLine();
 }

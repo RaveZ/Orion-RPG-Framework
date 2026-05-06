@@ -187,6 +187,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 		TObjectPtr<class UDialogBuilderNode_DialogLine> CurrentLine;
 
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
+		FOrionDialogLine CurrentDialogLine;
+
 	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
 		TArray< TObjectPtr<UDialogBuilderNode>> RootNodes;
 
@@ -295,6 +298,9 @@ public:
 
 	void StartFromRoot();
 
+
+	UFUNCTION()
+	virtual void DialogLineBegin(FOrionDialogLine InDialogLine);
 
 	UFUNCTION(BlueprintCallable, Category = "Dialog")
 	void BeginNode(UDialogBuilderNode* InNode, bool bLaunchEventOnLoad = false);

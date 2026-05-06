@@ -95,8 +95,7 @@ void UDialogBuilderNode_PlayerChoice::PostEditChangeProperty(FPropertyChangedEve
 	if (PropertyChangedEvent.MemberProperty)
 	{
 		const FName PropertyName = PropertyChangedEvent.MemberProperty->GetFName();
-		if (PropertyName == GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_PlayerChoice, ChoiceList) ||
-			PropertyName == GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_PlayerChoice, ChoiceText))
+		if (PropertyName == GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_PlayerChoice, ChoiceList))
 		{
 			OnPlayerChoiceDataChanged.Broadcast();
 		}
@@ -110,8 +109,7 @@ void UDialogBuilderNode_PlayerChoice::PostEditChangeChainProperty(FPropertyChang
 	if (PropertyChangedEvent.PropertyChain.GetHead() && PropertyChangedEvent.PropertyChain.GetHead()->GetValue())
 	{
 		const FName PropertyName = PropertyChangedEvent.PropertyChain.GetHead()->GetValue()->GetFName();
-		if (PropertyName == GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_PlayerChoice, ChoiceList) ||
-			PropertyName == GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_PlayerChoice, ChoiceText))
+		if (PropertyName == GET_MEMBER_NAME_CHECKED(UDialogBuilderNode_PlayerChoice, ChoiceList))
 		{
 			OnPlayerChoiceDataChanged.Broadcast();
 		}

@@ -87,7 +87,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialog")
 	TObjectPtr<class UAnimSequence> FacialAnimation;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog")
 	bool bCanSkipDialogLine;
 
 	FOrionDialogLine()

@@ -97,6 +97,9 @@ bool UDialogBuilderGraph::Initialize(UDialogComponent* InitializingComp)
 		}
 		OwningController = InitializingComp->GetOwningController();
 		DialogComponent = InitializingComp;
+		DialogComponent->OnDialogLineBegin.AddDynamic(this, &UDialogBuilderGraph::DialogLineBegin);
+
+
 		VisitedNodeIDs.Empty();
 		CachedActorMap.Empty();
 		CachedActorOriginalTransforms.Empty();
@@ -581,6 +584,11 @@ void UDialogBuilderGraph::OnSoftClassesLoaded()
 	}
 
 	bSetupCompleted = true;
+}
+
+void UDialogBuilderGraph::DialogLineBegin(FOrionDialogLine InDialogLine)
+{
+	CurrentDialogLine = InDialogLine;
 }
 
 void UDialogBuilderGraph::BeginNode(UDialogBuilderNode* InNode, bool bLaunchEventOnLoad)
@@ -1193,27 +1201,27 @@ void UDialogBuilderGraph::StopCurrentDialogLine()
 		DialogAudio = nullptr;
 	}
 
-	UDialogBuilderNode_DialogLine* CurrentDialogLine = Cast<UDialogBuilderNode_DialogLine>(CurrentNode);
-	if (CurrentDialogLine && CurrentDialogLine->DialogLineData.DialogMontage && CachedLastSpeaker.IsValid())
+	UDialogBuilderNode_DialogLine* CurrentDialogLineNode = Cast<UDialogBuilderNode_DialogLine>(CurrentNode);
+	if (CurrentDialogLineNode && CurrentDialogLineNode->DialogLineData.DialogMontage && CachedLastSpeaker.IsValid())
 	{
 		UActorComponent* Mesh = CachedLastSpeaker->GetComponentByClass(USkeletalMeshComponent::StaticClass());
 		if (USkeletalMeshComponent* BodyMesh = Cast<USkeletalMeshComponent>(Mesh))
 		{
 			if (BodyMesh->GetAnimInstance())
 			{
-				const float BlendOutTime = CurrentDialogLine->DialogLineData.DialogMontage->BlendOut.GetBlendTime();
-				BodyMesh->GetAnimInstance()->Montage_Stop(BlendOutTime, CurrentDialogLine->DialogLineData.DialogMontage);
+				const float BlendOutTime = CurrentDialogLineNode->DialogLineData.DialogMontage->BlendOut.GetBlendTime();
+				BodyMesh->GetAnimInstance()->Montage_Stop(BlendOutTime, CurrentDialogLineNode->DialogLineData.DialogMontage);
 			}
 		}
 	}
 
-	if (CurrentDialogLine && CurrentDialogLine->DialogLineData.FacialAnimation && CachedLastSpeaker.IsValid())
+	if (CurrentDialogLineNode && CurrentDialogLineNode->DialogLineData.FacialAnimation && CachedLastSpeaker.IsValid())
 	{
 		TArray<USkeletalMeshComponent*> SkeletalMeshComponents;
 		CachedLastSpeaker->GetComponents(SkeletalMeshComponents);
 
 		USkeletalMeshComponent* TargetMesh = nullptr;
-		const USkeleton* TargetSkeleton = CurrentDialogLine->DialogLineData.FacialAnimation->GetSkeleton();
+		const USkeleton* TargetSkeleton = CurrentDialogLineNode->DialogLineData.FacialAnimation->GetSkeleton();
 
 		for (USkeletalMeshComponent* SkeletalMeshComponent : SkeletalMeshComponents)
 		{

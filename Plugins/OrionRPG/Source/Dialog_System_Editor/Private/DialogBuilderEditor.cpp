@@ -151,6 +151,16 @@ FDialogBuilderEditor::FDialogBuilderEditor()
 
 FDialogBuilderEditor::~FDialogBuilderEditor()
 {
+	{
+		const bool bNoteSelectionChange = true;
+		const bool bDeselectBSPSurfs = true;
+		const bool bWarnAboutManyActors = false;
+		if (GEditor)
+		{
+			GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
+		}
+	}
+
 	// Unbind raw package dirty callback added in Initialize()
 	if (EditingDialogGraph && EditingDialogGraph->GetOutermost())
 	{
@@ -160,8 +170,14 @@ FDialogBuilderEditor::~FDialogBuilderEditor()
 	{
 		GEditor->UnregisterForUndo(this);
 	}
+
 	UnbindSequencerDelegates();
 	UnbindDelegates();
+
+	if (Sequencer.IsValid())
+	{
+		Sequencer->Close();
+	}
 
 	// Release sequencer/editor references early
 	Sequencer.Reset();
@@ -528,21 +544,28 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 		FSlateApplication::Get().DismissAllMenus();
 		UpdateDialogStage();
 
-		if (Sequencer)
+		UDialogBuilderNode_DialogSequence* SequenceNode = CurrentSequenceNode.Get();
+		if (!SequenceNode || !SequenceNode->DialogSequence)
 		{
-			TWeakObjectPtr<UDialogSequence> WeakDialogSequence = EditingDialogSequence;	
-			if (WeakDialogSequence.IsValid())
+			CurrentSequenceNode.Reset();
+			DialogStageTemplate.Reset();
+			DialogStageWidget->SetObject(nullptr);
+			if (EditingDialogGraph)
 			{
-				Sequencer->ResetToNewRootSequence(*WeakDialogSequence);
-
+				EditingDialogGraph->CurrentEditingSequenceNode = nullptr;
 			}
-			else
+			EditingDialogSequence = UDialogSequence::GetNullDialogSequence();
+			if (Sequencer)
 			{
 				Sequencer->ResetToNewRootSequence(*UDialogSequence::GetNullDialogSequence());
-
+				Sequencer->GetSequencerWidget()->SetEnabled(false);
+				Sequencer->SetAutoChangeMode(EAutoChangeMode::None);
+				DialogViewportWidget->RemoveDialogOverlayWidget();
 			}
-			Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
-			Sequencer->ForceEvaluate();
+		}
+		else
+		{
+			EditingDialogSequence = SequenceNode->DialogSequence;
 		}
 
 	}
@@ -568,9 +591,43 @@ void FDialogBuilderEditor::PostRedo(bool bSuccess)
 			PropertyWidget->ForceRefresh();
 		}
 
+		if (DialogStageManagerWidget.IsValid())
+		{
+			DialogStageManagerWidget->Refresh();
+		}
+
 		bPendingRefreshDialogEditor = true;
 
 		FSlateApplication::Get().DismissAllMenus();
+		UpdateDialogStage();
+
+		UDialogBuilderNode_DialogSequence* SequenceNode = CurrentSequenceNode.Get();
+		if (!SequenceNode || !SequenceNode->DialogSequence)
+		{
+			CurrentSequenceNode.Reset();
+			DialogStageTemplate.Reset();
+			DialogStageWidget->SetObject(nullptr);
+			if (EditingDialogGraph)
+			{
+				EditingDialogGraph->CurrentEditingSequenceNode = nullptr;
+			}
+			EditingDialogSequence = UDialogSequence::GetNullDialogSequence();
+		}
+		else
+		{
+			EditingDialogSequence = SequenceNode->DialogSequence;
+		}
+
+		if (Sequencer)
+		{
+			Sequencer->ResetToNewRootSequence(*EditingDialogSequence);
+
+			const bool bHasValidSequence = EditingDialogSequence != UDialogSequence::GetNullDialogSequence();
+			Sequencer->GetSequencerWidget()->SetEnabled(bHasValidSequence);
+
+			Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
+			Sequencer->ForceEvaluate();
+		}
 	}
 }
 
@@ -1883,21 +1940,27 @@ void FDialogBuilderEditor::AddToSelection(UEdGraphNode* InNode)
 
 void FDialogBuilderEditor::OnOpenDialogSequenceNode(UDialogBuilderNode_DialogSequence* InSequenceNode)
 {
-	//invoke sequencer tab
+	// invoke sequencer tab
 	TSharedPtr<FTabManager> HostTabManager;
 	HostTabManager = GetToolkitHost()->GetTabManager();
 
+	if (!InSequenceNode)
+	{
+		return;
+	}
+
+	InSequenceNode->EnsureSequenceCreated();
 
 	const FTabId SequencerTabId(FDialogBuilderEditorTabs::DialogSequencerTabID);
 
 	if (HostTabManager.IsValid())
 	{
-
 		if (CurrentSequenceNode == InSequenceNode)
 		{
 			HostTabManager->TryInvokeTab(SequencerTabId);
 			return;
 		}
+
 		DestroyDialogStage();
 		CurrentSequenceNode = InSequenceNode;
 		GetDialogBuilderGraph()->CurrentEditingSequenceNode = CurrentSequenceNode.Get();
@@ -1905,7 +1968,6 @@ void FDialogBuilderEditor::OnOpenDialogSequenceNode(UDialogBuilderNode_DialogSeq
 		DialogStageTemplate = InSequenceNode->DialogStageToUse;
 		OpenDialogSequence(InSequenceNode->DialogSequence);
 		UpdateDialogStage();
-
 
 		TSharedPtr<SDockTab> ExistingTab = HostTabManager->FindExistingLiveTab(SequencerTabId);
 		if (ExistingTab.IsValid())
@@ -2300,6 +2362,8 @@ void FDialogBuilderEditor::UnbindSequencerDelegates()
 		Sequencer->OnMovieSceneDataChanged().Remove(SequencerMovieSceneDataChangedHandle);
 		SequencerMovieSceneDataChangedHandle.Reset();
 	}
+
+	Sequencer->GetSelectionChangedObjectGuids().RemoveAll(this);
 
 	LastSequencerCameraCutActor.Reset();
 }
