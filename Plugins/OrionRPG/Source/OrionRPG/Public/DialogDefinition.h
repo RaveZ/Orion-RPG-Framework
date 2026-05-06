@@ -44,6 +44,9 @@ class ORIONRPG_API UDialogParticipant : public UDialogDefinition
 
 public:
 	UDialogParticipant();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true", Category = "Dialog", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
+	TObjectPtr<UObject> ParticipantImage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialog Definition", meta = (DisplayAfter = "DisplayName", DisplayName = "Pawn Class"))
 	TSoftClassPtr<class APawn> PawnClassSoft;

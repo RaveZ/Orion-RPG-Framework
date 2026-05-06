@@ -20,6 +20,7 @@ class FAdvancedPreviewScene;
 class SDialogPreviewViewport;
 class ISequencer;
 class ULevelSequence;
+class UDialogStage;
 class SDialogDefinitions;
 class SDialogCameraPresets;
 class UDialogParticipant;
@@ -404,6 +405,10 @@ public:
 	static bool IsPIESimulating();
 	static bool IsPIENotSimulating();
 
+
+	//New class Functions
+	void HandleNewClassPicked(UClass* InClass) const;
+	void CreateNewDialogStageTemplate(UDialogStage* InDialogStage);
 private:
 	/** Helper to move focused graph when clicking on graph breadcrumb */
 	void OnChangeBreadCrumbGraph(class UEdGraph* InGraph);
@@ -464,8 +469,6 @@ protected:
 	void DuplicateNodes();
 	bool CanDuplicateNodes();
 
-	//New Task Functions from toolbar
-	void HandleNewNodeClassPicked(UClass* InClass) const;
 
 	void CreateNewDialogDecorator();
 	bool CanCreateDialogDecorator() const;

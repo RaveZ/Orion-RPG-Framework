@@ -15,6 +15,8 @@ UDialogSequenceSlot::UDialogSequenceSlot()
 
 
 
+
+
 UDialogStage* UDialogSequenceSlot::GetOwningDialogStage() const
 {
 	return GetTypedOuter<UDialogStage>();
@@ -113,12 +115,72 @@ UDialogStage* UDialogStage::GetOwningDialogStage() const
 	return nullptr;
 }
 
+void UDialogStage::MakeUniqueDialogStageName()
+{
+	if (!OwningDialogGraph)
+	{
+		return;
+	}
+
+	if (!OwningDialogGraph->DialogStages.Contains(this))
+	{
+		return;
+	}
+
+	const FString BaseName = Name.ToString();
+	const FString CleanBaseName = BaseName.IsEmpty() ? TEXT("Stage") : BaseName;
+
+	auto IsNameTaken = [this](const FString& InCandidateName) -> bool
+		{
+			if (!OwningDialogGraph)
+			{
+				return false;
+			}
+
+			for (const TObjectPtr<UDialogStage>& StagePtr : OwningDialogGraph->DialogStages)
+			{
+				const UDialogStage* OtherStage = StagePtr.Get();
+				if (!OtherStage || OtherStage == this)
+				{
+					continue;
+				}
+
+				if (OtherStage->Name.ToString().Equals(InCandidateName, ESearchCase::CaseSensitive))
+				{
+					return true;
+				}
+			}
+
+			return false;
+		};
+
+	if (!IsNameTaken(CleanBaseName))
+	{
+		return;
+	}
+
+	int32 Suffix = 2;
+	FString UniqueName;
+
+	do
+	{
+		UniqueName = FString::Printf(TEXT("%s%d"), *CleanBaseName, Suffix++);
+	} while (IsNameTaken(UniqueName));
+
+	Name = FText::FromString(UniqueName);
+	MarkPackageDirty();
+}
+
 #if WITH_EDITOR
 void UDialogStage::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
-
+	if (PropertyChangedEvent.MemberProperty &&
+		PropertyChangedEvent.MemberProperty->GetFName() == GET_MEMBER_NAME_CHECKED(UDialogStage, Name))
+	{
+		MakeUniqueDialogStageName();
+	}
 }
 #endif
 

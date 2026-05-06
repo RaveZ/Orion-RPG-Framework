@@ -69,10 +69,13 @@ struct FOrionDialogLine
 
 public:
 
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, meta = (AllowPrivateAccess = "true", Category = "Dialog", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
+	TObjectPtr<UObject> SpeakerImageOverride;
+
+	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true", Category = "Dialog", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
 	TObjectPtr<UObject> SpeakerImage;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Dialog")
+	UPROPERTY(BlueprintReadWrite, Category = "Dialog")
 	FText SpeakerName;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (MultiLine = true, NoResetToDefault, DisplayPriority = -1), Category = "Dialog")
@@ -91,6 +94,7 @@ public:
 	{
 		Line = FText::FromString("");
 		DialogSound = nullptr;
+		bCanSkipDialogLine = true;
 	}
 };
 

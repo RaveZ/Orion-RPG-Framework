@@ -1595,7 +1595,7 @@ void FDialogBuilderEditor::SelectLightSlotActor(int32 index)
 
 void FDialogBuilderEditor::SelectActor(AActor* ActorToSelect)
 {
-	FDialogBuilderViewportClient* ViewportClient = DialogViewportWidget->GetDialogViewportClientPtr();
+	FDialogBuilderViewportClient* ViewportClient = DialogViewportWidget ? DialogViewportWidget->GetDialogViewportClientPtr() : nullptr;
 	if (!ViewportClient)
 	{
 		return;
@@ -2593,21 +2593,6 @@ void FDialogBuilderEditor::UpdateTrackModelRule()
 
 				}
 
-				for (TSharedPtr<UE::Sequencer::FObjectBindingModel> BindingModel :
-					RootSequenceModel->GetDescendantsOfType<UE::Sequencer::FObjectBindingModel>(true))
-				{
-
-					if (!BindingModel.IsValid()) continue;
-					bool bPinned = BindingModel->IsPinned();
-
-					//ensure pin camera binding
-					if (!CameraSlot) continue;
-					FMovieSceneBinding* Binding = MovieScene->FindBinding(CameraSlot->ID);
-					if (BindingModel->GetObjectGuid() == CameraSlot->ID)
-					{
-						BindingModel->SetCustomOrder(0);
-					}
-				}
 			}
 			
 		}
@@ -4529,7 +4514,7 @@ bool FDialogBuilderEditor::CanDuplicateNodes()
 	return CanCopyNodes();
 }
 
-void FDialogBuilderEditor::HandleNewNodeClassPicked(UClass* InClass) const
+void FDialogBuilderEditor::HandleNewClassPicked(UClass* InClass) const
 {
 
 	if (EditingDialogGraph != nullptr && InClass != nullptr && EditingDialogGraph->GetOutermost())
@@ -4576,9 +4561,111 @@ void FDialogBuilderEditor::HandleNewNodeClassPicked(UClass* InClass) const
 	FSlateApplication::Get().DismissAllMenus();
 }
 
+void FDialogBuilderEditor::CreateNewDialogStageTemplate(UDialogStage* InDialogStage)
+{
+	if (!InDialogStage || !EditingDialogGraph || !EditingDialogGraph->GetOutermost())
+	{
+		return;
+	}
+
+	FString PathName = EditingDialogGraph->GetOutermost()->GetPathName();
+	PathName = FPaths::GetPath(PathName);
+
+	const FString DefaultStageName = TEXT("DialogStage");
+
+	FSaveAssetDialogConfig SaveAssetDialogConfig;
+	SaveAssetDialogConfig.DialogTitleOverride = LOCTEXT("SaveDialogStageTemplateTitle", "Save Dialog Stage Template");
+	SaveAssetDialogConfig.DefaultPath = PathName;
+	SaveAssetDialogConfig.DefaultAssetName = DefaultStageName;
+	SaveAssetDialogConfig.ExistingAssetPolicy = ESaveAssetDialogExistingAssetPolicy::Disallow;
+
+	const FContentBrowserModule& ContentBrowserModule = FModuleManager::LoadModuleChecked<FContentBrowserModule>("ContentBrowser");
+	const FString SaveObjectPath = ContentBrowserModule.Get().CreateModalSaveAssetDialog(SaveAssetDialogConfig);
+	if (!SaveObjectPath.IsEmpty())
+	{
+		const FString SavePackageName = FPackageName::ObjectPathToPackageName(SaveObjectPath);
+		const FString SaveAssetName = FPaths::GetBaseFilename(SavePackageName);
+
+		UPackage* Package = CreatePackage(*SavePackageName);
+		if (ensure(Package))
+		{
+			if (UBlueprint* NewBP = FKismetEditorUtilities::CreateBlueprint(
+				UDialogStage::StaticClass(),
+				Package,
+				FName(*SaveAssetName),
+				BPTYPE_Normal,
+				UBlueprint::StaticClass(),
+				UBlueprintGeneratedClass::StaticClass()))
+			{
+				if (UDialogStage* DefaultStage = Cast<UDialogStage>(NewBP->GeneratedClass->GetDefaultObject()))
+				{
+					DefaultStage->Modify();
+					DefaultStage->bIsTemplate = true;
+					DefaultStage->OwningDialogGraph = nullptr;
+					DefaultStage->Name = InDialogStage->Name;
+					DefaultStage->Location = InDialogStage->Location;
+					DefaultStage->Rotation = InDialogStage->Rotation;
+
+					DefaultStage->Slots.Empty();
+					DefaultStage->CameraSlots.Empty();
+					DefaultStage->LightSlots.Empty();
+
+					for (UDialogSequenceSlot* Slot : InDialogStage->Slots)
+					{
+						if (!Slot)
+						{
+							continue;
+						}
+
+						if (UDialogSequenceSlot* NewSlot = DuplicateObject<UDialogSequenceSlot>(Slot, DefaultStage))
+						{
+							NewSlot->OwningDialogGraph = nullptr;
+							DefaultStage->Slots.Add(NewSlot);
+						}
+					}
+
+					for (UDialogSequenceSlot* Slot : InDialogStage->CameraSlots)
+					{
+						if (!Slot)
+						{
+							continue;
+						}
+
+						if (UDialogSequenceSlot* NewSlot = DuplicateObject<UDialogSequenceSlot>(Slot, DefaultStage))
+						{
+							NewSlot->OwningDialogGraph = nullptr;
+							DefaultStage->CameraSlots.Add(NewSlot);
+						}
+					}
+
+					for (UDialogSequenceSlot_Light* Slot : InDialogStage->LightSlots)
+					{
+						if (!Slot)
+						{
+							continue;
+						}
+
+						if (UDialogSequenceSlot_Light* NewSlot = DuplicateObject<UDialogSequenceSlot_Light>(Slot, DefaultStage))
+						{
+							NewSlot->OwningDialogGraph = nullptr;
+							DefaultStage->LightSlots.Add(NewSlot);
+						}
+					}
+				}
+
+				GEditor->GetEditorSubsystem<UAssetEditorSubsystem>()->OpenEditorForAsset(NewBP);
+				FAssetRegistryModule::AssetCreated(NewBP);
+				Package->MarkPackageDirty();
+			}
+		}
+	}
+
+	FSlateApplication::Get().DismissAllMenus();
+}
+
 void FDialogBuilderEditor::CreateNewDialogDecorator()
 {
-	HandleNewNodeClassPicked(UOrionDecorator::StaticClass());
+	HandleNewClassPicked(UOrionDecorator::StaticClass());
 }
 bool FDialogBuilderEditor::CanCreateDialogDecorator() const
 {
@@ -4586,7 +4673,7 @@ bool FDialogBuilderEditor::CanCreateDialogDecorator() const
 }
 void FDialogBuilderEditor::CreateNewDialogEvent()
 {
-	HandleNewNodeClassPicked(UOrionEvent::StaticClass());
+	HandleNewClassPicked(UOrionEvent::StaticClass());
 }
 bool FDialogBuilderEditor::CanCreateDialogEvent() const
 {
@@ -4594,7 +4681,7 @@ bool FDialogBuilderEditor::CanCreateDialogEvent() const
 }
 void FDialogBuilderEditor::CreateNewDialogCameraShot()
 {
-	HandleNewNodeClassPicked(UDialogCameraShot::StaticClass());
+	HandleNewClassPicked(UDialogCameraShot::StaticClass());
 }
 bool FDialogBuilderEditor::CanCreateDialogCameraShot() const
 {

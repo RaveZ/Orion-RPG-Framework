@@ -87,6 +87,7 @@ FDialogGraphEditorSummoner::FDialogGraphEditorSummoner(TSharedPtr<class FDialogB
 , DialogEditorPtr(InDialogEditorPtr)
 , OnCreateGraphEditorWidget(CreateGraphEditorWidgetCallback)
 {
+	TabLabel = LOCTEXT("DialogGraphLabel", "Dialog Graph");
 }
 
 void FDialogGraphEditorSummoner::OnTabActivated(TSharedPtr<SDockTab> Tab) const
