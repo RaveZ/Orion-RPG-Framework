@@ -22,18 +22,6 @@
 
 namespace
 {
-	bool HasClassPathToken(const FString& InTagValue, const UClass* InClass)
-	{
-		if (!InClass)
-		{
-			return false;
-		}
-
-		const FString ClassName = InClass->GetName();
-		const FString ClassPath = InClass->GetPathName();
-
-		return InTagValue.Contains(ClassName) || InTagValue.Contains(ClassPath);
-	}
 
 	class SDialogCameraPresetItem : public SButton
 	{
@@ -391,6 +379,19 @@ bool SDialogCameraPresets::IsCameraPresetBlueprint(const FAssetData& AssetData) 
 	}
 
 	return HasClassPathToken(ParentClassPath, UDialogSequenceShot::StaticClass());
+}
+
+bool SDialogCameraPresets::HasClassPathToken(const FString& InTagValue, const UClass* InClass)
+{
+	if (!InClass)
+	{
+		return false;
+	}
+
+	const FString ClassName = InClass->GetName();
+	const FString ClassPath = InClass->GetPathName();
+
+	return InTagValue.Contains(ClassName) || InTagValue.Contains(ClassPath);
 }
 
 UDialogSequenceShot* SDialogCameraPresets::CreateSelectedShotInstance(const FAssetData& AssetData) const

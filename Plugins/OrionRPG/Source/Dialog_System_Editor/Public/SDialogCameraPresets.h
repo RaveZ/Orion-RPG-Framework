@@ -48,6 +48,7 @@ private:
 
 public:
 	TArray<UDialogSequenceShot*> GetShotDuplicates() const;
+	static bool HasClassPathToken(const FString& InTagValue, const UClass* InClass);
 
 private:
 	TWeakPtr<FDialogBuilderEditor> DialogEditorPtr;

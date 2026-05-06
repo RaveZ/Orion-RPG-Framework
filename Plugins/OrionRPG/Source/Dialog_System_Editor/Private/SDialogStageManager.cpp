@@ -30,21 +30,6 @@
 
 #define LOCTEXT_NAMESPACE "DialogStageManager"
 
-namespace
-{
-	bool HasClassPathToken(const FString& InTagValue, const UClass* InClass)
-	{
-		if (!InClass)
-		{
-			return false;
-		}
-
-		const FString ClassName = InClass->GetName();
-		const FString ClassPath = InClass->GetPathName();
-
-		return InTagValue.Contains(ClassName) || InTagValue.Contains(ClassPath);
-	}
-}
 
 class SDialogStagePaletteItem : public SCompoundWidget
 {
@@ -1301,6 +1286,20 @@ bool SDialogStageManager::IsDialogStageBlueprint(const FAssetData& AssetData) co
 
 	return HasClassPathToken(ParentClassPath, UDialogStage::StaticClass());
 }
+
+bool SDialogStageManager::HasClassPathToken(const FString& InTagValue, const UClass* InClass)
+{
+	if (!InClass)
+	{
+		return false;
+	}
+
+	const FString ClassName = InClass->GetName();
+	const FString ClassPath = InClass->GetPathName();
+
+	return InTagValue.Contains(ClassName) || InTagValue.Contains(ClassPath);
+}
+
 
 void SDialogStageManager::SelectDialogStageByObjectName(const FName& InDialogStageObjectName)
 {

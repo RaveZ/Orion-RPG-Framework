@@ -131,6 +131,7 @@ private:
 	FDialogSlotListItemPtr FindSlotItemById(const FGuid& InSlotId) const;
 
 	bool IsDialogStageBlueprint(const FAssetData& AssetData) const;
+	static bool HasClassPathToken(const FString& InTagValue, const UClass* InClass);
 
 private:
 	FReply OnDialogStageItemClicked(FDialogStageListItemPtr InItem);
