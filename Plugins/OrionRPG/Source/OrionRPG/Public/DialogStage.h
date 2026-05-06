@@ -112,6 +112,7 @@ public:
 public:
 	class UDialogBuilderNode_DialogSequence* GetOwningDialogSequenceNode() const;
 	UDialogStage* GetOwningDialogStage() const;
+	void MakeUniqueDialogStageName();
 
 
 #if WITH_EDITOR

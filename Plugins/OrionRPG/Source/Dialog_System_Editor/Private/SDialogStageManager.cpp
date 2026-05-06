@@ -1463,6 +1463,7 @@ void SDialogStageManager::ImportDialogStageAsset(const FAssetData& AssetData)
 
 	NewDialogStage->Modify();
 	NewDialogStage->OwningDialogGraph = Graph;
+	NewDialogStage->MakeUniqueDialogStageName();
 
 	ResetDialogStageSlotDefinitions(NewDialogStage);
 
