@@ -49,7 +49,7 @@ public:
 	void SetDialogDefinition(UDialogDefinition* InDialogDefinition);
 
 	// The serialized template object that stores saved properties
-	UPROPERTY(VisibleAnywhere, Instanced, Category = "Dialog")
+	UPROPERTY(BlueprintReadOnly, Instanced, Category = "Detail")
 	TObjectPtr<AActor> ActorTemplate;
 
 	// Helper to create or update the template
@@ -84,6 +84,7 @@ class ORIONRPG_API UDialogStage : public UObject
 public:
 	UDialogStage();
 
+
 	UPROPERTY(BlueprintReadOnly, Category = "Detail")
 	TObjectPtr<UDialogBuilderGraph> OwningDialogGraph;
 
@@ -96,13 +97,16 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
 	FRotator Rotation;
 
-	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Detail")
+	UPROPERTY()
+	bool bIsTemplate = false;
+
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Detail", meta = (EditCondition = "bIsTemplate == true", HideEditConditionToggle, EditConditionHides))
 	TArray<TObjectPtr<class UDialogSequenceSlot>> Slots;
 
 	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Detail")
 	TArray<TObjectPtr<class UDialogSequenceSlot>> CameraSlots;
 
-	UPROPERTY(Instanced, BlueprintReadOnly, Category = "Detail")
+	UPROPERTY(EditAnywhere, Instanced, BlueprintReadOnly, Category = "Detail", meta = (EditCondition = "bIsTemplate == true", HideEditConditionToggle, EditConditionHides))
 	TArray<TObjectPtr<class UDialogSequenceSlot_Light>> LightSlots;
 
 public:

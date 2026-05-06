@@ -65,59 +65,87 @@ public:
 			[
 				SNew(SHorizontalBox)
 
-					+ SHorizontalBox::Slot()
-					.FillWidth(1.0f)
-					.Padding(FMargin(7.0f, 4.0f, 4.0f, 4.0f))
-					.VAlign(VAlign_Center)
-					[
-						SNew(SInlineEditableTextBlock)
-							.Text_Lambda([this]()
+				+ SHorizontalBox::Slot()
+				.FillWidth(1.0f)
+				.Padding(FMargin(7.0f, 4.0f, 4.0f, 4.0f))
+				.VAlign(VAlign_Center)
+				[
+					SNew(SInlineEditableTextBlock)
+					.Text_Lambda([this]()
+						{
+							const TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
+
+							if (const UDialogStage* LocalSet = DialogStage.Get())
+							{
+								const bool bIsCurrentStage =
+									DialogEditor.IsValid() &&
+									LocalSet == DialogEditor->GetDialogStageTemplate();
+
+								const FText StageName = LocalSet->Name.IsEmpty()
+									? LOCTEXT("UnnamedDialogStage", "None")
+									: LocalSet->Name;
+
+								return bIsCurrentStage
+									? FText::Format(LOCTEXT("CurrentDialogStageLabel", "{0} (current)"), StageName)
+									: StageName;
+							}
+
+							return LOCTEXT("InvalidDialogStage", "Invalid");
+						})
+					.ColorAndOpacity_Lambda([this]()
+						{
+							const TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
+
+							if (const UDialogStage* LocalSet = DialogStage.Get())
+							{
+								const bool bIsCurrentStage =
+									DialogEditor.IsValid() &&
+									LocalSet == DialogEditor->GetDialogStageTemplate();
+
+								return bIsCurrentStage
+									? FSlateColor(FColor::Turquoise)
+									: FSlateColor::UseForeground();
+							}
+
+							return FSlateColor::UseForeground();
+						})
+					.OnTextCommitted(OnNameCommitted)
+					.IsReadOnly(false)
+					.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.0f))
+				]
+
+				+ SHorizontalBox::Slot()
+				.AutoWidth()
+				.Padding(FMargin(2.0f, 0.0f))
+				.VAlign(VAlign_Center)
+				[
+					SAssignNew(ExportButton, SButton)
+						.ButtonStyle(FAppStyle::Get(), "SimpleButton")
+						.ContentPadding(FMargin(2.0f))
+						.ToolTipText(LOCTEXT("ExportDialogStageTooltip", "Export Dialog Stage as Template"))
+						.OnClicked_Lambda([this]()
+							{
+								const TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
+								UDialogStage* LocalStage = DialogStage.Get();
+
+								if (DialogEditor.IsValid() && LocalStage)
 								{
-									const TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
+									DialogEditor->CreateNewDialogStageTemplate(LocalStage);
+								}
 
-
-									if (const UDialogStage* LocalSet = DialogStage.Get())
+								return FReply::Handled();
+							})
+						[
+							SNew(SImage)
+								.Image(FAppStyle::GetBrush("Icons.Export"))
+								.ColorAndOpacity_Lambda([this]()
 									{
-										const bool bIsCurrentStage =
-											DialogEditor.IsValid() &&
-											LocalSet == DialogEditor->GetDialogStageTemplate();
-
-										const FText StageName = LocalSet->Name.IsEmpty()
-											? LOCTEXT("UnnamedDialogStage", "None")
-											: LocalSet->Name;
-
-										return bIsCurrentStage
-											? FText::Format(LOCTEXT("CurrentDialogStageLabel", "{0} (current)"), StageName)
-											: StageName;
-									}
-
-									return LOCTEXT("InvalidDialogStage", "Invalid");
-								})
-							.ColorAndOpacity_Lambda([this]()
-								{
-									const TSharedPtr<FDialogBuilderEditor> DialogEditor = DialogEditorPtr.Pin();
-
-
-									if (const UDialogStage* LocalSet = DialogStage.Get())
-									{
-										const bool bIsCurrentStage =
-											DialogEditor.IsValid() &&
-											LocalSet == DialogEditor->GetDialogStageTemplate();
-
-										const FText StageName = LocalSet->Name.IsEmpty()
-											? LOCTEXT("UnnamedDialogStage", "None")
-											: LocalSet->Name;
-
-										return bIsCurrentStage
-											? FSlateColor(FColor::Turquoise)
-											: FSlateColor::UseForeground();
-									}
-									return FSlateColor::UseForeground();
-								})
-							.OnTextCommitted(OnNameCommitted)
-							.IsReadOnly(false)
-							.Font(FCoreStyle::GetDefaultFontStyle("Bold", 10.0f))
-					]
+										return (ExportButton.IsValid() && ExportButton->IsHovered())
+											? FLinearColor::White
+											: FLinearColor(1.0f, 1.0f, 1.0f, 0.4f);
+									})
+						]
+				]
 			];
 	}
 
@@ -125,6 +153,7 @@ private:
 	TWeakObjectPtr<UDialogStage> DialogStage;
 	TWeakPtr<FDialogBuilderEditor> DialogEditorPtr;
 	FOnTextCommitted OnNameCommitted;
+	TSharedPtr<SButton> ExportButton;
 };
 
 class SDialogSlotPaletteItem : public SCompoundWidget

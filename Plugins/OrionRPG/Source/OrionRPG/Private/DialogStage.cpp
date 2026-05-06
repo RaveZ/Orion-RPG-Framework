@@ -15,6 +15,8 @@ UDialogSequenceSlot::UDialogSequenceSlot()
 
 
 
+
+
 UDialogStage* UDialogSequenceSlot::GetOwningDialogStage() const
 {
 	return GetTypedOuter<UDialogStage>();
@@ -113,11 +115,84 @@ UDialogStage* UDialogStage::GetOwningDialogStage() const
 	return nullptr;
 }
 
+namespace
+{
+	FString MakeUniqueDialogStageName(const UDialogStage* InStage)
+	{
+		if (!InStage)
+		{
+			return FString();
+		}
+
+		const UDialogBuilderGraph* Graph = InStage->OwningDialogGraph.Get();
+		const FString BaseName = InStage->Name.ToString();
+		const FString CleanBaseName = BaseName.IsEmpty() ? TEXT("Stage") : BaseName;
+
+		auto IsNameTaken = [InStage, Graph](const FString& InCandidateName) -> bool
+			{
+				if (!Graph)
+				{
+					return false;
+				}
+
+				for (const TObjectPtr<UDialogStage>& StagePtr : Graph->DialogStages)
+				{
+					const UDialogStage* OtherStage = StagePtr.Get();
+					if (!OtherStage || OtherStage == InStage)
+					{
+						continue;
+					}
+
+					if (OtherStage->Name.ToString().Equals(InCandidateName, ESearchCase::CaseSensitive))
+					{
+						return true;
+					}
+				}
+
+				return false;
+			};
+
+		if (!IsNameTaken(CleanBaseName))
+		{
+			return CleanBaseName;
+		}
+
+		int32 Suffix = 2;
+		FString UniqueName;
+
+		do
+		{
+			UniqueName = FString::Printf(TEXT("%s%d"), *CleanBaseName, Suffix++);
+		} while (IsNameTaken(UniqueName));
+
+		return UniqueName;
+	}
+}
+
 #if WITH_EDITOR
 void UDialogStage::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
+	if (PropertyChangedEvent.MemberProperty &&
+		PropertyChangedEvent.MemberProperty->GetFName() == GET_MEMBER_NAME_CHECKED(UDialogStage, Name))
+	{
+		if(!OwningDialogGraph)
+		{
+			return;
+		}
 
+		if(!OwningDialogGraph->DialogStages.Contains(this))
+		{
+			return;
+		}
+
+		const FString UniqueName = MakeUniqueDialogStageName(this);
+		if (!UniqueName.IsEmpty() && Name.ToString() != UniqueName)
+		{
+			Name = FText::FromString(UniqueName);
+			MarkPackageDirty();
+		}
+	}
 
 }
 #endif
