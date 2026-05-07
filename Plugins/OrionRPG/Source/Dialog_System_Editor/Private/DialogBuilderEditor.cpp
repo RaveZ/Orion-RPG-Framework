@@ -328,8 +328,18 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 	RegenerateMenusAndToolbars();
 	RebuildDialogBuilderGraphPages();
 
-	UpdateDialogStage();
-
+	const TWeakPtr<FDialogBuilderEditor> EditorWeak = SharedThis(this);
+	FTSTicker::GetCoreTicker().AddTicker(
+		FTickerDelegate::CreateLambda([EditorWeak](float)
+			{
+				if (const TSharedPtr<FDialogBuilderEditor> EditorPinned = EditorWeak.Pin())
+				{
+					EditorPinned->UpdateDialogStage();
+					EditorPinned->ApplyViewportCameraMode();
+				}
+				return false;
+			}),
+		1.0f);
 	BindDelegates();
 }
 
@@ -566,6 +576,11 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 		else
 		{
 			EditingDialogSequence = SequenceNode->DialogSequence;
+			if (Sequencer)
+			{
+				Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshTree);
+				Sequencer->ForceEvaluate();
+			}
 		}
 
 	}
@@ -612,22 +627,24 @@ void FDialogBuilderEditor::PostRedo(bool bSuccess)
 				EditingDialogGraph->CurrentEditingSequenceNode = nullptr;
 			}
 			EditingDialogSequence = UDialogSequence::GetNullDialogSequence();
+			if (Sequencer)
+			{
+				Sequencer->ResetToNewRootSequence(*UDialogSequence::GetNullDialogSequence());
+				Sequencer->GetSequencerWidget()->SetEnabled(false);
+				Sequencer->SetAutoChangeMode(EAutoChangeMode::None);
+				DialogViewportWidget->RemoveDialogOverlayWidget();
+			}
 		}
 		else
 		{
 			EditingDialogSequence = SequenceNode->DialogSequence;
+			if (Sequencer)
+			{
+				Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshTree);
+				Sequencer->ForceEvaluate();
+			}
 		}
 
-		if (Sequencer)
-		{
-			Sequencer->ResetToNewRootSequence(*EditingDialogSequence);
-
-			const bool bHasValidSequence = EditingDialogSequence != UDialogSequence::GetNullDialogSequence();
-			Sequencer->GetSequencerWidget()->SetEnabled(bHasValidSequence);
-
-			Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemsChanged);
-			Sequencer->ForceEvaluate();
-		}
 	}
 }
 
@@ -916,6 +933,7 @@ namespace
 			return;
 		}
 
+		ActorRefTrack->Modify();
 		ActorRefSection->Modify();
 
 		FMovieSceneActorReferenceKey NewKey;
@@ -2886,6 +2904,14 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 		return;
 	}
 
+	//modify
+	MovieScene->Modify();
+
+	if (TransformTrack)
+	{
+		TransformTrack->Modify();
+	}
+
 	TransformSection->Modify();
 	TransformSection->SetBlendType(EMovieSceneBlendType::Absolute);
 
@@ -2978,7 +3004,7 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 	}
 
 	TransformSection->SetRange(TRange<FFrameNumber>(EffectivePlaybackRangeStart, EffectivePlaybackRangeEnd));
-	Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshAllImmediately);
+	Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshTree);
 	Sequencer->ForceEvaluate();
 	SetViewportCameraMode(EDialogViewportCameraMode::DialogCameraLock);
 }
