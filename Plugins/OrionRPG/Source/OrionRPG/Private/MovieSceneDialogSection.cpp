@@ -117,9 +117,6 @@ void UMovieSceneDialogSection::RefreshDialogContent()
 FOrionDialogLine UMovieSceneDialogSection::GetDialogLine() const
 {
 	FOrionDialogLine Result = DialogLine;
-	Result.SpeakerImage = Result.SpeakerImageOverride
-		? Result.SpeakerImageOverride
-		: (SpeakerParticipantDefinition ? SpeakerParticipantDefinition->ParticipantImage : nullptr);
 	return Result;
 }
 

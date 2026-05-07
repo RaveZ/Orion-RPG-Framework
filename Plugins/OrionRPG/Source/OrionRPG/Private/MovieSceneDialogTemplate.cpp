@@ -44,8 +44,7 @@ namespace OrionDialogTemplate
 	struct FDialogSharedTrackData : IPersistentEvaluationData
 	{
 		FDialogSharedTrackData()
-			: bNeedExecute(false)
-			, bShow(false)
+			: bShow(false)
 		{
 		}
 
@@ -369,16 +368,11 @@ namespace OrionDialogTemplate
 			}
 		}
 
-		bool HasAnythingToDo() const
-		{
-			return bNeedExecute;
-		}
 
-		void SetInfo(bool bInShow, const FOrionDialogLine& InDialogLine)
+		void SetShowDialog(bool bInShow)
 		{
 			bShow = bInShow;
-			DialogLine = InDialogLine;
-			bNeedExecute = true;
+			bExecuteDialog = true;
 		}
 
 		void NotifyDialogInterface(UObject* TargetObject) const
@@ -404,9 +398,8 @@ namespace OrionDialogTemplate
 			}
 		}
 
-		void Apply(IMovieScenePlayer& Player)
+		void UpdateDialogHUD(const FMovieSceneContext& Context, IMovieScenePlayer& Player, const UMovieSceneDialogSection* InDialogSection, const FOrionDialogLine& InDialogLine)
 		{
-			bNeedExecute = false;
 
 			UWorld* World = Player.GetPlaybackContext() ? Player.GetPlaybackContext()->GetWorld() : nullptr;
 			if (!World)
@@ -414,55 +407,88 @@ namespace OrionDialogTemplate
 				return;
 			}
 
+			DialogLine = InDialogLine;
+
+			DialogLine.SpeakerImage = DialogLine.SpeakerImageOverride
+				? DialogLine.SpeakerImageOverride
+				: (InDialogSection->SpeakerParticipantDefinition ? InDialogSection->SpeakerParticipantDefinition->ParticipantImage : nullptr);
+			// Check if we need to restart the dialog HUD
+			const bool bIsBackwards = Context.GetDirection() == EPlayDirection::Backwards;
+			const bool bIsScrubbing =
+				Context.GetStatus() == EMovieScenePlayerStatus::Scrubbing ||
+				Context.GetStatus() == EMovieScenePlayerStatus::Stepping;
+			const bool bTimeChanged = !bHasLastDialogEvalTime || (LastDialogEvalTime != Context.GetTime());
+			const bool bDirectionChanged = !bHasLastDialogEvalTime || (LastDialogEvalDirection != Context.GetDirection());
+
+			const bool bForceResyncForScrub = bIsScrubbing && bTimeChanged;
+			const bool bForceResyncForReverse = bIsBackwards && bTimeChanged;
+
+			const bool bNeedsRestart =
+				Context.HasJumped() ||
+				bDirectionChanged ||
+				bForceResyncForScrub ||
+				bForceResyncForReverse ||
+				bExecuteDialog;
+
+			bExecuteDialog = false;
+
 			UDialogBuilderSetting* DialogBuilderSetting = GetMutableDefault<UDialogBuilderSetting>();
 			TSubclassOf<UUserWidget> DialogWidgetClass = DialogBuilderSetting->DefaultDialogWidget.Get();
-
 
 #if WITH_EDITOR
 			if (GIsEditor && !World->IsGameWorld())
 			{
 				if (bShow)
 				{
-					if (DialogWidget.IsValid() && !DialogWidget->GetCachedWidget().IsValid())
+					if (bNeedsRestart)
 					{
-						DialogWidget->RemoveFromParent();
-						
-						DialogWidget.Reset();
-					}
-					if (!DialogWidget.IsValid())
-					{
-						DialogWidget = CreateWidget<UUserWidget>(World, DialogWidgetClass);
-						if (DialogWidget.IsValid())
+						if (DialogWidget.IsValid() && !DialogWidget->GetCachedWidget().IsValid())
 						{
-							DialogWidget->GetRootWidget()->SetVisibility(ESlateVisibility::HitTestInvisible);
+							DialogWidget->RemoveFromParent();
 
-							if (UObject* PlaybackContextObject = Player.GetPlaybackContext())
-							{
-								if (IDialogContext* DialogContext = Cast<IDialogContext>(PlaybackContextObject))
+							DialogWidget.Reset();
+						}
+
+						if (!DialogWidget.IsValid())
+						{
+							DialogWidget = CreateWidget<UUserWidget>(World, DialogWidgetClass);
+							FWorldDelegates::OnWorldCleanup.AddLambda(
+								[this](UWorld*, bool, bool)
 								{
-									DialogContext->AddDialogToViewport(DialogWidget.Get());
+									if (DialogWidget.IsValid())
+									{
+										DialogWidget->RemoveFromParent();
+									}
+									DialogWidget.Reset();
+
+								});
+
+							if (DialogWidget.IsValid())
+							{
+								DialogWidget->GetRootWidget()->SetVisibility(ESlateVisibility::HitTestInvisible);
+
+								if (UObject* PlaybackContextObject = Player.GetPlaybackContext())
+								{
+									if (IDialogContext* DialogContext = Cast<IDialogContext>(PlaybackContextObject))
+									{
+										DialogContext->AddDialogToViewport(DialogWidget.Get());
+									}
 								}
+
 							}
 						}
 
-						FWorldDelegates::OnWorldCleanup.AddLambda(
-							[this](UWorld*, bool, bool)
-							{
-								if (DialogWidget.IsValid())
-								{
-									DialogWidget->RemoveFromParent();
-								}
-								DialogWidget.Reset();
-								
-							});
+						NotifyDialogInterface(DialogWidget.Get());
 					}
-
-					NotifyDialogInterface(DialogWidget.Get());
 				}
 				else
 				{
 					NotifyDialogInterface(DialogWidget.Get());
 				}
+
+				bHasLastDialogEvalTime = true;
+				LastDialogEvalTime = Context.GetTime();
+				LastDialogEvalDirection = Context.GetDirection();
 
 				return;
 			}
@@ -473,23 +499,30 @@ namespace OrionDialogTemplate
 				return;
 			}
 
-			UGameViewportClient* GameViewport = GEngine->GameViewport;
-
 			UDialogComponent* DialogComponent = UDialogBuilderFunctionLibrary::GetDialogComponent(World);
-
 			if (!DialogComponent) return;
+
 			if (bShow && !DialogLine.Line.IsEmpty())
 			{
-				DialogComponent->OnDialogLineBegin.Broadcast(DialogLine);
+				// Only broadcast if we need to restart or if this is a new evaluation
+				if (bNeedsRestart || !bHasLastDialogEvalTime)
+				{
+					DialogComponent->OnDialogLineBegin.Broadcast(DialogLine);
+				}
 			}
-			else
+			else if (!bShow)
 			{
+
 				//DialogComponent->OnDialogLineEnded.Broadcast(DialogLine);
 			}
+
+			bHasLastDialogEvalTime = true;
+			LastDialogEvalTime = Context.GetTime();
+			LastDialogEvalDirection = Context.GetDirection();
 		}
 
-		bool bNeedExecute;
 		bool bShow;
+		bool bExecuteDialog = false;
 
 		FOrionDialogLine DialogLine;
 		FGameplayTag SpeakerTag;
@@ -512,18 +545,27 @@ namespace OrionDialogTemplate
 		FFrameTime LastFacialEvalTime = FFrameTime(TNumericLimits<int32>::Lowest());
 		EPlayDirection LastFacialEvalDirection = EPlayDirection::Forwards;
 		bool bHasLastFacialEvalTime = false;
+
+		FFrameTime LastDialogEvalTime = FFrameTime(TNumericLimits<int32>::Lowest());
+		EPlayDirection LastDialogEvalDirection = EPlayDirection::Forwards;
+		bool bHasLastDialogEvalTime = false;
 	};
 
-	struct FDialogExecutionToken : IMovieSceneSharedExecutionToken
+	struct FDialogExecutionToken : IMovieSceneExecutionToken
 	{
-		virtual void Execute(FPersistentEvaluationData& PersistentData, IMovieScenePlayer& Player) override
+		FDialogExecutionToken(UMovieSceneDialogSection* InDialogSection, const FOrionDialogLine& InDialogLine)
+			: DialogSection(InDialogSection)
+			, DialogLine(InDialogLine)
 		{
-			FDialogSharedTrackData* TrackData = PersistentData.Find<FDialogSharedTrackData>(GetSharedDataKey());
-			if (TrackData)
-			{
-				TrackData->Apply(Player);
-			}
 		}
+		virtual void Execute(const FMovieSceneContext& Context, const FMovieSceneEvaluationOperand&, FPersistentEvaluationData& PersistentData, IMovieScenePlayer& Player) override
+		{
+			FDialogSharedTrackData& TrackData = PersistentData.GetOrAdd<FDialogSharedTrackData>(GetSharedDataKey());
+			TrackData.UpdateDialogHUD(Context, Player, DialogSection, DialogLine);
+		}
+
+		UMovieSceneDialogSection* DialogSection;
+		FOrionDialogLine DialogLine;
 	};
 
 	struct FDialogAudioExecutionToken : IMovieSceneExecutionToken
@@ -581,16 +623,9 @@ void FMovieSceneDialogSectionTemplate::Evaluate(
 
 	ExecutionTokens.Add(FDialogAudioExecutionToken(DialogSection, DialogSection->DialogLine));
 	ExecutionTokens.Add(FDialogFacialAnimationExecutionToken(DialogSection, DialogSection->DialogLine));
+	ExecutionTokens.Add(FDialogExecutionToken(DialogSection, DialogSection->DialogLine));
 
-	const FDialogSharedTrackData* TrackData = PersistentData.Find<FDialogSharedTrackData>(GetSharedDataKey());
-	if (TrackData)
-	{
-		const FMovieSceneSharedDataId SharedId = GetSharedDataKey().UniqueId;
-		if (!ExecutionTokens.FindShared(SharedId))
-		{
-			ExecutionTokens.AddShared(SharedId, FDialogExecutionToken());
-		}
-	}
+	
 }
 
 void FMovieSceneDialogSectionTemplate::Setup(FPersistentEvaluationData& PersistentData, IMovieScenePlayer& Player) const
@@ -598,7 +633,7 @@ void FMovieSceneDialogSectionTemplate::Setup(FPersistentEvaluationData& Persiste
 	using namespace OrionDialogTemplate;
 
 	FDialogSharedTrackData& TrackData = PersistentData.GetOrAdd<FDialogSharedTrackData>(GetSharedDataKey());
-	TrackData.SetInfo(true, DialogSection->DialogLine);
+	TrackData.SetShowDialog(true);
 }
 
 void FMovieSceneDialogSectionTemplate::TearDown(FPersistentEvaluationData& PersistentData, IMovieScenePlayer& Player) const
@@ -607,6 +642,7 @@ void FMovieSceneDialogSectionTemplate::TearDown(FPersistentEvaluationData& Persi
 
 	FDialogSharedTrackData& TrackData = PersistentData.GetOrAdd<FDialogSharedTrackData>(GetSharedDataKey());
 	TrackData.StopDialogAudio();
-	TrackData.SetInfo(false, DialogSection->DialogLine);
-	TrackData.Apply(Player);
+	TrackData.StopDialogFacialAnimation();
+	TrackData.SetShowDialog(false);
+	//TrackData.UpdateDialogHUD(Player);
 }
