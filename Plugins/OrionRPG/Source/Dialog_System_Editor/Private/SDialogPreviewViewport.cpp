@@ -22,6 +22,8 @@
 #include "ComponentVisualizer.h"
 #include "Styling/AppStyle.h"
 #include "EditorModeManager.h"
+#include "Widgets/Layout/SDPIScaler.h"
+#include "Widgets/Layout/SConstraintCanvas.h"
 #include "PreviewScene.h"
 #include "Engine/Selection.h"
 #include "EditorModeManager.h"
@@ -674,16 +676,57 @@ void SDialogPreviewViewport::ResetCameraSetting()
 
 void SDialogPreviewViewport::AddDialogOverlayWidget(UUserWidget* InWidget)
 {
-	if (!SceneViewport.IsValid())
+	if (!SceneViewport.IsValid() || !InWidget)
 	{
 		return;
 	}
 
-	DialogOverlayWidget = InWidget->TakeWidget();
+	// Get viewport size
+	FIntPoint ViewportSize = SceneViewport->GetSize();
+
+	// Get DPI scale
+	float DPIScale = .5f;
+	/*if (FSlateApplication::IsInitialized())
+	{
+		DPIScale = FSlateApplication::Get().GetApplicationScale();
+	}*/
+
+	// Calculate scaled size
+	float ScaledWidth = ViewportSize.X / DPIScale;
+	float ScaledHeight = ViewportSize.Y / DPIScale;
+
+	// Create constraint canvas for proper positioning
+	TSharedRef<SConstraintCanvas> ConstraintCanvas = SNew(SConstraintCanvas);
+
+	TSharedRef<SWidget> WidgetContent = InWidget->TakeWidget();
+
+	// Add widget to constraint canvas with full screen positioning
+	ConstraintCanvas->AddSlot()
+		.Anchors(FAnchors(0, 0, 1, 1))
+		.Offset(FMargin(0, 0, 0, 0))
+		.Alignment(FVector2D(0, 0))
+		[
+			SNew(SBox)
+				.WidthOverride(ScaledWidth)
+				.HeightOverride(ScaledHeight)
+				[
+					SNew(SDPIScaler)
+						.DPIScale(DPIScale)
+						[
+							WidgetContent
+						]
+				]
+		];
+
+	DialogOverlayWidget = ConstraintCanvas;
+
 	TWeakPtr<SWidget> EditorViewportContainer = SceneViewport->GetViewportWidget().Pin()->GetContent();
 	if (TSharedPtr<SOverlay> Overlay = StaticCastSharedPtr<SOverlay>(EditorViewportContainer.Pin()))
 	{
-		Overlay->AddSlot()[DialogOverlayWidget.ToSharedRef()];
+		Overlay->AddSlot()
+			[
+				DialogOverlayWidget.ToSharedRef()
+			];
 	}
 
 }
