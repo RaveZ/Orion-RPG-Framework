@@ -1312,13 +1312,13 @@ void FDialogBuilderEditor::RetrieveDialogSlotActor(UDialogSequenceSlot* InSlot, 
 						continue;
 					}
 
-					SkeletalMeshComponent->SetComponentTickEnabled(true);
+					/*SkeletalMeshComponent->SetComponentTickEnabled(true);
 					SkeletalMeshComponent->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
-					SkeletalMeshComponent->SetUpdateAnimationInEditor(true);
+					SkeletalMeshComponent->SetUpdateAnimationInEditor(true);*/
 				}
 
 				// Preserve the actor's world transform when attaching to the pivot.
-				NewActor->AttachToActor(EditorPinned->SequencePivot.Get(), FAttachmentTransformRules::KeepRelativeTransform);
+				NewActor->AttachToActor(EditorPinned->SequencePivot.Get(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
 				if (NewActor->IsA(ALight::StaticClass()))
 				{
@@ -1449,7 +1449,7 @@ void FDialogBuilderEditor::RetrieveLightSlotActor(UDialogSequenceSlot_Light* InL
 		NewActor->SetActorRelativeLocation(InLightSlot->SlotLocation);
 		NewActor->SetActorRelativeRotation(InLightSlot->SlotRotation);
 		DialogSlotActors.Emplace(InLightSlot, NewActor);
-		NewActor->AttachToActor(SequencePivot.Get(), FAttachmentTransformRules::KeepRelativeTransform);
+		NewActor->AttachToActor(SequencePivot.Get(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		
 		if (NewActor->IsA(ALight::StaticClass()))
 		{

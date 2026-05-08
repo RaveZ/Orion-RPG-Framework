@@ -507,7 +507,14 @@ namespace OrionDialogTemplate
 				// Only broadcast if we need to restart or if this is a new evaluation
 				if (bNeedsRestart || !bHasLastDialogEvalTime)
 				{
+					UDialogBuilderGraph* DialogGraph = DialogComponent ? DialogComponent->CurrentActiveDialog : nullptr;
+					
+					if (DialogGraph)
+					{
+						DialogGraph->bCanAdvanceDialog = DialogLine.bCanSkipDialogLine;
+					}
 					DialogComponent->OnDialogLineBegin.Broadcast(DialogLine);
+					
 				}
 			}
 			else if (!bShow)

@@ -13,10 +13,6 @@ UDialogSequenceSlot::UDialogSequenceSlot()
 {
 }
 
-
-
-
-
 UDialogStage* UDialogSequenceSlot::GetOwningDialogStage() const
 {
 	return GetTypedOuter<UDialogStage>();
@@ -90,13 +86,12 @@ void UDialogSequenceSlot::UpdateActorTemplate(AActor* InActor)
 void UDialogSequenceSlot::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
-
-	
 }
 #endif
 
 UDialogStage::UDialogStage()
 {
+	bSnapToGround = true;
 }
 
 UDialogBuilderNode_DialogSequence* UDialogStage::GetOwningDialogSequenceNode() const

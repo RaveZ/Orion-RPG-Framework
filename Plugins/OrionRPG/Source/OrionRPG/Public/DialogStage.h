@@ -35,6 +35,8 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
 	FRotator SlotRotation;
+	
+    	
 
 	FName GetID() const
 	{
@@ -97,6 +99,10 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Detail")
 	FRotator Rotation;
 
+	/**Try to find a safe ground placement when dialog begins*/
+	UPROPERTY(BlueprintReadOnly, Category = "Detail")
+	bool bSnapToGround;
+	
 	UPROPERTY()
 	bool bIsTemplate = false;
 

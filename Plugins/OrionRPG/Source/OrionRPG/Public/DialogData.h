@@ -28,6 +28,22 @@ enum class ESelectionTimeLimit : uint8
 };
 
 UENUM(BlueprintType)
+enum class EDialogType : uint8
+{
+	/**
+	* Cinematic dialog with camera cuts
+	*/
+	E_CinematicDialog		UMETA(DisplayName = "Cinematic Dialog"),
+	/**
+	* Free movement dialog.
+	* player can move during the dialog.
+	* Note that the dialog will be auto advance while in progress.
+	*/
+	E_FreeMovementDialog	UMETA(DisplayName = "Free Movement Dialog")
+};
+
+
+UENUM(BlueprintType)
 enum class EDialogSelectionType : uint8
 {
 	E_Sequence			UMETA(DisplayName = "Sequence"),

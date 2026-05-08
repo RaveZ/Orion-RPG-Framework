@@ -53,6 +53,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true", Category = "Configuration|Player", DisplayThumbnail = "true", AllowedClasses = "/Script/Engine.Texture,/Script/Engine.MaterialInterface,/Script/Engine.SlateTextureAtlasInterface", DisallowedClasses = "/Script/MediaAssets.MediaTexture"))
 		TObjectPtr<UObject> DefaultPlayerImage;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration|Dialog")
+		EDialogType DialogType;
+	
 	/*
 	* Rotate all participant to whoever is currently speaking
 	*/
@@ -63,11 +66,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration|Dialog")
 		bool bAutoAdvanceDialogLine;
 
-	/**Lock player movement when dialog in progress.
-	* If set to false, auto advance dialog and won't show mouse cursor.
-	*/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Configuration|Dialog")
-		bool bLockPlayerMovement;
 
 	/**
 	* Restore all actor transform after the dialog ends
@@ -264,6 +262,7 @@ public:
 /*------------------------End Default Camera Settings------------------------*/
 
 
+	bool bCanAdvanceDialog = false;
 public:
 	FSimpleMulticastDelegate OnDialogSetupFinished;
 
@@ -290,7 +289,6 @@ protected:
 	void OnSoftClassesLoaded();
 
 	FTimerHandle DialogLineTimer;
-	bool bCanAdvanceDialog = false;
 public:
 	virtual bool Initialize(UDialogComponent* InitializingComp);
 	virtual void Deinitialize();
@@ -299,6 +297,9 @@ public:
 	void StartFromRoot();
 
 
+	UFUNCTION(BlueprintPure, Category = "Dialog")
+	bool ShouldLockPlayerMovement();
+	
 	UFUNCTION()
 	virtual void DialogLineBegin(FOrionDialogLine InDialogLine);
 

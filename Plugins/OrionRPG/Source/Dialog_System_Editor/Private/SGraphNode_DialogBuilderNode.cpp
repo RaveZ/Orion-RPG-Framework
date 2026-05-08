@@ -1114,6 +1114,48 @@ void SGraphNode_DialogBuilderNode::AddPin(const TSharedRef<SGraphPin>& PinToAdd)
 	}
 }
 
+int32 SGraphNode_DialogBuilderNode::OnPaint(const FPaintArgs& Args, const FGeometry& AllottedGeometry,
+	const FSlateRect& MyCullingRect, FSlateWindowElementList& OutDrawElements, int32 LayerId,
+	const FWidgetStyle& InWidgetStyle, bool bParentEnabled) const
+{
+	if (IsCurrentEditingSequenceNode())
+	{
+		const double Time = FSlateApplication::Get().GetCurrentTime();
+
+		const float Cycle = 1.2f;
+		const float T = FMath::Fmod(Time, Cycle) / Cycle;
+
+		const float Expand = FMath::Lerp(6.0f, 28.0f, T);
+		const float Alpha = 1.0f - T;
+
+		const FVector2D NodeSize = AllottedGeometry.GetLocalSize();
+		const FVector2D RippleSize = NodeSize + FVector2D(Expand * 2.0f);
+		const FVector2D RippleOffset = FVector2D(-Expand, -Expand);
+
+		FSlateDrawElement::MakeBox(
+			OutDrawElements,
+			LayerId,
+			AllottedGeometry.ToPaintGeometry(
+				RippleSize,
+				FSlateLayoutTransform(RippleOffset)
+			),
+			FAppStyle::GetBrush("WhiteBrush"),
+			ESlateDrawEffect::None,
+			FLinearColor(0.1f, 0.55f, 1.0f, 0.22f * Alpha)
+		);
+	}
+
+	return SGraphNode::OnPaint(
+		Args,
+		AllottedGeometry,
+		MyCullingRect,
+		OutDrawElements,
+		LayerId + 1,
+		InWidgetStyle,
+		bParentEnabled
+	);
+}
+
 void SGraphNode_DialogBuilderNode::SetOwner(const TSharedRef<SGraphPanel>& OwnerPanel)
 {
 	SGraphNode::SetOwner(OwnerPanel);
@@ -1472,6 +1514,26 @@ EVisibility SGraphNode_DialogBuilderNode::GetSubNodeVisibility() const
 EVisibility SGraphNode_DialogBuilderNode::GetDragOverMarkerVisibility() const
 {
 	return bDragMarkerVisible ? EVisibility::Visible : EVisibility::Collapsed;
+}
+
+bool SGraphNode_DialogBuilderNode::IsCurrentEditingSequenceNode() const
+{
+	const UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+	const UDialogBuilderNode_DialogSequence* ThisSequenceNode = DialogEdNode
+		? Cast<UDialogBuilderNode_DialogSequence>(DialogEdNode->NodeInstance)
+		: nullptr;
+
+	const UDialogBuilderNode* DialogNode = DialogEdNode
+		? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance)
+		: nullptr;
+
+	const UDialogBuilderGraph* DialogGraph = DialogNode
+		? DialogNode->DialogGraph
+		: nullptr;
+
+	return ThisSequenceNode
+		&& DialogGraph
+		&& DialogGraph->CurrentEditingSequenceNode == ThisSequenceNode;
 }
 
 EVisibility SGraphNode_DialogBuilderNode::GetDebuggerSearchFailedMarkerVisibility() const

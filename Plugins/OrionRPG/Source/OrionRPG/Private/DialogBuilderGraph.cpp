@@ -46,7 +46,6 @@ UDialogBuilderGraph::UDialogBuilderGraph()
 	bRestoreState = false;
 	DefaultBoneToTrack = FName("head");
 	bAutoAdvanceDialogLine = false;
-	bLockPlayerMovement = true;
 	bCanInterruptDialog = true;
 	bDisableCameraCuts = false;
 	bFadeCameraOnDialogBegin = true;
@@ -136,8 +135,8 @@ bool UDialogBuilderGraph::Initialize(UDialogComponent* InitializingComp)
 				OwningController->ClientStartCameraShake(DialogCameraShake);
 			}
 		}
-		bAutoAdvanceDialogLine = bLockPlayerMovement ? bAutoAdvanceDialogLine : true; // if dialog is free movement, force auto advance dialog line -> true
-		bFadeCameraOnDialogBegin = bLockPlayerMovement ? bFadeCameraOnDialogBegin : false;
+		bAutoAdvanceDialogLine = ShouldLockPlayerMovement() ? bAutoAdvanceDialogLine : true; // if dialog is free movement, force auto advance dialog line -> true
+		bFadeCameraOnDialogBegin = ShouldLockPlayerMovement() ? bFadeCameraOnDialogBegin : false;
 		
 	}
 	return false;
@@ -396,6 +395,22 @@ UWorld* UDialogBuilderGraph::GetWorld() const
 	return nullptr;
 }
 
+bool UDialogBuilderGraph::ShouldLockPlayerMovement()
+{
+	bool bLockPlayerMovement = true;
+	switch (DialogType)
+	{
+	case EDialogType::E_CinematicDialog:
+		bLockPlayerMovement = true;
+		break;
+	case EDialogType::E_FreeMovementDialog:
+		bLockPlayerMovement = false;
+		break;
+	}
+	return bLockPlayerMovement;
+}
+
+
 void UDialogBuilderGraph::StartFromRoot()
 {
 	InitializeDialogActors();
@@ -633,7 +648,7 @@ void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialo
 	//Dialog Sound
 	if (InDialogLine->DialogLineData.DialogSound)
 	{
-		if (Speaker && bLockPlayerMovement)
+		if (Speaker && ShouldLockPlayerMovement())
 		{
 			DialogAudio = UGameplayStatics::SpawnSoundAttached(InDialogLine->DialogLineData.DialogSound, Speaker->GetRootComponent(), NAME_None, FVector::ZeroVector, EAttachLocation::SnapToTarget, false, 1.f, 1.f, 0.f, DialogSoundAttenuation);
 		}
@@ -645,7 +660,7 @@ void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialo
 		}
 	}
 
-	if (!bLockPlayerMovement && InDialogLine->ParticipantInfo.ParticipantTag == TAG_Dialog_Participant_Player)
+	if (!ShouldLockPlayerMovement() && InDialogLine->ParticipantInfo.ParticipantTag == TAG_Dialog_Participant_Player)
 		return;
 
 	DetermineDialogShot(InDialogLine, Speaker, Listener);
@@ -751,7 +766,7 @@ void UDialogBuilderGraph::ApplyRotationSetting(UDialogBuilderNode_DialogLine* In
 
 void UDialogBuilderGraph::DetermineDialogShot(UDialogBuilderNode_DialogLine* InDialogLine, AActor* Speaker, AActor* Listener)
 {
-	if (!bLockPlayerMovement)
+	if (!ShouldLockPlayerMovement())
 		return;
 
 	ApplyRotationSetting(InDialogLine, Speaker, Listener);
@@ -784,7 +799,7 @@ void UDialogBuilderGraph::DetermineDialogShot(UDialogBuilderNode_DialogLine* InD
 
 void UDialogBuilderGraph::BeginChoiceSelection(UDialogBuilderNode_PlayerChoice* InPlayerChoice)
 {
-	if (!bLockPlayerMovement)
+	if (!ShouldLockPlayerMovement())
 	{
 		EndDialog();
 		return;
@@ -1260,7 +1275,7 @@ void UDialogBuilderGraph::EndDialog()
 		SpawnedParticipant->Destroy();
 	}
 
-	if (bLockPlayerMovement)
+	if (ShouldLockPlayerMovement())
 	{
 		if (bRestoreState)
 		{

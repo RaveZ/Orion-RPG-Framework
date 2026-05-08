@@ -234,7 +234,8 @@ void UDialogBuilderEdNode::PostPlacedNewNode()
 			{
 				if (UDialogBuilderNode_DialogSequence* DialogSequenceNode = Cast<UDialogBuilderNode_DialogSequence>(NodeInstance))
 				{
-					FindUniqueNodeName("DialogSequence");
+					FindUniqueNodeName("Sequence");
+					DialogSequenceNode->NodeDisplayName = DialogSequenceNode->ID.ToString();
 				}
 				if (UDialogBuilderNode_PlayerLine* PlayerLineNode = Cast<UDialogBuilderNode_PlayerLine>(NodeInstance))
 				{

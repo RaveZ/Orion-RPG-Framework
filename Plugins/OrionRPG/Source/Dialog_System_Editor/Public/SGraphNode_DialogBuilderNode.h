@@ -47,6 +47,7 @@ public:
 	virtual void CreatePinWidgets() override;
 	virtual TSharedPtr<SToolTip> GetComplexTooltip() override;
 	virtual void AddPin(const TSharedRef<SGraphPin>& PinToAdd) override;
+	virtual int32 OnPaint( const FPaintArgs& Args, const FGeometry& AllottedGeometry, const FSlateRect& MyCullingRect, FSlateWindowElementList& OutDrawElements, int32 LayerId, const FWidgetStyle& InWidgetStyle, bool bParentEnabled ) const override;
 #if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
 	virtual void MoveTo(const FVector2f& NewPosition, FNodeSet& NodeFilter, bool bMarkDirty = true) override;
 	virtual TArray<FOverlayWidgetInfo> GetOverlayWidgets(bool bSelected, const FVector2f& WidgetSize) const override;
@@ -113,6 +114,8 @@ public:
 	virtual EVisibility GetSubNodeVisibility() const;
 	virtual EVisibility GetDragOverMarkerVisibility() const;
 
+	bool IsCurrentEditingSequenceNode() const;
+	
 	/** shows red marker when search failed*/
 	EVisibility GetDebuggerSearchFailedMarkerVisibility() const;
 
