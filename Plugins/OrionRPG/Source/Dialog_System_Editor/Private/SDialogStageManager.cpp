@@ -122,7 +122,7 @@ public:
 							})
 						[
 							SNew(SImage)
-								.Image(FAppStyle::GetBrush("Icons.Export"))
+								.Image(FAppStyle::GetBrush("LevelEditor.CreateClassBlueprint"))
 								.ColorAndOpacity_Lambda([this]()
 									{
 										return (ExportButton.IsValid() && ExportButton->IsHovered())
@@ -1454,19 +1454,21 @@ void SDialogStageManager::ImportDialogStageAsset(const FAssetData& AssetData)
 	const FScopedTransaction Transaction(LOCTEXT("ImportDialogStageTransaction", "Import Dialog Stage"));
 	Graph->Modify();
 
-	UDialogStage* NewDialogStage = DuplicateObject<UDialogStage>(SourceStage, Graph);
+	UDialogStage* NewDialogStage = NewObject<UDialogStage>(Graph, NAME_None, RF_Transactional);
 	if (!NewDialogStage)
 	{
 		return;
 	}
 
+	UEngine::CopyPropertiesForUnrelatedObjects(SourceStage, NewDialogStage);
+	
 	NewDialogStage->Modify();
 	NewDialogStage->OwningDialogGraph = Graph;
-	NewDialogStage->MakeUniqueDialogStageName();
 
 	ResetDialogStageSlotDefinitions(NewDialogStage);
 
 	Graph->DialogStages.Add(NewDialogStage);
+	NewDialogStage->MakeUniqueDialogStageName();
 
 	MarkGraphDirty();
 	RefreshDialogStageList();
