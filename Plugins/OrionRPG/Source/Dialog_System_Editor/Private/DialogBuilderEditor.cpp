@@ -84,6 +84,8 @@
 #include "CineCameraActor.h"
 #include "SequencerUtilities.h"
 #include "MovieSceneToolHelpers.h"
+#include "Components/LocalLightComponent.h"
+#include "Components/LightComponent.h"
 #include "Tracks/MovieSceneObjectPropertyTrack.h"
 #include "Tracks/MovieSceneActorReferenceTrack.h"
 #include "Tracks/MovieScene3DTransformTrack.h"
@@ -1419,7 +1421,7 @@ void FDialogBuilderEditor::RetrieveLightSlotActor(UDialogSequenceSlot_Light* InL
 	{
 		ExistingActor->SetActorRelativeLocation(InLightSlot->SlotLocation);
 		ExistingActor->SetActorRelativeRotation(InLightSlot->SlotRotation);
-		
+		UpdateLightSlotProperty(InLightSlot, ExistingActor);
 
 		return;
 	}
@@ -1451,6 +1453,7 @@ void FDialogBuilderEditor::RetrieveLightSlotActor(UDialogSequenceSlot_Light* InL
 		DialogSlotActors.Emplace(InLightSlot, NewActor);
 		NewActor->AttachToActor(SequencePivot.Get(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		
+		UpdateLightSlotProperty(InLightSlot, NewActor);
 		if (NewActor->IsA(ALight::StaticClass()))
 		{
 			InitializeLightActor(NewActor);
@@ -1458,6 +1461,40 @@ void FDialogBuilderEditor::RetrieveLightSlotActor(UDialogSequenceSlot_Light* InL
 	}
 
 
+}
+
+void FDialogBuilderEditor::UpdateLightSlotProperty(class UDialogSequenceSlot_Light* InLightSlot, AActor* InActor)
+{
+	
+	if (!InLightSlot || !InActor) return;
+	
+	if (ULightComponent* LightComponent =  Cast<ULightComponent>(InActor->GetComponentByClass(ULightComponent::StaticClass())))
+	{
+		LightComponent->SetIntensity(InLightSlot->Intensity);
+		LightComponent->LightColor = InLightSlot->LightColor;
+		LightComponent->bUseTemperature = InLightSlot->bUseTemperature;
+		LightComponent->Temperature = InLightSlot->Temperature;
+		LightComponent->bAffectsWorld = InLightSlot->bAffectsWorld;
+		LightComponent->CastShadows = InLightSlot->CastShadows;
+		LightComponent->IndirectLightingIntensity = InLightSlot->IndirectLightingIntensity;
+		LightComponent->VolumetricScatteringIntensity = InLightSlot->VolumetricScatteringIntensity;
+		LightComponent->CastStaticShadows = InLightSlot->CastStaticShadows;
+		LightComponent->CastDynamicShadows = InLightSlot->CastDynamicShadows;
+		LightComponent->bAffectTranslucentLighting = InLightSlot->bAffectTranslucentLighting;
+		LightComponent->bCastVolumetricShadow = InLightSlot->bCastVolumetricShadow;
+		LightComponent->bCastDeepShadow = InLightSlot->bCastDeepShadow;
+		LightComponent->CastRaytracedShadow = InLightSlot->CastRaytracedShadow;
+		LightComponent->bAffectReflection = InLightSlot->bAffectReflection;
+		LightComponent->bAffectGlobalIllumination = InLightSlot->bAffectGlobalIllumination;
+		LightComponent->DeepShadowLayerDistribution = InLightSlot->DeepShadowLayerDistribution;
+		
+	}
+	if (ULocalLightComponent* LocalLightComponent = Cast<ULocalLightComponent>(InActor->GetComponentByClass(ULocalLightComponent::StaticClass())))
+	{
+		LocalLightComponent->AttenuationRadius = InLightSlot->AttenuationRadius;
+		LocalLightComponent->IntensityUnits = InLightSlot->IntensityUnits; 
+	}
+	
 }
 
 void FDialogBuilderEditor::InitializeLightActor(AActor* InLightActor)

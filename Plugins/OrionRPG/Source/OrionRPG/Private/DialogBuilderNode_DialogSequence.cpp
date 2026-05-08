@@ -194,7 +194,25 @@ void UDialogBuilderNode_DialogSequence::UpdateDialogStageData()
 			Target->LightClass = Source->LightClass;
 			Target->SlotLocation = Source->SlotLocation;
 			Target->SlotRotation = Source->SlotRotation;
-
+			Target->Intensity = Source->Intensity;
+			Target->IntensityUnits = Source->IntensityUnits;
+			Target->LightColor = Source->LightColor;
+			Target->AttenuationRadius = Source->AttenuationRadius;
+			Target->bUseTemperature = Source->bUseTemperature;
+			Target->Temperature = Source->Temperature;
+			Target->bAffectsWorld = Source->bAffectsWorld;
+			Target->CastShadows = Source->CastShadows;
+			Target->IndirectLightingIntensity = Source->IndirectLightingIntensity;
+			Target->VolumetricScatteringIntensity = Source->VolumetricScatteringIntensity;
+			Target->CastStaticShadows = Source->CastStaticShadows;
+			Target->CastDynamicShadows = Source->CastDynamicShadows;
+			Target->bAffectTranslucentLighting = Source->bAffectTranslucentLighting;
+			Target->bCastVolumetricShadow = Source->bCastVolumetricShadow;
+			Target->bCastDeepShadow = Source->bCastDeepShadow;
+			Target->CastRaytracedShadow = Source->CastRaytracedShadow;
+			Target->bAffectReflection = Source->bAffectReflection;
+			Target->bAffectGlobalIllumination = Source->bAffectGlobalIllumination;
+			Target->DeepShadowLayerDistribution = Source->DeepShadowLayerDistribution;
 			DialogStage->LightSlots[idx] = Target;
 		}
 	}

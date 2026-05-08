@@ -98,9 +98,6 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera")
 		bool bBlendCameraOnDialogEnd;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Camera")
-		bool bShouldBlendCameraOnDialogEnd = false;
-
 	/**time taken to blend*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera", meta = (EditCondition = "bBlendCameraOnDialogEnd == true", HideEditConditionToggle, EditConditionHides))
 		float BlendTime;
@@ -384,7 +381,9 @@ public:
 protected:
 	virtual AActor* RetrieveParticipant(FParticipantInfo& Info);
 	virtual AActor* RetrieveActorFromSlot(class UDialogSequenceSlot* InSlot, FName SlotID);
+	virtual AActor* RetrieveCameraFromSlot(class UDialogSequenceSlot* InSlot, FName SlotID);
 	virtual AActor* RetrieveLightFromSlot(class UDialogSequenceSlot_Light* InSlot, FName SlotID);
+	void UpdateLightSlotProperty(class UDialogSequenceSlot_Light* InLightSlot, AActor* InActor);
 
 	void InitializeDialogActors();
 	void SetDialogStage(class UDialogStage* InDialogStage);	

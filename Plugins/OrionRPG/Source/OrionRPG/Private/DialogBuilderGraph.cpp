@@ -22,6 +22,8 @@
 #include "GameFramework/Character.h"
 #include <CineCameraActor.h>
 #include <DefaultLevelSequenceInstanceData.h>
+#include "Components/LocalLightComponent.h"
+#include "Components/LightComponent.h"
 #include <CineCameraComponent.h>
 #include "Sound/SoundBase.h"
 #include "Components/AudioComponent.h"
@@ -32,6 +34,8 @@
 #include "TimerManager.h"
 #include "Animation/AnimInstance.h"
 #include "Camera/CameraShakeBase.h"
+#include "Components/LightComponent.h"
+#include "Components/LocalLightComponent.h"
 #include "Engine/AssetManager.h"
 #include "Animation/AnimSequence.h"
 #include "Animation/Skeleton.h"
@@ -336,7 +340,7 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 		}
 		//Camera uses slot ID for binding
 		const FName SlotId = CameraSlot->GetID();
-		if (SequenceCameraActor = RetrieveActorFromSlot(CameraSlot, SlotId))
+		if (SequenceCameraActor = RetrieveCameraFromSlot(CameraSlot, SlotId))
 		{
 			CurrentDialogSequence->UnbindPossessableObjects(CameraSlot->ID);
 			CurrentDialogSequence->BindPossessableObject(CameraSlot->ID, *SequenceCameraActor, SequenceCameraActor->GetClass());
@@ -966,13 +970,6 @@ void UDialogBuilderGraph::PlayDialogShot(UDialogCameraShot* InDialogShot, AActor
 
 void UDialogBuilderGraph::PlaySequence(class ULevelSequence* InSequence, FMovieSceneSequencePlaybackSettings InPlaybackSetting)
 {
-	//Shot method changed, make sure cinecam is destroyed
-	if (Cinecam.IsValid())
-	{
-		Cinecam->Destroy();
-		Cinecam = nullptr;
-	}
-
 	DestroyDialogSequenceActor();
 
 	if (!DialogSequenceActor)
@@ -1010,9 +1007,13 @@ void UDialogBuilderGraph::HandleDialogSequenceFinished()
 	{
 		World->GetTimerManager().ClearTimer(DialogLineTimer);
 	}
-
+	
+	//set view target when sequence ends, this will provide better blend when the sequence ends
+	OwningController->SetViewTarget(SequenceCameraActor);
+	
 	DestroyDialogSequenceActor();
-
+	
+	
 	if (CurrentNode)
 	{
 		CurrentNode->EvaluateNextNode();
@@ -1267,12 +1268,12 @@ void UDialogBuilderGraph::StopCurrentDialogLine()
 
 void UDialogBuilderGraph::EndDialog()
 {
-	//destroy spawned participant
-	for (auto& SpawnedParticipant : SpawnedDialogActors)
+	//destroy spawned dialog actor
+	for (auto& SpawnedActor : SpawnedDialogActors)
 	{
-		if(SpawnedParticipant->IsPendingKillPending() )
+		if(SpawnedActor->IsPendingKillPending() )
 			continue;
-		SpawnedParticipant->Destroy();
+		SpawnedActor->Destroy();
 	}
 
 	if (ShouldLockPlayerMovement())
@@ -1288,29 +1289,35 @@ void UDialogBuilderGraph::EndDialog()
 	//clear shot and sequence
 	CurrentDialogSequence = nullptr;
 	SequencePivot = nullptr;
-	SequenceCameraActor = nullptr;
 
+	if (bBlendCameraOnDialogEnd)
+	{
+		OwningController->SetViewTargetWithBlend(
+			GetOwningPawn(),
+			BlendTime,
+			BlendFunc,
+			BlendExp,
+			true // bLockOutgoing
+		);
+	}
+	else
+	{
+		OwningController->SetViewTarget(GetOwningPawn());
+	}
+	
+	if (SequenceCameraActor)
+	{
+		SequenceCameraActor->SetLifeSpan(BlendTime);
+		SequenceCameraActor = nullptr;
+	}
+	
 	if (Cinecam.IsValid())
 	{
-		//TODO: blend to player when sequence ends
-		bShouldBlendCameraOnDialogEnd = bBlendCameraOnDialogEnd && !DialogSequenceActor;
-		if (bShouldBlendCameraOnDialogEnd)
-		{
-			OwningController->SetViewTargetWithBlend(
-				GetOwningPawn(),
-				BlendTime,
-				BlendFunc,
-				BlendExp,
-				true // bLockOutgoing
-			);
-			Cinecam->SetLifeSpan(BlendTime);
-		}
-		else
-		{
-			Cinecam->Destroy();
-		}
+		Cinecam->SetLifeSpan(BlendTime);
 		Cinecam = nullptr;
 	}
+	
+	
 	DestroyDialogSequenceActor();
 	
 	if (DialogCameraShake && OwningController)
@@ -1573,6 +1580,62 @@ AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot, 
 	if (NewActor)
 	{
 		NewActor->GetRootComponent()->SetMobility(EComponentMobility::Movable);
+		NewActor->AttachToActor(SequencePivot, FAttachmentTransformRules::KeepWorldTransform);
+		NewActor->SetActorRelativeLocation(InSlot->SlotLocation);
+		NewActor->SetActorRelativeRotation(InSlot->SlotRotation);
+
+		SpawnedDialogActors.AddUnique(NewActor);
+	}
+
+	return NewActor;
+}
+
+AActor* UDialogBuilderGraph::RetrieveCameraFromSlot(class UDialogSequenceSlot* InSlot, FName SlotID)
+{
+	if (!InSlot)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("RetrieveParticipant: Slot is null for Dialog ID: %s"), *SlotID.ToString());
+		return nullptr;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return nullptr;
+	}
+
+	UDialogDefinition* InDialogDefinition = InSlot->DialogDefinition;
+	if (!InDialogDefinition)
+	{
+		return nullptr;
+	}
+
+	const TSubclassOf<AActor> ActorClass = InDialogDefinition->GetActorClass();
+	if (!ActorClass)
+	{
+		return nullptr;
+	}
+
+
+	// Look up by the slot's ID (FName) which is the map's key type
+	if (TObjectPtr<AActor> ExistingActor = CachedActorMap.FindRef(SlotID))
+	{
+		ExistingActor->AttachToActor(SequencePivot, FAttachmentTransformRules::KeepRelativeTransform);
+		ExistingActor->SetActorRelativeLocation(InSlot->SlotLocation);
+		ExistingActor->SetActorRelativeRotation(InSlot->SlotRotation);
+		return ExistingActor;
+	}
+
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.bNoFail = true;
+	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	SpawnParams.Owner = OwningController;
+
+	AActor* NewActor = World->SpawnActor<AActor>(ActorClass, FTransform::Identity, SpawnParams);
+	if (NewActor)
+	{
+		NewActor->GetRootComponent()->SetMobility(EComponentMobility::Movable);
 		
 		if (ACineCameraActor* CineCam = Cast<ACineCameraActor>(NewActor))
 		{
@@ -1603,8 +1666,6 @@ AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot, 
 		NewActor->AttachToActor(SequencePivot, FAttachmentTransformRules::KeepWorldTransform);
 		NewActor->SetActorRelativeLocation(InSlot->SlotLocation);
 		NewActor->SetActorRelativeRotation(InSlot->SlotRotation);
-
-		SpawnedDialogActors.AddUnique(NewActor);
 	}
 
 	return NewActor;
@@ -1637,6 +1698,7 @@ AActor* UDialogBuilderGraph::RetrieveLightFromSlot(UDialogSequenceSlot_Light* In
 		ExistingActor->AttachToActor(SequencePivot, FAttachmentTransformRules::KeepRelativeTransform);
 		ExistingActor->SetActorRelativeLocation(InSlot->SlotLocation);
 		ExistingActor->SetActorRelativeRotation(InSlot->SlotRotation);
+		UpdateLightSlotProperty(InSlot, ExistingActor);
 		return ExistingActor;
 	}
 
@@ -1655,10 +1717,43 @@ AActor* UDialogBuilderGraph::RetrieveLightFromSlot(UDialogSequenceSlot_Light* In
 		NewActor->SetActorRelativeLocation(InSlot->SlotLocation);
 		NewActor->SetActorRelativeRotation(InSlot->SlotRotation);
 
+		UpdateLightSlotProperty(InSlot, NewActor);
 		SpawnedDialogActors.AddUnique(NewActor);
 	}
 
 	return NewActor;
+}
+
+void UDialogBuilderGraph::UpdateLightSlotProperty(class UDialogSequenceSlot_Light* InLightSlot, AActor* InActor)
+{
+	if (!InLightSlot || !InActor) return;
+	
+	if (ULightComponent* LightComponent =  Cast<ULightComponent>(InActor->GetComponentByClass(ULightComponent::StaticClass())))
+	{
+		LightComponent->Intensity = InLightSlot->Intensity;
+		LightComponent->LightColor = InLightSlot->LightColor;
+		LightComponent->bUseTemperature = InLightSlot->bUseTemperature;
+		LightComponent->Temperature = InLightSlot->Temperature;
+		LightComponent->bAffectsWorld = InLightSlot->bAffectsWorld;
+		LightComponent->CastShadows = InLightSlot->CastShadows;
+		LightComponent->IndirectLightingIntensity = InLightSlot->IndirectLightingIntensity;
+		LightComponent->VolumetricScatteringIntensity = InLightSlot->VolumetricScatteringIntensity;
+		LightComponent->CastStaticShadows = InLightSlot->CastStaticShadows;
+		LightComponent->CastDynamicShadows = InLightSlot->CastDynamicShadows;
+		LightComponent->bAffectTranslucentLighting = InLightSlot->bAffectTranslucentLighting;
+		LightComponent->bCastVolumetricShadow = InLightSlot->bCastVolumetricShadow;
+		LightComponent->bCastDeepShadow = InLightSlot->bCastDeepShadow;
+		LightComponent->CastRaytracedShadow = InLightSlot->CastRaytracedShadow;
+		LightComponent->bAffectReflection = InLightSlot->bAffectReflection;
+		LightComponent->bAffectGlobalIllumination = InLightSlot->bAffectGlobalIllumination;
+		LightComponent->DeepShadowLayerDistribution = InLightSlot->DeepShadowLayerDistribution;
+	}
+	if (ULocalLightComponent* LocalLightComponent = Cast<ULocalLightComponent>(InActor->GetComponentByClass(ULocalLightComponent::StaticClass())))
+	{
+		LocalLightComponent->AttenuationRadius = InLightSlot->AttenuationRadius;
+		LocalLightComponent->IntensityUnits = InLightSlot->IntensityUnits; 
+	}
+	
 }
 
 void UDialogBuilderGraph::CacheOriginalActorTransform(const FName& ActorId, AActor* Actor)

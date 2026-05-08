@@ -50,6 +50,28 @@ void UDialogSequenceSlot::SetDialogDefinition(UDialogDefinition* InDialogDefinit
 UDialogSequenceSlot_Light::UDialogSequenceSlot_Light()
 {
 	LightClass = APointLight::StaticClass();
+	
+	Intensity = 5000;
+	IntensityUnits = ELightUnits::Unitless;
+	AttenuationRadius = 1000;
+	LightColor = FColor::White;
+	VolumetricScatteringIntensity = 1.0f;
+	bAffectsWorld = true;
+	CastShadows = true;
+	CastStaticShadows = true;
+	CastDynamicShadows = true;
+	CastRaytracedShadow = ECastRayTracedShadow::UseProjectSetting;
+	bAffectReflection = true;
+	bAffectGlobalIllumination = true;
+	
+	DeepShadowLayerDistribution = 0.5f;
+	Temperature = 6500.0f;
+	bUseTemperature = false;
+	IndirectLightingIntensity = 1.0f;
+	
+
+	bAffectTranslucentLighting = true;
+	
 }
 
 

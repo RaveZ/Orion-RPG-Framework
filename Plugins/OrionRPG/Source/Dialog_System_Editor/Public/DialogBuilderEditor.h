@@ -368,6 +368,7 @@ public:
 	UDialogSequenceSlot* GetTemplateSlot(AActor* InActor);
 	void RetrieveDialogSlotActor(UDialogSequenceSlot* InSlot, AActor*& OutActor, bool bIsCamera = false);
 	void RetrieveLightSlotActor(class UDialogSequenceSlot_Light* InLightSlot, AActor*& OutActor);
+	void UpdateLightSlotProperty(class UDialogSequenceSlot_Light* InLightSlot, AActor* InActor);
 	void InitializeLightActor(class AActor* InLightActor);
 	void CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot, bool bIsCamera = false);
 	TArray<AActor*> GetDialogSlotActors() const;
