@@ -61,6 +61,8 @@ public class Dialog_System_Editor : ModuleRules
 				"ToolMenus",
 				"CoreUObject",
 				"Engine",
+				"TypedElementFramework",
+				"TypedElementRuntime",
 				"Slate",
 				"SlateCore",
 				"AIGraph",

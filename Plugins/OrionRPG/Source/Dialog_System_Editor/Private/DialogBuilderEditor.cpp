@@ -119,8 +119,40 @@
 #include "PropertyEditorModule.h"
 #include "IDetailsView.h"
 #include "Editor/TransBuffer.h"
+#include "Elements/Framework/TypedElementList.h"
+#include "Elements/Framework/TypedElementSelectionSet.h"
+#include "Selection.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderEditor"
+
+namespace
+{
+	void ResetSelectionWithoutResolvingElements(USelection* Selection)
+	{
+		if (!Selection)
+		{
+			return;
+		}
+
+		if (UTypedElementSelectionSet* SelectionSet = Selection->GetElementSelectionSet())
+		{
+			FTypedElementListConstRef ElementList = SelectionSet->GetElementList();
+			const_cast<FTypedElementList&>(ElementList.Get()).Reset();
+			Selection->NoteSelectionChanged();
+		}
+	}
+
+	void ResetEditorSelectionWithoutResolvingElements()
+	{
+		if (!GEditor)
+		{
+			return;
+		}
+
+		ResetSelectionWithoutResolvingElements(GEditor->GetSelectedActors());
+		ResetSelectionWithoutResolvingElements(GEditor->GetSelectedComponents());
+	}
+}
 
 const FName FDialogBuilderEditor::DialogEditorMode(TEXT("DialogEditor"));
 const FName FDialogBuilderEditor::DialogSequencerMode(TEXT("DialogSequencer"));
@@ -154,16 +186,6 @@ FDialogBuilderEditor::FDialogBuilderEditor()
 
 FDialogBuilderEditor::~FDialogBuilderEditor()
 {
-	{
-		const bool bNoteSelectionChange = true;
-		const bool bDeselectBSPSurfs = true;
-		const bool bWarnAboutManyActors = false;
-		if (GEditor)
-		{
-			GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
-		}
-	}
-
 	// Unbind raw package dirty callback added in Initialize()
 	if (EditingDialogGraph && EditingDialogGraph->GetOutermost())
 	{
@@ -587,7 +609,6 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 		bPendingRefreshDialogEditor = true;
 
 		FSlateApplication::Get().DismissAllMenus();
-		UpdateDialogStage();
 
 		UDialogBuilderNode_DialogSequence* SequenceNode = CurrentSequenceNode.Get();
 		if (!SequenceNode || !SequenceNode->DialogSequence)
@@ -634,6 +655,7 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 				Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshTree);
 				Sequencer->ForceEvaluate();
 			}
+			UpdateDialogStage();
 		}
 
 	}
@@ -667,7 +689,6 @@ void FDialogBuilderEditor::PostRedo(bool bSuccess)
 		bPendingRefreshDialogEditor = true;
 
 		FSlateApplication::Get().DismissAllMenus();
-		UpdateDialogStage();
 
 		UDialogBuilderNode_DialogSequence* SequenceNode = CurrentSequenceNode.Get();
 		if (!SequenceNode || !SequenceNode->DialogSequence)
@@ -714,6 +735,7 @@ void FDialogBuilderEditor::PostRedo(bool bSuccess)
 				Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshTree);
 				Sequencer->ForceEvaluate();
 			}
+			UpdateDialogStage();
 		}
 
 	}
@@ -1093,7 +1115,10 @@ void FDialogBuilderEditor::CreateDialogTrackFromSlot(UDialogSequenceSlot* InSlot
 void FDialogBuilderEditor::ResolveDialogBoundObjects()
 {
 	UMovieScene* MovieScene = EditingDialogSequence ? EditingDialogSequence->GetMovieScene() : nullptr;
-	if (!MovieScene) return;
+	if (!MovieScene || !Sequencer.IsValid())
+	{
+		return;
+	}
 	TArray<UDialogSequenceSlot*> DialogSlots;
 	DialogSlotActors.GenerateKeyArray(DialogSlots);
 
@@ -1627,6 +1652,16 @@ void FDialogBuilderEditor::DestroyDialogStage()
 	{
 		return;
 	}
+
+	if (DialogViewportWidget.IsValid())
+	{
+		if (FDialogBuilderViewportClient* ViewportClient = DialogViewportWidget->GetDialogViewportClientPtr())
+		{
+			ViewportClient->SelectActor(nullptr);
+		}
+	}
+
+	ResetEditorSelectionWithoutResolvingElements();
 
 	if (AActor* CameraActor = DialogCamera.Get())
 	{

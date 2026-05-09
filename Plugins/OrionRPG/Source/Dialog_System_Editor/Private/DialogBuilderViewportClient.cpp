@@ -110,10 +110,6 @@ void FDialogBuilderViewportClient::SetUseLevelWorld(bool bInUseLevelWorld)
 	}
 
 	RefreshRenderFeature();
-	if (GEditor)
-	{
-		GEditor->SelectNone(true, true, false);
-	}
 }
 
 void FDialogBuilderViewportClient::RefreshRenderFeature()
@@ -419,20 +415,8 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 
 void FDialogBuilderViewportClient::SelectActor(AActor* ActorToSelect)
 {
-	const bool bNoteSelectionChange = true;
-	const bool bDeselectBSPSurfs = true;
-	const bool bWarnAboutManyActors = false;
-	if (GEditor)
-	{
-		GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
-		CachedSelectedActor = ActorToSelect;
-		if (ActorToSelect)
-		{
-			GEditor->SelectActor(ActorToSelect, true, bNoteSelectionChange);
-		}
-
-		GEditor->NoteSelectionChange();
-	}
+	CachedSelectedActor = ActorToSelect;
+	Invalidate();
 }
 
 void FDialogBuilderViewportClient::MouseMove(FViewport* InViewport, int32 InX, int32 InY)
