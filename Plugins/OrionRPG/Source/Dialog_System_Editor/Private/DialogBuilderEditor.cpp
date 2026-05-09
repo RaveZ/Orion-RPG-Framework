@@ -603,15 +603,16 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 			{
 				EditingDialogGraph->CurrentEditingSequenceNode = nullptr;
 			}
+			if (DialogViewportWidget.IsValid())
+			{
+				DialogViewportWidget->RemoveDialogOverlayWidget();
+			}
 			EditingDialogSequence = UDialogSequence::GetNullDialogSequence();
-			if (Sequencer)
+			OpenDialogSequence(EditingDialogSequence);
+			if (Sequencer.IsValid())
 			{
 				Sequencer->GetSequencerWidget()->SetEnabled(false);
 				Sequencer->SetAutoChangeMode(EAutoChangeMode::None);
-				if (DialogViewportWidget.IsValid())
-				{
-					DialogViewportWidget->RemoveDialogOverlayWidget();
-				}
 			}
 		}
 		else
@@ -682,15 +683,16 @@ void FDialogBuilderEditor::PostRedo(bool bSuccess)
 			{
 				EditingDialogGraph->CurrentEditingSequenceNode = nullptr;
 			}
+			if (DialogViewportWidget.IsValid())
+			{
+				DialogViewportWidget->RemoveDialogOverlayWidget();
+			}
 			EditingDialogSequence = UDialogSequence::GetNullDialogSequence();
-			if (Sequencer)
+			OpenDialogSequence(EditingDialogSequence);
+			if (Sequencer.IsValid())
 			{
 				Sequencer->GetSequencerWidget()->SetEnabled(false);
 				Sequencer->SetAutoChangeMode(EAutoChangeMode::None);
-				if (DialogViewportWidget.IsValid())
-				{
-					DialogViewportWidget->RemoveDialogOverlayWidget();
-				}
 			}
 		}
 		else
