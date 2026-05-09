@@ -16,6 +16,7 @@
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/Layout/SSplitter.h"
 #include "Widgets/SBoxPanel.h"
+#include "Widgets/SNullWidget.h"
 #include "Widgets/Text/STextBlock.h"
 
 #define LOCTEXT_NAMESPACE "DialogCameraPresets"
@@ -96,15 +97,6 @@ void SDialogCameraPresets::Construct(const FArguments& InArgs, TWeakPtr<FDialogB
 {
 	DialogEditorPtr = InDialogEditor;
 
-	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
-
-	FDetailsViewArgs DetailsArgs;
-	DetailsArgs.NameAreaSettings = FDetailsViewArgs::HideNameArea;
-	DetailsArgs.bUpdatesFromSelection = false;
-	DetailsArgs.DefaultsOnlyVisibility = EEditDefaultsOnlyNodeVisibility::Hide;
-
-	ShotDetailsView = PropertyModule.CreateDetailView(DetailsArgs);
-
 	ChildSlot
 	[
 		SNew(SVerticalBox)
@@ -177,6 +169,17 @@ void SDialogCameraPresets::Construct(const FArguments& InArgs, TWeakPtr<FDialogB
 
 SDialogCameraPresets::~SDialogCameraPresets()
 {
+	ChildSlot
+	[
+		SNullWidget::NullWidget
+	];
+
+	if (CameraPresetListView.IsValid())
+	{
+		CameraPresetListView->ClearSelection();
+		CameraPresetListView.Reset();
+	}
+
 	UnbindShotPropertyChanged();
 	ReleaseShotDuplicates();
 }

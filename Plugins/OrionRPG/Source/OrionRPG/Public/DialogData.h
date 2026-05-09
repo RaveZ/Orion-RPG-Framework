@@ -37,7 +37,8 @@ enum class EDialogType : uint8
 	/**
 	* Free movement dialog.
 	* player can move during the dialog.
-	* Note that the dialog will be auto advance while in progress.
+	* Note:
+	* - the dialog will be auto advance while in progress.
 	*/
 	E_FreeMovementDialog	UMETA(DisplayName = "Free Movement Dialog")
 };

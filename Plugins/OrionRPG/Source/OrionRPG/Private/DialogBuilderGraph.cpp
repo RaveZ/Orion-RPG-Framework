@@ -1553,6 +1553,12 @@ AActor* UDialogBuilderGraph::RetrieveActorFromSlot(UDialogSequenceSlot* InSlot, 
 	{
 		return nullptr;
 	}
+	
+	if (InDialogDefinition->IsA(UDialogPlayerParticipant::StaticClass()) && DialogType == EDialogType::E_FreeMovementDialog)
+	{
+		//we dont need to bind player to sequence if dialog type is free movement
+		return nullptr;
+	}
 
 	const TSubclassOf<AActor> ActorClass = InDialogDefinition->GetActorClass();
 	if (!ActorClass)
@@ -1730,29 +1736,31 @@ void UDialogBuilderGraph::UpdateLightSlotProperty(class UDialogSequenceSlot_Ligh
 	
 	if (ULightComponent* LightComponent =  Cast<ULightComponent>(InActor->GetComponentByClass(ULightComponent::StaticClass())))
 	{
-		LightComponent->Intensity = InLightSlot->Intensity;
-		LightComponent->LightColor = InLightSlot->LightColor;
-		LightComponent->bUseTemperature = InLightSlot->bUseTemperature;
-		LightComponent->Temperature = InLightSlot->Temperature;
+		LightComponent->SetIntensity(InLightSlot->Intensity);
+		LightComponent->SetLightColor(InLightSlot->LightColor);
+		LightComponent->SetUseTemperature(InLightSlot->bUseTemperature);
+		LightComponent->SetTemperature(InLightSlot->Temperature);
 		LightComponent->bAffectsWorld = InLightSlot->bAffectsWorld;
-		LightComponent->CastShadows = InLightSlot->CastShadows;
-		LightComponent->IndirectLightingIntensity = InLightSlot->IndirectLightingIntensity;
-		LightComponent->VolumetricScatteringIntensity = InLightSlot->VolumetricScatteringIntensity;
+		LightComponent->SetCastShadows(InLightSlot->CastShadows);
+		LightComponent->SetIndirectLightingIntensity(InLightSlot->IndirectLightingIntensity);
+		LightComponent->SetVolumetricScatteringIntensity(InLightSlot->VolumetricScatteringIntensity);
 		LightComponent->CastStaticShadows = InLightSlot->CastStaticShadows;
 		LightComponent->CastDynamicShadows = InLightSlot->CastDynamicShadows;
-		LightComponent->bAffectTranslucentLighting = InLightSlot->bAffectTranslucentLighting;
-		LightComponent->bCastVolumetricShadow = InLightSlot->bCastVolumetricShadow;
-		LightComponent->bCastDeepShadow = InLightSlot->bCastDeepShadow;
+		LightComponent->SetAffectTranslucentLighting(InLightSlot->bAffectTranslucentLighting);
+		LightComponent->SetCastVolumetricShadow(InLightSlot->bCastVolumetricShadow);
+		LightComponent->SetCastDeepShadow(InLightSlot->bCastDeepShadow);
 		LightComponent->CastRaytracedShadow = InLightSlot->CastRaytracedShadow;
-		LightComponent->bAffectReflection = InLightSlot->bAffectReflection;
-		LightComponent->bAffectGlobalIllumination = InLightSlot->bAffectGlobalIllumination;
+		LightComponent->SetAffectReflection(InLightSlot->bAffectReflection);
+		LightComponent->SetAffectGlobalIllumination(InLightSlot->bAffectGlobalIllumination);
 		LightComponent->DeepShadowLayerDistribution = InLightSlot->DeepShadowLayerDistribution;
+		
 	}
 	if (ULocalLightComponent* LocalLightComponent = Cast<ULocalLightComponent>(InActor->GetComponentByClass(ULocalLightComponent::StaticClass())))
 	{
-		LocalLightComponent->AttenuationRadius = InLightSlot->AttenuationRadius;
-		LocalLightComponent->IntensityUnits = InLightSlot->IntensityUnits; 
+		LocalLightComponent->SetAttenuationRadius(InLightSlot->AttenuationRadius);
+		LocalLightComponent->SetIntensityUnits(InLightSlot->IntensityUnits); 
 	}
+	
 	
 }
 

@@ -185,12 +185,16 @@ FDialogBuilderEditor::~FDialogBuilderEditor()
 	Sequencer.Reset();
 	PlaybackContext.Reset();
 
-	DialogViewportWidget->RemoveDialogOverlayWidget();
-	DialogViewportWidget.Reset();
 
 	// Optional but recommended if you extend tool menus with this owner
 	UToolMenus::UnregisterOwner(this);
 	DestroyDialogStage();
+	if (DialogViewportWidget.IsValid())
+	{
+		DialogViewportWidget->OnActorUnlock();
+		DialogViewportWidget->RemoveDialogOverlayWidget();
+		DialogViewportWidget.Reset();
+	}
 #if ENGINE_MAJOR_VERSION < 5
 	UPackage::PackageSavedEvent.Remove(OnPackageSavedDelegateHandle);
 #else // #if ENGINE_MAJOR_VERSION < 5
@@ -1444,6 +1448,7 @@ void FDialogBuilderEditor::RetrieveLightSlotActor(UDialogSequenceSlot_Light* InL
 		{
 			return;
 		}
+		NewActor->AttachToActor(SequencePivot.Get(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		NewActor->SetActorTickEnabled(false);
 		NewActor->SetTickableWhenPaused(false);
 		NewActor->PrimaryActorTick.bStartWithTickEnabled = false;
@@ -1451,7 +1456,6 @@ void FDialogBuilderEditor::RetrieveLightSlotActor(UDialogSequenceSlot_Light* InL
 		NewActor->SetActorRelativeLocation(InLightSlot->SlotLocation);
 		NewActor->SetActorRelativeRotation(InLightSlot->SlotRotation);
 		DialogSlotActors.Emplace(InLightSlot, NewActor);
-		NewActor->AttachToActor(SequencePivot.Get(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 		
 		UpdateLightSlotProperty(InLightSlot, NewActor);
 		if (NewActor->IsA(ALight::StaticClass()))
@@ -1471,28 +1475,28 @@ void FDialogBuilderEditor::UpdateLightSlotProperty(class UDialogSequenceSlot_Lig
 	if (ULightComponent* LightComponent =  Cast<ULightComponent>(InActor->GetComponentByClass(ULightComponent::StaticClass())))
 	{
 		LightComponent->SetIntensity(InLightSlot->Intensity);
-		LightComponent->LightColor = InLightSlot->LightColor;
-		LightComponent->bUseTemperature = InLightSlot->bUseTemperature;
-		LightComponent->Temperature = InLightSlot->Temperature;
+		LightComponent->SetLightColor(InLightSlot->LightColor);
+		LightComponent->SetUseTemperature(InLightSlot->bUseTemperature);
+		LightComponent->SetTemperature(InLightSlot->Temperature);
 		LightComponent->bAffectsWorld = InLightSlot->bAffectsWorld;
-		LightComponent->CastShadows = InLightSlot->CastShadows;
-		LightComponent->IndirectLightingIntensity = InLightSlot->IndirectLightingIntensity;
-		LightComponent->VolumetricScatteringIntensity = InLightSlot->VolumetricScatteringIntensity;
+		LightComponent->SetCastShadows(InLightSlot->CastShadows);
+		LightComponent->SetIndirectLightingIntensity(InLightSlot->IndirectLightingIntensity);
+		LightComponent->SetVolumetricScatteringIntensity(InLightSlot->VolumetricScatteringIntensity);
 		LightComponent->CastStaticShadows = InLightSlot->CastStaticShadows;
 		LightComponent->CastDynamicShadows = InLightSlot->CastDynamicShadows;
-		LightComponent->bAffectTranslucentLighting = InLightSlot->bAffectTranslucentLighting;
-		LightComponent->bCastVolumetricShadow = InLightSlot->bCastVolumetricShadow;
-		LightComponent->bCastDeepShadow = InLightSlot->bCastDeepShadow;
+		LightComponent->SetAffectTranslucentLighting(InLightSlot->bAffectTranslucentLighting);
+		LightComponent->SetCastVolumetricShadow(InLightSlot->bCastVolumetricShadow);
+		LightComponent->SetCastDeepShadow(InLightSlot->bCastDeepShadow);
 		LightComponent->CastRaytracedShadow = InLightSlot->CastRaytracedShadow;
-		LightComponent->bAffectReflection = InLightSlot->bAffectReflection;
-		LightComponent->bAffectGlobalIllumination = InLightSlot->bAffectGlobalIllumination;
+		LightComponent->SetAffectReflection(InLightSlot->bAffectReflection);
+		LightComponent->SetAffectGlobalIllumination(InLightSlot->bAffectGlobalIllumination);
 		LightComponent->DeepShadowLayerDistribution = InLightSlot->DeepShadowLayerDistribution;
 		
 	}
 	if (ULocalLightComponent* LocalLightComponent = Cast<ULocalLightComponent>(InActor->GetComponentByClass(ULocalLightComponent::StaticClass())))
 	{
-		LocalLightComponent->AttenuationRadius = InLightSlot->AttenuationRadius;
-		LocalLightComponent->IntensityUnits = InLightSlot->IntensityUnits; 
+		LocalLightComponent->SetAttenuationRadius(InLightSlot->AttenuationRadius);
+		LocalLightComponent->SetIntensityUnits(InLightSlot->IntensityUnits); 
 	}
 	
 }
@@ -1568,6 +1572,20 @@ void FDialogBuilderEditor::DestroyDialogStage()
 	{
 		if (AActor* Actor = Pair.Value.Get())
 		{
+			TArray<UPrimitiveComponent*> PrimitiveComponents;
+			Actor->GetComponents(PrimitiveComponents);
+
+			for (UPrimitiveComponent* Component : PrimitiveComponents)
+			{
+				if (!Component)
+				{
+					continue;
+				}
+
+				Component->SetSimulatePhysics(false);
+				Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+				Component->UnregisterComponent();
+			}
 			PreviewWorld->EditorDestroyActor(Actor, false);
 
 			if (EditingDialogSequence)
@@ -3017,7 +3035,7 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 		}
 
 		const int32 PresetIndex = FMath::RandHelper(CameraPresets.Num());
-		UDialogSequenceShot* Preset = bRandomizeCameraPresets ? CameraPresets[PresetIndex] : InSettings->ShotToUse.Get();
+		UDialogSequenceShot* Preset = bRandomizeCameraPresets && CameraPresets.IsValidIndex(PresetIndex) ? CameraPresets[PresetIndex] : InSettings->ShotToUse.Get();
 		if (!Preset)
 		{
 			continue;

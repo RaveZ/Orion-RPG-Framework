@@ -23,19 +23,19 @@ UDialogBuilderSetting::UDialogBuilderSetting()
 		DefaultFreeMovementDialogWidget = DialogueFreeMovementWidgetFinder.Class;
 	}
 
-	auto CloseUpShot = ConstructorHelpers::FClassFinder<UDialogSequenceShot>(TEXT("'/OrionRPG/DefaultShot/SequenceShot/CloseUp.CloseUp_C'"));
+	auto CloseUpShot = ConstructorHelpers::FClassFinder<UDialogSequenceShot>(TEXT("'/OrionRPG/Dialog/DefaultShot/SequenceShot/CloseUp.CloseUp_C'"));
 	if (CloseUpShot.Succeeded())
 	{
 		DefaultCameraPresetsToGenerate.AddUnique(CloseUpShot.Class);
 	}
 
-	auto MediumShot = ConstructorHelpers::FClassFinder<UDialogSequenceShot>(TEXT("'/OrionRPG/DefaultShot/SequenceShot/MediumShot.MediumShot_C'"));
+	auto MediumShot = ConstructorHelpers::FClassFinder<UDialogSequenceShot>(TEXT("'/OrionRPG/Dialog/DefaultShot/SequenceShot/MediumShot.MediumShot_C'"));
 	if (MediumShot.Succeeded())
 	{
 		DefaultCameraPresetsToGenerate.AddUnique(MediumShot.Class);
 	}
 
-	auto OTS_CloseUp = ConstructorHelpers::FClassFinder<UDialogSequenceShot>(TEXT("'/OrionRPG/DefaultShot/SequenceShot/OTS_CloseUp.OTS_CloseUp_C'"));
+	auto OTS_CloseUp = ConstructorHelpers::FClassFinder<UDialogSequenceShot>(TEXT("'/OrionRPG/Dialog/DefaultShot/SequenceShot/OTS_CloseUp.OTS_CloseUp_C'"));
 	if (OTS_CloseUp.Succeeded())
 	{
 		DefaultCameraPresetsToGenerate.AddUnique(OTS_CloseUp.Class);
