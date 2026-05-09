@@ -118,6 +118,7 @@
 #include "DialogGenerateCameraSettings.h"
 #include "PropertyEditorModule.h"
 #include "IDetailsView.h"
+#include "Editor/TransBuffer.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderEditor"
 
@@ -171,6 +172,15 @@ FDialogBuilderEditor::~FDialogBuilderEditor()
 	if (GEditor)
 	{
 		GEditor->UnregisterForUndo(this);
+
+		if (TransactionStateChangedHandle.IsValid())
+		{
+			if (UTransBuffer* TransBuffer = Cast<UTransBuffer>(GEditor->Trans))
+			{
+				TransBuffer->OnTransactionStateChanged().Remove(TransactionStateChangedHandle);
+			}
+			TransactionStateChangedHandle.Reset();
+		}
 	}
 
 	UnbindSequencerDelegates();
@@ -215,6 +225,13 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 	if (GEditor)
 	{
 		GEditor->RegisterForUndo(this);
+
+		if (UTransBuffer* TransBuffer = Cast<UTransBuffer>(GEditor->Trans))
+		{
+			TransactionStateChangedHandle = TransBuffer->OnTransactionStateChanged().AddRaw(
+				this,
+				&FDialogBuilderEditor::OnTransactionStateChanged);
+		}
 	}
 
 	//Binding Functionality
@@ -436,9 +453,21 @@ void FDialogBuilderEditor::OnWorldCleanup(UWorld* World, bool bSessionEnded, boo
 		return;
 	}
 
-	DialogViewportWidget->RemoveDialogOverlayWidget();
+	if (DialogViewportWidget.IsValid())
+	{
+		DialogViewportWidget->RemoveDialogOverlayWidget();
+	}
 
 }
+
+void FDialogBuilderEditor::OnTransactionStateChanged(const FTransactionContext& /*TransactionContext*/, ETransactionStateEventType TransactionState)
+{
+	if (TransactionState == ETransactionStateEventType::UndoRedoStarted)
+	{
+		CloseSequencerForUndoRedo();
+	}
+}
+
 void FDialogBuilderEditor::RegisterTabSpawners(const TSharedRef<FTabManager>& InTabManager)
 {
 	DocumentManager->SetTabManager(InTabManager);
@@ -565,7 +594,10 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 		{
 			CurrentSequenceNode.Reset();
 			DialogStageTemplate.Reset();
-			DialogStageWidget->SetObject(nullptr);
+			if (DialogStageWidget.IsValid())
+			{
+				DialogStageWidget->SetObject(nullptr);
+			}
 			if (EditingDialogGraph)
 			{
 				EditingDialogGraph->CurrentEditingSequenceNode = nullptr;
@@ -573,16 +605,22 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 			EditingDialogSequence = UDialogSequence::GetNullDialogSequence();
 			if (Sequencer)
 			{
-				Sequencer->ResetToNewRootSequence(*UDialogSequence::GetNullDialogSequence());
 				Sequencer->GetSequencerWidget()->SetEnabled(false);
 				Sequencer->SetAutoChangeMode(EAutoChangeMode::None);
-				DialogViewportWidget->RemoveDialogOverlayWidget();
+				if (DialogViewportWidget.IsValid())
+				{
+					DialogViewportWidget->RemoveDialogOverlayWidget();
+				}
 			}
 		}
 		else
 		{
 			EditingDialogSequence = SequenceNode->DialogSequence;
-			if (Sequencer)
+			if (!Sequencer.IsValid())
+			{
+				OpenDialogSequence(EditingDialogSequence);
+			}
+			else
 			{
 				Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshTree);
 				Sequencer->ForceEvaluate();
@@ -627,7 +665,10 @@ void FDialogBuilderEditor::PostRedo(bool bSuccess)
 		{
 			CurrentSequenceNode.Reset();
 			DialogStageTemplate.Reset();
-			DialogStageWidget->SetObject(nullptr);
+			if (DialogStageWidget.IsValid())
+			{
+				DialogStageWidget->SetObject(nullptr);
+			}
 			if (EditingDialogGraph)
 			{
 				EditingDialogGraph->CurrentEditingSequenceNode = nullptr;
@@ -635,16 +676,22 @@ void FDialogBuilderEditor::PostRedo(bool bSuccess)
 			EditingDialogSequence = UDialogSequence::GetNullDialogSequence();
 			if (Sequencer)
 			{
-				Sequencer->ResetToNewRootSequence(*UDialogSequence::GetNullDialogSequence());
 				Sequencer->GetSequencerWidget()->SetEnabled(false);
 				Sequencer->SetAutoChangeMode(EAutoChangeMode::None);
-				DialogViewportWidget->RemoveDialogOverlayWidget();
+				if (DialogViewportWidget.IsValid())
+				{
+					DialogViewportWidget->RemoveDialogOverlayWidget();
+				}
 			}
 		}
 		else
 		{
 			EditingDialogSequence = SequenceNode->DialogSequence;
-			if (Sequencer)
+			if (!Sequencer.IsValid())
+			{
+				OpenDialogSequence(EditingDialogSequence);
+			}
+			else
 			{
 				Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshTree);
 				Sequencer->ForceEvaluate();
@@ -2071,7 +2118,10 @@ void FDialogBuilderEditor::OpenDialogSequence(UDialogSequence* InDialogSequence)
 	}
 
 	EditingDialogSequence = InDialogSequence;
-	DialogViewportWidget->RemoveDialogOverlayWidget();
+	if (DialogViewportWidget.IsValid())
+	{
+		DialogViewportWidget->RemoveDialogOverlayWidget();
+	}
 
 
 	if (Sequencer.IsValid())
@@ -2088,6 +2138,28 @@ void FDialogBuilderEditor::OpenDialogSequence(UDialogSequence* InDialogSequence)
 	else
 	{
 		EnsureSequencerCreated();
+		if (Sequencer.IsValid())
+		{
+			Sequencer->GetSequencerWidget()->SetEnabled(true);
+			Sequencer->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::RefreshAllImmediately);
+			Sequencer->ForceEvaluate();
+			RefreshSequencerCameraLock();
+		}
+	}
+
+	if (Sequencer.IsValid())
+	{
+		if (TSharedPtr<IToolkitHost> LocalToolkitHost = GetToolkitHost())
+		{
+			if (TSharedPtr<FTabManager> HostTabManager = LocalToolkitHost->GetTabManager())
+			{
+				const FTabId SequencerTabId(FDialogBuilderEditorTabs::DialogSequencerTabID);
+				if (TSharedPtr<SDockTab> ExistingTab = HostTabManager->FindExistingLiveTab(SequencerTabId))
+				{
+					ExistingTab->SetContent(Sequencer->GetSequencerWidget());
+				}
+			}
+		}
 	}
 
 	ApplyViewportCameraMode();
@@ -2206,6 +2278,32 @@ void FDialogBuilderEditor::EnsureSequencerCreated()
 		RefreshSequencerCameraLock();
 	}
 
+}
+
+void FDialogBuilderEditor::CloseSequencerForUndoRedo()
+{
+	if (!Sequencer.IsValid())
+	{
+		return;
+	}
+
+	UnbindSequencerDelegates();
+
+	if (TSharedPtr<IToolkitHost> LocalToolkitHost = GetToolkitHost())
+	{
+		if (TSharedPtr<FTabManager> HostTabManager = LocalToolkitHost->GetTabManager())
+		{
+			const FTabId SequencerTabId(FDialogBuilderEditorTabs::DialogSequencerTabID);
+			if (TSharedPtr<SDockTab> ExistingTab = HostTabManager->FindExistingLiveTab(SequencerTabId))
+			{
+				ExistingTab->SetContent(SNullWidget::NullWidget);
+			}
+		}
+	}
+
+	Sequencer->Close();
+	Sequencer.Reset();
+	PlaybackContext.Reset();
 }
 
 void FDialogBuilderEditor::ExtendSequencerToolbar(FToolBarBuilder& InToolbarBuilder)

@@ -12,6 +12,7 @@
 #include "Tickable.h"
 #include "TickableEditorObject.h"
 #include "KeyParams.h"
+#include "Misc/ITransaction.h"
 #include "Templates/SharedPointer.h"
 
 #include "DialogBuilderEditor.generated.h"
@@ -193,6 +194,7 @@ public:
 	void OnWorldAdded(UWorld*);
 	void OnWorldDestroyed(UWorld*);
 	void OnWorldCleanup(UWorld* World, bool bSessionEnded, bool bCleanupResources);
+	void OnTransactionStateChanged(const FTransactionContext& TransactionContext, ETransactionStateEventType TransactionState);
 
 	//Tabs
 	/** Spawns the detail property tab */
@@ -332,6 +334,7 @@ public:
 	void OnOpenDialogSequenceNode(class UDialogBuilderNode_DialogSequence* InSequenceNode);
 	void OpenDialogSequence(UDialogSequence* InDialogSequence);
 	void EnsureSequencerCreated();
+	void CloseSequencerForUndoRedo();
 	void EnsureDialogCameraCutSection();
 	void UpdateTrackModelRule();
 	void UpdateSectionRule();
@@ -539,6 +542,7 @@ protected:
 
 	/** Handle to the registered OnPackageSave delegate */
 	FDelegateHandle OnPackageSavedDelegateHandle;
+	FDelegateHandle TransactionStateChangedHandle;
 
 	TSharedPtr<class IDetailsView> EditorSettingsWidget;
 	TSharedPtr<class SDialogDefinitions> DialogDefinitionsWidget;
