@@ -592,6 +592,7 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 		UDialogBuilderNode_DialogSequence* SequenceNode = CurrentSequenceNode.Get();
 		if (!SequenceNode || !SequenceNode->DialogSequence)
 		{
+			DestroyDialogStage();
 			CurrentSequenceNode.Reset();
 			DialogStageTemplate.Reset();
 			if (DialogStageWidget.IsValid())
@@ -619,6 +620,13 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 			if (!Sequencer.IsValid())
 			{
 				OpenDialogSequence(EditingDialogSequence);
+				if (TSharedPtr<IToolkitHost> LocalToolkitHost = GetToolkitHost())
+				{
+					if (TSharedPtr<FTabManager> HostTabManager = LocalToolkitHost->GetTabManager())
+					{
+						HostTabManager->TryInvokeTab(FDialogBuilderEditorTabs::DialogSequencerTabID);
+					}
+				}
 			}
 			else
 			{
@@ -663,6 +671,7 @@ void FDialogBuilderEditor::PostRedo(bool bSuccess)
 		UDialogBuilderNode_DialogSequence* SequenceNode = CurrentSequenceNode.Get();
 		if (!SequenceNode || !SequenceNode->DialogSequence)
 		{
+			DestroyDialogStage();
 			CurrentSequenceNode.Reset();
 			DialogStageTemplate.Reset();
 			if (DialogStageWidget.IsValid())
@@ -690,6 +699,13 @@ void FDialogBuilderEditor::PostRedo(bool bSuccess)
 			if (!Sequencer.IsValid())
 			{
 				OpenDialogSequence(EditingDialogSequence);
+				if (TSharedPtr<IToolkitHost> LocalToolkitHost = GetToolkitHost())
+				{
+					if (TSharedPtr<FTabManager> HostTabManager = LocalToolkitHost->GetTabManager())
+					{
+						HostTabManager->TryInvokeTab(FDialogBuilderEditorTabs::DialogSequencerTabID);
+					}
+				}
 			}
 			else
 			{
