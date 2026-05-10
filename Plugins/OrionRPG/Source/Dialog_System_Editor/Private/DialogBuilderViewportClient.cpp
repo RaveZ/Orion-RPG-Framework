@@ -415,7 +415,18 @@ void FDialogBuilderViewportClient::ProcessClick(FSceneView& View, HHitProxy* Hit
 
 void FDialogBuilderViewportClient::SelectActor(AActor* ActorToSelect)
 {
-	CachedSelectedActor = ActorToSelect;
+	const bool bNoteSelectionChange = true;
+	const bool bDeselectBSPSurfs = true;
+	const bool bWarnAboutManyActors = false;
+	if (GEditor)
+	{
+		GEditor->SelectNone(bNoteSelectionChange, bDeselectBSPSurfs, bWarnAboutManyActors);
+		CachedSelectedActor = ActorToSelect;
+		if (ActorToSelect)
+		{
+			GEditor->SelectActor(ActorToSelect, true, true);
+		}
+	}
 	Invalidate();
 }
 

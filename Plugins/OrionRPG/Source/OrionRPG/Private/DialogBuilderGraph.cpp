@@ -1657,6 +1657,7 @@ AActor* UDialogBuilderGraph::RetrieveCameraFromSlot(class UDialogSequenceSlot* I
 				CinecamComp->CustomNearClippingPlane = CustomNearClippingPlane;
 
 				CinecamComp->FocusSettings.bSmoothFocusChanges = true;
+				CinecamComp->FocusSettings.FocusSmoothingInterpSpeed = 15.0f;
 				CinecamComp->FocusSettings.FocusMethod = FocusMethod;
 				if (bUsePostProcess)
 				{
@@ -1831,6 +1832,18 @@ void UDialogBuilderGraph::GetAllGraphs(TArray<UEdGraph*>& Graphs) const
 }
 void UDialogBuilderGraph::PostEditChangeProperty(FPropertyChangedEvent& PropertyChangedEvent)
 {
+	
+	FName PropertyName = (PropertyChangedEvent.Property != NULL) ? PropertyChangedEvent.Property->GetFName() : NAME_None;
+	FName DialogTypeProperty = FName("DialogType");
+
+	if (DialogTypeProperty == PropertyName)
+	{
+		if (DialogType == EDialogType::E_FreeMovementDialog)
+		{
+			bDisableCameraCuts = true;
+		}
+	}
+
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 }
 #endif // WITH_EDITORONLY_DATA

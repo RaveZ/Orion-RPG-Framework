@@ -39,6 +39,7 @@ enum class EDialogType : uint8
 	* player can move during the dialog.
 	* Note:
 	* - the dialog will be auto advance while in progress.
+	* - will disable camera cuts on post edit
 	*/
 	E_FreeMovementDialog	UMETA(DisplayName = "Free Movement Dialog")
 };

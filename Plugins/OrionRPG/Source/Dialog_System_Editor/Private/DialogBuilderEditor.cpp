@@ -642,13 +642,7 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 			if (!Sequencer.IsValid())
 			{
 				OpenDialogSequence(EditingDialogSequence);
-				if (TSharedPtr<IToolkitHost> LocalToolkitHost = GetToolkitHost())
-				{
-					if (TSharedPtr<FTabManager> HostTabManager = LocalToolkitHost->GetTabManager())
-					{
-						HostTabManager->TryInvokeTab(FDialogBuilderEditorTabs::DialogSequencerTabID);
-					}
-				}
+				
 			}
 			else
 			{
@@ -722,13 +716,7 @@ void FDialogBuilderEditor::PostRedo(bool bSuccess)
 			if (!Sequencer.IsValid())
 			{
 				OpenDialogSequence(EditingDialogSequence);
-				if (TSharedPtr<IToolkitHost> LocalToolkitHost = GetToolkitHost())
-				{
-					if (TSharedPtr<FTabManager> HostTabManager = LocalToolkitHost->GetTabManager())
-					{
-						HostTabManager->TryInvokeTab(FDialogBuilderEditorTabs::DialogSequencerTabID);
-					}
-				}
+				
 			}
 			else
 			{
@@ -3005,6 +2993,7 @@ void FDialogBuilderEditor::ApplyDefaultCameraSetting()
 			CinecamComp->CustomNearClippingPlane = DialogGraph->CustomNearClippingPlane;
 
 			CinecamComp->FocusSettings.bSmoothFocusChanges = true;
+			CinecamComp->FocusSettings.FocusSmoothingInterpSpeed = 15.0f;
 			CinecamComp->FocusSettings.FocusMethod = DialogGraph->FocusMethod;
 			if (DialogGraph->bUsePostProcess)
 			{
