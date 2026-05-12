@@ -1381,7 +1381,8 @@ void FDialogBuilderEditor::RetrieveDialogSlotActor(UDialogSequenceSlot* InSlot, 
 				{
 					return;
 				}
-
+				
+				NewActor->bIsEditorOnlyActor = true;
 				NewActor->SetActorTickEnabled(false);
 				NewActor->SetTickableWhenPaused(false);
 				NewActor->PrimaryActorTick.bStartWithTickEnabled = false;
@@ -1399,7 +1400,10 @@ void FDialogBuilderEditor::RetrieveDialogSlotActor(UDialogSequenceSlot* InSlot, 
 					SkeletalMeshComponent->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 					SkeletalMeshComponent->SetUpdateAnimationInEditor(true);*/
 				}
-
+				TArray<UPrimitiveComponent*> Components;
+				NewActor->GetComponents(Components);
+			
+				
 				// Preserve the actor's world transform when attaching to the pivot.
 				NewActor->AttachToActor(EditorPinned->SequencePivot.Get(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
 
@@ -1671,7 +1675,7 @@ void FDialogBuilderEditor::DestroyDialogStage()
 
 				Component->SetSimulatePhysics(false);
 				Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-				Component->UnregisterComponent();
+				Component->Deactivate();
 			}
 			PreviewWorld->EditorDestroyActor(Actor, false);
 
@@ -4904,6 +4908,7 @@ void FDialogBuilderEditor::CreateNewDialogStageTemplate(UDialogStage* InDialogSt
 						if (UDialogSequenceSlot* NewSlot = DuplicateObject<UDialogSequenceSlot>(Slot, DefaultStage))
 						{
 							NewSlot->OwningDialogGraph = nullptr;
+							NewSlot->DialogDefinition = nullptr;
 							DefaultStage->Slots.Add(NewSlot);
 						}
 					}
@@ -4918,6 +4923,7 @@ void FDialogBuilderEditor::CreateNewDialogStageTemplate(UDialogStage* InDialogSt
 						if (UDialogSequenceSlot* NewSlot = DuplicateObject<UDialogSequenceSlot>(Slot, DefaultStage))
 						{
 							NewSlot->OwningDialogGraph = nullptr;
+							NewSlot->DialogDefinition = nullptr;
 							DefaultStage->CameraSlots.Add(NewSlot);
 						}
 					}
@@ -4932,6 +4938,7 @@ void FDialogBuilderEditor::CreateNewDialogStageTemplate(UDialogStage* InDialogSt
 						if (UDialogSequenceSlot_Light* NewSlot = DuplicateObject<UDialogSequenceSlot_Light>(Slot, DefaultStage))
 						{
 							NewSlot->OwningDialogGraph = nullptr;
+							NewSlot->DialogDefinition = nullptr;
 							DefaultStage->LightSlots.Add(NewSlot);
 						}
 					}

@@ -1464,6 +1464,7 @@ void SDialogStageManager::ImportDialogStageAsset(const FAssetData& AssetData)
 	
 	NewDialogStage->Modify();
 	NewDialogStage->OwningDialogGraph = Graph;
+	NewDialogStage->bIsTemplate = false;
 
 	ResetDialogStageSlotDefinitions(NewDialogStage);
 
