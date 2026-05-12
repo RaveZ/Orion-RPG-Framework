@@ -651,7 +651,6 @@ void FDialogBuilderEditor::PostUndo(bool bSuccess)
 			}
 			UpdateDialogStage();
 		}
-
 	}
 }
 
