@@ -1382,7 +1382,6 @@ void FDialogBuilderEditor::RetrieveDialogSlotActor(UDialogSequenceSlot* InSlot, 
 					return;
 				}
 				
-				NewActor->bIsEditorOnlyActor = true;
 				NewActor->SetActorTickEnabled(false);
 				NewActor->SetTickableWhenPaused(false);
 				NewActor->PrimaryActorTick.bStartWithTickEnabled = false;
@@ -1400,8 +1399,6 @@ void FDialogBuilderEditor::RetrieveDialogSlotActor(UDialogSequenceSlot* InSlot, 
 					SkeletalMeshComponent->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 					SkeletalMeshComponent->SetUpdateAnimationInEditor(true);*/
 				}
-				TArray<UPrimitiveComponent*> Components;
-				NewActor->GetComponents(Components);
 			
 				
 				// Preserve the actor's world transform when attaching to the pivot.
