@@ -667,6 +667,7 @@ void UDialogBuilderGraph::BeginDialogLine(UDialogBuilderNode_DialogLine* InDialo
 	if (!ShouldLockPlayerMovement() && InDialogLine->ParticipantInfo.ParticipantTag == TAG_Dialog_Participant_Player)
 		return;
 
+	ApplyRotationSetting(InDialogLine, Speaker, Listener);
 	DetermineDialogShot(InDialogLine, Speaker, Listener);
 
 	//Dialog Animation 
@@ -770,10 +771,9 @@ void UDialogBuilderGraph::ApplyRotationSetting(UDialogBuilderNode_DialogLine* In
 
 void UDialogBuilderGraph::DetermineDialogShot(UDialogBuilderNode_DialogLine* InDialogLine, AActor* Speaker, AActor* Listener)
 {
-	if (!ShouldLockPlayerMovement())
-		return;
-
-	ApplyRotationSetting(InDialogLine, Speaker, Listener);
+	if (bDisableCameraCuts) return;
+	if (!ShouldLockPlayerMovement()) return;
+	
 
 	UDialogCameraShot* DialogShot = nullptr;
 

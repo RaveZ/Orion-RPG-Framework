@@ -114,7 +114,7 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Camera")
 		bool bFadeCameraOnDialogBegin;
 
-	UPROPERTY(BlueprintReadOnly, Category = "Audio")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
 		class USoundAttenuation* DialogSoundAttenuation;
 	
 
