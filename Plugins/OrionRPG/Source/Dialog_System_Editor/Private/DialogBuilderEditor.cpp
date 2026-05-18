@@ -3584,6 +3584,9 @@ void FDialogBuilderEditor::AddKeyFromCameraPreset(int32 InFrameNumber, EMovieSce
 		AddActorToTrackKeyIfValid(MovieScene, Sequencer.Get(), CinecamComp, InFrame);
 	}
 
+	const FFrameNumber DefaultPlaybackRangeStart = MovieScene->GetPlaybackRange().GetLowerBoundValue();
+	const FFrameNumber DefaultPlaybackRangeEnd = MovieScene->GetPlaybackRange().GetUpperBoundValue();
+	TransformSection->SetRange(TRange<FFrameNumber>(DefaultPlaybackRangeStart, DefaultPlaybackRangeEnd));
 }
 
 
