@@ -210,6 +210,8 @@ FDialogBuilderEditor::~FDialogBuilderEditor()
 
 	if (Sequencer.IsValid())
 	{
+		// Prevent UnrealEd pivot update from resolving stale actor elements during sequencer shutdown.
+		ResetEditorSelectionWithoutResolvingElements();
 		Sequencer->Close();
 	}
 
@@ -2342,6 +2344,8 @@ void FDialogBuilderEditor::CloseSequencerForUndoRedo()
 		}
 	}
 
+	// Clear typed-element selections before closing to avoid pivot updates on invalid preview actors.
+	ResetEditorSelectionWithoutResolvingElements();
 	Sequencer->Close();
 	Sequencer.Reset();
 	PlaybackContext.Reset();
