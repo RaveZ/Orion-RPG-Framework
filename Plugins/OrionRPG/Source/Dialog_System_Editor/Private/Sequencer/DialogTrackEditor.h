@@ -25,6 +25,6 @@ public:
 private:
 	void OnAddTrack();
 	void OnAddNewSection(UMovieSceneTrack* DialogTrack);
-	void AddNewSection(UMovieScene* MovieScene, UMovieSceneTrack* DialogTrack);
+	bool AddNewSection(UMovieScene* MovieScene, UMovieSceneTrack* DialogTrack);
 	TSharedRef<SWidget> BuildAddDialogSectionMenu(UMovieSceneTrack* DialogTrack);
 };

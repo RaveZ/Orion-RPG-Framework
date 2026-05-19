@@ -5,8 +5,11 @@
 #include "MovieSceneDialogSection.h"
 #include "MovieSceneDialogTrack.h"
 #include "DialogSequence.h"
+#include "OrionSetting.h"
 
 #include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "Framework/Notifications/NotificationManager.h"
+#include "HAL/PlatformProcess.h"
 #include "Modules/ModuleManager.h"
 #include "PropertyEditorModule.h"
 #include "IDetailsView.h"
@@ -14,8 +17,75 @@
 #include "DetailLayoutBuilder.h"
 #include "SequencerUtilities.h"
 #include "ScopedTransaction.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 #define LOCTEXT_NAMESPACE "DialogTrackEditor"
+
+namespace
+{
+	int32 CountDialogTrackSections(const UMovieSceneTrack* DialogTrack)
+	{
+		int32 SectionCount = 0;
+		if (!DialogTrack)
+		{
+			return SectionCount;
+		}
+
+		for (const UMovieSceneSection* Section : DialogTrack->GetAllSections())
+		{
+			if (Section && Section->IsA(UMovieSceneDialogSection::StaticClass()))
+			{
+				++SectionCount;
+			}
+		}
+
+		return SectionCount;
+	}
+
+	void ShowDialogSectionTrialLimitNotification(const UOrionSetting* Settings)
+	{
+		const int32 NodeLimit = Settings ? Settings->NodeLimit : 0;
+		FFormatNamedArguments Args;
+		Args.Add(TEXT("NodeLimit"), NodeLimit);
+
+		FNotificationInfo Info(FText::Format(LOCTEXT("DialogSectionTrialLimitWarning", "Trial Version only allows up to {NodeLimit} dialog sections."), Args));
+		Info.ExpireDuration = 5.0f;
+		Info.bUseLargeFont = false;
+
+		const FString PurchaseURL = Settings ? Settings->TrialPurchaseURL : FString();
+		if (!PurchaseURL.IsEmpty())
+		{
+			Info.HyperlinkText = LOCTEXT("DialogSectionTrialLimitPurchaseLink", "Purchase full product");
+			Info.Hyperlink = FSimpleDelegate::CreateLambda([PurchaseURL]()
+			{
+				FPlatformProcess::LaunchURL(*PurchaseURL, nullptr, nullptr);
+			});
+		}
+
+		TSharedPtr<SNotificationItem> Notification = FSlateNotificationManager::Get().AddNotification(Info);
+		if (Notification.IsValid())
+		{
+			Notification->SetCompletionState(SNotificationItem::CS_Fail);
+		}
+	}
+
+	bool CanAddDialogTrackSection(const UMovieSceneTrack* DialogTrack)
+	{
+		const UOrionSetting* Settings = GetDefault<UOrionSetting>();
+		if (!Settings || !Settings->bTrialVersion)
+		{
+			return true;
+		}
+
+		if (CountDialogTrackSections(DialogTrack) < FMath::Max(0, Settings->NodeLimit))
+		{
+			return true;
+		}
+
+		ShowDialogSectionTrialLimitNotification(Settings);
+		return false;
+	}
+}
 
 TSharedRef<ISequencerTrackEditor> FDialogTrackEditor::CreateTrackEditor(TSharedRef<ISequencer> InSequencer)
 {
@@ -161,15 +231,22 @@ void FDialogTrackEditor::OnAddNewSection(UMovieSceneTrack* DialogTrack)
 		return;
 	}
 
-	AddNewSection(FocusedMovieScene, DialogTrack);
-	GetSequencer()->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemAdded);
+	if (AddNewSection(FocusedMovieScene, DialogTrack))
+	{
+		GetSequencer()->NotifyMovieSceneDataChanged(EMovieSceneDataChangeType::MovieSceneStructureItemAdded);
+	}
 }
 
-void FDialogTrackEditor::AddNewSection(UMovieScene* MovieScene, UMovieSceneTrack* DialogTrack)
+bool FDialogTrackEditor::AddNewSection(UMovieScene* MovieScene, UMovieSceneTrack* DialogTrack)
 {
 	if (!MovieScene || !DialogTrack)
 	{
-		return;
+		return false;
+	}
+
+	if (!CanAddDialogTrackSection(DialogTrack))
+	{
+		return false;
 	}
 
 	const FScopedTransaction Transaction(LOCTEXT("AddDialogSection_Transaction", "Add Dialog Section"));
@@ -234,6 +311,7 @@ void FDialogTrackEditor::AddNewSection(UMovieScene* MovieScene, UMovieSceneTrack
 	DialogSection->SetRowIndex(0);
 
 	DialogTrack->AddSection(*DialogSection);
+	return true;
 }
 
 #undef LOCTEXT_NAMESPACE
