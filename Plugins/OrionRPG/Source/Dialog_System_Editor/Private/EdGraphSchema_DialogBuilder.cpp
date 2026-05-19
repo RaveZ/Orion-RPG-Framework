@@ -31,6 +31,10 @@
 #include "DialogBuilderNode_PlayerLine.h"
 #include "Decorator/OrionDecorator.h"
 #include "Event/OrionEvent.h"
+#include "OrionSetting.h"
+#include "Framework/Notifications/NotificationManager.h"
+#include "HAL/PlatformProcess.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 
 #define LOCTEXT_NAMESPACE "EdGraphSchema_DialogBuilder"
@@ -39,6 +43,82 @@ namespace
 {
 	// Maximum distance a drag can be off a node edge to require 'push off' from node
 	const int32 NodeDistance = 60;
+
+	int32 CountDialogTrialNodes(const UDialogBuilderEdNode* Node)
+	{
+		if (!Node || Node->IsA(UDialogBuilderEdNode_Root::StaticClass()) || Node->IsA(UDialogBuilderEdNode_Edge::StaticClass()))
+		{
+			return 0;
+		}
+
+		int32 NodeCount = 1;
+		for (const UDialogBuilderEdNode* SubNode : Node->SubNodes)
+		{
+			NodeCount += CountDialogTrialNodes(SubNode);
+		}
+
+		return NodeCount;
+	}
+
+	int32 CountDialogTrialNodes(const UEdGraph* Graph)
+	{
+		int32 NodeCount = 0;
+		if (!Graph)
+		{
+			return NodeCount;
+		}
+
+		for (const UEdGraphNode* GraphNode : Graph->Nodes)
+		{
+			NodeCount += CountDialogTrialNodes(Cast<UDialogBuilderEdNode>(GraphNode));
+		}
+
+		return NodeCount;
+	}
+
+	void ShowDialogTrialLimitNotification(const UOrionSetting* Settings)
+	{
+		const int32 NodeLimit = Settings ? Settings->NodeLimit : 0;
+		FFormatNamedArguments Args;
+		Args.Add(TEXT("NodeLimit"), NodeLimit);
+
+		FNotificationInfo Info(FText::Format(LOCTEXT("DialogTrialNodeLimitWarning", "Trial Version only allows up to {NodeLimit} nodes."), Args));
+		Info.ExpireDuration = 5.0f;
+		Info.bUseLargeFont = false;
+
+		const FString PurchaseURL = Settings ? Settings->TrialPurchaseURL : FString();
+		if (!PurchaseURL.IsEmpty())
+		{
+			Info.HyperlinkText = LOCTEXT("DialogTrialNodeLimitPurchaseLink", "Purchase full product");
+			Info.Hyperlink = FSimpleDelegate::CreateLambda([PurchaseURL]()
+			{
+				FPlatformProcess::LaunchURL(*PurchaseURL, nullptr, nullptr);
+			});
+		}
+
+		TSharedPtr<SNotificationItem> Notification = FSlateNotificationManager::Get().AddNotification(Info);
+		if (Notification.IsValid())
+		{
+			Notification->SetCompletionState(SNotificationItem::CS_Fail);
+		}
+	}
+
+	bool CanAddDialogTrialNode(const UEdGraph* Graph)
+	{
+		const UOrionSetting* Settings = GetDefault<UOrionSetting>();
+		if (!Settings || !Settings->bTrialVersion)
+		{
+			return true;
+		}
+
+		if (CountDialogTrialNodes(Graph) < FMath::Max(0, Settings->NodeLimit))
+		{
+			return true;
+		}
+
+		ShowDialogTrialLimitNotification(Settings);
+		return false;
+	}
 }
 
 int32 UEdGraphSchema_DialogBuilder::CurrentCacheRefreshID = 0;
@@ -99,6 +179,11 @@ UEdGraphNode* FAssetSchemaAction_DialogSystem_NewNode::PerformAction(UEdGraph* P
 	//// If there is a template, we actually use it
 	if (NodeTemplate != NULL)
 	{
+		if (!CanAddDialogTrialNode(ParentGraph))
+		{
+			return nullptr;
+		}
+
 		const FScopedTransaction Transaction(LOCTEXT("AddNode", "Add Node"));
 		ParentGraph->Modify();
 		if (FromPin)
@@ -784,6 +869,11 @@ TSharedPtr<FAssetSchemaAction_DialogSystem_NewSubNode> UEdGraphSchema_DialogBuil
 #if (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION >= 6)
 UEdGraphNode* FAssetSchemaAction_DialogSystem_NewSubNode::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2f& Location, bool bSelectNewNode)
 {
+	if (!CanAddDialogTrialNode(ParentGraph))
+	{
+		return nullptr;
+	}
+
 	ParentNode->AddSubNode(NodeTemplate, ParentGraph);
 	return NULL;
 }
@@ -795,6 +885,11 @@ UEdGraphNode* FAssetSchemaAction_DialogSystem_NewSubNode::PerformAction(UEdGraph
 #elif (ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION <= 5)
 UEdGraphNode* FAssetSchemaAction_DialogSystem_NewSubNode::PerformAction(UEdGraph* ParentGraph, UEdGraphPin* FromPin, const FVector2D Location, bool bSelectNewNode)
 {
+	if (!CanAddDialogTrialNode(ParentGraph))
+	{
+		return nullptr;
+	}
+
 	ParentNode->AddSubNode(NodeTemplate, ParentGraph);
 	return NULL;
 }

@@ -39,6 +39,10 @@ UOrionSetting::UOrionSetting()
 	}
 	bShowActionDisplayText = true;
 	DefaultActionDisplayText = FText::FromString("Interact");
+	
+	bTrialVersion = true;
+	NodeLimit = 3;
+	TrialPurchaseURL = TEXT("com.epicgames.launcher://ue/Fab/product/eab00427-3d38-42b0-adb0-d057883d4c3c");
 }
 
 UOrionSetting::~UOrionSetting()
