@@ -152,6 +152,45 @@ namespace
 		ResetSelectionWithoutResolvingElements(GEditor->GetSelectedActors());
 		ResetSelectionWithoutResolvingElements(GEditor->GetSelectedComponents());
 	}
+
+	void DestroyPreviewActor(UWorld* PreviewWorld, AActor* Actor)
+	{
+		if (!PreviewWorld || !IsValid(Actor))
+		{
+			return;
+		}
+
+		Actor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		Actor->SetActorTickEnabled(false);
+		Actor->SetTickableWhenPaused(false);
+
+		TArray<UPrimitiveComponent*> PrimitiveComponents;
+		Actor->GetComponents(PrimitiveComponents);
+		for (UPrimitiveComponent* Component : PrimitiveComponents)
+		{
+			if (!Component)
+			{
+				continue;
+			}
+
+			Component->SetSimulatePhysics(false);
+			Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			Component->Deactivate();
+			Component->UnregisterComponent();
+		}
+
+		TArray<UActorComponent*> ActorComponents;
+		Actor->GetComponents(ActorComponents);
+		for (UActorComponent* Component : ActorComponents)
+		{
+			if (Component && Component->IsRegistered())
+			{
+				Component->UnregisterComponent();
+			}
+		}
+
+		PreviewWorld->EditorDestroyActor(Actor, false);
+	}
 }
 
 const FName FDialogBuilderEditor::DialogEditorMode(TEXT("DialogEditor"));
@@ -1264,7 +1303,7 @@ void FDialogBuilderEditor::UpdateDialogStage()
 		{
 			if (AActor* Actor = It.Value().Get())
 			{
-				PreviewWorld->EditorDestroyActor(Actor, false);
+				DestroyPreviewActor(PreviewWorld, Actor);
 				if (EditingDialogSequence)
 				{
 					EditingDialogSequence->UnbindInvalidObjects(Key->ID, PreviewWorld);
@@ -1316,7 +1355,7 @@ void FDialogBuilderEditor::RetrieveDialogSlotActor(UDialogSequenceSlot* InSlot, 
 	
 	if ((!InDialogDefinition || !ActorSoftClass.IsValid()) && ExistingActor)
 	{
-		PreviewWorld->EditorDestroyActor(ExistingActor, false);
+		DestroyPreviewActor(PreviewWorld, ExistingActor);
 		DialogSlotActors.Remove(InSlot);
 		return;
 	}
@@ -1369,7 +1408,7 @@ void FDialogBuilderEditor::RetrieveDialogSlotActor(UDialogSequenceSlot* InSlot, 
 
 				if (ExistingActor)
 				{
-					PreviewWorld->EditorDestroyActor(ExistingActor, false);
+					DestroyPreviewActor(PreviewWorld, ExistingActor);
 					EditorPinned->DialogSlotActors.Remove(Slot);
 				}
 
@@ -1496,7 +1535,7 @@ void FDialogBuilderEditor::RetrieveLightSlotActor(UDialogSequenceSlot_Light* InL
 
 	if ((!InLightSlot || !ActorClass) && ExistingActor)
 	{
-		PreviewWorld->EditorDestroyActor(ExistingActor, false);
+		DestroyPreviewActor(PreviewWorld, ExistingActor);
 		DialogSlotActors.Remove(InLightSlot);
 		return;
 	}
@@ -1512,7 +1551,7 @@ void FDialogBuilderEditor::RetrieveLightSlotActor(UDialogSequenceSlot_Light* InL
 
 	if (ExistingActor)
 	{
-		PreviewWorld->EditorDestroyActor(ExistingActor, false);
+		DestroyPreviewActor(PreviewWorld, ExistingActor);
 		DialogSlotActors.Remove(InLightSlot);
 	}
 
@@ -1662,23 +1701,9 @@ void FDialogBuilderEditor::DestroyDialogStage()
 	{
 		if (AActor* Actor = Pair.Value.Get())
 		{
-			TArray<UPrimitiveComponent*> PrimitiveComponents;
-			Actor->GetComponents(PrimitiveComponents);
+			DestroyPreviewActor(PreviewWorld, Actor);
 
-			for (UPrimitiveComponent* Component : PrimitiveComponents)
-			{
-				if (!Component)
-				{
-					continue;
-				}
-
-				Component->SetSimulatePhysics(false);
-				Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-				Component->Deactivate();
-			}
-			PreviewWorld->EditorDestroyActor(Actor, false);
-
-			if (EditingDialogSequence)
+			if (EditingDialogSequence && Pair.Key)
 			{
 				EditingDialogSequence->UnbindPossessableObjects(Pair.Key->ID);
 			}
@@ -1690,7 +1715,7 @@ void FDialogBuilderEditor::DestroyDialogStage()
 
 	if (AActor* PivotActor = SequencePivot.Get())
 	{
-		PreviewWorld->EditorDestroyActor(PivotActor, false);
+		DestroyPreviewActor(PreviewWorld, PivotActor);
 	}
 
 	DialogCamera.Reset();
