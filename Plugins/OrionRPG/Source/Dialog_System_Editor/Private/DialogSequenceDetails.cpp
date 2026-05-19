@@ -304,7 +304,6 @@ void FDialogSequenceDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBuilde
 	// Section customization
 	if (UMovieSceneDialogSection* Section = MovieSceneDialogSection.Get())
 	{
-		Section->Modify();
 		Section->RefreshDialogContent();
 
 		IDetailCategoryBuilder& SectionCategory = DetailBuilder.EditCategory("Section", LOCTEXT("SectionCategoryTitle", "Section"));

@@ -87,9 +87,14 @@ void UMovieSceneDialogSection::SyncRangeToDialogSoundDuration()
 	}
 
 	const FFrameNumber StartFrame = HasStartFrame() ? GetInclusiveStartFrame() : FFrameNumber(0);
-	SetRange(TRange<FFrameNumber>(
+	const TRange<FFrameNumber> SoundRange(
 		TRangeBound<FFrameNumber>::Inclusive(StartFrame),
-		TRangeBound<FFrameNumber>::Exclusive(StartFrame + DurationFrames)));
+		TRangeBound<FFrameNumber>::Exclusive(StartFrame + DurationFrames));
+
+	if (GetRange() != SoundRange)
+	{
+		SetRange(SoundRange);
+	}
 }
 
 void UMovieSceneDialogSection::RefreshDialogContent()
@@ -99,16 +104,26 @@ void UMovieSceneDialogSection::RefreshDialogContent()
 	// Speaker reference validity
 	if (!IsParticipantInGraph(DialogGraph, SpeakerParticipantDefinition))
 	{
-		SpeakerParticipantDefinition = nullptr;
+		if (SpeakerParticipantDefinition)
+		{
+			SpeakerParticipantDefinition = nullptr;
+		}
 	}
 
 	// Listener reference validity
 	if (!IsParticipantInGraph(DialogGraph, ListenerParticipantDefinition))
 	{
-		ListenerParticipantDefinition = nullptr;
+		if (ListenerParticipantDefinition)
+		{
+			ListenerParticipantDefinition = nullptr;
+		}
 	}
 
-	DialogLine.SpeakerName = SpeakerParticipantDefinition ? SpeakerParticipantDefinition->DisplayName : FText();
+	const FText SpeakerName = SpeakerParticipantDefinition ? SpeakerParticipantDefinition->DisplayName : FText();
+	if (!DialogLine.SpeakerName.EqualTo(SpeakerName))
+	{
+		DialogLine.SpeakerName = SpeakerName;
+	}
 
 	// Keep section duration synced to dialog audio duration (if valid).
 	SyncRangeToDialogSoundDuration();
@@ -125,6 +140,7 @@ void UMovieSceneDialogSection::PostEditChangeProperty(FPropertyChangedEvent& Pro
 {
 	Super::PostEditChangeProperty(PropertyChangedEvent);
 
+	RefreshDialogContent();
 }
 #endif
 

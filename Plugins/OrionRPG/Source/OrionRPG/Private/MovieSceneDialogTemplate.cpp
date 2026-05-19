@@ -180,7 +180,7 @@ namespace OrionDialogTemplate
 						false, 
 						1.f, 
 						1.f, 
-						0.f, 
+						StartTimeSeconds, 
 						DialogGraph ? DialogGraph->DialogSoundAttenuation : nullptr);
 
 				}
@@ -198,7 +198,7 @@ namespace OrionDialogTemplate
 					
 					if (DialogComponent)
 					{
-						//somehow in editor if setuisound to false, there wont be any sound at all
+						// Sequencer/editor preview can be mixed as UI audio, especially outside PIE.
 						DialogAudioComponent->SetUISound(false);
 					}
 				}
@@ -627,10 +627,10 @@ void FMovieSceneDialogSectionTemplate::Evaluate(
 	using namespace OrionDialogTemplate;
 
 	DialogSection->RefreshDialogContent();
-
-	ExecutionTokens.Add(FDialogAudioExecutionToken(DialogSection, DialogSection->DialogLine));
-	ExecutionTokens.Add(FDialogFacialAnimationExecutionToken(DialogSection, DialogSection->DialogLine));
-	ExecutionTokens.Add(FDialogExecutionToken(DialogSection, DialogSection->DialogLine));
+	const FOrionDialogLine CurrentDialogLine = DialogSection->GetDialogLine();
+	ExecutionTokens.Add(FDialogAudioExecutionToken(DialogSection, CurrentDialogLine));
+	ExecutionTokens.Add(FDialogFacialAnimationExecutionToken(DialogSection, CurrentDialogLine));
+	ExecutionTokens.Add(FDialogExecutionToken(DialogSection, CurrentDialogLine));
 
 	
 }
