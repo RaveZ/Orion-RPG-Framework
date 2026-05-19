@@ -42,7 +42,7 @@ UOrionSetting::UOrionSetting()
 	
 	bTrialVersion = true;
 	NodeLimit = 3;
-	TrialPurchaseURL = TEXT("com.epicgames.launcher://ue/Fab/product/eab00427-3d38-42b0-adb0-d057883d4c3c");
+	TrialPurchaseURL = TEXT("https://www.fab.com/listings/8ac4736e-039a-4869-8abc-85c5e8c151a8?lang=en");
 }
 
 UOrionSetting::~UOrionSetting()
