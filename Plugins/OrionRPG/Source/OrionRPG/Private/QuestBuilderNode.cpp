@@ -30,9 +30,6 @@ UQuestBuilderNode::~UQuestBuilderNode()
 
 void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 {
-	if (bInitialized)
-		return;
-
 	OnAllStartEventFinished.RemoveAll(this);
 	OnAllEndEventFinished.RemoveAll(this);
 	bInitialized = true;
