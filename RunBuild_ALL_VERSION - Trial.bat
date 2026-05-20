@@ -21,8 +21,8 @@ for %%V in (%UE_VERSIONS%) do (
 
     :: Set the full paths for the current version
     set "ENGINE_UAT_PATH=!ENGINE_BASE_PATH!\%%V\Engine\Build\BatchFiles\RunUAT.bat"
-    set "CURRENT_PACKAGE_PATH=!PACKAGE_BASE_PATH!\%%V\OrionRPGPlugin"
-    set "ZIP_FILE_PATH=!PACKAGE_BASE_PATH!\ZipFiles\OrionRPGPlugin_%%V.zip"
+    set "CURRENT_PACKAGE_PATH=!PACKAGE_BASE_PATH!\%%V\OrionRPG-Trial"
+    set "ZIP_FILE_PATH=!PACKAGE_BASE_PATH!\ZipFiles\OrionRPG-Trial_%%V.zip"
     
     :: Check if the Unreal Engine path exists before trying to build
     if exist "!ENGINE_UAT_PATH!" (
