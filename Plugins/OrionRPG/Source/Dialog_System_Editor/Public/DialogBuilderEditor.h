@@ -575,6 +575,7 @@ protected:
 
 	bool bPendingRefreshDialogEditor = false;
 	bool bIsRefreshDialogEditorInProgress = false;
+	bool bIsClosing = false;
 
 	/** MovieScene for displaying this dialog sequence in timeline. */
 	TObjectPtr<UDialogSequence> EditingDialogSequence = nullptr;

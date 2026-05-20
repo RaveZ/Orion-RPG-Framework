@@ -191,6 +191,31 @@ namespace
 
 		PreviewWorld->EditorDestroyActor(Actor, false);
 	}
+
+	void DisablePreviewActorPhysics(AActor* Actor)
+	{
+		if (!IsValid(Actor))
+		{
+			return;
+		}
+
+		Actor->SetActorTickEnabled(false);
+		Actor->SetTickableWhenPaused(false);
+		Actor->PrimaryActorTick.bStartWithTickEnabled = false;
+
+		TArray<UPrimitiveComponent*> PrimitiveComponents;
+		Actor->GetComponents(PrimitiveComponents);
+		for (UPrimitiveComponent* Component : PrimitiveComponents)
+		{
+			if (!Component)
+			{
+				continue;
+			}
+
+			Component->SetSimulatePhysics(false);
+			Component->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
+	}
 }
 
 const FName FDialogBuilderEditor::DialogEditorMode(TEXT("DialogEditor"));
@@ -225,6 +250,8 @@ FDialogBuilderEditor::FDialogBuilderEditor()
 
 FDialogBuilderEditor::~FDialogBuilderEditor()
 {
+	bIsClosing = true;
+
 	// Unbind raw package dirty callback added in Initialize()
 	if (EditingDialogGraph && EditingDialogGraph->GetOutermost())
 	{
@@ -261,13 +288,13 @@ FDialogBuilderEditor::~FDialogBuilderEditor()
 
 	// Optional but recommended if you extend tool menus with this owner
 	UToolMenus::UnregisterOwner(this);
-	DestroyDialogStage();
 	if (DialogViewportWidget.IsValid())
 	{
 		DialogViewportWidget->OnActorUnlock();
 		DialogViewportWidget->RemoveDialogOverlayWidget();
 		DialogViewportWidget.Reset();
 	}
+	DestroyDialogStage();
 #if ENGINE_MAJOR_VERSION < 5
 	UPackage::PackageSavedEvent.Remove(OnPackageSavedDelegateHandle);
 #else // #if ENGINE_MAJOR_VERSION < 5
@@ -601,6 +628,11 @@ void FDialogBuilderEditor::UnregisterTabSpawners(const TSharedRef<FTabManager>& 
 
 void FDialogBuilderEditor::Tick(float DeltaTime)
 {
+	if (bIsClosing)
+	{
+		return;
+	}
+
 	if (IsPIESimulating())
 	{
 		return;
@@ -1189,6 +1221,11 @@ void FDialogBuilderEditor::ResolveDialogBoundObjects()
 
 void FDialogBuilderEditor::UpdateDialogStage()
 {
+	if (bIsClosing)
+	{
+		return;
+	}
+
 	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
 	check(DialogGraph);
 
@@ -1213,6 +1250,8 @@ void FDialogBuilderEditor::UpdateDialogStage()
 		PivotActor = PreviewWorld->SpawnActor<AActor>(AActor::StaticClass(), FTransform::Identity, SpawnParams);
 		if (PivotActor)
 		{
+			DisablePreviewActorPhysics(PivotActor);
+
 			USceneComponent* PivotRoot = NewObject<USceneComponent>(PivotActor, TEXT("PivotRoot"));
 			PivotActor->SetRootComponent(PivotRoot);
 			PivotRoot->RegisterComponent();
@@ -1333,6 +1372,11 @@ void FDialogBuilderEditor::UpdateDialogStage()
 
 void FDialogBuilderEditor::RetrieveDialogSlotActor(UDialogSequenceSlot* InSlot, AActor*& OutActor, bool bIsCamera)
 {
+	if (bIsClosing)
+	{
+		return;
+	}
+
 	if (!InSlot)
 	{
 		return;
@@ -1373,7 +1417,7 @@ void FDialogBuilderEditor::RetrieveDialogSlotActor(UDialogSequenceSlot* InSlot, 
 				const TSharedPtr<FDialogBuilderEditor> EditorPinned = EditorWeak.Pin();
 				UDialogSequenceSlot* Slot = SlotWeak.Get();
 
-				if (!EditorPinned.IsValid() || !Slot || !LoadedActorClass)
+				if (!EditorPinned.IsValid() || EditorPinned->bIsClosing || !Slot || !LoadedActorClass)
 				{
 					return;
 				}
@@ -1423,9 +1467,7 @@ void FDialogBuilderEditor::RetrieveDialogSlotActor(UDialogSequenceSlot* InSlot, 
 					return;
 				}
 				
-				NewActor->SetActorTickEnabled(false);
-				NewActor->SetTickableWhenPaused(false);
-				NewActor->PrimaryActorTick.bStartWithTickEnabled = false;
+				DisablePreviewActorPhysics(NewActor);
 				TArray<USkeletalMeshComponent*> SkeletalMeshComponents;
 				NewActor->GetComponents(SkeletalMeshComponents);
 
@@ -1518,6 +1560,11 @@ void FDialogBuilderEditor::RetrieveDialogSlotActor(UDialogSequenceSlot* InSlot, 
 
 void FDialogBuilderEditor::RetrieveLightSlotActor(UDialogSequenceSlot_Light* InLightSlot, AActor*& OutActor)
 {
+	if (bIsClosing)
+	{
+		return;
+	}
+
 	if(!InLightSlot)
 	{
 		return;
@@ -1567,10 +1614,8 @@ void FDialogBuilderEditor::RetrieveLightSlotActor(UDialogSequenceSlot_Light* InL
 		{
 			return;
 		}
+		DisablePreviewActorPhysics(NewActor);
 		NewActor->AttachToActor(SequencePivot.Get(), FAttachmentTransformRules::SnapToTargetNotIncludingScale);
-		NewActor->SetActorTickEnabled(false);
-		NewActor->SetTickableWhenPaused(false);
-		NewActor->PrimaryActorTick.bStartWithTickEnabled = false;
 
 		NewActor->SetActorRelativeLocation(InLightSlot->SlotLocation);
 		NewActor->SetActorRelativeRotation(InLightSlot->SlotRotation);
@@ -1675,12 +1720,6 @@ void FDialogBuilderEditor::DestroyDialogStage()
 {
 	UDialogBuilderGraph* DialogGraph = GetDialogBuilderGraph();
 	UWorld* PreviewWorld = GetPreviewWorld();
-	check(PreviewWorld);
-
-	if(!DialogGraph)
-	{
-		return;
-	}
 
 	if (DialogViewportWidget.IsValid())
 	{
@@ -1692,30 +1731,34 @@ void FDialogBuilderEditor::DestroyDialogStage()
 
 	ResetEditorSelectionWithoutResolvingElements();
 
-	if (AActor* CameraActor = DialogCamera.Get())
+	if (DialogGraph)
 	{
-		DialogGraph->CachedCameraTransform = CameraActor->GetActorTransform();
+		if (AActor* CameraActor = DialogCamera.Get())
+		{
+			DialogGraph->CachedCameraTransform = CameraActor->GetActorTransform();
+		}
 	}
 
-	for (auto& Pair : DialogSlotActors)
+	if (PreviewWorld)
 	{
-		if (AActor* Actor = Pair.Value.Get())
+		for (auto& Pair : DialogSlotActors)
 		{
-			DestroyPreviewActor(PreviewWorld, Actor);
-
-			if (EditingDialogSequence && Pair.Key)
+			if (AActor* Actor = Pair.Value.Get())
 			{
-				EditingDialogSequence->UnbindPossessableObjects(Pair.Key->ID);
+				DestroyPreviewActor(PreviewWorld, Actor);
+
+				if (EditingDialogSequence && Pair.Key)
+				{
+					EditingDialogSequence->UnbindPossessableObjects(Pair.Key->ID);
+				}
 			}
+
 		}
 
-	}
-
-	
-
-	if (AActor* PivotActor = SequencePivot.Get())
-	{
-		DestroyPreviewActor(PreviewWorld, PivotActor);
+		if (AActor* PivotActor = SequencePivot.Get())
+		{
+			DestroyPreviewActor(PreviewWorld, PivotActor);
+		}
 	}
 
 	DialogCamera.Reset();
