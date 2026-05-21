@@ -94,7 +94,6 @@ void UQuestBuilderNode::Initialize(bool bLaunchEventOnLoad)
 									Quest->CurrentNodes.RemoveSingle(CurrNode);
 									CurrNode->bWaitForBranching = false;
 								}
-
 							}
 						}
 						NextNodes.Empty();
@@ -175,6 +174,10 @@ void UQuestBuilderNode::EvaluateNextNode()
 			{
 				if (ObjectiveNode->bOptional)
 					continue;
+								
+				//Also check if the objective node has no parent, which means this objective is not connected with any other objective and should not block the branching
+				if (ObjectiveNode->ParentNodes.IsEmpty()) continue;
+
 				if(!ObjectiveNode->IsObjectiveCompleted())
 					bCanBranch = false;
 			}
