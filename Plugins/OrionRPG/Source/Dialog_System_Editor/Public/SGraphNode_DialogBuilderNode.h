@@ -25,6 +25,7 @@ protected:
 };
 
 class UDialogBuilderEdNode;
+enum class EEventLaunchType : uint8;
 class DIALOG_SYSTEM_EDITOR_API SGraphNode_DialogBuilderNode : public SGraphNode
 {
 public:
@@ -63,6 +64,10 @@ public:
 	virtual FText GetDescription() const;
 	virtual EVisibility GetDescriptionVisibility() const;
 	virtual EVisibility GetEventsVisibility() const;
+	virtual EVisibility GetLaunchTypeEventsVisibility(EEventLaunchType LaunchType) const;
+	virtual EVisibility GetStartEventsVisibility() const;
+	virtual EVisibility GetEndEventsVisibility() const;
+	virtual EVisibility GetBothEventsVisibility() const;
 	virtual EVisibility GetDecoratorVisibility() const;
 
 	/**
@@ -79,6 +84,7 @@ public:
 
 	/** adds event widget inside current node */
 	void AddEvent(TSharedPtr<SGraphNode> EventWidget);
+	void AddEvent(TSharedPtr<SGraphNode> EventWidget, EEventLaunchType EventLaunchType);
 
 
 	/** handle mouse down on the node */
@@ -145,6 +151,9 @@ protected:
 	TArray< TSharedPtr<SGraphNode> > EventsWidgets;
 	TSharedPtr<SVerticalBox> DecoratorsBox;
 	TSharedPtr<SVerticalBox> EventsBox;
+	TSharedPtr<SVerticalBox> StartEventsBox;
+	TSharedPtr<SVerticalBox> EndEventsBox;
+	TSharedPtr<SVerticalBox> BothEventsBox;
 	TSharedPtr<SHorizontalBox> OutputPinBox;
 	TSharedPtr<SWidget> DialogNodeWidgetRef;
 
@@ -152,6 +161,8 @@ protected:
 	TSharedPtr<SWidget> IndexOverlay;
 
 	EVisibility GetBlueprintIconVisibility() const;
+	EEventLaunchType GetEventLaunchTypeForDrop(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const;
+	void SetEventLaunchType(UDialogBuilderEdNode* EventNode, EEventLaunchType EventLaunchType);
 
 	/** Sequencer quick-open icon visibility */
 	EVisibility GetSequencerIconVisibility() const;

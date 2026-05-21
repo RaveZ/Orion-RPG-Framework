@@ -258,6 +258,10 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 		SAssignNew(EventsBox, SVerticalBox);
 	}
 
+	SAssignNew(StartEventsBox, SVerticalBox);
+	SAssignNew(EndEventsBox, SVerticalBox);
+	SAssignNew(BothEventsBox, SVerticalBox);
+
 	// Reset variables that are going to be exposed, in case we are refreshing an already setup node.
 	RightNodeBox.Reset();
 	LeftNodeBox.Reset(); 
@@ -295,7 +299,8 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 					NewNode->SetOwner(OwnerGraphPanelPtr.Pin().ToSharedRef());
 					OwnerGraphPanelPtr.Pin()->AttachGraphEvents(NewNode);
 				}
-				AddEvent(NewNode);
+				UOrionEvent* Event = DialogEdNode->Events[i] ? Cast<UOrionEvent>(DialogEdNode->Events[i]->NodeInstance) : nullptr;
+				AddEvent(NewNode, Event ? Event->EventLaunchType : EEventLaunchType::E_Start);
 				NewNode->UpdateGraphNode();
 			}
 		}
@@ -606,7 +611,82 @@ void SGraphNode_DialogBuilderNode::UpdateGraphNode()
 																		.Padding(FMargin(8.0f, 0, 0, 0))
 																		.AutoHeight()
 																		[
-																			EventsBox.ToSharedRef()
+																			SNew(SVerticalBox)
+																			+ SVerticalBox::Slot()
+																			.AutoHeight()
+																			[
+																				SNew(SBorder)
+																					.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+																					.BorderBackgroundColor(DialogBuilderColors::NodeBorder::SubNodeBorder)
+																					.Visibility(this, &SGraphNode_DialogBuilderNode::GetStartEventsVisibility)
+																					[
+																						SNew(SVerticalBox)
+																						+ SVerticalBox::Slot()
+																						.AutoHeight()
+																						.Padding(FMargin(4.0f, 0.0f))
+																						[
+																							SNew(STextBlock)
+																								.Text(LOCTEXT("StartEventLabel", "Start"))
+																								.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+																						]
+																						+ SVerticalBox::Slot()
+																						.AutoHeight()
+																						.Padding(FMargin(8.0f, 0.0f, 0.0f, 0.0f))
+																						[
+																							StartEventsBox.ToSharedRef()
+																						]
+																					]
+																			]
+																			+ SVerticalBox::Slot()
+																			.AutoHeight()
+																			[
+																				SNew(SBorder)
+																					.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+																					.BorderBackgroundColor(DialogBuilderColors::NodeBorder::SubNodeBorder)
+																					.Visibility(this, &SGraphNode_DialogBuilderNode::GetEndEventsVisibility)
+																					[
+																						SNew(SVerticalBox)
+																						+ SVerticalBox::Slot()
+																						.AutoHeight()
+																						.Padding(FMargin(4.0f, 0.0f))
+																						[
+																							SNew(STextBlock)
+																								.Text(LOCTEXT("EndEventLabel", "End"))
+																								.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+																						]
+																						+ SVerticalBox::Slot()
+																						.AutoHeight()
+																						.Padding(FMargin(8.0f, 0.0f, 0.0f, 0.0f))
+																						[
+																							EndEventsBox.ToSharedRef()
+																						]
+																					]
+																			]
+																			+ SVerticalBox::Slot()
+																			.AutoHeight()
+																			[
+																				SNew(SBorder)
+																					.BorderImage(FAppStyle::GetBrush("BTEditor.Graph.BTNode.Body"))
+																					.BorderBackgroundColor(DialogBuilderColors::NodeBorder::SubNodeBorder)
+																					.Visibility(this, &SGraphNode_DialogBuilderNode::GetBothEventsVisibility)
+																					[
+																						SNew(SVerticalBox)
+																						+ SVerticalBox::Slot()
+																						.AutoHeight()
+																						.Padding(FMargin(4.0f, 0.0f))
+																						[
+																							SNew(STextBlock)
+																								.Text(LOCTEXT("BothEventLabel", "Both"))
+																								.TextStyle(FAppStyle::Get(), TEXT("PhysicsAssetEditor.Tools.Font"))
+																						]
+																						+ SVerticalBox::Slot()
+																						.AutoHeight()
+																						.Padding(FMargin(8.0f, 0.0f, 0.0f, 0.0f))
+																						[
+																							BothEventsBox.ToSharedRef()
+																						]
+																					]
+																			]
 																		]
 																]
 														]
@@ -854,12 +934,14 @@ FReply SGraphNode_DialogBuilderNode::OnDrop(const FGeometry& MyGeometry, const F
 
 		UDialogBuilderEdNode* DropTargetNode = DragNodeOp->GetDropTargetNode();
 		const int32 InsertIndex = MyNode->FindSubNodeDropIndex(DropTargetNode);
+		const EEventLaunchType DroppedEventLaunchType = GetEventLaunchTypeForDrop(MyGeometry, DragDropEvent);
 
 		for (int32 Idx = 0; Idx < DraggedNodes.Num(); Idx++)
 		{
 			UDialogBuilderEdNode* DraggedTestNode = Cast<UDialogBuilderEdNode>(DraggedNodes[Idx]->GetNodeObj());
 			DraggedTestNode->Modify();
 			DraggedTestNode->ParentNode = MyNode;
+			SetEventLaunchType(DraggedTestNode, DroppedEventLaunchType);
 
 			MyNode->Modify();
 			MyNode->InsertSubNodeAt(DraggedTestNode, InsertIndex);
@@ -1222,6 +1304,45 @@ EVisibility SGraphNode_DialogBuilderNode::GetEventsVisibility() const
 	}
 	return EVisibility::Collapsed;
 }
+
+
+EVisibility SGraphNode_DialogBuilderNode::GetLaunchTypeEventsVisibility(EEventLaunchType LaunchType) const
+{
+	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
+	UDialogBuilderNode* DialogNode = DialogEdNode ? Cast<UDialogBuilderNode>(DialogEdNode->NodeInstance) : nullptr;
+	
+	if (DialogNode)
+	{
+		for (auto& Event : DialogNode->Events)
+		{
+			if (Event->EventLaunchType == LaunchType)
+			{
+				return EVisibility::Visible;
+			}
+		}
+	}
+
+	return EVisibility::Collapsed;
+}
+
+EVisibility SGraphNode_DialogBuilderNode::GetStartEventsVisibility() const
+{
+	
+	return GetLaunchTypeEventsVisibility(EEventLaunchType::E_Start);
+}
+
+EVisibility SGraphNode_DialogBuilderNode::GetEndEventsVisibility() const
+{
+	
+	return GetLaunchTypeEventsVisibility(EEventLaunchType::E_End);
+}
+
+EVisibility SGraphNode_DialogBuilderNode::GetBothEventsVisibility() const
+{
+	return GetLaunchTypeEventsVisibility(EEventLaunchType::E_Both);
+}
+
+
 EVisibility SGraphNode_DialogBuilderNode::GetDecoratorVisibility() const
 {
 	UDialogBuilderEdNode* DialogEdNode = Cast<UDialogBuilderEdNode>(GraphNode);
@@ -1252,12 +1373,81 @@ void SGraphNode_DialogBuilderNode::AddDecorator(TSharedPtr<SGraphNode> Decorator
 
 void SGraphNode_DialogBuilderNode::AddEvent(TSharedPtr<SGraphNode> EventWidget)
 {
-	EventsBox->AddSlot().AutoHeight()
+	UDialogBuilderEdNode* EventNode = EventWidget.IsValid() ? Cast<UDialogBuilderEdNode>(EventWidget->GetNodeObj()) : nullptr;
+	UOrionEvent* Event = EventNode ? Cast<UOrionEvent>(EventNode->NodeInstance) : nullptr;
+	AddEvent(EventWidget, Event ? Event->EventLaunchType : EEventLaunchType::E_Start);
+}
+
+void SGraphNode_DialogBuilderNode::AddEvent(TSharedPtr<SGraphNode> EventWidget, EEventLaunchType EventLaunchType)
+{
+	TSharedPtr<SVerticalBox> TargetBox = StartEventsBox;
+	if (EventLaunchType == EEventLaunchType::E_End)
+	{
+		TargetBox = EndEventsBox;
+	}
+	else if (EventLaunchType == EEventLaunchType::E_Both)
+	{
+		TargetBox = BothEventsBox;
+	}
+
+	TargetBox->AddSlot().AutoHeight()
 		[
 			EventWidget.ToSharedRef()
 		];
 	EventsWidgets.Add(EventWidget);
 	AddSubNode(EventWidget);
+}
+
+EEventLaunchType SGraphNode_DialogBuilderNode::GetEventLaunchTypeForDrop(const FGeometry& MyGeometry, const FPointerEvent& MouseEvent) const
+{
+	TSet<TSharedRef<SWidget>> EventContainers;
+	if (StartEventsBox.IsValid())
+	{
+		EventContainers.Add(StartEventsBox.ToSharedRef());
+	}
+	if (EndEventsBox.IsValid())
+	{
+		EventContainers.Add(EndEventsBox.ToSharedRef());
+	}
+	if (BothEventsBox.IsValid())
+	{
+		EventContainers.Add(BothEventsBox.ToSharedRef());
+	}
+
+	TMap<TSharedRef<SWidget>, FArrangedWidget> Result;
+	FindChildGeometries(MyGeometry, EventContainers, Result);
+
+	if (Result.Num() > 0)
+	{
+		FArrangedChildren ArrangedChildren(EVisibility::Visible);
+		Result.GenerateValueArray(ArrangedChildren.GetInternalArray());
+
+		const int32 HoveredIndex = SWidget::FindChildUnderMouse(ArrangedChildren, MouseEvent);
+		if (HoveredIndex != INDEX_NONE)
+		{
+			const TSharedRef<SWidget>& HoveredWidget = ArrangedChildren[HoveredIndex].Widget;
+			if (EndEventsBox.IsValid() && &HoveredWidget.Get() == EndEventsBox.Get())
+			{
+				return EEventLaunchType::E_End;
+			}
+			if (BothEventsBox.IsValid() && &HoveredWidget.Get() == BothEventsBox.Get())
+			{
+				return EEventLaunchType::E_Both;
+			}
+		}
+	}
+
+	return EEventLaunchType::E_Start;
+}
+
+void SGraphNode_DialogBuilderNode::SetEventLaunchType(UDialogBuilderEdNode* EventNode, EEventLaunchType EventLaunchType)
+{
+	UOrionEvent* Event = EventNode ? Cast<UOrionEvent>(EventNode->NodeInstance) : nullptr;
+	if (Event && Event->EventLaunchType != EventLaunchType)
+	{
+		Event->Modify();
+		Event->EventLaunchType = EventLaunchType;
+	}
 }
 
 void SGraphNode_DialogBuilderNode::AddSubNode(TSharedPtr<SGraphNode> SubNodeWidget)
