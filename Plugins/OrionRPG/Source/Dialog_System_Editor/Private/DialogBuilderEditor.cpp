@@ -3124,7 +3124,7 @@ void FDialogBuilderEditor::GenerateSequenceCameraFromDialogSections(const UDialo
 	const bool bRandomizeCameraAngles = InSettings ? InSettings->bRandomizeCameraAngles : false;
 	const bool bRandomizeCameraPresets = InSettings ? InSettings->bRandomizeCameraPresets : true;
 	const EMovieSceneKeyInterpolation KeyInterpolationType = InSettings ? InSettings->KeyInterpolation : EMovieSceneKeyInterpolation::Constant;
-	const TArray<UDialogSequenceShot*> CameraPresets = InSettings ? InSettings->DefaultShots : CameraPresets;
+	const TArray<UDialogSequenceShot*> CameraPresets = InSettings ? InSettings->DefaultShots : TArray<UDialogSequenceShot*>();
 	const bool bOverridePlaybackRangeStart = InSettings ? InSettings->bOverridePlaybackRangeStart : false;
 	const bool bOverridePlaybackRangeEnd = InSettings ? InSettings->bOverridePlaybackRangeEnd : false;
 	const float PlaybackRangeStart = InSettings ? InSettings->PlaybackRangeStart : 0.f;
