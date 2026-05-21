@@ -340,7 +340,8 @@ void UDialogBuilderGraph::SetDialogStage(UDialogStage* InDialogStage)
 		}
 		//Camera uses slot ID for binding
 		const FName SlotId = CameraSlot->GetID();
-		if (SequenceCameraActor = RetrieveCameraFromSlot(CameraSlot, SlotId))
+		SequenceCameraActor = RetrieveCameraFromSlot(CameraSlot, SlotId);
+		if (SequenceCameraActor)
 		{
 			CurrentDialogSequence->UnbindPossessableObjects(CameraSlot->ID);
 			CurrentDialogSequence->BindPossessableObject(CameraSlot->ID, *SequenceCameraActor, SequenceCameraActor->GetClass());
