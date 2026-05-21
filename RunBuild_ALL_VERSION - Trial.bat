@@ -21,7 +21,7 @@ for %%V in (%UE_VERSIONS%) do (
 
     :: Set the full paths for the current version
     set "ENGINE_UAT_PATH=!ENGINE_BASE_PATH!\%%V\Engine\Build\BatchFiles\RunUAT.bat"
-    set "CURRENT_PACKAGE_PATH=!PACKAGE_BASE_PATH!\%%V\OrionRPG-Trial"
+    set "CURRENT_PACKAGE_PATH=!PACKAGE_BASE_PATH!\OrionRPG-Trial%%V"
     set "ZIP_FILE_PATH=!PACKAGE_BASE_PATH!\ZipFiles\OrionRPG-Trial_%%V.zip"
     
     :: Check if the Unreal Engine path exists before trying to build
@@ -40,10 +40,11 @@ for %%V in (%UE_VERSIONS%) do (
             echo Plugin build for %%V successful.
             echo.
             
+            
             :: Deleting Intermediate and Binaries folders from the packaged plugin directory
-            echo Deleting Intermediate and Binaries folders from the packaged plugin...
+            echo Deleting Source folders from the packaged plugin...
+            rd /s /q "!CURRENT_PACKAGE_PATH!\Source"
             rd /s /q "!CURRENT_PACKAGE_PATH!\Intermediate"
-            rd /s /q "!CURRENT_PACKAGE_PATH!\Binaries"
             
             echo Cleanup of packaged plugin complete.
             echo.
