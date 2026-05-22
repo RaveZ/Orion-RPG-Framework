@@ -276,25 +276,29 @@ FDialogBuilderEditor::~FDialogBuilderEditor()
 
 	if (Sequencer.IsValid())
 	{
-		// Prevent UnrealEd pivot update from resolving stale actor elements during sequencer shutdown.
 		ResetEditorSelectionWithoutResolvingElements();
 		Sequencer->Close();
 	}
 
-	// Release sequencer/editor references early
 	Sequencer.Reset();
 	PlaybackContext.Reset();
 
 
-	// Optional but recommended if you extend tool menus with this owner
 	UToolMenus::UnregisterOwner(this);
 	if (DialogViewportWidget.IsValid())
 	{
 		DialogViewportWidget->OnActorUnlock();
 		DialogViewportWidget->RemoveDialogOverlayWidget();
-		DialogViewportWidget.Reset();
 	}
 	DestroyDialogStage();
+	
+	if (UWorld* World = PreviewScene.GetWorld())
+	{
+		
+		World->CleanupWorld(true, true);
+	}
+	
+	
 #if ENGINE_MAJOR_VERSION < 5
 	UPackage::PackageSavedEvent.Remove(OnPackageSavedDelegateHandle);
 #else // #if ENGINE_MAJOR_VERSION < 5
@@ -357,8 +361,6 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 		ToolbarBuilder = MakeShareable(new FDialogBuilderEditorToolbar(SharedThis(this)));
 	}
 
-	// if we are already editing objects, dont try to recreate the editor from scratch but update the list of objects in edition
-	// ex: BehaviorTree may want to reuse an editor already opened for its associated Blackboard asset.
 	const TArray<UObject*>* EditedObjects = GetObjectsCurrentlyBeingEdited();
 	if (EditedObjects == nullptr || EditedObjects->Num() == 0)
 	{
@@ -945,7 +947,6 @@ namespace
 				{
 					FGuid CineComponentBindingId;
 
-					// Same mechanism Sequencer uses when adding component bindings.
 					if (InSequencer)
 					{
 						CineComponentBindingId = InSequencer->GetHandleToObject(CineCameraComponent, true);
