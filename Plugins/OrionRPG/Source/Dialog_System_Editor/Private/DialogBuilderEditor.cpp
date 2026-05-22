@@ -1883,6 +1883,19 @@ void FDialogBuilderEditor::SelectLightSlotActor(int32 index)
 
 void FDialogBuilderEditor::SelectActor(AActor* ActorToSelect)
 {
+	if (ActorToSelect && IsValid(ActorToSelect))
+	{
+		USceneComponent* RootComp = ActorToSelect->GetRootComponent();
+		if (!IsValid(RootComp))
+		{
+			// No valid root component — cannot select
+			ActorToSelect = nullptr;
+		}
+	}
+	else
+	{
+		ActorToSelect = nullptr;
+	}
 	FDialogBuilderViewportClient* ViewportClient = DialogViewportWidget ? DialogViewportWidget->GetDialogViewportClientPtr() : nullptr;
 	if (!ViewportClient)
 	{
