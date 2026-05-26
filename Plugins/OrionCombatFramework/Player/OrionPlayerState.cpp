@@ -1,0 +1,89 @@
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
+
+
+#include "OrionPlayerState.h"
+
+#include "Net/UnrealNetwork.h"
+#include "OrionCombatFramework/AbilitySystem/OrionAbilitySystemComponent.h"
+#include "OrionCombatFramework/AbilitySystem/OrionAttributeSet.h"
+
+
+AOrionPlayerState::AOrionPlayerState()
+{
+	AbilitySystemComponent = CreateDefaultSubobject<UOrionAbilitySystemComponent>("AbilitySystemComponent");
+	AbilitySystemComponent->SetIsReplicated(true);
+	AbilitySystemComponent->SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
+	
+	AttributeSet = CreateDefaultSubobject<UOrionAttributeSet>("AttributeSet");
+	SetNetUpdateFrequency(100.f);
+}
+
+void AOrionPlayerState::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AOrionPlayerState, Level);
+	DOREPLIFETIME(AOrionPlayerState, XP);
+	DOREPLIFETIME(AOrionPlayerState, AttributePoints);
+	DOREPLIFETIME(AOrionPlayerState, SkillPoints);
+}
+
+UAbilitySystemComponent* AOrionPlayerState::GetAbilitySystemComponent() const
+{
+	return AbilitySystemComponent;
+}
+
+void AOrionPlayerState::AddToXP(int32 InXP)
+{
+	XP += InXP;
+	OnXPChangedDelegate.Broadcast(XP);
+}
+
+void AOrionPlayerState::AddToLevel(int32 InLevel)
+{
+	Level += InLevel;
+	OnLevelChangedDelegate.Broadcast(Level);	
+}
+
+void AOrionPlayerState::AddToAttributePoints(int32 InPoints)
+{
+	AttributePoints += InPoints;
+	OnAttributePointsChangedDelegate.Broadcast(AttributePoints);
+}
+
+void AOrionPlayerState::AddToSkillPoints(int32 InPoints)
+{
+	SkillPoints += InPoints;
+	OnSkillPointsChangedDelegate.Broadcast(SkillPoints);
+}
+
+void AOrionPlayerState::SetXP(int32 InXP)
+{
+	XP = InXP;
+	OnXPChangedDelegate.Broadcast(XP);
+}
+
+void AOrionPlayerState::SetLevel(int32 InLevel)
+{
+	Level = InLevel;
+	OnLevelChangedDelegate.Broadcast(Level);
+}
+
+void AOrionPlayerState::OnRep_Level(int32 OldLevel)
+{
+	OnLevelChangedDelegate.Broadcast(Level);
+}
+
+void AOrionPlayerState::OnRep_XP(int32 OldXP)
+{
+	OnXPChangedDelegate.Broadcast(XP);
+}
+
+void AOrionPlayerState::OnRep_AttributePoints(int32 OldAttributePoints)
+{
+	OnAttributePointsChangedDelegate.Broadcast(AttributePoints);
+}
+
+void AOrionPlayerState::OnRep_SkillPoints(int32 OldSpellPoints)
+{
+	OnSkillPointsChangedDelegate.Broadcast(SkillPoints);
+}
