@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class OrionCombatFramework : ModuleRules
+public class OrionCombat : ModuleRules
 {
-	public OrionCombatFramework(ReadOnlyTargetRules Target) : base(Target)
+	public OrionCombat(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = ModuleRules.PCHUsageMode.UseExplicitOrSharedPCHs;
 		
@@ -17,7 +17,7 @@ public class OrionCombatFramework : ModuleRules
 		
 		PrivateIncludePaths.AddRange(
 			new string[] {
-				// ... add other private include paths required here ...
+				"OrionCombat/Private",
 			}
 			);
 			

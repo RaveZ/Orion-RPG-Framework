@@ -1,16 +1,16 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
-#include "OrionCombatFramework.h"
+#include "OrionCombat.h"
 
-#define LOCTEXT_NAMESPACE "FOrionCombatFrameworkModule"
+#define LOCTEXT_NAMESPACE "FOrionCombatModule"
 
 
-void FOrionCombatFrameworkModule::StartupModule()
+void FOrionCombatModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 }
 
-void FOrionCombatFrameworkModule::ShutdownModule()
+void FOrionCombatModule::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
@@ -18,4 +18,4 @@ void FOrionCombatFrameworkModule::ShutdownModule()
 
 #undef LOCTEXT_NAMESPACE
 	
-IMPLEMENT_MODULE(FOrionCombatFrameworkModule, OrionCombatFramework)
+IMPLEMENT_MODULE(FOrionCombatModule, OrionCombat)

@@ -27,7 +27,7 @@
 			]
 		},
 		{
-			"Name": "OrionCombatFramework",
+			"Name": "OrionCombat",
 			"Type": "Runtime",
 			"LoadingPhase": "Default",
 			"PlatformAllowList": [
@@ -74,9 +74,16 @@
 			"Name": "EnhancedInput",
 			"Enabled": true
 		},
-
 		{
 			"Name": "LevelSequenceEditor",
+			"Enabled": true
+		},
+		{
+			"Name": "Niagara",
+			"Enabled": true
+		},
+		{
+			"Name": "GameplayAbilities",
 			"Enabled": true
 		}
 	]

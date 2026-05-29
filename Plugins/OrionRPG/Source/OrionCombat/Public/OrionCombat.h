@@ -4,11 +4,10 @@
 
 #include "Modules/ModuleManager.h"
 
-#define CUSTOM_DEPTH_RED 250
 
 
 
-class FOrionCombatFrameworkModule : public IModuleInterface
+class FOrionCombatModule : public IModuleInterface
 {
 public:
 
