@@ -27,7 +27,8 @@ public class OrionCombat : ModuleRules
 			{
 				"Core",
                 "AIModule",
-                "PhysicsCore"
+                "PhysicsCore",
+				"GameplayAbilities"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -43,7 +44,6 @@ public class OrionCombat : ModuleRules
 				"Slate",
 				"SlateCore", 
 				"EnhancedInput", 
-				"GameplayAbilities",
 				"GameplayTags", 
 				"GameplayTasks",
                 "NavigationSystem",
