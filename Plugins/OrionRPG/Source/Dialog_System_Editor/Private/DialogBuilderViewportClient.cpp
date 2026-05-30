@@ -36,6 +36,8 @@
 #include "ViewportToolbar/UnrealEdViewportToolbar.h"
 #include "Widgets/Text/SRichTextBlock.h"
 #include "Framework/MultiBox/MultiBoxBuilder.h"
+#include "Framework/Notifications/NotificationManager.h"
+#include "Widgets/Notifications/SNotificationList.h"
 
 #define LOCTEXT_NAMESPACE "DialogBuilderViewportClient"
 
@@ -1125,10 +1127,24 @@ void FDialogBuilderViewportClient::MovePivotToViewportCamera()
 	{
 		return;
 	}
+	AActor* LockedActor = GetActiveActorLock().Get();
+
+	if (LockedActor)
+	{
+		FNotificationInfo Info(LOCTEXT("MovePivotRequiresPerspective", "Switch to viewport perspective mode before moving the pivot, or press 1"));
+		Info.ExpireDuration = 3.0f;
+		Info.bFireAndForget = true;
+		Info.bUseLargeFont = false;
+
+		FSlateNotificationManager::Get().AddNotification(Info);
+		return;
+	}
+
 
 	BeginTransaction(LOCTEXT("MovePivotHereTransaction", "Move Pivot Here"));
 
 	DialogStageTemplate->Modify();
+	
 	DialogStageTemplate->Location = GetViewLocation();
 
 	EndTransaction();

@@ -443,18 +443,10 @@ void FDialogBuilderEditor::Initialize(const EToolkitMode::Type Mode, const TShar
 	RegenerateMenusAndToolbars();
 	RebuildDialogBuilderGraphPages();
 
-	const TWeakPtr<FDialogBuilderEditor> EditorWeak = SharedThis(this);
-	FTSTicker::GetCoreTicker().AddTicker(
-		FTickerDelegate::CreateLambda([EditorWeak](float)
-			{
-				if (const TSharedPtr<FDialogBuilderEditor> EditorPinned = EditorWeak.Pin())
-				{
-					EditorPinned->UpdateDialogStage();
-					EditorPinned->ApplyViewportCameraMode();
-				}
-				return false;
-			}),
-		1.0f);
+
+	UpdateDialogStage();
+	ApplyViewportCameraMode();
+
 	BindDelegates();
 }
 
@@ -1448,6 +1440,7 @@ void FDialogBuilderEditor::RetrieveDialogSlotActor(UDialogSequenceSlot* InSlot, 
 					}
 
 					EditorPinned->CreateDialogTrackFromSlot(Slot, bIsCamera);
+					EditorPinned->ResolveDialogBoundObjects();
 					return;
 				}
 
