@@ -589,6 +589,13 @@ void FDialogBuilderViewportClient::SummonContextMenu(const FTypedElementHandle& 
 	FMenuBuilder MenuBuilder(true, nullptr);
 
 	MenuBuilder.AddMenuEntry(
+		LOCTEXT("MovePivotHere", "Move Pivot Here"),
+		LOCTEXT("MovePivotHere_Tooltip", "Move the dialog pivot to the current viewport camera location."),
+		FSlateIcon(),
+		FUIAction(FExecuteAction::CreateSP(this, &FDialogBuilderViewportClient::MovePivotToViewportCamera))
+	);
+
+	MenuBuilder.AddMenuEntry(
 		LOCTEXT("ResetCamera", "Reset Camera"),
 		LOCTEXT("ResetCamera_Tooltip", "Reset the dialog preview camera."),
 		FSlateIcon(),
@@ -607,6 +614,7 @@ void FDialogBuilderViewportClient::SummonContextMenu(const FTypedElementHandle& 
 		MenuBuilder.MakeWidget(),
 		FSlateApplication::Get().GetCursorPos(),
 		FPopupTransitionEffect(FPopupTransitionEffect::ContextMenu));
+
 
 }
 ELevelViewportType FDialogBuilderViewportClient::GetViewportType() const
@@ -1101,6 +1109,31 @@ void FDialogBuilderViewportClient::ResetCamera()
 			//FocusViewportOnBox(BoundingBox);
 		}
 	}
+	Invalidate();
+}
+
+void FDialogBuilderViewportClient::MovePivotToViewportCamera()
+{
+	TSharedPtr<FDialogBuilderEditor> DialogEditor = Editor.Pin();
+	if (!DialogEditor.IsValid())
+	{
+		return;
+	}
+
+	UDialogStage* DialogStageTemplate = DialogEditor->GetDialogStageTemplate();
+	if (!DialogStageTemplate)
+	{
+		return;
+	}
+
+	BeginTransaction(LOCTEXT("MovePivotHereTransaction", "Move Pivot Here"));
+
+	DialogStageTemplate->Modify();
+	DialogStageTemplate->Location = GetViewLocation();
+
+	EndTransaction();
+
+	DialogEditor->UpdateDialogStage();
 	Invalidate();
 }
 

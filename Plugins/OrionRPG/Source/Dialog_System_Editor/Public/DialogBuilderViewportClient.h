@@ -112,6 +112,12 @@ public:
 	 */
 	void ResetCamera();
 
+
+	/**
+	 * Moves the dialog pivot to the current viewport camera transform.
+	 */
+	void MovePivotToViewportCamera();
+
 	/**
 	 * Check whether this viewport is locked to the specified actor
 	 */
