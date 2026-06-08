@@ -1,8 +1,8 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
-#include "AbilitySystem/OrionGameplayAbility.h"
+#include "AbilitySystem/Abilities/OrionGameplayAbility.h"
 #include "GameFramework/Character.h"
-#include "OrionAbilitySystemComponent.h"
+#include "AbilitySystem/OrionAbilitySystemComponent.h"
 #include "GameplayEffectTypes.h"
 
 
