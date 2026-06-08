@@ -31,6 +31,7 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Orion|Ability")
 	ACharacter* GetCharacterFromActorInfo() const;
+	
 
 protected:
 	//~UGameplayAbility interface
