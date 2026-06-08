@@ -39,6 +39,18 @@
 			]
 		},
 		{
+			"Name": "OrionCombatEditor",
+			"Type": "UncookedOnly",
+			"LoadingPhase": "PreDefault",
+			"PlatformAllowList": [
+				"Win64",
+				"Android",
+				"Linux",
+				"IOS",
+				"Mac"
+			]
+		},
+		{
 			"Name": "Dialog_System_Editor",
 			"Type": "UncookedOnly",
 			"LoadingPhase": "PreDefault",
