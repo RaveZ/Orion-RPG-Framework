@@ -6,7 +6,7 @@
 #include "AbilitySystemComponent.h"
 #include "OrionAttributeSet.h"
 #include "NativeGameplayTags.h"
-#include "OrionDefaultAttributeSet.generated.h"
+#include "OrionAttributeSetBase.generated.h"
 
 class UObject;
 
@@ -19,18 +19,18 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Orion_Damage_Message);
  * 
  */
 UCLASS(BlueprintType)
-class ORIONCOMBAT_API UOrionDefaultAttributeSet : public UOrionAttributeSet
+class ORIONCOMBAT_API UOrionAttributeSetBase : public UOrionAttributeSet
 {
 	GENERATED_BODY()
 public:
-	UOrionDefaultAttributeSet();
+	UOrionAttributeSetBase();
 	
-	ATTRIBUTE_ACCESSORS(UOrionDefaultAttributeSet, Health);
-	ATTRIBUTE_ACCESSORS(UOrionDefaultAttributeSet, Mana);
-	ATTRIBUTE_ACCESSORS(UOrionDefaultAttributeSet, MaxHealth);
-	ATTRIBUTE_ACCESSORS(UOrionDefaultAttributeSet, MaxMana);
-	ATTRIBUTE_ACCESSORS(UOrionDefaultAttributeSet, Healing);
-	ATTRIBUTE_ACCESSORS(UOrionDefaultAttributeSet, Damage);
+	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, Health);
+	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, Mana);
+	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, MaxHealth);
+	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, MaxMana);
+	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, Healing);
+	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, Damage);
 	
 	// Delegate when health changes due to damage/healing, some information may be missing on the client
 	mutable FOrionAttributeEvent OnHealthChanged;

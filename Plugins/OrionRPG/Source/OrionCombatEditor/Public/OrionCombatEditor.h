@@ -31,8 +31,6 @@ public:
 	virtual TSharedPtr<FExtensibilityManager> GetMenuExtensibilityManager() override { return MenuExtensibilityManager; }
 	virtual TSharedPtr<FExtensibilityManager> GetToolBarExtensibilityManager() override { return ToolBarExtensibilityManager; }
 	
-	void CheckClassCache();
-
 	static TSharedPtr<FSlateStyleSet> CustomAssetsEditorSlateStyle;
 
 private:
@@ -55,14 +53,10 @@ private:
 	TSharedPtr<FExtensibilityManager> ToolBarExtensibilityManager;
 
 	TSharedPtr<class FUICommandList> PluginCommands;
-	TSharedPtr<FDialogBuilderNodeFactory> GraphPanelNodeFactory_DialogEditor;
 	TSharedPtr<class IDetailsView> PropertyWidget;
 
 	EAssetTypeCategories::Type DialogEditorAssetCategoryBit;
 	TArray< TSharedPtr<IAssetTypeActions> > CreatedAssetTypeActions;
-
-	TSharedPtr<struct FGraphNodeClassHelper> DecoratorClassCache;
-	TSharedPtr<struct FGraphNodeClassHelper> EventClassCache;
 
 	/** List of registered class that we must unregister when the module shuts down */
 	TSet< FName > RegisteredClassNames;

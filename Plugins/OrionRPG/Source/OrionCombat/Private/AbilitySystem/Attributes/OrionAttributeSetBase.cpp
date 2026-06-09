@@ -1,7 +1,7 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
-#include "AbilitySystem/Attributes/OrionDefaultAttributeSet.h"
+#include "AbilitySystem/Attributes/OrionAttributeSetBase.h"
 #include "AbilitySystem/OrionAbilitySystemComponent.h"
 #include "Engine/World.h"
 #include "GameplayEffectExtension.h"
@@ -13,7 +13,7 @@ UE_DEFINE_GAMEPLAY_TAG(TAG_Gameplay_DamageSelfDestruct, "Gameplay.Damage.SelfDes
 UE_DEFINE_GAMEPLAY_TAG(TAG_Gameplay_FellOutOfWorld, "Gameplay.Damage.FellOutOfWorld");
 UE_DEFINE_GAMEPLAY_TAG(TAG_Orion_Damage_Message, "Orion.Damage.Message");
 
-UOrionDefaultAttributeSet::UOrionDefaultAttributeSet()
+UOrionAttributeSetBase::UOrionAttributeSetBase()
 	: Health(100.0f)
 	, MaxHealth(100.0f)
 	, Mana(50.0f)
@@ -24,35 +24,35 @@ UOrionDefaultAttributeSet::UOrionDefaultAttributeSet()
 	HealthBeforeAttributeChange = 0.0f;
 }
 
-void UOrionDefaultAttributeSet::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
+void UOrionAttributeSetBase::GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	//Vital Attributes
-	DOREPLIFETIME_CONDITION_NOTIFY(UOrionDefaultAttributeSet, Health, COND_None, REPNOTIFY_Always)
-	DOREPLIFETIME_CONDITION_NOTIFY(UOrionDefaultAttributeSet, MaxHealth, COND_None, REPNOTIFY_Always)
-	DOREPLIFETIME_CONDITION_NOTIFY(UOrionDefaultAttributeSet, Mana, COND_None, REPNOTIFY_Always)
-	DOREPLIFETIME_CONDITION_NOTIFY(UOrionDefaultAttributeSet, MaxMana, COND_None, REPNOTIFY_Always)
+	DOREPLIFETIME_CONDITION_NOTIFY(UOrionAttributeSetBase, Health, COND_None, REPNOTIFY_Always)
+	DOREPLIFETIME_CONDITION_NOTIFY(UOrionAttributeSetBase, MaxHealth, COND_None, REPNOTIFY_Always)
+	DOREPLIFETIME_CONDITION_NOTIFY(UOrionAttributeSetBase, Mana, COND_None, REPNOTIFY_Always)
+	DOREPLIFETIME_CONDITION_NOTIFY(UOrionAttributeSetBase, MaxMana, COND_None, REPNOTIFY_Always)
 
 	//Primary Attributes
 
 	//Secondary Attributes
 }
 
-void UOrionDefaultAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
+void UOrionAttributeSetBase::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
 {
 	Super::PreAttributeBaseChange(Attribute, NewValue);
 	
 	ClampAttribute(Attribute, NewValue);
 }
 
-void UOrionDefaultAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+void UOrionAttributeSetBase::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
 	Super::PreAttributeChange(Attribute, NewValue);
 	ClampAttribute(Attribute, NewValue);
 }
 
-void UOrionDefaultAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
+void UOrionAttributeSetBase::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
 {
 	Super::PostAttributeChange(Attribute, OldValue, NewValue);
 	if (Attribute == GetMaxHealthAttribute())
@@ -73,7 +73,7 @@ void UOrionDefaultAttributeSet::PostAttributeChange(const FGameplayAttribute& At
 	}
 }
 
-void UOrionDefaultAttributeSet::ClampAttribute(const FGameplayAttribute& Attribute, float& NewValue) const
+void UOrionAttributeSetBase::ClampAttribute(const FGameplayAttribute& Attribute, float& NewValue) const
 {
 	if (Attribute == GetHealthAttribute())
 	{
@@ -87,7 +87,7 @@ void UOrionDefaultAttributeSet::ClampAttribute(const FGameplayAttribute& Attribu
 	}
 }
 
-bool UOrionDefaultAttributeSet::PreGameplayEffectExecute(FGameplayEffectModCallbackData& Data)
+bool UOrionAttributeSetBase::PreGameplayEffectExecute(FGameplayEffectModCallbackData& Data)
 {
 	if (!Super::PreGameplayEffectExecute(Data))
 	{
@@ -118,7 +118,7 @@ bool UOrionDefaultAttributeSet::PreGameplayEffectExecute(FGameplayEffectModCallb
 	return true;
 }
 
-void UOrionDefaultAttributeSet::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
+void UOrionAttributeSetBase::PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data)
 {
 	Super::PostGameplayEffectExecute(Data);
 	
@@ -173,9 +173,9 @@ void UOrionDefaultAttributeSet::PostGameplayEffectExecute(const struct FGameplay
 }
 
 
-void UOrionDefaultAttributeSet::OnRep_Health(const FGameplayAttributeData& OldValue) 
+void UOrionAttributeSetBase::OnRep_Health(const FGameplayAttributeData& OldValue) 
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UOrionDefaultAttributeSet, Health, OldValue);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UOrionAttributeSetBase, Health, OldValue);
 	const float CurrentHealth = GetHealth();
 	const float EstimatedMagnitude = CurrentHealth - OldValue.GetCurrentValue();
 
@@ -189,21 +189,21 @@ void UOrionDefaultAttributeSet::OnRep_Health(const FGameplayAttributeData& OldVa
 	bOutOfHealth = (CurrentHealth <= 0.0f);
 }
 
-void UOrionDefaultAttributeSet::OnRep_Mana(const FGameplayAttributeData& OldValue)
+void UOrionAttributeSetBase::OnRep_Mana(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UOrionDefaultAttributeSet, Mana, OldValue);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UOrionAttributeSetBase, Mana, OldValue);
 }
 
 
-void UOrionDefaultAttributeSet::OnRep_MaxHealth(const FGameplayAttributeData& OldValue)
+void UOrionAttributeSetBase::OnRep_MaxHealth(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UOrionDefaultAttributeSet, MaxHealth, OldValue);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UOrionAttributeSetBase, MaxHealth, OldValue);
 	// Call the change callback, but without an instigator
 	// This could be changed to an explicit RPC in the future
 	OnMaxHealthChanged.Broadcast(nullptr, nullptr, nullptr, GetMaxHealth() - OldValue.GetCurrentValue(), OldValue.GetCurrentValue(), GetMaxHealth());
 }
 
-void UOrionDefaultAttributeSet::OnRep_MaxMana(const FGameplayAttributeData& OldValue)
+void UOrionAttributeSetBase::OnRep_MaxMana(const FGameplayAttributeData& OldValue)
 {
-	GAMEPLAYATTRIBUTE_REPNOTIFY(UOrionDefaultAttributeSet, MaxMana, OldValue);
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UOrionAttributeSetBase, MaxMana, OldValue);
 }

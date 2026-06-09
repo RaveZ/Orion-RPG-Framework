@@ -2,12 +2,12 @@
 
 #include "AbilitySystem/OrionAbilitySystemComponent.h"
 
-#include "AbilitySystem/Attributes/OrionDefaultAttributeSet.h"
+#include "AbilitySystem/Attributes/OrionAttributeSetBase.h"
 
 UOrionAbilitySystemComponent::UOrionAbilitySystemComponent()
 {
 	SetIsReplicatedByDefault(true);
-	DefaultAttributeSetClass = UOrionDefaultAttributeSet::StaticClass();
+	DefaultAttributeSetClass = UOrionAttributeSetBase::StaticClass();
 	SetReplicationMode(EGameplayEffectReplicationMode::Mixed);
 }
 
@@ -19,11 +19,6 @@ void UOrionAbilitySystemComponent::InitializeComponent()
 void UOrionAbilitySystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	if (DefaultAttributeSetClass)
-	{
-		const UAttributeSet* AttributeSet = GetOrCreateAttributeSubobject(DefaultAttributeSetClass);
-		DefaultAttributeSet = const_cast<UOrionDefaultAttributeSet*>(Cast<UOrionDefaultAttributeSet>(AttributeSet));
-	}
 }
 
 void UOrionAbilitySystemComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -34,4 +29,11 @@ void UOrionAbilitySystemComponent::EndPlay(const EEndPlayReason::Type EndPlayRea
 void UOrionAbilitySystemComponent::InitAbilityActorInfo(AActor* InOwnerActor, AActor* InAvatarActor)
 {
 	Super::InitAbilityActorInfo(InOwnerActor, InAvatarActor);
+	
+	if (DefaultAttributeSetClass)
+	{
+		const UAttributeSet* AttributeSet = GetOrCreateAttributeSubobject(DefaultAttributeSetClass);
+		DefaultAttributeSet = const_cast<UOrionAttributeSetBase*>(Cast<UOrionAttributeSetBase>(AttributeSet));
+	}
+	OnInitAbilityActorInfo.Broadcast();
 }

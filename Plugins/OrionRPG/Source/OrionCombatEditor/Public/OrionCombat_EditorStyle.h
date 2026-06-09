@@ -6,7 +6,7 @@
 #include "Styling/SlateStyle.h"
 
 /**  */
-class FDialogBuilder_EditorStyle
+class FOrionCombat_EditorStyle
 {
 public:
 

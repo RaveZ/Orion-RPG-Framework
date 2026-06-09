@@ -6,7 +6,10 @@
 #include "AbilitySystemComponent.h"
 #include "OrionAbilitySystemComponent.generated.h"
 
-class UOrionDefaultAttributeSet;
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOrionAbilityCompSignature);
+
+class UOrionAttributeSetBase;
 class UOrionAttributeSet;
 /**
  * Base gameplay ability system component for Orion combat module.
@@ -22,6 +25,8 @@ public:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UAttributeSet> StartingAttributes;
 	
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
+	FOrionAbilityCompSignature OnInitAbilityActorInfo;
 public:
 	UOrionAbilitySystemComponent();
 	virtual void InitializeComponent() override;

@@ -76,7 +76,7 @@ public class OrionCombatEditor : ModuleRules
 				"LevelSequence",
 				"LevelSequenceEditor",
 				"AdvancedPreviewScene",
-				"EditorWidgets"
+				"EditorWidgets", "Dialog_System_Editor", "Dialog_System_Editor"
    }
 			);
 		

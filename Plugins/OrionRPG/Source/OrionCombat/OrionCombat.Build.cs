@@ -47,7 +47,7 @@ public class OrionCombat : ModuleRules
 				"GameplayTags", 
 				"GameplayTasks",
                 "NavigationSystem",
-				"Niagara"
+				"Niagara", "OrionRPG"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

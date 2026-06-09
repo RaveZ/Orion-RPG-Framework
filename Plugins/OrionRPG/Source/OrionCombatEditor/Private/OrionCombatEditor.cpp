@@ -1,12 +1,15 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
-#include "OrionCombatEditor/Public/OrionCombatEditor.h"
+#include "OrionCombatEditor.h"
 #include "IAssetTools.h"
 #include "ISettingsModule.h"
 #include "ISettingsSection.h"
 #include "ISettingsContainer.h"
 #include <ISettingsCategory.h>
 #include "LevelEditor.h"
+#include "OrionCombatSetting.h"
+#include "OrionCombat_EditorCommands.h"
+#include "OrionCombat_EditorStyle.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/STextBlock.h"
@@ -30,19 +33,15 @@ void FOrionCombatEditorModule::StartupModule()
 	RegisterObjectCustomizations();
 
 	//Initialize
-	FDialogBuilder_EditorStyle::Initialize();
-	FDialogBuilder_EditorStyle::ReloadTextures();
-	FDialogBuilder_EditorCommands::Register();
+	FOrionCombat_EditorStyle::Initialize();
+	FOrionCombat_EditorStyle::ReloadTextures();
+	FOrionCombat_EditorCommands::Register();
 
 	//Register Settings Menu For Dialog Builder
 	RegisterSettings();
-
-	FEdGraphUtilities::RegisterVisualNodeFactory(GraphPanelNodeFactory_DialogEditor);
 	
 	PropertyModule.NotifyCustomizationModuleChanged();
 
-	ISequencerModule& SequencerModule = FModuleManager::LoadModuleChecked<ISequencerModule>("Sequencer");
-	DialogTrackEditorHandle = SequencerModule.RegisterTrackEditor(FOnCreateTrackEditor::CreateStatic(&FDialogTrackEditor::CreateTrackEditor));
 }
 
 void FOrionCombatEditorModule::ShutdownModule()
@@ -50,21 +49,13 @@ void FOrionCombatEditorModule::ShutdownModule()
 	MenuExtensibilityManager.Reset();
 	ToolBarExtensibilityManager.Reset();
 
-	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
-	// we call this function before unloading the module.
-	if (GraphPanelNodeFactory_DialogEditor.IsValid())
-	{
-		FEdGraphUtilities::UnregisterVisualNodeFactory(GraphPanelNodeFactory_DialogEditor);
-		GraphPanelNodeFactory_DialogEditor.Reset();
-	}
-
 	UToolMenus::UnRegisterStartupCallback(this);
 
 	UToolMenus::UnregisterOwner(this);
 
-	FDialogBuilder_EditorStyle::Shutdown();
+	FOrionCombat_EditorStyle::Shutdown();
 
-	FDialogBuilder_EditorCommands::Unregister();
+	FOrionCombat_EditorCommands::Unregister();
 
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(OrionCombatEditorTabName);
 
@@ -83,43 +74,20 @@ void FOrionCombatEditorModule::ShutdownModule()
 		}
 	}
 
-	if (FModuleManager::Get().IsModuleLoaded("Sequencer"))
-	{
-		ISequencerModule& SequencerModule = FModuleManager::GetModuleChecked<ISequencerModule>("Sequencer");
-		SequencerModule.UnRegisterTrackEditor(DialogTrackEditorHandle);
-	}
-
-	DecoratorClassCache.Reset();
-	EventClassCache.Reset();
 }
 
 
-void FOrionCombatEditorModule::CheckClassCache()
-{
-	if (!DecoratorClassCache.IsValid())
-	{
-		DecoratorClassCache = MakeShareable(new FGraphNodeClassHelper(UOrionDecorator::StaticClass()));
-		FGraphNodeClassHelper::AddObservedBlueprintClasses(UOrionDecorator::StaticClass());
-		DecoratorClassCache->UpdateAvailableBlueprintClasses();
-	}
-	if (!EventClassCache.IsValid())
-	{
-		EventClassCache = MakeShareable(new FGraphNodeClassHelper(UOrionEvent::StaticClass()));
-		FGraphNodeClassHelper::AddObservedBlueprintClasses(UOrionEvent::StaticClass());
-		EventClassCache->UpdateAvailableBlueprintClasses();
-	}
 
-}
 
 void FOrionCombatEditorModule::RegisterSettings()
 {
 	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
 	{
 		// Register the settings
-		SettingsModule->RegisterSettings("Project", "Game", "OrionRPG - Dialog",
-			LOCTEXT("DialogBuilderSettingsName", "OrionRPG - Dialog"),
-			LOCTEXT("DialogBuilderSettingsDescription", "Configuration Settings for the Dialog Builder Editor"),
-			GetMutableDefault<UDialogBuilderSetting>()
+		SettingsModule->RegisterSettings("Project", "Game", "OrionRPG - Combat",
+			LOCTEXT("OrionCombatSettingsName", "OrionRPG - Combat"),
+			LOCTEXT("OrionCombatSettingsDescription", "Configuration Settings for the Orion Combat"),
+			GetMutableDefault<UOrionCombatSetting>()
 		);
 
 	}
@@ -127,12 +95,7 @@ void FOrionCombatEditorModule::RegisterSettings()
 
 void FOrionCombatEditorModule::RegisterObjectCustomizations()
 {
-	RegisterCustomClassLayout("DialogBuilderNode_DialogLine", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogNodeDetails::MakeInstance));
-	RegisterCustomClassLayout("DialogBuilderNode_DialogSequence", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogNodeDetails::MakeInstance));
-	RegisterCustomClassLayout("DialogSequenceSlot", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogSequenceDetails::MakeInstance));
-	RegisterCustomClassLayout("MovieSceneDialogSection", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogSequenceDetails::MakeInstance));
-	RegisterCustomClassLayout("DialogSequenceShot", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogSequenceDetails::MakeInstance));
-	RegisterCustomClassLayout("DialogDefinition", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogSequenceDetails::MakeInstance));
+	//RegisterCustomClassLayout("OrionCombatNode_DialogLine", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogNodeDetails::MakeInstance));
 
 }
 
