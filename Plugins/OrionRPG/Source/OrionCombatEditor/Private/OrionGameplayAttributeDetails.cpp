@@ -4,8 +4,11 @@
 
 #include "AbilitySystem/Attributes/OrionAttributeSet.h"
 #include "AbilitySystemComponent.h"
+#include "AssetRegistry/AssetData.h"
 #include "AttributeSet.h"
 #include "DetailWidgetRow.h"
+#include "Engine/Blueprint.h"
+#include "Engine/BlueprintGeneratedClass.h"
 #include "IDetailChildrenBuilder.h"
 #include "PropertyHandle.h"
 #include "ScopedTransaction.h"
@@ -68,6 +71,59 @@ void FOrionGameplayAttributeDetails::CustomizeChildren(TSharedRef<IPropertyHandl
 {
 }
 
+FString FOrionGameplayAttributeDetails::GetFormattedClassName(const UClass* Class) const
+{
+	if (!Class)
+	{
+		return FString();
+	}
+
+	FString ClassName = Class->GetName();
+	
+	// Remove _C suffix for Blueprint classes
+	if (ClassName.EndsWith(TEXT("_C")))
+	{
+		ClassName = ClassName.Left(ClassName.Len() - 2);
+	}
+	
+	// Check if this is a Blueprint generated class and get its display name if available
+	if (const UBlueprintGeneratedClass* BPClass = Cast<const UBlueprintGeneratedClass>(Class))
+	{
+		if (UBlueprint* Blueprint = Cast<UBlueprint>(BPClass->ClassGeneratedBy))
+		{
+			if (Blueprint->GeneratedClass)
+			{
+				// Check for DisplayName metadata on the generated class
+				const FString DisplayName = Blueprint->GeneratedClass->GetMetaData(TEXT("DisplayName"));
+				if (!DisplayName.IsEmpty())
+				{
+					return DisplayName;
+				}
+			}
+			
+		}
+	}
+	
+	return ClassName;
+}
+
+FString FOrionGameplayAttributeDetails::GetFormattedPropertyName(const FProperty* Property) const
+{
+	if (!Property)
+	{
+		return FString();
+	}
+	
+	// Check for DisplayName metadata on the property
+	const FString DisplayName = Property->GetMetaData(TEXT("DisplayName"));
+	if (!DisplayName.IsEmpty())
+	{
+		return DisplayName;
+	}
+	
+	return Property->GetName();
+}
+
 void FOrionGameplayAttributeDetails::RefreshPropertyOptions()
 {
 	PropertyOptions.Empty();
@@ -81,6 +137,8 @@ void FOrionGameplayAttributeDetails::RefreshPropertyOptions()
 			continue;
 		}
 
+		const FString FormattedClassName = GetFormattedClassName(Class);
+		
 		for (TFieldIterator<FProperty> PropertyIt(Class, EFieldIteratorFlags::ExcludeSuper); PropertyIt; ++PropertyIt)
 		{
 			FProperty* Property = *PropertyIt;
@@ -89,10 +147,17 @@ void FOrionGameplayAttributeDetails::RefreshPropertyOptions()
 				continue;
 			}
 
-			const FString DisplayName = FString::Printf(TEXT("%s.%s"), *Class->GetName(), *Property->GetName());
+			const FString FormattedPropertyName = GetFormattedPropertyName(Property);
+			const FString DisplayName = FString::Printf(TEXT("%s.%s"), *FormattedClassName, *FormattedPropertyName);
+			
 			if (!SearchText.IsEmpty() && !DisplayName.Contains(SearchText.ToString(), ESearchCase::IgnoreCase))
 			{
-				continue;
+				// Also check against raw class name for search
+				const FString RawDisplayName = FString::Printf(TEXT("%s.%s"), *Class->GetName(), *Property->GetName());
+				if (!RawDisplayName.Contains(SearchText.ToString(), ESearchCase::IgnoreCase))
+				{
+					continue;
+				}
 			}
 
 			PropertyOptions.Add(MakeShared<FOrionGameplayAttributeOption>(Property, DisplayName));
@@ -264,7 +329,9 @@ FText FOrionGameplayAttributeDetails::GetSelectedAttributeText() const
 	{
 		if (const UClass* OwnerClass = SelectedAttribute->GetOwnerClass())
 		{
-			return FText::FromString(FString::Printf(TEXT("%s.%s"), *OwnerClass->GetName(), *SelectedAttribute->GetName()));
+			const FString FormattedClassName = GetFormattedClassName(OwnerClass);
+			const FString FormattedPropertyName = GetFormattedPropertyName(SelectedAttribute);
+			return FText::FromString(FString::Printf(TEXT("%s.%s"), *FormattedClassName, *FormattedPropertyName));
 		}
 	}
 

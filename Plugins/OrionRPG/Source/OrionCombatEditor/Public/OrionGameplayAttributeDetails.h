@@ -28,6 +28,12 @@ private:
 	FProperty* GetSelectedAttribute() const;
 	bool ShouldIncludeAttributeProperty(const FProperty* Property) const;
 	bool ShouldIncludeAttributeClass(const UClass* Class) const;
+	
+	/** Get formatted class name without _C suffix and using DisplayName if available */
+	FString GetFormattedClassName(const UClass* Class) const;
+	
+	/** Get formatted property name using DisplayName if available */
+	FString GetFormattedPropertyName(const FProperty* Property) const;
 
 	TSharedPtr<IPropertyHandle> AttributePropertyHandle;
 	TSharedPtr<IPropertyHandle> OwnerPropertyHandle;
