@@ -7,9 +7,13 @@
 #include "ISettingsContainer.h"
 #include <ISettingsCategory.h>
 #include "LevelEditor.h"
+#include "OrionCombatAssetFactories.h"
+#include "OrionAttributeSetDetails.h"
 #include "OrionCombatSetting.h"
 #include "OrionCombat_EditorCommands.h"
 #include "OrionCombat_EditorStyle.h"
+#include "OrionGameplayAttributeDataDetails.h"
+#include "OrionGameplayAttributeDetails.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/STextBlock.h"
@@ -29,8 +33,10 @@ void FOrionCombatEditorModule::StartupModule()
 	ToolBarExtensibilityManager = MakeShareable(new FExtensibilityManager);
 
 	// Register the PropertyEditors
+	FModuleManager::Get().LoadModuleChecked(TEXT("GameplayAbilitiesEditor"));
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	RegisterObjectCustomizations();
+	RegisterPropertyTypeCustomizations();
 
 	//Initialize
 	FOrionCombat_EditorStyle::Initialize();
@@ -39,6 +45,13 @@ void FOrionCombatEditorModule::StartupModule()
 
 	//Register Settings Menu For Dialog Builder
 	RegisterSettings();
+
+	IAssetTools& AssetTools = IAssetTools::Get();
+	OrionRPGAssetCategoryBit = AssetTools.RegisterAdvancedAssetCategory(
+		TEXT("OrionRPG"),
+		LOCTEXT("OrionRPGAssetCategory", "Orion RPG")
+	);
+	OrionCombatEditor::SetOrionRPGAssetCategory(OrionRPGAssetCategoryBit);
 	
 	PropertyModule.NotifyCustomizationModuleChanged();
 
@@ -72,6 +85,14 @@ void FOrionCombatEditorModule::ShutdownModule()
 				PropertyModule.UnregisterCustomClassLayout(*It);
 			}
 		}
+
+		for (auto It = RegisteredPropertyTypeNames.CreateConstIterator(); It; ++It)
+		{
+			if (It->IsValid())
+			{
+				PropertyModule.UnregisterCustomPropertyTypeLayout(*It);
+			}
+		}
 	}
 
 }
@@ -95,8 +116,13 @@ void FOrionCombatEditorModule::RegisterSettings()
 
 void FOrionCombatEditorModule::RegisterObjectCustomizations()
 {
-	//RegisterCustomClassLayout("OrionCombatNode_DialogLine", FOnGetDetailCustomizationInstance::CreateStatic(&FDialogNodeDetails::MakeInstance));
+	RegisterCustomClassLayout("OrionAttributeSet", FOnGetDetailCustomizationInstance::CreateStatic(&FOrionAttributeSetDetails::MakeInstance));
+}
 
+void FOrionCombatEditorModule::RegisterPropertyTypeCustomizations()
+{
+	RegisterCustomPropertyTypeLayout("GameplayAttribute", FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FOrionGameplayAttributeDetails::MakeInstance));
+	RegisterCustomPropertyTypeLayout("GameplayAttributeData", FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FOrionGameplayAttributeDataDetails::MakeInstance));
 }
 
 void FOrionCombatEditorModule::RegisterCustomClassLayout(FName ClassName, FOnGetDetailCustomizationInstance DetailLayoutDelegate)
@@ -108,6 +134,17 @@ void FOrionCombatEditorModule::RegisterCustomClassLayout(FName ClassName, FOnGet
 	static FName PropertyEditor("PropertyEditor");
 	FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>(PropertyEditor);
 	PropertyModule.RegisterCustomClassLayout(ClassName, DetailLayoutDelegate);
+}
+
+void FOrionCombatEditorModule::RegisterCustomPropertyTypeLayout(FName PropertyTypeName, FOnGetPropertyTypeCustomizationInstance PropertyTypeLayoutDelegate)
+{
+	check(PropertyTypeName != NAME_None);
+
+	RegisteredPropertyTypeNames.Add(PropertyTypeName);
+
+	static FName PropertyEditor("PropertyEditor");
+	FPropertyEditorModule& PropertyModule = FModuleManager::GetModuleChecked<FPropertyEditorModule>(PropertyEditor);
+	PropertyModule.RegisterCustomPropertyTypeLayout(PropertyTypeName, PropertyTypeLayoutDelegate);
 }
 
 #undef LOCTEXT_NAMESPACE

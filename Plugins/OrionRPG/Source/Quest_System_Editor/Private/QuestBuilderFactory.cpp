@@ -10,6 +10,7 @@
 #include "QuestBuilderEdGraph.h"
 #include "OrionSetting.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetTypeCategories.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "HAL/PlatformProcess.h"
 #include "Kismet2/KismetEditorUtilities.h"
@@ -20,6 +21,7 @@
 
 namespace
 {
+	uint32 GOrionRPGAssetCategory = EAssetTypeCategories::Misc;
 	constexpr int32 TrialGraphAssetLimit = 1;
 
 	int32 CountQuestGraphAssets()
@@ -69,6 +71,11 @@ namespace
 		ShowQuestGraphTrialLimitNotification(Settings);
 		return false;
 	}
+}
+
+void SetQuestEditorOrionRPGAssetCategory(uint32 InCategory)
+{
+	GOrionRPGAssetCategory = InCategory;
 }
 
 class FAssetClassParentFilter : public IClassViewerFilter
@@ -123,6 +130,10 @@ UQuestBuilderFactory::UQuestBuilderFactory(const FObjectInitializer& ObjectIniti
 	bEditAfterNew = true;
 }
 
+uint32 UQuestBuilderFactory::GetMenuCategories() const
+{
+	return GOrionRPGAssetCategory;
+}
 
 bool UQuestBuilderFactory::ConfigureProperties()
 {

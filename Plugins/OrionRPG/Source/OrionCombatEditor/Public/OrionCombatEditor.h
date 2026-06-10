@@ -36,6 +36,7 @@ public:
 private:
 	void RegisterSettings();
 	void RegisterObjectCustomizations();
+	void RegisterPropertyTypeCustomizations();
 
 	/**
 	 * Registers a custom class
@@ -44,6 +45,7 @@ private:
 	 * @param DetailLayoutDelegate	The delegate to call to get the custom detail layout instance
 	 */
 	void RegisterCustomClassLayout(FName ClassName, FOnGetDetailCustomizationInstance DetailLayoutDelegate);
+	void RegisterCustomPropertyTypeLayout(FName PropertyTypeName, FOnGetPropertyTypeCustomizationInstance PropertyTypeLayoutDelegate);
 
 
 
@@ -55,11 +57,12 @@ private:
 	TSharedPtr<class FUICommandList> PluginCommands;
 	TSharedPtr<class IDetailsView> PropertyWidget;
 
-	EAssetTypeCategories::Type DialogEditorAssetCategoryBit;
+	EAssetTypeCategories::Type OrionRPGAssetCategoryBit;
 	TArray< TSharedPtr<IAssetTypeActions> > CreatedAssetTypeActions;
 
 	/** List of registered class that we must unregister when the module shuts down */
 	TSet< FName > RegisteredClassNames;
+	TSet< FName > RegisteredPropertyTypeNames;
 private:
 	FDelegateHandle DialogTrackEditorHandle;
 };

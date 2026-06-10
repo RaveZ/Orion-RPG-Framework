@@ -96,6 +96,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = DataAsset)	
 		TSubclassOf<UQuestBuilderGraph> QuestSystemGraphClass;
 
+	virtual uint32 GetMenuCategories() const override;
 	virtual bool ConfigureProperties() override;
 	virtual UObject* FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn) override;
 

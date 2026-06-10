@@ -104,6 +104,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = DataAsset)	
 		TSubclassOf<UDialogBuilderGraph> DialogSystemGraphClass;
 
+	virtual uint32 GetMenuCategories() const override;
 	virtual bool ConfigureProperties() override;
 	virtual UObject* FactoryCreateNew(UClass* Class, UObject* InParent, FName Name, EObjectFlags Flags, UObject* Context, FFeedbackContext* Warn) override;
 
@@ -116,7 +117,6 @@ class UAssetDefinition_DialogEditor : public UAssetDefinitionDefault
 	GENERATED_BODY()
 
 public:
-
 	virtual FText GetAssetDisplayName() const override { return FText::FromString("Dialog Graph"); }
 	virtual FLinearColor GetAssetColor() const override { return FLinearColor(FColor(48, 165, 171)); }
 	virtual TSoftClassPtr<UObject> GetAssetClass() const override { return UDialogBuilderGraph::StaticClass(); }

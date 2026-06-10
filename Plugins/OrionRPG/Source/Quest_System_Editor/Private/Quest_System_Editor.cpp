@@ -30,6 +30,8 @@
 static const FName Quest_System_EditorTabName("Quest_System_Editor");
 TSharedPtr<FSlateStyleSet> FQuest_System_EditorModule::CustomAssetsEditorSlateStyle;
 
+extern void SetQuestEditorOrionRPGAssetCategory(uint32 InCategory);
+
 void FQuest_System_EditorModule::StartupModule()
 {	
 	// Register the PropertyEditors
@@ -43,6 +45,13 @@ void FQuest_System_EditorModule::StartupModule()
 
 	//Register Settings Menu For Quest Builder
 	RegisterSettings();
+
+	IAssetTools& AssetTools = IAssetTools::Get();
+	QuestEditorAssetCategoryBit = AssetTools.RegisterAdvancedAssetCategory(
+		TEXT("OrionRPG"),
+		LOCTEXT("OrionRPGAssetCategory", "Orion RPG")
+	);
+	SetQuestEditorOrionRPGAssetCategory(QuestEditorAssetCategoryBit);
 
 	//Register GraphNodeFactory
 	GraphPanelNodeFactory_QuestEditor = MakeShareable(new FQuestBuilderNodeFactory());

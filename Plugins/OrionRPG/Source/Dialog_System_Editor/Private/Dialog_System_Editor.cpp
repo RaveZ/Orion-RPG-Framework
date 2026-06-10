@@ -31,6 +31,8 @@
 static const FName Dialog_System_EditorTabName("Dialog_System_Editor");
 TSharedPtr<FSlateStyleSet> FDialog_System_EditorModule::CustomAssetsEditorSlateStyle;
 
+extern void SetDialogEditorOrionRPGAssetCategory(uint32 InCategory);
+
 void FDialog_System_EditorModule::StartupModule()
 {
 	MenuExtensibilityManager = MakeShareable(new FExtensibilityManager);
@@ -47,6 +49,13 @@ void FDialog_System_EditorModule::StartupModule()
 
 	//Register Settings Menu For Dialog Builder
 	RegisterSettings();
+
+	IAssetTools& AssetTools = IAssetTools::Get();
+	DialogEditorAssetCategoryBit = AssetTools.RegisterAdvancedAssetCategory(
+		TEXT("OrionRPG"),
+		LOCTEXT("OrionRPGAssetCategory", "Orion RPG")
+	);
+	SetDialogEditorOrionRPGAssetCategory(DialogEditorAssetCategoryBit);
 
 	//Register GraphNodeFactory
 	GraphPanelNodeFactory_DialogEditor = MakeShareable(new FDialogBuilderNodeFactory());

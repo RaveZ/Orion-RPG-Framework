@@ -8,6 +8,7 @@
 #include "DialogBuilderEditorUtils.h"
 #include "OrionSetting.h"
 #include "AssetRegistry/AssetRegistryModule.h"
+#include "AssetTypeCategories.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "HAL/PlatformProcess.h"
 #include "Kismet2/KismetEditorUtilities.h"
@@ -18,6 +19,7 @@
 
 namespace
 {
+	uint32 GOrionRPGAssetCategory = EAssetTypeCategories::Misc;
 	constexpr int32 TrialGraphAssetLimit = 1;
 
 	int32 CountDialogGraphAssets()
@@ -67,6 +69,11 @@ namespace
 		ShowDialogGraphTrialLimitNotification(Settings);
 		return false;
 	}
+}
+
+void SetDialogEditorOrionRPGAssetCategory(uint32 InCategory)
+{
+	GOrionRPGAssetCategory = InCategory;
 }
 
 class FAssetClassParentFilter : public IClassViewerFilter
@@ -121,6 +128,10 @@ UDialogBuilderFactory::UDialogBuilderFactory(const FObjectInitializer& ObjectIni
 	bEditAfterNew = true;
 }
 
+uint32 UDialogBuilderFactory::GetMenuCategories() const
+{
+	return GOrionRPGAssetCategory;
+}
 
 bool UDialogBuilderFactory::ConfigureProperties()
 {

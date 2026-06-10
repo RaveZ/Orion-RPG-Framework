@@ -39,6 +39,8 @@ public class OrionCombatEditor : ModuleRules
                 "Slate",
                 "AssetDefinition",
 				"GameplayTags",
+				"GameplayAbilities",
+				"GameplayAbilitiesEditor",
 				"CinematicCamera",
 				"LevelEditor",
                 "AssetRegistry"
@@ -53,6 +55,7 @@ public class OrionCombatEditor : ModuleRules
 				"PropertyEditor",
 				"EditorStyle",
 				"Kismet",
+				"BlueprintGraph",
 				"KismetWidgets",
 				"ApplicationCore",
 				"ToolMenus",
