@@ -7,6 +7,8 @@
 #include "OrionAbilitySystemComponent.generated.h"
 
 
+
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOrionAbilityCompSignature);
 
 class UOrionAttributeSetBase;
@@ -21,9 +23,6 @@ class ORIONCOMBAT_API UOrionAbilitySystemComponent : public UAbilitySystemCompon
 public:
 	TSubclassOf<UOrionAttributeSet> DefaultAttributeSetClass;
 	
-	// Attribute sets to grant when we first initialized this component
-	UPROPERTY(EditDefaultsOnly)
-	TSubclassOf<UAttributeSet> StartingAttributes;
 	
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
 	FOrionAbilityCompSignature OnInitAbilityActorInfo;

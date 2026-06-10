@@ -38,6 +38,10 @@ public:
 	
 	UWorld* GetWorld() const override;
 	UOrionAbilitySystemComponent* GetOrionAbilitySystemComponent() const;
+	virtual void InitFromMetaDataTable(const UDataTable* DataTable) override;
+
+private:
+	FString GetFormattedClassNameForDataTable() const;
 	
 
 };

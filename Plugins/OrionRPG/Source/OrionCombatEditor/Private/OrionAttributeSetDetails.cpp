@@ -48,16 +48,20 @@ void FOrionAttributeSetDetails::CustomizeDetails(IDetailLayoutBuilder& DetailBui
 	Category.AddCustomRow(LOCTEXT("AddGameplayAttributeFilter", "Add Gameplay Attribute"))
 		.WholeRowContent()
 		[
-			SNew(SButton)
-			.Text(LOCTEXT("AddGameplayAttributeButton", "Add Gameplay Attribute"))
-			.ToolTipText(this, &FOrionAttributeSetDetails::GetAddGameplayAttributeToolTip)
-			.IsEnabled(this, &FOrionAttributeSetDetails::CanAddGameplayAttribute)
-			.HAlign(HAlign_Center)
-			.OnClicked_Lambda([this]()
-			{
-				AddGameplayAttribute();
-				return FReply::Handled();
-			})
+			SNew(SBox)
+			.WidthOverride(200.f) 
+			[
+				SNew(SButton)
+				.Text(LOCTEXT("AddGameplayAttributeButton", "Add Gameplay Attribute"))
+				.ToolTipText(this, &FOrionAttributeSetDetails::GetAddGameplayAttributeToolTip)
+				.IsEnabled(this, &FOrionAttributeSetDetails::CanAddGameplayAttribute)
+				.HAlign(HAlign_Center)
+				.OnClicked_Lambda([this]()
+				{
+					AddGameplayAttribute();
+					return FReply::Handled();
+				})
+			]
 		];
 }
 

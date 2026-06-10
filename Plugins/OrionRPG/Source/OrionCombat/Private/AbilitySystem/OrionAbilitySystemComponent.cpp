@@ -34,6 +34,7 @@ void UOrionAbilitySystemComponent::InitAbilityActorInfo(AActor* InOwnerActor, AA
 	{
 		const UAttributeSet* AttributeSet = GetOrCreateAttributeSubobject(DefaultAttributeSetClass);
 		DefaultAttributeSet = const_cast<UOrionAttributeSetBase*>(Cast<UOrionAttributeSetBase>(AttributeSet));
+		
 	}
 	OnInitAbilityActorInfo.Broadcast();
 }
