@@ -55,10 +55,8 @@ public:
 	float MaxAngleFromCenter = 45.0f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
-	float TargetVerticalOffset = -200.0f; // Height offset (cm) to aim at chest/head
+	float CameraVerticalOffset = 200.0f; // Height offset (cm) to aim at chest/head
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
-	bool bOffsetFromTargetPivot = true;
 
 	// ---------- Runtime State ----------
 	UPROPERTY(BlueprintReadOnly, Category = "TargetingSystem")

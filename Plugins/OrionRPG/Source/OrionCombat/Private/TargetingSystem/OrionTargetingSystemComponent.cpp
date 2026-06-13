@@ -313,15 +313,8 @@ void UOrionTargetingSystemComponent::UpdateTargetCamera(float DeltaTime)
 	FVector CameraLocation = PC->PlayerCameraManager->GetCameraLocation();
 	FVector TargetLocation = CurrentTarget->GetComponentLocation();
     
-	// Apply vertical offset to look at upper body instead of feet
-	if (bOffsetFromTargetPivot)
-	{
-		TargetLocation.Z += TargetVerticalOffset;
-	}
-	else
-	{
-		TargetLocation.Z = TargetVerticalOffset; // Absolute Z position
-	}
+	
+	CameraLocation.Z += CameraVerticalOffset;
     
 	FRotator DesiredRot = UKismetMathLibrary::FindLookAtRotation(CameraLocation, TargetLocation);
 
