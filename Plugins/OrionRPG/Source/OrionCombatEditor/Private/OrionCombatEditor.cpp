@@ -110,7 +110,6 @@ void FOrionCombatEditorModule::RegisterSettings()
 			LOCTEXT("OrionCombatSettingsDescription", "Configuration Settings for the Orion Combat"),
 			GetMutableDefault<UOrionCombatSetting>()
 		);
-
 	}
 }
 
@@ -123,12 +122,12 @@ void FOrionCombatEditorModule::RegisterPropertyTypeCustomizations()
 {
 	RegisterCustomPropertyTypeLayout("GameplayAttribute", FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FOrionGameplayAttributeDetails::MakeInstance));
 	RegisterCustomPropertyTypeLayout("GameplayAttributeData", FOnGetPropertyTypeCustomizationInstance::CreateStatic(&FOrionGameplayAttributeDataDetails::MakeInstance));
+	
 }
 
 void FOrionCombatEditorModule::RegisterCustomClassLayout(FName ClassName, FOnGetDetailCustomizationInstance DetailLayoutDelegate)
 {
 	check(ClassName != NAME_None);
-
 	RegisteredClassNames.Add(ClassName);
 
 	static FName PropertyEditor("PropertyEditor");

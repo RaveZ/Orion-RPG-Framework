@@ -1,8 +1,9 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 #include "AbilitySystem/Attributes//OrionAttributeSet.h"
-
+#include "GameplayEffectTypes.h" 
 #include "AbilitySystemLog.h"
+#include "GameplayEffectExtension.h"
 #include "Engine/Blueprint.h"
 #include "Engine/BlueprintGeneratedClass.h"
 #include "AbilitySystem/OrionAbilitySystemComponent.h"
@@ -23,6 +24,65 @@ UWorld* UOrionAttributeSet::GetWorld() const
 UOrionAbilitySystemComponent* UOrionAttributeSet::GetOrionAbilitySystemComponent() const
 {
 	return Cast<UOrionAbilitySystemComponent>(GetOwningAbilitySystemComponent());
+}
+
+
+bool UOrionAttributeSet::PreGameplayEffectExecute(FGameplayEffectModCallbackData& Data)
+{
+	AActor* Instigator = Data.EffectSpec.GetEffectContext().GetInstigator();
+	AActor* Causer = Data.EffectSpec.GetEffectContext().GetEffectCauser();
+	float EffectMagnitude = 0.0f;
+    
+	K2_PreGameplayEffectExecute(Instigator, Causer, Data.EffectSpec, EffectMagnitude);
+	
+	return Super::PreGameplayEffectExecute(Data);
+}
+
+void UOrionAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data)
+{
+	Super::PostGameplayEffectExecute(Data);
+	
+	AActor* Instigator = Data.EffectSpec.GetEffectContext().GetInstigator();
+	AActor* Causer = Data.EffectSpec.GetEffectContext().GetEffectCauser();
+	float EffectMagnitude = 0.0f; 
+    
+	K2_PostGameplayEffectExecute(Instigator, Causer, Data.EffectSpec, EffectMagnitude);
+}
+
+void UOrionAttributeSet::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
+{
+	Super::PreAttributeBaseChange(Attribute, NewValue);
+	
+	ClampAttribute(Attribute, NewValue);
+	K2_PreAttributeBaseChange(Attribute, NewValue);
+}
+
+void UOrionAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
+{
+	Super::PreAttributeChange(Attribute, NewValue);
+	
+	ClampAttribute(Attribute, NewValue);
+	K2_PreAttributeChange(Attribute, NewValue);
+}
+
+void UOrionAttributeSet::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)
+{
+	Super::PostAttributeChange(Attribute, OldValue, NewValue);
+	
+	K2_PostAttributeChange(Attribute, OldValue, NewValue);
+}
+
+void UOrionAttributeSet::ClampAttribute(const FGameplayAttribute& Attribute, float& NewValue) const
+{
+	for (auto& ClampData : AttributeClampData)
+	{
+		if (Attribute == ClampData.AttributeToClamp)
+		{
+			NewValue = FMath::Clamp(NewValue, ClampData.MinValue, ClampData.MaxAttributeValue.GetNumericValue(this));
+		}
+	}
+	K2_ClampAttribute(Attribute, NewValue);
+	
 }
 
 void UOrionAttributeSet::InitFromMetaDataTable(const UDataTable* DataTable)
@@ -153,6 +213,7 @@ void UOrionAttributeSet::InitFromMetaDataTable(const UDataTable* DataTable)
 		}
 	}
 }
+
 
 FString UOrionAttributeSet::GetFormattedClassNameForDataTable() const
 {

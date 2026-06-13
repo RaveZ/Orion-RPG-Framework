@@ -42,14 +42,11 @@ void UOrionAttributeSetBase::GetLifetimeReplicatedProps(TArray<class FLifetimePr
 void UOrionAttributeSetBase::PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const
 {
 	Super::PreAttributeBaseChange(Attribute, NewValue);
-	
-	ClampAttribute(Attribute, NewValue);
 }
 
 void UOrionAttributeSetBase::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
 {
 	Super::PreAttributeChange(Attribute, NewValue);
-	ClampAttribute(Attribute, NewValue);
 }
 
 void UOrionAttributeSetBase::PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue)

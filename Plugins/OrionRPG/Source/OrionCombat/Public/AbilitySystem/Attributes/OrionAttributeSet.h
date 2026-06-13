@@ -3,6 +3,7 @@
 #pragma once
 
 #include "AttributeSet.h"
+#include "GameplayEffectTypes.h"
 #include "AbilitySystemComponent.h"
 #include "OrionAttributeSet.generated.h"
 
@@ -25,6 +26,30 @@ GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
 DECLARE_MULTICAST_DELEGATE_SixParams(FOrionAttributeEvent, AActor* /*EffectInstigator*/, AActor* /*EffectCauser*/, const FGameplayEffectSpec* /*EffectSpec*/, float /*EffectMagnitude*/, float /*OldValue*/, float /*NewValue*/);
 
 
+
+/**
+ * FLyraAbilitySet_GrantedHandles
+ *
+ *	Data used to store handles to what has been granted by the ability set.
+ */
+USTRUCT(BlueprintType)
+struct FOrionAttributeClampData
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FGameplayAttribute AttributeToClamp;
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	FGameplayAttribute MaxAttributeValue;
+	
+	UPROPERTY(BlueprintReadWrite, EditAnywhere)
+	float MinValue = 0.0f;
+	
+};
+
+
 /**
  * Base attribute set class for Orion combat module.
  */
@@ -34,12 +59,44 @@ class ORIONCOMBAT_API UOrionAttributeSet : public UAttributeSet
 	GENERATED_BODY()
 
 public:
+	UPROPERTY(BlueprintReadOnly, EditAnywhere, Category = "Config")
+	TArray<FOrionAttributeClampData> AttributeClampData;
+	
+public:
 	UOrionAttributeSet();
 	
 	UWorld* GetWorld() const override;
 	UOrionAbilitySystemComponent* GetOrionAbilitySystemComponent() const;
+	
 	virtual void InitFromMetaDataTable(const UDataTable* DataTable) override;
+	virtual bool PreGameplayEffectExecute(FGameplayEffectModCallbackData& Data) override;
+	virtual void PostGameplayEffectExecute(const FGameplayEffectModCallbackData& Data) override;
+	
+	virtual void PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const override;
+	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
 
+	void ClampAttribute(const FGameplayAttribute& Attribute, float& NewValue) const;
+	
+	
+	UFUNCTION(BlueprintImplementableEvent, DisplayName = "OnPreGameplayEffectExecute", Category = "OrionAttributeSet")
+	void K2_PreGameplayEffectExecute(AActor* Instigator, AActor* Causer, const FGameplayEffectSpec& EffectSpec, float EffectMagnitude);
+	
+	UFUNCTION(BlueprintImplementableEvent, DisplayName = "OnPostGameplayEffectExecute", Category = "OrionAttributeSet")
+	void K2_PostGameplayEffectExecute(AActor* Instigator, AActor* Causer, const FGameplayEffectSpec& EffectSpec, float EffectMagnitude);
+	
+	UFUNCTION(BlueprintImplementableEvent, DisplayName = "OnPreAttributeBaseChange", Category = "OrionAttributeSet")
+	void K2_PreAttributeBaseChange(const FGameplayAttribute& Attribute, float& NewValue) const;
+	
+	UFUNCTION(BlueprintImplementableEvent, DisplayName = "OnPreAttributeChange", Category = "OrionAttributeSet")
+	void K2_PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue);
+	
+	UFUNCTION(BlueprintImplementableEvent, DisplayName = "OnPostAttributeChange", Category = "OrionAttributeSet")
+	void K2_PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue);
+	
+	UFUNCTION(BlueprintImplementableEvent, DisplayName = "OnClampAttribute", Category = "OrionAttributeSet")
+	void K2_ClampAttribute(const FGameplayAttribute& Attribute, float& NewValue) const;
+	
 private:
 	FString GetFormattedClassNameForDataTable() const;
 	
