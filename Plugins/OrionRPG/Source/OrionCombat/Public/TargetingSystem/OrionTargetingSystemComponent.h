@@ -59,8 +59,11 @@ public:
 
 
 	// ---------- Runtime State ----------
-	UPROPERTY(BlueprintReadOnly, Category = "TargetingSystem")
-	TObjectPtr<APawn> OwningPawn;
+	
+	//We cache the OwningController, we won't cache pawn as this might change
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
+	TObjectPtr<APlayerController> OwningController;
+
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "TargetingSystem")
 	TObjectPtr<UOrionTargetComponent> CurrentTarget;
@@ -84,12 +87,20 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "TargetingSystem")
 	FOrionTargetingEnabledSignature OnTargetingEnabledChanged;
 
+	
+public:
+	UFUNCTION(BlueprintPure, Category = "TargetingSystem")
+	virtual APawn* GetOwningPawn() const;
+
+	UFUNCTION(BlueprintPure, Category = "TargetingSystem")
+	virtual APlayerController* GetOwningController() const;
+
+	UFUNCTION()
+	virtual void OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn);
+	
 public:
 	virtual void BeginPlay() override;
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-
-	UFUNCTION(BlueprintPure, Category = "TargetingSystem")
-	virtual APawn* GetOwningPawn() const;
 
 	UFUNCTION(BlueprintPure, Category = "TargetingSystem")
 	float GetDistanceToTarget() const;

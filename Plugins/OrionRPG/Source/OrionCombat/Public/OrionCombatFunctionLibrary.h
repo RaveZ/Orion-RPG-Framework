@@ -31,4 +31,22 @@ class ORIONCOMBAT_API UOrionCombatFunctionLibrary : public UBlueprintFunctionLib
 	*/
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Ability", meta = (DefaultToSelf = "Target"))
 	static class UOrionAbilitySystemComponent* GetOrionAbilityComponentFromTarget(AActor* Target);
+	
+	/**
+	* Grab the Targeting Ability System component from the local player controller.
+	*
+	* @return The Targeting System Component
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Targeting", meta = (WorldContext = "WorldContextObject"))
+	static class UOrionTargetingSystemComponent* GetTargetingSystemComponent(const UObject* WorldContextObject);
+	
+	/**
+	* Find the Targeting Ability System component from the supplied target object.
+	*
+	* @return The Targeting System Component
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Ability", meta = (DefaultToSelf = "Target"))
+	static class UOrionTargetingSystemComponent* GetTargetingSystemComponentFromTarget(AActor* Target);
+	
+	
 };

@@ -18,8 +18,16 @@ UOrionTargetingSystemComponent::UOrionTargetingSystemComponent()
 void UOrionTargetingSystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	OwningPawn = GetOwningPawn();
-	SetEnableTargeting(bTargetingEnabled);
+	// Cache the owning controller
+	OwningController = GetOwningController();
+
+	if (OwningController)
+	{
+		// Fix: Use a delegate to bind the function properly
+		OwningController->OnPossessedPawnChanged.AddDynamic(this, &UOrionTargetingSystemComponent::OnPossessedPawnChanged);
+     
+	}
+	SetEnableTargeting(true);
 }
 
 void UOrionTargetingSystemComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
@@ -41,21 +49,68 @@ void UOrionTargetingSystemComponent::TickComponent(float DeltaTime, ELevelTick T
 
 APawn* UOrionTargetingSystemComponent::GetOwningPawn() const
 {
-	if (OwningPawn)
-		return OwningPawn;
+	if (OwningController)
+	{
+		return OwningController->GetPawn();
+	}
 
-	if (APawn* Pawn = Cast<APawn>(GetOwner()))
-		return Pawn;
+	APlayerController* PC = Cast<APlayerController>(GetOwner());
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+
+	if (OwningPawn)
+	{
+		return OwningPawn;
+	}
+
+	if (!OwningPawn && PC)
+	{
+		return PC->GetPawn();
+	}
 
 	return nullptr;
 }
 
+APlayerController* UOrionTargetingSystemComponent::GetOwningController() const
+{
+	if (OwningController)
+	{
+		return OwningController;
+	}
+
+	APlayerController* PC = Cast<APlayerController>(GetOwner());
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+
+	if (PC)
+	{
+		return PC;
+	}
+
+	if (!PC && OwningPawn)
+	{
+		return Cast<APlayerController>(OwningPawn->GetController());
+	}
+
+	return nullptr;
+}
+
+void UOrionTargetingSystemComponent::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
+{
+	if (NewPawn == nullptr)
+	{
+		SetEnableTargeting(false);
+	}
+	else
+	{
+		SetEnableTargeting(true);
+	}
+}
+
 float UOrionTargetingSystemComponent::GetDistanceToTarget() const
 {
-	if (!CurrentTarget || !OwningPawn)
+	if (!CurrentTarget || !GetOwningPawn())
 		return 0.0f;
 
-	return FVector::Dist(OwningPawn->GetActorLocation(), CurrentTarget->GetComponentLocation());
+	return FVector::Dist(GetOwningPawn()->GetActorLocation(), CurrentTarget->GetComponentLocation());
 }
 
 void UOrionTargetingSystemComponent::SetEnableTargeting(bool bEnable)
@@ -181,10 +236,10 @@ void UOrionTargetingSystemComponent::ToggleTargetingWithSearch()
 
 float UOrionTargetingSystemComponent::ScoreTarget(const UOrionTargetComponent* Target) const
 {
-	if (!Target || !OwningPawn)
+	if (!Target || !GetOwningPawn())
 		return BIG_NUMBER;
 
-	float Distance = FVector::Dist(OwningPawn->GetActorLocation(), Target->GetComponentLocation());
+	float Distance = FVector::Dist(GetOwningPawn()->GetActorLocation(), Target->GetComponentLocation());
 	return Distance;
 }
 
@@ -197,7 +252,7 @@ bool UOrionTargetingSystemComponent::IsTargetValid(UOrionTargetComponent* Target
 		return false;
 
 	// Distance check (including tolerance)
-	float Distance = FVector::Dist(OwningPawn->GetActorLocation(), Target->GetComponentLocation());
+	float Distance = FVector::Dist(GetOwningPawn()->GetActorLocation(), Target->GetComponentLocation());
 
 	if (Distance > MaxDistance + LossDistanceTolerance)
 		return false;
@@ -208,10 +263,10 @@ bool UOrionTargetingSystemComponent::IsTargetValid(UOrionTargetComponent* Target
 TArray<UOrionTargetComponent*> UOrionTargetingSystemComponent::GetValidTargets() const
 {
     TArray<UOrionTargetComponent*> Targets;
-    if (!OwningPawn)
+    if (!GetOwningPawn())
         return Targets;
 
-    APlayerController* PC = Cast<APlayerController>(OwningPawn->GetController());
+    APlayerController* PC = Cast<APlayerController>(GetOwningPawn()->GetController());
     if (!PC && bOnlyTargetsInCameraView)
         return Targets;
 
@@ -219,9 +274,9 @@ TArray<UOrionTargetComponent*> UOrionTargetingSystemComponent::GetValidTargets()
     TArray<FOverlapResult> Overlaps;
     FCollisionShape Sphere = FCollisionShape::MakeSphere(SearchRadius);
     FCollisionQueryParams QueryParams;
-    QueryParams.AddIgnoredActor(OwningPawn);
+    QueryParams.AddIgnoredActor(GetOwningPawn());
 
-    GetWorld()->OverlapMultiByChannel(Overlaps, OwningPawn->GetActorLocation(), FQuat::Identity, TraceChannel, Sphere, QueryParams);
+    GetWorld()->OverlapMultiByChannel(Overlaps, GetOwningPawn()->GetActorLocation(), FQuat::Identity, TraceChannel, Sphere, QueryParams);
 
     for (const FOverlapResult& Overlap : Overlaps)
     {
@@ -280,7 +335,7 @@ bool UOrionTargetingSystemComponent::HasLineOfSight(const FVector& Start, const 
 {
 	FHitResult Hit;
 	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(OwningPawn);
+	Params.AddIgnoredActor(GetOwningPawn());
 	if (CurrentTarget && CurrentTarget->GetOwner())
 		Params.AddIgnoredActor(CurrentTarget->GetOwner());
 
@@ -303,10 +358,10 @@ void UOrionTargetingSystemComponent::CheckTargetLoss()
 
 void UOrionTargetingSystemComponent::UpdateTargetCamera(float DeltaTime)
 {
-	if (!OwningPawn || !CurrentTarget)
+	if (!GetOwningPawn() || !CurrentTarget)
 		return;
 
-	APlayerController* PC = Cast<APlayerController>(OwningPawn->GetController());
+	APlayerController* PC = Cast<APlayerController>(GetOwningPawn()->GetController());
 	if (!PC)
 		return;
 
@@ -323,7 +378,7 @@ void UOrionTargetingSystemComponent::UpdateTargetCamera(float DeltaTime)
 
 void UOrionTargetingSystemComponent::ApplyControlRotation(FRotator NewRotation, float DeltaTime)
 {
-	APlayerController* PC = Cast<APlayerController>(OwningPawn->GetController());
+	APlayerController* PC = Cast<APlayerController>(GetOwningPawn()->GetController());
 	if (!PC)
 		return;
 

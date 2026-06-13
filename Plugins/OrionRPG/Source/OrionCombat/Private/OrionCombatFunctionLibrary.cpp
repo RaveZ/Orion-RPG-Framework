@@ -4,6 +4,7 @@
 #include "OrionCombatFunctionLibrary.h"
 
 #include "AbilitySystem/OrionAbilitySystemComponent.h"
+#include "TargetingSystem/OrionTargetingSystemComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -40,6 +41,46 @@ class UOrionAbilitySystemComponent* UOrionCombatFunctionLibrary::GetOrionAbility
 		if (OwningPawn->GetPlayerState())
 		{
 			return OwningPawn->GetPlayerState()->FindComponentByClass<UOrionAbilitySystemComponent>();
+		}
+	}
+
+	return nullptr;
+}
+
+class UOrionTargetingSystemComponent* UOrionCombatFunctionLibrary::GetTargetingSystemComponent(
+	const UObject* WorldContextObject)
+{
+	return GetTargetingSystemComponentFromTarget(UGameplayStatics::GetPlayerController(WorldContextObject, 0));
+}
+
+
+class UOrionTargetingSystemComponent* UOrionCombatFunctionLibrary::GetTargetingSystemComponentFromTarget(AActor* Target)
+{
+	
+	if (!Target)
+	{
+		return nullptr;
+	}
+
+	if (UOrionTargetingSystemComponent* TargetingComp = Target->FindComponentByClass<UOrionTargetingSystemComponent>())
+	{
+		return TargetingComp;
+	}
+
+	//targeting comp may be on the controllers pawn or pawns controller
+	if (APlayerController* OwningController = Cast<APlayerController>(Target))
+	{
+		if (OwningController->GetPawn())
+		{
+			return OwningController->GetPawn()->FindComponentByClass<UOrionTargetingSystemComponent>();
+		}
+	}
+
+	if (APawn* OwningPawn = Cast<APawn>(Target))
+	{
+		if (OwningPawn->GetController())
+		{
+			return OwningPawn->GetController()->FindComponentByClass<UOrionTargetingSystemComponent>();
 		}
 	}
 
