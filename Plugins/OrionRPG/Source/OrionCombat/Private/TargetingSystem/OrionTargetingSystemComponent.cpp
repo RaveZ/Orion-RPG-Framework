@@ -13,6 +13,16 @@
 UOrionTargetingSystemComponent::UOrionTargetingSystemComponent()
 {
 	PrimaryComponentTick.bCanEverTick = true;
+	
+	bOnlyTargetsInCameraView = true;
+	
+	MaxDistance = 1250.0f;
+	SearchRadius = 1500.0f;
+	CameraVerticalOffset = 50.0f;
+	MaxAngleFromCenter = 45.0f;
+	CameraBlendSpeed = 540.0f;
+	
+	TraceChannel = ECC_Pawn;
 }
 
 void UOrionTargetingSystemComponent::BeginPlay()
@@ -37,11 +47,9 @@ void UOrionTargetingSystemComponent::TickComponent(float DeltaTime, ELevelTick T
 	if (!bTargetingEnabled)
 		return;
 
-	// 1. Validate current target
 	CheckTargetLoss();
 
-	// 2. Update camera if we have a target
-	if (CurrentTarget && bEnableCameraControl)
+	if (CurrentTarget)
 	{
 		UpdateTargetCamera(DeltaTime);
 	}
@@ -125,7 +133,7 @@ void UOrionTargetingSystemComponent::SetEnableTargeting(bool bEnable)
 	{
 		ClearTarget();
 	}
-	else if (bAutoAcquireTargetOnEnable && !CurrentTarget)
+	else if (!CurrentTarget)
 	{
 		SearchTarget();
 	}
@@ -155,84 +163,70 @@ void UOrionTargetingSystemComponent::SearchTarget()
 	}
 }
 
-void UOrionTargetingSystemComponent::CycleTarget(bool bNext)
+
+void UOrionTargetingSystemComponent::CycleToNextTarget()
 {
-	if (!bTargetingEnabled)
-		return;
+    if (!bTargetingEnabled)
+        return;
 
-	TArray<UOrionTargetComponent*> ValidTargets = GetValidTargets();
-	if (ValidTargets.Num() == 0)
-	{
-		ClearTarget();
-		return;
-	}
+	ValidTargetList = GetValidTargets();
+    
+    // If no valid targets, clear current target
+    if (ValidTargetList.IsEmpty() || ValidTargetList.Num()-1 == CurrentCycleIndex)
+    {
+        ClearTarget();
+        return;
+    }
 
-	// If no current target, acquire the best one
-	if (!CurrentTarget)
-	{
-		SearchTarget();
-		return;
-	}
+    // If we have no current target, acquire the best one
+    if (!CurrentTarget)
+    {
+        SearchTarget();
+        return;
+    }
 
-	int32 CurrentIndex = ValidTargets.IndexOfByKey(CurrentTarget);
-	if (CurrentIndex == INDEX_NONE)
-	{
-		// Current target is no longer valid -> clear and optionally reacquire
-		ClearTarget();
-		if (bAutoCycleAfterTargetLost)
-			SearchTarget();
-		return;
-	}
+    // Find current target in the list
+    int32 CurrentTargetIndex = ValidTargetList.IndexOfByKey(CurrentTarget);
+    
+    // If current target is not in valid list (maybe died or moved out of view)
+    if (CurrentTargetIndex == INDEX_NONE)
+    {
+        ClearTarget();
+        return;
+    }
 
-	int32 NewIndex = bNext ? CurrentIndex + 1 : CurrentIndex - 1;
-	if (bWrapTargetCycle)
-	{
-		NewIndex = (NewIndex + ValidTargets.Num()) % ValidTargets.Num();
-	}
-	else
-	{
-		if (NewIndex < 0 || NewIndex >= ValidTargets.Num())
-		{
-			ClearTarget();
-			return;
-		}
-	}
+    // Calculate next index
+    int32 NextIndex = (CurrentTargetIndex + 1) % (ValidTargetList.Num());
+	CurrentCycleIndex += 1;
+    
+    if (NextIndex >= ValidTargetList.Num())
+    {
+        ClearTarget();  // Go back to not targeting anything
+        return;
+    }
 
-	UOrionTargetComponent* NewTarget = ValidTargets[NewIndex];
-	if (NewTarget != CurrentTarget)
-	{
-		CurrentTarget = NewTarget;
-		OnTargetChanged.Broadcast(CurrentTarget);
-		OnTargetAcquired.Broadcast(CurrentTarget);
-	}
+    // Acquire the next target
+    UOrionTargetComponent* NewTarget = ValidTargetList[NextIndex];
+    if (NewTarget && NewTarget != CurrentTarget)
+    {
+        CurrentTarget = NewTarget;
+        OnTargetChanged.Broadcast(CurrentTarget);
+        OnTargetAcquired.Broadcast(CurrentTarget);
+    }
 }
 
 void UOrionTargetingSystemComponent::ClearTarget()
 {
 	if (CurrentTarget)
 	{
+		CurrentCycleIndex = 0;
 		OnLostTarget.Broadcast(CurrentTarget);
 		CurrentTarget = nullptr;
 		OnTargetCleared.Broadcast();
 	}
 }
 
-void UOrionTargetingSystemComponent::ToggleTargetingWithSearch()
-{
-	if (!bTargetingEnabled)
-	{
-		SetEnableTargeting(true);
-		SearchTarget(); 
-	}
-	else if (CurrentTarget)
-	{
-		ClearTarget();
-	}
-	else
-	{
-		SearchTarget();
-	}
-}
+
 
 float UOrionTargetingSystemComponent::ScoreTarget(const UOrionTargetComponent* Target) const
 {
@@ -254,7 +248,7 @@ bool UOrionTargetingSystemComponent::IsTargetValid(UOrionTargetComponent* Target
 	// Distance check (including tolerance)
 	float Distance = FVector::Dist(GetOwningPawn()->GetActorLocation(), Target->GetComponentLocation());
 
-	if (Distance > MaxDistance + LossDistanceTolerance)
+	if (Distance > MaxDistance)
 		return false;
 
 	return true;
@@ -351,8 +345,6 @@ void UOrionTargetingSystemComponent::CheckTargetLoss()
 	if (!IsTargetValid(CurrentTarget))
 	{
 		ClearTarget();
-		if (bAutoCycleAfterTargetLost)
-			SearchTarget();
 	}
 }
 
@@ -361,15 +353,22 @@ void UOrionTargetingSystemComponent::UpdateTargetCamera(float DeltaTime)
 	if (!GetOwningPawn() || !CurrentTarget)
 		return;
 
-	APlayerController* PC = Cast<APlayerController>(GetOwningPawn()->GetController());
+	APlayerController* PC = GetOwningController();
 	if (!PC)
 		return;
 
+	APawn* Pawn = GetOwningPawn();
+	if (!Pawn) return;
+	
 	FVector CameraLocation = PC->PlayerCameraManager->GetCameraLocation();
 	FVector TargetLocation = CurrentTarget->GetComponentLocation();
-    
+	FVector PawnLocation = Pawn->GetActorLocation();
 	
-	CameraLocation.Z += CameraVerticalOffset;
+	float Distance = FVector::Dist(PawnLocation, TargetLocation);
+	float AdjustedOffset = CameraVerticalOffset;
+	AdjustedOffset += FMath::Clamp((Distance * 0.5f), 0.0f, 300.0f); // Slightly higher when far
+	
+	CameraLocation.Z += AdjustedOffset;
     
 	FRotator DesiredRot = UKismetMathLibrary::FindLookAtRotation(CameraLocation, TargetLocation);
 

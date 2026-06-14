@@ -22,40 +22,25 @@ public:
 
 	// ---------- Configuration ----------
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
-	float MaxDistance = 1250.0f;
+	float MaxDistance;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
-	float SearchRadius = 1500.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
-	float LossDistanceTolerance = 200.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
-	bool bAutoAcquireTargetOnEnable = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
-	bool bAutoCycleAfterTargetLost = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
-	bool bWrapTargetCycle = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
-	float CameraBlendSpeed = 540.0f;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
-	bool bEnableCameraControl = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
-	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Pawn;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
-	bool bOnlyTargetsInCameraView = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
-	float MaxAngleFromCenter = 45.0f;
+	float SearchRadius;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
-	float CameraVerticalOffset = 200.0f; // Height offset (cm) to aim at chest/head
+	float CameraBlendSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
+	TEnumAsByte<ECollisionChannel> TraceChannel;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
+	bool bOnlyTargetsInCameraView;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
+	float MaxAngleFromCenter;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Config")
+	float CameraVerticalOffset; // Height offset (cm) to aim at chest/head
 
 
 	// ---------- Runtime State ----------
@@ -67,7 +52,13 @@ public:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "TargetingSystem")
 	TObjectPtr<UOrionTargetComponent> CurrentTarget;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "TargetingSystem")
+	TArray<TObjectPtr<UOrionTargetComponent>> ValidTargetList; 
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "TargetingSystem")
+	int32 CurrentCycleIndex = 0;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "TargetingSystem")
 	bool bTargetingEnabled = true;
 
@@ -112,13 +103,10 @@ public:
 	void SearchTarget();
 
 	UFUNCTION(BlueprintCallable, Category = "TargetingSystem")
-	void CycleTarget(bool bNext);
+	void CycleToNextTarget();
 
 	UFUNCTION(BlueprintCallable, Category = "TargetingSystem")
 	void ClearTarget();
-
-	UFUNCTION(BlueprintCallable, Category = "TargetingSystem")
-	void ToggleTargetingWithSearch();
 
 	UFUNCTION(BlueprintPure, Category = "TargetingSystem")
 	TArray<UOrionTargetComponent*> GetValidTargets() const;
