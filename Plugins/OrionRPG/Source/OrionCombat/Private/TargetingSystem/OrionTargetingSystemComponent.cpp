@@ -297,7 +297,6 @@ TArray<UOrionTargetComponent*> UOrionTargetingSystemComponent::GetValidTargets()
     return Targets;
 }
 
-// New helper function
 bool UOrionTargetingSystemComponent::IsTargetInCameraView(UOrionTargetComponent* Target, APlayerController* PC) const
 {
 	if (!PC || !Target) return false;
