@@ -170,14 +170,19 @@ void UOrionTargetingSystemComponent::CycleToNextTarget()
         return;
 
 	ValidTargetList = GetValidTargets();
-    
-    // If no valid targets, clear current target
-    if (ValidTargetList.IsEmpty() || ValidTargetList.Num()-1 == CurrentCycleIndex)
-    {
-        ClearTarget();
-        return;
-    }
+	const int32 NumTargets = ValidTargetList.Num();
+	
+	const bool bShouldClear =
+	 NumTargets == 0 ||
+	 (NumTargets == 1 && CurrentTarget) ||
+	 (NumTargets > 1 && CurrentCycleIndex == NumTargets - 1);
 
+	if (bShouldClear)
+	{
+		ClearTarget();
+		return;
+	}
+	
     // If we have no current target, acquire the best one
     if (!CurrentTarget)
     {
