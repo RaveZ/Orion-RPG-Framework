@@ -1,11 +1,11 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
-#include "AbilitySystem/Task/AsyncTaskCooldownChanged.h"
+#include "AbilitySystem/Task/OrionAsyncTask_CooldownChanged.h"
 
-UAsyncTaskCooldownChanged * UAsyncTaskCooldownChanged::ListenForCooldownChange(UAbilitySystemComponent * AbilitySystemComponent, FGameplayTagContainer InCooldownTags, bool InUseServerCooldown)
+UOrionAsyncTask_CooldownChanged * UOrionAsyncTask_CooldownChanged::ListenForCooldownChange(UAbilitySystemComponent * AbilitySystemComponent, FGameplayTagContainer InCooldownTags, bool InUseServerCooldown)
 {
-	UAsyncTaskCooldownChanged* ListenForCooldownChange = NewObject<UAsyncTaskCooldownChanged>();
+	UOrionAsyncTask_CooldownChanged* ListenForCooldownChange = NewObject<UOrionAsyncTask_CooldownChanged>();
 	ListenForCooldownChange->ASC = AbilitySystemComponent;
 	ListenForCooldownChange->CooldownTags = InCooldownTags;
 	ListenForCooldownChange->UseServerCooldown = InUseServerCooldown;
@@ -16,20 +16,20 @@ UAsyncTaskCooldownChanged * UAsyncTaskCooldownChanged::ListenForCooldownChange(U
 		return nullptr;
 	}
 
-	AbilitySystemComponent->OnActiveGameplayEffectAddedDelegateToSelf.AddUObject(ListenForCooldownChange, &UAsyncTaskCooldownChanged::OnActiveGameplayEffectAddedCallback);
+	AbilitySystemComponent->OnActiveGameplayEffectAddedDelegateToSelf.AddUObject(ListenForCooldownChange, &UOrionAsyncTask_CooldownChanged::OnActiveGameplayEffectAddedCallback);
 
 	TArray<FGameplayTag> CooldownTagArray;
 	InCooldownTags.GetGameplayTagArray(CooldownTagArray);
 	
 	for (FGameplayTag CooldownTag : CooldownTagArray)
 	{
-		AbilitySystemComponent->RegisterGameplayTagEvent(CooldownTag, EGameplayTagEventType::NewOrRemoved).AddUObject(ListenForCooldownChange, &UAsyncTaskCooldownChanged::CooldownTagChanged);
+		AbilitySystemComponent->RegisterGameplayTagEvent(CooldownTag, EGameplayTagEventType::NewOrRemoved).AddUObject(ListenForCooldownChange, &UOrionAsyncTask_CooldownChanged::CooldownTagChanged);
 	}
 
 	return ListenForCooldownChange;
 }
 
-void UAsyncTaskCooldownChanged::EndTask()
+void UOrionAsyncTask_CooldownChanged::EndTask()
 {
 	if (IsValid(ASC))
 	{
@@ -48,7 +48,7 @@ void UAsyncTaskCooldownChanged::EndTask()
 	MarkAsGarbage();
 }
 
-void UAsyncTaskCooldownChanged::OnActiveGameplayEffectAddedCallback(UAbilitySystemComponent * Target, const FGameplayEffectSpec & SpecApplied, FActiveGameplayEffectHandle ActiveHandle)
+void UOrionAsyncTask_CooldownChanged::OnActiveGameplayEffectAddedCallback(UAbilitySystemComponent * Target, const FGameplayEffectSpec & SpecApplied, FActiveGameplayEffectHandle ActiveHandle)
 {
 	FGameplayTagContainer AssetTags;
 	SpecApplied.GetAllAssetTags(AssetTags);
@@ -94,7 +94,7 @@ void UAsyncTaskCooldownChanged::OnActiveGameplayEffectAddedCallback(UAbilitySyst
 	}
 }
 
-void UAsyncTaskCooldownChanged::CooldownTagChanged(const FGameplayTag CooldownTag, int32 NewCount)
+void UOrionAsyncTask_CooldownChanged::CooldownTagChanged(const FGameplayTag CooldownTag, int32 NewCount)
 {
 	if (NewCount == 0)
 	{
@@ -102,7 +102,7 @@ void UAsyncTaskCooldownChanged::CooldownTagChanged(const FGameplayTag CooldownTa
 	}
 }
 
-bool UAsyncTaskCooldownChanged::GetCooldownRemainingForTag(FGameplayTagContainer InCooldownTags, float & TimeRemaining, float & CooldownDuration)
+bool UOrionAsyncTask_CooldownChanged::GetCooldownRemainingForTag(FGameplayTagContainer InCooldownTags, float & TimeRemaining, float & CooldownDuration)
 {
 	if (IsValid(ASC) && InCooldownTags.Num() > 0)
 	{

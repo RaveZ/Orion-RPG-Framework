@@ -164,7 +164,6 @@ void UOrionAttributeSet::InitFromMetaDataTable(const UDataTable* DataTable)
 			FAttributeMetaData* MetaData = nullptr;
 			FString UsedRowName;
 			
-			// Try different naming strategies in order of preference
 			// 1. Try Display Name if available
 			if (!FormattedClassName.Equals(StrippedClassName))
 			{

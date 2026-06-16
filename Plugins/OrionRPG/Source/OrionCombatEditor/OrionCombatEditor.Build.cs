@@ -43,8 +43,8 @@ public class OrionCombatEditor : ModuleRules
 				"GameplayAbilitiesEditor",
 				"CinematicCamera",
 				"LevelEditor",
-                "AssetRegistry"
-            }
+                "AssetRegistry", "AnimGraph"
+			}
 			);
 		
 		PrivateDependencyModuleNames.AddRange(
