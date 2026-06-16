@@ -6,7 +6,7 @@
 #include "Kismet/BlueprintAsyncActionBase.h"
 #include "AbilitySystemComponent.h"
 #include "GameplayTagContainer.h"
-#include "OrionAsyncTask_CooldownChanged.generated.h"
+#include "AsyncTaskCooldownChanged.generated.h"
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCooldownChanged, FGameplayTag, CooldownTag, float, TimeRemaining, float, Duration);
@@ -16,7 +16,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnCooldownChanged, FGameplayTag,
  * Useful to use in UI.
  */
 UCLASS(BlueprintType, meta = (ExposedAsyncProxy = AsyncTask))
-class ORIONCOMBAT_API UOrionAsyncTask_CooldownChanged : public UBlueprintAsyncActionBase
+class ORIONCOMBAT_API UAsyncTaskCooldownChanged : public UBlueprintAsyncActionBase
 {
 	GENERATED_BODY()
 	
@@ -31,7 +31,7 @@ public:
 	// UseServerCooldown determines if the Sever's cooldown is returned in addition to the local predicted cooldown.
 	// If using ServerCooldown, TimeRemaining and Duration will return -1 to signal local predicted cooldown has begun.
 	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true"), Category = "OrionLibrary|Ability")
-	static UOrionAsyncTask_CooldownChanged* ListenForCooldownChange(UAbilitySystemComponent* AbilitySystemComponent, FGameplayTagContainer CooldownTags, bool UseServerCooldown);
+	static UAsyncTaskCooldownChanged* ListenForCooldownChange(UAbilitySystemComponent* AbilitySystemComponent, FGameplayTagContainer CooldownTags, bool UseServerCooldown);
 
 	// You must call this function manually when you want the AsyncTask to end.
 	// For UMG Widgets, you would call it in the Widget's Destruct event.

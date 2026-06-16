@@ -25,6 +25,7 @@ public class OrionCombatEditor : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
+                "OrionRPG",
                 "OrionCombat",
                 "Core",
                 "CoreUObject",
@@ -42,8 +43,7 @@ public class OrionCombatEditor : ModuleRules
 				"GameplayAbilitiesEditor",
 				"CinematicCamera",
 				"LevelEditor",
-                "AssetRegistry", 
-                "AnimGraph"
+                "AssetRegistry", "AnimGraph"
 			}
 			);
 		
@@ -79,7 +79,7 @@ public class OrionCombatEditor : ModuleRules
 				"LevelSequence",
 				"LevelSequenceEditor",
 				"AdvancedPreviewScene",
-				"EditorWidgets",
+				"EditorWidgets", "Dialog_System_Editor", "Dialog_System_Editor"
    }
 			);
 		

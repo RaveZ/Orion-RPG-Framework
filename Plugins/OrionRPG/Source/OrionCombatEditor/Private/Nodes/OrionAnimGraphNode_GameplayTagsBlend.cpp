@@ -1,7 +1,8 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
-#include "Nodes/OrionAnimGraphNode_GameplayTagsBlend.h"
 #include "GameplayTagsManager.h"
+#include "Nodes/OrionAnimGraphNode_GameplayTagsBlend.h"
+#include "Animation/Nodes/OrionAnimNode_GameplayTagsBlend.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(OrionAnimGraphNode_GameplayTagsBlend)
 
