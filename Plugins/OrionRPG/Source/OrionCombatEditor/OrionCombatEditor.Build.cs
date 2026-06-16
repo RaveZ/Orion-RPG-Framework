@@ -43,7 +43,8 @@ public class OrionCombatEditor : ModuleRules
 				"GameplayAbilitiesEditor",
 				"CinematicCamera",
 				"LevelEditor",
-                "AssetRegistry", "AnimGraph"
+                "AssetRegistry", 
+                "AnimGraph"
 			}
 			);
 		
@@ -79,7 +80,7 @@ public class OrionCombatEditor : ModuleRules
 				"LevelSequence",
 				"LevelSequenceEditor",
 				"AdvancedPreviewScene",
-				"EditorWidgets", "Dialog_System_Editor", "Dialog_System_Editor"
+				"EditorWidgets",
    }
 			);
 		

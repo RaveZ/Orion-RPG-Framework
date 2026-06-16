@@ -29,7 +29,7 @@ public class OrionCombat : ModuleRules
                 "AIModule",
                 "PhysicsCore",
 				"GameplayAbilities", 
-				"AnimGraphRuntime", "AnimGraphRuntime"
+				"AnimGraphRuntime",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
