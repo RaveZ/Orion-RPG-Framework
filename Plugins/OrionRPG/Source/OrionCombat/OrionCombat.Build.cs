@@ -25,11 +25,6 @@ public class OrionCombat : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"Core",
-                "AIModule",
-                "PhysicsCore",
-				"GameplayAbilities", 
-				"AnimGraphRuntime",
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -38,6 +33,11 @@ public class OrionCombat : ModuleRules
 		PrivateDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"Core",
+				"AIModule",
+				"PhysicsCore",
+				"GameplayAbilities", 
+				"AnimGraphRuntime",
 				"CoreUObject",
 				"InputCore",
 				"Engine",
@@ -48,7 +48,9 @@ public class OrionCombat : ModuleRules
 				"GameplayTags", 
 				"GameplayTasks",
                 "NavigationSystem",
-				"Niagara", "OrionRPG"
+				"Niagara", 
+				"OrionRPG",
+				"GameplayStateTreeModule"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

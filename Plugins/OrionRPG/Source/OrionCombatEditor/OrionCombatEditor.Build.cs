@@ -25,7 +25,6 @@ public class OrionCombatEditor : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-                "OrionRPG",
                 "OrionCombat",
                 "Core",
                 "CoreUObject",
@@ -72,15 +71,6 @@ public class OrionCombatEditor : ModuleRules
 				"SlateCore",
 				"AIGraph",
 				"UMG",
-				"Sequencer",
-				"SequencerCore",
-                "MovieScene",
-				"MovieSceneTools",
-				"MovieSceneTracks",
-				"LevelSequence",
-				"LevelSequenceEditor",
-				"AdvancedPreviewScene",
-				"EditorWidgets",
    }
 			);
 		
