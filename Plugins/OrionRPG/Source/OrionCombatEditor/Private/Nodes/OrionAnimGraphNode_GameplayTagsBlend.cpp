@@ -2,6 +2,7 @@
 
 #include "Nodes/OrionAnimGraphNode_GameplayTagsBlend.h"
 #include "GameplayTagsManager.h"
+#include "Animation/Nodes/OrionAnimNode_GameplayTagsBlend.h"
 
 #include UE_INLINE_GENERATED_CPP_BY_NAME(OrionAnimGraphNode_GameplayTagsBlend)
 
