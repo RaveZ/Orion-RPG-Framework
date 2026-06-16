@@ -68,6 +68,11 @@ void AOrionAIController::SetTarget(AActor* InTarget, const bool bSetFocus)
 	}
 }
 
+void AOrionAIController::ClearTarget()
+{
+	SetTarget(nullptr, false);
+}
+
 void AOrionAIController::PerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 {
 	if (Stimulus.WasSuccessfullySensed())

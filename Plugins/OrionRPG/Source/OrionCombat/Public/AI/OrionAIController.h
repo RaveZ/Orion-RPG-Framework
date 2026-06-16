@@ -34,6 +34,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "AI")
 	virtual void SetTarget(AActor* InTarget, const bool bSetFocus = true);
+	
+	UFUNCTION(BlueprintCallable, Category = "AI")
+	virtual void ClearTarget();
 
 	UFUNCTION(BlueprintCallable, Category = "AI", meta = (AllowPrivateAccess = true))
 	void PerceptionUpdated(AActor* Actor, FAIStimulus Stimulus);
