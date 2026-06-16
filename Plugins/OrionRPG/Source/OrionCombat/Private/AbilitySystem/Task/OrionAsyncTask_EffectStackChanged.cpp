@@ -1,12 +1,12 @@
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
 
-#include "AbilitySystem/Task/AsyncTaskEffectStackChanged.h"
+#include "AbilitySystem/Task/OrionAsyncTask_EffectStackChanged.h"
 
 
-UAsyncTaskEffectStackChanged * UAsyncTaskEffectStackChanged::ListenForGameplayEffectStackChange(UAbilitySystemComponent * AbilitySystemComponent, FGameplayTag InEffectGameplayTag)
+UOrionAsyncTask_EffectStackChanged * UOrionAsyncTask_EffectStackChanged::ListenForGameplayEffectStackChange(UAbilitySystemComponent * AbilitySystemComponent, FGameplayTag InEffectGameplayTag)
 {
-	UAsyncTaskEffectStackChanged* ListenForGameplayEffectStackChange = NewObject<UAsyncTaskEffectStackChanged>();
+	UOrionAsyncTask_EffectStackChanged* ListenForGameplayEffectStackChange = NewObject<UOrionAsyncTask_EffectStackChanged>();
 	ListenForGameplayEffectStackChange->ASC = AbilitySystemComponent;
 	ListenForGameplayEffectStackChange->EffectGameplayTag = InEffectGameplayTag;
 
@@ -16,13 +16,13 @@ UAsyncTaskEffectStackChanged * UAsyncTaskEffectStackChanged::ListenForGameplayEf
 		return nullptr;
 	}
 
-	AbilitySystemComponent->OnActiveGameplayEffectAddedDelegateToSelf.AddUObject(ListenForGameplayEffectStackChange, &UAsyncTaskEffectStackChanged::OnActiveGameplayEffectAddedCallback);
-	AbilitySystemComponent->OnAnyGameplayEffectRemovedDelegate().AddUObject(ListenForGameplayEffectStackChange, &UAsyncTaskEffectStackChanged::OnRemoveGameplayEffectCallback);
+	AbilitySystemComponent->OnActiveGameplayEffectAddedDelegateToSelf.AddUObject(ListenForGameplayEffectStackChange, &UOrionAsyncTask_EffectStackChanged::OnActiveGameplayEffectAddedCallback);
+	AbilitySystemComponent->OnAnyGameplayEffectRemovedDelegate().AddUObject(ListenForGameplayEffectStackChange, &UOrionAsyncTask_EffectStackChanged::OnRemoveGameplayEffectCallback);
 
 	return ListenForGameplayEffectStackChange;
 }
 
-void UAsyncTaskEffectStackChanged::EndTask()
+void UOrionAsyncTask_EffectStackChanged::EndTask()
 {
 	if (IsValid(ASC))
 	{
@@ -39,7 +39,7 @@ void UAsyncTaskEffectStackChanged::EndTask()
 	MarkAsGarbage();
 }
 
-void UAsyncTaskEffectStackChanged::OnActiveGameplayEffectAddedCallback(UAbilitySystemComponent * Target, const FGameplayEffectSpec & SpecApplied, FActiveGameplayEffectHandle ActiveHandle)
+void UOrionAsyncTask_EffectStackChanged::OnActiveGameplayEffectAddedCallback(UAbilitySystemComponent * Target, const FGameplayEffectSpec & SpecApplied, FActiveGameplayEffectHandle ActiveHandle)
 {
 	FGameplayTagContainer AssetTags;
 	SpecApplied.GetAllAssetTags(AssetTags);
@@ -49,13 +49,13 @@ void UAsyncTaskEffectStackChanged::OnActiveGameplayEffectAddedCallback(UAbilityS
 
 	if (AssetTags.HasTagExact(EffectGameplayTag) || GrantedTags.HasTagExact(EffectGameplayTag))
 	{
-		ASC->OnGameplayEffectStackChangeDelegate(ActiveHandle)->AddUObject(this, &UAsyncTaskEffectStackChanged::GameplayEffectStackChanged);
+		ASC->OnGameplayEffectStackChangeDelegate(ActiveHandle)->AddUObject(this, &UOrionAsyncTask_EffectStackChanged::GameplayEffectStackChanged);
 		OnGameplayEffectStackChange.Broadcast(EffectGameplayTag, ActiveHandle, 1, 0);
 		ActiveEffectHandle = ActiveHandle;
 	}
 }
 
-void UAsyncTaskEffectStackChanged::OnRemoveGameplayEffectCallback(const FActiveGameplayEffect & EffectRemoved)
+void UOrionAsyncTask_EffectStackChanged::OnRemoveGameplayEffectCallback(const FActiveGameplayEffect & EffectRemoved)
 {
 	FGameplayTagContainer AssetTags;
 	EffectRemoved.Spec.GetAllAssetTags(AssetTags);
@@ -69,7 +69,7 @@ void UAsyncTaskEffectStackChanged::OnRemoveGameplayEffectCallback(const FActiveG
 	}
 }
 
-void UAsyncTaskEffectStackChanged::GameplayEffectStackChanged(FActiveGameplayEffectHandle EffectHandle, int32 NewStackCount, int32 PreviousStackCount)
+void UOrionAsyncTask_EffectStackChanged::GameplayEffectStackChanged(FActiveGameplayEffectHandle EffectHandle, int32 NewStackCount, int32 PreviousStackCount)
 {
 	OnGameplayEffectStackChange.Broadcast(EffectGameplayTag, EffectHandle, NewStackCount, PreviousStackCount);
 }

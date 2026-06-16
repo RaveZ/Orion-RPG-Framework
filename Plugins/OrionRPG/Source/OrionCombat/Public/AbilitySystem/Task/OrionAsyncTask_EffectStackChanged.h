@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintAsyncActionBase.h"
 #include "AbilitySystemComponent.h"
-#include "AsyncTaskEffectStackChanged.generated.h"
+#include "OrionAsyncTask_EffectStackChanged.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnGameplayEffectStackChanged, FGameplayTag, EffectGameplayTag, FActiveGameplayEffectHandle, Handle, int32, NewStackCount, int32, OldStackCount);
 
@@ -14,7 +14,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnGameplayEffectStackChanged, FGa
  * Useful to use in UI.
  */
 UCLASS(BlueprintType, meta = (ExposedAsyncProxy = AsyncTask))
-class ORIONCOMBAT_API UAsyncTaskEffectStackChanged : public UBlueprintAsyncActionBase
+class ORIONCOMBAT_API UOrionAsyncTask_EffectStackChanged : public UBlueprintAsyncActionBase
 {
 	GENERATED_BODY()
 	
@@ -22,7 +22,7 @@ class ORIONCOMBAT_API UAsyncTaskEffectStackChanged : public UBlueprintAsyncActio
 	FOnGameplayEffectStackChanged OnGameplayEffectStackChange;
 
 	UFUNCTION(BlueprintCallable, meta = (BlueprintInternalUseOnly = "true"), Category = "OrionLibrary|Ability")
-	static UAsyncTaskEffectStackChanged* ListenForGameplayEffectStackChange(UAbilitySystemComponent* AbilitySystemComponent, FGameplayTag EffectGameplayTag);
+	static UOrionAsyncTask_EffectStackChanged* ListenForGameplayEffectStackChange(UAbilitySystemComponent* AbilitySystemComponent, FGameplayTag EffectGameplayTag);
 
 	// You must call this function manually when you want the AsyncTask to end.
 	// For UMG Widgets, you would call it in the Widget's Destruct event.
