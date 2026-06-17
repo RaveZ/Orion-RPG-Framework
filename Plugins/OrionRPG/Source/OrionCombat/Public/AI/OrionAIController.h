@@ -28,6 +28,11 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI")
 	TObjectPtr<AActor> TargetActor;
 	
+	/*Cache the pawn position when being possessed, useful when we want to know the pawn spawn origin location*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "AI")
+	FVector OriginLocation;
+
+	
 public:
 	UFUNCTION(BlueprintImplementableEvent, DisplayName = "On Target Set", Category = "AI")
 	void K2_OnTargetSet(AActor* InTarget);

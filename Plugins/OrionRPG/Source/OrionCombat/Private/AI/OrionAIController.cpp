@@ -34,6 +34,10 @@ void AOrionAIController::Tick(float DeltaTime)
 void AOrionAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
+	if (InPawn)
+	{
+		OriginLocation = InPawn->GetActorLocation();
+	}
 }
 
 void AOrionAIController::UpdateControlRotation(float DeltaTime, bool bUpdatePawn)
@@ -70,7 +74,7 @@ void AOrionAIController::SetTarget(AActor* InTarget, const bool bSetFocus)
 
 void AOrionAIController::ClearTarget()
 {
-	SetTarget(nullptr, false);
+	SetTarget(nullptr, false); 
 }
 
 void AOrionAIController::PerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
