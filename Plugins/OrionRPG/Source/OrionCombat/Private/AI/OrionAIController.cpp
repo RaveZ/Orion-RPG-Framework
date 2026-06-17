@@ -84,7 +84,6 @@ void AOrionAIController::PerceptionUpdated(AActor* Actor, FAIStimulus Stimulus)
 		if (Stimulus.Type == UAISense::GetSenseID<UAISense_Hearing>())
 		{
 			const float Distance = FVector::Dist(Stimulus.ReceiverLocation, Stimulus.StimulusLocation);
-
 		}
 		else if (Stimulus.Type == UAISense::GetSenseID<UAISense_Sight>())
 		{
