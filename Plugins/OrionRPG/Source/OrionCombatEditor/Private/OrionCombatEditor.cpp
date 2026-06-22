@@ -13,6 +13,7 @@
 #include "OrionCombat_EditorCommands.h"
 #include "OrionCombat_EditorStyle.h"
 #include "OrionGameplayAttributeDataDetails.h"
+#include "OrionGameplayAttributeGraphPanelPinFactory.h"
 #include "OrionGameplayAttributeDetails.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Layout/SBox.h"
@@ -33,10 +34,11 @@ void FOrionCombatEditorModule::StartupModule()
 	ToolBarExtensibilityManager = MakeShareable(new FExtensibilityManager);
 
 	// Register the PropertyEditors
-	FModuleManager::Get().LoadModuleChecked(TEXT("GameplayAbilitiesEditor"));
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	RegisterObjectCustomizations();
 	RegisterPropertyTypeCustomizations();
+	GameplayAttributePinFactory = MakeShared<FOrionGameplayAttributeGraphPanelPinFactory>();
+	FEdGraphUtilities::RegisterVisualPinFactory(GameplayAttributePinFactory);
 
 	//Initialize
 	FOrionCombat_EditorStyle::Initialize();
@@ -71,6 +73,12 @@ void FOrionCombatEditorModule::ShutdownModule()
 	FOrionCombat_EditorCommands::Unregister();
 
 	FGlobalTabmanager::Get()->UnregisterNomadTabSpawner(OrionCombatEditorTabName);
+
+	if (GameplayAttributePinFactory.IsValid())
+	{
+		FEdGraphUtilities::UnregisterVisualPinFactory(GameplayAttributePinFactory);
+		GameplayAttributePinFactory.Reset();
+	}
 
 	//Unregister PropertyEditor
 	if (FModuleManager::Get().IsModuleLoaded("PropertyEditor"))
