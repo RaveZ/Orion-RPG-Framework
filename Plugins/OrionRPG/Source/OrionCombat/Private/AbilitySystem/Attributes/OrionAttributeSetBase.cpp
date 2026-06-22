@@ -18,6 +18,7 @@ UOrionAttributeSetBase::UOrionAttributeSetBase()
 	, MaxHealth(100.0f)
 	, Mana(50.0f)
 	, MaxMana(50.0f)
+	, Defense(0.0f)
 {
 	bOutOfHealth = false;
 	MaxHealthBeforeAttributeChange = 0.0f;
@@ -33,6 +34,7 @@ void UOrionAttributeSetBase::GetLifetimeReplicatedProps(TArray<class FLifetimePr
 	DOREPLIFETIME_CONDITION_NOTIFY(UOrionAttributeSetBase, MaxHealth, COND_None, REPNOTIFY_Always)
 	DOREPLIFETIME_CONDITION_NOTIFY(UOrionAttributeSetBase, Mana, COND_None, REPNOTIFY_Always)
 	DOREPLIFETIME_CONDITION_NOTIFY(UOrionAttributeSetBase, MaxMana, COND_None, REPNOTIFY_Always)
+	DOREPLIFETIME_CONDITION_NOTIFY(UOrionAttributeSetBase, Defense, COND_None, REPNOTIFY_Always)
 
 	//Primary Attributes
 
@@ -81,6 +83,10 @@ void UOrionAttributeSetBase::ClampAttribute(const FGameplayAttribute& Attribute,
 	{
 		// Do not allow max health to drop below 1.
 		NewValue = FMath::Max(NewValue, 1.0f);
+	}
+	else if (Attribute == GetDefenseAttribute())
+	{
+		NewValue = FMath::Max(NewValue, 0.0f);
 	}
 }
 
@@ -131,7 +137,8 @@ void UOrionAttributeSetBase::PostGameplayEffectExecute(const struct FGameplayEff
 		
 
 		// Convert into -Health and then clamp
-		SetHealth(FMath::Clamp(GetHealth() - GetDamage(), MinimumHealth, GetMaxHealth()));
+		const float MitigatedDamage = FMath::Max(0.0f, GetDamage() - GetDefense());
+		SetHealth(FMath::Clamp(GetHealth() - MitigatedDamage, MinimumHealth, GetMaxHealth()));
 		SetDamage(0.0f);
 	}
 	else if (Data.EvaluatedData.Attribute == GetHealingAttribute())
@@ -203,4 +210,9 @@ void UOrionAttributeSetBase::OnRep_MaxHealth(const FGameplayAttributeData& OldVa
 void UOrionAttributeSetBase::OnRep_MaxMana(const FGameplayAttributeData& OldValue)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UOrionAttributeSetBase, MaxMana, OldValue);
+}
+
+void UOrionAttributeSetBase::OnRep_Defense(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UOrionAttributeSetBase, Defense, OldValue);
 }

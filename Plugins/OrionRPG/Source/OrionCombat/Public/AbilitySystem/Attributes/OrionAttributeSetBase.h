@@ -29,6 +29,7 @@ public:
 	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, Mana);
 	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, MaxHealth);
 	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, MaxMana);
+	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, Defense);
 	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, Healing);
 	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, Damage);
 	
@@ -66,6 +67,9 @@ protected:
 
 	UFUNCTION()
 	void OnRep_MaxMana(const FGameplayAttributeData& OldValue);
+
+	UFUNCTION()
+	void OnRep_Defense(const FGameplayAttributeData& OldValue);
 	
 private:
 	
@@ -81,6 +85,9 @@ private:
 	
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxMana, Category = "Orion|DefaultAttribute", Meta = (AllowPrivateAccess = true))
 	FGameplayAttributeData MaxMana;
+
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Defense, Category = "Orion|DefaultAttribute", Meta = (AllowPrivateAccess = true))
+	FGameplayAttributeData Defense;
 	
 	// Used to track when the health reaches 0.
 	bool bOutOfHealth;
