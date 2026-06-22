@@ -25,6 +25,7 @@ public class OrionCombat : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
+				"GameplayTags"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);

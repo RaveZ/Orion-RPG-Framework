@@ -14,7 +14,7 @@ class ORIONCOMBAT_API UOrionCombatFunctionLibrary : public UBlueprintFunctionLib
 {
 	GENERATED_BODY()
 	
-	
+public:
 	/**
 	* Grab the Orion Ability System component from the local pawn or player state, whichever it exists on.
 	*
