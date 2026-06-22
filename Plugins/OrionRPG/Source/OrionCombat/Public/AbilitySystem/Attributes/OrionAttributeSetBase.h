@@ -105,7 +105,7 @@ private:
 	FGameplayAttributeData Healing;
 
 	// Incoming damage. This is mapped directly to -Health
-	UPROPERTY(BlueprintReadOnly, Category = "Orion|DefaultAttribute", Meta=(HideFromModifiers, AllowPrivateAccess=true))
+	UPROPERTY(BlueprintReadOnly, Category = "Orion|DefaultAttribute", Meta=(AllowPrivateAccess=true))
 	FGameplayAttributeData Damage;
 	
 

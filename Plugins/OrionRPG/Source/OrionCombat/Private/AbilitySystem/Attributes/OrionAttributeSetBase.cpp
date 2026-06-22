@@ -137,8 +137,7 @@ void UOrionAttributeSetBase::PostGameplayEffectExecute(const struct FGameplayEff
 		
 
 		// Convert into -Health and then clamp
-		const float MitigatedDamage = FMath::Max(0.0f, GetDamage() - GetDefense());
-		SetHealth(FMath::Clamp(GetHealth() - MitigatedDamage, MinimumHealth, GetMaxHealth()));
+		SetHealth(FMath::Clamp(GetHealth() - GetDamage(), MinimumHealth, GetMaxHealth()));
 		SetDamage(0.0f);
 	}
 	else if (Data.EvaluatedData.Attribute == GetHealingAttribute())
