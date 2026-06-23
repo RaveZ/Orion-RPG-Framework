@@ -2,11 +2,17 @@
 
 #include "AbilitySystem/OrionAbilitySystemComponent.h"
 
+#include "EnhancedInputSubsystems.h"
 #include "AbilitySystem/Abilities/OrionGameplayAbility.h"
 #include "AbilitySystem/Attributes/OrionAttributeSetBase.h"
+#include "Input/OrionInputComponent.h"
+#include "Kismet/GameplayStatics.h"
 
 
 UE_DEFINE_GAMEPLAY_TAG(TAG_Gameplay_AbilityInputBlocked, "Gameplay.AbilityInputBlocked");
+
+
+
 
 UOrionAbilitySystemComponent::UOrionAbilitySystemComponent()
 {
@@ -22,12 +28,52 @@ void UOrionAbilitySystemComponent::InitializeComponent()
 void UOrionAbilitySystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
+	{
+		PC->OnPossessedPawnChanged.AddDynamic(this, &UOrionAbilitySystemComponent::OnPossessedPawnChanged);
+		
+		if (APawn* Pawn = PC->GetPawn())
+		{
+			if (Pawn->InputComponent)
+			{
+				InitializePlayerInput(Pawn->InputComponent);
+			}
+		}
+	}
+	
+	
 }
 
 void UOrionAbilitySystemComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);
 }
+
+void UOrionAbilitySystemComponent::OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn)
+{
+	if (NewPawn )
+	{
+		if (NewPawn->InputComponent)
+		{
+			InitializePlayerInput(NewPawn->InputComponent);
+		}
+	}
+	
+}
+
+void UOrionAbilitySystemComponent::InitializePlayerInput(UInputComponent* PlayerInputComponent)
+{
+	UOrionInputComponent* OrionIC = Cast<UOrionInputComponent>(PlayerInputComponent);
+	check(OrionIC);
+	
+	if (ensureMsgf(OrionIC, TEXT("Unexpected Input Component class! The Gameplay Abilities will not be bound to their inputs. Change the input component to ULyraInputComponent or a subclass of it.")))
+	{
+		TArray<uint32> BindHandles;
+		OrionIC->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputTagPressed, &ThisClass::AbilityInputTagReleased, /*out*/ BindHandles);
+
+	}
+}
+
 
 void UOrionAbilitySystemComponent::InitAbilityActorInfo(AActor* InOwnerActor, AActor* InAvatarActor)
 {

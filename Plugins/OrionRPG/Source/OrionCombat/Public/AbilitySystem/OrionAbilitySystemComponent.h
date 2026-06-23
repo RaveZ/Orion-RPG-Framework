@@ -8,8 +8,8 @@
 #include "OrionAbilitySystemComponent.generated.h"
 
 
-
-
+class UOrionAbilitySet;
+class UOrionInputConfig;
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Gameplay_AbilityInputBlocked);
 
 class UOrionGameplayAbility;
@@ -30,8 +30,14 @@ public:
 	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
 	FOrionAbilityCompSignature OnInitAbilityActorInfo;
 	
+
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "InputSystem|Abilities")
+	UOrionAbilitySet* AbilitySet;
 	
-private:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "InputSystem|Input")
+	UOrionInputConfig* InputConfig;
+
 	
 protected:
 	// Handles to abilities that had their input pressed this frame.
@@ -65,6 +71,11 @@ public:
 
 	void ProcessAbilityInput(float DeltaTime, bool bGamePaused);
 	void ClearAbilityInput();
-
+	
+private:
+	UFUNCTION()
+	virtual void OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn);
+	
+	virtual void InitializePlayerInput(UInputComponent* PlayerInputComponent);
 	
 };

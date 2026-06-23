@@ -6,7 +6,7 @@
 UE_DEFINE_GAMEPLAY_TAG(TAG_InputTag, "InputTag");
 
 
-const UInputAction* UOrionInputConfig::FindNativeInputActionForTag(const FGameplayTag& InputTag) const
+const UInputAction* UOrionInputConfig::FindNativeInputActionForTag(const FGameplayTag& InputTag, bool bLogNotFound) const
 {
 	for (const FOrionInputAction& Action : NativeInputActions)
 	{
@@ -15,12 +15,14 @@ const UInputAction* UOrionInputConfig::FindNativeInputActionForTag(const FGamepl
 			return Action.InputAction;
 		}
 	}
-	UE_LOG(LogTemp, Error, TEXT("Can't find NativeInputAction for InputTag [%s] on InputConfig [%s]."), *InputTag.ToString(), *GetNameSafe(this));
-	
+	if (bLogNotFound)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Can't find NativeInputAction for InputTag [%s] on InputConfig [%s]."), *InputTag.ToString(), *GetNameSafe(this));
+	}
 	return nullptr;
 }
 
-const UInputAction* UOrionInputConfig::FindAbilityInputActionForTag(const FGameplayTag& InputTag) const
+const UInputAction* UOrionInputConfig::FindAbilityInputActionForTag(const FGameplayTag& InputTag, bool bLogNotFound) const
 {
 	for (const FOrionInputAction& Action : AbilityInputActions)
 	{
@@ -29,7 +31,11 @@ const UInputAction* UOrionInputConfig::FindAbilityInputActionForTag(const FGamep
 			return Action.InputAction;
 		}
 	}
-	UE_LOG(LogTemp, Error, TEXT("Can't find NativeInputAction for InputTag [%s] on InputConfig [%s]."), *InputTag.ToString(), *GetNameSafe(this));
 	
+	if (bLogNotFound)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Can't find AbilityInputAction for InputTag [%s] on InputConfig [%s]."), *InputTag.ToString(), *GetNameSafe(this));
+	}
+
 	return nullptr;
 }

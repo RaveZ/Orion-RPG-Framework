@@ -34,8 +34,11 @@ class ORIONCOMBAT_API UOrionInputConfig : public UDataAsset
 	GENERATED_BODY()
 	
 public:
-	const UInputAction* FindNativeInputActionForTag(const FGameplayTag& InputTag) const;
-	const UInputAction* FindAbilityInputActionForTag(const FGameplayTag& InputTag) const;
+	UFUNCTION(BlueprintCallable, Category = "Orion|Input")
+	const UInputAction* FindNativeInputActionForTag(const FGameplayTag& InputTag, bool bLogNotFound = true) const;
+	
+	UFUNCTION(BlueprintCallable, Category = "Orion|Input")
+	const UInputAction* FindAbilityInputActionForTag(const FGameplayTag& InputTag, bool bLogNotFound = true) const;
 
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Meta = (TitleProperty = "InputAction"))
