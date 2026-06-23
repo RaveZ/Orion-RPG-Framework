@@ -25,7 +25,7 @@ public class OrionCombat : ModuleRules
 		PublicDependencyModuleNames.AddRange(
 			new string[]
 			{
-				"GameplayTags"
+				"GameplayTags", "GameplayAbilities"
 				// ... add other public dependencies that you statically link with here ...
 			}
 			);
@@ -50,7 +50,6 @@ public class OrionCombat : ModuleRules
 				"GameplayTasks",
                 "NavigationSystem",
 				"Niagara", 
-				"OrionRPG",
 				"GameplayStateTreeModule"
 				// ... add private dependencies that you statically link with here ...	
 			}

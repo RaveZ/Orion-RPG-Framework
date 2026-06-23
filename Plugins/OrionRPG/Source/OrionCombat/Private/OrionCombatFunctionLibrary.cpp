@@ -27,7 +27,7 @@ class UOrionAbilitySystemComponent* UOrionCombatFunctionLibrary::GetOrionAbility
 		return AbilityComp;
 	}
 
-	//Dialog comp may be on the controllers pawn or pawns controller
+	//Dialog comp may be on the pawn or player state
 	if (APlayerState* OwningPlayerState = Cast<APlayerState>(Target))
 	{
 		if (OwningPlayerState->GetPawn())

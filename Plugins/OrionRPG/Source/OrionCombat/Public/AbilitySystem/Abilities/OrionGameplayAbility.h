@@ -5,8 +5,25 @@
 #include "Abilities/GameplayAbility.h"
 #include "OrionGameplayAbility.generated.h"
 
+
 class APlayerController;
 class UOrionAbilitySystemComponent;
+
+/**
+ * EOrionAbilityActivationPolicy
+ *
+ *	Defines how an ability is meant to activate.
+ */
+UENUM(BlueprintType)
+enum class EOrionAbilityActivationPolicy : uint8
+{
+	// Try to activate the ability when the input is triggered.
+	OnInputTriggered,
+
+	// Continually try to activate the ability while the input is active.
+	WhileInputActive,
+};
+
 /**
  * UOrionGameplayAbility
  *
@@ -32,6 +49,13 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Orion|Ability")
 	ACharacter* GetCharacterFromActorInfo() const;
 	
+protected:
+	// Defines how this ability is meant to activate.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Lyra|Ability Activation")
+	EOrionAbilityActivationPolicy ActivationPolicy;
+	
+public:
+	EOrionAbilityActivationPolicy GetActivationPolicy() const { return ActivationPolicy; }
 
 protected:
 	//~UGameplayAbility interface

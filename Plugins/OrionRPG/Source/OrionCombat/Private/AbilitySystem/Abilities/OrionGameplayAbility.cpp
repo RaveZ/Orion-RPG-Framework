@@ -12,6 +12,8 @@ UOrionGameplayAbility::UOrionGameplayAbility()
 	InstancingPolicy = EGameplayAbilityInstancingPolicy::InstancedPerActor;
 	NetExecutionPolicy = EGameplayAbilityNetExecutionPolicy::LocalPredicted;
 	NetSecurityPolicy = EGameplayAbilityNetSecurityPolicy::ClientOrServer;
+	
+	ActivationPolicy = EOrionAbilityActivationPolicy::OnInputTriggered;
 
 }
 

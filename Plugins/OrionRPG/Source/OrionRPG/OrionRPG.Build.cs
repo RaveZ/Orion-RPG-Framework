@@ -35,6 +35,7 @@ public class OrionRPG : ModuleRules
                 "LevelSequence",
                 "MovieScene",
                 "CinematicCamera",
+                "OrionCombat"
 
             }
             );
