@@ -53,6 +53,12 @@ void UOrionAbilitySystemComponent::BeginPlay()
 	
 }
 
+void UOrionAbilitySystemComponent::TickComponent(float DeltaTime, enum ELevelTick TickType,
+	FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+}
+
 void UOrionAbilitySystemComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	Super::EndPlay(EndPlayReason);

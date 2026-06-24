@@ -33,6 +33,10 @@ void FOrionCombatEditorModule::StartupModule()
 	MenuExtensibilityManager = MakeShareable(new FExtensibilityManager);
 	ToolBarExtensibilityManager = MakeShareable(new FExtensibilityManager);
 
+	// Register after GameplayAbilitiesEditor so our picker, which includes Blueprint-created
+	// Orion attribute sets, is the active FGameplayAttribute property customization.
+	FModuleManager::LoadModuleChecked<IModuleInterface>("GameplayAbilitiesEditor");
+
 	// Register the PropertyEditors
 	FPropertyEditorModule& PropertyModule = FModuleManager::LoadModuleChecked<FPropertyEditorModule>("PropertyEditor");
 	RegisterObjectCustomizations();
