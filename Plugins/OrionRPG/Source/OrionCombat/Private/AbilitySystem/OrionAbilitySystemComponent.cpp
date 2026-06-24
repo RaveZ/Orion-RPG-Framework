@@ -3,6 +3,7 @@
 #include "AbilitySystem/OrionAbilitySystemComponent.h"
 
 #include "EnhancedInputSubsystems.h"
+#include "AbilitySystem/OrionAbilitySet.h"
 #include "AbilitySystem/Abilities/OrionGameplayAbility.h"
 #include "AbilitySystem/Attributes/OrionAttributeSetBase.h"
 #include "Input/OrionInputComponent.h"
@@ -39,8 +40,16 @@ void UOrionAbilitySystemComponent::BeginPlay()
 				InitializePlayerInput(Pawn->InputComponent);
 			}
 		}
+		
 	}
-	
+	APawn* Pawn = Cast<APawn>(GetOwner());
+	if (Pawn)
+	{
+		if (AbilitySet)
+		{
+			AbilitySet->GiveToAbilitySystem(this, nullptr, Pawn);
+		}
+	}
 	
 }
 
@@ -172,7 +181,7 @@ void UOrionAbilitySystemComponent::AbilitySpecInputReleased(FGameplayAbilitySpec
 	}
 }
 
-void UOrionAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& InputTag)
+void UOrionAbilitySystemComponent::AbilityInputTagPressed(FGameplayTag InputTag)
 {
 	if (InputTag.IsValid())
 	{
@@ -187,7 +196,7 @@ void UOrionAbilitySystemComponent::AbilityInputTagPressed(const FGameplayTag& In
 	}	
 }
 
-void UOrionAbilitySystemComponent::AbilityInputTagReleased(const FGameplayTag& InputTag)
+void UOrionAbilitySystemComponent::AbilityInputTagReleased(FGameplayTag InputTag)
 {
 	if (InputTag.IsValid())
 	{

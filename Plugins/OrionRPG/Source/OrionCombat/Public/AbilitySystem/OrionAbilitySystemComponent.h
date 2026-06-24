@@ -22,20 +22,20 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOrionAbilityCompSignature);
 /**
  * Base gameplay ability system component for Orion combat module.
  */
-UCLASS(BlueprintType, Blueprintable, ClassGroup = (OrionCombat), meta = (BlueprintSpawnableComponent))
+UCLASS(BlueprintType, Blueprintable, ClassGroup = (OrionCombat), AutoExpandCategories ="AbilityComponent", meta = (BlueprintSpawnableComponent))
 class ORIONCOMBAT_API UOrionAbilitySystemComponent : public UAbilitySystemComponent
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "DialogComponent")
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "AbilityComponent")
 	FOrionAbilityCompSignature OnInitAbilityActorInfo;
 	
 
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "InputSystem|Abilities")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AbilityComponent")
 	UOrionAbilitySet* AbilitySet;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "InputSystem|Input")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AbilityComponent")
 	UOrionInputConfig* InputConfig;
 
 	
@@ -66,8 +66,8 @@ public:
 
 	void CancelInputActivatedAbilities(bool bReplicateCancelAbility);
 
-	void AbilityInputTagPressed(const FGameplayTag& InputTag);
-	void AbilityInputTagReleased(const FGameplayTag& InputTag);
+	void AbilityInputTagPressed(FGameplayTag InputTag);
+	void AbilityInputTagReleased(FGameplayTag InputTag);
 
 	void ProcessAbilityInput(float DeltaTime, bool bGamePaused);
 	void ClearAbilityInput();

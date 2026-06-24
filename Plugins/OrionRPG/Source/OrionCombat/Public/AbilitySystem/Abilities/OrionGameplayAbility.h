@@ -29,7 +29,7 @@ enum class EOrionAbilityActivationPolicy : uint8
  *
  *	The base gameplay ability class used by this project.
  */
-UCLASS(Abstract, HideCategories = Input, Meta = (ShortTooltip = "The base gameplay ability class used by this project."))
+UCLASS(Abstract, HideCategories = Input, Meta = (ShortTooltip = "The base gameplay ability class used by this project."), AutoExpandCategories = "Orion|Ability")
 class ORIONCOMBAT_API UOrionGameplayAbility : public UGameplayAbility
 {
 	GENERATED_BODY()
@@ -51,7 +51,7 @@ public:
 	
 protected:
 	// Defines how this ability is meant to activate.
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Lyra|Ability Activation")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Orion|Ability")
 	EOrionAbilityActivationPolicy ActivationPolicy;
 	
 public:
