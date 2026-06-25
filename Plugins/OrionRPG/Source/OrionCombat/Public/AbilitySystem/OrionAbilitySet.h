@@ -7,10 +7,11 @@
 #include "AttributeSet.h"
 #include "GameplayTagContainer.h"
 
+#include "ActiveGameplayEffectHandle.h"
 #include "GameplayAbilitySpecHandle.h"
 #include "OrionAbilitySet.generated.h"
 
-struct FActiveGameplayEffectHandle;
+
 class UAttributeSet;
 class UOrionGameplayAbility;
 class UGameplayEffect;
