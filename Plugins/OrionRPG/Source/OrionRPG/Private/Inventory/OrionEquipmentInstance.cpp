@@ -78,6 +78,18 @@ APawn* UOrionEquipmentInstance::GetTypedPawn(TSubclassOf<APawn> PawnType) const
 	return Result;
 }
 
+void UOrionEquipmentInstance::LinkAnimLayerClass(TSubclassOf<UAnimInstance> AnimInstanceClass, APawn* InPawn)
+{
+	if (ACharacter* Char = Cast<ACharacter>(InPawn))
+	{
+		USkeletalMeshComponent* SkelMeshComp = Char->GetMesh();
+		if (SkelMeshComp)
+		{
+			SkelMeshComp->LinkAnimClassLayers(AnimInstanceClass);
+		}
+	}
+}
+
 void UOrionEquipmentInstance::SpawnEquipmentActors(const TArray<FOrionEquipmentActorData>& ActorsToSpawn, APawn* InPawn)
 {
 	USceneComponent* AttachTarget = InPawn->GetRootComponent();

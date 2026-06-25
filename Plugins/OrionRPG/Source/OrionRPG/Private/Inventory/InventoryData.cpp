@@ -562,6 +562,8 @@ void FOrionEquipmentList::RemoveEntry(UOrionEquipmentInstance* Instance)
 				//Entry.GrantedHandles.TakeFromAbilitySystem(ASC);
 			}
 			Entry.Instance->SetOwningItemInstance(nullptr);
+			
+			Instance->LinkAnimLayerClass(nullptr, OwnerComponent->GetOwningPawn());
 			Instance->DestroyEquipmentActors();
 		}
 	}
@@ -591,6 +593,7 @@ UOrionEquipmentInstance* FOrionEquipmentList::CreateEquipmentInstance(FOrionEqui
 			AbilitySet->GiveToAbilitySystem(ASC, /*inout*/ &InEntry.GrantedHandles, Result);
 		}
 	}
+	Result->LinkAnimLayerClass(EquipmentDefinition.OverlayAnimationBlueprint, OwnerComponent->GetOwningPawn());
 	Result->SpawnEquipmentActors(EquipmentDefinition.ActorsToSpawn, OwnerComponent->GetOwningPawn());
 
 	return Result;
