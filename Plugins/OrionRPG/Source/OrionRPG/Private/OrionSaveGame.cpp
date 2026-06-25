@@ -2,6 +2,8 @@
 
 
 #include "OrionSaveGame.h"
+#include "Inventory/OrionInventoryFunctionLibrary.h"
+#include "Inventory/OrionInventoryComponent.h"
 #include "Engine/GameInstance.h"
 #include "Engine/LocalPlayer.h"
 #include "OrionSetting.h"
@@ -26,6 +28,7 @@ void UOrionSaveGame::ResetToDefault()
 	PlayInfoData = FOrionPlayInfoSaveData();
 	PlayerData = FOrionPlayerSaveData();
 	QuestData = FOrionQuestSaveData();
+	InventorySaveData = FOrionInventorySaveData();
 	SavedActors.Empty();
 
 	Super::ResetToDefault();
@@ -90,6 +93,16 @@ void UOrionSaveGame::HandlePreSave()
 		}
 	}
 
+	//Inventory
+	{
+		UOrionInventoryComponent* InvComp = UOrionInventoryFunctionLibrary::GetInventoryComponentFromTarget(PC);
+		if (InvComp)
+		{
+			InventorySaveData = InvComp->GetSaveGameData();
+		}
+
+
+	}
 	CachedActors.Empty();
 
 	TArray<AActor*> SaveGameActors;
@@ -265,7 +278,15 @@ void UOrionSaveGame::HandleLoadGame(UWorld* World, bool bFromLoadGame)
             }
 		}
 
-	
+		//INVENTORY
+		{
+			UOrionInventoryComponent* InvComp = UOrionInventoryFunctionLibrary::GetInventoryComponentFromTarget(PC);
+			if (InvComp)
+			{
+				InvComp->InitializeFromSaveGame(InventorySaveData);
+			}
+		}
+
 		// QUEST
 		{
 			UQuestComponent* QuestComp = UQuestBuilderFunctionLibrary::GetQuestComponentFromTarget(PC);

@@ -35,8 +35,15 @@ public class OrionRPG : ModuleRules
                 "LevelSequence",
                 "MovieScene",
                 "CinematicCamera",
-                "OrionCombat"
-
+                "OrionCombat",
+                "NetCore",
+                "AIModule",
+                "PhysicsCore",
+                "GameplayAbilities",
+                "GameplayTasks",
+                "NavigationSystem",
+                "Niagara",
+                "IrisCore"
             }
             );
 

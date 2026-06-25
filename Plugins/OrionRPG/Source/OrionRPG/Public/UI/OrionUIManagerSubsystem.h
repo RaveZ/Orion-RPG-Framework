@@ -22,10 +22,10 @@ public:
 	FOrionNavigationConfig() {
 		KeyEventRules.Reset();
 		//WASD causing the the enhanced input not working the first time playing. need to find a way to register and unregister whenever system try to open menu.
-		/*KeyEventRules.Emplace(EKeys::A, EUINavigation::Left);
+		KeyEventRules.Emplace(EKeys::A, EUINavigation::Left);
 		KeyEventRules.Emplace(EKeys::D, EUINavigation::Right);
 		KeyEventRules.Emplace(EKeys::W, EUINavigation::Up);
-		KeyEventRules.Emplace(EKeys::S, EUINavigation::Down);*/
+		KeyEventRules.Emplace(EKeys::S, EUINavigation::Down);
 		KeyEventRules.Emplace(EKeys::Left, EUINavigation::Left);
 		KeyEventRules.Emplace(EKeys::Right, EUINavigation::Right);
 		KeyEventRules.Emplace(EKeys::Up, EUINavigation::Up);
@@ -44,7 +44,9 @@ public:
 
 class UOrionPrimaryGameLayout;
 class UOrionGridContainerBase;
+class UOrionGridBase;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOrionDragItemSignature, class UOrionGridItem*, DraggedItem);
 UCLASS()
 class ORIONRPG_API UOrionUIManagerSubsystem : public UGameInstanceSubsystem
 {
@@ -57,10 +59,40 @@ public:
 	virtual void Initialize(FSubsystemCollectionBase& Collection) override;
 	virtual void Deinitialize() override;
 	virtual bool ShouldCreateSubsystem(UObject* Outer) const override;
+	bool Tick(float DeltaSeconds);
 
 public:
 	UPROPERTY(BlueprintReadOnly, Category = "UI Subsystem")
 	TObjectPtr<UOrionPrimaryGameLayout> PrimaryLayout;
+
+	UPROPERTY(BlueprintReadOnly, Category = "UI Subsystem")
+	TObjectPtr<UOrionGridContainerBase> CurrentFocusedGridContainer;
+
+	UPROPERTY(BlueprintReadOnly, Category = "UI Subsystem")
+	TObjectPtr<UOrionGridBase> CurrentFocusedGrid;
+
+	//Last Grid Slot Placement to swap item with
+	UPROPERTY(BlueprintReadWrite, Category = "UI Subsystem|Inventory")
+	TObjectPtr<class UOrionGridSlot> GridSlotToSwap;
+
+	UPROPERTY(BlueprintReadWrite, Category = "UI Subsystem|Inventory")
+	TObjectPtr<class UOrionGridItem> DraggedItem;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "UI Subsystem|Inventory")
+	FOrionDragItemSignature OnDragItem;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "UI Subsystem|Inventory")
+	FOrionDragItemSignature OnCancelDragItem;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "UI Subsystem|Inventory")
+	FOrionDragItemSignature OnDragItemCompleted;
+
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "UI Subsystem|Inventory")
+	FOrionDragItemSignature OnSwapItem;
+
+public:
+	UFUNCTION(BlueprintCallable, Category = "UI Subsystem|Inventory")
+	void CancelDragItem();
 
 
 private:

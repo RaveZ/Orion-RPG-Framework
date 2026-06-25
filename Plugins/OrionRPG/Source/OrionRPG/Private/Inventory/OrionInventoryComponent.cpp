@@ -1,0 +1,1051 @@
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
+
+
+#include "Inventory/OrionInventoryComponent.h"
+#include "Inventory/OrionInventorySetting.h"
+#include "Inventory/OrionItemPickup.h"
+#include "Inventory/OrionActorViewer.h"
+#include "Inventory/OrionInventoryItemInstance.h"
+#include "Inventory/OrionEquipmentInstance.h"
+#include "Inventory/OrionInventoryItemFragment.h"
+#include "Inventory/OrionInventoryNode_ItemDefinition.h"
+#include "Interaction/OrionInteractionComponent.h"
+#include "Decorator/OrionDecorator.h"
+#include "Event/OrionEvent.h"
+#include "Inventory/InventoryData.h"
+#include "UObject/UObjectIterator.h"
+#include "Inventory/OrionInventoryGraph.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/Controller.h"
+#include "AssetRegistry/AssetRegistryModule.h"
+#include "GameFramework/Pawn.h"
+#include "GameFramework/PlayerController.h"
+#include "Net/UnrealNetwork.h"
+#include "NativeGameplayTags.h"
+#include "Engine/ActorChannel.h"
+#include "Engine/StreamableManager.h"
+#include "Engine/AssetManager.h"
+#include "Engine/World.h"
+
+
+
+
+#define LOCTEXT_NAMESPACE "OrionInventoryComponent"
+
+UOrionInventoryComponent::UOrionInventoryComponent(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	SetIsReplicatedByDefault(true);
+	bWantsInitializeComponent = true;
+	bReplicateUsingRegisteredSubObjectList = true;
+	CurrentWeight = 0;
+	bInitializingSaveGame = false;
+	CurrentGridDimension = FIntPoint(1, 1);
+}
+
+
+void UOrionInventoryComponent::BeginPlay()
+{
+	Super::BeginPlay();
+	InitializeDelegate();
+	InventoryList.Initialize(this);
+	EquipmentList.Initialize(this);
+	//Set Dependency
+	UWorld* World = GetWorld();
+	OwningController = GetOwningController();
+	if (InventoryDB)
+	{
+		InventoryDB->Initialize(this);
+		MaxWeight = InventoryDB->DefaultMaxInventoryWeight;
+		CurrentGridDimension = InventoryDB->DefaultGridDimension;
+		CurrencyList = InventoryDB->CurrencyDatas;
+	}
+
+
+	if (World)
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = GetOwner();
+		SpawnParams.Instigator = GetOwningPawn();
+		SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+
+		if (IsRemoteOrServer())
+		{
+			//Actor viewer
+			TSubclassOf<AOrionActorViewer> ItemViewerClass = GetMutableDefault<UOrionInventorySetting>()->ItemViewerClass;
+			ItemViewer = World->SpawnActor<AOrionActorViewer>(ItemViewerClass, GetMutableDefault<UOrionInventorySetting>()->ItemViewerLocation, FRotator::ZeroRotator, SpawnParams);
+
+			//Character viewer
+			TSubclassOf<AOrionActorViewer> CharacterViewerClass = GetMutableDefault<UOrionInventorySetting>()->CharacterViewerClass;
+			CharacterViewer = World->SpawnActor<AOrionActorViewer>(CharacterViewerClass, GetMutableDefault<UOrionInventorySetting>()->CharacterViewerLocation, FRotator::ZeroRotator, SpawnParams);
+		}
+		
+	}
+
+	//console command
+	IConsoleManager::Get().RegisterConsoleCommand(
+		TEXT("orionLogInventory"),
+		TEXT("Dump all inventory item held by player"),
+		FConsoleCommandDelegate::CreateUObject(this, &ThisClass::execLogInventory),
+		ECVF_Default);
+
+	IConsoleManager::Get().RegisterConsoleCommand(
+		TEXT("orionAddItem"),
+		TEXT("[ItemTag] Add item to inventory"),
+		FConsoleCommandWithArgsDelegate::CreateUObject(this, &ThisClass::execAddItem),
+		ECVF_Default);
+
+	IConsoleManager::Get().RegisterConsoleCommand(
+		TEXT("orionDropItem"),
+		TEXT("[ItemTag] Drop inventory item"),
+		FConsoleCommandWithArgsDelegate::CreateUObject(this, &ThisClass::execDropItem),
+		ECVF_Default);
+}
+
+void UOrionInventoryComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Super::EndPlay(EndPlayReason);
+
+	OnGridDimensionChanged.RemoveDynamic(this, &ThisClass::GridDimensionChanged);
+}
+
+void UOrionInventoryComponent::InitializeComponent()
+{
+	Super::InitializeComponent();
+}
+
+void UOrionInventoryComponent::UninitializeComponent()
+{
+	TArray<UOrionEquipmentInstance*> AllEquipmentInstances;
+
+	// gathering all instances before removal to avoid side effects affecting the equipment list iterator	
+	for (const FOrionEquippedItemEntry& Entry : EquipmentList.Entries)
+	{
+		AllEquipmentInstances.Add(Entry.Instance);
+	}
+
+	for (UOrionEquipmentInstance* EquipInstance : AllEquipmentInstances)
+	{
+		UnequipItem(EquipInstance);
+	}
+
+	Super::UninitializeComponent();
+}
+
+void UOrionInventoryComponent::InitializeDelegate()
+{
+	OnGridDimensionChanged.RemoveDynamic(this, &ThisClass::GridDimensionChanged);
+
+	OnGridDimensionChanged.AddDynamic(this, &ThisClass::GridDimensionChanged);
+}
+
+
+
+void UOrionInventoryComponent::GetLifetimeReplicatedProps(TArray< FLifetimeProperty >& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ThisClass, InventoryList);
+	DOREPLIFETIME(ThisClass, EquipmentList);
+}
+
+
+void UOrionInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+
+}
+
+void UOrionInventoryComponent::AddItem(int32& StackRemainder, FItemInstanceData& OutItemData, FGameplayTag ItemTag, int32 StackCount)
+{
+	StackRemainder = StackCount;
+	if (GetRole() != ROLE_Authority)
+	{
+		Server_AddItem(ItemTag, StackCount);
+		return;
+	}
+
+	if (!IsValidItemTag(ItemTag))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Fail to add item. Invalid item Tag (%s)!"), *ItemTag.ToString());
+		return;
+	}
+
+	UOrionInventoryItemInstance* ItemInstance = InventoryList.FindFirstItemByTag(ItemTag);
+	int32 InitialStackCount = 0;
+
+	if (ItemInstance)
+	{
+		//Item found, increase stack count instead  
+		if (!ItemInstance->HasRoomForItem())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Fail to add item: %s. Stack is full (%d/%d)"), *ItemInstance->GetItemDef()->DisplayName.ToString(), ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
+			return;
+		}
+		InitialStackCount = ItemInstance->GetTotalStackCount();
+		ItemInstance->SetTotalStackCount(ItemInstance->GetTotalStackCount() + FMath::Abs(StackCount));
+		OnItemStackChanged.Broadcast(ItemInstance, ItemInstance->GetItemInstanceData());
+	}
+	else
+	{
+		//Item not found, create new entry
+		UOrionInventoryNode_ItemDefinition* ItemDef = FindItemDefinition(ItemTag);
+
+		if (ItemDef)
+		{
+			ItemInstance = InventoryList.AddEntry(const_cast<UOrionInventoryNode_ItemDefinition*>(ItemDef));
+			if (ItemInstance && this->IsUsingRegisteredSubObjectList() && this->IsReadyForReplication())
+			{
+				this->AddReplicatedSubObject(ItemInstance);
+				InitialStackCount = ItemInstance->GetTotalStackCount();
+				ItemInstance->SetTotalStackCount(ItemInstance->GetTotalStackCount() + FMath::Abs(StackCount));
+
+			}
+		}
+	}
+
+	if (ItemInstance)
+	{
+		int32 RoomLeft = ItemInstance->GetItemDef()->MaxStackCount - InitialStackCount;
+
+		OutItemData = ItemInstance->GetItemInstanceData();
+		StackRemainder = FMath::Max(0, StackCount - FMath::Clamp(StackCount, 0, RoomLeft));
+		int32 AddedStack = StackCount - StackRemainder;
+
+		if (GetOwner()->GetNetMode() == NM_ListenServer || GetOwner()->GetNetMode() == NM_Standalone)
+		{
+			OnItemAdded.Broadcast(ItemInstance, OutItemData, AddedStack);
+		}
+		
+		if(GetOwner()->GetRemoteRole() == ROLE_AutonomousProxy)Client_OnItemAdded(ItemInstance, OutItemData, AddedStack);
+		
+		UE_LOG(LogTemp, Log, TEXT("Item Added: %s | Tag: %s, StackCount: %d/%d\n"), *ItemInstance->GetItemDef()->DisplayName.ToString(), *ItemInstance->GetItemDef()->Tag.ToString(), ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
+	}
+}
+
+
+void UOrionInventoryComponent::Client_OnItemAdded_Implementation(UOrionInventoryItemInstance* Item, FItemInstanceData ItemData, int AddedCount)
+{
+	OnItemAdded.Broadcast(Item, ItemData, AddedCount);
+}
+
+
+void UOrionInventoryComponent::Server_AddItem_Implementation(FGameplayTag ItemTag, int32 StackCount)
+{
+	int32 Remainder;
+	FItemInstanceData ItemData;
+	AddItem(Remainder, ItemData, ItemTag, StackCount);
+}
+
+void UOrionInventoryComponent::DropItem(FItemInstanceData& OutItemData, FGameplayTag ItemTag, int32 StackCount)
+{
+	if (GetRole() != ROLE_Authority)
+	{
+		Server_DropItem(ItemTag, StackCount);
+		return;
+	}
+
+	if (!IsValidItemTag(ItemTag))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Fail to drop item. Invalid item Tag (%s)!"), *ItemTag.ToString());
+		return;
+	}
+
+	UOrionInventoryItemInstance* ItemInstance = InventoryList.FindFirstItemByTag(ItemTag);
+
+	if (ItemInstance)
+	{
+		Server_DropItemInstance(ItemInstance, StackCount);
+		OutItemData = ItemInstance->GetItemInstanceData();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Fail to drop item. Item with Tag (%s) not found in inventory!"), *ItemTag.ToString());
+	}
+}
+
+
+void UOrionInventoryComponent::Server_DropItem_Implementation(FGameplayTag ItemTag, int32 StackCount)
+{
+	FItemInstanceData ItemData;
+	DropItem(ItemData, ItemTag, StackCount);
+}
+
+UOrionInventoryNode_ItemDefinition* UOrionInventoryComponent::FindItemDefinition(FGameplayTag ItemTag)
+{
+	if(!IsValidItemTag(ItemTag))
+	{
+		return nullptr;
+	}
+	if(InventoryDB)
+	{
+		return InventoryDB->ItemDefinitions.FindRef(ItemTag);
+	}
+	return nullptr;
+}
+
+
+
+void UOrionInventoryComponent::Server_DropItemInstance_Implementation(UOrionInventoryItemInstance* ItemInstance, int32 StackCount)
+{
+	if (!ItemInstance)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Fail to drop item. ItemInstance is null!"));
+		return;
+	}
+
+	if(ItemInstance->IsEquipped())
+	{
+		UnequipItem(ItemInstance->EquippedItemInstance);
+	}
+
+	const int32 NewStackCount = ItemInstance->GetTotalStackCount() - FMath::Abs(StackCount);
+	ItemInstance->SetTotalStackCount(NewStackCount);
+	
+	if(NewStackCount <= 0)
+	{
+		InventoryList.RemoveEntry(ItemInstance);
+		if (IsUsingRegisteredSubObjectList())
+		{
+			RemoveReplicatedSubObject(ItemInstance);
+		}
+		
+		OnItemRemoved.Broadcast(ItemInstance, ItemInstance->GetItemInstanceData());
+	}
+	else
+	{
+		OnItemStackChanged.Broadcast(ItemInstance, ItemInstance->GetItemInstanceData());
+	}
+	
+	const UOrionInventoryFragment_DropItem* DropItemFragment = ItemInstance->GetItemDef()->DropItemFragment;
+	if (DropItemFragment && DropItemFragment->PickupActorClass)
+	{
+		switch(DropItemFragment->DropItemBehavior)
+		{
+			case EDropItemBehavior::E_DropAsPickupable:
+				SpawnDroppedItem(DropItemFragment->PickupActorClass, ItemInstance->GetItemDef()->Tag, StackCount);
+				break;
+			case EDropItemBehavior::E_DropAsLootable:
+				if (CurrentDroppedItem && CurrentDroppedItem->GetDistanceTo(GetOwningPawn()) < 200.0f)
+				{
+					FOrionPickupDefinition PickupDef;
+					PickupDef.ItemTag = ItemInstance->GetItemDef()->Tag;
+					PickupDef.Count = StackCount;
+					CurrentDroppedItem->InteractionTargetComp->AddItemToContainer(PickupDef);
+					break;
+				}
+				else
+				{
+					SpawnDroppedItem(DropItemFragment->LootableActorClass, ItemInstance->GetItemDef()->Tag, StackCount);
+				}
+				break;
+		}
+	}
+
+	UE_LOG(LogTemp, Log, TEXT("Drop Item: %s | Tag: %s, StackCount: %d/%d\n"), *ItemInstance->GetItemDef()->DisplayName.ToString(), *ItemInstance->GetItemDef()->Tag.ToString(), ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
+
+
+}
+
+
+void UOrionInventoryComponent::SpawnDroppedItem(TSoftClassPtr<AActor> PickupActorClass, FGameplayTag ItemTag, int32 StackCount)
+{
+	const APawn* InPawn = GetOwningPawn();
+	const FSoftObjectPath SoftPath = PickupActorClass.ToSoftObjectPath();
+	if (!SoftPath.IsValid())
+	{
+		return;
+	}
+
+	
+
+	// Create a delegate that will be called when the pickup actor class is loaded
+	FStreamableDelegate Delegate = FStreamableDelegate::CreateLambda([this, SoftPath, InPawn, ItemTag, StackCount]()
+		{
+			// Resolve or load the class synchronously if necessary
+			UObject* LoadedObj = SoftPath.ResolveObject();
+			if (!LoadedObj)
+			{
+				LoadedObj = SoftPath.TryLoad();
+			}
+
+			UClass* LoadedClass = Cast<UClass>(LoadedObj);
+			if (!LoadedClass)
+			{
+				return;
+			}
+
+			UWorld* World = GetWorld();
+			if (!World || !InPawn)
+			{
+				return;
+			}
+
+			const FVector PawnLocation = InPawn->GetActorLocation();
+			const FVector Forward = InPawn->GetActorForwardVector();
+			FVector SpawnOrigin = PawnLocation + Forward * 100.0f + FVector(0.0f, 0.0f, 50.0f);
+
+			// Perform a downward line trace from above SpawnOrigin to find the ground
+			FHitResult Hit;
+			const FVector TraceStart = SpawnOrigin + FVector(0.0f, 0.0f, 200.0f);
+			const FVector TraceEnd = SpawnOrigin - FVector(0.0f, 0.0f, 1000.0f);
+			FCollisionQueryParams QueryParams(SCENE_QUERY_STAT(SpawnDroppedItemTrace), true);
+			QueryParams.AddIgnoredActor(const_cast<APawn*>(InPawn));
+			bool bHit = World->LineTraceSingleByChannel(Hit, TraceStart, TraceEnd, ECC_Visibility, QueryParams);
+
+			// If we hit something, place the spawn location on the surface with a small offset to avoid clipping
+			FVector SpawnLocation = bHit ? (Hit.ImpactPoint + Hit.ImpactNormal * 5.0f) : SpawnOrigin;
+
+			const FRotator SpawnRotation = FRotator::ZeroRotator;
+
+			FActorSpawnParameters SpawnParams;
+			SpawnParams.Owner = GetOwner();
+			SpawnParams.Instigator = const_cast<APawn*>(InPawn);
+			SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+
+			// Only spawn on the authority (server). 
+			if (GetOwner() && (GetOwner()->GetLocalRole() < ROLE_Authority))
+			{
+				return;
+			}
+
+			AActor* SpawnedActor = World->SpawnActor<AActor>(LoadedClass, SpawnLocation, SpawnRotation, SpawnParams);
+
+			TArray<UPrimitiveComponent*> Components;
+			SpawnedActor->GetComponents(Components, true);
+			for (auto& PrimitiveComponent : Components)
+			{
+				PrimitiveComponent->SetCollisionResponseToChannel(ECC_Pawn, ECR_Ignore);
+			}
+				
+
+			FOrionPickupDefinition PickupDef;
+			PickupDef.ItemTag = ItemTag;
+			PickupDef.Count = StackCount;
+
+			if(AOrionLootable* LootableItem = Cast<AOrionLootable>(SpawnedActor))
+			{
+				CurrentDroppedItem = LootableItem;
+				LootableItem->InteractionTargetComp->AddItemToContainer(PickupDef);
+			}
+			else if (AOrionItemPickup* ItemPickup = Cast<AOrionItemPickup>(SpawnedActor))
+			{
+				ItemPickup->InteractionTargetComp->SetItem(PickupDef);
+			}
+			
+
+		});
+
+	// Request async load via AssetManager's StreamableManager
+	UAssetManager::GetStreamableManager().RequestAsyncLoad(SoftPath, Delegate);
+}
+
+
+void UOrionInventoryComponent::ConsumeItem(FItemInstanceData& OutItemData, FGameplayTag ItemTag, int32 StackCount)
+{
+	if (GetRole() != ROLE_Authority)
+	{
+		Server_DropItem(ItemTag, StackCount);
+		return;
+	}
+
+	if (!IsValidItemTag(ItemTag))
+	{
+		UE_LOG(LogTemp, Error, TEXT("Fail to consume item. Invalid item Tag (%s)!"), *ItemTag.ToString());
+		return;
+	}
+
+	UOrionInventoryItemInstance* ItemInstance = InventoryList.FindFirstItemByTag(ItemTag);
+
+	if (ItemInstance)
+	{
+		Server_ConsumeItemInstance(ItemInstance, StackCount);
+		OutItemData = ItemInstance->GetItemInstanceData();
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Fail to consume item. Item with Tag (%s) not found in inventory!"), *ItemTag.ToString());
+	}
+}
+
+void UOrionInventoryComponent::Server_ConsumeItemInstance_Implementation(UOrionInventoryItemInstance* ItemInstance, int32 StackCount)
+{
+	if (!ItemInstance)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Fail to consume item. ItemInstance is null!"));
+		return;
+	}
+
+	const int32 NewStackCount = ItemInstance->GetTotalStackCount() - FMath::Abs(StackCount);
+	ItemInstance->SetTotalStackCount(NewStackCount);
+
+	if (NewStackCount <= 0)
+	{
+		InventoryList.RemoveEntry(ItemInstance);
+		if (IsUsingRegisteredSubObjectList())
+		{
+			RemoveReplicatedSubObject(ItemInstance);
+		}
+		OnItemConsumed.Broadcast(ItemInstance, ItemInstance->GetItemInstanceData());
+	}
+	else
+	{
+		OnItemStackChanged.Broadcast(ItemInstance, ItemInstance->GetItemInstanceData());
+	}
+	UE_LOG(LogTemp, Log, TEXT("Consume Item: %s | Tag: %s, StackCount: %d/%d\n"), *ItemInstance->GetItemDef()->DisplayName.ToString(), *ItemInstance->GetItemDef()->Tag.ToString(), ItemInstance->GetTotalStackCount(), ItemInstance->GetItemDef()->MaxStackCount);
+
+
+
+}
+
+void UOrionInventoryComponent::Server_ConsumeItem_Implementation(FGameplayTag ItemTag, int32 StackCount)
+{
+	FItemInstanceData ItemData;
+	ConsumeItem(ItemData, ItemTag, StackCount);
+
+}
+
+void UOrionInventoryComponent::SetInventoryMaxWeight(float InNewMaxWeight)
+{
+	if (MaxWeight == InNewMaxWeight)
+	{
+		return;
+	}
+
+	MaxWeight = FMath::Max(0, InNewMaxWeight);
+	OnMaxWeightChanged.Broadcast(MaxWeight);
+}
+
+void UOrionInventoryComponent::SetInventoryGridDimension(FIntPoint InNewDimension)
+{
+	FIntPoint OldDimension = CurrentGridDimension;
+	if (CurrentGridDimension == InNewDimension ||
+		InNewDimension.X < CurrentGridDimension.X ||
+		InNewDimension.Y < CurrentGridDimension.Y)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Set inventory grid dimension failed, new dimension may be the same or smaller. \n Old: (%d, %d), New: (%d, %d)"),
+			OldDimension.X, OldDimension.Y, InNewDimension.X, InNewDimension.Y);
+		return;
+	}
+	CurrentGridDimension = InNewDimension;
+	InventoryList.UpdateGrid(OldDimension, CurrentGridDimension);
+	OnGridDimensionChanged.Broadcast(OldDimension, CurrentGridDimension);
+}
+
+TArray<UOrionInventoryItemInstance*> UOrionInventoryComponent::GetAllItems() const
+{
+	return InventoryList.GetAllItems();
+}
+
+
+bool UOrionInventoryComponent::IsValidSlot(UOrionInventoryNode_ItemDefinition* ItemDef, int32 SlotIndex)
+{
+	return InventoryList.IsValidSlot(ItemDef, SlotIndex);
+}
+
+void UOrionInventoryComponent::SetEntries(TArray<UOrionInventoryItemInstance*> InItemList)
+{
+	InventoryList.SetEntries(InItemList);	
+	
+
+}
+
+void UOrionInventoryComponent::AssignItemIndex(UOrionInventoryItemInstance* ItemInstance, int32 TileIndex)
+{
+	InventoryList.AssignItemIndex(ItemInstance, TileIndex);
+}
+
+UOrionInventoryItemInstance* UOrionInventoryComponent::GetItemInstanceByTag(FGameplayTag ItemTag)
+{
+	return InventoryList.FindFirstItemByTag(ItemTag);
+}
+
+bool UOrionInventoryComponent::GetItemData(FItemInstanceData& OutItemData, FGameplayTag ItemTag)
+{
+	UOrionInventoryItemInstance* ItemInstance = GetItemInstanceByTag(ItemTag);
+
+	if (ItemInstance)
+	{
+		OutItemData = ItemInstance->GetItemInstanceData();
+		return true;
+	}
+	return false;
+}
+
+
+
+
+APawn* UOrionInventoryComponent::GetOwningPawn() const
+{
+	if (OwningController)
+	{
+		return OwningController->GetPawn();
+	}
+
+	APlayerController* PC = Cast<APlayerController>(GetOwner());
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+
+	if (OwningPawn)
+	{
+		return OwningPawn;
+	}
+
+	if (!OwningPawn && PC)
+	{
+		return PC->GetPawn();
+	}
+
+	return nullptr;
+}
+
+void UOrionInventoryComponent::InspectItem(FGameplayTag ItemTag)
+{
+	UOrionInventoryItemInstance* FoundItem = InventoryList.FindFirstItemByTag(ItemTag);
+	
+	if (FoundItem)
+	{
+		InspectedItem = FoundItem;
+		InspectItemInstance(FoundItem);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Fail to Inspect item. Item not found!"));
+	}
+}
+
+void UOrionInventoryComponent::InspectItemInstance(UOrionInventoryItemInstance* ItemInstance)
+{
+	if (!ItemInstance)
+	{
+		return;
+	}
+
+	const UOrionInventoryFragment_InspectItem* InspectItemFragment = Cast< UOrionInventoryFragment_InspectItem>(ItemInstance->FindFragmentByClass(UOrionInventoryFragment_InspectItem::StaticClass()));
+
+	if (InspectItemFragment)
+	{
+		OnInspectItem.Broadcast(ItemInstance, InspectItemFragment->ActorToInspect);
+	}
+
+
+}
+
+bool UOrionInventoryComponent::GetEquippedItemFromSlot(UOrionInventoryItemInstance*& OutItemInstance, UOrionEquipmentInstance*& OutEquipInstance, FGameplayTag InEquipSlot)
+{
+	UOrionEquipmentInstance* EquipmentInstance = EquipmentList.FindFirstEquipmentBySlot(InEquipSlot);
+	if(EquipmentInstance)
+	{
+		OutEquipInstance = EquipmentInstance;
+		OutItemInstance = EquipmentInstance->GetOwningItemInstance();
+		return true;
+	}
+	return false;
+}
+
+UOrionEquipmentInstance* UOrionInventoryComponent::EquipItemFromInstance(UOrionInventoryItemInstance* ItemInstance)
+{
+	if (ItemInstance)
+	{
+		const UOrionInventoryFragment_EquippableItem* EquippableFragment = Cast<UOrionInventoryFragment_EquippableItem>(ItemInstance->FindFragmentByClass(UOrionInventoryFragment_EquippableItem::StaticClass()));
+		if (EquippableFragment)
+		{
+			FOrionEquipmentDefinition InEquipDef = EquippableFragment->EquipmentDefinition;
+			InEquipDef.OwningItem = ItemInstance->GetItemInstanceData().Tag;
+			UOrionEquipmentInstance* Result = EquipItem(InEquipDef);
+			if (Result)
+			{
+				ItemInstance->SetEquippedItemInstance(Result);
+				return Result;
+			}
+		}
+		
+	}
+	return nullptr;
+}
+
+UOrionEquipmentInstance* UOrionInventoryComponent::EquipItemFromTag(FGameplayTag ItemTag)
+{
+	UOrionInventoryItemInstance* ItemInstance = InventoryList.FindFirstItemByTag(ItemTag);
+	if (ItemInstance)
+	{
+		return EquipItemFromInstance(ItemInstance);
+	}
+	return nullptr;
+}
+
+UOrionEquipmentInstance* UOrionInventoryComponent::EquipItem(FOrionEquipmentDefinition EquipmentDefinition)
+{
+	if (EquipmentDefinition.EquipSlot == FGameplayTag::EmptyTag)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Fail to add item. Invalid Equipment Slot Tag"));
+		return nullptr;
+	}
+	
+	UOrionEquipmentInstance* Result = nullptr;
+	if (GetRole() != ROLE_Authority)
+	{
+		Server_EquipItem(EquipmentDefinition);
+		return nullptr;
+	}
+
+	
+	Result = EquipmentList.SetEntry(EquipmentDefinition);
+	if (Result != nullptr)
+	{
+		Result->OnEquipped();
+		OnItemEquipped.Broadcast(Result);
+
+		if (IsUsingRegisteredSubObjectList() && IsReadyForReplication())
+		{
+			AddReplicatedSubObject(Result);
+		}
+	}
+	
+	return Result;
+}
+
+void UOrionInventoryComponent::Server_EquipItem_Implementation(FOrionEquipmentDefinition EquipmentDefinition)
+{
+	EquipItem(EquipmentDefinition);
+}
+
+
+ 
+void UOrionInventoryComponent::UnequipItemFromSlot(FGameplayTag InEquipSlot)
+{
+	if (InEquipSlot == FGameplayTag::EmptyTag)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Fail to add item. Invalid Equipment Slot Tag"));
+	}
+	UOrionEquipmentInstance* EquipmentInstance = EquipmentList.FindFirstEquipmentBySlot(InEquipSlot);
+
+	if (EquipmentInstance)
+	{
+		UnequipItem(EquipmentInstance);
+	}
+}
+
+void UOrionInventoryComponent::UnequipItem(UOrionEquipmentInstance* EquipmentInstance)
+{
+	if (GetRole() != ROLE_Authority)
+	{
+		Server_UnequipItem(EquipmentInstance);
+		return;
+	}
+	if (EquipmentInstance != nullptr)
+	{
+		if (IsUsingRegisteredSubObjectList())
+		{
+			RemoveReplicatedSubObject(EquipmentInstance);
+		}
+
+		EquipmentInstance->OnUnequipped();
+		EquipmentList.RemoveEntry(EquipmentInstance);
+		OnItemUnequipped.Broadcast(EquipmentInstance);
+	}
+}
+
+void UOrionInventoryComponent::Server_UnequipItem_Implementation(UOrionEquipmentInstance* EquipmentInstance)
+{
+	UnequipItem(EquipmentInstance);
+}
+
+TArray<UOrionEquipmentInstance*> UOrionInventoryComponent::GetAllEquippedItems() const
+{
+	return EquipmentList.GetAllEquippedItems();
+}
+
+void UOrionInventoryComponent::LootItemFromActor(AActor* InActor)
+{
+	if (InActor)
+	{
+		UOrionInteractionTargetComponent_LootItem* LootComponent = InActor->FindComponentByClass<UOrionInteractionTargetComponent_LootItem>();
+		if (LootComponent)
+		{
+			LootItem(LootComponent);
+		}
+	}
+}
+
+void UOrionInventoryComponent::LootItem(UOrionInteractionTargetComponent_LootItem* InLootComponent)
+{
+	if (InLootComponent)
+	{
+		OnLootItem.Broadcast(InLootComponent);
+	}
+}
+
+bool UOrionInventoryComponent::AddCurrency(FGameplayTag InCurrencyTag, int32 Value, FOrionCurrencyData& OutCurrency)
+{
+	for (auto& CurrencyData : CurrencyList)
+	{
+		if (CurrencyData.CurrencyTag == InCurrencyTag)
+		{
+			CurrencyData.Value = FMath::Clamp(CurrencyData.Value + Value, 0, INT32_MAX);
+			OutCurrency = CurrencyData;
+			OnCurrencyDataChanged.Broadcast(CurrencyData);
+			return true;
+		}
+	}
+	return false;
+}
+
+
+
+bool UOrionInventoryComponent::GetCurrency(FGameplayTag InCurrencyTag, FOrionCurrencyData& OutCurrency)
+{
+	for (auto& CurrencyData : CurrencyList)
+	{
+		if (CurrencyData.CurrencyTag == InCurrencyTag)
+		{
+			OutCurrency = CurrencyData;
+			return true;
+		}
+	}
+	return false;
+}
+
+
+FOrionInventorySaveData UOrionInventoryComponent::GetSaveGameData()
+{
+	FOrionInventorySaveData InventorySaveData;
+
+	//Save Inventory Items
+	TArray<UOrionInventoryItemInstance*> AllItems = GetAllItems();
+	InventorySaveData.SavedInventoryItems.SetNum(AllItems.Num());
+    for (int32 i = 0; i < AllItems.Num(); ++i)
+    {
+		if (AllItems.IsValidIndex(i))
+		{
+			auto ItemInstance = AllItems[i];
+			if (ItemInstance && ItemInstance->GetItemDef())
+			{
+				FOrionInventoryItemSaveData ItemSaveData;
+				ItemSaveData.ItemTag = ItemInstance->GetItemDef()->Tag;
+				ItemSaveData.TotalStackCount = ItemInstance->GetTotalStackCount();
+				ItemSaveData.bIsEquipped = ItemInstance->IsEquipped();
+
+				InventorySaveData.SavedInventoryItems[i] = ItemSaveData;
+			}
+		}
+    }
+
+	
+	InventorySaveData.MaxWeight = MaxWeight;
+	InventorySaveData.GridDimension = CurrentGridDimension;
+	InventorySaveData.SavedCurrencies = CurrencyList;
+
+	return InventorySaveData;
+}
+
+void UOrionInventoryComponent::InitializeFromSaveGame(const FOrionInventorySaveData& InventorySaveData)
+{
+	if (GetRole() != ROLE_Authority)
+	{
+		Server_InitializeFromSaveGame(InventorySaveData);
+		return;
+	}
+	//Reset Inventory List
+	bInitializingSaveGame = true;
+	InventoryList.Reset();
+	EquipmentList.Reset();
+	InventoryList.InitializeFromSaveGame(InventorySaveData);
+
+
+	MaxWeight = InventorySaveData.MaxWeight;
+	CurrentGridDimension = InventorySaveData.GridDimension;
+	CurrencyList = InventorySaveData.SavedCurrencies;
+	
+	bInitializingSaveGame = false;
+
+}
+
+void UOrionInventoryComponent::Server_InitializeFromSaveGame_Implementation(const FOrionInventorySaveData& InventorySaveData)
+{
+	InitializeFromSaveGame(InventorySaveData);
+}
+
+
+
+APlayerController* UOrionInventoryComponent::GetOwningController() const
+{
+	//We cache this on beginplay as to not re-find it every time 
+	if (OwningController)
+	{
+		return OwningController;
+	}
+
+	APlayerController* PC = Cast<APlayerController>(GetOwner());
+	APawn* OwningPawn = Cast<APawn>(GetOwner());
+
+	if (PC)
+	{
+		return PC;
+	}
+
+	if (!PC && OwningPawn)
+	{
+		return Cast<APlayerController>(OwningPawn->GetController());
+	}
+
+	return nullptr;
+}
+
+
+bool UOrionInventoryComponent::ReplicateSubobjects(UActorChannel* Channel, FOutBunch* Bunch, FReplicationFlags* RepFlags)
+{
+	bool WroteSomething = Super::ReplicateSubobjects(Channel, Bunch, RepFlags);
+
+	for (FOrionInventoryEntry& Entry : InventoryList.Entries)
+	{
+		UOrionInventoryItemInstance* Instance = Entry.ItemInstance;
+
+		if (Instance && IsValid(Instance))
+		{
+			WroteSomething |= Channel->ReplicateSubobject(Instance, *Bunch, *RepFlags);
+		}
+	}
+
+	for (FOrionEquippedItemEntry& Entry : EquipmentList.Entries)
+	{
+		UOrionEquipmentInstance* Instance = Entry.Instance;
+
+		if (IsValid(Instance))
+		{
+			WroteSomething |= Channel->ReplicateSubobject(Instance, *Bunch, *RepFlags);
+		}
+	}
+
+	return WroteSomething;
+}
+
+void UOrionInventoryComponent::ReadyForReplication()
+{
+	Super::ReadyForReplication();
+
+	// Register existing UOrionInventoryItemInstance
+	if (IsUsingRegisteredSubObjectList())
+	{
+		for (const FOrionInventoryEntry& Entry : InventoryList.Entries)
+		{
+			UOrionInventoryItemInstance* Instance = Entry.ItemInstance;
+
+			if (IsValid(Instance))
+			{
+				AddReplicatedSubObject(Instance);
+			}
+		}
+	}
+	// Register existing OrionEquipmentInstances
+	if (IsUsingRegisteredSubObjectList())
+	{
+		for (const FOrionEquippedItemEntry& Entry : EquipmentList.Entries)
+		{
+			UOrionEquipmentInstance* Instance = Entry.Instance;
+
+			if (IsValid(Instance))
+			{
+				AddReplicatedSubObject(Instance);
+			}
+		}
+	}
+}
+
+float UOrionInventoryComponent::GetCurrentWeight()
+{
+	TArray<UOrionInventoryItemInstance*> AllItems;
+	for (auto& Item : GetAllItems())
+	{
+		AllItems.AddUnique(Item);
+	}
+
+	float OutWeight = 0;
+
+	for (int i = 0; i < AllItems.Num(); i++)
+	{
+		if (AllItems.IsValidIndex(i))
+		{
+			UOrionInventoryItemInstance* ItemInstance = AllItems[i];
+			if (ItemInstance)
+			{
+				OutWeight += (ItemInstance->GetTotalStackCount() * ItemInstance->GetItemInstanceData().Weight);
+			}
+		}
+	}
+	return OutWeight;
+}
+
+float UOrionInventoryComponent::GetMaxWeight()
+{
+	return MaxWeight;
+}
+
+FIntPoint UOrionInventoryComponent::GetCurrentGridDimension()
+{
+	FIntPoint OutDimension;
+    OutDimension.X = CurrentGridDimension.X;
+    int32 ItemMaxColumn = CurrentGridDimension.X > 0 ? FMath::CeilToInt(static_cast<float>(GetAllItems().Num()) / static_cast<float>(CurrentGridDimension.X)) : CurrentGridDimension.Y;
+	OutDimension.Y = InventoryDB ? InventoryDB->InventoryType == EOrionInventoryType::E_GridBased ? CurrentGridDimension.Y : FMath::Max(ItemMaxColumn, CurrentGridDimension.Y) : ItemMaxColumn;
+	return OutDimension;
+}
+
+void UOrionInventoryComponent::GridDimensionChanged(FIntPoint OldDimension, FIntPoint NewDimension)
+{
+}
+
+
+// ================================================================================================ //
+// CONSOLE COMMANDS
+// ================================================================================================ //
+
+void UOrionInventoryComponent::execLogInventory()
+{
+#if !UE_BUILD_SHIPPING
+
+	static FString Message;
+	Message.Reset();
+
+	Message += TEXT("\n==================== BEGIN Inventory ====================\n");
+
+	TArray<UOrionInventoryItemInstance* > ItemList = InventoryList.GetAllItems();
+	for (int32 i = 0; i < ItemList.Num(); ++i)
+	{
+		if (ItemList.IsValidIndex(i))
+		{
+			UOrionInventoryItemInstance* Item = ItemList[i];
+			if (Item)
+			{
+				Message += FString::Printf(TEXT("Name: %s | Tag: %s, StackCount: %d/%d\n"), *Item->GetItemDef()->DisplayName.ToString(), *Item->GetItemDef()->Tag.ToString(), Item->GetTotalStackCount(), Item->GetItemDef()->MaxStackCount);
+			}
+		}
+	}
+
+
+	Message += TEXT("==================== END Inventory ====================\n");
+
+	UE_LOG(LogTemp, Log, TEXT(" %s"), *Message);
+
+#endif // UE_BUILD_SHIPPING
+}
+
+void UOrionInventoryComponent::execAddItem(const TArray<FString>& ItemTag)
+{
+	if (ItemTag.IsEmpty()) return;
+
+	int32 Remainder;
+	FItemInstanceData ItemData;
+	AddItem(Remainder, ItemData, FGameplayTag::RequestGameplayTag(FName(*ItemTag[0])));
+}
+
+void UOrionInventoryComponent::execDropItem(const TArray<FString>& ItemTag)
+{
+	if (ItemTag.IsEmpty()) return;
+
+	FItemInstanceData ItemData;
+	DropItem(ItemData, FGameplayTag::RequestGameplayTag(FName(*ItemTag[0])));
+}
+
+
+#undef LOCTEXT_NAMESPACE
+
+

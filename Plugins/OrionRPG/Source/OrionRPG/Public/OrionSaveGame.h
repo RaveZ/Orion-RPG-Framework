@@ -7,6 +7,7 @@
 #include "Quest.h"
 #include "QuestData.h"
 #include "GameFramework/Actor.h"
+#include "Inventory/InventoryData.h"
 #include "UObject/Interface.h"
 #include "OrionSaveGame.generated.h"
 
@@ -130,6 +131,36 @@ public:
 
 };
 
+USTRUCT()
+struct FOrionInventorySaveData
+{
+	GENERATED_BODY()
+
+public:
+	/**
+	* Max weight capacity for the inventory
+	* Current weight capacity will be calculated based on the items stored in the inventory
+	*/
+	UPROPERTY(VisibleAnywhere, Category = InventorySaveData)
+	float MaxWeight;
+
+	UPROPERTY(VisibleAnywhere, Category = InventorySaveData)
+	FIntPoint GridDimension;
+
+	UPROPERTY(VisibleAnywhere, Category = InventorySaveData)
+	TArray<FOrionInventoryItemSaveData> SavedInventoryItems;
+
+	UPROPERTY(VisibleAnywhere, Category = InventorySaveData)
+	TArray<FOrionCurrencyData> SavedCurrencies;
+
+	FOrionInventorySaveData()
+	{
+		MaxWeight = 0.0f;
+		GridDimension = FIntPoint(0, 0);
+
+	}
+};
+
 
 UCLASS(Blueprintable, BlueprintType)
 class ORIONRPG_API UOrionSaveGame : public ULocalPlayerSaveGame
@@ -154,6 +185,8 @@ public:
 	UPROPERTY()
 	FOrionQuestSaveData QuestData;
 
+	UPROPERTY()
+	FOrionInventorySaveData InventorySaveData;
 
 	UPROPERTY()
 	FOrionPlayerSaveData PlayerData;
