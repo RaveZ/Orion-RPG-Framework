@@ -186,7 +186,7 @@ struct FOrionEquipmentDefinition
 	FGameplayTag OwningItem;
 	
 	
-	//Which equipment slot to assign to
+	//Animation layer to be linked when equipping this weapon
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment)
 	TSubclassOf<UAnimInstance> OverlayAnimationBlueprint;
 	

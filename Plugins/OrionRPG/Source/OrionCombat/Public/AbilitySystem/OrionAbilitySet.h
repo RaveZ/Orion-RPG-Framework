@@ -88,7 +88,7 @@ public:
  *	Data used to store handles to what has been granted by the ability set.
  */
 USTRUCT(BlueprintType)
-struct FOrionAbilitySet_GrantedHandles
+struct ORIONCOMBAT_API FOrionAbilitySet_GrantedHandles
 {
 	GENERATED_BODY()
 

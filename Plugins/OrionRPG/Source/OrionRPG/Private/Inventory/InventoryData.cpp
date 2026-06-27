@@ -559,11 +559,11 @@ void FOrionEquipmentList::RemoveEntry(UOrionEquipmentInstance* Instance)
 		{
 			if (UOrionAbilitySystemComponent* ASC = GetAbilitySystemComponent())
 			{
-				//Entry.GrantedHandles.TakeFromAbilitySystem(ASC);
+				Entry.GrantedHandles.TakeFromAbilitySystem(ASC);
 			}
 			Entry.Instance->SetOwningItemInstance(nullptr);
 			
-			Instance->LinkAnimLayerClass(nullptr, OwnerComponent->GetOwningPawn());
+			Instance->UnlinkAnimLayerClass(Instance->GetEquipmentDef().OverlayAnimationBlueprint, OwnerComponent->GetOwningPawn());
 			Instance->DestroyEquipmentActors();
 		}
 	}
@@ -628,6 +628,10 @@ UOrionAbilitySystemComponent* FOrionEquipmentList::GetAbilitySystemComponent() c
 {
 	check(OwnerComponent);
 	AActor* OwningActor = OwnerComponent->GetOwner();
+	if (APlayerController* PC = Cast<APlayerController>(OwningActor))
+	{
+		return Cast<UOrionAbilitySystemComponent>(UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(PC->GetPawn()));
+	}
 	return Cast<UOrionAbilitySystemComponent>(UAbilitySystemGlobals::GetAbilitySystemComponentFromActor(OwningActor));
 }
 

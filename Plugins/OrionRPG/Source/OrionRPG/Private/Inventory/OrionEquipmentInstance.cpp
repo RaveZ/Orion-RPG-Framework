@@ -80,12 +80,31 @@ APawn* UOrionEquipmentInstance::GetTypedPawn(TSubclassOf<APawn> PawnType) const
 
 void UOrionEquipmentInstance::LinkAnimLayerClass(TSubclassOf<UAnimInstance> AnimInstanceClass, APawn* InPawn)
 {
-	if (ACharacter* Char = Cast<ACharacter>(InPawn))
+	if (AnimInstanceClass)
 	{
-		USkeletalMeshComponent* SkelMeshComp = Char->GetMesh();
-		if (SkelMeshComp)
+		if (ACharacter* Char = Cast<ACharacter>(InPawn))
 		{
-			SkelMeshComp->LinkAnimClassLayers(AnimInstanceClass);
+			USkeletalMeshComponent* SkelMeshComp = Char->GetMesh();
+			if (SkelMeshComp)
+			{
+				SkelMeshComp->LinkAnimClassLayers(AnimInstanceClass);
+			}
+		}
+	}
+	
+}
+
+void UOrionEquipmentInstance::UnlinkAnimLayerClass(TSubclassOf<UAnimInstance> AnimInstanceClass, APawn* InPawn)
+{
+	if (AnimInstanceClass)
+	{
+		if (ACharacter* Char = Cast<ACharacter>(InPawn))
+		{
+			USkeletalMeshComponent* SkelMeshComp = Char->GetMesh();
+			if (SkelMeshComp)
+			{
+				SkelMeshComp->UnlinkAnimClassLayers(AnimInstanceClass);
+			}
 		}
 	}
 }

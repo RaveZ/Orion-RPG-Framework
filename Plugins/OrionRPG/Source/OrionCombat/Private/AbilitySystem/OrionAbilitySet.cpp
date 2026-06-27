@@ -64,6 +64,7 @@ void FOrionAbilitySet_GrantedHandles::TakeFromAbilitySystem(UOrionAbilitySystemC
 	GrantedAttributeSets.Reset();
 }
 
+
 UOrionAbilitySet::UOrionAbilitySet(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
