@@ -9,10 +9,13 @@
 #include "Inventory/OrionInventoryItemFragment.h"
 #include "AbilitySystem/OrionAbilitySystemComponent.h"
 #include "AbilitySystemGlobals.h"
+#include "OrionCombatFunctionLibrary.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
 #include "OrionSaveGame.h"
 #include "OrionRPG.h"
+#include "Animation/OrionMovementLayerComponent.h"
+#include "GameFramework/Character.h"
 
 //////////////////////////////////////////////////////////////////////
 
@@ -562,8 +565,10 @@ void FOrionEquipmentList::RemoveEntry(UOrionEquipmentInstance* Instance)
 				Entry.GrantedHandles.TakeFromAbilitySystem(ASC);
 			}
 			Entry.Instance->SetOwningItemInstance(nullptr);
-			
-			Instance->UnlinkAnimLayerClass(Instance->GetEquipmentDef().OverlayAnimationBlueprint, OwnerComponent->GetOwningPawn());
+			if (UOrionMovementLayerComponent* MovementLayerComponent = UOrionCombatFunctionLibrary::GetMovementLayerComponent(Cast<ACharacter>(OwnerComponent->GetOwningPawn())))
+			{
+				MovementLayerComponent->SetOverlay(MovementLayerComponent->DefaultOverlay);
+			}
 			Instance->DestroyEquipmentActors();
 		}
 	}
@@ -593,7 +598,12 @@ UOrionEquipmentInstance* FOrionEquipmentList::CreateEquipmentInstance(FOrionEqui
 			AbilitySet->GiveToAbilitySystem(ASC, /*inout*/ &InEntry.GrantedHandles, Result);
 		}
 	}
-	Result->LinkAnimLayerClass(EquipmentDefinition.OverlayAnimationBlueprint, OwnerComponent->GetOwningPawn());
+	
+	
+	if (UOrionMovementLayerComponent* MovementLayerComponent = UOrionCombatFunctionLibrary::GetMovementLayerComponent(Cast<ACharacter>(OwnerComponent->GetOwningPawn())))
+	{
+		MovementLayerComponent->SetOverlay(EquipmentDefinition.MovementOverlay);
+	}
 	Result->SpawnEquipmentActors(EquipmentDefinition.ActorsToSpawn, OwnerComponent->GetOwningPawn());
 
 	return Result;

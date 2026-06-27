@@ -51,12 +51,6 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = Equipment)
 	TArray<FOrionEquipmentActorData> GetSpawnedActorDatas() const { return SpawnedActorDatas; }
-
-	UFUNCTION(BlueprintCallable, Category = Equipment)
-	virtual void LinkAnimLayerClass(TSubclassOf<UAnimInstance> AnimInstanceClass, APawn* InPawn);
-	
-	UFUNCTION(BlueprintCallable, Category = Equipment)
-	virtual void UnlinkAnimLayerClass(TSubclassOf<UAnimInstance> AnimInstanceClass, APawn* InPawn);
 	
 	UFUNCTION(BlueprintCallable, Category = Equipment)
 	virtual void SpawnEquipmentActors(const TArray<FOrionEquipmentActorData>& ActorsToSpawn, APawn* InPawn);

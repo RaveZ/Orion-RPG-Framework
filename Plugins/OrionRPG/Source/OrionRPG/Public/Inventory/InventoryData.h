@@ -187,8 +187,8 @@ struct FOrionEquipmentDefinition
 	
 	
 	//Animation layer to be linked when equipping this weapon
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment)
-	TSubclassOf<UAnimInstance> OverlayAnimationBlueprint;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment, meta = (Categories = "MovementLayer"))
+	FGameplayTag MovementOverlay;
 	
 	//Which equipment slot to assign to
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Equipment, meta=(Categories="EquipSlot"))

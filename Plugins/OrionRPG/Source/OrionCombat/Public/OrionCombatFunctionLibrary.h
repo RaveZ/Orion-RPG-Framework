@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayTagContainer.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "OrionCombatFunctionLibrary.generated.h"
 
@@ -33,7 +34,7 @@ public:
 	static class UOrionAbilitySystemComponent* GetOrionAbilityComponentFromTarget(AActor* Target);
 	
 	/**
-	* Grab the Targeting Ability System component from the local player controller.
+	* Grab the Targeting System component from the local player controller.
 	*
 	* @return The Targeting System Component
 	*/
@@ -41,12 +42,28 @@ public:
 	static class UOrionTargetingSystemComponent* GetTargetingSystemComponent(const UObject* WorldContextObject);
 	
 	/**
-	* Find the Targeting Ability System component from the supplied target object.
+	* Find the Targeting System component from the supplied target object.
 	*
 	* @return The Targeting System Component
 	*/
-	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Ability", meta = (DefaultToSelf = "Target"))
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Targeting", meta = (DefaultToSelf = "Target"))
 	static class UOrionTargetingSystemComponent* GetTargetingSystemComponentFromTarget(AActor* Target);
+	
+	/**
+	* Find the Targeting System component from the supplied target object.
+	*
+	* @return The Targeting System Component
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Movement")
+	static class UOrionMovementLayerComponent* GetMovementLayerComponent(ACharacter* Character);
+	
+	/**
+	* Set Movement Overlay
+	*
+	*/
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Movement")
+	static void SetMovementOverlay(ACharacter* Character, UPARAM(meta = (Categories = "MovementLayer"))FGameplayTag Tag);
+	
 	
 	
 };

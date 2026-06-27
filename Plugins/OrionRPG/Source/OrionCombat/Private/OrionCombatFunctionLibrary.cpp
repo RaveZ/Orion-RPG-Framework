@@ -4,6 +4,8 @@
 #include "OrionCombatFunctionLibrary.h"
 
 #include "AbilitySystem/OrionAbilitySystemComponent.h"
+#include "Animation/OrionMovementLayerComponent.h"
+#include "GameFramework/Character.h"
 #include "TargetingSystem/OrionTargetingSystemComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Pawn.h"
@@ -85,4 +87,22 @@ class UOrionTargetingSystemComponent* UOrionCombatFunctionLibrary::GetTargetingS
 	}
 
 	return nullptr;
+}
+
+class UOrionMovementLayerComponent* UOrionCombatFunctionLibrary::GetMovementLayerComponent(ACharacter* Character)
+{
+	if (Character)
+	{
+		return Character->FindComponentByClass<UOrionMovementLayerComponent>();
+	}
+	return nullptr;
+}
+
+void UOrionCombatFunctionLibrary::SetMovementOverlay(ACharacter* Character, FGameplayTag Tag)
+{
+	UOrionMovementLayerComponent* MovementLayer = Character ? GetMovementLayerComponent(Character) : nullptr;
+	if (MovementLayer)
+	{
+		MovementLayer->SetOverlay(Tag);
+	}
 }

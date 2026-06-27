@@ -5,8 +5,11 @@
 
 #include "CoreMinimal.h"
 #include "GameplayTagContainer.h"
+#include "NativeGameplayTags.h"
 #include "Components/ActorComponent.h"
-#include "MovementLayerComponent.generated.h"
+#include "OrionMovementLayerComponent.generated.h"
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Gameplay_MovementLayer_Unarmed);
 
 //////////////////////////////////////////////////////////////////////
 
@@ -17,7 +20,7 @@ struct FMovementLayer
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (Categories = "MovementLayer"))
 	FGameplayTag Tag;
     
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -27,18 +30,18 @@ public:
 /**
  * Component to handle animation layer to character. Unarmed, sword, gun stance, etc.
  */
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class ORIONCOMBAT_API UMovementLayerComponent : public UActorComponent
+UCLASS(ClassGroup=(OrionCombat), meta=(BlueprintSpawnableComponent), AutoExpandCategories = "MovementLayer|Config")
+class ORIONCOMBAT_API UOrionMovementLayerComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:
-	UMovementLayerComponent();
+	UOrionMovementLayerComponent();
     
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MovementLayer|Runtime")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "MovementLayer")
 	FGameplayTag CurrentOverlay;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MovementLayer|Config")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MovementLayer|Config", meta = (Categories = "MovementLayer"))
 	FGameplayTag DefaultOverlay;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "MovementLayer|Config")
@@ -46,7 +49,7 @@ public:
     
 public:
 	UFUNCTION(BlueprintCallable, Category = "MovementLayer")
-	void SetOverlay(FGameplayTag Tag);
+	void SetOverlay(UPARAM(meta = (Categories = "MovementLayer")) FGameplayTag Tag);
     
 	UFUNCTION(BlueprintCallable, Category = "MovementLayer")
 	void ClearOverlay();

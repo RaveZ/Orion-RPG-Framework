@@ -1,16 +1,19 @@
 // MovementLayerComponent.cpp
 // Copyright 2025 Ivan Chandra. All Rights Reserved.
 
-#include "Animation/MovementLayerComponent.h"
+#include "Animation/OrionMovementLayerComponent.h"
 #include "GameFramework/Character.h"
 #include "Components/SkeletalMeshComponent.h"
 
-UMovementLayerComponent::UMovementLayerComponent()
+
+UE_DEFINE_GAMEPLAY_TAG(TAG_Gameplay_MovementLayer_Unarmed, "MovementLayer.Unarmed");
+
+UOrionMovementLayerComponent::UOrionMovementLayerComponent()
 {
     PrimaryComponentTick.bCanEverTick = true;
 }
 
-void UMovementLayerComponent::SetOverlay(FGameplayTag Tag)
+void UOrionMovementLayerComponent::SetOverlay(FGameplayTag Tag)
 {
     if (!Tag.IsValid())
     {
@@ -65,7 +68,7 @@ void UMovementLayerComponent::SetOverlay(FGameplayTag Tag)
     UE_LOG(LogTemp, Log, TEXT("MovementLayerComponent: Set overlay to '%s'"), *Tag.ToString());
 }
 
-void UMovementLayerComponent::ClearOverlay()
+void UOrionMovementLayerComponent::ClearOverlay()
 {
     UnlinkOverlayLayer();
     CurrentOverlay = FGameplayTag();
@@ -74,7 +77,7 @@ void UMovementLayerComponent::ClearOverlay()
     UE_LOG(LogTemp, Log, TEXT("MovementLayerComponent: Cleared overlay"));
 }
 
-FMovementLayer UMovementLayerComponent::GetOverlayData(FGameplayTag Tag) const
+FMovementLayer UOrionMovementLayerComponent::GetOverlayData(FGameplayTag Tag) const
 {
     for (const FMovementLayer& Layer : OverlayData)
     {
@@ -87,7 +90,7 @@ FMovementLayer UMovementLayerComponent::GetOverlayData(FGameplayTag Tag) const
     return FMovementLayer();
 }
 
-void UMovementLayerComponent::LinkOverlayLayer(TSubclassOf<UAnimInstance> AnimInstanceClass)
+void UOrionMovementLayerComponent::LinkOverlayLayer(TSubclassOf<UAnimInstance> AnimInstanceClass)
 {
     if (!AnimInstanceClass)
     {
@@ -109,7 +112,7 @@ void UMovementLayerComponent::LinkOverlayLayer(TSubclassOf<UAnimInstance> AnimIn
     SkeletalMesh->LinkAnimClassLayers(AnimInstanceClass);
 }
 
-void UMovementLayerComponent::UnlinkOverlayLayer()
+void UOrionMovementLayerComponent::UnlinkOverlayLayer()
 {
     if (!CurrentAnimInstanceClass)
     {
@@ -131,13 +134,16 @@ void UMovementLayerComponent::UnlinkOverlayLayer()
     SkeletalMesh->UnlinkAnimClassLayers(CurrentAnimInstanceClass);
 }
 
-void UMovementLayerComponent::BeginPlay()
+void UOrionMovementLayerComponent::BeginPlay()
 {
     Super::BeginPlay();
-
+    if (DefaultOverlay.IsValid())
+    {
+        SetOverlay(DefaultOverlay);
+    }
 }
 
-void UMovementLayerComponent::TickComponent(float DeltaTime, ELevelTick TickType,
+void UOrionMovementLayerComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                             FActorComponentTickFunction* ThisTickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
