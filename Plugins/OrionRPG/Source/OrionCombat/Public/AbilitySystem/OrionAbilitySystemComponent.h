@@ -27,17 +27,18 @@ class ORIONCOMBAT_API UOrionAbilitySystemComponent : public UAbilitySystemCompon
 {
 	GENERATED_BODY()
 public:
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "AbilityComponent")
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Orion")
 	FOrionAbilityCompSignature OnInitAbilityActorInfo;
-	
 
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AbilityComponent")
-	UOrionAbilitySet* AbilitySet;
 	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AbilityComponent")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Orion")
+	TArray<TObjectPtr<UOrionAbilitySet>> AbilitySets;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Orion")
+	TSubclassOf<UOrionGameplayAbility> HitReactAbility = nullptr;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Orion")
 	UOrionInputConfig* InputConfig;
-
 	
 protected:
 	// Handles to abilities that had their input pressed this frame.
@@ -73,6 +74,7 @@ public:
 	void ProcessAbilityInput(float DeltaTime, bool bGamePaused);
 	void ClearAbilityInput();
 	
+	void TryActivateAbilitiesOnSpawn();
 private:
 	UFUNCTION()
 	virtual void OnPossessedPawnChanged(APawn* OldPawn, APawn* NewPawn);

@@ -9,6 +9,7 @@
 
 #include "ActiveGameplayEffectHandle.h"
 #include "GameplayAbilitySpecHandle.h"
+#include "NativeGameplayTags.h"
 #include "OrionAbilitySet.generated.h"
 
 
@@ -29,7 +30,6 @@ struct FOrionAbilitySet_GameplayAbility
 	GENERATED_BODY()
 
 public:
-
 	// Gameplay ability to grant.
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<UOrionGameplayAbility> Ability = nullptr;

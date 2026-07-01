@@ -40,16 +40,29 @@ void UOrionAbilitySystemComponent::BeginPlay()
 				InitializePlayerInput(Pawn->InputComponent);
 			}
 		}
-		
 	}
 	APawn* Pawn = Cast<APawn>(GetOwner());
 	if (Pawn)
 	{
-		if (AbilitySet)
+		for (auto& AbilitySet : AbilitySets)
 		{
-			AbilitySet->GiveToAbilitySystem(this, nullptr, Pawn);
+			if (AbilitySet)
+			{
+				AbilitySet->GiveToAbilitySystem(this, nullptr, Pawn);
+			}
 		}
 	}
+	if (HitReactAbility)
+	{
+		UOrionGameplayAbility* AbilityCDO = HitReactAbility->GetDefaultObject<UOrionGameplayAbility>();
+
+		FGameplayAbilitySpec AbilitySpec(AbilityCDO, 1);
+		AbilitySpec.SourceObject = Pawn;
+		GiveAbility(AbilitySpec);
+		TryActivateAbilityByClass(HitReactAbility);
+	}
+
+
 	
 }
 
@@ -85,7 +98,6 @@ void UOrionAbilitySystemComponent::InitializePlayerInput(UInputComponent* Player
 	{
 		TArray<uint32> BindHandles;
 		OrionIC->BindAbilityActions(InputConfig, this, &ThisClass::AbilityInputTagPressed, &ThisClass::AbilityInputTagReleased, /*out*/ BindHandles);
-
 	}
 }
 
@@ -95,6 +107,8 @@ void UOrionAbilitySystemComponent::InitAbilityActorInfo(AActor* InOwnerActor, AA
 	Super::InitAbilityActorInfo(InOwnerActor, InAvatarActor);
 	
 	OnInitAbilityActorInfo.Broadcast();
+	
+	TryActivateAbilitiesOnSpawn();
 }
 
 void UOrionAbilitySystemComponent::CancelAbilitiesByFunc(TShouldCancelAbilityFunc ShouldCancelFunc,
@@ -319,4 +333,16 @@ void UOrionAbilitySystemComponent::ClearAbilityInput()
 	InputPressedSpecHandles.Reset();
 	InputReleasedSpecHandles.Reset();
 	InputHeldSpecHandles.Reset();
+}
+
+void UOrionAbilitySystemComponent::TryActivateAbilitiesOnSpawn()
+{
+	ABILITYLIST_SCOPE_LOCK();
+	for (const FGameplayAbilitySpec& AbilitySpec : ActivatableAbilities.Items)
+	{
+		if (const UOrionGameplayAbility* LyraAbilityCDO = Cast<UOrionGameplayAbility>(AbilitySpec.Ability))
+		{
+			LyraAbilityCDO->TryActivateAbilityOnSpawn(AbilityActorInfo.Get(), AbilitySpec);
+		}
+	}
 }

@@ -22,6 +22,9 @@ enum class EOrionAbilityActivationPolicy : uint8
 
 	// Continually try to activate the ability while the input is active.
 	WhileInputActive,
+
+	// Try to activate the ability when an avatar is assigned.
+	OnSpawn
 };
 
 /**
@@ -56,7 +59,8 @@ protected:
 	
 public:
 	EOrionAbilityActivationPolicy GetActivationPolicy() const { return ActivationPolicy; }
-
+	
+	void TryActivateAbilityOnSpawn(const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilitySpec& Spec) const;
 protected:
 	//~UGameplayAbility interface
 	virtual bool CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const override;

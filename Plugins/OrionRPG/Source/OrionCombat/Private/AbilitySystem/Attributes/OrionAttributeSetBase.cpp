@@ -2,6 +2,8 @@
 
 
 #include "AbilitySystem/Attributes/OrionAttributeSetBase.h"
+
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/OrionAbilitySystemComponent.h"
 #include "Engine/World.h"
 #include "GameplayEffectExtension.h"
@@ -134,8 +136,21 @@ void UOrionAttributeSetBase::PostGameplayEffectExecute(const struct FGameplayEff
 
 	if (Data.EvaluatedData.Attribute == GetDamageAttribute())
 	{
-		
-
+		float DamageAmount = GetDamage();
+        
+		if (DamageAmount > 0)
+		{
+			AActor* TargetActor = GetOwningActor();
+			if (!TargetActor) return;
+			FGameplayEventData Payload;
+			Payload.Instigator = Instigator;                  
+			Payload.Target = TargetActor; 
+			Payload.EventTag = TAG_Gameplay_Damage; 
+			Payload.EventMagnitude = DamageAmount;  
+			Payload.OptionalObject = Causer; 
+			Payload.ContextHandle = EffectContext;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(TargetActor, TAG_Gameplay_Damage, Payload);
+		}
 		// Convert into -Health and then clamp
 		SetHealth(FMath::Clamp(GetHealth() - GetDamage(), MinimumHealth, GetMaxHealth()));
 		SetDamage(0.0f);

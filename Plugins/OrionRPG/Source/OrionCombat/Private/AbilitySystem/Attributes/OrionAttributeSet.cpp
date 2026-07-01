@@ -45,6 +45,7 @@ void UOrionAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallb
 	AActor* Instigator = Data.EffectSpec.GetEffectContext().GetInstigator();
 	AActor* Causer = Data.EffectSpec.GetEffectContext().GetEffectCauser();
 	float EffectMagnitude = 0.0f; 
+	
     
 	K2_PostGameplayEffectExecute(Instigator, Causer, Data.EffectSpec, EffectMagnitude);
 }
