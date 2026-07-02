@@ -35,9 +35,6 @@ public:
 	TArray<TObjectPtr<UOrionAbilitySet>> AbilitySets;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Orion")
-	TSubclassOf<UOrionGameplayAbility> HitReactAbility = nullptr;
-	
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Orion")
 	UOrionInputConfig* InputConfig;
 	
 protected:

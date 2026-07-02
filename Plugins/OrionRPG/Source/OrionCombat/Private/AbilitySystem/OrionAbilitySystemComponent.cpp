@@ -52,15 +52,6 @@ void UOrionAbilitySystemComponent::BeginPlay()
 			}
 		}
 	}
-	if (HitReactAbility)
-	{
-		UOrionGameplayAbility* AbilityCDO = HitReactAbility->GetDefaultObject<UOrionGameplayAbility>();
-
-		FGameplayAbilitySpec AbilitySpec(AbilityCDO, 1);
-		AbilitySpec.SourceObject = Pawn;
-		GiveAbility(AbilitySpec);
-		TryActivateAbilityByClass(HitReactAbility);
-	}
 
 
 	
