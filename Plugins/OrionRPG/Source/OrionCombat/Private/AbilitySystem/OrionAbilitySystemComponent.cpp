@@ -29,7 +29,8 @@ void UOrionAbilitySystemComponent::InitializeComponent()
 void UOrionAbilitySystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (PC && PC->GetPawn() == GetOwner())
 	{
 		PC->OnPossessedPawnChanged.AddDynamic(this, &UOrionAbilitySystemComponent::OnPossessedPawnChanged);
 		
