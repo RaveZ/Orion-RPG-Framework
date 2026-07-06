@@ -10,4 +10,8 @@
 
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayCue_Character_DamageTaken);
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayEffect_Defense_Parry);
+
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayEffect_Defense_Block);
+
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayEffect_DamageType_Basic);

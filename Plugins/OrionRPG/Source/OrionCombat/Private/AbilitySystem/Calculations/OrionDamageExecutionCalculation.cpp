@@ -5,6 +5,7 @@
 #include "AbilitySystem/Attributes/OrionAttributeSetBase.h"
 #include "GameplayEffect.h"
 #include "GameplayEffectExecutionCalculation.h"
+#include "OrionCombatData.h"
 
 struct FOrionDamageStatics
 {
@@ -33,6 +34,16 @@ UOrionDamageExecutionCalculation::UOrionDamageExecutionCalculation()
 void UOrionDamageExecutionCalculation::Execute_Implementation(const FGameplayEffectCustomExecutionParameters& ExecutionParams, FGameplayEffectCustomExecutionOutput& OutExecutionOutput) const
 {
 	const FGameplayEffectSpec& Spec = ExecutionParams.GetOwningSpec();
+	UAbilitySystemComponent* TargetASC = ExecutionParams.GetTargetAbilitySystemComponent();
+	if (!TargetASC) return;
+	
+	AActor* TargetActor = TargetASC->GetOwner();
+	if (!TargetActor) return;
+	
+	FGameplayTagContainer TargetTags;
+	TargetASC->GetOwnedGameplayTags(TargetTags);
+
+	
     
 	FAggregatorEvaluateParameters EvaluateParameters;
 	EvaluateParameters.SourceTags = Spec.CapturedSourceTags.GetAggregatedTags();
@@ -43,27 +54,18 @@ void UOrionDamageExecutionCalculation::Execute_Implementation(const FGameplayEff
 	check(TypedContext);
 	
 	const FHitResult* HitActorResult = TypedContext->GetHitResult();
-
-	AActor* HitActor = nullptr;
-	FVector ImpactLocation = FVector::ZeroVector;
-	FVector ImpactNormal = FVector::ZeroVector;
-	FVector StartTrace = FVector::ZeroVector;
-	FVector EndTrace = FVector::ZeroVector;
-
-	// Calculation of hit actor, surface, zone, and distance all rely on whether the calculation has a hit result or not.
-	// Effects just being added directly w/o having been targeted will always come in without a hit result, which must default
-	// to some fallback information.
-	if (HitActorResult)
+	
+	//Parry Calculation: Full Damage Negation
+	if (TargetTags.HasTag(TAG_GameplayEffect_Defense_Parry))
 	{
-		const FHitResult& CurHitResult = *HitActorResult;
-		HitActor = CurHitResult.HitObjectHandle.FetchActor();
-		if (HitActor)
-		{
-			ImpactLocation = CurHitResult.ImpactPoint;
-			ImpactNormal = CurHitResult.ImpactNormal;
-			StartTrace = CurHitResult.TraceStart;
-			EndTrace = CurHitResult.TraceEnd;
-		}
+		OutExecutionOutput.AddOutputModifier(
+			FGameplayModifierEvaluatedData(
+				UOrionAttributeSetBase::GetDamageAttribute(),
+				EGameplayModOp::Additive,
+				0.0f
+			)
+		);
+		return;
 	}
 	
 	float IncomingDamage = 0.0f;
@@ -75,8 +77,14 @@ void UOrionDamageExecutionCalculation::Execute_Implementation(const FGameplayEff
 	float Defense = 0.0f;
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
 		OrionDamageStatics().DefenseDef, EvaluateParameters, Defense);
+	
+	float FinalDamage = FMath::Max(0.0f, IncomingDamage - Defense);
+	
+	if (TargetTags.HasTag(TAG_GameplayEffect_Defense_Block))
+	{
+		FinalDamage = FinalDamage * 0.5f;/*Block Coefficient*/
+	}
     
-	const float FinalDamage = FMath::Max(0.0f, IncomingDamage - Defense);
     
 	// Output to meta attribute instead of directly to Health
 	OutExecutionOutput.AddOutputModifier(
