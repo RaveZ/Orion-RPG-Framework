@@ -11,6 +11,8 @@
 
 #define LOCTEXT_NAMESPACE "Inventory_Editor"
 
+uint32 GOrionRPGAssetCategory = EAssetTypeCategories::Misc;
+
 class FAssetClassParentFilter : public IClassViewerFilter
 {
 public:
@@ -63,6 +65,16 @@ UOrionInventoryFactory::UOrionInventoryFactory(const FObjectInitializer& ObjectI
 	bEditAfterNew = true;
 }
 
+void SetInventoryEditorOrionRPGAssetCategory(uint32 InCategory)
+{
+	GOrionRPGAssetCategory = InCategory;
+}
+
+
+uint32 UOrionInventoryFactory::GetMenuCategories() const
+{
+	return GOrionRPGAssetCategory;
+}
 
 bool UOrionInventoryFactory::ConfigureProperties()
 {

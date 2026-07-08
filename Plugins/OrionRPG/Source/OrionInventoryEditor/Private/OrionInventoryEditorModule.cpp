@@ -11,6 +11,7 @@
 #include "ISettingsContainer.h"
 #include <ISettingsCategory.h>
 #include "LevelEditor.h"
+#include "OrionInventoryFactory.h"
 #include "Widgets/Docking/SDockTab.h"
 #include "Widgets/Layout/SBox.h"
 #include "Widgets/Text/STextBlock.h"
@@ -36,6 +37,14 @@ void FOrionInventoryEditorModule::StartupModule()
 	//Register Settings Menu For Inventory Builder
 	RegisterSettings();
 
+	
+	IAssetTools& AssetTools = IAssetTools::Get();
+	InventoryEditorAssetCategoryBit = AssetTools.RegisterAdvancedAssetCategory(
+		TEXT("OrionRPG"),
+		LOCTEXT("OrionRPGAssetCategory", "Orion RPG")
+	);
+	SetInventoryEditorOrionRPGAssetCategory(InventoryEditorAssetCategoryBit);
+	
 	//Register GraphNodeFactory
 	GraphPanelNodeFactory_InventoryEditor = MakeShareable(new FOrionInventoryNodeFactory());
 	FEdGraphUtilities::RegisterVisualNodeFactory(GraphPanelNodeFactory_InventoryEditor);

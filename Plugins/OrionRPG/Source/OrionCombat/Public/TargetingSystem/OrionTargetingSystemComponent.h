@@ -110,6 +110,9 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "TargetingSystem")
 	TArray<UOrionTargetComponent*> GetValidTargets() const;
+	
+	UFUNCTION(BlueprintPure, Category = "TargetingSystem")
+	UOrionTargetComponent* GetNearestValidTarget() const;
 
 protected:
 	virtual float ScoreTarget(const UOrionTargetComponent* Target) const;  // const-correct

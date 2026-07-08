@@ -297,6 +297,42 @@ TArray<UOrionTargetComponent*> UOrionTargetingSystemComponent::GetValidTargets()
     return Targets;
 }
 
+UOrionTargetComponent* UOrionTargetingSystemComponent::GetNearestValidTarget() const
+{
+	if (!GetOwningPawn())
+		return nullptr;
+
+	APlayerController* PC = Cast<APlayerController>(GetOwningPawn()->GetController());
+	if (!PC && bOnlyTargetsInCameraView)
+		return nullptr;
+
+	TArray<UOrionTargetComponent*> ValidTargets = GetValidTargets();
+    
+	if (ValidTargets.Num() == 0)
+		return nullptr;
+
+	// Find the nearest target by distance
+	UOrionTargetComponent* NearestTarget = nullptr;
+	float NearestDistance = MAX_FLT;
+	FVector PawnLocation = GetOwningPawn()->GetActorLocation();
+
+	for (UOrionTargetComponent* Target : ValidTargets)
+	{
+		if (!Target)
+			continue;
+		float Distance = FVector::Dist(PawnLocation, Target->GetComponentLocation());
+
+		if (Distance < NearestDistance)
+		{
+			NearestDistance = Distance;
+			NearestTarget = Target;
+		}
+	}
+
+	return NearestTarget;
+	
+}
+
 bool UOrionTargetingSystemComponent::IsTargetInCameraView(UOrionTargetComponent* Target, APlayerController* PC) const
 {
 	if (!PC || !Target) return false;
@@ -321,7 +357,7 @@ bool UOrionTargetingSystemComponent::IsTargetInCameraView(UOrionTargetComponent*
 	{
 		FVector2D Center(ViewportSizeX * 0.5f, ViewportSizeY * 0.5f);
 		float DistanceFromCenter = FVector2D::Distance(ScreenPos, Center);
-		float MaxScreenDistance = FMath::Tan(FMath::DegreesToRadians(MaxAngleFromCenter)) * Center.X; // renamed variable
+		float MaxScreenDistance = FMath::Tan(FMath::DegreesToRadians(MaxAngleFromCenter)) * Center.X;
 		if (DistanceFromCenter > MaxScreenDistance)
 			return false;
 	}
@@ -370,7 +406,18 @@ void UOrionTargetingSystemComponent::UpdateTargetCamera(float DeltaTime)
 	
 	float Distance = FVector::Dist(PawnLocation, TargetLocation);
 	float AdjustedOffset = CameraVerticalOffset;
-	AdjustedOffset += FMath::Clamp((Distance * 0.5f), 0.0f, 300.0f); // Slightly higher when far
+	
+	
+	float DistanceAlpha = FMath::GetMappedRangeValueClamped(
+		FVector2D(300.0f, 1500.0f),
+		FVector2D(0.0f, 1.0f),
+		Distance
+	);
+	DistanceAlpha = FMath::Clamp(DistanceAlpha, 0.0f, 1.0f);
+	
+	float MaxZ = FMath::Lerp(0.0f, 200.0f, DistanceAlpha);
+	
+	AdjustedOffset += FMath::Clamp((Distance * 0.5f), 0.0f, MaxZ); // Slightly higher when far
 	
 	CameraLocation.Z += AdjustedOffset;
     

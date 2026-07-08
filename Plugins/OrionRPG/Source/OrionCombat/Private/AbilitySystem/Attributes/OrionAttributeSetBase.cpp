@@ -7,13 +7,9 @@
 #include "AbilitySystem/OrionAbilitySystemComponent.h"
 #include "Engine/World.h"
 #include "GameplayEffectExtension.h"
+#include "OrionCombatData.h"
 #include "Net/UnrealNetwork.h"
 
-UE_DEFINE_GAMEPLAY_TAG(TAG_Gameplay_Damage, "Gameplay.Damage");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Gameplay_DamageImmunity, "Gameplay.DamageImmunity");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Gameplay_DamageSelfDestruct, "Gameplay.Damage.SelfDestruct");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Gameplay_FellOutOfWorld, "Gameplay.Damage.FellOutOfWorld");
-UE_DEFINE_GAMEPLAY_TAG(TAG_Orion_Damage_Message, "Orion.Damage.Message");
 
 UOrionAttributeSetBase::UOrionAttributeSetBase()
 	: Health(100.0f)

@@ -2,6 +2,7 @@
 
 #include "AbilitySystem/Calculations/OrionDamageExecutionCalculation.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/Attributes/OrionAttributeSetBase.h"
 #include "GameplayEffect.h"
 #include "GameplayEffectExecutionCalculation.h"
@@ -55,6 +56,20 @@ void UOrionDamageExecutionCalculation::Execute_Implementation(const FGameplayEff
 	
 	const FHitResult* HitActorResult = TypedContext->GetHitResult();
 	
+	
+	float IncomingDamage = 0.0f;
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
+		OrionDamageStatics().DamageDef, EvaluateParameters, IncomingDamage);
+	IncomingDamage = FMath::Max(IncomingDamage, 
+		Spec.GetSetByCallerMagnitude(TAG_Gameplay_Damage, false, 0.0f));
+	
+	
+	float Defense = 0.0f;
+	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
+		OrionDamageStatics().DefenseDef, EvaluateParameters, Defense);
+	
+	float FinalDamage = FMath::Max(0.0f, IncomingDamage - Defense);
+	
 	//Parry Calculation: Full Damage Negation
 	if (TargetTags.HasTag(TAG_GameplayEffect_Defense_Parry))
 	{
@@ -65,24 +80,40 @@ void UOrionDamageExecutionCalculation::Execute_Implementation(const FGameplayEff
 				0.0f
 			)
 		);
+		
+		{//Send Gameplay Event Parried
+			FGameplayEventData Payload;          
+			Payload.EventTag = TAG_Event_Defense_Parried;
+			Payload.Instigator = Spec.GetContext().GetInstigator();
+			Payload.Target = TargetActor;
+			Payload.OptionalObject = Spec.GetContext().GetSourceObject();
+			Payload.OptionalObject2 = Spec.GetContext().GetEffectCauser();
+			Payload.ContextHandle = Spec.GetContext();
+			Payload.InstigatorTags = *Spec.CapturedSourceTags.GetAggregatedTags();
+			Payload.TargetTags = *Spec.CapturedTargetTags.GetAggregatedTags();
+			Payload.EventMagnitude = FinalDamage;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(TargetActor, TAG_Event_Defense_Parried, Payload);
+		}
 		return;
 	}
-	
-	float IncomingDamage = 0.0f;
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
-		OrionDamageStatics().DamageDef, EvaluateParameters, IncomingDamage);
-	IncomingDamage = FMath::Max(IncomingDamage, 
-		Spec.GetSetByCallerMagnitude(TAG_Gameplay_Damage, false, 0.0f));
-    
-	float Defense = 0.0f;
-	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
-		OrionDamageStatics().DefenseDef, EvaluateParameters, Defense);
-	
-	float FinalDamage = FMath::Max(0.0f, IncomingDamage - Defense);
 	
 	if (TargetTags.HasTag(TAG_GameplayEffect_Defense_Block))
 	{
 		FinalDamage = FinalDamage * 0.5f;/*Block Coefficient*/
+		
+		{//Send Gameplay Event Blocked
+			FGameplayEventData Payload;          
+			Payload.EventTag = TAG_Event_Defense_Blocked;
+			Payload.Instigator = Spec.GetContext().GetInstigator();
+			Payload.Target = TargetActor;
+			Payload.OptionalObject = Spec.GetContext().GetSourceObject();
+			Payload.OptionalObject2 = Spec.GetContext().GetEffectCauser();
+			Payload.ContextHandle = Spec.GetContext();
+			Payload.InstigatorTags = *Spec.CapturedSourceTags.GetAggregatedTags();
+			Payload.TargetTags = *Spec.CapturedTargetTags.GetAggregatedTags();
+			Payload.EventMagnitude = FinalDamage;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(TargetActor, TAG_Event_Defense_Blocked, Payload);
+		}
 	}
     
     
