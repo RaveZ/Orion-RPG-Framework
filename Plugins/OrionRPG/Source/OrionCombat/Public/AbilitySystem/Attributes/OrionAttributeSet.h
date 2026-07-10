@@ -23,7 +23,7 @@ GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
  * @param OldValue			The value of the attribute before it was changed
  * @param NewValue			The value after it was changed
 */
-DECLARE_MULTICAST_DELEGATE_SixParams(FOrionAttributeEvent, AActor* /*EffectInstigator*/, AActor* /*EffectCauser*/, const FGameplayEffectSpec* /*EffectSpec*/, float /*EffectMagnitude*/, float /*OldValue*/, float /*NewValue*/);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_SixParams(FOrionAttributeEvent, AActor*, EffectInstigator, AActor*, EffectCauser, const FGameplayEffectSpec, EffectSpec, float, EffectMagnitude, float, OldValue, float, NewValue);
 
 
 

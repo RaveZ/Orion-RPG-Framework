@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "AbilitySystemComponent.h"
 #include "NativeGameplayTags.h"
+#include "Attributes/OrionAttributeSet.h"
 #include "OrionAbilitySystemComponent.generated.h"
 
 
@@ -36,6 +37,20 @@ public:
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Orion")
 	UOrionInputConfig* InputConfig;
+	
+public:
+
+	// Delegate when max health changes
+	UPROPERTY(BlueprintAssignable, Category = "Orion")
+	mutable FOrionAttributeEvent OnMaxHealthChanged;
+	
+	// Delegate when health changes due to damage/healing, some information may be missing on the client
+	UPROPERTY(BlueprintAssignable, Category = "Orion")
+	FOrionAttributeEvent OnHealthChanged;
+	
+	// Delegate to broadcast when the health attribute reaches zero
+	UPROPERTY(BlueprintAssignable, Category = "Orion")
+	FOrionAttributeEvent OnOutOfHealth;
 	
 protected:
 	// Handles to abilities that had their input pressed this frame.

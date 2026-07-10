@@ -34,6 +34,14 @@ public:
 	static class UOrionAbilitySystemComponent* GetOrionAbilityComponentFromTarget(AActor* Target);
 	
 	/**
+	* Check if the actor is alive
+	*
+	*/
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Ability")
+	static bool IsAlive(AActor* Target);
+	
+	
+	/**
 	* Grab the Targeting System component from the local player controller.
 	*
 	* @return The Targeting System Component
@@ -63,7 +71,6 @@ public:
 	*/
 	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Movement")
 	static void SetMovementOverlay(ACharacter* Character, UPARAM(meta = (Categories = "MovementLayer"))FGameplayTag Tag);
-	
 	
 	
 };

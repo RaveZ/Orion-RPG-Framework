@@ -123,6 +123,9 @@ void UOrionAttributeSetBase::PostGameplayEffectExecute(const struct FGameplayEff
 {
 	Super::PostGameplayEffectExecute(Data);
 	
+	UOrionAbilitySystemComponent* OrionASC = GetOrionAbilitySystemComponent();
+	check(OrionASC);
+	
 	const bool bIsDamageFromSelfDestruct = Data.EffectSpec.GetDynamicAssetTags().HasTagExact(TAG_Gameplay_DamageSelfDestruct);
 	float MinimumHealth = 0.0f;
 
@@ -167,18 +170,18 @@ void UOrionAttributeSetBase::PostGameplayEffectExecute(const struct FGameplayEff
 		// TODO clamp current health?
 
 		// Notify on any requested max health changes
-		OnMaxHealthChanged.Broadcast(Instigator, Causer, &Data.EffectSpec, Data.EvaluatedData.Magnitude, MaxHealthBeforeAttributeChange, GetMaxHealth());
+		OrionASC->OnMaxHealthChanged.Broadcast(Instigator, Causer, Data.EffectSpec, Data.EvaluatedData.Magnitude, MaxHealthBeforeAttributeChange, GetMaxHealth());
 	}
 
 	// If health has actually changed activate callbacks
 	if (GetHealth() != HealthBeforeAttributeChange)
 	{
-		OnHealthChanged.Broadcast(Instigator, Causer, &Data.EffectSpec, Data.EvaluatedData.Magnitude, HealthBeforeAttributeChange, GetHealth());
+		OrionASC->OnHealthChanged.Broadcast(Instigator, Causer, Data.EffectSpec, Data.EvaluatedData.Magnitude, HealthBeforeAttributeChange, GetHealth());
 	}
 
 	if ((GetHealth() <= 0.0f) && !bOutOfHealth)
 	{
-		OnOutOfHealth.Broadcast(Instigator, Causer, &Data.EffectSpec, Data.EvaluatedData.Magnitude, HealthBeforeAttributeChange, GetHealth());
+		OrionASC->OnOutOfHealth.Broadcast(Instigator, Causer, Data.EffectSpec, Data.EvaluatedData.Magnitude, HealthBeforeAttributeChange, GetHealth());
 	}
 
 	// Check health again in case an event above changed it.
@@ -189,15 +192,18 @@ void UOrionAttributeSetBase::PostGameplayEffectExecute(const struct FGameplayEff
 
 void UOrionAttributeSetBase::OnRep_Health(const FGameplayAttributeData& OldValue) 
 {
+	UOrionAbilitySystemComponent* OrionASC = GetOrionAbilitySystemComponent();
+	check(OrionASC);
+	
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UOrionAttributeSetBase, Health, OldValue);
 	const float CurrentHealth = GetHealth();
 	const float EstimatedMagnitude = CurrentHealth - OldValue.GetCurrentValue();
 
-	OnHealthChanged.Broadcast(nullptr, nullptr, nullptr, EstimatedMagnitude, OldValue.GetCurrentValue(), CurrentHealth);
+	OrionASC->OnHealthChanged.Broadcast(nullptr, nullptr, FGameplayEffectSpec(), EstimatedMagnitude, OldValue.GetCurrentValue(), CurrentHealth);
 
 	if (!bOutOfHealth && CurrentHealth <= 0.0f)
 	{
-		OnOutOfHealth.Broadcast(nullptr, nullptr, nullptr, EstimatedMagnitude, OldValue.GetCurrentValue(), CurrentHealth);
+		OrionASC->OnOutOfHealth.Broadcast(nullptr, nullptr, FGameplayEffectSpec(), EstimatedMagnitude, OldValue.GetCurrentValue(), CurrentHealth);
 	}
 
 	bOutOfHealth = (CurrentHealth <= 0.0f);
@@ -211,10 +217,13 @@ void UOrionAttributeSetBase::OnRep_Mana(const FGameplayAttributeData& OldValue)
 
 void UOrionAttributeSetBase::OnRep_MaxHealth(const FGameplayAttributeData& OldValue)
 {
+	UOrionAbilitySystemComponent* OrionASC = GetOrionAbilitySystemComponent();
+	check(OrionASC);
+	
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UOrionAttributeSetBase, MaxHealth, OldValue);
 	// Call the change callback, but without an instigator
 	// This could be changed to an explicit RPC in the future
-	OnMaxHealthChanged.Broadcast(nullptr, nullptr, nullptr, GetMaxHealth() - OldValue.GetCurrentValue(), OldValue.GetCurrentValue(), GetMaxHealth());
+	OrionASC->OnMaxHealthChanged.Broadcast(nullptr, nullptr, FGameplayEffectSpec(), GetMaxHealth() - OldValue.GetCurrentValue(), OldValue.GetCurrentValue(), GetMaxHealth());
 }
 
 void UOrionAttributeSetBase::OnRep_MaxMana(const FGameplayAttributeData& OldValue)

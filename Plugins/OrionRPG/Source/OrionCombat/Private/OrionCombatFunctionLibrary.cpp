@@ -3,7 +3,9 @@
 
 #include "OrionCombatFunctionLibrary.h"
 
+#include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystem/OrionAbilitySystemComponent.h"
+#include "AbilitySystem/Attributes/OrionAttributeSetBase.h"
 #include "Animation/OrionMovementLayerComponent.h"
 #include "GameFramework/Character.h"
 #include "TargetingSystem/OrionTargetingSystemComponent.h"
@@ -96,6 +98,20 @@ class UOrionMovementLayerComponent* UOrionCombatFunctionLibrary::GetMovementLaye
 		return Character->FindComponentByClass<UOrionMovementLayerComponent>();
 	}
 	return nullptr;
+}
+
+bool UOrionCombatFunctionLibrary::IsAlive(AActor* Target)
+{
+	
+	if (!Target) return false;
+    
+	UAbilitySystemComponent* ASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(Target);
+	if (!ASC) return false;
+    
+	UOrionAttributeSetBase* AttributeSet = const_cast<UOrionAttributeSetBase*>(ASC->GetSet<UOrionAttributeSetBase>());
+	if (!AttributeSet) return false;
+    
+	return AttributeSet->IsAlive();
 }
 
 void UOrionCombatFunctionLibrary::SetMovementOverlay(ACharacter* Character, FGameplayTag Tag)

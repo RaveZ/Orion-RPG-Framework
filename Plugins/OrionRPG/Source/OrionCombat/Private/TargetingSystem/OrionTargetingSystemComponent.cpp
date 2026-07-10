@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "DrawDebugHelpers.h"  // for debug, optional
+#include "OrionCombatFunctionLibrary.h"
 #include "Engine/OverlapResult.h"
 
 UOrionTargetingSystemComponent::UOrionTargetingSystemComponent()
@@ -18,7 +19,7 @@ UOrionTargetingSystemComponent::UOrionTargetingSystemComponent()
 	
 	MaxDistance = 1250.0f;
 	SearchRadius = 1500.0f;
-	CameraVerticalOffset = 50.0f;
+	CameraVerticalOffset = 30.0f;
 	MaxAngleFromCenter = 45.0f;
 	CameraBlendSpeed = 540.0f;
 	
@@ -28,6 +29,7 @@ UOrionTargetingSystemComponent::UOrionTargetingSystemComponent()
 void UOrionTargetingSystemComponent::BeginPlay()
 {
 	Super::BeginPlay();
+	
 	// Cache the owning controller
 	OwningController = GetOwningController();
 
@@ -47,8 +49,23 @@ void UOrionTargetingSystemComponent::TickComponent(float DeltaTime, ELevelTick T
 	if (!bTargetingEnabled)
 		return;
 
-	CheckTargetLoss();
+	
+	static int32 TickCounter = 0;
+	if (++TickCounter % 20 == 0) 
+	{
+		CheckTargetLoss();
+		if (CurrentTarget && !UOrionCombatFunctionLibrary::IsAlive(GetOwningPawn()))
+		{
+			ClearTarget();
+		}
+		if (CurrentTarget && !UOrionCombatFunctionLibrary::IsAlive(CurrentTarget->GetOwner()))
+		{
+			ClearTarget();
+			CycleToNextTarget();
+		}
+	}
 
+	
 	if (CurrentTarget)
 	{
 		UpdateTargetCamera(DeltaTime);
@@ -280,7 +297,7 @@ TArray<UOrionTargetComponent*> UOrionTargetingSystemComponent::GetValidTargets()
     for (const FOverlapResult& Overlap : Overlaps)
     {
         AActor* Actor = Overlap.GetActor();
-        if (!Actor) continue;
+        if (!Actor || !UOrionCombatFunctionLibrary::IsAlive(Actor)) continue;
 
         UOrionTargetComponent* TargetComp = Actor->FindComponentByClass<UOrionTargetComponent>();
         if (!TargetComp || !IsTargetValid(TargetComp))
@@ -422,6 +439,12 @@ void UOrionTargetingSystemComponent::UpdateTargetCamera(float DeltaTime)
 	CameraLocation.Z += AdjustedOffset;
     
 	FRotator DesiredRot = UKismetMathLibrary::FindLookAtRotation(CameraLocation, TargetLocation);
+
+	if (Distance < 100.0f)
+	{
+		FRotator CurrentRot = PC->GetControlRotation();
+		DesiredRot.Pitch = CurrentRot.Pitch;  
+	}
 
 	ApplyControlRotation(DesiredRot, DeltaTime);
 }

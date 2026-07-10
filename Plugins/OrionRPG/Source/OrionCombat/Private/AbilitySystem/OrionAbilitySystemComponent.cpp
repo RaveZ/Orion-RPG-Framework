@@ -98,6 +98,8 @@ void UOrionAbilitySystemComponent::InitAbilityActorInfo(AActor* InOwnerActor, AA
 {
 	Super::InitAbilityActorInfo(InOwnerActor, InAvatarActor);
 	
+	GetOrCreateAttributeSubobject(UOrionAttributeSetBase::StaticClass());
+	
 	OnInitAbilityActorInfo.Broadcast();
 	
 	TryActivateAbilitiesOnSpawn();

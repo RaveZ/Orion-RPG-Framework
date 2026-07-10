@@ -28,15 +28,8 @@ public:
 	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, Healing);
 	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, Damage);
 	
-	// Delegate when health changes due to damage/healing, some information may be missing on the client
-	mutable FOrionAttributeEvent OnHealthChanged;
-
-	// Delegate when max health changes
-	mutable FOrionAttributeEvent OnMaxHealthChanged;
-
-	// Delegate to broadcast when the health attribute reaches zero
-	mutable FOrionAttributeEvent OnOutOfHealth;
-	
+	UFUNCTION(BlueprintCallable, Category = "Orion|DefaultAttribute")
+	bool IsAlive() const { return !bOutOfHealth; }
 	
 public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
