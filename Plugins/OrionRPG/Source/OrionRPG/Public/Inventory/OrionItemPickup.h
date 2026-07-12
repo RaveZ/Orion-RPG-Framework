@@ -77,6 +77,9 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+	virtual void OnLocalCompleted_Implementation(AActor* Interactor, UOrionInteractionTargetComponent* Component) override;
+
+	virtual bool CanInteract() const override;
 };
 
 

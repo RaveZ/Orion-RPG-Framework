@@ -75,6 +75,18 @@ void UOrionInteractionTargetComponent_LootItem::GetLifetimeReplicatedProps(TArra
 	DOREPLIFETIME(ThisClass, ContainedItems);
 }
 
+void UOrionInteractionTargetComponent_LootItem::OnLocalCompleted_Implementation(AActor* Interactor,
+	UOrionInteractionTargetComponent* Component)
+{
+	Super::OnLocalCompleted_Implementation(Interactor, Component);
+	UOrionInventoryFunctionLibrary::LootItemFromActor(this, GetOwner(), Interactor);
+}
+
+bool UOrionInteractionTargetComponent_LootItem::CanInteract() const
+{
+	return Super::CanInteract() && !ContainedItems.IsEmpty();
+}
+
 void UOrionInteractionTargetComponent_LootItem::BeginPlay()
 {
 	Super::BeginPlay();

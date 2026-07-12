@@ -3,6 +3,7 @@
 #pragma once
 
 #include "Components/BoxComponent.h"
+#include "Components/SphereComponent.h"
 #include "Event/OrionEvent.h"
 #include "Interaction/InteractionData.h"
 #include "Decorator/OrionDecorator.h"
@@ -22,7 +23,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnInteractionTargetFocusChanged,
  * Interaction component
  */
 UCLASS(meta = (BlueprintSpawnableComponent), Blueprintable, HideDropdown, ClassGroup = "OrionRPG", DisplayName = "Orion Interaction Target")
-class UOrionInteractionTargetComponent : public USceneComponent
+class UOrionInteractionTargetComponent : public USphereComponent
 {
 	GENERATED_BODY()
 	
@@ -98,7 +99,14 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable", meta = (EditCondition = "Mode == EOrionInteractionMode::Hold", HideEditConditionToggle, EditConditionHides))
 	float HoldDuration;
-
+	
+	/**
+	* Alternatively, you can select which bone to attach from here
+	*/
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable",
+        meta = (AnimNotifyBoneName = "true"))
+	FName AttachBoneName;
+	
 	float CurrentHoldTime;
 
 	/**
@@ -142,7 +150,7 @@ public:
 
 
 	UFUNCTION(BlueprintPure, Category = "Interactable")
-	bool CanInteract() const;
+	virtual bool CanInteract() const;
 
 	void SetFocusState(bool bFocused, AActor* Interactor);
 

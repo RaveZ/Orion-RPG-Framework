@@ -34,6 +34,21 @@ void UOrionInteractionTargetComponent::BeginPlay()
 	if (Owner)
 	{
 		Owner->Tags.AddUnique(Tag.GetTagName());
+		if (!AttachBoneName.IsNone())
+		{
+			// Try to find a skeletal mesh component on the owner
+			USkeletalMeshComponent* SkeletalMesh = Owner->FindComponentByClass<USkeletalMeshComponent>();
+			if (SkeletalMesh)
+			{
+				AttachToComponent(
+					SkeletalMesh,
+					FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+					AttachBoneName
+				);
+            
+			}
+		
+		}
 	}
 
 	//Begin event setup to load async any soft reference
@@ -49,6 +64,7 @@ void UOrionInteractionTargetComponent::BeginPlay()
 
 	//Bind Delegate
 	Local_OnCompleted.AddDynamic(this, &ThisClass::OnLocalCompleted);
+	
 	
 }
 

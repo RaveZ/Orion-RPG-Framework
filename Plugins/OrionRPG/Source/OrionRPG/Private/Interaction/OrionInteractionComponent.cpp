@@ -369,6 +369,9 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 
 				if (UOrionInteractionTargetComponent* TargetInteractable = Hit.GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>())
 				{
+					if (!TargetInteractable->CanInteract())
+						continue;
+					
 					if (Hit.GetActor()->IsPendingKillPending())
 						continue;
 
@@ -441,6 +444,7 @@ UOrionInteractionTargetComponent* UOrionInteractionComponent::GetInteractionTrac
 
 			if (UOrionInteractionTargetComponent* TargetInteractable = InteractionhitResults[0].GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>())
 			{
+				if (!TargetInteractable->CanInteract()) return nullptr;
 				if (InteractionhitResults[0].GetActor()->IsPendingKillPending()) return nullptr;
 
 				if (InteractionhitResults[0].GetActor()->IsHidden()) return nullptr;
@@ -506,6 +510,8 @@ void UOrionInteractionComponent::DetectAvailableInteractionTargets()
 
 		if (UOrionInteractionTargetComponent* TargetInteractable = Hit.GetActor()->FindComponentByClass<UOrionInteractionTargetComponent>())
 		{
+			if (!TargetInteractable->CanInteract())
+				continue;
 			if (Hit.GetActor()->IsPendingKillPending())
 				continue;
 
