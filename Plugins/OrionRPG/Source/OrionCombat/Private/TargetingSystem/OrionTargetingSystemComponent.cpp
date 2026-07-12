@@ -297,7 +297,9 @@ TArray<UOrionTargetComponent*> UOrionTargetingSystemComponent::GetValidTargets()
     for (const FOverlapResult& Overlap : Overlaps)
     {
         AActor* Actor = Overlap.GetActor();
-        if (!Actor || !UOrionCombatFunctionLibrary::IsAlive(Actor)) continue;
+        if (!Actor) continue;
+    	
+    	if (!UOrionCombatFunctionLibrary::IsAlive(Actor)) continue;
 
         UOrionTargetComponent* TargetComp = Actor->FindComponentByClass<UOrionTargetComponent>();
         if (!TargetComp || !IsTargetValid(TargetComp))
@@ -309,7 +311,7 @@ TArray<UOrionTargetComponent*> UOrionTargetingSystemComponent::GetValidTargets()
                 continue;
         }
 
-        Targets.Add(TargetComp);
+        Targets.AddUnique(TargetComp);
     }
     return Targets;
 }
