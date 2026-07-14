@@ -100,9 +100,8 @@ bool UOrionAttributeSetBase::PreGameplayEffectExecute(FGameplayEffectModCallback
 	{
 		if (Data.EvaluatedData.Magnitude > 0.0f)
 		{
-			const bool bIsDamageFromSelfDestruct = Data.EffectSpec.GetDynamicAssetTags().HasTagExact(TAG_Gameplay_DamageSelfDestruct);
 
-			if (Data.Target.HasMatchingGameplayTag(TAG_Gameplay_DamageImmunity) && !bIsDamageFromSelfDestruct)
+			if (Data.Target.HasMatchingGameplayTag(TAG_GameplayEffect_DamageImmunity))
 			{
 				// Do not take away any health.
 				Data.EvaluatedData.Magnitude = 0.0f;
@@ -126,7 +125,6 @@ void UOrionAttributeSetBase::PostGameplayEffectExecute(const struct FGameplayEff
 	UOrionAbilitySystemComponent* OrionASC = GetOrionAbilitySystemComponent();
 	check(OrionASC);
 	
-	const bool bIsDamageFromSelfDestruct = Data.EffectSpec.GetDynamicAssetTags().HasTagExact(TAG_Gameplay_DamageSelfDestruct);
 	float MinimumHealth = 0.0f;
 
 	const FGameplayEffectContextHandle& EffectContext = Data.EffectSpec.GetEffectContext();
@@ -144,11 +142,11 @@ void UOrionAttributeSetBase::PostGameplayEffectExecute(const struct FGameplayEff
 			FGameplayEventData Payload;
 			Payload.Instigator = Instigator;                  
 			Payload.Target = TargetActor; 
-			Payload.EventTag = TAG_Gameplay_Damage; 
+			Payload.EventTag = TAG_Event_Damage; 
 			Payload.EventMagnitude = DamageAmount;  
 			Payload.OptionalObject = Causer; 
 			Payload.ContextHandle = EffectContext;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(TargetActor, TAG_Gameplay_Damage, Payload);
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(TargetActor, TAG_Event_Damage, Payload);
 		}
 		// Convert into -Health and then clamp
 		SetHealth(FMath::Clamp(GetHealth() - GetDamage(), MinimumHealth, GetMaxHealth()));

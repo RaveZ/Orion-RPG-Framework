@@ -60,8 +60,9 @@ void UOrionDamageExecutionCalculation::Execute_Implementation(const FGameplayEff
 	float IncomingDamage = 0.0f;
 	ExecutionParams.AttemptCalculateCapturedAttributeMagnitude(
 		OrionDamageStatics().DamageDef, EvaluateParameters, IncomingDamage);
-	IncomingDamage = FMath::Max(IncomingDamage, 
+	/*IncomingDamage = FMath::Max(IncomingDamage, 
 		Spec.GetSetByCallerMagnitude(TAG_Gameplay_Damage, false, 0.0f));
+		*/
 	
 	
 	float Defense = 0.0f;
