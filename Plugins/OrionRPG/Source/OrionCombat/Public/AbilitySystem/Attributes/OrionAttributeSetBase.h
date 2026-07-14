@@ -22,8 +22,10 @@ public:
 	
 	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, Health);
 	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, Mana);
+	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, Stamina);
 	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, MaxHealth);
 	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, MaxMana);
+	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, MaxStamina);
 	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, Defense);
 	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, Healing);
 	ATTRIBUTE_ACCESSORS(UOrionAttributeSetBase, Damage);
@@ -49,32 +51,44 @@ protected:
 
 	UFUNCTION()
 	void OnRep_Mana(const FGameplayAttributeData& OldValue);
+	
+	UFUNCTION()
+	void OnRep_Stamina(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
 	void OnRep_MaxHealth(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
 	void OnRep_MaxMana(const FGameplayAttributeData& OldValue);
+	
+	UFUNCTION()
+	void OnRep_MaxStamina(const FGameplayAttributeData& OldValue);
 
 	UFUNCTION()
 	void OnRep_Defense(const FGameplayAttributeData& OldValue);
 	
 private:
 	
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Health, Category = "Orion|DefaultAttribute", Meta = (HideFromModifiers, AllowPrivateAccess = true))
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Health, Category = "Orion|DefaultAttribute", Meta = (AllowPrivateAccess = true))
 	FGameplayAttributeData Health;
 
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Mana, Category = "Orion|DefaultAttribute", Meta = (AllowPrivateAccess = true))
+	FGameplayAttributeData Mana;
+	
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Stamina, Category = "Orion|DefaultAttribute", Meta = (AllowPrivateAccess = true))
+	FGameplayAttributeData Stamina;
+	
 	// The current max health attribute.  Max health is an attribute since gameplay effects can modify it
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxHealth, Category = "Orion|DefaultAttribute", Meta = (AllowPrivateAccess = true))
 	FGameplayAttributeData MaxHealth;
 	
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Mana, Category = "Orion|DefaultAttribute", Meta = (HideFromModifiers, AllowPrivateAccess = true))
-	FGameplayAttributeData Mana;
-	
 	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxMana, Category = "Orion|DefaultAttribute", Meta = (AllowPrivateAccess = true))
 	FGameplayAttributeData MaxMana;
+	
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxMana, Category = "Orion|DefaultAttribute", Meta = (AllowPrivateAccess = true))
+	FGameplayAttributeData MaxStamina;
 
-	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_Defense, Category = "Orion|DefaultAttribute", Meta = (AllowPrivateAccess = true))
+	UPROPERTY(BlueprintReadOnly, ReplicatedUsing = OnRep_MaxStamina, Category = "Orion|DefaultAttribute", Meta = (AllowPrivateAccess = true))
 	FGameplayAttributeData Defense;
 	
 	// Used to track when the health reaches 0.

@@ -13,9 +13,11 @@
 
 UOrionAttributeSetBase::UOrionAttributeSetBase()
 	: Health(100.0f)
-	, MaxHealth(100.0f)
 	, Mana(50.0f)
+	, Stamina(100.0f)
+	, MaxHealth(100.0f)
 	, MaxMana(50.0f)
+	, MaxStamina(100.0f)
 	, Defense(0.0f)
 {
 	bOutOfHealth = false;
@@ -30,6 +32,8 @@ void UOrionAttributeSetBase::GetLifetimeReplicatedProps(TArray<class FLifetimePr
 	//Vital Attributes
 	DOREPLIFETIME_CONDITION_NOTIFY(UOrionAttributeSetBase, Health, COND_None, REPNOTIFY_Always)
 	DOREPLIFETIME_CONDITION_NOTIFY(UOrionAttributeSetBase, MaxHealth, COND_None, REPNOTIFY_Always)
+	DOREPLIFETIME_CONDITION_NOTIFY(UOrionAttributeSetBase, Stamina, COND_None, REPNOTIFY_Always)
+	DOREPLIFETIME_CONDITION_NOTIFY(UOrionAttributeSetBase, MaxStamina, COND_None, REPNOTIFY_Always)
 	DOREPLIFETIME_CONDITION_NOTIFY(UOrionAttributeSetBase, Mana, COND_None, REPNOTIFY_Always)
 	DOREPLIFETIME_CONDITION_NOTIFY(UOrionAttributeSetBase, MaxMana, COND_None, REPNOTIFY_Always)
 	DOREPLIFETIME_CONDITION_NOTIFY(UOrionAttributeSetBase, Defense, COND_None, REPNOTIFY_Always)
@@ -212,6 +216,11 @@ void UOrionAttributeSetBase::OnRep_Mana(const FGameplayAttributeData& OldValue)
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UOrionAttributeSetBase, Mana, OldValue);
 }
 
+void UOrionAttributeSetBase::OnRep_Stamina(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UOrionAttributeSetBase, Stamina, OldValue);
+}
+
 
 void UOrionAttributeSetBase::OnRep_MaxHealth(const FGameplayAttributeData& OldValue)
 {
@@ -222,11 +231,16 @@ void UOrionAttributeSetBase::OnRep_MaxHealth(const FGameplayAttributeData& OldVa
 	// Call the change callback, but without an instigator
 	// This could be changed to an explicit RPC in the future
 	OrionASC->OnMaxHealthChanged.Broadcast(nullptr, nullptr, FGameplayEffectSpec(), GetMaxHealth() - OldValue.GetCurrentValue(), OldValue.GetCurrentValue(), GetMaxHealth());
-}
+} 
 
 void UOrionAttributeSetBase::OnRep_MaxMana(const FGameplayAttributeData& OldValue)
 {
 	GAMEPLAYATTRIBUTE_REPNOTIFY(UOrionAttributeSetBase, MaxMana, OldValue);
+}
+
+void UOrionAttributeSetBase::OnRep_MaxStamina(const FGameplayAttributeData& OldValue)
+{
+	GAMEPLAYATTRIBUTE_REPNOTIFY(UOrionAttributeSetBase, MaxStamina, OldValue);
 }
 
 void UOrionAttributeSetBase::OnRep_Defense(const FGameplayAttributeData& OldValue)

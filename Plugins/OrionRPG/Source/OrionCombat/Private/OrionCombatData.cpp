@@ -5,6 +5,7 @@
 
 
 
+UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayEffect_Dead, "GameplayEffect.Dead"); 
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayEffect_DamageImmunity, "GameplayEffect.DamageImmunity"); 
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayEffect_Damage_Basic, "GameplayEffect.Damage.Basic");
 UE_DEFINE_GAMEPLAY_TAG(TAG_GameplayEffect_Defense_Parry, "GameplayEffect.Defense.Parry");

@@ -8,6 +8,7 @@
 
 
 
+UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayEffect_Dead);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayEffect_DamageImmunity);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayEffect_Damage_Basic);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_GameplayEffect_Defense_Parry);
