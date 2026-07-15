@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameplayEffect.h"
 #include "GameplayTagContainer.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
 #include "OrionCombatFunctionLibrary.generated.h"
@@ -40,6 +41,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "OrionLibrary|Ability")
 	static bool IsAlive(AActor* Target);
 	
+	UFUNCTION(BlueprintCallable, Category = "OrionLibrary|Ability")
+	static FActiveGameplayEffectHandle ApplyGameplayEffectToTargetFromHitResult(UAbilitySystemComponent* Source, TSubclassOf<UGameplayEffect> GameplayEffect, UAbilitySystemComponent *Target, FHitResult HitResult, float Level = 1.0f);
+
 	
 	/**
 	* Grab the Targeting System component from the local player controller.

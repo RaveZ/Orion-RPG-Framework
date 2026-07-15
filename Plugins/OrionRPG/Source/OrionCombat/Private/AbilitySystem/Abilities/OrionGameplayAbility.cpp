@@ -24,7 +24,7 @@ UOrionAbilitySystemComponent* UOrionGameplayAbility::GetOrionAbilitySystemCompon
 
 APlayerController* UOrionGameplayAbility::GetPlayerControllerFromActorInfo() const
 {
-	return (CurrentActorInfo ? Cast<APlayerController>(CurrentActorInfo->PlayerController.Get()) : nullptr);
+	return (CurrentActorInfo ? Cast<APlayerController>(GetControllerFromActorInfo()) : nullptr);
 }
 
 AController* UOrionGameplayAbility::GetControllerFromActorInfo() const

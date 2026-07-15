@@ -114,6 +114,27 @@ bool UOrionCombatFunctionLibrary::IsAlive(AActor* Target)
 	return AttributeSet->IsAlive();
 }
 
+FActiveGameplayEffectHandle UOrionCombatFunctionLibrary::ApplyGameplayEffectToTargetFromHitResult(UAbilitySystemComponent* Source,
+	TSubclassOf<UGameplayEffect> GameplayEffect, UAbilitySystemComponent* Target, FHitResult HitResult, float Level)
+{
+	if (!GameplayEffect || !Source || !Target)
+	{
+		return FActiveGameplayEffectHandle();
+	}
+
+	FGameplayEffectContextHandle Context = Source->MakeEffectContext();
+	Context.AddInstigator(Source ? Source->GetOwnerActor() : nullptr, Source ? Source->GetAvatarActor() : nullptr);
+	Context.AddHitResult(HitResult);
+
+	// Use the Level parameter passed in
+	FGameplayEffectSpecHandle SpecHandle = Source->MakeOutgoingSpec(GameplayEffect, Level, Context);
+	if (SpecHandle.IsValid())
+	{
+		return Source->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), Target);
+	}
+	return FActiveGameplayEffectHandle();
+}
+
 void UOrionCombatFunctionLibrary::SetMovementOverlay(ACharacter* Character, FGameplayTag Tag)
 {
 	UOrionMovementLayerComponent* MovementLayer = Character ? GetMovementLayerComponent(Character) : nullptr;
