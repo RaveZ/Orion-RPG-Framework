@@ -10,7 +10,18 @@ public class OrionRPGFramework : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "GameplayAbilities" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] {"GameplayTags", "GameplayTasks" });
+		PrivateDependencyModuleNames.AddRange(new string[] {
+			"GameplayTags", 
+			"DeveloperSettings",
+			"GameplayTasks", 			
+			"AIModule",
+			"NavigationSystem",
+			"MassEntity",
+			"MassCommon",
+			"MassActors",
+			"MassSpawner",
+			"MassLOD",
+			"MassRepresentation" });
 
 		// Uncomment if you are using Slate UI
 		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });

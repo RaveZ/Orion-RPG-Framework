@@ -151,13 +151,13 @@ void UOrionAttributeSet::InitFromMetaDataTable(const UDataTable* DataTable)
 				void* Data = NumericProperty->ContainerPtrToValuePtr<void>(this);
 				NumericProperty->SetFloatingPointPropertyValue(Data, MetaData->BaseValue);
 				
-				UE_LOG(LogAbilitySystem, Verbose, TEXT("Initialized numeric attribute %s with value %f (using row: %s)"), 
-					*Property->GetName(), MetaData->BaseValue, *UsedRowName);
+				//UE_LOG(LogAbilitySystem, Verbose, TEXT("Initialized numeric attribute %s with value %f (using row: %s)"), 
+					//*Property->GetName(), MetaData->BaseValue, *UsedRowName);
 			}
 			else
 			{
-				UE_LOG(LogAbilitySystem, Warning, TEXT("Could not find DataTable row for attribute: %s (tried: DisplayName='%s', Stripped='%s', Raw='%s', PropertyOnly='%s')"), 
-					*Property->GetName(), *FormattedClassName, *StrippedClassName, *RawClassName, *Property->GetName());
+				//UE_LOG(LogAbilitySystem, Warning, TEXT("Could not find DataTable row for attribute: %s (tried: DisplayName='%s', Stripped='%s', Raw='%s', PropertyOnly='%s')"), 
+					//*Property->GetName(), *FormattedClassName, *StrippedClassName, *RawClassName, *Property->GetName());
 			}
 		}
 		else if (FGameplayAttribute::IsGameplayAttributeDataProperty(Property))
@@ -202,13 +202,13 @@ void UOrionAttributeSet::InitFromMetaDataTable(const UDataTable* DataTable)
 				DataPtr->SetBaseValue(MetaData->BaseValue);
 				DataPtr->SetCurrentValue(MetaData->BaseValue);
 				
-				UE_LOG(LogAbilitySystem, Verbose, TEXT("Initialized gameplay attribute data %s with value %f (using row: %s)"), 
-					*Property->GetName(), MetaData->BaseValue, *UsedRowName);
+				//UE_LOG(LogAbilitySystem, Verbose, TEXT("Initialized gameplay attribute data %s with value %f (using row: %s)"), 
+					//*Property->GetName(), MetaData->BaseValue, *UsedRowName);
 			}
 			else
 			{
-				UE_LOG(LogAbilitySystem, Warning, TEXT("Could not find DataTable row for gameplay attribute: %s (tried: DisplayName='%s', Stripped='%s', Raw='%s', PropertyOnly='%s')"), 
-					*Property->GetName(), *FormattedClassName, *StrippedClassName, *RawClassName, *Property->GetName());
+				//UE_LOG(LogAbilitySystem, Warning, TEXT("Could not find DataTable row for gameplay attribute: %s (tried: DisplayName='%s', Stripped='%s', Raw='%s', PropertyOnly='%s')"), 
+					//*Property->GetName(), *FormattedClassName, *StrippedClassName, *RawClassName, *Property->GetName());
 			}
 		}
 	}
