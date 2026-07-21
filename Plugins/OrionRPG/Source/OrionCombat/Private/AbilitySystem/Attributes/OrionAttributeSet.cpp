@@ -225,29 +225,6 @@ FString UOrionAttributeSet::GetFormattedClassNameForDataTable() const
 		ClassName = ClassName.Left(ClassName.Len() - 2);
 	}
 	
-	// Check if this is a Blueprint and get its display name if available
-	if (UBlueprintGeneratedClass* BPClass = Cast<UBlueprintGeneratedClass>(GetClass()))
-	{
-		if (UBlueprint* Blueprint = Cast<UBlueprint>(BPClass->ClassGeneratedBy))
-		{
-			// Try to get Display Name from Blueprint's generated class
-			if (Blueprint->GeneratedClass)
-			{
-				const FString DisplayName = Blueprint->GeneratedClass->GetMetaData(TEXT("DisplayName"));
-				if (!DisplayName.IsEmpty())
-				{
-					return DisplayName; // Use Display Name if available
-				}
-			}
-			
-			// Alternative: Check Blueprint asset's metadata
-			const FString BlueprintDisplayName = Blueprint->GeneratedClass->GetMetaData(TEXT("DisplayName"));
-			if (!BlueprintDisplayName.IsEmpty())
-			{
-				return BlueprintDisplayName;
-			}
-		}
-	}
 	
 	return ClassName;
 }
