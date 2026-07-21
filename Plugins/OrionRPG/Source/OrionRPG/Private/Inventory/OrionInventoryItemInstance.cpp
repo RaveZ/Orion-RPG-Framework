@@ -99,19 +99,26 @@ void UOrionInventoryItemInstance::SetEquippedItemInstance(UOrionEquipmentInstanc
 	EquippedItemInstance = InEquipmentInstance;
 	OnEquippedStateChanged.Broadcast();
 
-	if (EquippedItemInstance)
+	if (EquippedItemInstance && IsValid(EquippedItemInstance))
 	{
 		TWeakObjectPtr<UOrionInventoryItemInstance> WeakThis = this;
+		TWeakObjectPtr<UOrionEquipmentInstance> WeakEquipped = EquippedItemInstance;
+        
 		
 		EquippedItemInstance->OnUnequippedDelegate.AddLambda(
-			[this, WeakThis]()
+			[WeakThis, WeakEquipped]()
 			{
-				if (WeakThis.IsValid())
+				if (!WeakThis.IsValid() || !WeakEquipped.IsValid())
 				{
-					EquippedItemInstance->OnUnequippedDelegate.Clear();
-					EquippedItemInstance = nullptr;
-					OnEquippedStateChanged.Broadcast();
+					return;
 				}
+                
+				UOrionEquipmentInstance* Equipped = WeakEquipped.Get();
+				UOrionInventoryItemInstance* ThisPtr = WeakThis.Get();
+                
+				Equipped->OnUnequippedDelegate.Clear();
+				ThisPtr->EquippedItemInstance = nullptr;
+				ThisPtr->OnEquippedStateChanged.Broadcast();
 			}
 		);
 		
