@@ -1,23 +1,23 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "HostileDeathProcessor.h"
+#include "DeathProcessor.h"
 
 #include "HostileMassFragments.h"
 #include "MassRepresentationFragments.h"
 
-UHostileDeathProcessor::UHostileDeathProcessor() : EntityQuery(*this)
+UDeathProcessor::UDeathProcessor() : EntityQuery(*this)
 {
 	ExecutionFlags = static_cast<uint8>(EProcessorExecutionFlags::All & ~EProcessorExecutionFlags::Client);
 }
 
-void UHostileDeathProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
+void UDeathProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	EntityQuery.AddRequirement<FHostileDeathFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FMassRepresentationFragment>(EMassFragmentAccess::ReadOnly);
 }
 
-void UHostileDeathProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
+void UDeathProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
 	EntityQuery.ForEachEntityChunk(Context, [](FMassExecutionContext& Ctx)
 	{

@@ -5,18 +5,18 @@
 #include "CoreMinimal.h"
 #include "MassProcessor.h"
 #include "MassEntityQuery.h" 
-#include "HostileDeathProcessor.generated.h"
+#include "DeathProcessor.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ORIONRPGFRAMEWORK_API UHostileDeathProcessor : public UMassProcessor
+class ORIONRPGFRAMEWORK_API UDeathProcessor : public UMassProcessor
 {
 	GENERATED_BODY()
 
 public:
-	UHostileDeathProcessor();
+	UDeathProcessor();
 
 protected:
 	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager) override;

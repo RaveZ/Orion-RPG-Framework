@@ -5,18 +5,18 @@
 #include "CoreMinimal.h"
 #include "MassProcessor.h"
 #include "MassEntityQuery.h" 
-#include "HostileWanderProcessor.generated.h"
+#include "WanderProcessor.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class ORIONRPGFRAMEWORK_API UHostileWanderProcessor : public UMassProcessor
+class ORIONRPGFRAMEWORK_API UWanderProcessor : public UMassProcessor
 {
 	GENERATED_BODY()
 
 public:
-	UHostileWanderProcessor();
+	UWanderProcessor();
 
 protected:
 	virtual void ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager) override;

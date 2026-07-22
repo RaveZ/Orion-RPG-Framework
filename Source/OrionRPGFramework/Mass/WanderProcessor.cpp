@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "HostileWanderProcessor.h"
+#include "WanderProcessor.h"
 
 #include "HostileMassFragments.h"
 #include "MassCommonFragments.h"
@@ -9,12 +9,12 @@
 #include "NavigationSystem.h"
 #include "AI/NavigationSystemBase.h"
 
-UHostileWanderProcessor::UHostileWanderProcessor() : EntityQuery(*this)
+UWanderProcessor::UWanderProcessor() : EntityQuery(*this)
 {
 	ExecutionFlags = static_cast<uint8>(EProcessorExecutionFlags::All & ~EProcessorExecutionFlags::Client);
 }
 
-void UHostileWanderProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
+void UWanderProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FHostileWanderFragment>(EMassFragmentAccess::ReadWrite);
@@ -25,7 +25,7 @@ void UHostileWanderProcessor::ConfigureQueries(const TSharedRef<FMassEntityManag
 	EntityQuery.AddTagRequirement<FMassOffLODTag>(EMassFragmentPresence::None);
 }
 
-void UHostileWanderProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
+void UWanderProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
 {
 	EntityQuery.ForEachEntityChunk(Context, [](FMassExecutionContext& Ctx)
 	{
