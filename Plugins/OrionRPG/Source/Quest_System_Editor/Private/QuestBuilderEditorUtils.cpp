@@ -44,7 +44,7 @@ UEdGraph* FQuestBuilderEditorUtils::CreateNewGraph(UObject* ParentScope, const F
 	
 	NewGraph->Schema = SchemaClass;
 	NewGraph->GetSchema()->CreateDefaultNodesForGraph(*NewGraph);
-	NewGraph->Rename(*(GraphName.ToString()), ParentScope, REN_DoNotDirty | REN_ForceNoResetLoaders);
+	NewGraph->Rename(*(GraphName.ToString()), ParentScope, REN_DoNotDirty);
 
 	if (UQuestBuilderEdGraph* QuestGraph = Cast<UQuestBuilderEdGraph>(NewGraph))
 	{

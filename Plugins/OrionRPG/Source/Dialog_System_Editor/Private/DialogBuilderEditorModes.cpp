@@ -71,7 +71,6 @@ void FDialogBuilderEditorApplicationMode::RegisterTabFactories(TSharedPtr<FTabMa
 	// Mode-specific setup
 	DialogEditorPtr->PushTabFactories(DialogBuilderEditorTabFactories);
 
-	FApplicationMode::RegisterTabFactories(InTabManager);
 }
 
 void FDialogBuilderEditorApplicationMode::PreDeactivateMode()
@@ -208,7 +207,7 @@ void FDialogBuilderSequencerApplicationMode::RegisterTabFactories(TSharedPtr<FTa
 	// Mode-specific setup
 	DialogEditorPtr->PushTabFactories(DialogSequencerTabFactories);
 
-	FApplicationMode::RegisterTabFactories(InTabManager);
+	
 }
 
 void FDialogBuilderSequencerApplicationMode::PreDeactivateMode()

@@ -1,5 +1,9 @@
+// Copyright 2025 Ivan Chandra. All Rights Reserved.
+
 #include "SDialogPreviewViewport.h"
 
+#include "RenderingThread.h" 
+#include "RHI.h" 
 #include "DialogBuilderEditor.h"
 #include "DialogBuilderViewportClient.h"
 #include "DialogBuilder_EditorCommands.h"
@@ -56,12 +60,37 @@ void SDialogPreviewViewport::Construct(const FArguments& InArgs, TSharedRef<FDia
 		UWorld* World = DialogViewportClient->GetPreviewScene()->GetWorld();
 		if (World != nullptr)
 		{
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 8
+			// UE 5.8+: Use ShaderPlatformChanged instead of ChangeFeatureLevel
+			World->ShaderPlatformChanged(GMaxRHIShaderPlatform);
+#else
+			// UE 5.7 and earlier: Use ChangeFeatureLevel
 			World->ChangeFeatureLevel(GWorld->GetFeatureLevel());
+#endif
 		}
 	}
 
 	// Use a delegate to inform the attached world of feature level changes.
 	UEditorEngine* Editor = (UEditorEngine*)GEngine;
+	
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 8
+	// UE 5.8+: Use OnPreviewShaderPlatformChanged
+	PreviewFeatureLevelChangedHandle = Editor->OnPreviewShaderPlatformChanged().AddLambda([this](EShaderPlatform NewShaderPlatform)
+		{
+			if (DialogViewportClient.IsValid())
+			{
+				UWorld* World = DialogViewportClient->GetPreviewScene()->GetWorld();
+				if (World != nullptr)
+				{
+					World->ShaderPlatformChanged(NewShaderPlatform);
+
+					// Refresh the preview scene. Don't change the camera.
+					RequestRefresh(false);
+				}
+			}
+		});
+#else
+	// UE 5.7 and earlier: Use OnPreviewFeatureLevelChanged
 	PreviewFeatureLevelChangedHandle = Editor->OnPreviewFeatureLevelChanged().AddLambda([this](ERHIFeatureLevel::Type NewFeatureLevel)
 		{
 			if (DialogViewportClient.IsValid())
@@ -76,6 +105,7 @@ void SDialogPreviewViewport::Construct(const FArguments& InArgs, TSharedRef<FDia
 				}
 			}
 		});
+#endif
 
 	// Refresh the preview scene
 	RequestRefresh(true);
@@ -91,7 +121,14 @@ SDialogPreviewViewport::~SDialogPreviewViewport()
 	RemoveDialogOverlayWidget();
 
 	UEditorEngine* Editor = (UEditorEngine*)GEngine;
+	
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 8
+	// UE 5.8+: Use OnPreviewShaderPlatformChanged
+	Editor->OnPreviewShaderPlatformChanged().Remove(PreviewFeatureLevelChangedHandle);
+#else
+	// UE 5.7 and earlier: Use OnPreviewFeatureLevelChanged
 	Editor->OnPreviewFeatureLevelChanged().Remove(PreviewFeatureLevelChangedHandle);
+#endif
 
 	if (DialogViewportClient.IsValid())
 	{

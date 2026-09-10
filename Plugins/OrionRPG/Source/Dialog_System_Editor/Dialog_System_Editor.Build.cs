@@ -40,7 +40,9 @@ public class Dialog_System_Editor : ModuleRules
 				"GameplayTags",
 				"CinematicCamera",
 				"LevelEditor",
-                "AssetRegistry"
+                "AssetRegistry",
+                "RHI",
+                "RenderCore",
             }
 			);
 		

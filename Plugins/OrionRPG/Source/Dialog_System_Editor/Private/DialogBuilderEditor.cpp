@@ -1071,21 +1071,31 @@ namespace
 			return;
 		}
 
-		TArrayView<FMovieSceneActorReferenceData*> Channels =
-			ActorRefSection->GetChannelProxy().GetChannels<FMovieSceneActorReferenceData>();
-
-		if (!Channels.IsValidIndex(0) || !Channels[0])
-		{
-			return;
-		}
-
 		ActorRefTrack->Modify();
 		ActorRefSection->Modify();
 
 		FMovieSceneActorReferenceKey NewKey;
 		NewKey.Object = UE::MovieScene::FRelativeObjectBindingID(ActorBindingId);
 
-		Channels[0]->GetData().UpdateOrAddKey(InFrame, NewKey);
+#if ENGINE_MAJOR_VERSION >= 5 && ENGINE_MINOR_VERSION >= 8
+		// UE 5.8+ uses FMovieSceneActorReferenceChannel
+		TArrayView<FMovieSceneActorReferenceChannel*> Channels =
+			ActorRefSection->GetChannelProxy().GetChannels<FMovieSceneActorReferenceChannel>();
+
+		if (Channels.IsValidIndex(0) && Channels[0])
+		{
+			Channels[0]->GetData().UpdateOrAddKey(InFrame, NewKey);
+		}
+#else
+		// UE 5.7 and earlier use FMovieSceneActorReferenceData
+		TArrayView<FMovieSceneActorReferenceData*> Channels =
+			ActorRefSection->GetChannelProxy().GetChannels<FMovieSceneActorReferenceData>();
+
+		if (Channels.IsValidIndex(0) && Channels[0])
+		{
+			Channels[0]->GetData().UpdateOrAddKey(InFrame, NewKey);
+		}
+#endif
 	}
 }
 

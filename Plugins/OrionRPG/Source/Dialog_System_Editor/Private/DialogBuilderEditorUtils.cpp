@@ -41,7 +41,7 @@ UEdGraph* FDialogBuilderEditorUtils::CreateNewGraph(UObject* ParentScope, const 
 	
 	NewGraph->Schema = SchemaClass;
 	NewGraph->GetSchema()->CreateDefaultNodesForGraph(*NewGraph);
-	NewGraph->Rename(*(GraphName.ToString()), ParentScope, REN_DoNotDirty | REN_ForceNoResetLoaders);
+	NewGraph->Rename(*(GraphName.ToString()), ParentScope, REN_DoNotDirty);
 
 	if (UDialogBuilderEdGraph* DialogGraph = Cast<UDialogBuilderEdGraph>(NewGraph))
 	{
